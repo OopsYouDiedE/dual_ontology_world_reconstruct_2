@@ -1,0 +1,394 @@
+{
+  "painting": {
+    "name": "油画挂件",
+    "fields": [
+      {
+        "id": "frame_w",
+        "label": "画宽(m)",
+        "val": 1.35,
+        "step": 0.05
+      },
+      {
+        "id": "frame_h",
+        "label": "画高(m)",
+        "val": 0.95,
+        "step": 0.05
+      },
+      {
+        "id": "mount_y",
+        "label": "挂高(m)",
+        "val": 1.65,
+        "step": 0.05
+      }
+    ]
+  },
+  "wall_lantern": {
+    "name": "壁灯",
+    "fields": [
+      {
+        "id": "lamp_energy",
+        "label": "光强",
+        "val": 15,
+        "step": 2
+      },
+      {
+        "id": "lamp_height",
+        "label": "挂高(m)",
+        "val": 2.2,
+        "step": 0.1
+      }
+    ]
+  },
+  "banker_lamp": {
+    "name": "台灯",
+    "fields": [
+      {
+        "id": "lamp_energy",
+        "label": "光强",
+        "val": 8,
+        "step": 1
+      },
+      {
+        "id": "mount_y",
+        "label": "桌面高(m)",
+        "val": 0.75,
+        "step": 0.05
+      }
+    ]
+  },
+  "pendant_lamp": {
+    "name": "吊灯",
+    "fields": [
+      {
+        "id": "drop_length",
+        "label": "吊长(m)",
+        "val": 1.1,
+        "step": 0.1
+      },
+      {
+        "id": "lamp_energy",
+        "label": "光强",
+        "val": 22,
+        "step": 2
+      }
+    ]
+  },
+  "table": {
+    "name": "书桌",
+    "fields": [
+      {
+        "id": "table_w",
+        "label": "宽(m)",
+        "val": 1.8,
+        "step": 0.1
+      },
+      {
+        "id": "table_d",
+        "label": "深(m)",
+        "val": 0.95,
+        "step": 0.05
+      },
+      {
+        "id": "table_h",
+        "label": "高(m)",
+        "val": 0.75,
+        "step": 0.05
+      }
+    ]
+  },
+  "chair": {
+    "name": "木椅",
+    "fields": [
+      {
+        "id": "seat_w",
+        "label": "宽(m)",
+        "val": 0.48,
+        "step": 0.02
+      },
+      {
+        "id": "seat_d",
+        "label": "深(m)",
+        "val": 0.48,
+        "step": 0.02
+      }
+    ]
+  },
+  "bookshelf": {
+    "name": "书柜",
+    "fields": [
+      {
+        "id": "shelf_w",
+        "label": "宽(m)",
+        "val": 1.5,
+        "step": 0.1
+      },
+      {
+        "id": "shelf_h",
+        "label": "高(m)",
+        "val": 2.2,
+        "step": 0.1
+      },
+      {
+        "id": "shelf_layers",
+        "label": "层数",
+        "val": 5,
+        "step": 1
+      }
+    ]
+  },
+  "bench": {
+    "name": "长椅",
+    "fields": [
+      {
+        "id": "bench_len",
+        "label": "长(m)",
+        "val": 1.6,
+        "step": 0.1
+      },
+      {
+        "id": "bench_w",
+        "label": "深(m)",
+        "val": 0.5,
+        "step": 0.05
+      }
+    ]
+  },
+  "reception_desk": {
+    "name": "前台",
+    "fields": [
+      {
+        "id": "desk_w",
+        "label": "宽(m)",
+        "val": 2.4,
+        "step": 0.2
+      },
+      {
+        "id": "desk_h",
+        "label": "高(m)",
+        "val": 1.05,
+        "step": 0.05
+      }
+    ]
+  },
+  "wash_table": {
+    "name": "盥洗台",
+    "fields": [
+      {
+        "id": "wash_w",
+        "label": "宽(m)",
+        "val": 1.1,
+        "step": 0.1
+      },
+      {
+        "id": "mirror_h",
+        "label": "镜高(m)",
+        "val": 0.8,
+        "step": 0.05
+      }
+    ]
+  },
+  "bed": {
+    "name": "大床",
+    "fields": [
+      {
+        "id": "bed_w",
+        "label": "宽(m)",
+        "val": 1.8,
+        "step": 0.1
+      },
+      {
+        "id": "bed_l",
+        "label": "长(m)",
+        "val": 2.1,
+        "step": 0.1
+      },
+      {
+        "id": "head_h",
+        "label": "床头高(m)",
+        "val": 1.35,
+        "step": 0.05
+      }
+    ]
+  },
+  "cabinet": {
+    "name": "立柜",
+    "fields": [
+      {
+        "id": "cab_w",
+        "label": "宽(m)",
+        "val": 1.2,
+        "step": 0.1
+      },
+      {
+        "id": "cab_h",
+        "label": "高(m)",
+        "val": 2.0,
+        "step": 0.1
+      }
+    ]
+  },
+  "pedestal": {
+    "name": "雕花展台",
+    "fields": [
+      {
+        "id": "width",
+        "label": "宽(m)",
+        "val": 0.52,
+        "step": 0.05
+      },
+      {
+        "id": "height",
+        "label": "高(m)",
+        "val": 0.75,
+        "step": 0.05
+      }
+    ]
+  },
+  "chest": {
+    "name": "储物箱",
+    "fields": [
+      {
+        "id": "chest_w",
+        "label": "长(m)",
+        "val": 0.95,
+        "step": 0.05
+      },
+      {
+        "id": "chest_d",
+        "label": "宽(m)",
+        "val": 0.55,
+        "step": 0.05
+      },
+      {
+        "id": "chest_h",
+        "label": "高(m)",
+        "val": 0.5,
+        "step": 0.05
+      }
+    ]
+  },
+  "screen": {
+    "name": "屏风",
+    "fields": [
+      {
+        "id": "screen_w",
+        "label": "宽(m)",
+        "val": 1.8,
+        "step": 0.1
+      },
+      {
+        "id": "screen_h",
+        "label": "高(m)",
+        "val": 1.7,
+        "step": 0.05
+      }
+    ]
+  },
+  "rug": {
+    "name": "地毯",
+    "fields": [
+      {
+        "id": "rug_w",
+        "label": "宽(m)",
+        "val": 2.6,
+        "step": 0.2
+      },
+      {
+        "id": "rug_d",
+        "label": "深(m)",
+        "val": 1.8,
+        "step": 0.2
+      }
+    ]
+  },
+  "lectern": {
+    "name": "讲台",
+    "fields": [
+      {
+        "id": "lec_h",
+        "label": "高(m)",
+        "val": 1.15,
+        "step": 0.05
+      }
+    ]
+  },
+  "chalkboard": {
+    "name": "黑板",
+    "fields": [
+      {
+        "id": "board_w",
+        "label": "宽(m)",
+        "val": 2.0,
+        "step": 0.1
+      },
+      {
+        "id": "board_h",
+        "label": "高(m)",
+        "val": 1.2,
+        "step": 0.05
+      }
+    ]
+  },
+  "planter": {
+    "name": "花卉盆栽",
+    "fields": [
+      {
+        "id": "plant_w",
+        "label": "冠径(m)",
+        "val": 0.65,
+        "step": 0.05
+      },
+      {
+        "id": "plant_h",
+        "label": "株高(m)",
+        "val": 0.85,
+        "step": 0.05
+      },
+      {
+        "id": "flower_count",
+        "label": "花朵数",
+        "val": 7,
+        "step": 1
+      }
+    ]
+  },
+  "upright_piano": {
+    "name": "钢琴",
+    "fields": [
+      {
+        "id": "piano_w",
+        "label": "宽(m)",
+        "val": 1.45,
+        "step": 0.05
+      },
+      {
+        "id": "piano_h",
+        "label": "高(m)",
+        "val": 1.2,
+        "step": 0.05
+      }
+    ]
+  },
+  "easel": {
+    "name": "画架",
+    "fields": [
+      {
+        "id": "easel_h",
+        "label": "高(m)",
+        "val": 1.75,
+        "step": 0.05
+      }
+    ]
+  },
+  "crates": {
+    "name": "木箱堆",
+    "fields": [
+      {
+        "id": "crate_tier",
+        "label": "层数",
+        "val": 3,
+        "step": 1
+      }
+    ]
+  }
+}

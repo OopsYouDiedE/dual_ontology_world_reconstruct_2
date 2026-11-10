@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <UseSharedCompilation>true</UseSharedCompilation>
+    <BuildInParallel>true</BuildInParallel>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/bin/**;**/obj/**;.runtime/**;.godot/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

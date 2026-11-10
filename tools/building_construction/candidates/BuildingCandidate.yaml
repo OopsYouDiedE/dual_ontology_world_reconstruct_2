@@ -1,0 +1,157 @@
+"activeLayerId": "layer_R01"
+"layers":
+  -
+	"id": "layer_R01"
+	"name": "2F R01 卢西安居室 地面"
+	"polygons": [[[-3.9,0.0],[-3.9,-6.7],[3.9,-6.7],[3.9,0.0]]]
+	"style": "parquet_wood"
+	"y": 0.0
+"walls":
+  -
+	"baseY": 0.0
+	"closed": false
+	"height": 3.9
+	"id": "wall_R01"
+	"name": "主外墙柱 (L型剖面外墙)"
+	"openings": [{"bottom":0.0,"center":6.75,"height":2.4,"id":"op_R01_Door_00","segment":1.0,"type":"closed_door","width":1.2},{"bottom":0.95,"center":2.5,"height":2.2,"id":"op_R01_window_01","rise":0.4,"segment":0.0,"type":"arched_window","width":1.4}]
+	"points": [[-3.9,0.0,0.0],[-3.9,0.0,-6.7],[3.9,0.0,-6.7]]
+	"style": "classical"
+	"thickness": 0.28
+"stairs": []
+"railings": []
+"props":
+  -
+	"id": "prop_R01_bed_01"
+	"kind": "bed"
+	"name": "R01_bed_01"
+	"params": {}
+	"x": 0.45
+	"y": 0.0
+	"yaw": 0.0
+	"z": -5.18
+  -
+	"id": "prop_R01_wardrobe_01"
+	"kind": "cabinet"
+	"name": "R01_wardrobe_01"
+	"params": {}
+	"x": -2.85
+	"y": 0.0
+	"yaw": 0.0
+	"z": -6.27
+  -
+	"id": "prop_R01_nightstand_01"
+	"kind": "table"
+	"name": "R01_nightstand_01"
+	"params": {}
+	"x": -0.66
+	"y": 0.0
+	"yaw": 0.0
+	"z": -5.79
+  -
+	"id": "prop_R01_banker_lamp_01"
+	"kind": "banker_lamp"
+	"name": "R01_banker_lamp_01"
+	"params": {"lamp_energy":8.0,"mount_y":0.61}
+	"x": -0.66
+	"y": 0.61
+	"yaw": 0.0
+	"z": -5.79
+  -
+	"id": "prop_R01_table_01"
+	"kind": "table"
+	"name": "R01_table_01"
+	"params": {}
+	"x": -3.42
+	"y": 0.0
+	"yaw": -90.0
+	"z": -2.5
+  -
+	"id": "prop_R01_chair_01"
+	"kind": "chair"
+	"name": "R01_chair_01"
+	"params": {}
+	"x": -2.55
+	"y": 0.0
+	"yaw": 90.0
+	"z": -2.5
+  -
+	"id": "prop_R01_banker_lamp_02"
+	"kind": "banker_lamp"
+	"name": "R01_banker_lamp_02"
+	"params": {"lamp_energy":8.0,"mount_y":0.8}
+	"x": -3.42
+	"y": 0.8
+	"yaw": -90.0
+	"z": -3.05
+  -
+	"id": "prop_R01_wash_table_01"
+	"kind": "wash_table"
+	"name": "R01_wash_table_01"
+	"params": {}
+	"x": 2.95
+	"y": 0.0
+	"yaw": 0.0
+	"z": -2.6
+  -
+	"id": "prop_R01_painting_01"
+	"kind": "painting"
+	"name": "R01_painting_01"
+	"params": {"mount_y":1.65}
+	"x": 0.45
+	"y": 1.65
+	"yaw": 0.0
+	"z": -6.52
+  -
+	"id": "prop_R01_wall_lantern_01"
+	"kind": "wall_lantern"
+	"name": "R01_wall_lantern_01"
+	"params": {"lamp_energy":15.0,"lamp_height":2.55}
+	"x": 2.0
+	"y": 2.55
+	"yaw": 0.0
+	"z": -6.52
+  -
+	"id": "prop_R01_wall_lantern_02"
+	"kind": "wall_lantern"
+	"name": "R01_wall_lantern_02"
+	"params": {"lamp_energy":15.0,"lamp_height":2.5}
+	"x": -3.72
+	"y": 2.5
+	"yaw": -90.0
+	"z": -4.12
+  -
+	"id": "prop_R01_rug_01"
+	"kind": "rug"
+	"name": "R01_rug_01"
+	"params": {}
+	"x": 0.1
+	"y": 0.0
+	"yaw": 0.0
+	"z": -2.25
+  -
+	"id": "prop_R01_bench_01"
+	"kind": "bench"
+	"name": "R01_bench_01"
+	"params": {}
+	"x": -1.2
+	"y": 0.0
+	"yaw": -90.0
+	"z": -0.85
+  -
+	"id": "prop_R01_table_02"
+	"kind": "table"
+	"name": "R01_table_02"
+	"params": {}
+	"x": -0.25
+	"y": 0.0
+	"yaw": 0.0
+	"z": -1.05
+  -
+	"id": "prop_R01_residential_accessories_01"
+	"kind": "crates"
+	"name": "R01_residential_accessories_01"
+	"params": {}
+	"x": -3.42
+	"y": 0.81
+	"yaw": -90.0
+	"z": -2.25

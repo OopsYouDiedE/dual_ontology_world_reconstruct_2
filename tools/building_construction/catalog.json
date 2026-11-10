@@ -1,0 +1,998 @@
+{
+  "version": 1,
+  "categories": {
+    "Walls": "墙壁",
+    "Floors": "地板",
+    "Stairs": "楼梯",
+    "Railings": "栏杆",
+    "Doors": "门",
+    "Windows": "窗户",
+    "Tables": "桌子",
+    "Lighting": "灯具",
+    "Chairs": "椅子",
+    "Cabinets": "柜子",
+    "Beds": "床铺",
+    "Props": "摆件与设备",
+    "Outdoor": "庭院"
+  },
+  "items": [
+    {
+      "id": "SmartWall3D",
+      "category": "Walls",
+      "label": "墙壁",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd",
+      "parametric": true
+    },
+    {
+      "id": "SmartFloorZone3D",
+      "category": "Floors",
+      "label": "地板",
+      "path": "res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd",
+      "parametric": true
+    },
+    {
+      "id": "SmartStair3D",
+      "category": "Stairs",
+      "label": "楼梯",
+      "path": "res://tools/building_construction/BuildingConstruction/Stairs/SmartStair3D.gd",
+      "parametric": true
+    },
+    {
+      "id": "SmartRailing3D",
+      "category": "Railings",
+      "label": "栏杆",
+      "path": "res://tools/building_construction/BuildingConstruction/Railings/SmartRailing3D.gd",
+      "parametric": true
+    },
+    {
+      "id": "HingedDoor3D",
+      "category": "Doors",
+      "label": "门",
+      "path": "res://tools/building_construction/BuildingConstruction/Doors/HingedDoor3D.gd",
+      "parametric": true
+    },
+    {
+      "id": "HingedWindow3D",
+      "category": "Windows",
+      "label": "窗户",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/HingedWindow3D.gd",
+      "parametric": true
+    },
+    {
+      "id": "RecipeBook",
+      "category": "Props",
+      "label": "book",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBook.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::book"
+    },
+    {
+      "id": "RecipeBooks",
+      "category": "Props",
+      "label": "books",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBooks.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::books"
+    },
+    {
+      "id": "RecipeOpenBook",
+      "category": "Props",
+      "label": "open_book",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeOpenBook.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::open_book"
+    },
+    {
+      "id": "RecipeBookshelf",
+      "category": "Cabinets",
+      "label": "bookshelf",
+      "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::bookshelf"
+    },
+    {
+      "id": "RecipeTable",
+      "category": "Tables",
+      "label": "原版雕花桌",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeTable.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::table"
+    },
+    {
+      "id": "RecipeChair",
+      "category": "Chairs",
+      "label": "原版扶手椅",
+      "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeChair.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::chair"
+    },
+    {
+      "id": "RecipeBench",
+      "category": "Chairs",
+      "label": "原版长椅",
+      "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeBench.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::bench"
+    },
+    {
+      "id": "RecipeReceptionDesk",
+      "category": "Tables",
+      "label": "reception_desk",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeReceptionDesk.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::reception_desk"
+    },
+    {
+      "id": "RecipePlanter",
+      "category": "Props",
+      "label": "planter",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlanter.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::planter"
+    },
+    {
+      "id": "RecipePainting",
+      "category": "Props",
+      "label": "painting",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePainting.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::painting"
+    },
+    {
+      "id": "RecipeLadder",
+      "category": "Props",
+      "label": "ladder",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeLadder.gd",
+      "parametric": true,
+      "source": "kit/furniture.py::ladder"
+    },
+    {
+      "id": "RecipeWallLantern",
+      "category": "Lighting",
+      "label": "原版壁灯",
+      "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeWallLantern.gd",
+      "parametric": true,
+      "source": "kit/lighting.py::wall_lantern"
+    },
+    {
+      "id": "RecipeBankerLamp",
+      "category": "Lighting",
+      "label": "原版银行家台灯",
+      "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeBankerLamp.gd",
+      "parametric": true,
+      "source": "kit/lighting.py::banker_lamp"
+    },
+    {
+      "id": "RecipePendantLamp",
+      "category": "Lighting",
+      "label": "原版吊灯",
+      "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipePendantLamp.gd",
+      "parametric": true,
+      "source": "kit/lighting.py::pendant_lamp"
+    },
+    {
+      "id": "RecipeBed",
+      "category": "Beds",
+      "label": "bed",
+      "path": "res://tools/building_construction/BuildingConstruction/Beds/RecipeBed.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::bed"
+    },
+    {
+      "id": "RecipeCabinet",
+      "category": "Cabinets",
+      "label": "cabinet",
+      "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeCabinet.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::cabinet"
+    },
+    {
+      "id": "RecipeChest",
+      "category": "Props",
+      "label": "chest",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeChest.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::chest"
+    },
+    {
+      "id": "RecipeVessel",
+      "category": "Props",
+      "label": "vessel",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeVessel.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::vessel"
+    },
+    {
+      "id": "RecipeSink",
+      "category": "Props",
+      "label": "sink",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSink.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::sink"
+    },
+    {
+      "id": "RecipeStove",
+      "category": "Props",
+      "label": "stove",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeStove.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::stove"
+    },
+    {
+      "id": "RecipeWorkCounter",
+      "category": "Tables",
+      "label": "work_counter",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeWorkCounter.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::work_counter"
+    },
+    {
+      "id": "RecipeTub",
+      "category": "Props",
+      "label": "tub",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeTub.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::tub"
+    },
+    {
+      "id": "RecipeWashstand",
+      "category": "Props",
+      "label": "washstand",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeWashstand.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::washstand"
+    },
+    {
+      "id": "RecipeScreen",
+      "category": "Props",
+      "label": "screen",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeScreen.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::screen"
+    },
+    {
+      "id": "RecipeRack",
+      "category": "Props",
+      "label": "rack",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRack.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::rack"
+    },
+    {
+      "id": "RecipeChalkboard",
+      "category": "Props",
+      "label": "chalkboard",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeChalkboard.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::chalkboard"
+    },
+    {
+      "id": "RecipeLectern",
+      "category": "Props",
+      "label": "lectern",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeLectern.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::lectern"
+    },
+    {
+      "id": "RecipeChessboard",
+      "category": "Props",
+      "label": "chessboard",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeChessboard.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::chessboard"
+    },
+    {
+      "id": "RecipeRecordStation",
+      "category": "Props",
+      "label": "record_station",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRecordStation.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::record_station"
+    },
+    {
+      "id": "RecipeBottles",
+      "category": "Props",
+      "label": "bottles",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBottles.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::bottles"
+    },
+    {
+      "id": "RecipeCrates",
+      "category": "Props",
+      "label": "crates",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCrates.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::crates"
+    },
+    {
+      "id": "RecipeSacks",
+      "category": "Props",
+      "label": "sacks",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSacks.gd",
+      "parametric": true,
+      "source": "kit/special_props.py::sacks"
+    },
+    {
+      "id": "RecipePaneledBed",
+      "category": "Beds",
+      "label": "paneled_bed",
+      "path": "res://tools/building_construction/BuildingConstruction/Beds/RecipePaneledBed.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::paneled_bed"
+    },
+    {
+      "id": "RecipeFramedMirror",
+      "category": "Props",
+      "label": "framed_mirror",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeFramedMirror.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::framed_mirror"
+    },
+    {
+      "id": "RecipePitcher",
+      "category": "Props",
+      "label": "pitcher",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePitcher.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::pitcher"
+    },
+    {
+      "id": "RecipeWashTable",
+      "category": "Tables",
+      "label": "wash_table",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeWashTable.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::wash_table"
+    },
+    {
+      "id": "RecipeRug",
+      "category": "Floors",
+      "label": "rug",
+      "path": "res://tools/building_construction/BuildingConstruction/Floors/RecipeRug.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::rug"
+    },
+    {
+      "id": "RecipeSlateTable",
+      "category": "Tables",
+      "label": "slate_table",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeSlateTable.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::slate_table"
+    },
+    {
+      "id": "RecipeFoldingDesk",
+      "category": "Tables",
+      "label": "folding_desk",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeFoldingDesk.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::folding_desk"
+    },
+    {
+      "id": "RecipeGoBoard",
+      "category": "Props",
+      "label": "go_board",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGoBoard.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::go_board"
+    },
+    {
+      "id": "RecipeMusicStand",
+      "category": "Props",
+      "label": "music_stand",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeMusicStand.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::music_stand"
+    },
+    {
+      "id": "RecipeKeyboard",
+      "category": "Props",
+      "label": "keyboard",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeKeyboard.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::keyboard"
+    },
+    {
+      "id": "RecipeCookerHood",
+      "category": "Props",
+      "label": "cooker_hood",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCookerHood.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::cooker_hood"
+    },
+    {
+      "id": "RecipeCrockeryShelf",
+      "category": "Props",
+      "label": "crockery_shelf",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCrockeryShelf.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::crockery_shelf"
+    },
+    {
+      "id": "RecipeLinenCabinet",
+      "category": "Cabinets",
+      "label": "linen_cabinet",
+      "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeLinenCabinet.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::linen_cabinet"
+    },
+    {
+      "id": "RecipeSpeakingTube",
+      "category": "Props",
+      "label": "speaking_tube",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSpeakingTube.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::speaking_tube"
+    },
+    {
+      "id": "RecipePressurePanel",
+      "category": "Props",
+      "label": "pressure_panel",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePressurePanel.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::pressure_panel"
+    },
+    {
+      "id": "RecipeVentGrille",
+      "category": "Props",
+      "label": "vent_grille",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeVentGrille.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::vent_grille"
+    },
+    {
+      "id": "RecipeDeskBundle",
+      "category": "Tables",
+      "label": "desk_bundle",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeDeskBundle.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::desk_bundle"
+    },
+    {
+      "id": "RecipeEasel",
+      "category": "Props",
+      "label": "easel",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeEasel.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::easel"
+    },
+    {
+      "id": "RecipeStool",
+      "category": "Chairs",
+      "label": "stool",
+      "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeStool.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::stool"
+    },
+    {
+      "id": "RecipeSealDoorTrim",
+      "category": "Props",
+      "label": "seal_door_trim",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSealDoorTrim.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::seal_door_trim"
+    },
+    {
+      "id": "RecipeKitchenHood",
+      "category": "Props",
+      "label": "kitchen_hood",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeKitchenHood.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::kitchen_hood"
+    },
+    {
+      "id": "RecipeUprightPiano",
+      "category": "Props",
+      "label": "upright_piano",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeUprightPiano.gd",
+      "parametric": true,
+      "source": "kit/residential_props.py::upright_piano"
+    },
+    {
+      "id": "RecipeRingBand",
+      "category": "Props",
+      "label": "ring_band",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRingBand.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::ring_band"
+    },
+    {
+      "id": "RecipeArmillary",
+      "category": "Props",
+      "label": "armillary",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeArmillary.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::armillary"
+    },
+    {
+      "id": "RecipeResonanceTubes",
+      "category": "Props",
+      "label": "resonance_tubes",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeResonanceTubes.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::resonance_tubes"
+    },
+    {
+      "id": "RecipeBalance",
+      "category": "Props",
+      "label": "balance",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBalance.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::balance"
+    },
+    {
+      "id": "RecipeMagnifier",
+      "category": "Props",
+      "label": "magnifier",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeMagnifier.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::magnifier"
+    },
+    {
+      "id": "RecipeStampPress",
+      "category": "Props",
+      "label": "stamp_press",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeStampPress.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::stamp_press"
+    },
+    {
+      "id": "RecipeRecordsPillar",
+      "category": "Props",
+      "label": "records_pillar",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRecordsPillar.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::records_pillar"
+    },
+    {
+      "id": "RecipeMedicineCabinet",
+      "category": "Cabinets",
+      "label": "medicine_cabinet",
+      "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeMedicineCabinet.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::medicine_cabinet"
+    },
+    {
+      "id": "RecipeDishRack",
+      "category": "Props",
+      "label": "dish_rack",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeDishRack.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::dish_rack"
+    },
+    {
+      "id": "RecipePlantingBed",
+      "category": "Props",
+      "label": "planting_bed",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlantingBed.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::planting_bed"
+    },
+    {
+      "id": "RecipeGreenhouseFrame",
+      "category": "Props",
+      "label": "greenhouse_frame",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGreenhouseFrame.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::greenhouse_frame"
+    },
+    {
+      "id": "RecipeWateringCan",
+      "category": "Props",
+      "label": "watering_can",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeWateringCan.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::watering_can"
+    },
+    {
+      "id": "RecipeGrille",
+      "category": "Props",
+      "label": "grille",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGrille.gd",
+      "parametric": true,
+      "source": "kit/public_props.py::grille"
+    },
+    {
+      "id": "RecipePedestal",
+      "category": "Props",
+      "label": "pedestal",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePedestal.gd",
+      "parametric": true,
+      "source": "kit/decor.py::pedestal"
+    },
+    {
+      "id": "RecipeCoatStand",
+      "category": "Props",
+      "label": "coat_stand",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCoatStand.gd",
+      "parametric": true,
+      "source": "kit/decor.py::coat_stand"
+    },
+    {
+      "id": "RecipePlatform",
+      "category": "Props",
+      "label": "platform",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlatform.gd",
+      "parametric": true,
+      "source": "kit/decor.py::platform"
+    },
+    {
+      "id": "RecipeLibraryRail",
+      "category": "Railings",
+      "label": "library_rail",
+      "path": "res://tools/building_construction/BuildingConstruction/Railings/RecipeLibraryRail.gd",
+      "parametric": true,
+      "source": "kit/decor.py::library_rail"
+    },
+    {
+      "id": "RecipeArchedWindow",
+      "category": "Windows",
+      "label": "原版拱窗",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeArchedWindow.gd",
+      "parametric": true,
+      "source": "kit/openings.py::arched_window"
+    },
+    {
+      "id": "RecipeClosedDoor",
+      "category": "Doors",
+      "label": "原版平顶门",
+      "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeClosedDoor.gd",
+      "parametric": true,
+      "source": "kit/openings.py::closed_door"
+    },
+    {
+      "id": "RecipeRectangularWindow",
+      "category": "Windows",
+      "label": "原版矩形窗",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeRectangularWindow.gd",
+      "parametric": true,
+      "source": "kit/variants.py::rectangular_window"
+    },
+    {
+      "id": "RecipeRoundWindow",
+      "category": "Windows",
+      "label": "原版圆窗",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeRoundWindow.gd",
+      "parametric": true,
+      "source": "kit/variants.py::round_window"
+    },
+    {
+      "id": "RecipeArchedClosedDoor",
+      "category": "Doors",
+      "label": "原版拱门",
+      "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeArchedClosedDoor.gd",
+      "parametric": true,
+      "source": "kit/variants.py::arched_closed_door"
+    },
+    {
+      "id": "RecipeWallPath",
+      "category": "Walls",
+      "label": "原版路径墙体",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeWallPath.gd",
+      "parametric": true,
+      "source": "kit/architecture.py::wall_path"
+    },
+    {
+      "id": "RecipeStaircase",
+      "category": "Stairs",
+      "label": "原版路径楼梯",
+      "path": "res://tools/building_construction/BuildingConstruction/Stairs/RecipeStaircase.gd",
+      "parametric": true,
+      "source": "kit/architecture.py::staircase"
+    },
+    {
+      "id": "RecipeRailing",
+      "category": "Railings",
+      "label": "原版栏杆",
+      "path": "res://tools/building_construction/BuildingConstruction/Railings/RecipeRailing.gd",
+      "parametric": true,
+      "source": "kit/architecture.py::railing"
+    },
+    {
+      "id": "RecipeStraightFlight",
+      "category": "Stairs",
+      "label": "原版精确直跑楼梯",
+      "path": "res://tools/building_construction/BuildingConstruction/Stairs/RecipeStraightFlight.gd",
+      "parametric": true,
+      "source": "kit/stair_exact.py::straight_flight"
+    },
+    {
+      "id": "RecipeTiledFloor",
+      "category": "Floors",
+      "label": "原版拼花地板",
+      "path": "res://tools/building_construction/BuildingConstruction/Floors/RecipeTiledFloor.gd",
+      "parametric": true,
+      "source": "kit/flooring.py::tiled_floor"
+    },
+    {
+      "id": "RecipeStoneWall",
+      "category": "Walls",
+      "label": "stone_wall",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeStoneWall.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::stone_wall"
+    },
+    {
+      "id": "RecipeCourtyardGate",
+      "category": "Doors",
+      "label": "courtyard_gate",
+      "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeCourtyardGate.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::courtyard_gate"
+    },
+    {
+      "id": "RecipeTree",
+      "category": "Outdoor",
+      "label": "tree",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeTree.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::tree"
+    },
+    {
+      "id": "RecipePlanterBed",
+      "category": "Outdoor",
+      "label": "planter_bed",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipePlanterBed.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::planter_bed"
+    },
+    {
+      "id": "RecipeFountain",
+      "category": "Outdoor",
+      "label": "fountain",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeFountain.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::fountain"
+    },
+    {
+      "id": "RecipeScholarlyStatue",
+      "category": "Outdoor",
+      "label": "scholarly_statue",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeScholarlyStatue.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::scholarly_statue"
+    },
+    {
+      "id": "RecipeInstrumentTable",
+      "category": "Tables",
+      "label": "instrument_table",
+      "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeInstrumentTable.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::instrument_table"
+    },
+    {
+      "id": "RecipeLampPost",
+      "category": "Lighting",
+      "label": "lamp_post",
+      "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeLampPost.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::lamp_post"
+    },
+    {
+      "id": "RecipeOathPlatform",
+      "category": "Outdoor",
+      "label": "oath_platform",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeOathPlatform.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::oath_platform"
+    },
+    {
+      "id": "RecipeBarrelOutdoor",
+      "category": "Outdoor",
+      "label": "barrel",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeBarrelOutdoor.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::barrel"
+    },
+    {
+      "id": "RecipeBollard",
+      "category": "Outdoor",
+      "label": "bollard",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeBollard.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::bollard"
+    },
+    {
+      "id": "RecipeRopeCoil",
+      "category": "Outdoor",
+      "label": "rope_coil",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeRopeCoil.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::rope_coil"
+    },
+    {
+      "id": "RecipeDock",
+      "category": "Outdoor",
+      "label": "dock",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeDock.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::dock"
+    },
+    {
+      "id": "RecipeWaterPatch",
+      "category": "Outdoor",
+      "label": "water_patch",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeWaterPatch.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::water_patch"
+    },
+    {
+      "id": "RecipeRowboat",
+      "category": "Outdoor",
+      "label": "rowboat",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeRowboat.gd",
+      "parametric": true,
+      "source": "kit/outdoor_props.py::rowboat"
+    },
+    {
+      "id": "RecipeRing",
+      "category": "Props",
+      "label": "ring",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRing.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::ring"
+    },
+    {
+      "id": "RecipeFlange",
+      "category": "Props",
+      "label": "flange",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeFlange.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::flange"
+    },
+    {
+      "id": "RecipePipeRun",
+      "category": "Props",
+      "label": "pipe_run",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePipeRun.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::pipe_run"
+    },
+    {
+      "id": "RecipeGauge",
+      "category": "Props",
+      "label": "gauge",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGauge.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::gauge"
+    },
+    {
+      "id": "RecipeInterlockHandle",
+      "category": "Props",
+      "label": "interlock_handle",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeInterlockHandle.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::interlock_handle"
+    },
+    {
+      "id": "RecipeValveStation",
+      "category": "Props",
+      "label": "valve_station",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeValveStation.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::valve_station"
+    },
+    {
+      "id": "RecipeControlConsole",
+      "category": "Props",
+      "label": "control_console",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeControlConsole.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::control_console"
+    },
+    {
+      "id": "RecipeReactionVessel",
+      "category": "Props",
+      "label": "reaction_vessel",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeReactionVessel.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::reaction_vessel"
+    },
+    {
+      "id": "RecipeCagedLamp",
+      "category": "Lighting",
+      "label": "caged_lamp",
+      "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeCagedLamp.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::caged_lamp"
+    },
+    {
+      "id": "RecipeIndicatorBoard",
+      "category": "Props",
+      "label": "indicator_board",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeIndicatorBoard.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::indicator_board"
+    },
+    {
+      "id": "RecipeSchematic",
+      "category": "Props",
+      "label": "schematic",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSchematic.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::schematic"
+    },
+    {
+      "id": "RecipePallet",
+      "category": "Props",
+      "label": "pallet",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePallet.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::pallet"
+    },
+    {
+      "id": "RecipeStorageRack",
+      "category": "Props",
+      "label": "storage_rack",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeStorageRack.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::storage_rack"
+    },
+    {
+      "id": "RecipeBarrelIndustrial",
+      "category": "Props",
+      "label": "barrel",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBarrelIndustrial.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::barrel"
+    },
+    {
+      "id": "RecipeHandcart",
+      "category": "Props",
+      "label": "handcart",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeHandcart.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::handcart"
+    },
+    {
+      "id": "RecipePlatformScale",
+      "category": "Props",
+      "label": "platform_scale",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlatformScale.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::platform_scale"
+    },
+    {
+      "id": "RecipeDrainGrate",
+      "category": "Props",
+      "label": "drain_grate",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeDrainGrate.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::drain_grate"
+    },
+    {
+      "id": "RecipeSimpleRail",
+      "category": "Railings",
+      "label": "simple_rail",
+      "path": "res://tools/building_construction/BuildingConstruction/Railings/RecipeSimpleRail.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::simple_rail"
+    },
+    {
+      "id": "RecipeRampModule",
+      "category": "Props",
+      "label": "ramp_module",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRampModule.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::ramp_module"
+    },
+    {
+      "id": "RecipeHeavyLock",
+      "category": "Props",
+      "label": "heavy_lock",
+      "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeHeavyLock.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::heavy_lock"
+    },
+    {
+      "id": "RecipeMasonryJoints",
+      "category": "Walls",
+      "label": "masonry_joints",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeMasonryJoints.gd",
+      "parametric": true,
+      "source": "kit/industrial_props.py::masonry_joints"
+    }
+  ]
+}

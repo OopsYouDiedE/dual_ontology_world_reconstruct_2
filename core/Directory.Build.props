@@ -1,0 +1,10 @@
+<Project>
+  <Import Project="../Directory.Build.props" />
+  <!-- Keep generated outputs out of the maintained source tree. -->
+  <PropertyGroup>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)../.runtime/build/bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <BaseIntermediateOutputPath Condition="'$(DvIntermediateRoot)' == ''">$(MSBuildThisFileDirectory)../.runtime/build/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath Condition="'$(DvIntermediateRoot)' != ''">$(DvIntermediateRoot)/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/obj/**;**/bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

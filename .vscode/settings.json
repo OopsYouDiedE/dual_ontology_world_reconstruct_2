@@ -1,0 +1,5 @@
+{
+  "dotnet.defaultSolution": "DualOntologyWorldReconstruct2.sln",
+  "files.watcherExclude": { "**/.runtime/**": true, "**/.godot/**": true },
+  "search.exclude": { ".runtime": true, ".godot": true }
+}

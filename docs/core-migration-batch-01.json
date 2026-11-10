@@ -1,0 +1,34 @@
+{
+  "batch": 1,
+  "files": [
+    {
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\core\\dv\\DvDocument.cs",
+      "target": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\core\\dv\\DvDocument.cs",
+      "source_sha256": "BB1FD6B38D853E1425A14DF3741A04FF7243F81D81A84D2E906B1EB4DB1F2F36",
+      "target_sha256": "BB1FD6B38D853E1425A14DF3741A04FF7243F81D81A84D2E906B1EB4DB1F2F36",
+      "byte_identical": true
+    },
+    {
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\core\\dv\\DvScriptReader.cs",
+      "target": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\core\\dv\\DvScriptReader.cs",
+      "source_sha256": "8DC34E6D4A7420E97413B0EEC4E45D6555B7B06177177BAA5E99FCC9DC89DCE8",
+      "target_sha256": "8DC34E6D4A7420E97413B0EEC4E45D6555B7B06177177BAA5E99FCC9DC89DCE8",
+      "byte_identical": true
+    },
+    {
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\core\\dv\\HistoryScriptReader.cs",
+      "target": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\core\\dv\\HistoryScriptReader.cs",
+      "source_sha256": "5DC9AA4B3133ADEBE73D748EB25C84DD4B2F469D34B67F8555B235F9659F8D74",
+      "target_sha256": "5DC9AA4B3133ADEBE73D748EB25C84DD4B2F469D34B67F8555B235F9659F8D74",
+      "byte_identical": true
+    },
+    {
+      "source": "C:\\Users\\iii\\Desktop\\dual_ontology_world_engine\\core\\dv\\DuelView.Dv.csproj",
+      "target": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\core\\dv\\DuelView.Dv.csproj",
+      "source_sha256": "9F6C4D8A46FAEF65B04DBA68B28FC6C8184032D02E07145BA6F961F737DF2623",
+      "target_sha256": "B7DF7411AECE1F654075B978234C5956ED4FA6A21F82EFEF60806611087238CD",
+      "byte_identical": false
+    }
+  ],
+  "project_change": "Remove UseSharedCompilation=false; inherit root shared compilation."
+}

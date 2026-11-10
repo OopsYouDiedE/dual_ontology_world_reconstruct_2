@@ -1,0 +1,726 @@
+extends Control
+## Native Godot host for the original Web ArchBuilder wall workflow.
+const State = preload("ArchitectState.gd")
+const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
+const Geo = preload("BuildingConstruction/Shared/ArchitectGeometry.gd")
+const Wall = preload("BuildingConstruction/Walls/WallPathGeometry.gd")
+const Floor = preload("BuildingConstruction/Floors/ArchitectFloor.gd")
+const Stair = preload("BuildingConstruction/Stairs/ArchitectStair.gd")
+const Railing = preload("BuildingConstruction/Railings/ArchitectRailing.gd")
+const WebProps = preload("BuildingConstruction/Props/ArchitectProps.gd")
+const STYLES = {"classical":"古典护墙板（踢脚＋腰线＋顶线）","dado":"半高木护墙","stone":"原石砌块墙","plain":"素面粉刷墙"}
+const OPENINGS = {"arched_window":"半圆拱窗","rectangular_window":"矩形多格窗","round_window":"圆形牛眼窗","double_door":"双开实木大门","closed_door":"单开平顶木门","arched_closed_door":"单开拱顶木门","portal_arch":"敞开式拱形门洞"}
+const FLOOR_STYLES = {"octagonal_tile":"八角拼花砖","parquet_wood":"胡桃木拼花","stone_slab":"原石大板","plain_grout":"素面灰石"}
+var state = State.new()
+var tool = "select"
+var drawing: Array = []
+var wall_params = {"height":3.6,"thickness":0.28,"baseY":0.0,"style":"classical","hasPillars":true}
+var opening_params = {"type":"arched_window","width":1.4,"height":2.3,"bottom":0.85,"rise":0.4}
+var rail_params = {"height":0.9,"spacing":0.18}
+var stair_params = {"rise":2.4,"run":3.2,"risers":12,"width":1.2,"railingPos":"both","yaw":0.0}
+var auto_y = true
+var blueprint: Control
+var candidates: Node3D
+var wireframe = false
+var hidden_parts: Dictionary = {}
+var visibility_window: Window
+var wire_mesh: MeshInstance3D
+var camera: Camera3D
+var view3: SubViewportContainer
+var viewport3: SubViewport
+var inspector: VBoxContainer
+var outline: ItemList
+var layer_select: OptionButton
+var status: Label
+var modal: Window
+var file_dialog: FileDialog
+var file_action = ""
+var orbit = Vector2(-0.7,0.8)
+var distance = 18.0
+var target = Vector3(4,0,3)
+var rooms: Array = []
+var ui_fields: Dictionary = {}
+var catalog: Dictionary = {}
+var prop_presets: Dictionary = {}
+var web_prop_kind = "wall_lantern"
+var prop_fields: VBoxContainer
+var prop_entry: Dictionary = {}
+var prop_params: Dictionary = {}
+var prop_position = Vector2.ZERO
+var prop_yaw = 0.0
+
+func _ready() -> void:
+	get_viewport().gui_embed_subwindows = true
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://tools/building_construction/candidates"))
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	state.new_layer()
+	state.remember()
+	rooms = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_rooms.json"))
+	for room in rooms:
+		if room.id=="R01": state.restore(JSON.stringify(room)); state.remember(); break
+	catalog = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/catalog.json"))
+	prop_presets = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_prop_presets.json"))
+	_make_ui()
+	refresh()
+	await get_tree().process_frame
+	reset_views()
+
+func button(parent: Node, text: String, callback: Callable) -> Button:
+	var item = Button.new()
+	item.text = text
+	item.pressed.connect(callback)
+	parent.add_child(item)
+	return item
+func label(parent: Node, text: String) -> Label:
+	var item = Label.new()
+	item.text = text
+	parent.add_child(item)
+	return item
+func number(parent: Node, text: String, value: float, callback: Callable, step := 0.1, minimum := -10000.0, maximum := 10000.0) -> SpinBox:
+	var row = HBoxContainer.new()
+	parent.add_child(row)
+	var caption = label(row,text)
+	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var item = SpinBox.new()
+	item.min_value = minimum
+	item.max_value = maximum
+	# HTML number inputs retain arbitrary source values; step only affects arrows.
+	item.step = 0.0
+	item.custom_arrow_step = step
+	item.value = value
+	item.custom_minimum_size.x = 125
+	row.add_child(item)
+	item.value_changed.connect(callback)
+	return item
+func choice(parent: Node, text: String, options: Dictionary, current: String, callback: Callable) -> OptionButton:
+	label(parent,text)
+	var item = OptionButton.new()
+	parent.add_child(item)
+	for key in options:
+		item.add_item(options[key])
+		item.set_item_metadata(item.item_count-1,key)
+		if key==current: item.select(item.item_count-1)
+	item.item_selected.connect(func(index): callback.call(item.get_item_metadata(index)))
+	return item
+func check(parent: Node, text: String, value: bool, callback: Callable) -> CheckBox:
+	var item = CheckBox.new()
+	item.text = text
+	item.button_pressed = value
+	parent.add_child(item)
+	item.toggled.connect(callback)
+	return item
+func text_field(parent: Node, title: String, value: String, callback: Callable) -> void:
+	label(parent,title)
+	var edit = LineEdit.new()
+	edit.text = value
+	parent.add_child(edit)
+	edit.text_submitted.connect(callback)
+	edit.focus_exited.connect(func(): callback.call(edit.text))
+func page(tabs: TabContainer, title: String) -> VBoxContainer:
+	var scroll = ScrollContainer.new()
+	scroll.name = title
+	tabs.add_child(scroll)
+	var column = VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation",8)
+	scroll.add_child(column)
+	return column
+
+func _make_ui() -> void:
+	var theme = Theme.new()
+	theme.default_font_size = 14
+	self.theme = theme
+	var root = VBoxContainer.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(root)
+	var header = HBoxContainer.new()
+	root.add_child(header)
+	label(header,"ArchBuilder · 建筑构建器")
+	button(header,"双联视口",func(): blueprint.show(); view3.show())
+	button(header,"仅 2D",func(): blueprint.show(); view3.hide())
+	button(header,"仅 3D",func(): blueprint.hide(); view3.show())
+	button(header,"撤销",func(): if state.undo(-1): refresh())
+	button(header,"重做",func(): if state.undo(1): refresh())
+	button(header,"导入 JSON／YAML",func(): open_file("import"))
+	button(header,"保存 JSON",func(): open_file("json"))
+	button(header,"保存 YAML",func(): open_file("yaml"))
+	button(header,"导出 Godot",func(): open_file("scene"))
+	button(header,"清空场景",clear_dialog)
+	var body = HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(body)
+	var center = VBoxContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(center)
+	var actions = HBoxContainer.new()
+	center.add_child(actions)
+	button(actions,"选择／取消",func(): set_tool("select"))
+	choice(actions,"吸附",{"0":"自由","0.1":"0.10m","0.2":"0.20m","0.5":"0.50m","1":"1m"},"0.2",func(v): state.grid_snap = float(v))
+	button(actions,"居中",reset_views)
+	button(actions,"线框",func(): wireframe = not wireframe; update_wireframe())
+	button(actions,"完成／闭合",func(): finish_path(tool!="railing"))
+	button(actions,"开放折线",func(): finish_path(false))
+	button(actions,"显示／隐藏",show_visibility)
+	var views = HSplitContainer.new()
+	views.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.add_child(views)
+	blueprint = preload("ArchitectBlueprint.tscn").instantiate()
+	blueprint.editor = self
+	blueprint.custom_minimum_size.x = 320
+	blueprint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	views.add_child(blueprint)
+	view3 = SubViewportContainer.new()
+	view3.stretch = true
+	view3.custom_minimum_size.x = 320
+	view3.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	views.add_child(view3)
+	viewport3 = SubViewport.new()
+	viewport3.size = Vector2i(520,720)
+	viewport3.own_world_3d = true
+	viewport3.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	view3.add_child(viewport3)
+	var world = Node3D.new()
+	viewport3.add_child(world)
+	candidates = Node3D.new()
+	candidates.name = "ArchBuilderRoot"
+	world.add_child(candidates)
+	wire_mesh = MeshInstance3D.new()
+	world.add_child(wire_mesh)
+	var environment = WorldEnvironment.new()
+	var env = Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color("12151a")
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color("ffedd3")
+	env.ambient_light_energy = 0.7
+	environment.environment = env
+	world.add_child(environment)
+	var light = DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-50,-35,0)
+	light.light_color = Color("ffe5c5")
+	light.light_energy = 1.4
+	light.shadow_enabled = true
+	world.add_child(light)
+	camera = Camera3D.new()
+	camera.fov = 42
+	world.add_child(camera)
+	view3.gui_input.connect(_camera_input)
+	_update_camera()
+	var side = VBoxContainer.new()
+	side.custom_minimum_size.x = 350
+	body.add_child(side)
+	var tabs = TabContainer.new()
+	tabs.custom_minimum_size.y = 410
+	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	side.add_child(tabs)
+	var floors = page(tabs,"地面")
+	layer_select = OptionButton.new()
+	floors.add_child(layer_select)
+	layer_select.item_selected.connect(func(index):
+		state.data.activeLayerId = layer_select.get_item_metadata(index)
+		if auto_y: sync_wall("baseY",state.layer().y)
+		refresh_layers())
+	button(floors,"新增标高图层",func(): state.new_layer(); state.remember(); refresh_layers())
+	ui_fields.layer_y = number(floors,"图层标高 Y",0,func(v):
+		state.layer().y = v
+		if auto_y: sync_wall("baseY",v)
+		commit())
+	ui_fields.floor_style = choice(floors,"地板铺装",FLOOR_STYLES,"octagonal_tile",func(v): state.layer().style = v; commit())
+	button(floors,"在 2D 放线绘制地板",func(): set_tool("floor"))
+	label(floors,"相近标高 ≤ 0.3m 自动裁剪重叠地板")
+	var walls = page(tabs,"墙体")
+	check(walls,"自动跟随图层标高",true,func(v): auto_y = v; if v: sync_wall("baseY",state.layer().get("y",0)))
+	choice(walls,"立面风格",STYLES,"classical",func(v): wall_params.style = v)
+	for spec in [["height","墙高 (m)",0.1],["thickness","墙厚 (m)",0.02],["baseY","初始点位标高 Y",0.1]]:
+		var key = spec[0]
+		ui_fields[key] = number(walls,spec[1],wall_params[key],func(v): sync_wall(key,v),spec[2])
+	label(walls,"墙两侧自动贴合房间；端点与交点共用节点")
+	check(walls,"转角与端点生成独立装饰立柱",true,func(v): wall_params.hasPillars = v)
+	button(walls,"在 2D 手动放线绘墙",func(): set_tool("wall"))
+	button(walls,"闭合墙环",func(): finish_path(true))
+	button(walls,"开放墙体折线",func(): finish_path(false))
+	button(walls,"沿地板边界生成贴合墙体",func():
+		if state.auto_walls(wall_params): refresh()
+		else: status.text = "请先绘制地板；已有墙网房间请直接编辑墙体")
+	var openings = page(tabs,"门窗")
+	choice(openings,"构件样式",OPENINGS,opening_params.type,func(v):
+		opening_params.type = v
+		opening_params.bottom = 0.85 if "window" in v else 0.0
+		ui_fields.op_bottom.set_value_no_signal(opening_params.bottom)
+		ui_fields.op_rise.get_parent().visible = "arched" in v)
+	for spec in [["width","洞宽 (m)"],["height","洞高 (m)"],["bottom","离地高 (m)"],["rise","拱高 (m)"]]:
+		var key = spec[0]
+		ui_fields["op_"+key] = number(openings,spec[1],opening_params[key],func(v): opening_params[key] = v)
+	button(openings,"点击墙段安装门窗",func(): set_tool("opening"))
+	var stairs = page(tabs,"梯栏")
+	for key in ["rise","run","risers","width","yaw"]:
+		number(stairs,{"rise":"总高","run":"水平总长","risers":"踏步数","width":"梯宽","yaw":"朝向角度"}[key],stair_params[key],func(v): stair_params[key] = v,1 if key=="risers" else 0.1,1 if key=="risers" else 0.01)
+	choice(stairs,"楼梯扶手",{"both":"双侧","left":"左侧","right":"右侧","none":"无"},"both",func(v): stair_params.railingPos = v)
+	button(stairs,"放置直跑楼梯",spawn_stair)
+	number(stairs,"独立栏杆高度",0.9,func(v): rail_params.height = v)
+	number(stairs,"栏杆立杆间距",0.18,func(v): rail_params.spacing = v,0.02,0.02)
+	button(stairs,"在 2D 放线绘制栏杆",func(): set_tool("railing"))
+	var props = page(tabs,"陈设")
+	choice(props,"原版家具／灯具",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
+	prop_fields = VBoxContainer.new()
+	props.add_child(prop_fields)
+	refresh_prop_fields()
+	number(props,"位置 X",0,func(v): prop_position.x = v)
+	number(props,"位置 Z",0,func(v): prop_position.y = v)
+	number(props,"朝向角度",0,func(v): prop_yaw = v,15)
+	button(props,"按参数放置原版家具",func(): prop_entry = {}; place_prop(prop_position))
+	button(props,"在 2D 放置原版家具",func(): prop_entry = {}; set_tool("prop"))
+	var prop_select = OptionButton.new()
+	props.add_child(prop_select)
+	for entry in catalog.items:
+		if not entry.get("recipe",false) and not str(entry.path).get_file().begins_with("Recipe"): continue
+		prop_select.add_item(entry.label)
+		prop_select.set_item_metadata(prop_select.item_count-1,entry)
+	prop_select.item_selected.connect(func(index): prop_entry = prop_select.get_item_metadata(index); prop_params = prop_entry.get("defaults",{}).duplicate(true))
+	# Original web furniture remains the default selection.
+	button(props,"在 2D 点选放置组件",func(): set_tool("prop"))
+	button(props,"打开组件库",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
+	var presets = page(tabs,"房间")
+	label(presets,"已导入旧编辑器的 %d 个房间（含家具）" % rooms.size())
+	var room_select = OptionButton.new()
+	room_select.custom_minimum_size.x = 260
+	room_select.clip_text = true
+	presets.add_child(room_select)
+	for room in rooms: room_select.add_item(str(room.id)+" · "+str(room.name))
+	room_select.select(1)
+	button(presets,"载入已设计房间",func():
+		if state.restore(JSON.stringify(rooms[room_select.selected])):
+			hidden_parts.clear()
+			state.remember()
+			refresh()
+			reset_views())
+	outline = ItemList.new()
+	outline.custom_minimum_size.y = 125
+	side.add_child(outline)
+	outline.item_selected.connect(func(index): state.selected = outline.get_item_metadata(index).duplicate(); refresh_inspector())
+	var edit_actions = HBoxContainer.new()
+	side.add_child(edit_actions)
+	button(edit_actions,"独立参数窗口（E）",show_parameters)
+	button(edit_actions,"删除",delete_selected)
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size.y = 220
+	side.add_child(scroll)
+	inspector = VBoxContainer.new()
+	inspector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(inspector)
+	status = label(root,"")
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	file_dialog = FileDialog.new()
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.use_native_dialog = false
+	file_dialog.file_selected.connect(_file_selected)
+	add_child(file_dialog)
+
+func sync_wall(key: String, value: float) -> void:
+	wall_params[key] = value
+	if ui_fields.has(key): ui_fields[key].set_value_no_signal(value)
+	if key=="baseY":
+		for p in drawing: p[2] = value
+func set_tool(value: String) -> void:
+	tool = value
+	drawing = []
+	if tool=="wall" and auto_y: sync_wall("baseY",state.layer().get("y",0))
+	update_status()
+func update_status() -> void:
+	status.text = {"select":"左键选择／拖拽 · 双击节点或 E 编辑 · 双击线段插点 · Delete 删除 · Ctrl+Z 撤销", "wall":"绘墙：依次点击节点；点击起点或 Enter 闭合；开放折线按钮保留开口", "floor":"绘地板：依次点击顶点，点击起点或 Enter 完成", "opening":"安装门窗：点击已有墙段；选择模式下可沿墙拖动", "railing":"绘栏杆：依次点击节点，Enter 完成", "prop":"在 2D 点击放置当前组件"}.get(tool,tool)+"  |  节点："+str(drawing.size())
+func finish_path(close: bool) -> void:
+	if drawing.size()<2: return
+	var active = state.layer()
+	if tool=="floor":
+		if drawing.size()>=3:
+			var points = []
+			for p in drawing: points.append([p[0],p[1]])
+			state.add_floor(points)
+	elif tool=="wall":
+		var points = []
+		for p in drawing: points.append([p[0],p[2],p[1]])
+		var closed = close and drawing.size()>=3
+		if closed: points.append(points[0].duplicate())
+		var wall = wall_params.duplicate(true)
+		wall.merge({"id":state.uid("wall"),"name":"墙体 #"+str(state.data.walls.size()+1),"points":points,"closed":closed,"openings":[]},true)
+		state.data.walls.append(wall)
+	elif tool=="railing":
+		var points = []
+		for p in drawing: points.append([p[0],active.get("y",0),p[1]])
+		var rail = rail_params.duplicate()
+		rail.merge({"id":state.uid("rail"),"name":"木栏杆 #"+str(state.data.railings.size()+1),"points":points})
+		state.data.railings.append(rail)
+	set_tool("select")
+	commit()
+func insert_floor_node(point: Vector2, tolerance: float) -> void:
+	for li in range(state.data.layers.size()):
+		for pi in range(state.data.layers[li].polygons.size()):
+			var poly = state.data.layers[li].polygons[pi]
+			for i in range(poly.size()):
+				var a = poly[i]
+				var b = poly[(i+1)%poly.size()]
+				var hit = state.project(point,Vector2(a[0],a[1]),Vector2(b[0],b[1]))
+				if hit.dist<=tolerance:
+					poly.insert(i+1,[state.snap(hit.point.x),state.snap(hit.point.y)])
+					state.selected = {"kind":"floorNode","layerIndex":li,"polyIndex":pi,"ptIndex":i+1}
+					commit()
+					return
+func spawn_stair() -> void:
+	var stair = stair_params.duplicate(true)
+	stair.merge({"id":state.uid("st"),"name":"直跑梯 #"+str(state.data.stairs.size()+1),"x":1.2,"y":state.layer().get("y",0),"z":1.2,"nosing":0.03})
+	state.data.stairs.append(stair)
+	state.selected = {"kind":"stair","index":state.data.stairs.size()-1}
+	commit()
+func place_prop(point: Vector2) -> void:
+	if prop_entry.is_empty():
+		state.data.props.append({"id":state.uid("prop"),"name":prop_presets[web_prop_kind].name,"kind":web_prop_kind,"x":state.snap(point.x),"y":state.layer().get("y",0),"z":state.snap(point.y),"yaw":prop_yaw,"params":prop_params.duplicate(true)})
+		state.selected = {"kind":"prop","index":state.data.props.size()-1}
+		commit()
+		return
+	state.data.props.append({"id":state.uid("prop"),"name":prop_entry.label,"kind":"native_recipe","path":prop_entry.path,"x":state.snap(point.x),"y":state.layer().get("y",0),"z":state.snap(point.y),"yaw":0,"params":prop_params.duplicate(true)})
+	state.selected = {"kind":"prop","index":state.data.props.size()-1}
+	commit()
+func prop_names() -> Dictionary:
+	var names = {}
+	for key in prop_presets: names[key] = prop_presets[key].name
+	return names
+func refresh_prop_fields() -> void:
+	clear_children(prop_fields)
+	prop_params = {}
+	for field in prop_presets[web_prop_kind].fields:
+		prop_params[field.id] = field.val
+		number(prop_fields,field.label,field.val,func(v): prop_params[field.id] = v,field.step)
+func commit() -> void:
+	state.remember()
+	refresh()
+func delete_selected() -> void:
+	state.delete_selected()
+	refresh()
+func refresh() -> void:
+	rebuild()
+	refresh_layers()
+	refresh_outline()
+	refresh_inspector()
+	update_status()
+func rebuild() -> void:
+	state.sync_rooms()
+	for child in candidates.get_children():
+		candidates.remove_child(child)
+		child.queue_free()
+	for item in state.data.layers: add_view_part(Floor.build(item),"layers",item)
+	for item in state.data.walls: add_view_part(Wall.build(item),"walls",item)
+	for item in state.data.stairs: add_view_part(Stair.build(item),"stairs",item)
+	for item in state.data.railings: add_view_part(Railing.build(item),"railings",item)
+	for item in state.data.props:
+		if item.get("path","")!="":
+			var node = Components.create(str(item.path))
+			if node == null: continue
+			for key in item.params: node.set(key,item.params[key])
+			node.position = Vector3(item.x,item.get("y",0),item.z)
+			node.rotation.y = deg_to_rad(item.get("yaw",0))
+			add_view_part(node,"props",item)
+		# Web prop builders are registered below, preserving their own source dimensions.
+		else: add_view_part(WebProps.build(item),"props",item)
+	apply_visibility()
+
+func add_view_part(node: Node3D, category: String, item: Dictionary) -> void:
+	node.set_meta("view_category",category)
+	node.set_meta("view_id",str(item.id))
+	candidates.add_child(node)
+
+func apply_visibility() -> void:
+	for node in candidates.get_children():
+		var category = str(node.get_meta("view_category",""))
+		var id = str(node.get_meta("view_id",""))
+		node.visible = not hidden_parts.has(category) and not hidden_parts.has(id)
+		if category!="walls": continue
+		var wall: Dictionary = node.get_meta("wall_path")
+		var count = wall.points.size()-1
+		for child in node.get_children():
+			if str(child.name).begins_with("Segment_"):
+				child.visible = not hidden_parts.has(id+"/"+str(child.name))
+			elif child.has_meta("wall_joint"):
+				var joint = int(child.get_meta("wall_joint"))
+				var before = (joint-1+count)%count
+				var after = joint%count
+				child.visible = not (hidden_parts.has(id+"/Segment_"+str(before)) and hidden_parts.has(id+"/Segment_"+str(after)))
+	update_wireframe()
+
+func visibility_check(parent: Node, caption: String, key: String) -> void:
+	check(parent,caption,not hidden_parts.has(key),func(shown):
+		if shown: hidden_parts.erase(key)
+		else: hidden_parts[key] = true
+		apply_visibility())
+
+func show_visibility() -> void:
+	if is_instance_valid(visibility_window): visibility_window.queue_free()
+	visibility_window = Window.new()
+	visibility_window.title = "3D 显示／隐藏"
+	visibility_window.size = Vector2i(490,650)
+	visibility_window.close_requested.connect(func(): visibility_window.hide())
+	add_child(visibility_window)
+	var scroll = ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	visibility_window.add_child(scroll)
+	var box = VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(box)
+	label(box,"仅影响 3D 视图；完整结构始终保留并导出。")
+	button(box,"全部显示",func(): hidden_parts.clear(); apply_visibility(); show_visibility())
+	for category in {"walls":"墙体（含门窗）","layers":"地面","stairs":"楼梯","railings":"栏杆","props":"家具与灯具"}:
+		visibility_check(box,{"walls":"墙体（含门窗）","layers":"地面","stairs":"楼梯","railings":"栏杆","props":"家具与灯具"}[category],category)
+	for wall in state.data.walls:
+		label(box,str(wall.name))
+		for i in range(wall.points.size()-1):
+			visibility_check(box,"墙段 %d · %s → %s" % [i+1,str(wall.points[i]),str(wall.points[i+1])],str(wall.id)+"/Segment_"+str(i))
+	for spec in [["layers","地面"],["stairs","楼梯"],["railings","栏杆"],["props","家具与灯具"]]:
+		label(box,spec[1])
+		for item in state.data[spec[0]]: visibility_check(box,str(item.get("name",item.id)),str(item.id))
+	visibility_window.popup_centered()
+
+func view_mesh_shown(node: Node3D) -> bool:
+	var current: Node = node
+	while current!=candidates:
+		if current is Node3D and not current.visible: return false
+		current = current.get_parent()
+	return true
+	update_wireframe()
+
+func update_wireframe() -> void:
+	candidates.visible = not wireframe
+	wire_mesh.visible = wireframe
+	if not wireframe: return
+	# Compatibility renderer has no viewport wireframe mode. Draw the same triangle edges.
+	var surface = SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_LINES)
+	var count = 0
+	for node in candidates.find_children("*","MeshInstance3D",true,false):
+		if node.mesh==null or not view_mesh_shown(node): continue
+		for si in range(node.mesh.get_surface_count()):
+			var arrays = node.mesh.surface_get_arrays(si)
+			if arrays.is_empty(): continue
+			var vertices = arrays[Mesh.ARRAY_VERTEX]
+			var indices = arrays[Mesh.ARRAY_INDEX]
+			if indices==null or indices.is_empty(): indices = range(vertices.size())
+			var mat = node.material_override if node.material_override else node.mesh.surface_get_material(si)
+			var color = mat.albedo_color if mat is StandardMaterial3D else Color.WHITE
+			for i in range(0,indices.size()-2,3):
+				for edge in [[0,1],[1,2],[2,0]]:
+					for index in edge:
+						surface.set_color(color)
+						surface.add_vertex(node.global_transform*vertices[indices[i+index]])
+						count += 1
+	var line_mat = StandardMaterial3D.new()
+	line_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	line_mat.vertex_color_use_as_albedo = true
+	surface.set_material(line_mat)
+	wire_mesh.mesh = surface.commit() if count>0 else null
+
+func refresh_layers() -> void:
+	layer_select.clear()
+	for item in state.data.layers:
+		layer_select.add_item(item.name+" · Y="+str(item.y))
+		layer_select.set_item_metadata(layer_select.item_count-1,item.id)
+		if item.id==state.data.activeLayerId: layer_select.select(layer_select.item_count-1)
+	if not state.layer().is_empty(): ui_fields.layer_y.set_value_no_signal(state.layer().y)
+	for index in range(ui_fields.floor_style.item_count):
+		if ui_fields.floor_style.get_item_metadata(index)==state.layer().get("style","octagonal_tile"): ui_fields.floor_style.select(index)
+func refresh_outline() -> void:
+	outline.clear()
+	for li in range(state.data.layers.size()):
+		for pi in range(state.data.layers[li].polygons.size()):
+			outline.add_item("地板 · "+state.data.layers[li].name+" #"+str(pi+1))
+			outline.set_item_metadata(outline.item_count-1,{"kind":"floorPoly","layerIndex":li,"polyIndex":pi})
+	for spec in [["walls","wall","wallIndex"],["stairs","stair","index"],["railings","railing","railIndex"],["props","prop","index"]]:
+		for i in range(state.data[spec[0]].size()):
+			var item = state.data[spec[0]][i]
+			outline.add_item(str(item.get("name",item.id)))
+			outline.set_item_metadata(outline.item_count-1,{"kind":spec[1],spec[2]:i})
+			if spec[0]=="walls":
+				for oi in range(item.openings.size()):
+					outline.add_item("  └ 门窗 · "+item.openings[oi].type)
+					outline.set_item_metadata(outline.item_count-1,{"kind":"opening","wallIndex":i,"opIndex":oi})
+func clear_children(parent: Node) -> void:
+	for child in parent.get_children():
+		parent.remove_child(child)
+		child.queue_free()
+func refresh_inspector() -> void:
+	clear_children(inspector)
+	fill_parameters(inspector)
+func fill_parameters(parent: Node) -> void:
+	var s = state.selected
+	if s.is_empty(): label(parent,"选择墙体、节点或门窗查看参数"); return
+	label(parent,"选中："+str(s.kind))
+	if s.kind in ["wall","wallNode"]:
+		var wall = state.data.walls[s.wallIndex]
+		text_field(parent,"名称",wall.name,func(v): wall.name = v; commit())
+		choice(parent,"立面风格",STYLES,wall.get("style","classical"),func(v): wall.style = v; commit())
+		for key in ["height","thickness"]:
+			number(parent,"墙高" if key=="height" else "墙厚",wall[key],func(v): wall[key] = v; commit(),0.1 if key=="height" else 0.02,0.05)
+		number(parent,"整墙标高 Y",wall.get("baseY",0),func(v): state.set_wall_y(wall,v); commit())
+		check(parent,"装饰立柱",wall.get("hasPillars",true),func(v): wall.hasPillars = v; commit())
+		var indices = [s.ptIndex] if s.kind=="wallNode" else range(wall.points.size()-(1 if wall.closed else 0))
+		for index in indices:
+			label(parent,"节点 #"+str(index+1))
+			for axis in range(3):
+				number(parent,["X","Y","Z"][axis],wall.points[index][axis],func(v): state.set_node(wall,index,axis,v); commit())
+	elif s.kind=="opening":
+		var wall = state.data.walls[s.wallIndex]
+		var op = wall.openings[s.opIndex]
+		choice(parent,"门窗类型",OPENINGS,op.type,func(v): op.type = v; commit())
+		for spec in [["segment","所在墙段（从 0 起）"],["center","沿墙中心距离"],["width","洞宽"],["height","洞高"],["bottom","离地高"],["rise","拱高"]]:
+			var key = spec[0]
+			number(parent,spec[1],op.get(key,0.4),func(v): op[key] = int(v) if key=="segment" else v; commit(),1 if key=="segment" else 0.1,0,wall.points.size()-2 if key=="segment" else 10000)
+	elif s.kind in ["floorPoly","floorNode"]:
+		var layer = state.data.layers[s.layerIndex]
+		text_field(parent,"图层名称",layer.name,func(v): layer.name = v; commit())
+		number(parent,"图层标高",layer.y,func(v): layer.y = v; commit())
+		choice(parent,"铺装风格",FLOOR_STYLES,layer.style,func(v): layer.style = v; commit())
+		if s.kind=="floorNode":
+			var pt = layer.roomFaces[s.polyIndex].nodes[s.ptIndex] if layer.has("roomFaces") else layer.polygons[s.polyIndex][s.ptIndex]
+			for axis in range(2): number(parent,["X","Z"][axis],pt[axis],func(v):
+				state.move_room_node(s.layerIndex,s.polyIndex,s.ptIndex,v if axis==0 else pt[0],v if axis==1 else pt[1]); commit())
+	elif s.kind in ["railing","railingNode"]:
+		var rail = state.data.railings[s.railIndex]
+		number(parent,"栏杆高度",rail.height,func(v): rail.height = v; commit(),0.1,0.12)
+		number(parent,"立杆间距",rail.get("spacing",0.18),func(v): rail.spacing = v; commit(),0.02,0.02)
+		if s.kind=="railingNode":
+			for axis in range(3): number(parent,["X","Y","Z"][axis],rail.points[s.ptIndex][axis],func(v): rail.points[s.ptIndex][axis] = v; commit())
+	elif s.kind in ["stair","prop"]:
+		var item = state.data.stairs[s.index] if s.kind=="stair" else state.data.props[s.index]
+		text_field(parent,"名称",item.get("name",item.id),func(v): item.name = v; commit())
+		for key in (["x","y","z","yaw","rise","run","risers","width","nosing"] if s.kind=="stair" else ["x","y","z","yaw"]):
+			number(parent,key,item.get(key,0),func(v): item[key] = v; commit(),1 if key=="risers" else 0.1,1 if key=="risers" else -10000)
+		if s.kind=="prop":
+			for field in prop_presets.get(item.kind,{"fields":[]}).fields:
+				number(parent,field.label,item.params.get(field.id,field.val),func(v): item.params[field.id] = v; commit(),field.step)
+		if s.kind=="stair": choice(parent,"扶手",{"both":"双侧","left":"左侧","right":"右侧","none":"无"},item.get("railingPos","both"),func(v): item.railingPos = v; commit())
+func show_parameters() -> void:
+	if state.selected.is_empty(): return
+	if is_instance_valid(modal): modal.queue_free()
+	modal = Window.new()
+	modal.title = "独立参数编辑"
+	modal.size = Vector2i(420,620)
+	modal.close_requested.connect(func(): modal.queue_free())
+	add_child(modal)
+	var scroll = ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	modal.add_child(scroll)
+	var column = VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(column)
+	fill_parameters(column)
+	button(column,"关闭",func(): modal.queue_free())
+	modal.popup_centered()
+func open_file(action: String) -> void:
+	file_action = action
+	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE if action=="import" else FileDialog.FILE_MODE_SAVE_FILE
+	file_dialog.filters = PackedStringArray(["*.tscn ; Godot 场景"] if action=="scene" else (["*.yaml ; ArchBuilder YAML"] if action=="yaml" else ["*.json,*.yaml,*.yml ; ArchBuilder JSON / YAML"]))
+	file_dialog.current_dir = ProjectSettings.globalize_path("res://tools/building_construction/candidates")
+	file_dialog.current_file = "BuildingCandidate.tscn" if action=="scene" else ("BuildingCandidate.yaml" if action=="yaml" else "BuildingCandidate.json")
+	file_dialog.popup_centered(Vector2i(850,600))
+func _file_selected(path: String) -> void:
+	if file_action=="import":
+		if state.restore(FileAccess.get_file_as_string(path)):
+			state.remember()
+			refresh()
+			reset_views()
+		else: status.text = "JSON／YAML 场景格式无效"
+	elif file_action in ["json","yaml"]:
+		var file = FileAccess.open(path,FileAccess.WRITE)
+		if file: file.store_string(preload("ArchitectYaml.gd").dump(state.data)+"\n" if file_action=="yaml" else JSON.stringify(state.data,"  ")); status.text = "已保存："+path
+	else:
+		var copy = candidates.duplicate()
+		copy.visible = true
+		for node in copy.find_children("*","Node3D",true,false): node.visible = true
+		var script = GDScript.new()
+		script.source_code = "extends Node3D\n@export var authored_scene: Dictionary = {}\n"
+		var error = script.reload()
+		if error==OK: error = ResourceSaver.save(script,path.get_basename()+".gd")
+		copy.set_script(script)
+		copy.set("authored_scene",state.data.duplicate(true))
+		for child in copy.find_children("*","",true,false): child.owner = copy
+		var packed = PackedScene.new()
+		if error==OK: error = packed.pack(copy)
+		if error==OK: error = ResourceSaver.save(packed,path)
+		copy.free()
+		status.text = "已导出候选："+path if error==OK else "导出失败："+error_string(error)
+func clear_dialog() -> void:
+	var dialog = ConfirmationDialog.new()
+	dialog.dialog_text = "清空当前场景？可以撤销。"
+	add_child(dialog)
+	dialog.confirmed.connect(func():
+		state.data = {"activeLayerId":null,"layers":[],"walls":[],"stairs":[],"railings":[],"props":[]}
+		state.selected = {}
+		state.new_layer()
+		set_tool("select")
+		commit()
+		dialog.queue_free())
+	dialog.canceled.connect(func(): dialog.queue_free())
+	dialog.popup_centered()
+func reset_views() -> void:
+	var min_x = INF
+	var max_x = -INF
+	var min_z = INF
+	var max_z = -INF
+	var max_y = 3.6
+	for layer in state.data.layers:
+		for poly in layer.polygons:
+			for pt in poly:
+				min_x = min(min_x,pt[0]); max_x = max(max_x,pt[0])
+				min_z = min(min_z,pt[1]); max_z = max(max_z,pt[1])
+	for wall in state.data.walls:
+		max_y = max(max_y,wall.get("baseY",0)+wall.get("height",3.6))
+		for pt in wall.points:
+			min_x = min(min_x,pt[0]); max_x = max(max_x,pt[0])
+			min_z = min(min_z,pt[2]); max_z = max(max_z,pt[2])
+	for prop in state.data.props:
+		min_x = min(min_x,prop.x-0.5); max_x = max(max_x,prop.x+0.5)
+		min_z = min(min_z,prop.z-0.5); max_z = max(max_z,prop.z+0.5)
+	if not is_finite(min_x): min_x = -4.0; max_x = 4.0; min_z = -7.0; max_z = 0.0; max_y = 3.6
+	var cx = (min_x+max_x)*0.5
+	var cz = (min_z+max_z)*0.5
+	blueprint.zoom = maxf(16,minf(58,minf(blueprint.size.x*0.75/maxf(0.1,max_x-min_x+2),blueprint.size.y*0.75/maxf(0.1,max_z-min_z+2))))
+	blueprint.pan = blueprint.size*0.5-Vector2(cx,cz)*blueprint.zoom
+	var span = maxf(maxf(max_x-min_x,max_z-min_z),7)
+	var target_y = minf(4,max_y*0.4)
+	var dist = maxf(span*1.05,10)
+	target = Vector3(cx,target_y,cz)
+	var delta = Vector3(dist*0.85,dist*0.72-target_y,dist*0.95)
+	distance = delta.length()
+	orbit = Vector2(atan2(delta.x,delta.z),asin(delta.y/distance))
+	_update_camera()
+func _update_camera() -> void:
+	camera.position = target+Vector3(sin(orbit.x)*cos(orbit.y),sin(orbit.y),cos(orbit.x)*cos(orbit.y))*distance
+	camera.look_at(target)
+func _camera_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		if event.button_mask&MOUSE_BUTTON_MASK_RIGHT:
+			if event.shift_pressed: target += Vector3(-event.relative.x,0,-event.relative.y)*distance*0.002
+			else: orbit += Vector2(-event.relative.x,event.relative.y)*0.006; orbit.y = clampf(orbit.y,0.05,1.5)
+			_update_camera()
+	elif event is InputEventMouseButton and event.pressed:
+		if event.button_index==MOUSE_BUTTON_WHEEL_UP: distance = maxf(2,distance*0.9)
+		elif event.button_index==MOUSE_BUTTON_WHEEL_DOWN: distance = minf(300,distance*1.1)
+		_update_camera()
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not event is InputEventKey or not event.pressed or event.echo: return
+	if get_viewport().gui_get_focus_owner() is LineEdit: return
+	match event.keycode:
+		KEY_DELETE,KEY_BACKSPACE: delete_selected()
+		KEY_ESCAPE:
+			if drawing.is_empty(): state.selected = {}
+			set_tool("select")
+			refresh_inspector()
+		KEY_ENTER: finish_path(tool!="railing")
+		KEY_E: show_parameters()
+		KEY_Z:
+			if event.ctrl_pressed and state.undo(1 if event.shift_pressed else -1): refresh()
+		KEY_Y:
+			if event.ctrl_pressed and state.undo(1): refresh()
+		KEY_R:
+			var s = state.selected
+			if s.get("kind","") in ["prop","stair"]:
+				var item = state.data.props[s.index] if s.kind=="prop" else state.data.stairs[s.index]
+				item.yaw = fposmod(item.get("yaw",0)+(45 if s.kind=="prop" else 90),360)
+				commit()

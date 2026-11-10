@@ -1,0 +1,14 @@
+.godot/
+.runtime/
+artifacts/
+*.tmp
+*.bak
+**/bin/
+**/obj/
+**/__pycache__/
+**/.venv/
+*.pyc
+*.log
+.env
+.env.*
+!.env.example

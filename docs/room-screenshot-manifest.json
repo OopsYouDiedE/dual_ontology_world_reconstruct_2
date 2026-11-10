@@ -1,0 +1,298 @@
+[
+  {
+    "id": "F01",
+    "name": "入口双分叉梯大厅与连续二层回廊",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000008.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000012.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000012.json",
+    "layer": "layer_F01_ground"
+  },
+  {
+    "id": "R01",
+    "name": "R01 卢西安居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000017.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000021.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000021.json",
+    "layer": "layer_R01"
+  },
+  {
+    "id": "R02",
+    "name": "R02 顾平章居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000038.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000042.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000042.json",
+    "layer": "layer_R02"
+  },
+  {
+    "id": "R03",
+    "name": "R03 雀儿居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000048.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000052.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000052.json",
+    "layer": "layer_R03"
+  },
+  {
+    "id": "R04",
+    "name": "R04 沃德居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000058.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000062.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000062.json",
+    "layer": "layer_R04"
+  },
+  {
+    "id": "R05",
+    "name": "R05 侦探居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000072.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000076.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000076.json",
+    "layer": "layer_R05"
+  },
+  {
+    "id": "R06",
+    "name": "R06 霍铎居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000083.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000087.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000087.json",
+    "layer": "layer_R06"
+  },
+  {
+    "id": "R07",
+    "name": "R07 沈鼎居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000101.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000105.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000105.json",
+    "layer": "layer_R07"
+  },
+  {
+    "id": "R08",
+    "name": "R08 苏泠居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000112.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000116.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000116.json",
+    "layer": "layer_R08"
+  },
+  {
+    "id": "R09",
+    "name": "R09 赛尔玛居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000123.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000127.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000127.json",
+    "layer": "layer_R09"
+  },
+  {
+    "id": "R10",
+    "name": "R10 阮清月居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000134.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000138.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000138.json",
+    "layer": "layer_R10"
+  },
+  {
+    "id": "R11",
+    "name": "R11 伊莲娜居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000145.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000149.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000149.json",
+    "layer": "layer_R11"
+  },
+  {
+    "id": "R12",
+    "name": "R12 莫兰居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000160.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000164.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000164.json",
+    "layer": "layer_R12"
+  },
+  {
+    "id": "R13",
+    "name": "R13 维罗妮卡居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000175.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000179.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000179.json",
+    "layer": "layer_R13"
+  },
+  {
+    "id": "R14",
+    "name": "R14 贝尔特朗居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000186.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000190.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000190.json",
+    "layer": "layer_R14"
+  },
+  {
+    "id": "R15",
+    "name": "R15 玛格丽特居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000197.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000201.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000201.json",
+    "layer": "layer_R15"
+  },
+  {
+    "id": "R16",
+    "name": "R16 茉拉居室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000208.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000212.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000212.json",
+    "layer": "layer_R16"
+  },
+  {
+    "id": "B-102",
+    "name": "白塔院 · 配药清洁制备室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000219.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000223.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000223.json",
+    "layer": "layer_B-102"
+  },
+  {
+    "id": "F-104",
+    "name": "铁工院 · 备件与成品室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000230.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000234.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000234.json",
+    "layer": "layer_F-104"
+  },
+  {
+    "id": "S-102",
+    "name": "星仪院 · 精密仪器室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000241.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000245.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000245.json",
+    "layer": "layer_S-102"
+  },
+  {
+    "id": "W-102",
+    "name": "文契院 · 纸墨分析室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000252.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000256.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000256.json",
+    "layer": "layer_W-102"
+  },
+  {
+    "id": "A-P",
+    "name": "甲区备餐检修间",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000263.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000267.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000267.json",
+    "layer": "layer_A-P"
+  },
+  {
+    "id": "B-P",
+    "name": "乙区公共小厨房",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000274.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000278.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000278.json",
+    "layer": "layer_B-P"
+  },
+  {
+    "id": "C-P",
+    "name": "丙区备餐间",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000285.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000289.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000289.json",
+    "layer": "layer_C-P"
+  },
+  {
+    "id": "D-P",
+    "name": "丁区备餐小厅",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000296.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000300.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000300.json",
+    "layer": "layer_D-P"
+  },
+  {
+    "id": "b2_control",
+    "name": "B2控制室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000311.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000315.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000315.json",
+    "layer": "layer_b2_control"
+  },
+  {
+    "id": "b2_valve_gallery",
+    "name": "低位联锁阀廊",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000322.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000326.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000326.json",
+    "layer": "layer_b2_valve_gallery"
+  },
+  {
+    "id": "clinic",
+    "name": "医疗诊疗室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000333.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000337.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000337.json",
+    "layer": "layer_clinic"
+  },
+  {
+    "id": "lecture",
+    "name": "公共讲堂／黑板诗现场",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000354.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000358.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000358.json",
+    "layer": "layer_lecture"
+  },
+  {
+    "id": "living_hall",
+    "name": "二层生活汇合厅（旧J绑定）",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000371.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000375.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000375.json",
+    "layer": "layer_living_hall"
+  },
+  {
+    "id": "main1f_f04",
+    "name": "银器与配膳室",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000382.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000386.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000386.json",
+    "layer": "layer_main1f_f04"
+  },
+  {
+    "id": "main1f_f05",
+    "name": "热厨",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000393.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000397.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000397.json",
+    "layer": "layer_main1f_f05"
+  },
+  {
+    "id": "main1f_f06",
+    "name": "阀门安全侧",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000404.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000408.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000408.json",
+    "layer": "layer_main1f_f06"
+  },
+  {
+    "id": "main_dining",
+    "name": "大食堂",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000415.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000419.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000419.json",
+    "layer": "layer_main_dining"
+  },
+  {
+    "id": "mainb1_service",
+    "name": "B1服务走廊",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000426.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000430.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000430.json",
+    "layer": "layer_mainb1_service"
+  },
+  {
+    "id": "mainb1_u01",
+    "name": "B1主粮仓",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000446.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000450.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000450.json",
+    "layer": "layer_mainb1_u01"
+  },
+  {
+    "id": "service_stair_M",
+    "name": "M勤务楼梯",
+    "full": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000457.png",
+    "interior": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6/observation-000461.png",
+    "receipt": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mcp-runs\\5885b86fe029c2d6\\observation-000461.json",
+    "layer": "layer_service_stair_M"
+  }
+]

@@ -10,5 +10,7 @@
   <ItemGroup>
     <Compile Include="scenes/**/*.cs" />
     <ProjectReference Include="core/dv/DuelView.Dv.csproj" />
+    <ProjectReference Include="core/reasoning/DuelView.Reasoning.csproj" />
+    <ProjectReference Include="core/runtime/DuelView.Runtime.csproj" />
   </ItemGroup>
 </Project>

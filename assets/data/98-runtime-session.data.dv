@@ -1,0 +1,71 @@
+// Runtime mechanisms remain C#. These declarations select authored attention and update policy.
+schema "dv-script-v1";
+
+data runtime.actor_attention {
+    value = {
+        minimum_confidence = 0;
+        rules = [
+            { kind = "deliberate_focus"; },
+            { kind = "failed_action_focus"; },
+            { kind = "current_action"; },
+            { kind = "current_goal"; }
+        ];
+    };
+}
+
+data runtime.session {
+    value = {
+        attention = "runtime.actor_attention";
+        scheduling_definition = "runtime.scheduling";
+        clock_definition = "runtime.clock";
+        residency_definition = "runtime.residency";
+        action_timing_definition = "runtime.action_timing";
+        actor_attention_overrides = {};
+        inference_rules_per_slice = 32;
+        observation_kinds = ["inspect", "read", "experiment"];
+        incoming_information = "filter_then_buffer";
+        knowledge_commit = ["deliberate", "failed_action", "observation_ended"];
+    };
+}
+
+data runtime.action_timing {
+    value = {
+        content_time_unit_seconds = 60;
+        minimum_action_seconds = 10;
+        kind_duration_multipliers = { talk = 3; speech = 3; dialogue = 3; inspect = 2; read = 2; };
+    };
+}
+
+data runtime.scheduling {
+    value = {
+        decision_interval_seconds = 90;
+        content_time_unit_seconds = 60;
+        actor_stagger_seconds = 5;
+        candidates_per_decision = 16;
+        drives_per_decision = 5;
+        candidates_per_drive = 2;
+        minimum_action_utility = 0;
+        evaluations_per_slice = 4;
+        milliseconds_per_slice = 1;
+    };
+}
+
+data runtime.clock {
+    value = {
+        active_game_seconds_per_second = 1;
+        idle_game_seconds_per_second = 1;
+        work_game_seconds_per_second = 4;
+        maximum_game_seconds_per_slice = 5;
+        rest_game_seconds_per_second = 600;
+        rest_maximum_game_seconds_per_slice = 60;
+    };
+}
+
+data runtime.residency {
+    value = {
+        inactive_retention_seconds = 30;
+        room_requests_per_slice = 1;
+        retry_delay_seconds = 5;
+        inactive_simulation = "godot_authored";
+    };
+}

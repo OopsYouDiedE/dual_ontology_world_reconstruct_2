@@ -1,0 +1,2075 @@
+// 五日正式剧情：人物所知、现场物证、独立意见、推演及言灵分别声明。
+schema "dv-script-v1";
+data runtime.character_session { "value": {
+  "compact": true,
+  "viewer": "detective",
+  "room_labels": {"A-P":"甲区公共厅","B-P":"乙区公共厅／小厨房","C-P":"丙区公共厅","D-P":"丁区公共厅","2F-cross-M":"二楼中翼交汇处","2F-North-Stair":"二楼北侧楼梯与联锁闸","1F-Shaft-Monitor":"一楼竖井监测壁龛","1F-Infirmary":"一楼临时医疗角","F03":"一楼大食堂","F05":"一楼热厨","T01":"二楼公共讲堂","B1-hazard":"B1服务廊与下行检修坡道","D-gate":"丁区边界门","U01-granary":"B1主粮仓","B2-control":"B2低位控制室","B2-valve":"B2联锁阀廊"},
+  "start_minutes": 420,
+  "scheduling": {"decision_interval_seconds":15,"actor_stagger_seconds":0.05,"candidates_per_decision":32,"evaluations_per_slice":32},
+  "run": {"end_minutes":1420},
+  "source": {"document":"scenarios/day4.dv","scope":"第四天07:00至错峰入睡，包含微震倒灌险情爆发、涉险抢救、配药救治、死锁防卫抉择与晚间集体生活","anchors":["docs/02 地理箱庭、文献与六章剧情.md","docs/22 证据链与六章推理设计.md","docs/sources/Gemini-original.txt"]},
+  "actor_defaults": {"autonomous":true,"autonomy":{"commodity_needs":{"energy":85,"hunger":70,"social":60,"comfort":55,"thirst":70,"hygiene":70},"need_decay_per_second":{"energy":0.001,"hunger":0.001,"social":0.0005,"comfort":0.0005,"thirst":0.0015,"hygiene":0.0005},"autonomy_weights":{"energy":1,"hunger":1,"social":1,"comfort":1,"thirst":2,"hygiene":1.5},"time_cost":0.0001,"initial_emotion":"睡眠","buff_definitions":{"buff_granary_opened":{"label":"粮仓开启心头大定","emotion":"安心","emotion_weight":2,"tag_scores":{"搬运":30,"协作":25},"duration_minutes":180},"buff_ration_dispute":{"label":"口粮争议心存芥蒂","emotion":"警觉","emotion_weight":2,"tag_scores":{"防范":25,"闲聊":-15},"duration_minutes":120},"buff_ruan_stratagem_ready":{"label":"试应手棋局已定","emotion":"专注","emotion_weight":3,"tag_scores":{"谋划":35,"掩饰":25},"duration_minutes":240},"buff_warm_porridge":{"label":"热气腾腾清粥饱腹","emotion":"安心","emotion_weight":2,"tag_scores":{"安睡":35,"休整":30},"duration_minutes":180},"condition_detective_day4":{"label":"严加戒备巡守四方","emotion":"警觉","emotion_weight":3,"tag_scores":{"勘验":35,"防卫":40,"锁门":45,"闲聊":-20},"until_resolved":true,"resolution":"锁闭险门"},"condition_moran_day4":{"label":"迷恋风暴奇异折光","emotion":"专注","emotion_weight":3,"tag_scores":{"写生":45,"涉险":40},"until_resolved":true,"resolution":"服药获救"},"condition_bertrand_day4":{"label":"挺身而出舍命相救","emotion":"担忧","emotion_weight":3,"tag_scores":{"救援":50,"护卫":40},"until_resolved":true,"resolution":"服药获救"},"condition_veronica_day4":{"label":"临危调配螯合解药","emotion":"专注","emotion_weight":3,"tag_scores":{"配药":50,"救急":40},"until_resolved":true,"resolution":"解药配成"},"condition_mora_day4":{"label":"火速抢救施药回生","emotion":"担忧","emotion_weight":3,"tag_scores":{"施救":50,"照护":40},"until_resolved":true,"resolution":"伤员脱险"},"condition_quer_day4":{"label":"协同加固机械锁止","emotion":"专注","emotion_weight":2,"tag_scores":{"锁门":45,"协作":35},"until_resolved":true,"resolution":"锁闭险门"},"condition_huo_day4":{"label":"重型扳手反扣止挡","emotion":"专注","emotion_weight":2,"tag_scores":{"锁门":45,"加固":40},"until_resolved":true,"resolution":"锁闭险门"},"condition_ward_day4":{"label":"恪守条文核查防卫","emotion":"警觉","emotion_weight":2,"tag_scores":{"核查":40,"评价":35},"until_resolved":true,"resolution":"确认安全"},"condition_ruan_day4":{"label":"审时度势评估得失","emotion":"专注","emotion_weight":2,"tag_scores":{"复盘":40,"评价":35},"until_resolved":true,"resolution":"确认安全"},"condition_shen_day4":{"label":"守候热汤抚慰惊魂","emotion":"安心","emotion_weight":2,"tag_scores":{"厨务":40,"抚慰":35},"until_resolved":true,"resolution":"供餐完毕"},"condition_su_day4":{"label":"听音预警地脉微震","emotion":"警觉","emotion_weight":2,"tag_scores":{"听辨":45,"避险":35},"until_resolved":true,"resolution":"脱离险情"},"condition_elena_day4":{"label":"安坐避险静待平息","emotion":"安心","emotion_weight":2,"tag_scores":{"休养":40},"until_resolved":true,"resolution":"脱离险情"},"condition_lucian_day4":{"label":"持剑警戒护卫后方","emotion":"警觉","emotion_weight":2,"tag_scores":{"护卫":40,"警戒":35},"until_resolved":true,"resolution":"脱离险情"},"condition_gu_day4":{"label":"护持典籍记叙险象","emotion":"专注","emotion_weight":2,"tag_scores":{"记录":40},"until_resolved":true,"resolution":"脱离险情"},"condition_selma_day4":{"label":"抚琴安魂平息惶恐","emotion":"安心","emotion_weight":2,"tag_scores":{"抚琴":40},"until_resolved":true,"resolution":"脱离险情"},"condition_margaret_day4":{"label":"观测震波结构裂隙","emotion":"专注","emotion_weight":2,"tag_scores":{"测绘":40},"until_resolved":true,"resolution":"脱离险情"},"buff_gate_secured":{"label":"险门锁死全员安然","emotion":"安心","emotion_weight":3,"tag_scores":{"安心":45,"就寝":40},"duration_minutes":240},"condition_moran_after_rescue":{"label":"莫兰急救后仍胸闷乏力","emotion":"不适","emotion_weight":2,"tag_scores":{"奔跑":-60,"负重":-50,"休养":30,"医护":20},"until_resolved":true,"resolution":"实际复查后缓解"},"condition_bertrand_after_rescue":{"label":"贝尔特朗急救后仍胸闷乏力","emotion":"不适","emotion_weight":2,"tag_scores":{"奔跑":-60,"负重":-50,"休养":30,"医护":20},"until_resolved":true,"resolution":"实际复查后缓解"}},"emotion_definitions":{"睡眠":{"tag_scores":{"睡眠":50,"勘验":-50,"闲聊":-50,"用餐":-50}},"不适":{"tag_scores":{"护创":35,"休整":25,"闲聊":-15,"深度讨论":-20}},"警觉":{"tag_scores":{"勘验":25,"破拆":25,"核账":30,"防范":25,"闲聊":-10}},"专注":{"tag_scores":{"测绘":30,"破拆":30,"检修":30,"打谱":35,"调解":25,"闲聊":-15}},"担忧":{"tag_scores":{"查伤":35,"换药":30,"照料":30,"闲聊":-10}},"悲愤":{"tag_scores":{"争辩":30,"质询":30,"闲聊":-10}},"安心":{"tag_scores":{"厨务":25,"用餐":30,"休整":25,"就寝":35}}},"action_weights":{},"action_predictions":{},"completed_action_effects":{}}},
+  "templates": {},
+  "fixtures": [
+    {"id":"R01-bed","room":"R01","label":"自己的床"},
+    {"id":"R02-bed","room":"R02","label":"自己的床"},
+    {"id":"R03-bed","room":"R03","label":"自己的床"},
+    {"id":"R04-bed","room":"R04","label":"自己的床"},
+    {"id":"R05-bed","room":"R05","label":"自己的床"},
+    {"id":"R06-bed","room":"R06","label":"自己的床"},
+    {"id":"R07-bed","room":"R07","label":"自己的床"},
+    {"id":"R08-bed","room":"R08","label":"自己的床"},
+    {"id":"R09-bed","room":"R09","label":"自己的床"},
+    {"id":"R10-bed","room":"R10","label":"自己的床"},
+    {"id":"R11-bed","room":"R11","label":"自己的床"},
+    {"id":"R12-bed","room":"R12","label":"自己的床"},
+    {"id":"R13-bed","room":"R13","label":"自己的床"},
+    {"id":"R14-bed","room":"R14","label":"自己的床"},
+    {"id":"R15-bed","room":"R15","label":"自己的床"},
+    {"id":"R16-bed","room":"R16","label":"自己的床"},
+    {"id":"F03-table","room":"F03","label":"大食堂长桌"},
+    {"id":"F05-stove","room":"F05","label":"热厨大灶"},
+    {"id":"B1-hazard-door","room":"B1-hazard","label":"B1通往B2联锁隔离门"},
+    {"id":"R01-basin","room":"R01","label":"水盆与水壶"},
+    {"id":"R02-basin","room":"R02","label":"水盆与水壶"},
+    {"id":"R03-basin","room":"R03","label":"水盆与水壶"},
+    {"id":"R04-basin","room":"R04","label":"水盆与水壶"},
+    {"id":"R05-basin","room":"R05","label":"水盆与水壶"},
+    {"id":"R06-basin","room":"R06","label":"水盆与水壶"},
+    {"id":"R07-basin","room":"R07","label":"水盆与水壶"},
+    {"id":"R08-basin","room":"R08","label":"水盆与水壶"},
+    {"id":"R09-basin","room":"R09","label":"水盆与水壶"},
+    {"id":"R10-basin","room":"R10","label":"水盆与水壶"},
+    {"id":"R11-basin","room":"R11","label":"水盆与水壶"},
+    {"id":"R12-basin","room":"R12","label":"水盆与水壶"},
+    {"id":"R13-basin","room":"R13","label":"水盆与水壶"},
+    {"id":"R14-basin","room":"R14","label":"水盆与水壶"},
+    {"id":"R15-basin","room":"R15","label":"水盆与水壶"},
+    {"id":"R16-basin","room":"R16","label":"水盆与水壶"},
+    {"id":"B1.warning","room":"B1-hazard","label":"坡道入口的危险牌"},
+    {"id":"B2.panel","room":"B2-control","label":"低位阀路图与控制面板"},
+    {"id":"B1.interlock","room":"B2-control","label":"隔墙通口联锁门"},
+    {"id":"B1.valve","room":"B2-valve","label":"松动的低位联锁阀"},
+    {"id":"r07.cabinet","room":"1F-Infirmary","label":"螯合剂原料与封签药柜"},
+    {"id":"medical.desk","room":"1F-Infirmary","label":"伤员诊疗床与记录"},
+    {"id":"detective.casebook","room":"B2-control","label":"边界与规则推演册"},
+    {"id":"lucian.draft","room":"R01","label":"为守夜人改写一首短歌"},
+    {"id":"gu.folio","room":"R02","label":"誊录已验证条文，分别标明记录来源"},
+    {"id":"su.instrument","room":"R08","label":"记录微震前后耳鸣的高频变化"},
+    {"id":"elena.splint","room":"R11","label":"护住踝部，整理能在卧床时完成的分拣"},
+    {"id":"selma.instrument","room":"R09","label":"备妥止血布与临时床垫"},
+    {"id":"ruan.board","room":"R10","label":"复盘侦探在险情中采用的手段与代价"}
+  ],
+  "display": {"action_reasons":false,"hidden_facts":[]},
+  "atomic_actions": true,
+  "actors": [
+    {
+      "id": "lucian",
+      "name": "卢西安",
+      "home_room": "R01",
+      "home_bed": "R01-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"lucian.room":"R01","lucian.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"recognition":1.4,"solidarity":1,"honesty":0.6},"modifiers":[]},
+      "actions": [
+        {"id":"lucian.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R01","minutes":1,"priority":80,"once":true,"focus":"R01-bed","interaction_slot":"R01-bed","writes":{"lucian.phys.asleep":false},"observes":["lucian.room","lucian.phys.asleep"],"add_buffs":["condition_lucian_day4"],"emotion":"安心"},
+        {"id":"lucian.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R01","minutes":6,"priority":22,"once":true,"focus":"R01-basin","interaction_slot":"R01-basin","when":{"lucian.phys.asleep":false,"event:lucian.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"lucian.daily_work","label":"为守夜人改写一首短歌","kind":"interact","at":"R01","minutes":25,"priority":35,"once":true,"focus":"lucian.draft","interaction_slot":"lucian.draft","when":{"lucian.phys.asleep":false,"event:lucian.morning_care.done":true},"tags":["吟诗"]},
+        {"id":"lucian.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R01","minutes":3,"priority":26,"once":true,"focus":"lucian","when":{"lucian.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"lucian.room":"F03"},"observes":["lucian.room"],"route_rooms":["R01","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"lucian.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":12,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-lucian","when":{"lucian.phys.asleep":false,"event:lucian.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_lucian.phys.consumed":true},"observes":["meal_day4_lucian.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"lucian.return_bed","label":"前往R01","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"lucian","when":{"lucian.phys.asleep":false,"event:lucian.eat_supper.done":true},"writes":{"lucian.room":"R01"},"observes":["lucian.room"],"route_rooms":["F03","R01"],"not_before_game_minutes":1260},
+        {"id":"lucian.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R01","minutes":2,"priority":50,"once":true,"focus":"R01-bed","interaction_slot":"R01-bed","when":{"lucian.phys.asleep":false,"event:lucian.return_bed.done":true},"writes":{"lucian.phys.asleep":true},"observes":["lucian.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"lucian.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"lucian","interaction_slot":"lucian","when":{"lucian.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"lucian.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R01","minutes":8,"priority":-12,"once":false,"focus":"lucian","interaction_slot":"lucian","when":{"lucian.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"lucian.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"lucian.room":"F03","lucian.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "gu",
+      "name": "顾平章",
+      "home_room": "R02",
+      "home_bed": "R02-bed",
+      "wake_at_game_minutes": 422,
+      "knows": {"gu.room":"R02","gu.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"honesty":1.3,"reason":1.3,"care":1},"modifiers":[]},
+      "actions": [
+        {"id":"gu.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R02","minutes":1,"priority":80,"once":true,"focus":"R02-bed","interaction_slot":"R02-bed","writes":{"gu.phys.asleep":false},"observes":["gu.room","gu.phys.asleep"],"add_buffs":["condition_gu_day4"],"emotion":"专注"},
+        {"id":"gu.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R02","minutes":6,"priority":22,"once":true,"focus":"R02-basin","interaction_slot":"R02-basin","when":{"gu.phys.asleep":false,"event:gu.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"gu.daily_work","label":"誊录已验证条文，分别标明记录来源","kind":"interact","at":"R02","minutes":25,"priority":35,"once":true,"focus":"gu.folio","interaction_slot":"gu.folio","when":{"gu.phys.asleep":false,"event:gu.morning_care.done":true},"tags":["记录"]},
+        {"id":"gu.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R02","minutes":3,"priority":26,"once":true,"focus":"gu","when":{"gu.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"gu.room":"F03"},"observes":["gu.room"],"route_rooms":["R02","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"gu.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-gu","when":{"gu.phys.asleep":false,"event:gu.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_gu.phys.consumed":true},"observes":["meal_day4_gu.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"gu.return_bed","label":"前往R02","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"gu","when":{"gu.phys.asleep":false,"event:gu.eat_supper.done":true},"writes":{"gu.room":"R02"},"observes":["gu.room"],"route_rooms":["F03","R02"],"not_before_game_minutes":1264},
+        {"id":"gu.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R02","minutes":2,"priority":50,"once":true,"focus":"R02-bed","interaction_slot":"R02-bed","when":{"gu.phys.asleep":false,"event:gu.return_bed.done":true},"writes":{"gu.phys.asleep":true},"observes":["gu.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"gu.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"gu","interaction_slot":"gu","when":{"gu.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"gu.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R02","minutes":8,"priority":-12,"once":false,"focus":"gu","interaction_slot":"gu","when":{"gu.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"gu.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"gu.room":"F03","gu.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "quer",
+      "name": "雀儿",
+      "home_room": "R03",
+      "home_bed": "R03-bed",
+      "wake_at_game_minutes": 424,
+      "knows": {"quer.room":"R03","quer.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"autonomy":1.4,"craft":1.3,"safety":0.9,"fairness":1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
+      "actions": [
+        {"id":"quer.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R03","minutes":1,"priority":80,"once":true,"focus":"R03-bed","interaction_slot":"R03-bed","writes":{"quer.phys.asleep":false},"observes":["quer.room","quer.phys.asleep"],"add_buffs":["condition_quer_day4"],"emotion":"专注"},
+        {"id":"quer.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R03","minutes":6,"priority":22,"once":true,"focus":"R03-basin","interaction_slot":"R03-basin","when":{"quer.phys.asleep":false,"event:quer.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"quer.to_control","label":"前往B2低位控制室","kind":"walk","at":"R03","minutes":3,"priority":32,"once":true,"focus":"quer","when":{"quer.phys.asleep":false,"event:quer.morning_care.done":true},"writes":{"quer.room":"B2-control"},"observes":["quer.room"],"route_rooms":["R03","B2-control"],"not_before_game_minutes":600},
+        {"id":"quer.inspect_interlock","label":"检查联锁门、扳手与止挡的实际配合","kind":"inspect","at":"B2-control","minutes":6,"priority":35,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"quer.phys.asleep":false,"event:quer.to_control.done":true},"observes":["B2.trace.closed_boundary","probes.phys.owner"],"tags":["检修","协作"]},
+        {"id":"quer.seal_lock_core","label":"用保住的精钢探针封闭锁芯，完成机械止挡","kind":"interact","at":"B2-control","minutes":5,"priority":35,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"quer.phys.asleep":false,"quer.doc.airlock_cooperation":true,"B2.lock.ratchet_fitted":true,"airlock.lock.sealed":true},"requires":{"B2.lock.ratchet_fitted":true,"airlock.lock.sealed":true,"probes.phys.owner":"quer"},"writes":{"hazard_gate.lock.secured":true,"backflow.phys.active":false,"night_day4.phys.secured":true},"observes":["hazard_gate.lock.secured","backflow.phys.active","night_day4.phys.secured"],"tags":["破拆","协作"]},
+        {"id":"quer.to_supper","label":"前往一楼大食堂","kind":"walk","at":"B2-control","minutes":3,"priority":26,"once":true,"focus":"quer","when":{"quer.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"quer.room":"F03"},"observes":["quer.room"],"route_rooms":["B2-control","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"quer.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":16,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-quer","when":{"quer.phys.asleep":false,"event:quer.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_quer.phys.consumed":true},"observes":["meal_day4_quer.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"quer.return_bed","label":"前往R03","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"quer","when":{"quer.phys.asleep":false,"event:quer.eat_supper.done":true},"writes":{"quer.room":"R03"},"observes":["quer.room"],"route_rooms":["F03","R03"],"not_before_game_minutes":1268},
+        {"id":"quer.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R03","minutes":2,"priority":50,"once":true,"focus":"R03-bed","interaction_slot":"R03-bed","when":{"quer.phys.asleep":false,"event:quer.return_bed.done":true},"writes":{"quer.phys.asleep":true},"observes":["quer.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"quer.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"B2-control","minutes":8,"priority":-12,"once":false,"focus":"quer","interaction_slot":"quer","when":{"quer.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"quer.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"quer","interaction_slot":"quer","when":{"quer.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"quer.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R03","minutes":8,"priority":-12,"once":false,"focus":"quer","interaction_slot":"quer","when":{"quer.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"quer.evaluate_night","label":"把协作锁门记作对自己手艺的尊重","kind":"interact","at":"F03","minutes":3,"priority":35,"once":true,"focus":"quer","interaction_slot":"quer","when":{"quer.phys.asleep":false,"event:quer.eat_supper.done":true,"day4.doc.crisis_reported":true},"writes":{"quer.doc.day4_judgment":"把协作锁门记作对自己手艺的尊重"},"observes":["quer.doc.day4_judgment"]}
+      ],
+      "perceptions": [
+        {"id":"quer.ratchet_seen","label":"看到棘轮与止挡已确实装到门上","when":{"quer.room":"B2-control","quer.phys.asleep":false,"B2.lock.ratchet_fitted":true},"observes":["B2.lock.ratchet_fitted"]},
+        {"id":"quer.night_safety","label":"核对已安装的门锁或实际执行的夜间安排","when":{"quer.room":"B2-control","quer.phys.asleep":false,"night_day4.phys.secured":true},"observes":["night_day4.phys.secured","night_day4.doc.strategy"]},
+        {"id":"quer.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"quer.room":"F03","quer.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "ward",
+      "name": "沃德",
+      "home_room": "R04",
+      "home_bed": "R04-bed",
+      "wake_at_game_minutes": 426,
+      "knows": {"ward.room":"R04","ward.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.4,"fairness":1.1,"safety":0.8,"honesty":1.3},"modifiers":[]},
+      "actions": [
+        {"id":"ward.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R04","minutes":1,"priority":80,"once":true,"focus":"R04-bed","interaction_slot":"R04-bed","writes":{"ward.phys.asleep":false},"observes":["ward.room","ward.phys.asleep"],"add_buffs":["condition_ward_day4"],"emotion":"安心"},
+        {"id":"ward.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R04","minutes":6,"priority":22,"once":true,"focus":"R04-basin","interaction_slot":"R04-basin","when":{"ward.phys.asleep":false,"event:ward.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"ward.to_control","label":"前往B2低位控制室","kind":"walk","at":"R04","minutes":3,"priority":32,"once":true,"focus":"ward","when":{"ward.phys.asleep":false,"event:ward.morning_care.done":true},"writes":{"ward.room":"B2-control"},"observes":["ward.room"],"route_rooms":["R04","B2-control"],"not_before_game_minutes":900},
+        {"id":"ward.hold_indoor_inquiry","label":"通过传声管宣布紧急盘点，并关闭低位区通行登记","kind":"interact","at":"B2-control","minutes":12,"priority":35,"once":true,"focus":"B2.panel","interaction_slot":"B2.panel","when":{"ward.phys.asleep":false,"ward.doc.diversion_accepted":true},"requires":{"airlock.lock.sealed":true},"writes":{"night_day4.phys.secured":true},"observes":["night_day4.phys.secured"]},
+        {"id":"ward.to_supper","label":"前往一楼大食堂","kind":"walk","at":"B2-control","minutes":3,"priority":26,"once":true,"focus":"ward","when":{"ward.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"ward.room":"F03"},"observes":["ward.room"],"route_rooms":["B2-control","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"ward.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":18,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-ward","when":{"ward.phys.asleep":false,"event:ward.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_ward.phys.consumed":true},"observes":["meal_day4_ward.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"ward.return_bed","label":"前往R04","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"ward","when":{"ward.phys.asleep":false,"event:ward.eat_supper.done":true},"writes":{"ward.room":"R04"},"observes":["ward.room"],"route_rooms":["F03","R04"],"not_before_game_minutes":1272},
+        {"id":"ward.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R04","minutes":2,"priority":50,"once":true,"focus":"R04-bed","interaction_slot":"R04-bed","when":{"ward.phys.asleep":false,"event:ward.return_bed.done":true},"writes":{"ward.phys.asleep":true},"observes":["ward.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"ward.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"B2-control","minutes":8,"priority":-12,"once":false,"focus":"ward","interaction_slot":"ward","when":{"ward.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"ward.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"ward","interaction_slot":"ward","when":{"ward.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"ward.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R04","minutes":8,"priority":-12,"once":false,"focus":"ward","interaction_slot":"ward","when":{"ward.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"ward.evaluate_night","label":"确认公开记录与抢险执行相符","kind":"interact","at":"F03","minutes":3,"priority":35,"once":true,"focus":"ward","interaction_slot":"ward","when":{"ward.phys.asleep":false,"event:ward.eat_supper.done":true,"day4.doc.crisis_reported":true},"writes":{"ward.doc.day4_judgment":"确认公开记录与抢险执行相符"},"observes":["ward.doc.day4_judgment"]}
+      ],
+      "perceptions": [
+        {"id":"ward.night_safety","label":"核对已安装的门锁或实际执行的夜间安排","when":{"ward.room":"B2-control","ward.phys.asleep":false,"night_day4.phys.secured":true},"observes":["night_day4.phys.secured","night_day4.doc.strategy"]},
+        {"id":"ward.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"ward.room":"F03","ward.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "detective",
+      "name": "侦探",
+      "home_room": "R05",
+      "home_bed": "R05-bed",
+      "wake_at_game_minutes": 428,
+      "knows": {"detective.room":"R05","detective.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.4,"care":1.1,"safety":1},"modifiers":[]},
+      "actions": [
+        {"id":"detective.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R05","minutes":1,"priority":80,"once":true,"focus":"R05-bed","interaction_slot":"R05-bed","writes":{"detective.phys.asleep":false},"observes":["detective.room","detective.phys.asleep","R05.phys.drinking_water_available","detective.doc.water_return_room"],"add_buffs":["condition_detective_day4"],"emotion":"专注"},
+        {"id":"detective.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R05","minutes":6,"priority":22,"once":true,"focus":"R05-basin","interaction_slot":"R05-basin","when":{"detective.phys.asleep":false,"event:detective.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"detective.to_ramp","label":"前往B1服务廊与下行检修坡道","kind":"walk","at":"R05","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.morning_care.done":true},"writes":{"detective.room":"B1-hazard"},"observes":["detective.room"],"route_rooms":["R05","B1-hazard"]},
+        {"id":"detective.read_seventh_clause","label":"逐字核对危险牌上的第七条适用条件","kind":"read","at":"B1-hazard","minutes":4,"priority":35,"once":true,"focus":"B1.warning","interaction_slot":"B1.warning","when":{"detective.phys.asleep":false,"event:detective.to_ramp.done":true},"observes":["contract.doc.seven"]},
+        {"id":"detective.to_control","label":"前往B2低位控制室","kind":"walk","at":"B1-hazard","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.read_seventh_clause.done":true},"writes":{"detective.room":"B2-control"},"observes":["detective.room"],"route_rooms":["B1-hazard","B2-control"]},
+        {"id":"detective.inspect_topology","label":"顺着阀路图核对控制室、隔墙通口与低位阀廊","kind":"inspect","at":"B2-control","minutes":5,"priority":35,"once":true,"focus":"B2.panel","interaction_slot":"B2.panel","when":{"detective.phys.asleep":false,"event:detective.to_control.done":true},"observes":["B2.doc.topology","B2.trace.closed_boundary","B2.doc.temporary_rule","night_day4.doc.safe_room_available","night_day4.doc.plan_chosen"]},
+        {"id":"detective.check_tools","label":"当面核对雀儿探针卷与霍铎的反扣扳手","kind":"inspect","at":"B2-control","minutes":3,"priority":35,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"detective.phys.asleep":false,"event:detective.inspect_topology.done":true},"requires":{"huo.room":"B2-control","quer.room":"B2-control"},"observes":["probes.phys.owner"]},
+        {"id":"detective.to_medical_stock","label":"前往一楼临时医疗角","kind":"walk","at":"B2-control","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.check_tools.done":true},"writes":{"detective.room":"1F-Infirmary"},"observes":["detective.room"],"route_rooms":["B2-control","1F-Infirmary"]},
+        {"id":"detective.check_rescue_stock","label":"逐剂核验救援药品与夜间储备","kind":"inspect","at":"1F-Infirmary","minutes":3,"priority":35,"once":true,"focus":"r07.cabinet","interaction_slot":"r07.cabinet","when":{"detective.phys.asleep":false,"event:detective.to_medical_stock.done":true},"requires":{"r07.phys.ready":true},"observes":["r07.phys.ready","watch_supply.phys.ready"]},
+        {"id":"detective.return_control","label":"前往B2低位控制室","kind":"walk","at":"1F-Infirmary","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.check_rescue_stock.done":true},"writes":{"detective.room":"B2-control"},"observes":["detective.room"],"route_rooms":["1F-Infirmary","B2-control"]},
+        {"id":"detective.inspect_backflow","label":"观察旁路回流与紧闭门扇，确定污染如何越界","kind":"inspect","at":"B2-control","minutes":0.5,"priority":35,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"detective.phys.asleep":false,"backflow.phys.active":true},"observes":["B2.trace.leak_path"]},
+        {"id":"detective.deduce_airlock","label":"脑内推演：把闭合边界与污染旁路分别建模，限定短时封隔","kind":"deduce","at":"B2-control","minutes":2,"priority":45,"once":true,"focus":"detective.casebook","interaction_slot":"detective.casebook","when":{"detective.phys.asleep":false,"B2.doc.topology":"B1服务廊沿检修坡道下行至B2控制室；隔墙通口接低位阀廊，不能把控制室与阀廊视为同一空间","B2.trace.closed_boundary":"控制室隔离门已经闭合，门框与整圈阀道共同限定空气越界的边界","B2.trace.leak_path":"门虽闭合，松动联锁阀的旁路仍会让污染气体从低位阀廊流入控制室","B2.doc.temporary_rule":"言灵可以约束已理解的局部通行规则；耗尽专注后不能维持，机械止挡仍需实际安装","contract.doc.seven":"第七条只保护尚不知道当前具体致命危险的在册者；保护义务可通过把人移到安全处履行"},"deduction":{"title":"把闭合边界与污染旁路分别建模，限定短时封隔","evidence":[{"id":"e1","when":{"B2.doc.topology":"B1服务廊沿检修坡道下行至B2控制室；隔墙通口接低位阀廊，不能把控制室与阀廊视为同一空间"},"label":"坡道、控制室与隔墙通口的空间关系"},{"id":"e2","when":{"B2.trace.closed_boundary":"控制室隔离门已经闭合，门框与整圈阀道共同限定空气越界的边界"},"label":"闭合门扇与完整边界"},{"id":"e3","when":{"B2.trace.leak_path":"门虽闭合，松动联锁阀的旁路仍会让污染气体从低位阀廊流入控制室"},"label":"绕过门扇的污染旁路"},{"id":"e4","when":{"B2.doc.temporary_rule":"言灵可以约束已理解的局部通行规则；耗尽专注后不能维持，机械止挡仍需实际安装"},"label":"局部规则的时效与代价"},{"id":"e5","when":{"contract.doc.seven":"第七条只保护尚不知道当前具体致命危险的在册者；保护义务可通过把人移到安全处履行"},"label":"第七条的具体知情与移离义务"}],"rules":[{"id":"combine_deduce_airlock","all":["e1","e2","e3","e4","e5"],"then":"deduce_airlock_supported","label":"把闭合边界与污染旁路分别建模，限定短时封隔"}],"conclusion":"deduce_airlock_supported","learns":{"detective.infer.safe_airlock":true,"detective.infer.seventh_clause_limits":true},"qualification":"短时言灵只限制已经核对的局部通行边界，不能治疗暴露者或替代整夜的机械止挡；第七条的保护也可以通过把人移到安全处履行。"},"tags":["推演","专注"]},
+        {"id":"detective.seal_airlock","label":"言灵：「闭合之门，不纳污息」","kind":"incant","at":"B2-control","minutes":0.5,"priority":62,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"backflow.phys.active":true},"incantation":{"formula":"闭合之门，不纳污息","requires":{"detective.infer.safe_airlock":true,"detective.infer.seventh_clause_limits":true},"resource":"detective.phys.resolve","cost":12,"backlash":{"field":"detective.phys.corruption","amount":3},"rule":{"field":"airlock.lock.sealed","value":true,"duration_minutes":45},"witnesses":["huo","quer","margaret"]},"tags":["言灵","防卫"],"public_completion_text":"侦探：闭合之门，不纳污息。\n示流丝在门边颤了一下，指尖的刺痛沿手背攀上来。侦探没有松开钟表：只有四十五分钟，门仍得靠你们的手锁住。"},
+        {"id":"detective.reseal_airlock","label":"再次施言灵，付出额外代价延长封隔","kind":"incant","at":"B2-control","minutes":0.5,"priority":60,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"backflow.phys.active":true,"event:detective.seal_airlock.done":true,"airlock.lock.sealed":false},"incantation":{"formula":"闭合之门，不纳污息","requires":{"detective.infer.safe_airlock":true,"detective.infer.seventh_clause_limits":true},"resource":"detective.phys.resolve","cost":12,"backlash":{"field":"detective.phys.corruption","amount":3},"rule":{"field":"airlock.lock.sealed","value":true,"duration_minutes":45},"witnesses":["huo","quer","margaret"]},"tags":["言灵","防卫"]},
+        {"id":"detective.plan_night","label":"权衡工具、值守储备与同伴，拟定第四夜策略","kind":"strategy","at":"B2-control","minutes":1,"priority":50,"once":true,"focus":"detective.casebook","interaction_slot":"detective.casebook","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"night_day4.doc.plan_chosen":false},"strategy":{"output":"night_day4.doc.strategy","publish":true,"options":[{"id":"lock","label":"雀儿与霍铎共同机械锁门","when":{"probes.phys.owner":"quer","detective.infer.safe_airlock":true},"utility":16,"basis":"工具已经保住，局部隔绝为两种工艺提供短暂安全窗口"},{"id":"diversion","label":"虚构内务问题留人核查","when":{"night_day4.doc.safe_room_available":true,"detective.infer.seventh_clause_limits":true},"utility":13,"basis":"能把人留在安全室内，代价是被识破后损害程序信任"},{"id":"watch","label":"公开险情并组织轮值","when":{"watch_supply.phys.ready":true,"detective.infer.seventh_clause_limits":true},"utility":11,"basis":"药剂与人员足够，需实际到岗并付出守夜精力"}]},"writes":{"night_day4.doc.plan_chosen":true},"observes":["night_day4.doc.plan_chosen"]},
+        {"id":"detective.choose_lock","label":"决定：雀儿与霍铎共同机械锁门","kind":"strategy","at":"B2-control","minutes":1,"priority":50,"once":true,"focus":"detective.casebook","interaction_slot":"detective.casebook","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"night_day4.doc.plan_chosen":false},"strategy":{"output":"night_day4.doc.strategy","publish":true,"options":[{"id":"lock","label":"雀儿与霍铎共同机械锁门","when":{"probes.phys.owner":"quer","detective.infer.safe_airlock":true},"utility":16,"basis":"工具已经保住，局部隔绝为两种工艺提供短暂安全窗口"}]},"writes":{"night_day4.doc.plan_chosen":true},"observes":["night_day4.doc.plan_chosen"],"manual_only":true},
+        {"id":"detective.choose_diversion","label":"决定：虚构内务问题留人核查","kind":"strategy","at":"B2-control","minutes":1,"priority":50,"once":true,"focus":"detective.casebook","interaction_slot":"detective.casebook","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"night_day4.doc.plan_chosen":false},"strategy":{"output":"night_day4.doc.strategy","publish":true,"options":[{"id":"diversion","label":"虚构内务问题留人核查","when":{"night_day4.doc.safe_room_available":true,"detective.infer.seventh_clause_limits":true},"utility":13,"basis":"能把人留在安全室内，代价是被识破后损害程序信任"}]},"writes":{"night_day4.doc.plan_chosen":true},"observes":["night_day4.doc.plan_chosen"],"manual_only":true},
+        {"id":"detective.choose_watch","label":"决定：公开险情并组织轮值","kind":"strategy","at":"B2-control","minutes":1,"priority":50,"once":true,"focus":"detective.casebook","interaction_slot":"detective.casebook","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"night_day4.doc.plan_chosen":false},"strategy":{"output":"night_day4.doc.strategy","publish":true,"options":[{"id":"watch","label":"公开险情并组织轮值","when":{"watch_supply.phys.ready":true,"detective.infer.seventh_clause_limits":true},"utility":11,"basis":"药剂与人员足够，需实际到岗并付出守夜精力"}]},"writes":{"night_day4.doc.plan_chosen":true},"observes":["night_day4.doc.plan_chosen"],"manual_only":true},
+        {"id":"detective.recruit_huo","label":"请霍铎利用短时封隔协作锁门","kind":"talk","at":"B2-control","minutes":2,"priority":43,"once":true,"focus":"huo","interaction_slot":"huo","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"detective.infer.seventh_clause_limits":true,"night_day4.doc.strategy":"lock"},"requires":{"huo.room":"B2-control"},"suggestion":{"target":"huo","evidence":["detective.infer.safe_airlock","detective.infer.seventh_clause_limits"],"appeal":{"craft":0.6,"safety":0.4},"cost":0.4,"risk":0.9,"result":"huo.doc.airlock_cooperation"},"tags":["协作","求证"],"writes":{"huo.doc.work_order_received":true},"observes":["huo.doc.work_order_received"],"public_completion_text":"侦探：你看见示流丝停了，但这只是暂时的封隔。霍铎，我需要你把止挡真正装上；你若看见通口越线，就退回来。"},
+        {"id":"detective.recruit_quer","label":"请雀儿利用短时封隔协作锁门","kind":"talk","at":"B2-control","minutes":2,"priority":43,"once":true,"focus":"quer","interaction_slot":"quer","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"detective.infer.seventh_clause_limits":true,"night_day4.doc.strategy":"lock"},"requires":{"quer.room":"B2-control"},"suggestion":{"target":"quer","evidence":["detective.infer.safe_airlock","detective.infer.seventh_clause_limits"],"appeal":{"craft":0.6,"safety":0.4},"cost":0.4,"risk":0.9,"result":"quer.doc.airlock_cooperation"},"tags":["协作","求证"],"writes":{"quer.doc.work_order_received":true},"observes":["quer.doc.work_order_received"],"public_completion_text":"侦探：雀儿，探针仍由你保管。请只做你确认能做的锁针行程；我会报时，你也可以叫停。"},
+        {"id":"detective.recruit_diversion","label":"以紧急内务盘点请沃德把同伴留在安全室内","kind":"talk","at":"B2-control","minutes":2,"priority":43,"once":true,"focus":"ward","interaction_slot":"ward","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"detective.infer.seventh_clause_limits":true,"night_day4.doc.strategy":"diversion","airlock.lock.sealed":true},"requires":{"ward.room":"B2-control"},"suggestion":{"target":"ward","evidence":["detective.infer.safe_airlock","detective.infer.seventh_clause_limits"],"appeal":{"duty":0.9,"safety":0.5},"cost":0.2,"risk":0.05,"result":"ward.doc.diversion_accepted"},"tags":["协作","求证"],"writes":{"night_day4.doc.false_inventory":true},"observes":["night_day4.doc.false_inventory"]},
+        {"id":"detective.recruit_watch","label":"公开险情，请玛格丽特与自己轮流看守控制侧通口","kind":"talk","at":"B2-control","minutes":2,"priority":43,"once":true,"focus":"margaret","interaction_slot":"margaret","when":{"detective.phys.asleep":false,"detective.infer.safe_airlock":true,"detective.infer.seventh_clause_limits":true,"night_day4.doc.strategy":"watch","airlock.lock.sealed":true},"requires":{"margaret.room":"B2-control"},"suggestion":{"target":"margaret","evidence":["detective.infer.safe_airlock","detective.infer.seventh_clause_limits","watch_supply.phys.ready","airlock.lock.sealed"],"appeal":{"duty":0.8,"safety":0.6},"cost":0.2,"risk":0.05,"result":"margaret.doc.watch_accepted"},"tags":["协作","求证"],"writes":{"night_day4.doc.watch_roster":true},"observes":["night_day4.doc.watch_roster"],"public_completion_text":"侦探：伤者留在医疗角。玛格丽特，请只守控制侧，按刻线、钟点和储备交接；言灵到时会失效，我们必须在这段时间里把轮值落实。"},
+        {"id":"detective.report_crisis","label":"将抢险、值守安排与言灵到期限制写入交接记录","kind":"interact","at":"B2-control","minutes":3,"priority":35,"once":true,"focus":"B2.panel","interaction_slot":"B2.panel","when":{"detective.phys.asleep":false,"night_day4.phys.secured":true},"writes":{"day4.doc.crisis_reported":true},"observes":["day4.doc.crisis_reported"],"tell":[{"actor":"lucian","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"gu","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"quer","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"ward","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"huo","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"shen","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"su","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"selma","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"ruan","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"elena","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"moran","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"veronica","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"bertrand","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"margaret","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"},{"actor":"mora","fields":["night_day4.doc.strategy","night_day4.phys.secured"],"results":["day4.doc.crisis_reported"],"rooms":["A-P","B-P","C-P","D-P","2F-cross-M","2F-North-Stair","1F-Shaft-Monitor","1F-Infirmary","F03","F05","T01","B1-hazard","D-gate","U01-granary","B2-control","B2-valve","R01","R02","R03","R04","R05","R06","R07","R08","R09","R10","R11","R12","R13","R14","R15","R16"],"channel":"speaking_tube"}],"public_completion_text":"侦探：把已做到的事和仍须守住的条件分开登记。言灵有到期，药有余量，伤者还要观察；今晚能关上的这道门，不替明晚作担保。"},
+        {"id":"detective.seek_elena","label":"可选试探：探访伊莲娜，考虑耳罩诱导","kind":"walk","at":"B2-control","minutes":3,"priority":15,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"detective.infer.seventh_clause_limits":true},"requires":{"backflow.phys.active":true,"night_day4.phys.secured":false,"day4.doc.crisis_reported":false,"elena.room":"R11"},"writes":{"detective.room":"R11"},"observes":["detective.room"],"route_rooms":["B2-control","R11"],"manual_only":true},
+        {"id":"detective.leave_elena_room","label":"结束可选探访，沿原路返回B2控制室","kind":"walk","at":"R11","minutes":3,"priority":32,"once":false,"focus":"R11-door","when":{"detective.phys.asleep":false,"event:detective.seek_elena.done":true},"writes":{"detective.room":"B2-control"},"observes":["detective.room"],"route_rooms":["R11","2F-cross-M","B1-hazard","B2-control"],"manual_only":true},
+        {"id":"detective.offer_earmuffs","label":"借安静休息之名给伊莲娜戴上隔音耳罩","kind":"talk","at":"R11","minutes":1,"priority":35,"once":true,"focus":"elena","interaction_slot":"elena","when":{"detective.phys.asleep":false,"event:detective.seek_elena.done":true},"requires":{"elena.room":"R11"},"suggestion":{"target":"elena","evidence":["detective.infer.seventh_clause_limits"],"appeal":{"care":1,"autonomy":0.3},"cost":0.1,"risk":0,"result":"elena.doc.earmuffs_accepted"},"writes":{"elena.phys.earmuffs":true,"detour.doc.invited":true},"observes":["elena.phys.earmuffs","detour.doc.invited"],"manual_only":true},
+        {"id":"detective.escort_elena_to_valve","label":"搀扶不知具体险情的伊莲娜到低位阀旁","kind":"walk","at":"R11","minutes":4,"priority":35,"once":true,"focus":"elena","interaction_slot":"elena","when":{"detective.phys.asleep":false,"event:detective.offer_earmuffs.done":true},"requires":{"elena.room":"R11","elena.phys.earmuffs":true,"backflow.phys.active":true},"writes":{"detective.room":"B2-valve","elena.room":"B2-valve","elena.phys.in_hazard":true},"observes":["detective.room"],"escort":"elena","reserve":["actor.elena"],"route_rooms":["R11","2F-cross-M","B1-hazard","B2-control","B2-valve"],"tell":[{"actor":"elena","room":"B2-valve","fields":[],"results":["elena.room"]}],"manual_only":true},
+        {"id":"detective.return_from_failed_trap","label":"前往B2低位控制室","kind":"walk","at":"B2-valve","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.escort_elena_to_valve.done":true},"writes":{"detective.room":"B2-control"},"observes":["detective.room"],"route_rooms":["B2-valve","B2-control"],"manual_only":true},
+        {"id":"detective.to_supper","label":"前往一楼大食堂","kind":"walk","at":"B2-control","minutes":3,"priority":26,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.report_crisis.done":true},"writes":{"detective.room":"F03"},"observes":["detective.room"],"route_rooms":["B2-control","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"detective.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":12,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-detective","when":{"detective.phys.asleep":false,"event:detective.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_detective.phys.consumed":true},"observes":["meal_day4_detective.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"detective.return_bed","label":"前往R05","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.eat_supper.done":true},"writes":{"detective.room":"R05"},"observes":["detective.room"],"route_rooms":["F03","R05"],"not_before_game_minutes":1260},
+        {"id":"detective.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R05","minutes":2,"priority":50,"once":true,"focus":"R05-bed","interaction_slot":"R05-bed","when":{"detective.phys.asleep":false,"event:detective.return_bed.done":true,"night_day4.phys.secured":true},"writes":{"detective.phys.asleep":true},"observes":["detective.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"detective.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"B2-control","minutes":8,"priority":-12,"once":false,"focus":"detective","interaction_slot":"detective","when":{"detective.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"detective.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"detective","interaction_slot":"detective","when":{"detective.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"detective.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R05","minutes":8,"priority":-12,"once":false,"focus":"detective","interaction_slot":"detective","when":{"detective.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"detective.backflow_at_port","label":"看到隔墙通口的示流丝逆转，听见低处喷气","when":{"detective.room":"B2-control","detective.phys.asleep":false,"backflow.phys.active":true},"observes":["backflow.phys.active"]},
+        {"id":"detective.night_safety","label":"核对已安装的门锁或实际执行的夜间安排","when":{"detective.room":"B2-control","detective.phys.asleep":false,"night_day4.phys.secured":true},"observes":["night_day4.phys.secured","night_day4.doc.strategy"]},
+        {"id":"detective.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"detective.room":"F03","detective.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "huo",
+      "name": "霍铎",
+      "home_room": "R06",
+      "home_bed": "R06-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"huo.room":"R06","huo.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"craft":1.4,"safety":1.3,"duty":1.1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
+      "actions": [
+        {"id":"huo.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R06","minutes":1,"priority":80,"once":true,"focus":"R06-bed","interaction_slot":"R06-bed","writes":{"huo.phys.asleep":false},"observes":["huo.room","huo.phys.asleep"],"add_buffs":["condition_huo_day4"],"emotion":"专注"},
+        {"id":"huo.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R06","minutes":6,"priority":22,"once":true,"focus":"R06-basin","interaction_slot":"R06-basin","when":{"huo.phys.asleep":false,"event:huo.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"huo.to_control","label":"前往B2低位控制室","kind":"walk","at":"R06","minutes":3,"priority":32,"once":true,"focus":"huo","when":{"huo.phys.asleep":false,"event:huo.morning_care.done":true},"writes":{"huo.room":"B2-control"},"observes":["huo.room"],"route_rooms":["R06","B2-control"],"not_before_game_minutes":600},
+        {"id":"huo.inspect_interlock","label":"检查联锁门、扳手与止挡的实际配合","kind":"inspect","at":"B2-control","minutes":6,"priority":35,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"huo.phys.asleep":false,"event:huo.to_control.done":true},"observes":["B2.trace.closed_boundary","probes.phys.owner"],"tags":["检修","协作"]},
+        {"id":"huo.fit_ratchet","label":"进入封隔窗口，装上反扣棘轮与止挡","kind":"interact","at":"B2-control","minutes":4,"priority":35,"once":true,"focus":"B1.interlock","interaction_slot":"B1.interlock","when":{"huo.phys.asleep":false,"huo.doc.airlock_cooperation":true,"airlock.lock.sealed":true},"requires":{"airlock.lock.sealed":true},"writes":{"B2.lock.ratchet_fitted":true},"observes":["B2.lock.ratchet_fitted"],"tell":[{"actor":"quer","room":"B2-control","fields":[],"results":["B2.lock.ratchet_fitted"]}],"tags":["检修","协作"]},
+        {"id":"huo.to_supper","label":"前往一楼大食堂","kind":"walk","at":"B2-control","minutes":3,"priority":26,"once":true,"focus":"huo","when":{"huo.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"huo.room":"F03"},"observes":["huo.room"],"route_rooms":["B2-control","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"huo.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-huo","when":{"huo.phys.asleep":false,"event:huo.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_huo.phys.consumed":true},"observes":["meal_day4_huo.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"huo.return_bed","label":"前往R06","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"huo","when":{"huo.phys.asleep":false,"event:huo.eat_supper.done":true},"writes":{"huo.room":"R06"},"observes":["huo.room"],"route_rooms":["F03","R06"],"not_before_game_minutes":1264},
+        {"id":"huo.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R06","minutes":2,"priority":50,"once":true,"focus":"R06-bed","interaction_slot":"R06-bed","when":{"huo.phys.asleep":false,"event:huo.return_bed.done":true},"writes":{"huo.phys.asleep":true},"observes":["huo.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"huo.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"B2-control","minutes":8,"priority":-12,"once":false,"focus":"huo","interaction_slot":"huo","when":{"huo.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"huo.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"huo","interaction_slot":"huo","when":{"huo.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"huo.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R06","minutes":8,"priority":-12,"once":false,"focus":"huo","interaction_slot":"huo","when":{"huo.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"huo.night_safety","label":"核对已安装的门锁或实际执行的夜间安排","when":{"huo.room":"B2-control","huo.phys.asleep":false,"night_day4.phys.secured":true},"observes":["night_day4.phys.secured","night_day4.doc.strategy"]},
+        {"id":"huo.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"huo.room":"F03","huo.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "shen",
+      "name": "沈鼎",
+      "home_room": "R07",
+      "home_bed": "R07-bed",
+      "wake_at_game_minutes": 422,
+      "knows": {"shen.room":"R07","shen.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"solidarity":1.4,"fairness":1.1,"safety":0.9,"care":1.2},"modifiers":[]},
+      "actions": [
+        {"id":"shen.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R07","minutes":1,"priority":80,"once":true,"focus":"R07-bed","interaction_slot":"R07-bed","writes":{"shen.phys.asleep":false},"observes":["shen.room","shen.phys.asleep"],"add_buffs":["condition_shen_day4"],"emotion":"安心"},
+        {"id":"shen.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R07","minutes":6,"priority":22,"once":true,"focus":"R07-basin","interaction_slot":"R07-basin","when":{"shen.phys.asleep":false,"event:shen.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"shen.to_kitchen","label":"前往一楼热厨","kind":"walk","at":"R07","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.morning_care.done":true},"writes":{"shen.room":"F05"},"observes":["shen.room"],"route_rooms":["R07","F05"]},
+        {"id":"shen.cook_supper","label":"继续按配给表熬粥，为抢险者保温","kind":"interact","at":"F05","minutes":20,"priority":35,"once":true,"focus":"F05-stove","interaction_slot":"F05-stove","when":{"shen.phys.asleep":false,"event:shen.to_kitchen.done":true},"not_before_game_minutes":1040,"writes":{"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"],"tags":["厨务"]},
+        {"id":"shen.serve_supper","label":"前往一楼大食堂","kind":"walk","at":"F05","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.cook_supper.done":true,"day4.doc.crisis_reported":true},"writes":{"shen.room":"F03"},"observes":["shen.room"],"route_rooms":["F05","F03"]},
+        {"id":"shen.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":16,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-shen","when":{"shen.phys.asleep":false,"event:shen.serve_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_shen.phys.consumed":true},"observes":["meal_day4_shen.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"shen.return_bed","label":"前往R07","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.eat_supper.done":true},"writes":{"shen.room":"R07"},"observes":["shen.room"],"route_rooms":["F03","R07"],"not_before_game_minutes":1268},
+        {"id":"shen.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R07","minutes":2,"priority":50,"once":true,"focus":"R07-bed","interaction_slot":"R07-bed","when":{"shen.phys.asleep":false,"event:shen.return_bed.done":true},"writes":{"shen.phys.asleep":true},"observes":["shen.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"shen.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"shen","interaction_slot":"shen","when":{"shen.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"shen.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R07","minutes":8,"priority":-12,"once":false,"focus":"shen","interaction_slot":"shen","when":{"shen.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"shen.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"shen.room":"F03","shen.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "su",
+      "name": "苏泠",
+      "home_room": "R08",
+      "home_bed": "R08-bed",
+      "wake_at_game_minutes": 424,
+      "knows": {"su.room":"R08","su.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.2,"safety":1.2,"honesty":1.1},"modifiers":[]},
+      "actions": [
+        {"id":"su.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R08","minutes":1,"priority":80,"once":true,"focus":"R08-bed","interaction_slot":"R08-bed","writes":{"su.phys.asleep":false},"observes":["su.room","su.phys.asleep"],"add_buffs":["condition_su_day4"],"emotion":"安心"},
+        {"id":"su.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R08","minutes":6,"priority":22,"once":true,"focus":"R08-basin","interaction_slot":"R08-basin","when":{"su.phys.asleep":false,"event:su.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"su.daily_work","label":"记录微震前后耳鸣的高频变化","kind":"interact","at":"R08","minutes":25,"priority":35,"once":true,"focus":"su.instrument","interaction_slot":"su.instrument","when":{"su.phys.asleep":false,"event:su.morning_care.done":true},"tags":["听辨"]},
+        {"id":"su.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R08","minutes":3,"priority":26,"once":true,"focus":"su","when":{"su.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"su.room":"F03"},"observes":["su.room"],"route_rooms":["R08","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"su.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":18,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-su","when":{"su.phys.asleep":false,"event:su.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_su.phys.consumed":true},"observes":["meal_day4_su.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"su.return_bed","label":"前往R08","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"su","when":{"su.phys.asleep":false,"event:su.eat_supper.done":true},"writes":{"su.room":"R08"},"observes":["su.room"],"route_rooms":["F03","R08"],"not_before_game_minutes":1272},
+        {"id":"su.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R08","minutes":2,"priority":50,"once":true,"focus":"R08-bed","interaction_slot":"R08-bed","when":{"su.phys.asleep":false,"event:su.return_bed.done":true},"writes":{"su.phys.asleep":true},"observes":["su.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"su.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"su","interaction_slot":"su","when":{"su.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"su.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R08","minutes":8,"priority":-12,"once":false,"focus":"su","interaction_slot":"su","when":{"su.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"su.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"su.room":"F03","su.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "selma",
+      "name": "赛尔玛",
+      "home_room": "R09",
+      "home_bed": "R09-bed",
+      "wake_at_game_minutes": 426,
+      "knows": {"selma.room":"R09","selma.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.4,"solidarity":1.3,"safety":1.1},"modifiers":[]},
+      "actions": [
+        {"id":"selma.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R09","minutes":1,"priority":80,"once":true,"focus":"R09-bed","interaction_slot":"R09-bed","writes":{"selma.phys.asleep":false},"observes":["selma.room","selma.phys.asleep"],"add_buffs":["condition_selma_day4"],"emotion":"安心"},
+        {"id":"selma.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R09","minutes":6,"priority":22,"once":true,"focus":"R09-basin","interaction_slot":"R09-basin","when":{"selma.phys.asleep":false,"event:selma.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"selma.daily_work","label":"备妥止血布与临时床垫","kind":"interact","at":"R09","minutes":25,"priority":35,"once":true,"focus":"selma.instrument","interaction_slot":"selma.instrument","when":{"selma.phys.asleep":false,"event:selma.morning_care.done":true},"tags":["照护"]},
+        {"id":"selma.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R09","minutes":3,"priority":26,"once":true,"focus":"selma","when":{"selma.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"selma.room":"F03"},"observes":["selma.room"],"route_rooms":["R09","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"selma.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":12,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-selma","when":{"selma.phys.asleep":false,"event:selma.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_selma.phys.consumed":true},"observes":["meal_day4_selma.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"selma.return_bed","label":"前往R09","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"selma","when":{"selma.phys.asleep":false,"event:selma.eat_supper.done":true},"writes":{"selma.room":"R09"},"observes":["selma.room"],"route_rooms":["F03","R09"],"not_before_game_minutes":1260},
+        {"id":"selma.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R09","minutes":2,"priority":50,"once":true,"focus":"R09-bed","interaction_slot":"R09-bed","when":{"selma.phys.asleep":false,"event:selma.return_bed.done":true},"writes":{"selma.phys.asleep":true},"observes":["selma.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"selma.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"selma","interaction_slot":"selma","when":{"selma.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"selma.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R09","minutes":8,"priority":-12,"once":false,"focus":"selma","interaction_slot":"selma","when":{"selma.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"selma.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"selma.room":"F03","selma.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "ruan",
+      "name": "阮清月",
+      "home_room": "R10",
+      "home_bed": "R10-bed",
+      "wake_at_game_minutes": 428,
+      "knows": {"ruan.room":"R10","ruan.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.5,"autonomy":1.2,"craft":1.1},"modifiers":[]},
+      "actions": [
+        {"id":"ruan.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R10","minutes":1,"priority":80,"once":true,"focus":"R10-bed","interaction_slot":"R10-bed","writes":{"ruan.phys.asleep":false},"observes":["ruan.room","ruan.phys.asleep"],"add_buffs":["condition_ruan_day4"],"emotion":"专注"},
+        {"id":"ruan.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R10","minutes":6,"priority":22,"once":true,"focus":"R10-basin","interaction_slot":"R10-basin","when":{"ruan.phys.asleep":false,"event:ruan.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"ruan.daily_work","label":"复盘侦探在险情中采用的手段与代价","kind":"interact","at":"R10","minutes":25,"priority":35,"once":true,"focus":"ruan.board","interaction_slot":"ruan.board","when":{"ruan.phys.asleep":false,"event:ruan.morning_care.done":true},"tags":["复盘"]},
+        {"id":"ruan.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R10","minutes":3,"priority":26,"once":true,"focus":"ruan","when":{"ruan.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"ruan.room":"F03"},"observes":["ruan.room"],"route_rooms":["R10","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"ruan.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-ruan","when":{"ruan.phys.asleep":false,"event:ruan.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_ruan.phys.consumed":true},"observes":["meal_day4_ruan.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"ruan.return_bed","label":"前往R10","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"ruan","when":{"ruan.phys.asleep":false,"event:ruan.eat_supper.done":true},"writes":{"ruan.room":"R10"},"observes":["ruan.room"],"route_rooms":["F03","R10"],"not_before_game_minutes":1264},
+        {"id":"ruan.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R10","minutes":2,"priority":50,"once":true,"focus":"R10-bed","interaction_slot":"R10-bed","when":{"ruan.phys.asleep":false,"event:ruan.return_bed.done":true},"writes":{"ruan.phys.asleep":true},"observes":["ruan.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"ruan.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"ruan","interaction_slot":"ruan","when":{"ruan.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"ruan.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R10","minutes":8,"priority":-12,"once":false,"focus":"ruan","interaction_slot":"ruan","when":{"ruan.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"ruan.evaluate_night","label":"记下侦探如何用有限言灵换得机械作业窗口","kind":"interact","at":"F03","minutes":3,"priority":35,"once":true,"focus":"ruan","interaction_slot":"ruan","when":{"ruan.phys.asleep":false,"event:ruan.eat_supper.done":true,"day4.doc.crisis_reported":true},"writes":{"ruan.doc.day4_judgment":"记下侦探如何用有限言灵换得机械作业窗口"},"observes":["ruan.doc.day4_judgment"]}
+      ],
+      "perceptions": [
+        {"id":"ruan.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"ruan.room":"F03","ruan.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "elena",
+      "name": "伊莲娜",
+      "home_room": "R11",
+      "home_bed": "R11-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"elena.room":"R11","elena.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"autonomy":1.3,"care":1.2,"safety":1.2},"modifiers":[]},
+      "actions": [
+        {"id":"elena.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R11","minutes":1,"priority":80,"once":true,"focus":"R11-bed","interaction_slot":"R11-bed","writes":{"elena.phys.asleep":false},"observes":["elena.room","elena.phys.asleep"],"add_buffs":["condition_elena_day4"],"emotion":"安心"},
+        {"id":"elena.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R11","minutes":6,"priority":22,"once":true,"focus":"R11-basin","interaction_slot":"R11-basin","when":{"elena.phys.asleep":false,"event:elena.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"elena.daily_work","label":"护住踝部，整理能在卧床时完成的分拣","kind":"interact","at":"R11","minutes":25,"priority":35,"once":true,"focus":"elena.splint","interaction_slot":"elena.splint","when":{"elena.phys.asleep":false,"event:elena.morning_care.done":true},"tags":["休养"]},
+        {"id":"elena.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R11","minutes":3,"priority":26,"once":true,"focus":"elena","when":{"elena.phys.asleep":false,"day4.doc.crisis_reported":true},"writes":{"elena.room":"F03"},"observes":["elena.room"],"route_rooms":["R11","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"elena.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":16,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-elena","when":{"elena.phys.asleep":false,"event:elena.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_elena.phys.consumed":true},"observes":["meal_day4_elena.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"elena.return_bed","label":"前往R11","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"elena","when":{"elena.phys.asleep":false,"event:elena.eat_supper.done":true},"writes":{"elena.room":"R11"},"observes":["elena.room"],"route_rooms":["F03","R11"],"not_before_game_minutes":1268},
+        {"id":"elena.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R11","minutes":2,"priority":50,"once":true,"focus":"R11-bed","interaction_slot":"R11-bed","when":{"elena.phys.asleep":false,"event:elena.return_bed.done":true},"writes":{"elena.phys.asleep":true},"observes":["elena.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"elena.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"elena","interaction_slot":"elena","when":{"elena.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"elena.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R11","minutes":8,"priority":-12,"once":false,"focus":"elena","interaction_slot":"elena","when":{"elena.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"elena.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"elena.room":"F03","elena.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "moran",
+      "name": "莫兰",
+      "home_room": "R12",
+      "home_bed": "R12-bed",
+      "wake_at_game_minutes": 422,
+      "knows": {"moran.room":"R12","moran.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"art":1.6,"autonomy":1.2,"care":0.8},"modifiers":[]},
+      "actions": [
+        {
+          "id": "moran.wake",
+          "label": "醒来，确认此刻身处自己的卧室",
+          "kind": "interact",
+          "at": "R12",
+          "minutes": 1,
+          "priority": 80,
+          "once": true,
+          "focus": "R12-bed",
+          "interaction_slot": "R12-bed",
+          "writes": {
+            "moran.phys.asleep": false
+          },
+          "observes": [
+            "moran.room",
+            "moran.phys.asleep"
+          ],
+          "add_buffs": [
+            "condition_moran_day4"
+          ],
+          "emotion": "安心"
+        },
+        {
+          "id": "moran.morning_care",
+          "label": "饮水洗漱，整理随身器具",
+          "kind": "interact",
+          "at": "R12",
+          "minutes": 6,
+          "priority": 22,
+          "once": true,
+          "focus": "R12-basin",
+          "interaction_slot": "R12-basin",
+          "when": {
+            "moran.phys.asleep": false,
+            "event:moran.wake.done": true
+          },
+          "perceived_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "completed_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "tags": [
+            "自护",
+            "清洁"
+          ]
+        },
+        {
+          "id": "moran.to_studio",
+          "label": "前往二楼公共讲堂",
+          "kind": "walk",
+          "at": "R12",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "moran",
+          "when": {
+            "moran.phys.asleep": false,
+            "event:moran.morning_care.done": true
+          },
+          "writes": {
+            "moran.room": "T01"
+          },
+          "observes": [
+            "moran.room"
+          ],
+          "route_rooms": [
+            "R12",
+            "T01"
+          ]
+        },
+        {
+          "id": "moran.morning_art",
+          "label": "观察窗外光色，为源质风暴留下空白页",
+          "kind": "interact",
+          "at": "T01",
+          "minutes": 25,
+          "priority": 35,
+          "once": true,
+          "focus": "moran.easel",
+          "interaction_slot": "moran.easel",
+          "when": {
+            "moran.phys.asleep": false,
+            "event:moran.to_studio.done": true
+          },
+          "tags": [
+            "写生"
+          ]
+        },
+        {
+          "id": "moran.to_ramp",
+          "label": "前往B1服务廊与下行检修坡道",
+          "kind": "walk",
+          "at": "T01",
+          "minutes": 2.5,
+          "priority": 60,
+          "once": true,
+          "focus": "moran",
+          "when": {
+            "moran.phys.asleep": false,
+            "island_environment.phys.earthquake": true
+          },
+          "writes": {
+            "moran.room": "B1-hazard"
+          },
+          "observes": [
+            "moran.room"
+          ],
+          "route_rooms": [
+            "T01",
+            "2F-cross-M",
+            "B1-hazard"
+          ]
+        },
+        {
+          "id": "moran.read_warning",
+          "label": "读懂此刻毒雾可致命的危险牌，仍不舍风暴色彩",
+          "kind": "read",
+          "at": "B1-hazard",
+          "minutes": 0.25,
+          "priority": 35,
+          "once": true,
+          "focus": "B1.warning",
+          "interaction_slot": "B1.warning",
+          "when": {
+            "moran.phys.asleep": false,
+            "B1.doc.current_warning": true,
+            "event:moran.to_ramp.done": true
+          },
+          "observes": [
+            "B1.doc.warning"
+          ],
+          "tags": [
+            "写生"
+          ],
+          "public_completion_text": "莫兰盯着危险牌，仍没有合上速写本：我读懂了。可这道紫金色不是反光，它像在朝另一个方向长……给我一眼，我只要记住它怎样转。"
+        },
+        {
+          "id": "moran.enter_valve_gallery",
+          "label": "前往B2联锁阀廊",
+          "kind": "walk",
+          "at": "B1-hazard",
+          "minutes": 1,
+          "priority": 65,
+          "once": true,
+          "focus": "moran",
+          "when": {
+            "moran.phys.asleep": false,
+            "event:moran.read_warning.done": true,
+            "B1.doc.warning": "低位阀廊的源质倒灌可致命；已经读懂这项具体警告的人不适用第七条无知免死"
+          },
+          "writes": {
+            "moran.room": "B2-valve",
+            "moran.phys.in_hazard": true
+          },
+          "observes": [
+            "moran.room",
+            "moran.phys.in_hazard"
+          ],
+          "route_rooms": [
+            "B1-hazard",
+            "B2-control",
+            "B2-valve"
+          ],
+          "requires": {
+            "backflow.phys.active": true
+          }
+        },
+        {
+          "id": "moran.to_supper",
+          "label": "按医嘱沿一楼走廊慢行到食堂",
+          "kind": "walk",
+          "at": "1F-Infirmary",
+          "minutes": 5,
+          "priority": 26,
+          "once": true,
+          "focus": "moran",
+          "when": {
+            "moran.phys.asleep": false,
+            "day4.doc.crisis_reported": true,
+            "moran.phys.cured": true,
+            "victims.phys.observation_complete": true
+          },
+          "writes": {
+            "moran.room": "F03"
+          },
+          "observes": [
+            "moran.room"
+          ],
+          "route_rooms": [
+            "1F-Infirmary",
+            "F03"
+          ],
+          "not_before_game_minutes": 1080,
+          "perceived_need_effects": {
+            "hunger": 25,
+            "social": 10
+          },
+          "tags": [
+            "用餐"
+          ],
+          "reason": "已经完成实际床边观察，仍需休息；今晚不再下低位区或负重。"
+        },
+        {
+          "id": "moran.eat_supper",
+          "label": "在餐桌上领取一份热食，与同伴吃完晚餐",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 18,
+          "priority": 34,
+          "once": true,
+          "focus": "F03-table",
+          "interaction_slot": "F03-seat-moran",
+          "when": {
+            "moran.phys.asleep": false,
+            "event:moran.to_supper.done": true,
+            "meal_day4.phys.ready": true
+          },
+          "requires": {
+            "meal_day4.phys.ready": true
+          },
+          "writes": {
+            "meal_day4_moran.phys.consumed": true
+          },
+          "observes": [
+            "meal_day4_moran.phys.consumed"
+          ],
+          "perceived_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "completed_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "add_buffs": [
+            "buff_warm_porridge"
+          ],
+          "emotion": "安心",
+          "tags": [
+            "用餐"
+          ]
+        },
+        {
+          "id": "moran.return_bed",
+          "label": "前往R12",
+          "kind": "walk",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "moran",
+          "when": {
+            "moran.phys.asleep": false,
+            "event:moran.eat_supper.done": true
+          },
+          "writes": {
+            "moran.room": "R12"
+          },
+          "observes": [
+            "moran.room"
+          ],
+          "route_rooms": [
+            "F03",
+            "R12"
+          ],
+          "not_before_game_minutes": 1272
+        },
+        {
+          "id": "moran.sleep_night",
+          "label": "洗漱后躺回自己的床，安眠至翌晨",
+          "kind": "interact",
+          "at": "R12",
+          "minutes": 2,
+          "priority": 50,
+          "once": true,
+          "focus": "R12-bed",
+          "interaction_slot": "R12-bed",
+          "when": {
+            "moran.phys.asleep": false,
+            "event:moran.return_bed.done": true
+          },
+          "writes": {
+            "moran.phys.asleep": true
+          },
+          "observes": [
+            "moran.phys.asleep"
+          ],
+          "emotion": "睡眠",
+          "tags": [
+            "睡眠"
+          ],
+          "perceived_need_effects": {
+            "energy": 85
+          },
+          "completed_need_effects": {
+            "energy": 85
+          }
+        },
+        {
+          "id": "moran.rest_0",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "1F-Infirmary",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "moran",
+          "interaction_slot": "moran",
+          "when": {
+            "moran.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "moran.rest_1",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "moran",
+          "interaction_slot": "moran",
+          "when": {
+            "moran.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "moran.rest_2",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "R12",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "moran",
+          "interaction_slot": "moran",
+          "when": {
+            "moran.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "moran.recognize_after_rescue",
+          "label": "留意急救后的乏力，接受今晚不再负重的安排",
+          "kind": "interact",
+          "at": "1F-Infirmary",
+          "minutes": 1,
+          "priority": 65,
+          "once": true,
+          "focus": "moran",
+          "interaction_slot": "moran",
+          "when": {
+            "moran.phys.asleep": false,
+            "moran.phys.cured": true,
+            "moran.phys.recovering": true
+          },
+          "add_buffs": [
+            "condition_moran_after_rescue"
+          ],
+          "completed_need_effects": {
+            "energy": -15,
+            "comfort": -10
+          },
+          "public_completion_text": "莫兰把速写本合到一半：那道颜色还在，闭上眼也在……这一次，先记住我没看懂它。"
+        }
+      ],
+      "perceptions": [
+        {"id":"moran.danger_indicator","label":"看见入口危险牌的倒灌指示翻转","when":{"moran.room":"B1-hazard","moran.phys.asleep":false,"B1.doc.current_warning":true},"observes":["B1.doc.current_warning"]},
+        {"id":"moran.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"moran.room":"F03","moran.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ],
+      "incapacitated_ref": {"type":"ref","object":"moran","facet":"phys","field":"incapacitated"}
+    },
+    {
+      "id": "veronica",
+      "name": "维罗妮卡",
+      "home_room": "R13",
+      "home_bed": "R13-bed",
+      "wake_at_game_minutes": 424,
+      "knows": {"veronica.room":"R13","veronica.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.3,"craft":1.2,"care":0.9,"autonomy":1},"modifiers":[]},
+      "actions": [
+        {"id":"veronica.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R13","minutes":1,"priority":80,"once":true,"focus":"R13-bed","interaction_slot":"R13-bed","writes":{"veronica.phys.asleep":false},"observes":["veronica.room","veronica.phys.asleep"],"add_buffs":["condition_veronica_day4"],"emotion":"专注"},
+        {"id":"veronica.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R13","minutes":6,"priority":22,"once":true,"focus":"R13-basin","interaction_slot":"R13-basin","when":{"veronica.phys.asleep":false,"event:veronica.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"veronica.to_infirmary","label":"前往一楼临时医疗角","kind":"walk","at":"R13","minutes":3,"priority":32,"once":true,"focus":"veronica","when":{"veronica.phys.asleep":false,"event:veronica.morning_care.done":true},"writes":{"veronica.room":"1F-Infirmary"},"observes":["veronica.room"],"route_rooms":["R13","1F-Infirmary"]},
+        {"id":"veronica.inspect_stock","label":"复核昨日封签的三份螯合剂原料","kind":"inspect","at":"1F-Infirmary","minutes":4,"priority":35,"once":true,"focus":"r07.cabinet","interaction_slot":"r07.cabinet","when":{"veronica.phys.asleep":false,"event:veronica.to_infirmary.done":true},"requires":{"supply.doc.day2_verified":true},"observes":["r07.phys.raw_stock"]},
+        {"id":"veronica.compound_antidote","label":"按原方配制三剂R-07，并单列一剂为夜间缓冲储备","kind":"interact","at":"1F-Infirmary","minutes":10,"priority":35,"once":true,"focus":"r07.cabinet","interaction_slot":"r07.cabinet","when":{"veronica.phys.asleep":false,"event:veronica.inspect_stock.done":true,"r07.phys.raw_stock":3},"requires":{"r07.phys.raw_stock":3},"writes":{"r07.phys.raw_stock":0,"r07.phys.doses":3,"r07.phys.ready":true,"watch_supply.phys.ready":true},"observes":["r07.phys.doses","r07.phys.ready","watch_supply.phys.ready"],"tell":[{"actor":"mora","room":"1F-Infirmary","fields":[],"results":["r07.phys.doses","r07.phys.ready"]}],"tags":["配药","照护"]},
+        {"id":"veronica.to_supper","label":"前往一楼大食堂","kind":"walk","at":"1F-Infirmary","minutes":3,"priority":26,"once":true,"focus":"veronica","when":{"veronica.phys.asleep":false,"day4.doc.crisis_reported":true,"victims.phys.cured":true,"victims.phys.observation_complete":true},"writes":{"veronica.room":"F03"},"observes":["veronica.room"],"route_rooms":["1F-Infirmary","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"veronica.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":12,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-veronica","when":{"veronica.phys.asleep":false,"event:veronica.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_veronica.phys.consumed":true},"observes":["meal_day4_veronica.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"veronica.return_bed","label":"前往R13","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"veronica","when":{"veronica.phys.asleep":false,"event:veronica.eat_supper.done":true},"writes":{"veronica.room":"R13"},"observes":["veronica.room"],"route_rooms":["F03","R13"],"not_before_game_minutes":1260},
+        {"id":"veronica.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R13","minutes":2,"priority":50,"once":true,"focus":"R13-bed","interaction_slot":"R13-bed","when":{"veronica.phys.asleep":false,"event:veronica.return_bed.done":true},"writes":{"veronica.phys.asleep":true},"observes":["veronica.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"veronica.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"1F-Infirmary","minutes":8,"priority":-12,"once":false,"focus":"veronica","interaction_slot":"veronica","when":{"veronica.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"veronica.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"veronica","interaction_slot":"veronica","when":{"veronica.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"veronica.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R13","minutes":8,"priority":-12,"once":false,"focus":"veronica","interaction_slot":"veronica","when":{"veronica.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"veronica.victims_arrive","label":"看到贝尔特朗架着莫兰进入诊疗处","when":{"veronica.room":"1F-Infirmary","veronica.phys.asleep":false,"moran.room":"1F-Infirmary","bertrand.phys.rescued_moran":true},"observes":["bertrand.phys.rescued_moran"]},
+        {"id":"veronica.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"veronica.room":"F03","veronica.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "bertrand",
+      "name": "贝尔特朗",
+      "home_room": "R14",
+      "home_bed": "R14-bed",
+      "wake_at_game_minutes": 426,
+      "knows": {"bertrand.room":"R14","bertrand.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.5,"care":1.2,"solidarity":1.2},"modifiers":[]},
+      "actions": [
+        {"id":"bertrand.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R14","minutes":1,"priority":80,"once":true,"focus":"R14-bed","interaction_slot":"R14-bed","writes":{"bertrand.phys.asleep":false},"observes":["bertrand.room","bertrand.phys.asleep"],"add_buffs":["condition_bertrand_day4"],"emotion":"安心"},
+        {"id":"bertrand.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R14","minutes":6,"priority":22,"once":true,"focus":"R14-basin","interaction_slot":"R14-basin","when":{"bertrand.phys.asleep":false,"event:bertrand.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"bertrand.to_patrol","label":"前往二楼中翼交汇处","kind":"walk","at":"R14","minutes":3,"priority":32,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"event:bertrand.morning_care.done":true},"writes":{"bertrand.room":"2F-cross-M"},"observes":["bertrand.room"],"route_rooms":["R14","2F-cross-M"]},
+        {"id":"bertrand.to_control","label":"前往B2低位控制室","kind":"walk","at":"2F-cross-M","minutes":3,"priority":65,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"island_environment.phys.earthquake":true},"writes":{"bertrand.room":"B2-control"},"observes":["bertrand.room"],"route_rooms":["2F-cross-M","B1-hazard","B2-control"]},
+        {"id":"bertrand.enter_for_rescue","label":"前往B2联锁阀廊","kind":"walk","at":"B2-control","minutes":0.5,"priority":70,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"moran.phys.in_hazard":true,"B1.doc.warning":"低位阀廊的源质倒灌可致命；已经读懂这项具体警告的人不适用第七条无知免死"},"writes":{"bertrand.room":"B2-valve","bertrand.phys.in_hazard":true},"observes":["bertrand.room","bertrand.phys.in_hazard"],"route_rooms":["B2-control","B2-valve"],"public_completion_text":"贝尔特朗：我看见警告了。那也不能让他一个人留在里面。把回来的通口空出来，别跟进来！"},
+        {"id":"bertrand.carry_moran","label":"架起莫兰，先把两人拖过隔墙退到控制室","kind":"walk","at":"B2-valve","minutes":1.5,"priority":80,"once":true,"focus":"moran","interaction_slot":"moran","when":{"bertrand.phys.asleep":false,"event:bertrand.enter_for_rescue.done":true},"requires":{"moran.room":"B2-valve","moran.phys.incapacitated":false,"bertrand.phys.incapacitated":false},"writes":{"moran.room":"B2-control","bertrand.room":"B2-control","moran.phys.in_hazard":false,"bertrand.phys.in_hazard":false,"bertrand.phys.pulled_moran_clear":true},"observes":["bertrand.room","bertrand.phys.in_hazard","bertrand.phys.pulled_moran_clear"],"escort":"moran","reserve":["actor.moran"],"route_rooms":["B2-valve","B2-control"],"tell":[{"actor":"moran","room":"B2-control","fields":[],"results":["moran.room","moran.phys.in_hazard"]}],"tags":["照护"],"public_completion_text":"贝尔特朗把人拖过通口才松开一只手：先把嘴里的气吐出来。画册拿着，别再回头；剩下这段坡道，我们慢一点。"},
+        {"id":"bertrand.to_supper","label":"按医嘱沿一楼走廊慢行到食堂","kind":"walk","at":"1F-Infirmary","minutes":5,"priority":26,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"day4.doc.crisis_reported":true,"bertrand.phys.cured":true,"victims.phys.observation_complete":true},"writes":{"bertrand.room":"F03"},"observes":["bertrand.room"],"route_rooms":["1F-Infirmary","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"],"reason":"已经完成实际床边观察，仍需休息；今晚不再下低位区或负重。"},
+        {"id":"bertrand.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-bertrand","when":{"bertrand.phys.asleep":false,"event:bertrand.to_supper.done":true,"meal_day4.phys.ready":true},"requires":{"meal_day4.phys.ready":true},"writes":{"meal_day4_bertrand.phys.consumed":true},"observes":["meal_day4_bertrand.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"bertrand.return_bed","label":"前往R14","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"event:bertrand.eat_supper.done":true},"writes":{"bertrand.room":"R14"},"observes":["bertrand.room"],"route_rooms":["F03","R14"],"not_before_game_minutes":1264},
+        {"id":"bertrand.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R14","minutes":2,"priority":50,"once":true,"focus":"R14-bed","interaction_slot":"R14-bed","when":{"bertrand.phys.asleep":false,"event:bertrand.return_bed.done":true},"writes":{"bertrand.phys.asleep":true},"observes":["bertrand.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"bertrand.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"B2-control","minutes":8,"priority":-12,"once":false,"focus":"bertrand","interaction_slot":"bertrand","when":{"bertrand.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"bertrand.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"bertrand","interaction_slot":"bertrand","when":{"bertrand.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"bertrand.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R14","minutes":8,"priority":-12,"once":false,"focus":"bertrand","interaction_slot":"bertrand","when":{"bertrand.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"bertrand.carry_moran_upstairs","label":"从控制室沿检修坡道扶莫兰上行到医疗角","kind":"walk","at":"B2-control","minutes":7,"priority":80,"once":true,"focus":"moran","interaction_slot":"moran","when":{"bertrand.phys.asleep":false,"bertrand.phys.pulled_moran_clear":true},"requires":{"moran.room":"B2-control","moran.phys.incapacitated":false,"bertrand.phys.incapacitated":false},"writes":{"moran.room":"1F-Infirmary","bertrand.room":"1F-Infirmary","bertrand.phys.rescued_moran":true},"observes":["bertrand.room","bertrand.phys.rescued_moran"],"escort":"moran","reserve":["actor.moran"],"route_rooms":["B2-control","B1-hazard","1F-Infirmary"],"tell":[{"actor":"moran","room":"1F-Infirmary","fields":[],"results":["moran.room"]}],"completed_need_effects":{"energy":-12,"comfort":-8},"tags":["照护"],"public_completion_text":"贝尔特朗扶着门框把莫兰交到诊台边，自己也一时说不出整句：两个……都吸进去了。先别让他再站起来。"},
+        {"id":"bertrand.recognize_after_rescue","label":"留意急救后的乏力，接受今晚不再负重的安排","kind":"interact","at":"1F-Infirmary","minutes":1,"priority":65,"once":true,"focus":"bertrand","interaction_slot":"bertrand","when":{"bertrand.phys.asleep":false,"bertrand.phys.cured":true,"bertrand.phys.recovering":true},"add_buffs":["condition_bertrand_after_rescue"],"completed_need_effects":{"energy":-15,"comfort":-10},"public_completion_text":"贝尔特朗松开盾带：替我把下面的口子交给能站稳的人。我的手还在抖，今晚就不逞这个能了。"}
+      ],
+      "perceptions": [
+        {"id":"bertrand.painter_in_gallery","label":"从控制室通口看见莫兰进入毒区，并读懂通口重复警告","when":{"bertrand.room":"B2-control","bertrand.phys.asleep":false,"moran.phys.in_hazard":true},"observes":["moran.phys.in_hazard","B1.doc.warning"]},
+        {"id":"bertrand.night_safety","label":"核对已安装的门锁或实际执行的夜间安排","when":{"bertrand.room":"B2-control","bertrand.phys.asleep":false,"night_day4.phys.secured":true},"observes":["night_day4.phys.secured","night_day4.doc.strategy"]},
+        {"id":"bertrand.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"bertrand.room":"F03","bertrand.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ],
+      "incapacitated_ref": {"type":"ref","object":"bertrand","facet":"phys","field":"incapacitated"}
+    },
+    {
+      "id": "margaret",
+      "name": "玛格丽特",
+      "home_room": "R15",
+      "home_bed": "R15-bed",
+      "wake_at_game_minutes": 428,
+      "knows": {"margaret.room":"R15","margaret.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"craft":1.3,"safety":1.3,"duty":1.2},"modifiers":[]},
+      "actions": [
+        {
+          "id": "margaret.wake",
+          "label": "醒来，确认此刻身处自己的卧室",
+          "kind": "interact",
+          "at": "R15",
+          "minutes": 1,
+          "priority": 80,
+          "once": true,
+          "focus": "R15-bed",
+          "interaction_slot": "R15-bed",
+          "writes": {
+            "margaret.phys.asleep": false
+          },
+          "observes": [
+            "margaret.room",
+            "margaret.phys.asleep"
+          ],
+          "add_buffs": [
+            "condition_margaret_day4"
+          ],
+          "emotion": "专注"
+        },
+        {
+          "id": "margaret.morning_care",
+          "label": "饮水洗漱，整理随身器具",
+          "kind": "interact",
+          "at": "R15",
+          "minutes": 6,
+          "priority": 22,
+          "once": true,
+          "focus": "R15-basin",
+          "interaction_slot": "R15-basin",
+          "when": {
+            "margaret.phys.asleep": false,
+            "event:margaret.wake.done": true
+          },
+          "perceived_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "completed_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "tags": [
+            "自护",
+            "清洁"
+          ]
+        },
+        {
+          "id": "margaret.to_control",
+          "label": "前往B2低位控制室",
+          "kind": "walk",
+          "at": "R15",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "margaret",
+          "when": {
+            "margaret.phys.asleep": false,
+            "event:margaret.morning_care.done": true
+          },
+          "writes": {
+            "margaret.room": "B2-control"
+          },
+          "observes": [
+            "margaret.room"
+          ],
+          "route_rooms": [
+            "R15",
+            "B2-control"
+          ],
+          "not_before_game_minutes": 600
+        },
+        {
+          "id": "margaret.inspect_interlock",
+          "label": "检查联锁门、扳手与止挡的实际配合",
+          "kind": "inspect",
+          "at": "B2-control",
+          "minutes": 6,
+          "priority": 35,
+          "once": true,
+          "focus": "B1.interlock",
+          "interaction_slot": "B1.interlock",
+          "when": {
+            "margaret.phys.asleep": false,
+            "event:margaret.to_control.done": true
+          },
+          "observes": [
+            "B2.trace.closed_boundary",
+            "probes.phys.owner"
+          ],
+          "tags": [
+            "检修",
+            "协作"
+          ]
+        },
+        {
+          "id": "margaret.to_supper",
+          "label": "前往一楼大食堂",
+          "kind": "walk",
+          "at": "B2-control",
+          "minutes": 3,
+          "priority": 26,
+          "once": true,
+          "focus": "margaret",
+          "when": {
+            "margaret.phys.asleep": false,
+            "day4.doc.crisis_reported": true
+          },
+          "writes": {
+            "margaret.room": "F03"
+          },
+          "observes": [
+            "margaret.room"
+          ],
+          "route_rooms": [
+            "B2-control",
+            "F03"
+          ],
+          "not_before_game_minutes": 1080,
+          "perceived_need_effects": {
+            "hunger": 25,
+            "social": 10
+          },
+          "tags": [
+            "用餐"
+          ]
+        },
+        {
+          "id": "margaret.eat_supper",
+          "label": "在餐桌上领取一份热食，与同伴吃完晚餐",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 16,
+          "priority": 34,
+          "once": true,
+          "focus": "F03-table",
+          "interaction_slot": "F03-seat-margaret",
+          "when": {
+            "margaret.phys.asleep": false,
+            "event:margaret.to_supper.done": true,
+            "meal_day4.phys.ready": true
+          },
+          "requires": {
+            "meal_day4.phys.ready": true
+          },
+          "writes": {
+            "meal_day4_margaret.phys.consumed": true
+          },
+          "observes": [
+            "meal_day4_margaret.phys.consumed"
+          ],
+          "perceived_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "completed_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "add_buffs": [
+            "buff_warm_porridge"
+          ],
+          "emotion": "安心",
+          "tags": [
+            "用餐"
+          ]
+        },
+        {
+          "id": "margaret.return_bed",
+          "label": "前往R15",
+          "kind": "walk",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "margaret",
+          "when": {
+            "margaret.phys.asleep": false,
+            "event:margaret.eat_supper.done": true
+          },
+          "writes": {
+            "margaret.room": "R15"
+          },
+          "observes": [
+            "margaret.room"
+          ],
+          "route_rooms": [
+            "F03",
+            "R15"
+          ],
+          "not_before_game_minutes": 1268
+        },
+        {
+          "id": "margaret.sleep_night",
+          "label": "洗漱后躺回自己的床，安眠至翌晨",
+          "kind": "interact",
+          "at": "R15",
+          "minutes": 2,
+          "priority": 50,
+          "once": true,
+          "focus": "R15-bed",
+          "interaction_slot": "R15-bed",
+          "when": {
+            "margaret.phys.asleep": false,
+            "event:margaret.return_bed.done": true
+          },
+          "writes": {
+            "margaret.phys.asleep": true
+          },
+          "observes": [
+            "margaret.phys.asleep"
+          ],
+          "emotion": "睡眠",
+          "tags": [
+            "睡眠"
+          ],
+          "perceived_need_effects": {
+            "energy": 85
+          },
+          "completed_need_effects": {
+            "energy": 85
+          }
+        },
+        {
+          "id": "margaret.rest_0",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "B2-control",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "margaret",
+          "interaction_slot": "margaret",
+          "when": {
+            "margaret.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "margaret.rest_1",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "margaret",
+          "interaction_slot": "margaret",
+          "when": {
+            "margaret.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "margaret.rest_2",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "R15",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "margaret",
+          "interaction_slot": "margaret",
+          "when": {
+            "margaret.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "margaret.stand_watch",
+          "label": "在已封隔的控制侧到岗轮值，记录通口并耗用夜间缓冲储备",
+          "kind": "interact",
+          "at": "B2-control",
+          "minutes": 30,
+          "priority": 35,
+          "once": true,
+          "focus": "margaret",
+          "interaction_slot": "margaret",
+          "when": {
+            "margaret.phys.asleep": false,
+            "margaret.doc.watch_accepted": true,
+            "r07.phys.doses": 1,
+            "watch_supply.phys.ready": true,
+            "airlock.lock.sealed": true
+          },
+          "requires": {
+            "r07.phys.doses": 1,
+            "watch_supply.phys.ready": true,
+            "airlock.lock.sealed": true
+          },
+          "writes": {
+            "r07.phys.doses": 0,
+            "watch_supply.phys.ready": false,
+            "night_day4.phys.secured": true
+          },
+          "observes": [
+            "night_day4.phys.secured"
+          ],
+          "completed_need_effects": {
+            "energy": -18
+          },
+          "tags": [
+            "守望"
+          ],
+          "public_completion_text": "玛格丽特：我守控制侧，你记时。针位越过这道刻线就换人退回，谁也不拿硬撑充当安全余量。"
+        }
+      ],
+      "perceptions": [
+        {"id":"margaret.night_safety","label":"核对已安装的门锁或实际执行的夜间安排","when":{"margaret.room":"B2-control","margaret.phys.asleep":false,"night_day4.phys.secured":true},"observes":["night_day4.phys.secured","night_day4.doc.strategy"]},
+        {"id":"margaret.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"margaret.room":"F03","margaret.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "mora",
+      "name": "茉拉",
+      "home_room": "R16",
+      "home_bed": "R16-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"mora.room":"R16","mora.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.5,"safety":1.3,"solidarity":1.1},"modifiers":[]},
+      "actions": [
+        {
+          "id": "mora.wake",
+          "label": "醒来，确认此刻身处自己的卧室",
+          "kind": "interact",
+          "at": "R16",
+          "minutes": 1,
+          "priority": 80,
+          "once": true,
+          "focus": "R16-bed",
+          "interaction_slot": "R16-bed",
+          "writes": {
+            "mora.phys.asleep": false
+          },
+          "observes": [
+            "mora.room",
+            "mora.phys.asleep"
+          ],
+          "add_buffs": [
+            "condition_mora_day4"
+          ],
+          "emotion": "安心"
+        },
+        {
+          "id": "mora.morning_care",
+          "label": "饮水洗漱，整理随身器具",
+          "kind": "interact",
+          "at": "R16",
+          "minutes": 6,
+          "priority": 22,
+          "once": true,
+          "focus": "R16-basin",
+          "interaction_slot": "R16-basin",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.wake.done": true
+          },
+          "perceived_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "completed_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "tags": [
+            "自护",
+            "清洁"
+          ]
+        },
+        {
+          "id": "mora.to_infirmary",
+          "label": "前往一楼临时医疗角",
+          "kind": "walk",
+          "at": "R16",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "mora",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.morning_care.done": true
+          },
+          "writes": {
+            "mora.room": "1F-Infirmary"
+          },
+          "observes": [
+            "mora.room"
+          ],
+          "route_rooms": [
+            "R16",
+            "1F-Infirmary"
+          ]
+        },
+        {
+          "id": "mora.treat_moran",
+          "label": "给莫兰缓慢使用R-07并观察急性反应",
+          "kind": "interact",
+          "at": "1F-Infirmary",
+          "minutes": 5,
+          "priority": 80,
+          "once": true,
+          "focus": "medical.desk",
+          "interaction_slot": "medical.desk",
+          "when": {
+            "mora.phys.asleep": false,
+            "bertrand.phys.rescued_moran": true,
+            "r07.phys.ready": true
+          },
+          "requires": {
+            "moran.room": "1F-Infirmary",
+            "r07.phys.doses": 3,
+            "moran.phys.incapacitated": false
+          },
+          "writes": {
+            "r07.phys.doses": 2,
+            "moran.phys.dose": 0,
+            "moran.phys.cured": true,
+            "moran.phys.recovering": true,
+            "moran.phys.observation_complete": false
+          },
+          "observes": [
+            "r07.phys.doses",
+            "moran.phys.cured",
+            "moran.phys.recovering",
+            "moran.phys.observation_complete"
+          ],
+          "tell": [
+            {
+              "actor": "moran",
+              "room": "1F-Infirmary",
+              "fields": [],
+              "results": [
+                "moran.phys.cured"
+              ]
+            },
+            {
+              "actor": "moran",
+              "fields": [],
+              "results": [
+                "moran.phys.cured",
+                "moran.phys.recovering",
+                "moran.phys.observation_complete"
+              ],
+              "room": "1F-Infirmary"
+            }
+          ],
+          "tags": [
+            "医护"
+          ],
+          "reserve": [
+            "actor.moran"
+          ],
+          "public_completion_text": "茉拉：这剂药先压住眼前的反应，不能把刚才吸进去的一切当作没发生。看着我的手，慢慢呼吸；等我数完再回答。"
+        },
+        {
+          "id": "mora.treat_bertrand",
+          "label": "给贝尔特朗缓慢使用R-07并观察急性反应",
+          "kind": "interact",
+          "at": "1F-Infirmary",
+          "minutes": 5,
+          "priority": 80,
+          "once": true,
+          "focus": "medical.desk",
+          "interaction_slot": "medical.desk",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.treat_moran.done": true
+          },
+          "requires": {
+            "bertrand.room": "1F-Infirmary",
+            "r07.phys.doses": 2,
+            "bertrand.phys.incapacitated": false
+          },
+          "writes": {
+            "r07.phys.doses": 1,
+            "bertrand.phys.dose": 0,
+            "bertrand.phys.cured": true,
+            "victims.phys.cured": true,
+            "bertrand.phys.recovering": true,
+            "bertrand.phys.observation_complete": false
+          },
+          "observes": [
+            "r07.phys.doses",
+            "bertrand.phys.cured",
+            "victims.phys.cured",
+            "bertrand.phys.recovering",
+            "bertrand.phys.observation_complete"
+          ],
+          "tell": [
+            {
+              "actor": "bertrand",
+              "room": "1F-Infirmary",
+              "fields": [],
+              "results": [
+                "bertrand.phys.cured",
+                "victims.phys.cured"
+              ]
+            },
+            {
+              "actor": "veronica",
+              "room": "1F-Infirmary",
+              "fields": [],
+              "results": [
+                "victims.phys.cured"
+              ]
+            },
+            {
+              "actor": "bertrand",
+              "fields": [],
+              "results": [
+                "bertrand.phys.cured",
+                "bertrand.phys.recovering",
+                "bertrand.phys.observation_complete"
+              ],
+              "room": "1F-Infirmary"
+            },
+            {
+              "actor": "detective",
+              "fields": [],
+              "results": [
+                "r07.phys.doses",
+                "victims.phys.cured"
+              ],
+              "rooms": [
+                "B2-control",
+                "B1-hazard",
+                "1F-Infirmary"
+              ],
+              "channel": "speaking_tube"
+            },
+            {
+              "actor": "margaret",
+              "fields": [],
+              "results": [
+                "r07.phys.doses",
+                "victims.phys.cured"
+              ],
+              "rooms": [
+                "B2-control",
+                "B1-hazard",
+                "1F-Infirmary"
+              ],
+              "channel": "speaking_tube"
+            }
+          ],
+          "tags": [
+            "医护"
+          ],
+          "reserve": [
+            "actor.bertrand"
+          ],
+          "public_completion_text": "茉拉按住贝尔特朗想撑起的肩：救人的那段已经走完了。现在轮到你坐稳；我会告诉下面怎样交班，你不需要再把自己送下去证明什么。"
+        },
+        {
+          "id": "mora.to_supper",
+          "label": "前往一楼大食堂",
+          "kind": "walk",
+          "at": "1F-Infirmary",
+          "minutes": 3,
+          "priority": 26,
+          "once": true,
+          "focus": "mora",
+          "when": {
+            "mora.phys.asleep": false,
+            "day4.doc.crisis_reported": true,
+            "victims.phys.cured": true,
+            "victims.phys.observation_complete": true
+          },
+          "writes": {
+            "mora.room": "F03"
+          },
+          "observes": [
+            "mora.room"
+          ],
+          "route_rooms": [
+            "1F-Infirmary",
+            "F03"
+          ],
+          "not_before_game_minutes": 1080,
+          "perceived_need_effects": {
+            "hunger": 25,
+            "social": 10
+          },
+          "tags": [
+            "用餐"
+          ]
+        },
+        {
+          "id": "mora.eat_supper",
+          "label": "在餐桌上领取一份热食，与同伴吃完晚餐",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 18,
+          "priority": 34,
+          "once": true,
+          "focus": "F03-table",
+          "interaction_slot": "F03-seat-mora",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.to_supper.done": true,
+            "meal_day4.phys.ready": true
+          },
+          "requires": {
+            "meal_day4.phys.ready": true
+          },
+          "writes": {
+            "meal_day4_mora.phys.consumed": true
+          },
+          "observes": [
+            "meal_day4_mora.phys.consumed"
+          ],
+          "perceived_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "completed_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "add_buffs": [
+            "buff_warm_porridge"
+          ],
+          "emotion": "安心",
+          "tags": [
+            "用餐"
+          ]
+        },
+        {
+          "id": "mora.return_bed",
+          "label": "前往R16",
+          "kind": "walk",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "mora",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.eat_supper.done": true
+          },
+          "writes": {
+            "mora.room": "R16"
+          },
+          "observes": [
+            "mora.room"
+          ],
+          "route_rooms": [
+            "F03",
+            "R16"
+          ],
+          "not_before_game_minutes": 1272
+        },
+        {
+          "id": "mora.sleep_night",
+          "label": "洗漱后躺回自己的床，安眠至翌晨",
+          "kind": "interact",
+          "at": "R16",
+          "minutes": 2,
+          "priority": 50,
+          "once": true,
+          "focus": "R16-bed",
+          "interaction_slot": "R16-bed",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.return_bed.done": true
+          },
+          "writes": {
+            "mora.phys.asleep": true
+          },
+          "observes": [
+            "mora.phys.asleep"
+          ],
+          "emotion": "睡眠",
+          "tags": [
+            "睡眠"
+          ],
+          "perceived_need_effects": {
+            "energy": 85
+          },
+          "completed_need_effects": {
+            "energy": 85
+          }
+        },
+        {
+          "id": "mora.rest_0",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "1F-Infirmary",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "mora",
+          "interaction_slot": "mora",
+          "when": {
+            "mora.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "mora.rest_1",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "mora",
+          "interaction_slot": "mora",
+          "when": {
+            "mora.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "mora.rest_2",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "R16",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "mora",
+          "interaction_slot": "mora",
+          "when": {
+            "mora.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "mora.evaluate_night",
+          "label": "核对用药与伤者均实际脱险",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 35,
+          "once": true,
+          "focus": "mora",
+          "interaction_slot": "mora",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.eat_supper.done": true,
+            "day4.doc.crisis_reported": true
+          },
+          "writes": {
+            "mora.doc.day4_judgment": "核对用药与伤者均实际脱险"
+          },
+          "observes": [
+            "mora.doc.day4_judgment"
+          ]
+        },
+        {
+          "id": "mora.observe_recovery",
+          "label": "留两名伤者在医疗角，持续复测呼吸和脉搏",
+          "kind": "interact",
+          "at": "1F-Infirmary",
+          "minutes": 20,
+          "priority": 74,
+          "once": true,
+          "focus": "medical.desk",
+          "interaction_slot": "medical.desk",
+          "when": {
+            "mora.phys.asleep": false,
+            "event:mora.treat_bertrand.done": true,
+            "victims.phys.cured": true
+          },
+          "requires": {
+            "moran.room": "1F-Infirmary",
+            "bertrand.room": "1F-Infirmary",
+            "moran.phys.incapacitated": false,
+            "bertrand.phys.incapacitated": false
+          },
+          "reserve": [
+            "actor.moran",
+            "actor.bertrand"
+          ],
+          "writes": {
+            "moran.phys.observation_complete": true,
+            "bertrand.phys.observation_complete": true,
+            "victims.phys.observation_complete": true
+          },
+          "observes": [
+            "moran.phys.observation_complete",
+            "bertrand.phys.observation_complete",
+            "victims.phys.observation_complete"
+          ],
+          "tags": [
+            "医护"
+          ],
+          "public_completion_text": "茉拉把复测时刻写在药签背面：现在可以慢走，今晚不再下低位区，也不负重。胸闷、眩光或手抖再来，都要叫我；明天仍须复查。",
+          "tell": [
+            {
+              "actor": "moran",
+              "fields": [],
+              "results": [
+                "moran.phys.observation_complete",
+                "bertrand.phys.observation_complete",
+                "victims.phys.observation_complete"
+              ],
+              "room": "1F-Infirmary"
+            },
+            {
+              "actor": "bertrand",
+              "fields": [],
+              "results": [
+                "moran.phys.observation_complete",
+                "bertrand.phys.observation_complete",
+                "victims.phys.observation_complete"
+              ],
+              "room": "1F-Infirmary"
+            },
+            {
+              "actor": "veronica",
+              "fields": [],
+              "results": [
+                "moran.phys.observation_complete",
+                "bertrand.phys.observation_complete",
+                "victims.phys.observation_complete"
+              ],
+              "room": "1F-Infirmary"
+            }
+          ]
+        }
+      ],
+      "perceptions": [
+        {"id":"mora.r07_ready","label":"核对药柜中三份已经封装的R-07","when":{"mora.room":"1F-Infirmary","mora.phys.asleep":false,"r07.phys.ready":true},"observes":["r07.phys.ready","r07.phys.doses"]},
+        {"id":"mora.victims_arrive","label":"看到贝尔特朗架着莫兰进入诊疗处","when":{"mora.room":"1F-Infirmary","mora.phys.asleep":false,"moran.room":"1F-Infirmary","bertrand.phys.rescued_moran":true},"observes":["bertrand.phys.rescued_moran"]},
+        {"id":"mora.day4_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"mora.room":"F03","mora.phys.asleep":false,"meal_day4.phys.ready":true},"observes":["meal_day4.phys.ready"]}
+      ]
+    },
+    {
+      "id": "demon",
+      "name": "代管者",
+      "home_room": "1F-Shaft-Monitor",
+      "knows": {"demon.room":"1F-Shaft-Monitor","demon.phys.asleep":false},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.5,"reason":1.2,"art":1},"modifiers":[]},
+      "actions": [
+        {"id":"demon.to_elena","label":"前往B2联锁阀廊","kind":"walk","at":"1F-Shaft-Monitor","minutes":0.1,"priority":90,"once":true,"focus":"demon","when":{"demon.phys.asleep":false,"elena.phys.in_hazard":true},"writes":{"demon.room":"B2-valve"},"observes":["demon.room"],"route_rooms":["1F-Shaft-Monitor","B2-valve"]},
+        {"id":"demon.carry_elena_to_safety","label":"依第七条把伊莲娜抱回安全卧室，离开阀门","kind":"walk","at":"B2-valve","minutes":0.2,"priority":90,"once":true,"focus":"elena","interaction_slot":"elena","when":{"demon.phys.asleep":false,"event:demon.to_elena.done":true},"requires":{"elena.room":"B2-valve"},"writes":{"elena.room":"R11","elena.phys.in_hazard":false,"elena.phys.earmuffs":false,"elena.doc.escorted_safely":true,"elena.doc.deception_discovered":true,"demon.room":"R11"},"observes":["demon.room"],"escort":"elena","tell":[{"actor":"elena","room":"R11","fields":[],"results":["elena.room","elena.doc.deception_discovered","elena.doc.escorted_safely"]}]}
+      ],
+      "perceptions": [
+        {"id":"demon.ignorant_caller","label":"沿契约感知到耳罩下的伤员处于险地","when":{"elena.phys.in_hazard":true},"observes":["elena.phys.in_hazard"]}
+      ]
+    }
+  ],
+  "facts": {
+    "lucian.room": "R01",
+    "lucian.phys.asleep": true,
+    "gu.room": "R02",
+    "gu.phys.asleep": true,
+    "quer.room": "R03",
+    "quer.phys.asleep": true,
+    "ward.room": "R04",
+    "ward.phys.asleep": true,
+    "detective.room": "R05",
+    "detective.phys.asleep": true,
+    "huo.room": "R06",
+    "huo.phys.asleep": true,
+    "shen.room": "R07",
+    "shen.phys.asleep": true,
+    "su.room": "R08",
+    "su.phys.asleep": true,
+    "selma.room": "R09",
+    "selma.phys.asleep": true,
+    "ruan.room": "R10",
+    "ruan.phys.asleep": true,
+    "elena.room": "R11",
+    "elena.phys.asleep": true,
+    "moran.room": "R12",
+    "moran.phys.asleep": true,
+    "veronica.room": "R13",
+    "veronica.phys.asleep": true,
+    "bertrand.room": "R14",
+    "bertrand.phys.asleep": true,
+    "margaret.room": "R15",
+    "margaret.phys.asleep": true,
+    "mora.room": "R16",
+    "mora.phys.asleep": true,
+    "demon.room": "1F-Shaft-Monitor",
+    "demon.phys.asleep": false,
+    "island_environment.phys.earthquake": false,
+    "backflow.phys.active": false,
+    "B1.doc.warning": "低位阀廊的源质倒灌可致命；已经读懂这项具体警告的人不适用第七条无知免死",
+    "B1.doc.current_warning": false,
+    "B2.doc.topology": "B1服务廊沿检修坡道下行至B2控制室；隔墙通口接低位阀廊，不能把控制室与阀廊视为同一空间",
+    "B2.trace.closed_boundary": "控制室隔离门已经闭合，门框与整圈阀道共同限定空气越界的边界",
+    "B2.trace.leak_path": "门虽闭合，松动联锁阀的旁路仍会让污染气体从低位阀廊流入控制室",
+    "B2.doc.temporary_rule": "言灵可以约束已理解的局部通行规则；耗尽专注后不能维持，机械止挡仍需实际安装",
+    "contract.doc.seven": "第七条只保护尚不知道当前具体致命危险的在册者；保护义务可通过把人移到安全处履行",
+    "airlock.lock.sealed": false,
+    "hazard_gate.lock.secured": false,
+    "B2.lock.ratchet_fitted": false,
+    "night_day4.phys.secured": false,
+    "night_day4.doc.strategy": "",
+    "night_day4.doc.plan_chosen": false,
+    "night_day4.doc.safe_room_available": true,
+    "night_day4.doc.false_inventory": false,
+    "watch_supply.phys.ready": false,
+    "r07.phys.doses": 0,
+    "r07.phys.ready": false,
+    "r07.phys.raw_stock": 3,
+    "moran.phys.in_hazard": false,
+    "moran.phys.dose": 0,
+    "moran.phys.symptomatic": false,
+    "moran.phys.incapacitated": false,
+    "moran.phys.cured": false,
+    "bertrand.phys.in_hazard": false,
+    "bertrand.phys.dose": 0,
+    "bertrand.phys.symptomatic": false,
+    "bertrand.phys.incapacitated": false,
+    "bertrand.phys.cured": false,
+    "bertrand.phys.rescued_moran": false,
+    "victims.phys.cured": false,
+    "elena.phys.earmuffs": false,
+    "elena.phys.in_hazard": false,
+    "elena.doc.escorted_safely": false,
+    "elena.doc.deception_discovered": false,
+    "elena.doc.hazard_known": false,
+    "detour.doc.invited": false,
+    "day4.doc.safety_briefed": false,
+    "day4.doc.crisis_reported": false,
+    "meal_day4.phys.ready": false,
+    "R05.phys.drinking_water_available": true,
+    "detective.doc.water_return_room": "",
+    "moran.phys.recovering": false,
+    "moran.phys.observation_complete": false,
+    "bertrand.phys.recovering": false,
+    "bertrand.phys.observation_complete": false,
+    "victims.phys.observation_complete": false,
+    "bertrand.phys.pulled_moran_clear": false,
+    "margaret.doc.watch_accepted": false
+  },
+  "fact_labels": {
+    "B2.doc.topology": "坡道、控制室与隔墙通口的空间关系",
+    "B2.trace.closed_boundary": "闭合门扇与完整边界",
+    "B2.trace.leak_path": "绕过门扇的污染旁路",
+    "B2.doc.temporary_rule": "局部规则的时效与代价",
+    "contract.doc.seven": "第七条的具体知情与移离义务",
+    "night_day4.phys.secured": "人员已按选定办法度过危险窗口",
+    "moran.phys.in_hazard": "莫兰进入低位污染区",
+    "bertrand.phys.rescued_moran": "贝尔特朗实际把莫兰架离阀廊",
+    "victims.phys.cured": "两名伤者已完成急性暴露处置",
+    "meal_day4.phys.ready": "第4日晚餐已备好",
+    "moran.phys.cured": "莫兰已完成急性暴露处置（仍需观察）",
+    "moran.phys.recovering": "莫兰急救后仍有乏力和不适",
+    "moran.phys.observation_complete": "莫兰已完成床边观察，可以慢行",
+    "bertrand.phys.cured": "贝尔特朗已完成急性暴露处置（仍需观察）",
+    "bertrand.phys.recovering": "贝尔特朗急救后仍有乏力和不适",
+    "bertrand.phys.observation_complete": "贝尔特朗已完成床边观察，可以慢行",
+    "victims.phys.observation_complete": "两名伤者已完成实际床边观察",
+    "bertrand.phys.pulled_moran_clear": "贝尔特朗已把莫兰拖过隔墙退到控制室",
+    "margaret.doc.watch_accepted": "玛格丽特实际接受控制侧轮值"
+  },
+  "expectations": [
+    {
+      "id": "lucian.sleep_night",
+      "action": "lucian.sleep_night"
+    },
+    {
+      "id": "gu.sleep_night",
+      "action": "gu.sleep_night"
+    },
+    {
+      "id": "quer.sleep_night",
+      "action": "quer.sleep_night"
+    },
+    {
+      "id": "ward.sleep_night",
+      "action": "ward.sleep_night"
+    },
+    {
+      "id": "detective.sleep_night",
+      "action": "detective.sleep_night"
+    },
+    {
+      "id": "huo.sleep_night",
+      "action": "huo.sleep_night"
+    },
+    {
+      "id": "shen.sleep_night",
+      "action": "shen.sleep_night"
+    },
+    {
+      "id": "su.sleep_night",
+      "action": "su.sleep_night"
+    },
+    {
+      "id": "selma.sleep_night",
+      "action": "selma.sleep_night"
+    },
+    {
+      "id": "ruan.sleep_night",
+      "action": "ruan.sleep_night"
+    },
+    {
+      "id": "elena.sleep_night",
+      "action": "elena.sleep_night"
+    },
+    {
+      "id": "moran.sleep_night",
+      "action": "moran.sleep_night"
+    },
+    {
+      "id": "veronica.sleep_night",
+      "action": "veronica.sleep_night"
+    },
+    {
+      "id": "bertrand.sleep_night",
+      "action": "bertrand.sleep_night"
+    },
+    {
+      "id": "margaret.sleep_night",
+      "action": "margaret.sleep_night"
+    },
+    {
+      "id": "mora.sleep_night",
+      "action": "mora.sleep_night"
+    },
+    {
+      "id": "detective.deduce_airlock",
+      "action": "detective.deduce_airlock"
+    },
+    {
+      "id": "detective.seal_airlock",
+      "action": "detective.seal_airlock"
+    },
+    {
+      "id": "detective.report_crisis",
+      "action": "detective.report_crisis"
+    },
+    {
+      "id": "mora.treat_moran",
+      "action": "mora.treat_moran"
+    },
+    {
+      "id": "mora.treat_bertrand",
+      "action": "mora.treat_bertrand"
+    },
+    {
+      "id": "night_day4.doc.plan_chosen",
+      "condition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "night_day4",
+          "facet": "doc",
+          "field": "plan_chosen"
+        },
+        "value": true
+      }
+    },
+    {
+      "id": "night_day4.phys.secured",
+      "condition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "night_day4",
+          "facet": "phys",
+          "field": "secured"
+        },
+        "value": true
+      }
+    },
+    {
+      "id": "victims.phys.cured",
+      "condition": {
+        "op": "equals",
+        "ref": {
+          "type": "ref",
+          "object": "victims",
+          "facet": "phys",
+          "field": "cured"
+        },
+        "value": true
+      }
+    },
+    {
+      "id": "optional_elena_visit_returns_to_mainline",
+      "condition": {
+        "op": "not",
+        "item": {
+          "op": "all",
+          "items": [
+            {
+              "op": "equals",
+              "ref": {
+                "type": "ref",
+                "object": "event:detective.seek_elena",
+                "facet": "state",
+                "field": "done"
+              },
+              "value": true
+            },
+            {
+              "op": "not",
+              "item": {
+                "op": "equals",
+                "ref": {
+                  "type": "ref",
+                  "object": "event:detective.to_supper",
+                  "facet": "state",
+                  "field": "done"
+                },
+                "value": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "rescue_leaves_contaminated_gallery_before_slow_ascent",
+      "before": "bertrand.carry_moran",
+      "after": "bertrand.carry_moran_upstairs"
+    },
+    {
+      "id": "acute_treatment_precedes_observation",
+      "before": "mora.treat_bertrand",
+      "after": "mora.observe_recovery"
+    },
+    {
+      "id": "injured_veteran_observed_before_supper",
+      "before": "mora.observe_recovery",
+      "after": "bertrand.to_supper"
+    }
+  ],
+  "world_events": [
+    {"id":"microquake","at_game_minutes":1050,"label":"17:30，地板与灯具短促震颤，楼下传来金属碰响","writes":{"island_environment.phys.earthquake":true},"tell":["lucian","gu","quer","ward","detective","huo","shen","su","selma","ruan","elena","moran","veronica","bertrand","margaret","mora"]},
+    {"id":"loosened_low_valve","at_game_minutes":1050,"label":"微震震松低位联锁阀，倒灌指示翻转","writes":{"backflow.phys.active":true,"B1.doc.current_warning":true}},
+    {"id":"moran_exposure_symptoms","at_game_minutes":1050,"when":{"moran.phys.cured":false},"when_condition":{"op":"at_least","ref":{"type":"ref","object":"moran","facet":"phys","field":"dose"},"value":60},"writes":{"moran.phys.symptomatic":true},"tell":["moran"]},
+    {"id":"moran_irreversible_exposure","at_game_minutes":1050,"when":{"moran.phys.cured":false},"when_condition":{"op":"at_least","ref":{"type":"ref","object":"moran","facet":"phys","field":"dose"},"value":300},"writes":{"moran.phys.incapacitated":true},"tell":["moran"]},
+    {"id":"bertrand_exposure_symptoms","at_game_minutes":1050,"when":{"bertrand.phys.cured":false},"when_condition":{"op":"at_least","ref":{"type":"ref","object":"bertrand","facet":"phys","field":"dose"},"value":60},"writes":{"bertrand.phys.symptomatic":true},"tell":["bertrand"]},
+    {"id":"bertrand_irreversible_exposure","at_game_minutes":1050,"when":{"bertrand.phys.cured":false},"when_condition":{"op":"at_least","ref":{"type":"ref","object":"bertrand","facet":"phys","field":"dose"},"value":300},"writes":{"bertrand.phys.incapacitated":true},"tell":["bertrand"]}
+  ],
+  "objective_accumulators": [
+    {"active":{"type":"ref","object":"backflow","facet":"phys","field":"active"},"present":{"type":"ref","object":"moran","facet":"phys","field":"in_hazard"},"amount":{"type":"ref","object":"moran","facet":"phys","field":"dose"},"per_game_second":1},
+    {"active":{"type":"ref","object":"backflow","facet":"phys","field":"active"},"present":{"type":"ref","object":"bertrand","facet":"phys","field":"in_hazard"},"amount":{"type":"ref","object":"bertrand","facet":"phys","field":"dose"},"per_game_second":1}
+  ]
+} }

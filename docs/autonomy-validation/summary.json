@@ -1,0 +1,351 @@
+{
+  "source_run": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-5cf1f7fc47fff17006bbb2df",
+  "status": "completed",
+  "stop_reason": "observation_window_completed",
+  "initial_state": {
+    "version": 0,
+    "chapter": 1,
+    "game_time": 420,
+    "day": 1,
+    "status": "running",
+    "stop_reason": "",
+    "horizon": 7200,
+    "campaign_completed": false,
+    "campaign_progress": {
+      "mode": "observation_window",
+      "completed": false,
+      "window_completed": false,
+      "end_minutes": 7200,
+      "label": "第五日观察结束",
+      "phase": {
+        "active": false,
+        "start_minutes": 5760,
+        "label": "自主观察日",
+        "description": "各人依据已经知道的事、身体需要与自己的责任安排生活。",
+        "task_guidance": true
+      }
+    }
+  },
+  "final_state": {
+    "version": 3896,
+    "chapter": 6,
+    "game_time": 7200,
+    "day": 6,
+    "status": "completed",
+    "stop_reason": "observation_window_completed",
+    "horizon": 7200,
+    "campaign_completed": true,
+    "campaign_progress": {
+      "mode": "observation_window",
+      "completed": true,
+      "window_completed": true,
+      "end_minutes": 7200,
+      "label": "第五日观察结束",
+      "phase": {
+        "active": true,
+        "start_minutes": 5760,
+        "label": "自主观察日",
+        "description": "各人依据已经知道的事、身体需要与自己的责任安排生活。",
+        "task_guidance": false
+      }
+    }
+  },
+  "elapsed_seconds": 1005.3684811592102,
+  "all_actor_count": 17,
+  "completed_actions": 2408,
+  "total_action_receipts": 3896,
+  "parsed_action_rows": 3896,
+  "unexpected_action_failures": 0,
+  "invariant_failures": [],
+  "receipt_outcomes": {
+    "completed": 2408,
+    "standing_resource_busy": 1295,
+    "objective_condition_failed": 189,
+    "suggestion_rejected": 4
+  },
+  "host_stopped": true,
+  "graceful_exit": true,
+  "assessment_scope": "runtime_conditions_and_mechanics",
+  "emergence_assessment": "requires_independent_causal_review",
+  "selected_actors": {
+    "detective": {
+      "label": "侦探",
+      "completed_by_day": {
+        "1": 68,
+        "2": 49,
+        "3": 30,
+        "4": 29,
+        "5": 76
+      },
+      "outcomes": {
+        "completed": 252,
+        "standing_resource_busy": 47,
+        "objective_condition_failed": 25
+      },
+      "day5_example": {
+        "receipt_index": 3067,
+        "action": "detective.day5.food_from_F05",
+        "label": "有些饿，去食堂看看能吃什么",
+        "start_minutes": 6526.583333333333,
+        "candidate_count": 6,
+        "decision_drive": {
+          "Action": "detective.day5.food_from_F05",
+          "Score": 11.9581,
+          "NeedContributions": {
+            "emotion:专注": 0,
+            "buff:condition_detective_day2": 0,
+            "buff:full_meal": 0,
+            "buff:condition_detective_day3": 0,
+            "buff:condition_detective_day4": 0,
+            "hunger": 10.9761
+          },
+          "TimeCost": 0.018000000000000002,
+          "BaseBias": 1
+        },
+        "decision_intent": {
+          "Path": "daily",
+          "Task": null,
+          "Step": null,
+          "PhysiologicalNeed": null,
+          "Reason": "当前没有已解锁任务，继续日常判断。",
+          "PhysiologicalRoute": null,
+          "RouteAction": null,
+          "GoalAlgorithm": null,
+          "GoalSequence": null,
+          "GoalObjectives": null
+        },
+        "knowledge_basis_count": 9
+      }
+    },
+    "quer": {
+      "label": "雀儿",
+      "completed_by_day": {
+        "1": 45,
+        "2": 18,
+        "3": 16,
+        "4": 19,
+        "5": 50
+      },
+      "outcomes": {
+        "completed": 148,
+        "objective_condition_failed": 6,
+        "standing_resource_busy": 99
+      },
+      "day5_example": {
+        "receipt_index": 2038,
+        "action": "quer.day5.scheme.quer_reject_patron",
+        "label": "说明自己拒绝由他人代为承担授权",
+        "start_minutes": 6263.083333333333,
+        "candidate_count": 6,
+        "decision_drive": {
+          "Action": "quer.day5.scheme.quer_reject_patron",
+          "Score": -0.018000000000000002,
+          "NeedContributions": {
+            "emotion:安心": 0,
+            "buff:condition_quer_day2": 0,
+            "buff:full_meal": 0,
+            "buff:condition_quer_day3": 0,
+            "buff:condition_quer_day4": 0
+          },
+          "TimeCost": 0.018000000000000002,
+          "BaseBias": 0
+        },
+        "decision_intent": {
+          "Path": "goal",
+          "Task": null,
+          "Step": null,
+          "PhysiologicalNeed": null,
+          "Reason": "根据本人已知条件预测1步行动，检验能否推进3项自身目标；结果仍待现场执行。",
+          "PhysiologicalRoute": null,
+          "RouteAction": null,
+          "GoalAlgorithm": "beam",
+          "GoalSequence": [
+            "quer.day5.scheme.quer_reject_patron"
+          ],
+          "GoalObjectives": [
+            "quer.scheme_goal.quer_terms",
+            "quer.scheme_goal.quer_revocable_agreement",
+            "quer.scheme_goal.quer_reject_patron"
+          ]
+        },
+        "knowledge_basis_count": 6
+      }
+    },
+    "lucian": {
+      "label": "卢西安",
+      "completed_by_day": {
+        "1": 37,
+        "2": 16,
+        "3": 18,
+        "4": 17,
+        "5": 62
+      },
+      "outcomes": {
+        "completed": 150,
+        "objective_condition_failed": 13,
+        "standing_resource_busy": 108,
+        "suggestion_rejected": 1
+      },
+      "day5_example": {
+        "receipt_index": 1961,
+        "action": "lucian.day5.food_from_R01",
+        "label": "有些饿，去食堂看看能吃什么",
+        "start_minutes": 6242.2,
+        "candidate_count": 6,
+        "decision_drive": {
+          "Action": "lucian.day5.food_from_R01",
+          "Score": 23.332600000000003,
+          "NeedContributions": {
+            "emotion:安心": 0,
+            "buff:condition_lucian_day2": 0,
+            "buff:full_meal": 0,
+            "buff:condition_lucian_day3": 0,
+            "buff:condition_lucian_day4": 0,
+            "hunger": 22.350600000000004
+          },
+          "TimeCost": 0.018000000000000002,
+          "BaseBias": 1
+        },
+        "decision_intent": {
+          "Path": "daily",
+          "Task": null,
+          "Step": null,
+          "PhysiologicalNeed": null,
+          "Reason": "尚未选择行动。",
+          "PhysiologicalRoute": null,
+          "RouteAction": null,
+          "GoalAlgorithm": null,
+          "GoalSequence": null,
+          "GoalObjectives": null
+        },
+        "knowledge_basis_count": 9
+      }
+    },
+    "ruan": {
+      "label": "阮清月",
+      "completed_by_day": {
+        "1": 34,
+        "2": 20,
+        "3": 21,
+        "4": 16,
+        "5": 30
+      },
+      "outcomes": {
+        "completed": 121,
+        "objective_condition_failed": 6,
+        "standing_resource_busy": 24
+      },
+      "day5_example": {
+        "receipt_index": 1975,
+        "action": "ruan.day5.scheme.test_design",
+        "label": "把登记办法中的可检验差异排成两列",
+        "start_minutes": 6245.513333333333,
+        "candidate_count": 6,
+        "decision_drive": {
+          "Action": "ruan.day5.scheme.test_design",
+          "Score": -0.024,
+          "NeedContributions": {
+            "emotion:专注": 0,
+            "buff:full_meal": 0,
+            "buff:condition_ruan_day2": 0,
+            "buff:condition_ruan_day3": 0,
+            "buff:condition_ruan_day4": 0
+          },
+          "TimeCost": 0.024,
+          "BaseBias": 0
+        },
+        "decision_intent": {
+          "Path": "goal",
+          "Task": null,
+          "Step": null,
+          "PhysiologicalNeed": null,
+          "Reason": "根据本人已知条件预测2步行动，检验能否推进1项自身目标；结果仍待现场执行。",
+          "PhysiologicalRoute": null,
+          "RouteAction": null,
+          "GoalAlgorithm": "beam",
+          "GoalSequence": [
+            "ruan.day5.scheme.test_design",
+            "ruan.day5.scheme.ruan_test"
+          ],
+          "GoalObjectives": [
+            "ruan.scheme_goal.ruan_test"
+          ]
+        },
+        "knowledge_basis_count": 8
+      }
+    },
+    "shen": {
+      "label": "沈鼐",
+      "completed_by_day": {
+        "1": 38,
+        "2": 22,
+        "3": 21,
+        "4": 20,
+        "5": 62
+      },
+      "outcomes": {
+        "completed": 163,
+        "standing_resource_busy": 149,
+        "objective_condition_failed": 11
+      },
+      "day5_example": {
+        "receipt_index": 2436,
+        "action": "shen.day5.cook_batch",
+        "label": "把四份干粮炖成热食",
+        "start_minutes": 6385.483333333334,
+        "candidate_count": 7,
+        "decision_drive": {
+          "Action": "shen.day5.cook_batch",
+          "Score": 42.745847999999995,
+          "NeedContributions": {
+            "emotion:安心": 0,
+            "buff:full_meal": 0,
+            "buff:condition_shen_day2": 0,
+            "buff:condition_shen_day3": 0,
+            "buff:condition_shen_day4": 0,
+            "comfort": 4.435848,
+            "social": 0,
+            "purpose": 32.4
+          },
+          "TimeCost": 0.09000000000000001,
+          "BaseBias": 6
+        },
+        "decision_intent": {
+          "Path": "daily",
+          "Task": null,
+          "Step": null,
+          "PhysiologicalNeed": null,
+          "Reason": "尚未选择行动。",
+          "PhysiologicalRoute": null,
+          "RouteAction": null,
+          "GoalAlgorithm": null,
+          "GoalSequence": null,
+          "GoalObjectives": null
+        },
+        "knowledge_basis_count": 8
+      }
+    }
+  },
+  "raw_files": {
+    "report.yaml": {
+      "path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-5cf1f7fc47fff17006bbb2df\\report.yaml",
+      "sha256": "5736d62571c1312e56bfa0ba41d0aa63ef0efe965aa9e4b9ada98ea5c590c627"
+    },
+    "actions.yaml": {
+      "path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-5cf1f7fc47fff17006bbb2df\\actions.yaml",
+      "sha256": "1df127548b77d86aa591ed93cd3131d23f9fec7185f73b062e34dc3a08b570d4"
+    },
+    "actions.states.yaml": {
+      "path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-5cf1f7fc47fff17006bbb2df\\actions.states.yaml",
+      "sha256": "8e55cad59c6220e463013700f6604bd77fe814585ea3a1af84f6b20cf5982466"
+    },
+    "actions.acceptance.json": {
+      "path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-5cf1f7fc47fff17006bbb2df\\actions.acceptance.json",
+      "sha256": "e6c126cbea7fc3af7558bd712af99e75c8f7b184c8d73cc00740e642f6f24d69"
+    },
+    "actions.evidence-coverage.json": {
+      "path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-5cf1f7fc47fff17006bbb2df\\actions.evidence-coverage.json",
+      "sha256": "b2a46abf97a35773beed1fe01e1ce51346155aeb0f7cd5a4fa3fdfefb5dcfa08"
+    }
+  }
+}

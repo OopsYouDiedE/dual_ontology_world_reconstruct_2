@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../dv/DuelView.Dv.csproj" />
+    <ProjectReference Include="../reasoning/DuelView.Reasoning.csproj" />
+  </ItemGroup>
+  <!-- Inspect resolved references as well as direct project references so that
+       an adapter cannot bring the retired runtime back transitively. -->
+  <Target Name="RejectLegacyRuntimeDependencies" AfterTargets="ResolveReferences" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <LegacyRuntimeReference Include="@(ReferencePath)"
+        Condition="'%(ReferencePath.Filename)' == 'DuelView.Core' Or '%(ReferencePath.Filename)' == 'DuelView.Session' Or '%(ReferencePath.Filename)' == 'DualOntologyWorldEngine'" />
+    </ItemGroup>
+    <Error Condition="'@(LegacyRuntimeReference)' != ''"
+      Text="The independent runtime must not reference the legacy engine, session, or Godot host: @(LegacyRuntimeReference)" />
+  </Target>
+</Project>

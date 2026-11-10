@@ -1,0 +1,2025 @@
+// 任务是本人已知目标的有限行动计划；身体需求由独立恢复路径处理。
+schema "dv-script-v1";
+data runtime.character_planning { value = {
+  "actors": [
+    {
+      "id": "detective",
+      "planning": {
+        "tasks": [
+          {
+            "id": "d1_gate_trace",
+            "label": "核对门厅鞋印、衣袖和门扇",
+            "priority": 40,
+            "not_before_game_minutes": 0,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "event:detective.wake.done": true,
+              "detective.room": "B-P"
+            },
+            "goal": {
+              "B_case.infer.drag_direction_supported": true
+            },
+            "steps": [
+              {
+                "id": "leave",
+                "action": "detective.leave",
+                "after": [],
+                "done_when": {
+                  "event:detective.leave.done": true
+                }
+              },
+              {
+                "id": "inspect_shoes",
+                "action": "detective.inspect_shoes",
+                "after": [
+                  "leave"
+                ],
+                "done_when": {
+                  "event:detective.inspect_shoes.done": true
+                }
+              },
+              {
+                "id": "inspect_sleeve",
+                "action": "detective.inspect_sleeve",
+                "after": [
+                  "inspect_shoes"
+                ],
+                "done_when": {
+                  "event:detective.inspect_sleeve.done": true
+                }
+              },
+              {
+                "id": "inspect_direction",
+                "action": "detective.inspect_direction",
+                "after": [
+                  "inspect_sleeve"
+                ],
+                "done_when": {
+                  "event:detective.inspect_direction.done": true
+                }
+              },
+              {
+                "id": "deduce_drag",
+                "action": "detective.deduce_drag",
+                "after": [
+                  "inspect_direction"
+                ],
+                "done_when": {
+                  "event:detective.deduce_drag.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d1_trace_sequence",
+            "label": "向同伴核实门槛痕迹的先后",
+            "priority": 40,
+            "not_before_game_minutes": 0,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "B_case.infer.drag_direction_supported": true
+            },
+            "goal": {
+              "B_case.infer.sequence_supported": true
+            },
+            "steps": [
+              {
+                "id": "tell_direction",
+                "action": "detective.tell_direction",
+                "after": [],
+                "done_when": {
+                  "event:detective.tell_direction.done": true
+                }
+              },
+              {
+                "id": "inspect_watermark",
+                "action": "detective.inspect_watermark",
+                "after": [
+                  "tell_direction"
+                ],
+                "done_when": {
+                  "event:detective.inspect_watermark.done": true
+                }
+              },
+              {
+                "id": "inspect_threshold",
+                "action": "detective.inspect_threshold",
+                "after": [
+                  "inspect_watermark"
+                ],
+                "done_when": {
+                  "event:detective.inspect_threshold.done": true
+                }
+              },
+              {
+                "id": "inspect_boots",
+                "action": "detective.inspect_boots",
+                "after": [
+                  "inspect_watermark"
+                ],
+                "done_when": {
+                  "event:detective.inspect_boots.done": true
+                }
+              },
+              {
+                "id": "inspect_lock",
+                "action": "detective.inspect_lock",
+                "after": [
+                  "inspect_boots"
+                ],
+                "done_when": {
+                  "event:detective.inspect_lock.done": true
+                }
+              },
+              {
+                "id": "deduce_sequence",
+                "action": "detective.deduce_sequence",
+                "after": [
+                  "inspect_threshold",
+                  "inspect_lock"
+                ],
+                "done_when": {
+                  "event:detective.deduce_sequence.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d1_kitchen_paths",
+            "label": "核查湿布来处与房间通路",
+            "priority": 40,
+            "not_before_game_minutes": 0,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "detective.infer.question_cloth": true
+            },
+            "goal": {
+              "event:detective.report_b.done": true
+            },
+            "steps": [
+              {
+                "id": "inspect_wetcloth",
+                "action": "detective.inspect_wetcloth",
+                "after": [],
+                "done_when": {
+                  "event:detective.inspect_wetcloth.done": true
+                }
+              },
+              {
+                "id": "inspect_containers",
+                "action": "detective.inspect_containers",
+                "after": [
+                  "inspect_wetcloth"
+                ],
+                "done_when": {
+                  "event:detective.inspect_containers.done": true
+                }
+              },
+              {
+                "id": "inspect_cloth",
+                "action": "detective.inspect_cloth",
+                "after": [
+                  "inspect_containers"
+                ],
+                "done_when": {
+                  "event:detective.inspect_cloth.done": true
+                }
+              },
+              {
+                "id": "inspect_window",
+                "action": "detective.inspect_window",
+                "after": [
+                  "inspect_cloth"
+                ],
+                "done_when": {
+                  "event:detective.inspect_window.done": true
+                }
+              },
+              {
+                "id": "inspect_paths",
+                "action": "detective.inspect_paths",
+                "after": [
+                  "inspect_window"
+                ],
+                "done_when": {
+                  "event:detective.inspect_paths.done": true
+                }
+              },
+              {
+                "id": "deduce_fifth_entity",
+                "action": "detective.deduce_fifth_entity",
+                "after": [
+                  "inspect_paths"
+                ],
+                "done_when": {
+                  "event:detective.deduce_fifth_entity.done": true
+                }
+              },
+              {
+                "id": "report_b",
+                "action": "detective.report_b",
+                "after": [
+                  "deduce_fifth_entity"
+                ],
+                "done_when": {
+                  "event:detective.report_b.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d1_sources",
+            "label": "汇合后核对记录、条文和仪表",
+            "priority": 40,
+            "not_before_game_minutes": 0,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "event:detective.report_b.done": true
+            },
+            "goal": {
+              "island_meeting.phys.done": true
+            },
+            "steps": [
+              {
+                "id": "join",
+                "action": "detective.join",
+                "after": [],
+                "done_when": {
+                  "event:detective.join.done": true
+                }
+              },
+              {
+                "id": "compare_accounts",
+                "action": "detective.compare_accounts",
+                "after": [
+                  "join"
+                ],
+                "done_when": {
+                  "event:detective.compare_accounts.done": true
+                }
+              },
+              {
+                "id": "read_signs",
+                "action": "detective.read_signs",
+                "after": [
+                  "compare_accounts"
+                ],
+                "done_when": {
+                  "event:detective.read_signs.done": true
+                }
+              },
+              {
+                "id": "read_contract",
+                "action": "detective.read_contract",
+                "after": [
+                  "read_signs"
+                ],
+                "done_when": {
+                  "event:detective.read_contract.done": true
+                }
+              },
+              {
+                "id": "play_record",
+                "action": "detective.play_record",
+                "after": [
+                  "read_contract"
+                ],
+                "done_when": {
+                  "event:detective.play_record.done": true
+                }
+              },
+              {
+                "id": "read_log",
+                "action": "detective.read_log",
+                "after": [
+                  "play_record"
+                ],
+                "done_when": {
+                  "event:detective.read_log.done": true
+                }
+              },
+              {
+                "id": "to_stairs",
+                "action": "detective.to_stairs",
+                "after": [
+                  "read_log"
+                ],
+                "done_when": {
+                  "event:detective.to_stairs.done": true
+                }
+              },
+              {
+                "id": "inspect_stairs",
+                "action": "detective.inspect_stairs",
+                "after": [
+                  "to_stairs"
+                ],
+                "done_when": {
+                  "event:detective.inspect_stairs.done": true
+                }
+              },
+              {
+                "id": "to_monitor",
+                "action": "detective.to_monitor",
+                "after": [
+                  "inspect_stairs"
+                ],
+                "done_when": {
+                  "event:detective.to_monitor.done": true
+                }
+              },
+              {
+                "id": "read_gauges",
+                "action": "detective.read_gauges",
+                "after": [
+                  "to_monitor"
+                ],
+                "done_when": {
+                  "event:detective.read_gauges.done": true
+                }
+              },
+              {
+                "id": "inspect_monitor",
+                "action": "detective.inspect_monitor",
+                "after": [
+                  "read_gauges"
+                ],
+                "done_when": {
+                  "event:detective.inspect_monitor.done": true
+                }
+              },
+              {
+                "id": "ask_steward",
+                "action": "detective.ask_steward",
+                "after": [
+                  "inspect_monitor"
+                ],
+                "done_when": {
+                  "event:detective.ask_steward.done": true
+                }
+              },
+              {
+                "id": "deduce_records",
+                "action": "detective.deduce_records",
+                "after": [
+                  "ask_steward"
+                ],
+                "done_when": {
+                  "event:detective.deduce_records.done": true
+                }
+              },
+              {
+                "id": "return_briefing",
+                "action": "detective.return_briefing",
+                "after": [
+                  "deduce_records"
+                ],
+                "done_when": {
+                  "event:detective.return_briefing.done": true
+                }
+              },
+              {
+                "id": "briefing",
+                "action": "detective.briefing",
+                "after": [
+                  "return_briefing"
+                ],
+                "done_when": {
+                  "event:detective.briefing.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d1_poem",
+            "label": "查验讲堂诗歌的出处",
+            "priority": 40,
+            "not_before_game_minutes": 0,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "T01_board.phys.claimed": true,
+              "island_meeting.phys.done": true
+            },
+            "goal": {
+              "event:detective.laugh.done": true
+            },
+            "steps": [
+              {
+                "id": "visit_poem",
+                "action": "detective.visit_poem",
+                "after": [],
+                "done_when": {
+                  "event:detective.visit_poem.done": true
+                }
+              },
+              {
+                "id": "inspect_height",
+                "action": "detective.inspect_height",
+                "after": [
+                  "visit_poem"
+                ],
+                "done_when": {
+                  "event:detective.inspect_height.done": true
+                }
+              },
+              {
+                "id": "inspect_poem",
+                "action": "detective.inspect_poem",
+                "after": [
+                  "inspect_height"
+                ],
+                "done_when": {
+                  "event:detective.inspect_poem.done": true
+                }
+              },
+              {
+                "id": "deduce_poem",
+                "action": "detective.deduce_poem",
+                "after": [
+                  "inspect_poem"
+                ],
+                "done_when": {
+                  "event:detective.deduce_poem.done": true
+                }
+              },
+              {
+                "id": "expose_poem",
+                "action": "detective.expose_poem",
+                "after": [
+                  "deduce_poem"
+                ],
+                "done_when": {
+                  "event:detective.expose_poem.done": true
+                }
+              },
+              {
+                "id": "laugh",
+                "action": "detective.laugh",
+                "after": [
+                  "expose_poem"
+                ],
+                "done_when": {
+                  "event:detective.laugh.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d1_shared_meal",
+            "label": "共同准备晚餐和明日补给",
+            "priority": 30,
+            "not_before_game_minutes": 0,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "event:detective.laugh.done": true
+            },
+            "goal": {
+              "event:detective.plan_tomorrow.done": true
+            },
+            "steps": [
+              {
+                "id": "afternoon_1",
+                "action": "detective.afternoon_1",
+                "after": [],
+                "done_when": {
+                  "event:detective.afternoon_1.done": true
+                }
+              },
+              {
+                "id": "afternoon_2",
+                "action": "detective.afternoon_2",
+                "after": [
+                  "afternoon_1"
+                ],
+                "done_when": {
+                  "event:detective.afternoon_2.done": true
+                }
+              },
+              {
+                "id": "afternoon_rest",
+                "action": "detective.afternoon_rest",
+                "after": [
+                  "afternoon_2"
+                ],
+                "done_when": {
+                  "event:detective.afternoon_rest.done": true
+                }
+              },
+              {
+                "id": "to_supper",
+                "action": "detective.to_supper",
+                "after": [
+                  "afternoon_rest"
+                ],
+                "done_when": {
+                  "event:detective.to_supper.done": true
+                }
+              },
+              {
+                "id": "check_ingredients",
+                "action": "detective.check_ingredients",
+                "after": [
+                  "to_supper"
+                ],
+                "done_when": {
+                  "event:detective.check_ingredients.done": true
+                }
+              },
+              {
+                "id": "check_skins",
+                "action": "detective.check_skins",
+                "after": [
+                  "to_supper"
+                ],
+                "done_when": {
+                  "event:detective.check_skins.done": true
+                }
+              },
+              {
+                "id": "make_supper",
+                "action": "detective.make_supper",
+                "after": [
+                  "check_ingredients",
+                  "check_skins"
+                ],
+                "done_when": {
+                  "event:detective.make_supper.done": true
+                }
+              },
+              {
+                "id": "check_supper",
+                "action": "detective.check_supper",
+                "after": [
+                  "make_supper"
+                ],
+                "done_when": {
+                  "event:detective.check_supper.done": true
+                }
+              },
+              {
+                "id": "clear_table",
+                "action": "detective.clear_table",
+                "after": [
+                  "check_supper"
+                ],
+                "done_when": {
+                  "event:detective.clear_table.done": true
+                }
+              },
+              {
+                "id": "plan_tomorrow",
+                "action": "detective.plan_tomorrow",
+                "after": [
+                  "clear_table"
+                ],
+                "done_when": {
+                  "event:detective.plan_tomorrow.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_rations",
+            "label": "核对补给清册与食堂分配办法",
+            "priority": 40,
+            "not_before_game_minutes": 1860,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "event:detective.day2.morning_care.done": true
+            },
+            "goal": {
+              "ration.policy.mediated": true
+            },
+            "steps": [
+              {
+                "id": "to_monitor",
+                "action": "detective.day2.to_monitor",
+                "after": [],
+                "done_when": {
+                  "event:detective.day2.to_monitor.done": true
+                }
+              },
+              {
+                "id": "inspect_wind",
+                "action": "detective.day2.inspect_wind",
+                "after": [
+                  "to_monitor"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_wind.done": true
+                }
+              },
+              {
+                "id": "to_granary",
+                "action": "detective.day2.to_granary",
+                "after": [
+                  "inspect_wind"
+                ],
+                "done_when": {
+                  "event:detective.day2.to_granary.done": true
+                }
+              },
+              {
+                "id": "inspect_granary",
+                "action": "detective.day2.inspect_granary",
+                "after": [
+                  "to_granary"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_granary.done": true
+                }
+              },
+              {
+                "id": "read_inventory",
+                "action": "detective.day2.read_inventory",
+                "after": [
+                  "inspect_granary"
+                ],
+                "done_when": {
+                  "event:detective.day2.read_inventory.done": true
+                }
+              },
+              {
+                "id": "to_dining",
+                "action": "detective.day2.to_dining",
+                "after": [
+                  "read_inventory"
+                ],
+                "done_when": {
+                  "event:detective.day2.to_dining.done": true
+                }
+              },
+              {
+                "id": "read_ration_terms",
+                "action": "detective.day2.read_ration_terms",
+                "after": [
+                  "to_dining"
+                ],
+                "done_when": {
+                  "event:detective.day2.read_ration_terms.done": true
+                }
+              },
+              {
+                "id": "deduce_ration",
+                "action": "detective.day2.deduce_ration",
+                "after": [
+                  "read_ration_terms"
+                ],
+                "done_when": {
+                  "event:detective.day2.deduce_ration.done": true
+                }
+              },
+              {
+                "id": "persuade_ward",
+                "action": "detective.day2.persuade_ward",
+                "after": [
+                  "deduce_ration"
+                ],
+                "done_when": {
+                  "event:detective.day2.persuade_ward.done": true
+                }
+              },
+              {
+                "id": "persuade_shen",
+                "action": "detective.day2.persuade_shen",
+                "after": [
+                  "persuade_ward"
+                ],
+                "done_when": {
+                  "event:detective.day2.persuade_shen.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_academy_dispatch",
+            "label": "按登记图到中翼安排四院初探",
+            "priority": 38,
+            "not_before_game_minutes": 2190,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "ration.policy.mediated": true,
+              "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+            },
+            "goal": {
+              "detective.room": "2F-cross-M"
+            },
+            "steps": [
+              {
+                "id": "to_academy_dispatch",
+                "action": "detective.day2.to_academy_dispatch",
+                "after": [],
+                "done_when": {
+                  "detective.room": "2F-cross-M"
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_w102",
+            "label": "循登记路线查验文契院纸墨台",
+            "priority": 44,
+            "not_before_game_minutes": 2190,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "ration.policy.mediated": true,
+              "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+              "island_environment.phys.wind_window": true
+            },
+            "goal": {
+              "event:detective.day2.inspect_W102.done": true,
+              "detective.room": "2F-cross-M"
+            },
+            "steps": [
+              {
+                "id": "to_W102",
+                "action": "detective.day2.to_W102",
+                "after": [],
+                "done_when": {
+                  "detective.room": "W-102"
+                }
+              },
+              {
+                "id": "inspect_W102",
+                "action": "detective.day2.inspect_W102",
+                "after": [
+                  "to_W102"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_W102.done": true
+                }
+              },
+              {
+                "id": "return_from_W102",
+                "action": "detective.day2.return_from_W102",
+                "after": [
+                  "inspect_W102"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_W102.done": true,
+                  "detective.room": "2F-cross-M"
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_b102",
+            "label": "循登记路线查验白塔院配药台",
+            "priority": 43,
+            "not_before_game_minutes": 2190,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "ration.policy.mediated": true,
+              "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+              "island_environment.phys.wind_window": true
+            },
+            "goal": {
+              "event:detective.day2.inspect_B102.done": true,
+              "detective.room": "2F-cross-M"
+            },
+            "steps": [
+              {
+                "id": "to_B102",
+                "action": "detective.day2.to_B102",
+                "after": [],
+                "done_when": {
+                  "detective.room": "B-102"
+                }
+              },
+              {
+                "id": "inspect_B102",
+                "action": "detective.day2.inspect_B102",
+                "after": [
+                  "to_B102"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_B102.done": true
+                }
+              },
+              {
+                "id": "return_from_B102",
+                "action": "detective.day2.return_from_B102",
+                "after": [
+                  "inspect_B102"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_B102.done": true,
+                  "detective.room": "2F-cross-M"
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_f104",
+            "label": "循登记路线查验铁工院备件台",
+            "priority": 42,
+            "not_before_game_minutes": 2190,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "ration.policy.mediated": true,
+              "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+              "island_environment.phys.wind_window": true
+            },
+            "goal": {
+              "event:detective.day2.inspect_F104.done": true,
+              "detective.room": "2F-cross-M"
+            },
+            "steps": [
+              {
+                "id": "to_F104",
+                "action": "detective.day2.to_F104",
+                "after": [],
+                "done_when": {
+                  "detective.room": "F-104"
+                }
+              },
+              {
+                "id": "inspect_F104",
+                "action": "detective.day2.inspect_F104",
+                "after": [
+                  "to_F104"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_F104.done": true
+                }
+              },
+              {
+                "id": "return_from_F104",
+                "action": "detective.day2.return_from_F104",
+                "after": [
+                  "inspect_F104"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_F104.done": true,
+                  "detective.room": "2F-cross-M"
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_s102",
+            "label": "循登记路线查验星仪院仪器台",
+            "priority": 41,
+            "not_before_game_minutes": 2190,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "ration.policy.mediated": true,
+              "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+              "island_environment.phys.wind_window": true
+            },
+            "goal": {
+              "event:detective.day2.inspect_S102.done": true,
+              "detective.room": "2F-cross-M"
+            },
+            "steps": [
+              {
+                "id": "to_S102",
+                "action": "detective.day2.to_S102",
+                "after": [],
+                "done_when": {
+                  "detective.room": "S-102"
+                }
+              },
+              {
+                "id": "inspect_S102",
+                "action": "detective.day2.inspect_S102",
+                "after": [
+                  "to_S102"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_S102.done": true
+                }
+              },
+              {
+                "id": "return_from_S102",
+                "action": "detective.day2.return_from_S102",
+                "after": [
+                  "inspect_S102"
+                ],
+                "done_when": {
+                  "event:detective.day2.inspect_S102.done": true,
+                  "detective.room": "2F-cross-M"
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_compare_academies",
+            "label": "对照亲见结果、签名报告与物资清册",
+            "priority": 38,
+            "not_before_game_minutes": 2190,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "W102.trace.paper_register": "纸墨台上可比对旧纸纤维、样墨和刮擦痕；借阅牌要求保留原页与编号，原卷库封签不能凭一张旧签名拆开。",
+              "B102.trace.preparation_limits": "洁净药柜只有空瓶、滤布和量具；配制牌写明原料须从已封签粮药清册领用，未制成的螯合剂不能按现成药发放。",
+              "F104.trace.parts_fit": "备件台列出棘齿、止动销和垫片的配合尺寸；现成备件只能替换匹配的机械件，不能代替雀儿的精钢探针或霍铎的棘轮扳手。",
+              "S102.trace.reference_scale": "仪器台保留机械标尺零点、读数时刻和压差对照表；晶体发亮只是单项显示，未对照机械读数与当前风窗就不能据此判定通路安全。"
+            },
+            "goal": {
+              "detective.infer.academy_resource_limits": true
+            },
+            "steps": [
+              {
+                "id": "read_academy_reports",
+                "action": "detective.day2.read_academy_reports",
+                "after": [],
+                "done_when": {
+                  "event:detective.day2.read_academy_reports.done": true
+                }
+              },
+              {
+                "id": "deduce_academy_resources",
+                "action": "detective.day2.deduce_academy_resources",
+                "after": [
+                  "read_academy_reports"
+                ],
+                "done_when": {
+                  "event:detective.day2.deduce_academy_resources.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_reports_after_close",
+            "label": "关窗后核对巡检者签名报告",
+            "priority": 42,
+            "not_before_game_minutes": 2461,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "ration.policy.mediated": true,
+              "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+              "island_environment.phys.wind_window": false
+            },
+            "goal": {
+              "detective.infer.academy_resource_limits": true
+            },
+            "steps": [
+              {
+                "id": "to_academy_dispatch",
+                "action": "detective.day2.to_academy_dispatch",
+                "after": [],
+                "done_when": {
+                  "detective.room": "2F-cross-M"
+                }
+              },
+              {
+                "id": "read_academy_reports",
+                "action": "detective.day2.read_academy_reports",
+                "after": [
+                  "to_academy_dispatch"
+                ],
+                "done_when": {
+                  "event:detective.day2.read_academy_reports.done": true
+                }
+              },
+              {
+                "id": "deduce_academy_reports",
+                "action": "detective.day2.deduce_academy_reports",
+                "after": [
+                  "read_academy_reports"
+                ],
+                "done_when": {
+                  "event:detective.day2.deduce_academy_reports.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d2_resource_handoff",
+            "label": "把已核实的资源限制带回食堂",
+            "priority": 35,
+            "not_before_game_minutes": 2190,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "detective.infer.academy_resource_limits": true
+            },
+            "goal": {
+              "event:detective.day2.finish_academy_survey.done": true
+            },
+            "steps": [
+              {
+                "id": "finish_academy_survey",
+                "action": "detective.day2.finish_academy_survey",
+                "after": [],
+                "done_when": {
+                  "event:detective.day2.finish_academy_survey.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d3_public_accounts",
+            "label": "先听取登记中的指控和当事人陈述",
+            "priority": 40,
+            "not_before_game_minutes": 3300,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "event:detective.day3.morning_care.done": true
+            },
+            "goal": {
+              "event:detective.day3.interview_lucian.done": true
+            },
+            "steps": [
+              {
+                "id": "to_hall",
+                "action": "detective.day3.to_hall",
+                "after": [],
+                "done_when": {
+                  "event:detective.day3.to_hall.done": true
+                }
+              },
+              {
+                "id": "read_notice",
+                "action": "detective.day3.read_notice",
+                "after": [
+                  "to_hall"
+                ],
+                "done_when": {
+                  "event:detective.day3.read_notice.done": true
+                }
+              },
+              {
+                "id": "interview_lucian",
+                "action": "detective.day3.interview_lucian",
+                "after": [
+                  "read_notice"
+                ],
+                "done_when": {
+                  "event:detective.day3.interview_lucian.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d3_probe",
+            "label": "核对探针交接与表决原话",
+            "priority": 40,
+            "not_before_game_minutes": 3300,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "case_day3.doc.kind": "probe",
+              "event:detective.day3.interview_lucian.done": true
+            },
+            "goal": {
+              "case_day3.phys.resolved": true
+            },
+            "steps": [
+              {
+                "id": "read_votes",
+                "action": "detective.day3.read_votes",
+                "after": [],
+                "done_when": {
+                  "event:detective.day3.read_votes.done": true
+                }
+              },
+              {
+                "id": "probe_to_su",
+                "action": "detective.day3.probe_to_su",
+                "after": [
+                  "read_votes"
+                ],
+                "done_when": {
+                  "event:detective.day3.probe_to_su.done": true
+                }
+              },
+              {
+                "id": "interview_su",
+                "action": "detective.day3.interview_su",
+                "after": [
+                  "probe_to_su"
+                ],
+                "done_when": {
+                  "event:detective.day3.interview_su.done": true
+                }
+              },
+              {
+                "id": "probe_to_ruan",
+                "action": "detective.day3.probe_to_ruan",
+                "after": [
+                  "interview_su"
+                ],
+                "done_when": {
+                  "event:detective.day3.probe_to_ruan.done": true
+                }
+              },
+              {
+                "id": "inspect_probe_draft",
+                "action": "detective.day3.inspect_probe_draft",
+                "after": [
+                  "probe_to_ruan"
+                ],
+                "done_when": {
+                  "event:detective.day3.inspect_probe_draft.done": true
+                }
+              },
+              {
+                "id": "deduce_probe",
+                "action": "detective.day3.deduce_probe",
+                "after": [
+                  "inspect_probe_draft"
+                ],
+                "done_when": {
+                  "event:detective.day3.deduce_probe.done": true
+                }
+              },
+              {
+                "id": "call_hearing_probe",
+                "action": "detective.day3.call_hearing_probe",
+                "after": [
+                  "deduce_probe"
+                ],
+                "done_when": {
+                  "event:detective.day3.call_hearing_probe.done": true
+                }
+              },
+              {
+                "id": "probe_to_hearing",
+                "action": "detective.day3.probe_to_hearing",
+                "after": [
+                  "call_hearing_probe"
+                ],
+                "done_when": {
+                  "event:detective.day3.probe_to_hearing.done": true
+                }
+              },
+              {
+                "id": "recover_probes",
+                "action": "detective.day3.recover_probes",
+                "after": [
+                  "probe_to_hearing"
+                ],
+                "done_when": {
+                  "event:detective.day3.recover_probes.done": true
+                }
+              },
+              {
+                "id": "persuade_ward_probe",
+                "action": "detective.day3.persuade_ward_probe",
+                "after": [
+                  "recover_probes"
+                ],
+                "done_when": {
+                  "event:detective.day3.persuade_ward_probe.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d3_medicine",
+            "label": "核对验药原页的去向",
+            "priority": 40,
+            "not_before_game_minutes": 3300,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "case_day3.doc.kind": "medicine",
+              "event:detective.day3.interview_lucian.done": true
+            },
+            "goal": {
+              "case_day3.phys.resolved": true
+            },
+            "steps": [
+              {
+                "id": "medicine_to_archive",
+                "action": "detective.day3.medicine_to_archive",
+                "after": [],
+                "done_when": {
+                  "event:detective.day3.medicine_to_archive.done": true
+                }
+              },
+              {
+                "id": "inspect_archive_seal",
+                "action": "detective.day3.inspect_archive_seal",
+                "after": [
+                  "medicine_to_archive"
+                ],
+                "done_when": {
+                  "event:detective.day3.inspect_archive_seal.done": true
+                }
+              },
+              {
+                "id": "medicine_to_mora",
+                "action": "detective.day3.medicine_to_mora",
+                "after": [
+                  "inspect_archive_seal"
+                ],
+                "done_when": {
+                  "event:detective.day3.medicine_to_mora.done": true
+                }
+              },
+              {
+                "id": "compare_original_page",
+                "action": "detective.day3.compare_original_page",
+                "after": [
+                  "medicine_to_mora"
+                ],
+                "done_when": {
+                  "event:detective.day3.compare_original_page.done": true
+                }
+              },
+              {
+                "id": "medicine_to_ruan",
+                "action": "detective.day3.medicine_to_ruan",
+                "after": [
+                  "compare_original_page"
+                ],
+                "done_when": {
+                  "event:detective.day3.medicine_to_ruan.done": true
+                }
+              },
+              {
+                "id": "inspect_medicine_draft",
+                "action": "detective.day3.inspect_medicine_draft",
+                "after": [
+                  "medicine_to_ruan"
+                ],
+                "done_when": {
+                  "event:detective.day3.inspect_medicine_draft.done": true
+                }
+              },
+              {
+                "id": "deduce_medicine",
+                "action": "detective.day3.deduce_medicine",
+                "after": [
+                  "inspect_medicine_draft"
+                ],
+                "done_when": {
+                  "event:detective.day3.deduce_medicine.done": true
+                }
+              },
+              {
+                "id": "call_hearing_medicine",
+                "action": "detective.day3.call_hearing_medicine",
+                "after": [
+                  "deduce_medicine"
+                ],
+                "done_when": {
+                  "event:detective.day3.call_hearing_medicine.done": true
+                }
+              },
+              {
+                "id": "medicine_to_hearing",
+                "action": "detective.day3.medicine_to_hearing",
+                "after": [
+                  "call_hearing_medicine"
+                ],
+                "done_when": {
+                  "event:detective.day3.medicine_to_hearing.done": true
+                }
+              },
+              {
+                "id": "restore_original_page",
+                "action": "detective.day3.restore_original_page",
+                "after": [
+                  "medicine_to_hearing"
+                ],
+                "done_when": {
+                  "event:detective.day3.restore_original_page.done": true
+                }
+              },
+              {
+                "id": "persuade_ward_medicine",
+                "action": "detective.day3.persuade_ward_medicine",
+                "after": [
+                  "restore_original_page"
+                ],
+                "done_when": {
+                  "event:detective.day3.persuade_ward_medicine.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d3_ration",
+            "label": "核对配给票据的用途与签收",
+            "priority": 40,
+            "not_before_game_minutes": 3300,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "case_day3.doc.kind": "ration",
+              "event:detective.day3.interview_lucian.done": true
+            },
+            "goal": {
+              "case_day3.phys.resolved": true
+            },
+            "steps": [
+              {
+                "id": "ration_to_kitchen",
+                "action": "detective.day3.ration_to_kitchen",
+                "after": [],
+                "done_when": {
+                  "event:detective.day3.ration_to_kitchen.done": true
+                }
+              },
+              {
+                "id": "read_empty_crate_log",
+                "action": "detective.day3.read_empty_crate_log",
+                "after": [
+                  "ration_to_kitchen"
+                ],
+                "done_when": {
+                  "event:detective.day3.read_empty_crate_log.done": true
+                }
+              },
+              {
+                "id": "ration_to_counter",
+                "action": "detective.day3.ration_to_counter",
+                "after": [
+                  "read_empty_crate_log"
+                ],
+                "done_when": {
+                  "event:detective.day3.ration_to_counter.done": true
+                }
+              },
+              {
+                "id": "inspect_receipt",
+                "action": "detective.day3.inspect_receipt",
+                "after": [
+                  "ration_to_counter"
+                ],
+                "done_when": {
+                  "event:detective.day3.inspect_receipt.done": true
+                }
+              },
+              {
+                "id": "ration_to_ruan",
+                "action": "detective.day3.ration_to_ruan",
+                "after": [
+                  "inspect_receipt"
+                ],
+                "done_when": {
+                  "event:detective.day3.ration_to_ruan.done": true
+                }
+              },
+              {
+                "id": "inspect_ration_draft",
+                "action": "detective.day3.inspect_ration_draft",
+                "after": [
+                  "ration_to_ruan"
+                ],
+                "done_when": {
+                  "event:detective.day3.inspect_ration_draft.done": true
+                }
+              },
+              {
+                "id": "deduce_ration_forgery",
+                "action": "detective.day3.deduce_ration_forgery",
+                "after": [
+                  "inspect_ration_draft"
+                ],
+                "done_when": {
+                  "event:detective.day3.deduce_ration_forgery.done": true
+                }
+              },
+              {
+                "id": "call_hearing_ration",
+                "action": "detective.day3.call_hearing_ration",
+                "after": [
+                  "deduce_ration_forgery"
+                ],
+                "done_when": {
+                  "event:detective.day3.call_hearing_ration.done": true
+                }
+              },
+              {
+                "id": "ration_to_hearing",
+                "action": "detective.day3.ration_to_hearing",
+                "after": [
+                  "call_hearing_ration"
+                ],
+                "done_when": {
+                  "event:detective.day3.ration_to_hearing.done": true
+                }
+              },
+              {
+                "id": "restore_rations",
+                "action": "detective.day3.restore_rations",
+                "after": [
+                  "ration_to_hearing"
+                ],
+                "done_when": {
+                  "event:detective.day3.restore_rations.done": true
+                }
+              },
+              {
+                "id": "persuade_ward_ration",
+                "action": "detective.day3.persuade_ward_ration",
+                "after": [
+                  "restore_rations"
+                ],
+                "done_when": {
+                  "event:detective.day3.persuade_ward_ration.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d4_preparation",
+            "label": "核查低位空间、契约与救援储备",
+            "priority": 40,
+            "not_before_game_minutes": 4740,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "event:detective.day4.morning_care.done": true
+            },
+            "goal": {
+              "event:detective.day4.return_control.done": true
+            },
+            "steps": [
+              {
+                "id": "to_ramp",
+                "action": "detective.day4.to_ramp",
+                "after": [],
+                "done_when": {
+                  "event:detective.day4.to_ramp.done": true
+                }
+              },
+              {
+                "id": "read_seventh_clause",
+                "action": "detective.day4.read_seventh_clause",
+                "after": [
+                  "to_ramp"
+                ],
+                "done_when": {
+                  "event:detective.day4.read_seventh_clause.done": true
+                }
+              },
+              {
+                "id": "to_control",
+                "action": "detective.day4.to_control",
+                "after": [
+                  "read_seventh_clause"
+                ],
+                "done_when": {
+                  "event:detective.day4.to_control.done": true
+                }
+              },
+              {
+                "id": "inspect_topology",
+                "action": "detective.day4.inspect_topology",
+                "after": [
+                  "to_control"
+                ],
+                "done_when": {
+                  "event:detective.day4.inspect_topology.done": true
+                }
+              },
+              {
+                "id": "check_tools",
+                "action": "detective.day4.check_tools",
+                "after": [
+                  "inspect_topology"
+                ],
+                "done_when": {
+                  "event:detective.day4.check_tools.done": true
+                }
+              },
+              {
+                "id": "to_medical_stock",
+                "action": "detective.day4.to_medical_stock",
+                "after": [
+                  "check_tools"
+                ],
+                "done_when": {
+                  "event:detective.day4.to_medical_stock.done": true
+                }
+              },
+              {
+                "id": "check_rescue_stock",
+                "action": "detective.day4.check_rescue_stock",
+                "after": [
+                  "to_medical_stock"
+                ],
+                "done_when": {
+                  "event:detective.day4.check_rescue_stock.done": true
+                }
+              },
+              {
+                "id": "return_control",
+                "action": "detective.day4.return_control",
+                "after": [
+                  "check_rescue_stock"
+                ],
+                "done_when": {
+                  "event:detective.day4.return_control.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d4_backflow",
+            "label": "查明当前回流并争取安全作业时间",
+            "priority": 50,
+            "not_before_game_minutes": 5370,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "backflow.phys.active": true
+            },
+            "goal": {
+              "event:detective.day4.seal_airlock.done": true,
+              "night_day4.doc.plan_chosen": true
+            },
+            "steps": [
+              {
+                "id": "inspect_backflow",
+                "action": "detective.day4.inspect_backflow",
+                "after": [],
+                "done_when": {
+                  "event:detective.day4.inspect_backflow.done": true
+                }
+              },
+              {
+                "id": "deduce_airlock",
+                "action": "detective.day4.deduce_airlock",
+                "after": [
+                  "inspect_backflow"
+                ],
+                "done_when": {
+                  "event:detective.day4.deduce_airlock.done": true
+                }
+              },
+              {
+                "id": "seal_airlock",
+                "action": "detective.day4.seal_airlock",
+                "after": [
+                  "deduce_airlock"
+                ],
+                "done_when": {
+                  "event:detective.day4.seal_airlock.done": true
+                }
+              },
+              {
+                "id": "plan_night",
+                "action": "detective.day4.plan_night",
+                "after": [
+                  "seal_airlock"
+                ],
+                "done_when": {
+                  "event:detective.day4.plan_night.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d4_lock",
+            "label": "请同伴按已选方案完成机械封隔",
+            "priority": 45,
+            "not_before_game_minutes": 5370,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "night_day4.doc.strategy": "lock",
+              "detective.infer.safe_airlock": true
+            },
+            "goal": {
+              "day4.doc.crisis_reported": true
+            },
+            "steps": [
+              {
+                "id": "recruit_huo",
+                "action": "detective.day4.recruit_huo",
+                "after": [],
+                "done_when": {
+                  "event:detective.day4.recruit_huo.done": true
+                }
+              },
+              {
+                "id": "recruit_quer",
+                "action": "detective.day4.recruit_quer",
+                "after": [
+                  "recruit_huo"
+                ],
+                "done_when": {
+                  "event:detective.day4.recruit_quer.done": true
+                }
+              },
+              {
+                "id": "report_crisis",
+                "action": "detective.day4.report_crisis",
+                "after": [
+                  "recruit_quer"
+                ],
+                "done_when": {
+                  "event:detective.day4.report_crisis.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d4_diversion",
+            "label": "按已选内务方案安置安全区同伴",
+            "priority": 45,
+            "not_before_game_minutes": 5370,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "night_day4.doc.strategy": "diversion",
+              "detective.infer.safe_airlock": true
+            },
+            "goal": {
+              "day4.doc.crisis_reported": true
+            },
+            "steps": [
+              {
+                "id": "recruit_diversion",
+                "action": "detective.day4.recruit_diversion",
+                "after": [],
+                "done_when": {
+                  "event:detective.day4.recruit_diversion.done": true
+                }
+              },
+              {
+                "id": "report_crisis",
+                "action": "detective.day4.report_crisis",
+                "after": [
+                  "recruit_diversion"
+                ],
+                "done_when": {
+                  "event:detective.day4.report_crisis.done": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "d4_watch",
+            "label": "按已选值守方案落实轮班",
+            "priority": 45,
+            "not_before_game_minutes": 5370,
+            "available_when": {
+              "detective.phys.asleep": false,
+              "night_day4.doc.strategy": "watch",
+              "detective.infer.safe_airlock": true
+            },
+            "goal": {
+              "day4.doc.crisis_reported": true
+            },
+            "steps": [
+              {
+                "id": "recruit_watch",
+                "action": "detective.day4.recruit_watch",
+                "after": [],
+                "done_when": {
+                  "event:detective.day4.recruit_watch.done": true
+                }
+              },
+              {
+                "id": "report_crisis",
+                "action": "detective.day4.report_crisis",
+                "after": [
+                  "recruit_watch"
+                ],
+                "done_when": {
+                  "event:detective.day4.report_crisis.done": true
+                }
+              }
+            ]
+          }
+        ],
+        "physiology": {
+          "needs": [
+            "energy",
+            "hunger",
+            "thirst",
+            "hygiene"
+          ],
+          "critical_below": {
+            "energy": 25,
+            "hunger": 20,
+            "thirst": 25,
+            "hygiene": 15
+          },
+          "resume_above": {
+            "energy": 45,
+            "hunger": 45,
+            "thirst": 50,
+            "hygiene": 35
+          },
+          "routes": [
+            {
+              "id": "water_at_home",
+              "label": "在已知清水壶处饮水",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.room": "R05"
+              },
+              "actions": [
+                "detective.drink_at_home"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_b_p",
+              "label": "从B-P取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "detective.room": "B-P"
+              },
+              "actions": [
+                "detective.water_from_b_p",
+                "detective.drink_at_home",
+                "detective.water_return_b_p"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_2f_cross_m",
+              "label": "从2F-cross-M取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "2F-cross-M"
+              },
+              "actions": [
+                "detective.water_from_2f_cross_m",
+                "detective.drink_at_home",
+                "detective.water_return_2f_cross_m"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_1f_shaft_monitor",
+              "label": "从1F-Shaft-Monitor取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "1F-Shaft-Monitor"
+              },
+              "actions": [
+                "detective.water_from_1f_shaft_monitor",
+                "detective.drink_at_home",
+                "detective.water_return_1f_shaft_monitor"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_t01",
+              "label": "从T01取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "T01"
+              },
+              "actions": [
+                "detective.water_from_t01",
+                "detective.drink_at_home",
+                "detective.water_return_t01"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_f03",
+              "label": "从F03取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "F03"
+              },
+              "actions": [
+                "detective.water_from_f03",
+                "detective.drink_at_home",
+                "detective.water_return_f03"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_u01_granary",
+              "label": "从U01-granary取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "U01-granary"
+              },
+              "actions": [
+                "detective.water_from_u01_granary",
+                "detective.drink_at_home",
+                "detective.water_return_u01_granary"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_r08",
+              "label": "从R08取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "R08"
+              },
+              "actions": [
+                "detective.water_from_r08",
+                "detective.drink_at_home",
+                "detective.water_return_r08"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_r10",
+              "label": "从R10取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "R10"
+              },
+              "actions": [
+                "detective.water_from_r10",
+                "detective.drink_at_home",
+                "detective.water_return_r10"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_r13",
+              "label": "从R13取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "R13"
+              },
+              "actions": [
+                "detective.water_from_r13",
+                "detective.drink_at_home",
+                "detective.water_return_r13"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_r16",
+              "label": "从R16取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "R16"
+              },
+              "actions": [
+                "detective.water_from_r16",
+                "detective.drink_at_home",
+                "detective.water_return_r16"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_f04",
+              "label": "从F04取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "F04"
+              },
+              "actions": [
+                "detective.water_from_f04",
+                "detective.drink_at_home",
+                "detective.water_return_f04"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_b1_hazard",
+              "label": "从B1-hazard取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "B1-hazard"
+              },
+              "actions": [
+                "detective.water_from_b1_hazard",
+                "detective.drink_at_home",
+                "detective.water_return_b1_hazard"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_b2_control",
+              "label": "从B2-control取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "op": "all",
+                "items": [
+                  {
+                    "op": "equals",
+                    "ref": {
+                      "type": "ref",
+                      "object": "detective",
+                      "facet": "phys",
+                      "field": "asleep"
+                    },
+                    "value": false
+                  },
+                  {
+                    "op": "equals",
+                    "ref": {
+                      "type": "ref",
+                      "object": "R05",
+                      "facet": "phys",
+                      "field": "drinking_water_available"
+                    },
+                    "value": true
+                  },
+                  {
+                    "op": "equals",
+                    "ref": {
+                      "type": "ref",
+                      "object": "detective",
+                      "facet": "doc",
+                      "field": "water_return_room"
+                    },
+                    "value": ""
+                  },
+                  {
+                    "op": "equals",
+                    "ref": {
+                      "type": "ref",
+                      "object": "event:detective.join",
+                      "facet": "state",
+                      "field": "done"
+                    },
+                    "value": true
+                  },
+                  {
+                    "op": "equals",
+                    "ref": {
+                      "type": "ref",
+                      "object": "detective",
+                      "facet": "state",
+                      "field": "room"
+                    },
+                    "value": "B2-control"
+                  },
+                  {
+                    "op": "not",
+                    "item": {
+                      "op": "known",
+                      "ref": {
+                        "type": "ref",
+                        "object": "backflow",
+                        "facet": "phys",
+                        "field": "active"
+                      }
+                    }
+                  }
+                ]
+              },
+              "actions": [
+                "detective.water_from_b2_control",
+                "detective.drink_at_home",
+                "detective.water_return_b2_control"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            },
+            {
+              "id": "water_from_1f_infirmary",
+              "label": "从1F-Infirmary取水后返回原调查处",
+              "need": "thirst",
+              "available_when": {
+                "detective.phys.asleep": false,
+                "R05.phys.drinking_water_available": true,
+                "detective.doc.water_return_room": "",
+                "event:detective.join.done": true,
+                "detective.room": "1F-Infirmary"
+              },
+              "actions": [
+                "detective.water_from_1f_infirmary",
+                "detective.drink_at_home",
+                "detective.water_return_1f_infirmary"
+              ],
+              "recovery_action": "detective.drink_at_home"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}; }

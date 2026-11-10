@@ -10,7 +10,7 @@ try {
     New-Item -ItemType Directory -Force $logRoot | Out-Null
     $buildId = Get-Date -Format "yyyyMMdd-HHmmss-fff"
     $clock = [Diagnostics.Stopwatch]::StartNew()
-    & dotnet build "DualOntologyWorldReconstruct2.csproj" --configuration $Configuration --nologo --verbosity minimal -maxcpucount -nodeReuse:true "-bl:$logRoot/$buildId.binlog" 2>&1 | Tee-Object -FilePath "$logRoot/$buildId.log"
+    & dotnet build "DualOntologyWorldReconstruct2.sln" --configuration $Configuration --nologo --verbosity minimal -maxcpucount -nodeReuse:true "-bl:$logRoot/$buildId.binlog" 2>&1 | Tee-Object -FilePath "$logRoot/$buildId.log"
     $buildExitCode = $LASTEXITCODE
     $clock.Stop()
     [ordered]@{ configuration = $Configuration; exit_code = $buildExitCode; elapsed_seconds = $clock.Elapsed.TotalSeconds; log = "$buildId.log"; binary_log = "$buildId.binlog" } | ConvertTo-Json | Set-Content "$logRoot/$buildId.json" -Encoding UTF8

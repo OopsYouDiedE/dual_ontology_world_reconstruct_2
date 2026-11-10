@@ -179,6 +179,9 @@ func _make_ui() -> void:
 	button(header,"导出 Godot",func(): open_file("scene"))
 	header.add_child(VSeparator.new())
 	button(header,"清空场景",clear_dialog,"可撤销")
+	button(header,"角色模型",func():
+		var gallery = preload("res://tools/characters/CharacterGallery.tscn").instantiate()
+		add_child(gallery))
 	var body = HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(body)

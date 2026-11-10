@@ -1,0 +1,1594 @@
+schema "dv-script-v1";
+data campaign.rooms { value = {
+  "source_topology": "res://tools/building/designs/campus-r3.json",
+  "source_asset_catalog": "tools/building/lowpoly_chapters_v3/scene_catalog.csv",
+  "publication": "Formal campaign room presentation; source lowpoly bundles retain their provenance; Core alone authorizes and times transitions.",
+  "model_source": "res://assets/data/character_art.dv",
+  "model_definition": "character_art",
+  "actor_height": 1.32,
+  "collision_radius": 0.18,
+  "walking_speed": 2.4,
+  "interaction_distance": 0.35,
+  "player_speed": 1,
+  "auto_speed": 1024,
+  "maximum_slices_per_frame": 180,
+  "frame_simulation_budget_usec": 9000,
+  "fact_labels": {
+    "shaft_niche_1F.doc.active": "四锚仪表当前稳定",
+    "granary.phys.structure_braced": "粮仓结构支撑已到位",
+    "granary.lock.picked": "粮仓锁芯已经解开",
+    "su.doc.current_consent": "苏泠当前同意试验",
+    "ruan.doc.knew_su_dissent": "阮清月事先知晓苏泠拒绝",
+    "B_case.infer.sequence_supported": "乙区痕迹的先后顺序获得支持",
+    "island_case.infer.history_correlated": "四区旧事与空间证据相互印证",
+    "B_case.infer.fifth_entity": "乙区第五实体的推断获得支持",
+    "T01_case.infer.poem_attributed_to_lucian": "讲堂诗稿的作者归属获得支持",
+    "detective.infer.dual_ration": "等额份额与集中热餐可以并行",
+    "ration.policy.mediated": "配给争议已达成共同协议",
+    "case_day3.phys.resolved": "第三日失物或授权争议已解决",
+    "ruan.doc.test_admitted": "阮清月已承认试探",
+    "detective.infer.safe_airlock": "限定边界的安全封隔方案成立",
+    "detective.infer.seventh_clause_limits": "第七条的知情与移离义务已厘清",
+    "night_day4.phys.secured": "第四夜防护已落实",
+    "victims.phys.rechecked": "两名倒灌伤者已完成复查",
+    "detective.infer.su_coupling_explained": "苏泠声学反应与机械压力耦合得到解释",
+    "detective.infer.academy_resource_limits": "四院可用设施与资源边界已经厘清",
+    "detective.infer.academies_personally_verified": "四院现场已逐一勘查并与签名记录核对",
+    "detective.infer.academies_report_basis": "四院判断以专业巡检者的签名报告为依据"
+  },
+  "visible_hidden_rooms": {
+    "demon": [
+      "T01"
+    ]
+  },
+  "rooms": {
+    "R01": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R01/R01.tscn",
+      "label": "R01 卢西安居室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "2F",
+      "spawn": [
+        1.0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R01]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        5.3999999999999995,
+        22.200000000000003
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R01/R01.tscn"
+    },
+    "R02": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R02/R02.tscn",
+      "label": "R02 顾平章居室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "2F",
+      "spawn": [
+        1.0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R02]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        5.3999999999999995,
+        29.700000000000003
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R02/R02.tscn"
+    },
+    "R03": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R03/R03.tscn",
+      "label": "R03 雀儿居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R03]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        18.0,
+        20.400000000000002
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R03/R03.tscn"
+    },
+    "R04": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R04/R04.tscn",
+      "label": "R04 沃德居室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "2F",
+      "spawn": [
+        1.0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R04]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        18.0,
+        26.1
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R04/R04.tscn"
+    },
+    "R05": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R05/R05.tscn",
+      "label": "R05 侦探居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R05]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        57.599999999999994,
+        20.400000000000002
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R05/R05.tscn"
+    },
+    "R06": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R06/R06.tscn",
+      "label": "R06 霍铎居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R06]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        57.599999999999994,
+        25.2
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R06/R06.tscn"
+    },
+    "R07": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R07/R07.tscn",
+      "label": "R07 沈鼎居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R07]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        70.2,
+        20.400000000000002
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R07/R07.tscn"
+    },
+    "R08": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R08/R08.tscn",
+      "label": "R08 苏泠居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R08]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        70.2,
+        25.2
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R08/R08.tscn"
+    },
+    "R09": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R09/R09.tscn",
+      "label": "R09 赛尔玛居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R09]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        5.3999999999999995,
+        55.5
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R09/R09.tscn"
+    },
+    "R10": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R10/R10.tscn",
+      "label": "R10 阮清月居室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "2F",
+      "spawn": [
+        1.4,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R10]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        5.3999999999999995,
+        62.1
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R10/R10.tscn"
+    },
+    "R11": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R11/R11.tscn",
+      "label": "R11 伊莲娜居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R11]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        18.0,
+        55.5
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R11/R11.tscn"
+    },
+    "R12": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R12/R12.tscn",
+      "label": "R12 莫兰居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R12]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        18.0,
+        61.2
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R12/R12.tscn"
+    },
+    "R13": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R13/R13.tscn",
+      "label": "R13 维罗妮卡居室",
+      "interaction_slots": [
+        {
+          "component": "R13_folding_desk_01",
+          "slot": "Front",
+          "position": [
+            1.2,
+            0,
+            -0.83
+          ]
+        }
+      ],
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "2F",
+      "spawn": [
+        1.0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R13]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        57.599999999999994,
+        56.4
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R13/R13.tscn"
+    },
+    "R14": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R14/R14.tscn",
+      "label": "R14 贝尔特朗居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R14]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        57.599999999999994,
+        62.099999999999994
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R14/R14.tscn"
+    },
+    "R15": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R15/R15.tscn",
+      "label": "R15 玛格丽特居室",
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R15]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        70.2,
+        55.5
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R15/R15.tscn"
+    },
+    "R16": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/R16/R16.tscn",
+      "label": "R16 茉拉居室",
+      "interaction_slots": [
+        {
+          "component": "R16_table_01",
+          "slot": "Front",
+          "position": [
+            1.2,
+            0,
+            -0.83
+          ]
+        }
+      ],
+      "width": 6.8,
+      "depth": 6.1,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[R16]",
+      "topology_note": "宿舍门连通所在区公共厅与住宅走廊。",
+      "map_position": [
+        70.2,
+        61.2
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R16/R16.tscn"
+    },
+    "A-P": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/A-P/A-P.tscn",
+      "label": "甲区公共厅",
+      "width": 6.8,
+      "depth": 5.5,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[A-P]",
+      "topology_note": "甲区居室经此处通往共同中翼。",
+      "map_position": [
+        5.3999999999999995,
+        36.6
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/A-P/A-P.tscn"
+    },
+    "B-P": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/B-P/B-P.tscn",
+      "label": "乙区公共厅与小厨房",
+      "width": 6.8,
+      "depth": 5.5,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[B-P]",
+      "topology_note": "乙区房门、门厅、小厨房与隔离区门相连；门槛是调查现场。",
+      "map_position": [
+        57.599999999999994,
+        31.200000000000003
+      ],
+      "extra_components": [
+        {
+          "id": "campaign_B_vent",
+          "source_scene": "res://assets/scenes/campaign_rooms/rooms/R03/R03.tscn",
+          "source_kind": "vent_grille",
+          "position": [
+            -3.15,
+            2.6,
+            -3.8
+          ],
+          "yaw": 90,
+          "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/R03/R03.tscn"
+        }
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/B-P/B-P.tscn"
+    },
+    "C-P": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/C-P/C-P.tscn",
+      "label": "丙区公共厅",
+      "width": 6.8,
+      "depth": 5.5,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[C-P]",
+      "topology_note": "丙区居室、气闸和共同中翼的连接区。",
+      "map_position": [
+        18.0,
+        66.0
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/C-P/C-P.tscn"
+    },
+    "D-P": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/D-P/D-P.tscn",
+      "label": "丁区公共厅",
+      "width": 8.2,
+      "depth": 6.3,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[D-P]",
+      "topology_note": "丁区居室与公共中翼的生活汇合点。",
+      "map_position": [
+        57.599999999999994,
+        67.2
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/D-P/D-P.tscn"
+    },
+    "D-gate": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/D-P/D-P.tscn",
+      "label": "丁区边界门",
+      "width": 8.2,
+      "depth": 6.3,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[D-P]",
+      "topology_note": "同一公共厅的门侧站点；跨门仍需已成立的通行条件。",
+      "map_position": [
+        57.599999999999994,
+        67.2
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/D-P/D-P.tscn"
+    },
+    "2F-cross-M": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/living_hall/living_hall.tscn",
+      "label": "二楼中翼交汇处",
+      "width": 10,
+      "depth": 8,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[2F-cross-M]",
+      "topology_note": "四区在此汇合。记录立柱与契约铭牌位于公共动线。",
+      "map_position": [
+        0.0,
+        0.0
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/living_hall/living_hall.tscn"
+    },
+    "2F-North-Stair": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/service_stair_M/service_stair_M.tscn",
+      "label": "二楼北侧楼梯与联锁闸",
+      "width": 5.8,
+      "depth": 6.0,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[M2F]",
+      "topology_note": "通往一楼竖井监测壁龛；联锁闸决定通路开放状态。",
+      "map_position": [
+        4.35,
+        43.239999999999995
+      ],
+      "navigation_height": 5.2,
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/service_stair_M/service_stair_M.tscn"
+    },
+    "1F-Shaft-Monitor": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/main1f_f06/main1f_f06.tscn",
+      "label": "一楼竖井监测壁龛",
+      "width": 6.5,
+      "depth": 7,
+      "floor": "1F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[F06]",
+      "topology_note": "监测仪表与阀门安全侧，记录四锚运行与风窗。",
+      "map_position": [
+        5.3999999999999995,
+        29.25
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/main1f_f06/main1f_f06.tscn"
+    },
+    "1F-Infirmary": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/clinic/clinic.tscn",
+      "label": "一楼临时医疗角",
+      "width": 9,
+      "depth": 8.5,
+      "floor": "1F",
+      "spawn": [
+        1.2,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[clinic:ward]",
+      "topology_note": "病床、药柜与护理工作台提供明确的调查和照护位置。",
+      "map_position": [
+        0.0,
+        0.0
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/clinic/clinic.tscn"
+    },
+    "F03": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/main_dining/main_dining.tscn",
+      "label": "一楼大食堂",
+      "interaction_slots": [
+        {
+          "component": "main_dining_table_01",
+          "slot": "Front",
+          "position": [
+            2.75,
+            0,
+            0
+          ]
+        }
+      ],
+      "width": 14,
+      "depth": 12,
+      "floor": "1F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[F03]",
+      "topology_note": "配给、备餐与共同就餐在这里发生。",
+      "map_position": [
+        63.9,
+        7.35
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/main_dining/main_dining.tscn"
+    },
+    "F05": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/main1f_f05/main1f_f05.tscn",
+      "label": "一楼热厨",
+      "width": 8,
+      "depth": 7,
+      "floor": "1F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[F05]",
+      "topology_note": "炉灶、清洗池与备餐台由独立可交互家具组成。",
+      "map_position": [
+        5.3999999999999995,
+        36.6
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/main1f_f05/main1f_f05.tscn"
+    },
+    "T01": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/lecture/lecture.tscn",
+      "label": "二楼公共讲堂",
+      "interaction_slots": [
+        {
+          "component": "lecture_chair_01",
+          "slot": "Front",
+          "position": [
+            1.05,
+            0,
+            0
+          ]
+        }
+      ],
+      "width": 10,
+      "depth": 10,
+      "floor": "2F",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[T01]",
+      "topology_note": "黑板、讲台与听众座席形成观察与公开讨论现场。",
+      "map_position": [
+        11.700000000000001,
+        7.35
+      ],
+      "extra_components": [
+        {
+          "id": "campaign_alarm_control",
+          "source_scene": "res://assets/scenes/campaign_rooms/rooms/mainb1_service/mainb1_service.tscn",
+          "source_kind": "interlock_handle",
+          "position": [
+            1.8,
+            1.05,
+            -8.3
+          ],
+          "yaw": 0,
+          "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/mainb1_service/mainb1_service.tscn"
+        }
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/lecture/lecture.tscn"
+    },
+    "U01-granary": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/mainb1_u01/mainb1_u01.tscn",
+      "label": "B1主粮仓",
+      "width": 10.8,
+      "depth": 9.2,
+      "floor": "B1",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[U01]",
+      "topology_note": "主粮仓通过勤务通道与楼梯接入学院动线。",
+      "map_position": [
+        5.3999999999999995,
+        27.0
+      ],
+      "extra_components": [
+        {
+          "id": "campaign_granary_winch_control",
+          "source_scene": "res://assets/scenes/campaign_rooms/rooms/mainb1_service/mainb1_service.tscn",
+          "source_kind": "interlock_handle",
+          "position": [
+            1.15,
+            1.2,
+            -9.049999999999999
+          ],
+          "yaw": 0,
+          "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/mainb1_service/mainb1_service.tscn"
+        }
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/mainb1_u01/mainb1_u01.tscn"
+    },
+    "B1-hazard": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/mainb1_service/mainb1_service.tscn",
+      "label": "B1 服务廊与下行检修坡道",
+      "width": 4.6,
+      "depth": 9.0,
+      "floor": "B1",
+      "spawn": [
+        0,
+        0,
+        -0.9
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[B1-service]",
+      "topology_note": "由既有服务廊下行，进入低位控制室。阀廊位于独立隔墙另一侧。",
+      "map_position": [
+        11.7,
+        32.4
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/mainb1_service/mainb1_service.tscn"
+    },
+    "F04": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/main1f_f04/main1f_f04.tscn",
+      "label": "F04 银器与配膳室",
+      "width": 7,
+      "depth": 6,
+      "floor": "1F",
+      "spawn": [
+        0,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[id=F04]",
+      "topology_note": "配膳收发台保留独立签收地点；与 F03 递杯地点分离，时间与动线可以交叉检验。",
+      "map_position": [
+        18,
+        36.6
+      ],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/main1f_f04/main1f_f04.tscn"
+    },
+    "B2-control": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/b2_control/b2_control.tscn",
+      "label": "B2 低位控制室",
+      "width": 7.6,
+      "depth": 6.4,
+      "floor": "B2",
+      "spawn": [
+        0,
+        0,
+        -0.75
+      ],
+      "topology_ref": "docs/02 地理箱庭、文献与六章剧情.md#低位联锁",
+      "topology_note": "安全控制室通过隔墙通口观察阀廊，联锁状态决定协作时机。",
+      "map_position": [],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/b2_control/b2_control.tscn"
+    },
+    "B2-valve": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/b2_valve_gallery/b2_valve_gallery.tscn",
+      "label": "B2 低位联锁阀廊",
+      "width": 8.4,
+      "depth": 4.8,
+      "floor": "B2",
+      "spawn": [
+        0,
+        0,
+        -0.75
+      ],
+      "topology_ref": "docs/02 地理箱庭、文献与六章剧情.md#低位联锁",
+      "topology_note": "毒雾区域与控制室隔墙分离，阀门、排水槽与撤离口形成救援动线。",
+      "map_position": [],
+      "source_candidate_scene": "res://tools/building/candidates/lowpoly_chapters_v3/b2_valve_gallery/b2_valve_gallery.tscn"
+    },
+    "W-102": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/W-102/W-102.tscn",
+      "label": "文契院 · 纸墨分析室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "1F",
+      "spawn": [
+        0.9,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[W-102]",
+      "topology_floor": "AC-W-1",
+      "topology_absolute_floor": 48,
+      "topology_bbox": [
+        -10.5,
+        -5.4,
+        -0.6000000000000014,
+        4.5
+      ],
+      "map_position": [
+        -5.550000000000001,
+        -0.4500000000000002
+      ],
+      "topology_note": "四院路线使用 R3 连廊；本室为保留用途与动线的原型适配。",
+      "source_adaptation": "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。",
+      "source_composition": "res://tools/building/designs/courtyard_prototype_rooms.json"
+    },
+    "B-102": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/B-102/B-102.tscn",
+      "label": "白塔院 · 配药清洁制备室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "1F",
+      "spawn": [
+        0.9,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[B-102]",
+      "topology_floor": "AC-B-1",
+      "topology_absolute_floor": 48,
+      "topology_bbox": [
+        76.19999999999999,
+        -5.4,
+        86.1,
+        4.5
+      ],
+      "map_position": [
+        81.14999999999999,
+        -0.4500000000000002
+      ],
+      "topology_note": "四院路线使用 R3 连廊；本室为保留用途与动线的原型适配。",
+      "source_adaptation": "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。",
+      "source_composition": "res://tools/building/designs/courtyard_prototype_rooms.json"
+    },
+    "F-104": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/F-104/F-104.tscn",
+      "label": "铁工院 · 备件与成品室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "2F",
+      "spawn": [
+        0.9,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[F-104]",
+      "topology_floor": "AC-F-1",
+      "topology_absolute_floor": 56.4,
+      "topology_bbox": [
+        65.4,
+        73.2,
+        75,
+        77.4
+      ],
+      "map_position": [
+        70.2,
+        75.30000000000001
+      ],
+      "topology_note": "四院路线使用 R3 连廊；本室为保留用途与动线的原型适配。",
+      "source_adaptation": "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。",
+      "source_composition": "res://tools/building/designs/courtyard_prototype_rooms.json"
+    },
+    "S-102": {
+      "scene": "res://assets/scenes/campaign_rooms/rooms/S-102/S-102.tscn",
+      "label": "星仪院 · 精密仪器室",
+      "width": 7.8,
+      "depth": 6.7,
+      "floor": "2F",
+      "spawn": [
+        0.9,
+        0,
+        -0.95
+      ],
+      "topology_ref": "tools/building/designs/campus-r3.json#rooms[S-102]",
+      "topology_floor": "AC-S-1",
+      "topology_absolute_floor": 56.4,
+      "topology_bbox": [
+        76.19999999999999,
+        73.19999999999999,
+        86.1,
+        83.1
+      ],
+      "map_position": [
+        81.14999999999999,
+        78.14999999999999
+      ],
+      "topology_note": "四院路线使用 R3 连廊；本室为保留用途与动线的原型适配。",
+      "source_adaptation": "四院用途专属的室内原型。复用已发布的 R13 建筑壳体及原尺度家具重新布置；不声称复刻原拓扑平面尺寸。地图和楼层使用 campus-r3 的真实房间记录。所有规则、证据和人物行动由 DV/Core 决定。",
+      "source_composition": "res://tools/building/designs/courtyard_prototype_rooms.json"
+    }
+  },
+  "focus_bindings": {
+    "B_foyer.footprints": {
+      "label": "门厅足迹与靴印",
+      "kinds": [
+        "door"
+      ],
+      "distance": 1.2
+    },
+    "B_threshold.bootprints": {
+      "label": "门厅足迹与靴印",
+      "kinds": [
+        "door"
+      ],
+      "distance": 1.2
+    },
+    "B_threshold.water": {
+      "label": "门槛水迹与木楔",
+      "kinds": [
+        "door"
+      ],
+      "distance": 1.0
+    },
+    "B_threshold.wedge": {
+      "label": "门槛水迹与木楔",
+      "kinds": [
+        "door"
+      ],
+      "distance": 1.0
+    },
+    "B_gate.closer": {
+      "label": "隔离门闭门器与锁闩",
+      "kinds": [
+        "door"
+      ],
+      "distance": 1.0
+    },
+    "B_gate.ratchet": {
+      "label": "隔离门闭门器与锁闩",
+      "kinds": [
+        "door"
+      ],
+      "distance": 1.0
+    },
+    "B_kitchen.cloth": {
+      "label": "挂钩上的湿布",
+      "kinds": [
+        "cloth_rack",
+        "linen_cabinet"
+      ]
+    },
+    "B_kitchen.containers": {
+      "label": "厨房盆碗",
+      "kinds": [
+        "sink",
+        "crockery_shelf"
+      ]
+    },
+    "B_corridor.floor": {
+      "label": "走廊石粉带",
+      "kinds": [
+        "door"
+      ],
+      "distance": 1.4
+    },
+    "B_room.window": {
+      "label": "高窗与铅封",
+      "kinds": [
+        "window"
+      ]
+    },
+    "B_room.vent": {
+      "label": "通风口铁篦",
+      "kinds": [
+        "vent_grille"
+      ]
+    },
+    "central_pillar": {
+      "label": "记录立柱与契约铭牌",
+      "kinds": [
+        "records_pillar"
+      ]
+    },
+    "central_pillar.plaque": {
+      "label": "记录立柱与契约铭牌",
+      "kinds": [
+        "records_pillar"
+      ]
+    },
+    "central_pillar.phonograph": {
+      "label": "立柱录音匣",
+      "kinds": [
+        "record_station",
+        "records_pillar"
+      ]
+    },
+    "central_pillar.ledger": {
+      "label": "交接与值守记录",
+      "kinds": [
+        "record_station",
+        "lectern"
+      ]
+    },
+    "order.roster": {
+      "label": "交接与值守记录",
+      "kinds": [
+        "record_station",
+        "lectern"
+      ]
+    },
+    "island_meeting": {
+      "label": "四区汇合现场",
+      "kinds": [
+        "records_pillar",
+        "table"
+      ]
+    },
+    "shaft.gauges": {
+      "label": "联锁仪表",
+      "kinds": [
+        "pressure_gauge",
+        "control_console",
+        "interlock_handle",
+        "door"
+      ]
+    },
+    "north_stair_2F": {
+      "label": "北侧楼梯与观察台",
+      "kinds": [
+        "indicator_board",
+        "maintenance_cabinet"
+      ]
+    },
+    "shaft.logs": {
+      "label": "分时工程日志",
+      "kinds": [
+        "control_console",
+        "record_station",
+        "cabinet"
+      ]
+    },
+    "steward_request": {
+      "label": "监测壁龛传声口",
+      "kinds": [
+        "control_console",
+        "speaking_tube",
+        "door"
+      ]
+    },
+    "T01_board": {
+      "label": "公共讲堂黑板",
+      "kinds": [
+        "chalkboard",
+        "record_station",
+        "records_pillar"
+      ]
+    },
+    "T01.handout": {
+      "label": "公共讲堂黑板",
+      "kinds": [
+        "chalkboard",
+        "lectern"
+      ]
+    },
+    "T01-lectern": {
+      "label": "公共讲台与案卷",
+      "kinds": [
+        "lectern",
+        "table"
+      ]
+    },
+    "cases.archive": {
+      "label": "公共讲台与案卷",
+      "kinds": [
+        "lectern",
+        "table"
+      ]
+    },
+    "F03_meal": {
+      "label": "食堂配给与餐桌记录",
+      "kinds": [
+        "table"
+      ]
+    },
+    "ration.ledger": {
+      "label": "食堂配给与餐桌记录",
+      "kinds": [
+        "table"
+      ]
+    },
+    "vote.ledger": {
+      "label": "中央厅表决账册",
+      "kinds": [
+        "record_station",
+        "records_pillar",
+        "table"
+      ]
+    },
+    "ration.receipt": {
+      "label": "F04 配膳签收票据",
+      "kinds": [
+        "work_counter",
+        "table",
+        "counter",
+        "crockery_shelf"
+      ]
+    },
+    "granary.door": {
+      "label": "粮仓大门",
+      "kinds": [
+        "door"
+      ]
+    },
+    "granary.lock": {
+      "label": "粮仓重锁",
+      "kinds": [
+        "heavy_lock",
+        "door"
+      ]
+    },
+    "granary.winch": {
+      "label": "绞盘制动与反扣手柄",
+      "kinds": [
+        "interlock_handle"
+      ]
+    },
+    "granary.ledger": {
+      "label": "粮仓账册与存量",
+      "component": "mainb1_u01_table_01",
+      "slot": "Back",
+      "kinds": [
+        "table"
+      ]
+    },
+    "ruan.board": {
+      "label": "棋盘与夹层",
+      "kinds": [
+        "go_board",
+        "table"
+      ]
+    },
+    "evidence.folder": {
+      "label": "文件与证物夹",
+      "kinds": [
+        "folding_desk",
+        "table",
+        "cabinet"
+      ]
+    },
+    "B1.interlock": {
+      "label": "隔离联锁手轮",
+      "kinds": [
+        "control_console",
+        "interlock_handle"
+      ]
+    },
+    "B1.valve": {
+      "label": "隔离联锁手轮",
+      "kinds": [
+        "valve_station"
+      ]
+    },
+    "B1.warning": {
+      "label": "服务廊警示表",
+      "kinds": [
+        "indicator_board",
+        "service_cabinet",
+        "door"
+      ]
+    },
+    "r07.cabinet": {
+      "label": "医疗用品柜",
+      "kinds": [
+        "medicine_cabinet",
+        "cabinet",
+        "bedside_cabinet"
+      ]
+    },
+    "B_case.casebook": {
+      "label": "侦探的案卷",
+      "kinds": [],
+      "self": true
+    },
+    "detective.casebook": {
+      "label": "侦探的案卷",
+      "kinds": [],
+      "self": true
+    },
+    "detective.notebook": {
+      "label": "侦探的案卷",
+      "kinds": [],
+      "self": true
+    },
+    "detective.plan_notes": {
+      "label": "侦探的案卷",
+      "kinds": [],
+      "self": true
+    },
+    "detective.body": {
+      "label": "随身与盥洗",
+      "kinds": [
+        "wash_table",
+        "sink"
+      ],
+      "self": true
+    },
+    "detective.voice": {
+      "label": "向现场同伴说明",
+      "kinds": [],
+      "self": true
+    },
+    "detective.seat": {
+      "label": "可供休息的座位",
+      "kinds": [
+        "bench",
+        "chair"
+      ],
+      "self": true
+    },
+    "2F.detective_bench": {
+      "label": "可供休息的座位",
+      "kinds": [
+        "bench",
+        "chair"
+      ]
+    },
+    "detective.aftermeal_item": {
+      "label": "餐后茶杯",
+      "component": "main_dining_table_01",
+      "kinds": [
+        "table",
+        "cup"
+      ],
+      "self": true
+    },
+    "case.notice": {
+      "label": "中央厅案情告示",
+      "kinds": [
+        "records_pillar",
+        "record_station",
+        "lectern"
+      ]
+    },
+    "medicine.folder": {
+      "label": "维若妮卡的药品记录",
+      "kinds": [
+        "folding_desk",
+        "table"
+      ]
+    },
+    "mora.folder": {
+      "label": "莫拉的诊疗记录",
+      "kinds": [
+        "table",
+        "work_counter"
+      ]
+    },
+    "case.lectern": {
+      "label": "裁决讲台",
+      "kinds": [
+        "lectern"
+      ]
+    },
+    "B2.panel": {
+      "label": "低位控制面板",
+      "kinds": [
+        "control_console"
+      ]
+    },
+    "monitor.gauge": {
+      "label": "竖井压力监测仪",
+      "kinds": [
+        "control_console",
+        "record_station",
+        "indicator_board",
+        "valve_station"
+      ]
+    },
+    "medical.desk": {
+      "label": "诊疗工作台",
+      "kinds": [
+        "table",
+        "medicine_cabinet"
+      ]
+    },
+    "acoustic.bench": {
+      "label": "诊疗室声学检查台",
+      "kinds": [
+        "table"
+      ]
+    },
+    "shaft_niche_1F": {
+      "label": "竖井监测壁龛",
+      "kinds": [
+        "control_console"
+      ]
+    },
+    "casebook": {
+      "label": "五日调查案卷",
+      "self": true
+    },
+    "order.board": {
+      "label": "讲堂值守与撤离安排",
+      "kinds": [
+        "chalkboard",
+        "lectern"
+      ]
+    },
+    "T01.bell": {
+      "label": "讲台报警拉柄",
+      "kinds": [
+        "interlock_handle"
+      ]
+    },
+    "B1.gauge": {
+      "label": "服务廊联锁状态仪",
+      "kinds": [
+        "indicator_board"
+      ]
+    },
+    "W102.workbench": {
+      "label": "纸张样本、墨迹与取样登记台",
+      "component": "W102_workbench",
+      "slot": "Front"
+    },
+    "B102.cabinet": {
+      "label": "药剂柜与洁净制备记录",
+      "component": "B102_cabinet",
+      "slot": "Front"
+    },
+    "F104.spares": {
+      "label": "备件箱、检修工具与领用册",
+      "component": "F104_spares",
+      "slot": "Front"
+    },
+    "S102.instruments": {
+      "label": "校准仪表、精密天平与记录台",
+      "component": "S102_instruments",
+      "slot": "Front"
+    },
+    "academies.report_board": {
+      "label": "四院接驳路线牌与签名巡检簿",
+      "component": "living_hall_lectern_01",
+      "slot": "Front"
+    },
+    "T01_case": {
+      "label": "讲堂诗稿与归属记录",
+      "component": "lecture_lectern_01",
+      "slot": "Front"
+    },
+    "A_vent.grate": {
+      "label": "甲区通风格栅",
+      "component": "A-P_vent_grille_01",
+      "slot": "Front"
+    },
+    "A_vent.map": {
+      "label": "通风格栅中的草图",
+      "component": "A-P_vent_grille_01",
+      "slot": "Front"
+    },
+    "corridor.test_panel": {
+      "label": "公共走廊测试记录台",
+      "component": "living_hall_record_station_01",
+      "slot": "Front"
+    },
+    "A_gate.outer_pin": {
+      "label": "甲区门外销",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "D_gate.safety_pin": {
+      "label": "丁区门安全销",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "A_gate.inner_hook": {
+      "label": "甲区门内挂钩",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "A_gate.handle": {
+      "label": "甲区门把",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "B_sink": {
+      "label": "乙区水槽",
+      "component": "B-P_sink_01",
+      "slot": "Front"
+    },
+    "C_gate.outer_cam": {
+      "label": "丙区门外凸轮",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "D_gate.outer_latch": {
+      "label": "丁区门外闩",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "F03_hall": {
+      "label": "食堂设施工作位",
+      "component": "main_dining_table_01",
+      "slot": "Front"
+    },
+    "F05_kitchen": {
+      "label": "热厨工作台",
+      "component": "main1f_f05_work_counter_01",
+      "slot": "Front"
+    },
+    "B_kitchen": {
+      "label": "乙区共用灶台",
+      "component": "B-P_stove_01",
+      "slot": "Front"
+    },
+    "F05.chopping_block": {
+      "label": "热厨切配台",
+      "component": "main1f_f05_work_counter_01",
+      "slot": "Front"
+    },
+    "F05.mixing_bowl": {
+      "label": "热厨拌馅工作台",
+      "component": "main1f_f05_work_counter_01",
+      "slot": "Front"
+    },
+    "F05.stove": {
+      "label": "热厨炉灶",
+      "component": "main1f_f05_stove_01",
+      "slot": "Front"
+    },
+    "F05.pot": {
+      "label": "热厨烧水炉",
+      "component": "main1f_f05_stove_01",
+      "slot": "Front"
+    },
+    "F05.dough": {
+      "label": "热厨面团工作台",
+      "component": "main1f_f05_work_counter_01",
+      "slot": "Front"
+    },
+    "F05.sink": {
+      "label": "热厨水槽",
+      "component": "main1f_f05_sink_01",
+      "slot": "Front"
+    },
+    "F05.colander": {
+      "label": "热厨沥水台",
+      "component": "main1f_f05_sink_01",
+      "slot": "Front"
+    },
+    "T01.su_chair": {
+      "label": "苏泠的讲堂休息席",
+      "component": "lecture_chair_01",
+      "slot": "Back"
+    },
+    "C_gate": {
+      "label": "丙区公共门",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "C_gate.inner_cam": {
+      "label": "丙区门内凸轮",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "C_gate.handle": {
+      "label": "丙区门把",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "central_pillar.pipe": {
+      "label": "中央柱管线查验位",
+      "component": "living_hall_records_pillar_01",
+      "slot": "Front"
+    },
+    "D_gate.wedges": {
+      "label": "丁区门楔",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "D_gate.handle": {
+      "label": "丁区门把",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    },
+    "D_gate.speaking_tube": {
+      "label": "丁区门旁传声位",
+      "kinds": [
+        "door"
+      ],
+      "slot": "Front"
+    }
+  },
+  "focus_prefixes": [
+    {
+      "prefix": "F03.",
+      "label": "食堂工作台",
+      "kinds": [
+        "table"
+      ]
+    },
+    {
+      "prefix": "infirmary.",
+      "label": "医疗工作台",
+      "kinds": [
+        "table",
+        "medicine_cabinet"
+      ]
+    },
+    {
+      "prefix": "B_gate",
+      "label": "乙区隔离门",
+      "kinds": [
+        "door"
+      ]
+    },
+    {
+      "prefix": "B_threshold",
+      "label": "门槛",
+      "kinds": [
+        "door"
+      ]
+    },
+    {
+      "prefix": "granary.",
+      "label": "粮仓设施",
+      "kinds": [
+        "grain_rack",
+        "door"
+      ]
+    },
+    {
+      "prefix": "B1.",
+      "label": "服务廊设施",
+      "kinds": [
+        "interlock_handle",
+        "door"
+      ]
+    },
+    {
+      "prefix": "cases.",
+      "label": "案卷工作台",
+      "kinds": [
+        "lectern",
+        "table"
+      ]
+    },
+    {
+      "prefix": "order.",
+      "label": "值守记录",
+      "kinds": [
+        "record_station",
+        "lectern"
+      ]
+    }
+  ],
+  "action_animations": {
+    "walk": "walk",
+    "inspect": "interact",
+    "read": "read_scroll",
+    "talk": "talk",
+    "interact": "interact",
+    "rest": "idle",
+    "deduce": "read_scroll",
+    "incantation": "talk",
+    "utterance": "talk",
+    "persuade": "talk"
+  },
+  "actor_models": {
+    "lucian": "poet",
+    "gu": "archaeologist",
+    "quer": "thief",
+    "ward": "lawyer",
+    "detective": "detective",
+    "huo": "engineer",
+    "shen": "chef",
+    "su": "musician",
+    "selma": "naturalist",
+    "ruan": "chessplayer",
+    "elena": "dancer",
+    "moran": "painter",
+    "veronica": "chemist",
+    "bertrand": "marksman",
+    "margaret": "architect",
+    "mora": "doctor",
+    "demon": "demon"
+  },
+  "kind_labels": {
+    "door": "门与门槛",
+    "table": "桌面与文件",
+    "work_counter": "工作台",
+    "wash_table": "盥洗台",
+    "bed": "床铺",
+    "control_console": "控制面板",
+    "record_station": "记录装置",
+    "records_pillar": "中央记录柱",
+    "interlock_handle": "联锁手柄",
+    "window": "窗与窗槛",
+    "vent_grille": "通风篦",
+    "cloth_rack": "衣物架",
+    "lectern": "讲台",
+    "chalkboard": "记录板",
+    "go_board": "棋盘与草稿",
+    "medicine_cabinet": "医疗柜",
+    "indicator_board": "状态仪表"
+  },
+  "label_font": "res://assets/external/NotoSansSC/NotoSansSC[wght].ttf"
+}; };

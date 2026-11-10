@@ -1,0 +1,691 @@
+{
+  "source_root": "C:/Users/iii/Desktop/dual_ontology_world_engine",
+  "target_root": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2",
+  "scope": "Reasoning, Runtime, formal CLI/MCP, campaign DV closure, five character models",
+  "files": [
+    {
+      "path": "core/reasoning/AutonomyDriveSolver.cs",
+      "source_sha256": "8D618DE1240DC04B4BC33F4F95B29A88FFDA145F442D13FF4A11B4D6E5103AFA",
+      "target_sha256": "8D618DE1240DC04B4BC33F4F95B29A88FFDA145F442D13FF4A11B4D6E5103AFA",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseBranches.cs",
+      "source_sha256": "E05B919E618D7B40E5F50C7AA3A94F4331958BDB1F5EE1F517423170045E0E08",
+      "target_sha256": "E05B919E618D7B40E5F50C7AA3A94F4331958BDB1F5EE1F517423170045E0E08",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseFiniteModel.cs",
+      "source_sha256": "5248984F1EDB0117DBE1ADA7EA30F7897D9606E993B1F2C05E1DF39C9B12E41B",
+      "target_sha256": "5248984F1EDB0117DBE1ADA7EA30F7897D9606E993B1F2C05E1DF39C9B12E41B",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseHistory.cs",
+      "source_sha256": "14A0FB089BE16E138816C65170FC1E8EC8EF315120E7212E2837324F6728F623",
+      "target_sha256": "14A0FB089BE16E138816C65170FC1E8EC8EF315120E7212E2837324F6728F623",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseHistoryLean.cs",
+      "source_sha256": "E5AD5D079C060EA945E43EF369C682EC7EC4CD9280FE85338CDF49CFB28BFAB7",
+      "target_sha256": "E5AD5D079C060EA945E43EF369C682EC7EC4CD9280FE85338CDF49CFB28BFAB7",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseHistoryProjection.cs",
+      "source_sha256": "933DDF1945B5D7C5EAF9AC27F3DEF6F3D651BD3B2F776FDD80C2BC1DEF0F9AA7",
+      "target_sha256": "933DDF1945B5D7C5EAF9AC27F3DEF6F3D651BD3B2F776FDD80C2BC1DEF0F9AA7",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseHistoryReference.cs",
+      "source_sha256": "5C94334AFBA8A7363D7F2BB904D3BCAA2D3DF68440DDE94DC1729C354ADCC83C",
+      "target_sha256": "5C94334AFBA8A7363D7F2BB904D3BCAA2D3DF68440DDE94DC1729C354ADCC83C",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseInferenceWork.cs",
+      "source_sha256": "5E55C42F2213E8F9610E694D50DC5155A5C0CB09776667FB4FDB4C7BD1D090E3",
+      "target_sha256": "5E55C42F2213E8F9610E694D50DC5155A5C0CB09776667FB4FDB4C7BD1D090E3",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseLeanBridge.cs",
+      "source_sha256": "8CAC5293DB3190F974F98AA60F863FFE4A7B3F22777A3300595AF2213F832798",
+      "target_sha256": "8CAC5293DB3190F974F98AA60F863FFE4A7B3F22777A3300595AF2213F832798",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseProofChecker.cs",
+      "source_sha256": "786C6E91E542D2CB1F8126BF79E9DD7EBEE033B203ECCC11DAC28A07376FBE59",
+      "target_sha256": "786C6E91E542D2CB1F8126BF79E9DD7EBEE033B203ECCC11DAC28A07376FBE59",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseProofScript.cs",
+      "source_sha256": "DE72D8FECE4809EFDCD32212FC33B2A39AF84CB04531F9C6E40A99649EB6AF92",
+      "target_sha256": "DE72D8FECE4809EFDCD32212FC33B2A39AF84CB04531F9C6E40A99649EB6AF92",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseTheory.cs",
+      "source_sha256": "7E6331540C6A5303A85973511A09A12C7E9EA24082A8BE16FFF4C2FF26D8E029",
+      "target_sha256": "7E6331540C6A5303A85973511A09A12C7E9EA24082A8BE16FFF4C2FF26D8E029",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/CaseTravel.cs",
+      "source_sha256": "66E009E62906995F0DD2ECA902EC5B3084A4C216955261809214067566C69005",
+      "target_sha256": "66E009E62906995F0DD2ECA902EC5B3084A4C216955261809214067566C69005",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/DuelView.Reasoning.csproj",
+      "source_sha256": "4830CCE0E9D973C19473129938AA0302569243E6649D956B9409D1E7F5D2D01A",
+      "target_sha256": "F338A98A07859A0FE7C1E60323267A9C324502FBE45BB66CB7F14438A1695BE8",
+      "byte_identical": false
+    },
+    {
+      "path": "core/reasoning/NaturalDeduction.cs",
+      "source_sha256": "2AA289AF36D6FE035DAE8B197FC98C7B431C0C75BF7EDD04C0B9EE848A7EE58B",
+      "target_sha256": "2AA289AF36D6FE035DAE8B197FC98C7B431C0C75BF7EDD04C0B9EE848A7EE58B",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/NaturalDeductionLean.cs",
+      "source_sha256": "7DEE1C8988A3E6659350A1BFB40EACA78DB75FEC55105C9B6C4F68EF42191A15",
+      "target_sha256": "7DEE1C8988A3E6659350A1BFB40EACA78DB75FEC55105C9B6C4F68EF42191A15",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/Sim4Planner.cs",
+      "source_sha256": "57B7D2AC42FE90C0866C177665F82D5DB418B80E48BE1D15BE99FDBB6D9A47D0",
+      "target_sha256": "57B7D2AC42FE90C0866C177665F82D5DB418B80E48BE1D15BE99FDBB6D9A47D0",
+      "byte_identical": true
+    },
+    {
+      "path": "core/reasoning/StrategyJudgment.cs",
+      "source_sha256": "28D03E8BB89FFB57B112768F8945388A8133D3AC2D7D76E8D46B65C0EC79099F",
+      "target_sha256": "28D03E8BB89FFB57B112768F8945388A8133D3AC2D7D76E8D46B65C0EC79099F",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/ActionCatalog.cs",
+      "source_sha256": "298B0FFF1DEEBFC72F97CD03E8AB3FFF6387F69EF1FAD0F7F1465AF27776B3C7",
+      "target_sha256": "298B0FFF1DEEBFC72F97CD03E8AB3FFF6387F69EF1FAD0F7F1465AF27776B3C7",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/ActionFailureMemory.cs",
+      "source_sha256": "6B53425291E6A76C2A93DF9803C82998E624FFE09E21DFA262ACC503D54DF297",
+      "target_sha256": "6B53425291E6A76C2A93DF9803C82998E624FFE09E21DFA262ACC503D54DF297",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/ActorClient.cs",
+      "source_sha256": "94E231B582F4C443268A715B3A07055E6D9788D02EE65369495A8AA1BDAB2892",
+      "target_sha256": "94E231B582F4C443268A715B3A07055E6D9788D02EE65369495A8AA1BDAB2892",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/CampaignProgress.cs",
+      "source_sha256": "00BFFB025B1E9B1273D25B2288A199384B82D020FE7C129179EBB3B3E83FD085",
+      "target_sha256": "00BFFB025B1E9B1273D25B2288A199384B82D020FE7C129179EBB3B3E83FD085",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/CampaignScenario.cs",
+      "source_sha256": "17719F1C4FBEEE31E6A3E368A648042AEE8C8338D4C22394372CC634362675C0",
+      "target_sha256": "17719F1C4FBEEE31E6A3E368A648042AEE8C8338D4C22394372CC634362675C0",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/CharacterContentRevision.cs",
+      "source_sha256": "322ECD44A961A449BA97C96ADBC9F047C001FFB58335B7B25E64595999536390",
+      "target_sha256": "322ECD44A961A449BA97C96ADBC9F047C001FFB58335B7B25E64595999536390",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/CharacterSessionDefinition.cs",
+      "source_sha256": "0564B0B6A1B357829ADB3AA6447CEBCFD1D249AF8A7D95EAD071FE886E4BC5F1",
+      "target_sha256": "0564B0B6A1B357829ADB3AA6447CEBCFD1D249AF8A7D95EAD071FE886E4BC5F1",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/CompactScenario.cs",
+      "source_sha256": "9EB1B3581DDCA12C6BFB2BA00AF7DB57524CFDE454B4A973F2A58A2CE0C5F8DC",
+      "target_sha256": "9EB1B3581DDCA12C6BFB2BA00AF7DB57524CFDE454B4A973F2A58A2CE0C5F8DC",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/Conditions.cs",
+      "source_sha256": "3A6E4A0D451ECF546A4DFF6BCECCDECDEC8884A8B7CD1E537D8DEBE63BDAD7AC",
+      "target_sha256": "3A6E4A0D451ECF546A4DFF6BCECCDECDEC8884A8B7CD1E537D8DEBE63BDAD7AC",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/ConversationSession.cs",
+      "source_sha256": "0E3ED8AAB5E00992D13A8F10B9A30735A958D575192F79975D30E4F557D27AB5",
+      "target_sha256": "0E3ED8AAB5E00992D13A8F10B9A30735A958D575192F79975D30E4F557D27AB5",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/DecisionScheduler.cs",
+      "source_sha256": "CD6395332D62DE56E02750EA3939CC2663F08E321A505E77685BA2AFF21CD948",
+      "target_sha256": "CD6395332D62DE56E02750EA3939CC2663F08E321A505E77685BA2AFF21CD948",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/DriveCalculator.cs",
+      "source_sha256": "104A61BC4DA1BF062DB6A620DC5897762DFD1B045D9F78DDC73A6DD7A4FC6660",
+      "target_sha256": "104A61BC4DA1BF062DB6A620DC5897762DFD1B045D9F78DDC73A6DD7A4FC6660",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/DriveCandidateIndex.cs",
+      "source_sha256": "A57168BC86DA96FBC76DBE4B8B131EF9980E767C0D538DC35ED45E3F4852BE7C",
+      "target_sha256": "A57168BC86DA96FBC76DBE4B8B131EF9980E767C0D538DC35ED45E3F4852BE7C",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/DuelView.Runtime.csproj",
+      "source_sha256": "36C0558C9A87C57D47A4DABB5FF9877E1A29A42C664C3DF6295BAF02FD7FADD4",
+      "target_sha256": "67DF9589DDEF784CA9024AA843710301C67C9F6BCCA5E868EF37F869B53924B3",
+      "byte_identical": false
+    },
+    {
+      "path": "core/runtime/GoalPlanning.cs",
+      "source_sha256": "CC510EA2D4EFAA07B4BA4B6C52C8EFCD463BB2594B737551DCE97F40EEC3AF15",
+      "target_sha256": "CC510EA2D4EFAA07B4BA4B6C52C8EFCD463BB2594B737551DCE97F40EEC3AF15",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/GoalPlanningAdapter.cs",
+      "source_sha256": "D7FBC7523C3112B40F82F368A1F34214159E13E6D8DE7A77B877F60D896F1766",
+      "target_sha256": "D7FBC7523C3112B40F82F368A1F34214159E13E6D8DE7A77B877F60D896F1766",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/GoalPlanningChecks.cs",
+      "source_sha256": "283DCD0BC18106A9B36FB76313FCEDD43393B47E2B04F96E76FBA0F553449E13",
+      "target_sha256": "283DCD0BC18106A9B36FB76313FCEDD43393B47E2B04F96E76FBA0F553449E13",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/NavigationGraph.cs",
+      "source_sha256": "59AC7F168BDBD1A10B84DD565CA55BFDE84E28074A37B097A00A93A393D4148D",
+      "target_sha256": "59AC7F168BDBD1A10B84DD565CA55BFDE84E28074A37B097A00A93A393D4148D",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/PathJourney.cs",
+      "source_sha256": "7517C3DA54A6500DA6F0493C739A3370FEAA5FB5BC975B80CDFA373AFB2D2A30",
+      "target_sha256": "7517C3DA54A6500DA6F0493C739A3370FEAA5FB5BC975B80CDFA373AFB2D2A30",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/PerceptionBindings.cs",
+      "source_sha256": "FBD993D5F6099EE01C5C5D139193714BCEDB2F8C3F78007765E557F66FD8E794",
+      "target_sha256": "FBD993D5F6099EE01C5C5D139193714BCEDB2F8C3F78007765E557F66FD8E794",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/PhysiologicalRoutes.cs",
+      "source_sha256": "4EA3D9D878572E27C2686EB2770C2678A62E306244216A920606BAC58116B757",
+      "target_sha256": "4EA3D9D878572E27C2686EB2770C2678A62E306244216A920606BAC58116B757",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/PortalPolicy.cs",
+      "source_sha256": "321C3479DED1175F86C764DD70BE3C24247D5EE32BA50819612D0D18B961DCAA",
+      "target_sha256": "321C3479DED1175F86C764DD70BE3C24247D5EE32BA50819612D0D18B961DCAA",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RoomLifecycle.cs",
+      "source_sha256": "B1C5642E43AC913924882C384539FB903DCE93D6692DFADEE6C9B53E92E0E481",
+      "target_sha256": "B1C5642E43AC913924882C384539FB903DCE93D6692DFADEE6C9B53E92E0E481",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RoomResidency.cs",
+      "source_sha256": "1E657F18D0D224DBFCF0187E00DAF23B1A8A68096BF41E2C7783CEC126B08F47",
+      "target_sha256": "1E657F18D0D224DBFCF0187E00DAF23B1A8A68096BF41E2C7783CEC126B08F47",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RoomVisibility.cs",
+      "source_sha256": "E1A0F72B9B41507695F6407B99A0BD67EBD8ED8D7685F33B850D3565DA624BA9",
+      "target_sha256": "E1A0F72B9B41507695F6407B99A0BD67EBD8ED8D7685F33B850D3565DA624BA9",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RuntimeContent.cs",
+      "source_sha256": "6840069EB32344570A66AA5C801594118563C0A3CD773460E2415067384B20AC",
+      "target_sha256": "6840069EB32344570A66AA5C801594118563C0A3CD773460E2415067384B20AC",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RuntimeDebugSettings.cs",
+      "source_sha256": "D31125610DDCCC8B511A6524F9AD0A77DACB91DBD21F3088596B3BC4F2614289",
+      "target_sha256": "D31125610DDCCC8B511A6524F9AD0A77DACB91DBD21F3088596B3BC4F2614289",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RuntimeMechanics.cs",
+      "source_sha256": "F5D66B93BF3F004E4AC74044219E66EDAF48466C270290D88B6589A995291FD6",
+      "target_sha256": "F5D66B93BF3F004E4AC74044219E66EDAF48466C270290D88B6589A995291FD6",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RuntimeNarrative.cs",
+      "source_sha256": "25C8CE053A2D5C373E45F82745C18FFBFE3C8A9A45297E0084FDCC6833A6B7EB",
+      "target_sha256": "25C8CE053A2D5C373E45F82745C18FFBFE3C8A9A45297E0084FDCC6833A6B7EB",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RuntimeSession.cs",
+      "source_sha256": "4A5324CA3F242375FD7544FE8AEA5D41FAEAEE9C5F5AEDE1BF9D2265DB022EA1",
+      "target_sha256": "4A5324CA3F242375FD7544FE8AEA5D41FAEAEE9C5F5AEDE1BF9D2265DB022EA1",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/RuntimeSpatial.cs",
+      "source_sha256": "66F261A6ABA33AD960D4354D667888CF61508C41A6A29CEDB5A8F5E83217A080",
+      "target_sha256": "66F261A6ABA33AD960D4354D667888CF61508C41A6A29CEDB5A8F5E83217A080",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/SceneComposer.cs",
+      "source_sha256": "55BCB34B4E32CBB429C0AAC60BB099E4B30E2368EE447A655BEFC54DE4A66842",
+      "target_sha256": "55BCB34B4E32CBB429C0AAC60BB099E4B30E2368EE447A655BEFC54DE4A66842",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/SessionFactory.cs",
+      "source_sha256": "74CB6734D84BD9A3746239FA2BB3F72F20E6CC612FAB402BA9716A9FAE3F97A3",
+      "target_sha256": "74CB6734D84BD9A3746239FA2BB3F72F20E6CC612FAB402BA9716A9FAE3F97A3",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/SharedScenario.cs",
+      "source_sha256": "AC1D145797FE26F700B48FAE03E8ED01B1857B367B3268A5E4F6B61E08B2E1F0",
+      "target_sha256": "AC1D145797FE26F700B48FAE03E8ED01B1857B367B3268A5E4F6B61E08B2E1F0",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/SimulationClock.cs",
+      "source_sha256": "0E7D04154AF39C5BB3102034DD914B8F9026FF1866DA9479E1AB871B7055F1D6",
+      "target_sha256": "0E7D04154AF39C5BB3102034DD914B8F9026FF1866DA9479E1AB871B7055F1D6",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/SingleStepPolicy.cs",
+      "source_sha256": "189C7BFF9CFF8BCC5F23E5DA90BFD4E39598C5CA00269FD3109AF4FCCC6B02A0",
+      "target_sha256": "189C7BFF9CFF8BCC5F23E5DA90BFD4E39598C5CA00269FD3109AF4FCCC6B02A0",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/SlotReservations.cs",
+      "source_sha256": "141734DCC079EEA1B2FDFB38BDA4D251CBD0CD18876C5791C0B9037D58EEE60E",
+      "target_sha256": "141734DCC079EEA1B2FDFB38BDA4D251CBD0CD18876C5791C0B9037D58EEE60E",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/StrategyActivity.cs",
+      "source_sha256": "B5E8AC908857E10D31667954E41CCBA6C64B53DD6C14FC87E1434D2F3C95840C",
+      "target_sha256": "B5E8AC908857E10D31667954E41CCBA6C64B53DD6C14FC87E1434D2F3C95840C",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/TaskPlanner.cs",
+      "source_sha256": "3459222671D7F83F65CD31DC66CF9AB466015BBF6F1138D9164CC7D7026DB8EF",
+      "target_sha256": "3459222671D7F83F65CD31DC66CF9AB466015BBF6F1138D9164CC7D7026DB8EF",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/Values.cs",
+      "source_sha256": "8C06A72CC4D697669E6C606FC1FC62A00DDAF0A23DC62EB9670798562BB78CA5",
+      "target_sha256": "8C06A72CC4D697669E6C606FC1FC62A00DDAF0A23DC62EB9670798562BB78CA5",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/ValueTemplates.cs",
+      "source_sha256": "FAE69EFB543026A04B4CE41F326C647A9727F733A45FE23B9615741F54A541D5",
+      "target_sha256": "FAE69EFB543026A04B4CE41F326C647A9727F733A45FE23B9615741F54A541D5",
+      "byte_identical": true
+    },
+    {
+      "path": "core/runtime/WorldRules.cs",
+      "source_sha256": "F91C885309C2BF9D7F2A4A79DB23590C36B9D16362DFCAA1CE73A9B22AEF41D1",
+      "target_sha256": "F91C885309C2BF9D7F2A4A79DB23590C36B9D16362DFCAA1CE73A9B22AEF41D1",
+      "byte_identical": true
+    },
+    {
+      "path": "core/cli/AppendAuditLog.cs",
+      "source_sha256": "E54E96CC3444C84064108528E16DAA9181EF8BADAB9FE8D4424DCD9829CCDBAE",
+      "target_sha256": "E54E96CC3444C84064108528E16DAA9181EF8BADAB9FE8D4424DCD9829CCDBAE",
+      "byte_identical": true
+    },
+    {
+      "path": "core/cli/DuelView.Cli.csproj",
+      "source_sha256": "1DA07A1DDB22A7308056CEA316C3EA4744DE3DFF348F20BCF3D87D67FCFE84D7",
+      "target_sha256": "1DA07A1DDB22A7308056CEA316C3EA4744DE3DFF348F20BCF3D87D67FCFE84D7",
+      "byte_identical": true
+    },
+    {
+      "path": "core/cli/NativeCli.cs",
+      "source_sha256": "6F55A74CB6FBFB3617C8B7D36A13782BC13325F780A3CCE140ACCE2BA7904F3C",
+      "target_sha256": "6F55A74CB6FBFB3617C8B7D36A13782BC13325F780A3CCE140ACCE2BA7904F3C",
+      "byte_identical": true
+    },
+    {
+      "path": "core/cli/Program.cs",
+      "source_sha256": "27BED1B5C38653FEF25694648830AE3F615E2C4BC40E18F5D473AB0F8536836D",
+      "target_sha256": "27BED1B5C38653FEF25694648830AE3F615E2C4BC40E18F5D473AB0F8536836D",
+      "byte_identical": true
+    },
+    {
+      "path": "core/cli/ReadableEventLog.cs",
+      "source_sha256": "02D848BFD4D42BBCB70BDE9789C326F36DFD1E0299F188A63768C7B76E1A816C",
+      "target_sha256": "02D848BFD4D42BBCB70BDE9789C326F36DFD1E0299F188A63768C7B76E1A816C",
+      "byte_identical": true
+    },
+    {
+      "path": "core/cli/SpatialPublication.cs",
+      "source_sha256": "54D6058123C167E067D31206445888077DFFE8C01266FD6A5D0149BB3132EE53",
+      "target_sha256": "54D6058123C167E067D31206445888077DFFE8C01266FD6A5D0149BB3132EE53",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/asset_bundle.py",
+      "source_sha256": "41C831A93E2BEBAD7CF567B4B996E126EB88EF1E824105FBACEAA409129508A6",
+      "target_sha256": "41C831A93E2BEBAD7CF567B4B996E126EB88EF1E824105FBACEAA409129508A6",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/automation.py",
+      "source_sha256": "3C73621FE65C0DB3AD819EC7EFC34850545A97CEC7485EB075830B700E320DD7",
+      "target_sha256": "3C73621FE65C0DB3AD819EC7EFC34850545A97CEC7485EB075830B700E320DD7",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/build_cache.py",
+      "source_sha256": "2393D925914AB99A07BDF4045220492FB90497AD61C401690C2C1154DBCCAEE4",
+      "target_sha256": "42758D3D08F5798BC983F5A8C3FDC5337657B6C43CE480ED4871D63419D06A95",
+      "byte_identical": false
+    },
+    {
+      "path": "mcp/game/environment.py",
+      "source_sha256": "ADE69A863037812100663B23EC0DE7DFE436D366545EA2D7FF5208CA086C7A4B",
+      "target_sha256": "35890523A9EE3065C48F8EFB8B6BEDFAF8ED51DE69D398FB824E3ED8186BB5EE",
+      "byte_identical": false
+    },
+    {
+      "path": "mcp/game/input_client.py",
+      "source_sha256": "A7D78E9C3CC6D4AB578138D19DA0E3C4214DF6D519FBD444D41CE6B5B04DDBD7",
+      "target_sha256": "A7D78E9C3CC6D4AB578138D19DA0E3C4214DF6D519FBD444D41CE6B5B04DDBD7",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/linux_display.py",
+      "source_sha256": "3BCE507BC8A013035C4AA30754A20127CDBB9A2ABA90A09278E34E4754D2BA68",
+      "target_sha256": "3BCE507BC8A013035C4AA30754A20127CDBB9A2ABA90A09278E34E4754D2BA68",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/play.py",
+      "source_sha256": "7501F393BE01D1C332EEEFB74BF7164416CA322C919B3765DC3ED0CA9C01C9EB",
+      "target_sha256": "7501F393BE01D1C332EEEFB74BF7164416CA322C919B3765DC3ED0CA9C01C9EB",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/requirements.txt",
+      "source_sha256": "4FE75062C5D424BBC86A8CD58C63AB19AEFFE4F0A0E100022252C8032E12EE5B",
+      "target_sha256": "4FE75062C5D424BBC86A8CD58C63AB19AEFFE4F0A0E100022252C8032E12EE5B",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/run_auto.py",
+      "source_sha256": "28E35BA26FD36BFC6E90BF8E2565FBA76BD88E8C25A3C6B87F641F22599AAE0A",
+      "target_sha256": "28E35BA26FD36BFC6E90BF8E2565FBA76BD88E8C25A3C6B87F641F22599AAE0A",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/run_environment.py",
+      "source_sha256": "C9AE460A51DD76A36CBB66325B81C3707D0652D50D56132851B8B2AFB5A04F92",
+      "target_sha256": "C9AE460A51DD76A36CBB66325B81C3707D0652D50D56132851B8B2AFB5A04F92",
+      "byte_identical": true
+    },
+    {
+      "path": "mcp/game/runtime.py",
+      "source_sha256": "15D7B051B07A2954FDA87F2800D5B1E84DBAE3D75D40C7D773F5671FC44BCC58",
+      "target_sha256": "0ED1DBCCB2DA448C8CAECAF4DB1FD7D90A49C822846A6B6545C7DEA72B2DD0FF",
+      "byte_identical": false
+    },
+    {
+      "path": "mcp/game/server.py",
+      "source_sha256": "77D2E61AA76E978939887EC43272BE19835D0C91E1B9040571BAB5C0A04FB758",
+      "target_sha256": "77D2E61AA76E978939887EC43272BE19835D0C91E1B9040571BAB5C0A04FB758",
+      "byte_identical": true
+    },
+    {
+      "path": "tools/story/ScenarioAuthoring.cs",
+      "source_sha256": "57F70EAEDB668BC23B6F6446A859612D7A4B92418BCC0E57B2E8867FFA186162",
+      "target_sha256": "57F70EAEDB668BC23B6F6446A859612D7A4B92418BCC0E57B2E8867FFA186162",
+      "byte_identical": true
+    },
+    {
+      "path": "tools/building/SeatingFit.cs",
+      "source_sha256": "0314C54DFA8DBA1AD9DFB2E3F239119322D352499B3DA776EC99ECC65D86E0FA",
+      "target_sha256": "0314C54DFA8DBA1AD9DFB2E3F239119322D352499B3DA776EC99ECC65D86E0FA",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/98-runtime-session.data.dv",
+      "source_sha256": "42EE99E42FC67B1003A9A80D33FD757FBA12BB8CE531C465F1C1FD6EC5EEB5E8",
+      "target_sha256": "42EE99E42FC67B1003A9A80D33FD757FBA12BB8CE531C465F1C1FD6EC5EEB5E8",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/character_art.dv",
+      "source_sha256": "94C9E46C6DD0637525033285012C5B3CBF498A27A5AC7823A29874F3A0F3930A",
+      "target_sha256": "94C9E46C6DD0637525033285012C5B3CBF498A27A5AC7823A29874F3A0F3930A",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/presentation/campaign_rooms.dv",
+      "source_sha256": "F920829F6ED08D4BAC9CF6C18BABD90E9063C26483FA0C058C678B0AE017AAA1",
+      "target_sha256": "F920829F6ED08D4BAC9CF6C18BABD90E9063C26483FA0C058C678B0AE017AAA1",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/campaign.dv",
+      "source_sha256": "22F7A55B4A4CB6F83A3918C104DC38B3C6FABD15358713B7E6C1D99AE959790F",
+      "target_sha256": "22F7A55B4A4CB6F83A3918C104DC38B3C6FABD15358713B7E6C1D99AE959790F",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/daily-life.dv",
+      "source_sha256": "501FFBC6BF8F71927D6B06CE4424E2552405AC02D822147A417E71DA124EF4A0",
+      "target_sha256": "501FFBC6BF8F71927D6B06CE4424E2552405AC02D822147A417E71DA124EF4A0",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/day1-morning.dv",
+      "source_sha256": "1335E4C150CB632C63564E36970E799158850AC70F98DA9079F871B96D33C17E",
+      "target_sha256": "1335E4C150CB632C63564E36970E799158850AC70F98DA9079F871B96D33C17E",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/day2.dv",
+      "source_sha256": "A389EFEB88C22F5121E095F5195BD00FDD2BBF3B2A2F94C9C00D2E3434469E41",
+      "target_sha256": "A389EFEB88C22F5121E095F5195BD00FDD2BBF3B2A2F94C9C00D2E3434469E41",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/day3.dv",
+      "source_sha256": "5F6BF4B1F883192AD9783BE8D69D8EC992FFF7C418A4E9F8CF5706969FDB2A21",
+      "target_sha256": "5F6BF4B1F883192AD9783BE8D69D8EC992FFF7C418A4E9F8CF5706969FDB2A21",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/day4.dv",
+      "source_sha256": "BD4DA259FC8F118D1136F1280D0B64D447AA57B8B65F01A76CC695EEDDDB193B",
+      "target_sha256": "BD4DA259FC8F118D1136F1280D0B64D447AA57B8B65F01A76CC695EEDDDB193B",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/day5.dv",
+      "source_sha256": "9E1FDE5F70102E535C9ECAE810C31F4E6B44AD5C8F2420167EA25C6CB9C3775F",
+      "target_sha256": "9E1FDE5F70102E535C9ECAE810C31F4E6B44AD5C8F2420167EA25C6CB9C3775F",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/detective-planning.dv",
+      "source_sha256": "19AF3E6EC54A54B039A7C465C1B42D6536E38EE12C40636DBEDDFE7698A4057B",
+      "target_sha256": "19AF3E6EC54A54B039A7C465C1B42D6536E38EE12C40636DBEDDFE7698A4057B",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-demon.dv",
+      "source_sha256": "5079C94EF62E8C0996BBD15A1A640FEF51881A01B9AC9C2592C71C549EF012A5",
+      "target_sha256": "5079C94EF62E8C0996BBD15A1A640FEF51881A01B9AC9C2592C71C549EF012A5",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-detective-huo.dv",
+      "source_sha256": "64C6D498784C7EBEC1BC2AC258090072FB9AB14857C1FE4949CD86D502271F82",
+      "target_sha256": "64C6D498784C7EBEC1BC2AC258090072FB9AB14857C1FE4949CD86D502271F82",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-elena-moran.dv",
+      "source_sha256": "81CC5A172EC9BC4BFAE3A1E0D5F4AD4FCCFED5C81139FF7935A9A33C94A8D18A",
+      "target_sha256": "81CC5A172EC9BC4BFAE3A1E0D5F4AD4FCCFED5C81139FF7935A9A33C94A8D18A",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-lucian-gu.dv",
+      "source_sha256": "41D930075E8D859500A470FA92BA34F5CAFB9ACC7200C35FA15CE1246A09B6D9",
+      "target_sha256": "41D930075E8D859500A470FA92BA34F5CAFB9ACC7200C35FA15CE1246A09B6D9",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-margaret-mora.dv",
+      "source_sha256": "E9BCDE673C12AF408A2CF37CE62F691A10A51DA75ED4332181987D973C73C6C2",
+      "target_sha256": "E9BCDE673C12AF408A2CF37CE62F691A10A51DA75ED4332181987D973C73C6C2",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-quer-ward.dv",
+      "source_sha256": "7E77A2A9CB950751B8D5A9A170B5420F9B4AF99B2FF96713EDC14DAFAEB3EDCC",
+      "target_sha256": "7E77A2A9CB950751B8D5A9A170B5420F9B4AF99B2FF96713EDC14DAFAEB3EDCC",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-selma-ruan.dv",
+      "source_sha256": "75BF6BE09FE4F2EC0E3BDAA2D6E2126F6324A558210D2584997BD0062B84ADF5",
+      "target_sha256": "75BF6BE09FE4F2EC0E3BDAA2D6E2126F6324A558210D2584997BD0062B84ADF5",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-shen-su.dv",
+      "source_sha256": "84131252DCDAF198823B8EC153903F5365BF229DE6F4F43564EA49AC44615C47",
+      "target_sha256": "84131252DCDAF198823B8EC153903F5365BF229DE6F4F43564EA49AC44615C47",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/life-veronica-bertrand.dv",
+      "source_sha256": "347A59651E1142557BD72FAC0A5709037E1F965E4803B3A4F11A021A180C971A",
+      "target_sha256": "347A59651E1142557BD72FAC0A5709037E1F965E4803B3A4F11A021A180C971A",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-detective-huo.dv",
+      "source_sha256": "13E5D3D4C13DA0B8964B4B4B5413616E60DC494C6231BC2265403EA75F44326C",
+      "target_sha256": "13E5D3D4C13DA0B8964B4B4B5413616E60DC494C6231BC2265403EA75F44326C",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-elena-moran.dv",
+      "source_sha256": "7311A709557E9EDA9082575BC2E0484208B6E4E532B2907A6F55E4D15E21C463",
+      "target_sha256": "7311A709557E9EDA9082575BC2E0484208B6E4E532B2907A6F55E4D15E21C463",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-lucian-gu.dv",
+      "source_sha256": "16D47F5AB798EB7AAA048B824560A1335F0DA05B6FCB9B5129CABE8BEEBC44C9",
+      "target_sha256": "16D47F5AB798EB7AAA048B824560A1335F0DA05B6FCB9B5129CABE8BEEBC44C9",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-margaret-mora.dv",
+      "source_sha256": "18EDD465B5B0B8A1D55663D6DA92A74976E0BA09FD49E5E67150A963DA2A6E56",
+      "target_sha256": "18EDD465B5B0B8A1D55663D6DA92A74976E0BA09FD49E5E67150A963DA2A6E56",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-quer-ward.dv",
+      "source_sha256": "FB33F4D7856973CC53EEA2C46CDA364A9465083CBA8DC26EA3A50A299924AB46",
+      "target_sha256": "FB33F4D7856973CC53EEA2C46CDA364A9465083CBA8DC26EA3A50A299924AB46",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-selma-ruan.dv",
+      "source_sha256": "242DE5A65943A7F9AF3797BF2D30D9A4EEA9027D76ADF2A9A1EC2ACC3604EF5F",
+      "target_sha256": "242DE5A65943A7F9AF3797BF2D30D9A4EEA9027D76ADF2A9A1EC2ACC3604EF5F",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-shen-su.dv",
+      "source_sha256": "FA3246FA0B729E7E71B4950D877FA7A7A5A48B367697E9D29E83F2D2B6354C0A",
+      "target_sha256": "FA3246FA0B729E7E71B4950D877FA7A7A5A48B367697E9D29E83F2D2B6354C0A",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/open-day5-veronica-bertrand.dv",
+      "source_sha256": "46FC0D0A7AAE4F23B6D9FD1F28B38E3A32AB652BE35AFDC48EDA253698D27C66",
+      "target_sha256": "46FC0D0A7AAE4F23B6D9FD1F28B38E3A32AB652BE35AFDC48EDA253698D27C66",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/data/scenarios/social-schemes.dv",
+      "source_sha256": "A2746C6328B0F9342129FC4D5955D85568ECB8FF801528A4F223BEA5AF74A151",
+      "target_sha256": "A2746C6328B0F9342129FC4D5955D85568ECB8FF801528A4F223BEA5AF74A151",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/characters/UserModels/model_01.glb",
+      "source_sha256": "6405060DB48A2D723ED2D6EE62A5E44201C79D08F7329BF8457AED7BBA186019",
+      "target_sha256": "6405060DB48A2D723ED2D6EE62A5E44201C79D08F7329BF8457AED7BBA186019",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/characters/UserModels/model_06.glb",
+      "source_sha256": "97F568A3507C402C02CEFAAD82943F49607DE2127515FAE71AD56F395A8EE951",
+      "target_sha256": "97F568A3507C402C02CEFAAD82943F49607DE2127515FAE71AD56F395A8EE951",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/characters/UserModels/model_07.glb",
+      "source_sha256": "7BC00446FA364243A5DD74533EAF128319D4CB5F755AC335778B56828C03749F",
+      "target_sha256": "7BC00446FA364243A5DD74533EAF128319D4CB5F755AC335778B56828C03749F",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/characters/UserModels/model_10.glb",
+      "source_sha256": "5BEE1863909DAF7ABEC5E0E71BA67AC2D3B7C410BF93A05637F0CA1B0074D991",
+      "target_sha256": "5BEE1863909DAF7ABEC5E0E71BA67AC2D3B7C410BF93A05637F0CA1B0074D991",
+      "byte_identical": true
+    },
+    {
+      "path": "assets/characters/UserModels/model_17.glb",
+      "source_sha256": "C647B0A519D536972394661BD561FF5340CD62E3FDE7EDC0D526CBB86C5A0A8D",
+      "target_sha256": "C647B0A519D536972394661BD561FF5340CD62E3FDE7EDC0D526CBB86C5A0A8D",
+      "byte_identical": true
+    }
+  ]
+}

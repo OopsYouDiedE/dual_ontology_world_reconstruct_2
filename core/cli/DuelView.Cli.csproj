@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../tools/building/SeatingFit.cs" Link="Building/SeatingFit.cs" />
+    <Compile Include="../../tools/story/ScenarioAuthoring.cs" Link="Story/ScenarioAuthoring.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="NativeCli.cs" />
+    <Compile Include="AppendAuditLog.cs" />
+    <Compile Include="ReadableEventLog.cs" />
+    <Compile Include="SpatialPublication.cs" />
+    <ProjectReference Include="../runtime/DuelView.Runtime.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,6 @@
 # Dual Ontology World Reconstruct 2
 
-Godot .NET 4.7.2 / .NET 8。当前入口为既有建筑模拟器，C# 工程引用 `core/dv`。
+Godot .NET 4.7.2 / .NET 8。当前 Godot 入口为建筑模拟器；共用 C# 包含 DV、Reasoning 与 Runtime，并保留正式 CLI 数日自主决策宿主。
 
 ## VSCode 构建
 
@@ -25,6 +25,22 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 环境要求：本目录 `.runtime/godot/4.7.2/` 中的完整 .NET 引擎及 .NET SDK 8.0.4xx；不使用标准版 Godot。SDK 由 `global.json` 限定 .NET 8 补丁系列。
 
 迁移计划、逐批状态与验证边界见 [实施与验收](docs/33%20实施与验收.md)。
+
+## 数日自主决策
+
+从 VSCode 运行 `run: five-day autonomous CLI (600s)`，或在项目根执行：
+
+```powershell
+.runtime/python/Scripts/python.exe mcp/game/run_auto.py --backend cli --duration-seconds 600 --receipt .runtime/runs/latest-auto-receipt.json
+```
+
+此入口保持正式 CliMCP 连接，包含构建、内容验证和正式新局。所有角色由引擎决策，DV 观察窗从首日 07:00 至第五日结束；达到墙钟时限会停止宿主，不能视为完成观察窗。逐动作日志含候选评分、需要贡献、行动意图、本人认知依据与实际结果，位于 `.runtime/runs/<run>/actions.yaml`；同目录保存状态变化、可读日志与报告。模型迁入范围为五人；正式 DV 推演保留完整人物关系与其他角色。
+
+AI／人工 CLI 输入使用 `.runtime/python/Scripts/python.exe mcp/game/input_client.py`，通过 `on`、串行 `step`／`observe`、`close` 操作。环境准备入口为 `.runtime/python/Scripts/python.exe mcp/game/run_environment.py --local-copy`，Python 依赖见 `mcp/game/requirements.txt`。
+
+## 五人角色模型
+
+建筑器顶部点击“角色模型”，查看侦探、雀儿、卢西安、阮清月、沈鼐，可左右旋转并返回。也可在 Godot 打开 `tools/characters/CharacterGallery.tscn` 运行当前场景。模型映射、高度和朝向由 `assets/data/character_models.dv` 声明，经 C# DV 解析器读取；GLB 保留原网格、内嵌纹理、蒙皮与动画资源。本预览不运行游戏规则，模型尚未接入正式 Godot 游戏会话。
 
 ## 建筑组件加载
 

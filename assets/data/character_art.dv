@@ -1,0 +1,116 @@
+schema "dv-script-v1";
+
+layout character_art {
+  style = "E-three-head-chibi";
+  head_units = 3;
+  base_status = "retargeted-user-chibi-models";
+  models = {
+    thief = { path = "res://assets/characters/UserModels/model_01.glb"; height = 1.32; yaw_degrees = -90; };
+    chemist = { path = "res://assets/characters/UserModels/model_02.glb"; height = 1.32; yaw_degrees = -90; };
+    marksman = { path = "res://assets/characters/UserModels/model_03.glb"; height = 1.32; yaw_degrees = -90; };
+    engineer = { path = "res://assets/characters/UserModels/model_04.glb"; height = 1.32; yaw_degrees = -90; };
+    naturalist = { path = "res://assets/characters/UserModels/model_05.glb"; height = 1.32; yaw_degrees = -90; };
+    detective = { path = "res://assets/characters/UserModels/model_06.glb"; height = 1.32; yaw_degrees = -90; };
+    chef = { path = "res://assets/characters/UserModels/model_07.glb"; height = 1.32; yaw_degrees = -90; };
+    archaeologist = { path = "res://assets/characters/UserModels/model_08.glb"; height = 1.32; yaw_degrees = -90; };
+    demon = { path = "res://assets/characters/UserModels/model_09.glb"; height = 1.32; yaw_degrees = -90; };
+    poet = { path = "res://assets/characters/UserModels/model_10.glb"; height = 1.32; yaw_degrees = -90; };
+    dancer = { path = "res://assets/characters/UserModels/model_11.glb"; height = 1.32; yaw_degrees = -90; };
+    painter = { path = "res://assets/characters/UserModels/model_12.glb"; height = 1.32; yaw_degrees = -90; };
+    architect = { path = "res://assets/characters/UserModels/model_13.glb"; height = 1.32; yaw_degrees = -90; };
+    lawyer = { path = "res://assets/characters/UserModels/model_14.glb"; height = 1.32; yaw_degrees = -90; };
+    doctor = { path = "res://assets/characters/UserModels/model_15.glb"; height = 1.32; yaw_degrees = -90; };
+    musician = { path = "res://assets/characters/UserModels/model_16.glb"; height = 1.32; yaw_degrees = -90; };
+    chessplayer = { path = "res://assets/characters/UserModels/model_17.glb"; height = 1.32; yaw_degrees = -90; };
+  };
+  conversation_motion = {
+    enabled = true;
+    status = "enabled-independent-track-rebuild-formal-new-game-tested-per-character-review-pending";
+    source_clip = "interact";
+    standing_base = "idle";
+    seated_base = "sit_idle";
+    source = "KayKit General Interact upper-body adaptation; CC0, existing project assets";
+    gesture_pause_seconds = 1.15;
+    listener_pause_seconds = 2.2;
+    speaker_arm_weight = 0.48;
+    speaker_torso_weight = 0.22;
+    listener_torso_weight = 0.10;
+    arm_bones = ["LeftArm", "LeftForeArm", "LeftHand", "RightArm", "RightForeArm", "RightHand", "upperarm.l", "lowerarm.l", "hand.l", "upperarm.r", "lowerarm.r", "hand.r"];
+    torso_bones = ["Spine", "Spine2", "Head", "spine", "chest", "head"];
+  };
+  production = {
+    status = "shared-master-in-production";
+    base_tool = "VRoid Studio";
+    finishing_tool = "Blender";
+    preserve_existing_clothing_design = true;
+    shared_topology = true;
+    shared_skeleton = true;
+    shared_rest_pose = true;
+    material_route = "procedural-gdshader-primary";
+    target_head_units = [3.0, 3.5];
+    first_samples = ["detective", "veronica"];
+    roster = ["detective", "huo", "shen", "su", "lucian", "gu", "quer", "ward", "selma", "ruan", "elena", "moran", "veronica", "bertrand", "margaret", "mora", "demon"];
+    missing_E_visuals = ["demon"];
+    demon_design = {
+      status = "existing-design-pending-model";
+      cloth = "0e0c10";
+      accent = "d9a13a";
+      garment = "实体燕尾服与白手套";
+      eyes = "琥珀金竖瞳";
+    };
+  };
+  body_template = {
+    status = "design-proposal-pending-skinning";
+    head_units = 3;
+    nominal_height_m = 1.32;
+    head_size_m = [0.40, 0.44, 0.34];
+    shoulder_y_m = [0.79, 0.81];
+    hip_y_m = 0.50;
+    knee_y_m = 0.28;
+    ankle_y_m = 0.075;
+    segment_stretch = false;
+    bones = {
+      "root" = { parent = ""; from = [0, 0, 0]; to = [0, 0.18, 0]; };
+      "hips" = { parent = "root"; from = [0, 0.5, 0]; to = [0, 0.61, 0]; };
+      "spine" = { parent = "hips"; from = [0, 0.61, 0]; to = [0, 0.7, 0]; };
+      "chest" = { parent = "spine"; from = [0, 0.7, 0]; to = [0, 0.8, 0]; };
+      "neck" = { parent = "chest"; from = [0, 0.8, 0]; to = [0, 0.88, 0]; };
+      "head" = { parent = "neck"; from = [0, 0.88, 0]; to = [0, 1.27, 0]; };
+      "upperarm.l" = { parent = "chest"; from = [-0.18, 0.79, 0]; to = [-0.25, 0.55, 0.04]; };
+      "lowerarm.l" = { parent = "upperarm.l"; from = [-0.25, 0.55, 0.04]; to = [-0.22, 0.45, 0.1]; };
+      "wrist.l" = { parent = "lowerarm.l"; from = [-0.22, 0.45, 0.1]; to = [-0.22, 0.42, 0.11]; };
+      "hand.l" = { parent = "wrist.l"; from = [-0.22, 0.42, 0.11]; to = [-0.22, 0.38, 0.12]; };
+      "upperleg.l" = { parent = "hips"; from = [-0.1, 0.5, 0]; to = [-0.105, 0.28, 0.015]; };
+      "lowerleg.l" = { parent = "upperleg.l"; from = [-0.105, 0.28, 0.015]; to = [-0.105, 0.075, 0]; };
+      "foot.l" = { parent = "lowerleg.l"; from = [-0.105, 0.075, 0]; to = [-0.105, 0.045, 0.16]; };
+      "toes.l" = { parent = "foot.l"; from = [-0.105, 0.045, 0.16]; to = [-0.105, 0.045, 0.2]; };
+      "upperarm.r" = { parent = "chest"; from = [0.18, 0.79, 0]; to = [0.25, 0.55, 0.04]; };
+      "lowerarm.r" = { parent = "upperarm.r"; from = [0.25, 0.55, 0.04]; to = [0.22, 0.45, 0.1]; };
+      "wrist.r" = { parent = "lowerarm.r"; from = [0.22, 0.45, 0.1]; to = [0.22, 0.42, 0.11]; };
+      "hand.r" = { parent = "wrist.r"; from = [0.22, 0.42, 0.11]; to = [0.22, 0.38, 0.12]; };
+      "upperleg.r" = { parent = "hips"; from = [0.1, 0.5, 0]; to = [0.105, 0.28, 0.015]; };
+      "lowerleg.r" = { parent = "upperleg.r"; from = [0.105, 0.28, 0.015]; to = [0.105, 0.075, 0]; };
+      "foot.r" = { parent = "lowerleg.r"; from = [0.105, 0.075, 0]; to = [0.105, 0.045, 0.16]; };
+      "toes.r" = { parent = "foot.r"; from = [0.105, 0.045, 0.16]; to = [0.105, 0.045, 0.2]; };
+    };
+  };
+  cast = {
+    demon = { character_id = "demon"; cloth = "0e0c10"; hair = "252525"; outfit = "coat"; };
+    poet = { character_id = "lucian"; cloth = "793e37"; hair = "775234"; outfit = "cape"; silhouette = "窄腰礼服，后方短披肩展开三角，胸前浅领饰"; hair_design = "鬓侧大卷，后颈一层卷发"; garment_design = "暗红天鹅绒礼服、分开后摆、袖口局部磨损"; primary_props = "书袋与书；仪仗剑按剧情装备"; avoid = "开局常驻佩剑与中世纪骑士甲"; review_status = "design-proposal"; };
+    archaeologist = { character_id = "gu"; cloth = "284f82"; hair = "b5b0a0"; outfit = "robe"; silhouette = "稳定竖长袍，胸上短须楔形与细手杖"; hair_design = "灰白后梳短发，连续短须网格"; garment_design = "蓝长袍、领座、右侧襟线、步行开衩，露出鞋尖"; primary_props = "手杖与按工作取出的拓片册"; avoid = "新增跛行设定与满脸刻线"; review_status = "design-proposal"; };
+    thief = { character_id = "quer"; cloth = "58614c"; hair = "4f3428"; outfit = "short"; silhouette = "紧凑短上衣、清楚双腿、一侧贴髋工具袋"; hair_design = "右侧短辫收至肩上，三束大额发"; garment_design = "髋上收口外衣、挽袖、收腿长裤、系带短靴"; primary_props = "闭合探针工具卷"; avoid = "儿童化身体、裸露大腿与遍身破烂"; review_status = "design-proposal"; };
+    lawyer = { character_id = "ward"; cloth = "2f3b57"; hair = "49413c"; outfit = "coat"; silhouette = "近矩形上身，收腰长外套与平整前摆"; hair_design = "整齐后梳，发际略后退"; garment_design = "蓝黑礼服外套、窄白领饰"; primary_props = "硬挺公文包"; avoid = "法官假发、警徽与军装"; review_status = "design-proposal"; };
+    detective = { character_id = "detective"; cloth = "654633"; hair = "4f3428"; outfit = "coat"; silhouette = "直立窄梯形，打开的前襟露出暗绿马甲"; hair_design = "短侧分，额前一束不完全服帖"; garment_design = "大腿中段呢料外套、翻领、后开衩、衬衣袖口"; primary_props = "黄铜放大镜；案卷册按动作取出"; avoid = "猎鹿帽、烟斗与常驻巨大放大镜"; review_status = "design-proposal"; };
+    engineer = { character_id = "huo"; cloth = "a35c36"; hair = "68503b"; outfit = "apron"; silhouette = "平直肩线，前窄后宽皮围裙"; hair_design = "短发后梳，小鬓角"; garment_design = "挽袖衬衣、膝上中开衩围裙、真实连接的肩带"; primary_props = "短扳手与既有速记石板"; avoid = "齿轮帽、蒸汽背包与新增护目镜"; review_status = "design-proposal"; };
+    chef = { character_id = "shen"; cloth = "d4c6a0"; hair = "77786b"; outfit = "apron"; silhouette = "圆弧围裙，衣料松量表达厚实轮廓"; hair_design = "短发、两鬓灰、小髭"; garment_design = "交叠短工作上衣、背侧腰结、腕上袖口"; primary_props = "擀面杖与汤勺按工作取出"; avoid = "日常常驻持刀与新增厨师等级标识"; review_status = "design-proposal"; };
+    musician = { character_id = "su"; cloth = "285852"; hair = "34332d"; outfit = "robe"; silhouette = "窄肩长衣，直落衣褶与一条纵襟线"; hair_design = "向后收的高椭圆发髻"; garment_design = "细收袖口，露腕执音叉"; primary_props = "音叉与另一手承托的乐谱册"; avoid = "常驻紫光、鬼脸与漂浮身体"; review_status = "design-proposal"; };
+    naturalist = { character_id = "selma"; cloth = "62744b"; hair = "7b4e31"; outfit = "coat"; silhouette = "短外套与步行裙，圆角标本盒形成侧影"; hair_design = "左侧单辫至上胸"; garment_design = "合体外衣，离地裙摆与后侧行走余量"; primary_props = "有口袋的采集套、标本盒"; avoid = "民族节庆服与身体长出枝叶"; review_status = "design-proposal"; };
+    chessplayer = { character_id = "ruan"; cloth = "ded8c4"; hair = "34332d"; outfit = "cape"; silhouette = "对称弧边短披肩，下层长衣分片"; hair_design = "收窄垂落后发，头顶不过高"; garment_design = "浅色长衣、露双腕、小椭圆棋袋"; primary_props = "落子时两指夹棋子"; avoid = "满身棋盘纹与永久愠怒表情"; review_status = "design-proposal"; };
+    dancer = { character_id = "elena"; cloth = "416579"; hair = "76553d"; outfit = "skirt"; silhouette = "清楚腰带与受控裙摆，整洁肩线"; hair_design = "紧贴枕骨的低后髻与小发饰"; garment_design = "踝上日常裙，双脚清楚可见"; primary_props = "左踝变体按正式剧情启用"; avoid = "日常足尖鞋、蓬蓬舞裙与新增手杖"; review_status = "design-proposal"; };
+    painter = { character_id = "moran"; cloth = "66767d"; hair = "755038"; outfit = "short"; silhouette = "宽松短罩衣、偏斜帽沿与薄速写本"; hair_design = "帽下露额发，后发不过领"; garment_design = "收袖口，少量实际作画擦痕"; primary_props = "速写本与单支画笔，绘画时取调色板"; avoid = "日常源质紫金配色与常驻魔法特效"; review_status = "design-proposal"; };
+    chemist = { character_id = "veronica"; cloth = "d3d1bf"; hair = "72614b"; outfit = "coat"; silhouette = "膝上工作罩衣、窄圆眼镜与笔直领座"; hair_design = "中高后髻，成年光洁面部"; garment_design = "前开合罩衣、两侧袋、整齐内层衣裙"; primary_props = "药瓶与瓶塞；左袖按演出挽起"; avoid = "常驻血迹与将工作服当成贵族礼服"; review_status = "design-proposal"; };
+    marksman = { character_id = "bertrand"; cloth = "59624d"; hair = "55453a"; outfit = "coat"; silhouette = "厚实短勤务外套，斜背带与低工具袋"; hair_design = "平整短发，鬓角与短胡茬"; garment_design = "收进实用靴的裤脚，后摆不拖膝"; primary_props = "重弩按装备状态出现"; avoid = "新增军衔勋章、步枪与弹匣"; review_status = "design-proposal"; };
+    architect = { character_id = "margaret"; cloth = "9b7050"; hair = "815036"; outfit = "short"; silhouette = "结构化腰长外衣，分片工作裙与侧腰筒套"; hair_design = "发辫盘至脑后侧"; garment_design = "平袖口露手，下摆与袖口少量石粉磨耗"; primary_props = "图纸卷、直角尺与薄工具袋"; avoid = "默认格子裙与现代安全帽"; review_status = "design-proposal"; };
+    doctor = { character_id = "mora"; cloth = "c6d0bc"; hair = "858075"; outfit = "apron"; silhouette = "宽围裙胸片、低宽医疗包"; hair_design = "低发髻与灰鬓区别化学家"; garment_design = "背交叉带、可洗袖套、小腿中部外层与独立裙摆"; primary_props = "诊疗时取器具，提手与手指扣合"; avoid = "护士帽、现代听诊器与未经设定的红十字标志"; review_status = "design-proposal"; };
+  };
+}

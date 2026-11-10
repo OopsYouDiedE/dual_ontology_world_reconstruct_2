@@ -1,0 +1,11 @@
+schema "dv-script-v1";
+
+layout migrated_character_models {
+  models = [
+    { character_id = "detective"; label = "侦探"; path = "res://assets/characters/UserModels/model_06.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "quer"; label = "雀儿"; path = "res://assets/characters/UserModels/model_01.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "lucian"; label = "卢西安"; path = "res://assets/characters/UserModels/model_10.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "ruan"; label = "阮清月"; path = "res://assets/characters/UserModels/model_17.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "shen"; label = "沈鼐"; path = "res://assets/characters/UserModels/model_07.glb"; height = 1.32; yaw_degrees = -90; }
+  ];
+}

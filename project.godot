@@ -14,15 +14,19 @@ config/name="建筑模拟器 · Reconstruct 2"
 run/main_scene="res://tools/building_construction/BuildingSimulator.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 
+[autoload]
+
+BuildingMcp="*res://mcp/building/GodotControl.gd"
+
 [display]
 
 window/size/viewport_width=1440
 window/size/viewport_height=900
 window/stretch/mode="canvas_items"
 
-[autoload]
+[dotnet]
 
-BuildingMcp="*res://mcp/building/GodotControl.gd"
+project/assembly_name="DualOntologyWorldReconstruct2"
 
 [editor_plugins]
 
@@ -33,7 +37,3 @@ enabled=PackedStringArray("res://tools/building_construction/plugin.cfg")
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.055, 0.075, 0.1, 1)
-
-[dotnet]
-
-project/assembly_name="DualOntologyWorldReconstruct2"

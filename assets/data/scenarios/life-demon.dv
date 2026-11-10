@@ -1,0 +1,13 @@
+schema "dv-script-v1";
+data runtime.character_session {"value": {
+  "compact": true,
+  "actors": [
+    {
+      "id": "demon",
+      "actions": [
+        {"id":"demon.life.go_teach","label":"应实际求教前往讲堂","kind":"walk","at":"1F-Shaft-Monitor","focus":"demon","minutes":3,"priority":8,"once":true,"not_after_game_minutes":7200,"when":{"lecture.doc.requested":true},"writes":{"demon.room":"T01"},"observes":["demon.room"],"route_rooms":["1F-Shaft-Monitor","T01"],"perceived_need_effects":{"purpose":22,"curiosity":15}},
+        {"id":"demon.life.scope_lesson","label":"就所问范围讲解答复与授权","kind":"talk","at":"T01","focus":"demon","minutes":16,"priority":8,"once":true,"not_after_game_minutes":7200,"when":{"lecture.doc.requested":true},"writes":{"lecture.doc.posted":true},"observes":["lecture.doc.posted"],"tell":[{"actor":"lucian","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"gu","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"quer","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"ward","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"detective","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"huo","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"shen","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"su","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"selma","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"ruan","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"elena","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"moran","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"veronica","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"bertrand","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"margaret","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]},{"actor":"mora","room":"T01","fields":["lecture.doc.scope_lesson"],"results":["lecture.doc.posted"]}],"perceived_need_effects":{"purpose":28,"curiosity":18},"completed_need_effects":{"purpose":28,"curiosity":18},"public_completion_text":"代管者：答复只涵盖所问的对象、条件与时点。接管一件物品，不自动取得处分权；见证一人的签字，也不能代替另一人的同意。 诸位若愿意把没问的半句也写在纸上，我会少受一些冤枉。"}
+      ]
+    }
+  ]
+}};

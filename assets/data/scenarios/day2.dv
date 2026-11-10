@@ -1,0 +1,1521 @@
+// 五日正式剧情：人物所知、现场物证、独立意见、推演及言灵分别声明。
+schema "dv-script-v1";
+data runtime.character_session { "value": {
+  "compact": true,
+  "viewer": "detective",
+  "room_labels": {"A-P":"甲区公共厅","B-P":"乙区公共厅／小厨房","C-P":"丙区公共厅","D-P":"丁区公共厅","2F-cross-M":"二楼中翼交汇处","2F-North-Stair":"二楼北侧楼梯与联锁闸","1F-Shaft-Monitor":"一楼竖井监测壁龛","1F-Infirmary":"一楼临时医疗角","F03":"一楼大食堂","F05":"一楼热厨","T01":"二楼公共讲堂","U01-granary":"B1主粮仓","D-gate":"丁区边界门","B1-hazard":"B1服务廊与下行检修坡道","W-102":"文契院·纸墨分析室","B-102":"白塔院·配药清洁制备室","F-104":"铁工院·备件成品室","S-102":"星仪院·精密仪器室"},
+  "start_minutes": 420,
+  "scheduling": {"decision_interval_seconds":15,"actor_stagger_seconds":0.05,"candidates_per_decision":32,"evaluations_per_slice":32},
+  "run": {"end_minutes":1420},
+  "source": {"document":"scenarios/day2.dv","scope":"第二天07:00至错峰入睡，包含风窗开仓、配给争议、四院真实初探与签名巡检、阮清月独坐打谱和傍晚集体生活","anchors":["docs/02 地理箱庭、文献与六章剧情.md","docs/22 证据链与六章推理设计.md","docs/sources/Gemini-original.txt","tools/building/designs/campus-r3.json"]},
+  "actor_defaults": {"autonomous":true,"autonomy":{"commodity_needs":{"energy":85,"hunger":70,"social":60,"comfort":55,"thirst":70,"hygiene":70},"need_decay_per_second":{"energy":0.001,"hunger":0.001,"social":0.0005,"comfort":0.0005,"thirst":0.0015,"hygiene":0.0005},"autonomy_weights":{"energy":1,"hunger":1,"social":1,"comfort":1,"thirst":2,"hygiene":1.5},"time_cost":0.0001,"initial_emotion":"睡眠","buff_definitions":{"buff_granary_opened":{"label":"主粮仓开启全员振奋","emotion":"安心","emotion_weight":3,"tag_scores":{"协作":30,"安心":25},"until_resolved":true,"resolution":"次日醒来"},"buff_ration_dispute":{"label":"口粮争议心存芥蒂","emotion":"警觉","emotion_weight":2,"tag_scores":{"防范":25,"闲聊":-15},"duration_minutes":120},"buff_ruan_stratagem_ready":{"label":"试应手棋局已定","emotion":"专注","emotion_weight":3,"tag_scores":{"谋划":35,"掩饰":25},"duration_minutes":240},"buff_warm_porridge":{"label":"热气腾腾清粥饱腹","emotion":"安心","emotion_weight":2,"tag_scores":{"安睡":35,"休整":30},"duration_minutes":180},"condition_detective_day2":{"label":"手背擦伤结痂","emotion":"专注","emotion_weight":2,"tag_scores":{"勘验":30,"调解":35,"闲聊":-10},"until_resolved":true,"resolution":"夜巡"},"condition_quer_day2":{"label":"备好精钢探针卷","emotion":"警觉","emotion_weight":2,"tag_scores":{"查工具":35,"破拆":40,"争论":20},"until_resolved":true,"resolution":"开仓完毕"},"condition_huo_day2":{"label":"维护棘轮重型扳手","emotion":"专注","emotion_weight":2,"tag_scores":{"检修":40,"开仓":40,"搬运":25},"until_resolved":true,"resolution":"开仓完毕"},"condition_margaret_day2":{"label":"携带折叠钢卷尺","emotion":"专注","emotion_weight":2,"tag_scores":{"测绘":45,"结构分析":35},"until_resolved":true,"resolution":"开仓完毕"},"condition_elena_day2":{"label":"夹板固定伤踝静卧","emotion":"安心","emotion_weight":2,"tag_scores":{"静卧":35,"休整":30,"行走":-30},"until_resolved":true,"resolution":"复诊换药"},"condition_shen_day2":{"label":"盘算开仓调粮掌勺","emotion":"安心","emotion_weight":2,"tag_scores":{"厨务":45,"热食":35,"闲聊":10},"until_resolved":true,"resolution":"开仓供餐"},"condition_ward_day2":{"label":"核查配给维持警戒","emotion":"警觉","emotion_weight":2,"tag_scores":{"盘查":40,"戒备":35,"争论":25},"until_resolved":true,"resolution":"配给确立"},"condition_ruan_day2":{"label":"研判各区试探人心","emotion":"专注","emotion_weight":2,"tag_scores":{"推手":45,"棋局":40,"观察":30},"until_resolved":true,"resolution":"确定试应手"},"condition_lucian_day2":{"label":"佩剑归鞘心绪平复","emotion":"安心","emotion_weight":1,"tag_scores":{"闲聊":25,"休整":30},"until_resolved":true,"resolution":"就餐"},"condition_gu_day2":{"label":"整理抄本研读契约","emotion":"专注","emotion_weight":2,"tag_scores":{"护书":40,"抄录":35},"until_resolved":true,"resolution":"就餐"},"condition_su_day2":{"label":"辨听风声校准律管","emotion":"专注","emotion_weight":2,"tag_scores":{"听辨":40,"抚琴":30},"until_resolved":true,"resolution":"就餐"},"condition_moran_day2":{"label":"勾勒速写巡视结构","emotion":"专注","emotion_weight":2,"tag_scores":{"写生":40,"观察":30},"until_resolved":true,"resolution":"就餐"},"condition_veronica_day2":{"label":"调配试剂检查水质","emotion":"专注","emotion_weight":2,"tag_scores":{"化验":45,"配药":35},"until_resolved":true,"resolution":"就餐"},"condition_bertrand_day2":{"label":"灼伤包扎持盾护卫","emotion":"警觉","emotion_weight":2,"tag_scores":{"巡守":35,"自护":30},"until_resolved":true,"resolution":"就餐"},"condition_mora_day2":{"label":"巡视伤情换药诊治","emotion":"安心","emotion_weight":2,"tag_scores":{"扶伤":45,"照应":35},"until_resolved":true,"resolution":"就餐"},"condition_selma_day2":{"label":"抚琴安神抚平人心","emotion":"安心","emotion_weight":2,"tag_scores":{"抚琴":40,"安抚":30},"until_resolved":true,"resolution":"就餐"}},"emotion_definitions":{"睡眠":{"tag_scores":{"睡眠":50,"勘验":-50,"闲聊":-50,"用餐":-50}},"不适":{"tag_scores":{"护创":35,"休整":25,"闲聊":-15,"深度讨论":-20}},"警觉":{"tag_scores":{"勘验":25,"破拆":25,"核账":30,"防范":25,"闲聊":-10}},"专注":{"tag_scores":{"测绘":30,"破拆":30,"检修":30,"打谱":35,"调解":25,"闲聊":-15}},"担忧":{"tag_scores":{"查伤":35,"换药":30,"照料":30,"闲聊":-10}},"悲愤":{"tag_scores":{"争辩":30,"质询":30,"闲聊":-10}},"安心":{"tag_scores":{"厨务":25,"用餐":30,"休整":25,"就寝":35}}},"action_weights":{},"action_predictions":{},"completed_action_effects":{}}},
+  "templates": {},
+  "fixtures": [
+    {"id":"R01-bed","room":"R01","label":"自己的床"},
+    {"id":"R02-bed","room":"R02","label":"自己的床"},
+    {"id":"R03-bed","room":"R03","label":"自己的床"},
+    {"id":"R04-bed","room":"R04","label":"自己的床"},
+    {"id":"R05-bed","room":"R05","label":"自己的床"},
+    {"id":"R06-bed","room":"R06","label":"自己的床"},
+    {"id":"R07-bed","room":"R07","label":"自己的床"},
+    {"id":"R08-bed","room":"R08","label":"自己的床"},
+    {"id":"R09-bed","room":"R09","label":"自己的床"},
+    {"id":"R10-bed","room":"R10","label":"自己的床"},
+    {"id":"R11-bed","room":"R11","label":"自己的床"},
+    {"id":"R12-bed","room":"R12","label":"自己的床"},
+    {"id":"R13-bed","room":"R13","label":"自己的床"},
+    {"id":"R14-bed","room":"R14","label":"自己的床"},
+    {"id":"R15-bed","room":"R15","label":"自己的床"},
+    {"id":"R16-bed","room":"R16","label":"自己的床"},
+    {"id":"F03-table","room":"F03","label":"大食堂长桌"},
+    {"id":"F05-stove","room":"F05","label":"热厨大灶"},
+    {"id":"U01-door","room":"U01-granary","label":"主粮仓石门"},
+    {"id":"U01-winch","room":"U01-granary","label":"主粮仓重型绞盘"},
+    {"id":"R10-board","room":"R10","label":"阮清月棋盘"},
+    {"id":"R01-basin","room":"R01","label":"水盆与水壶"},
+    {"id":"R02-basin","room":"R02","label":"水盆与水壶"},
+    {"id":"R03-basin","room":"R03","label":"水盆与水壶"},
+    {"id":"R04-basin","room":"R04","label":"水盆与水壶"},
+    {"id":"R05-basin","room":"R05","label":"水盆与水壶"},
+    {"id":"R06-basin","room":"R06","label":"水盆与水壶"},
+    {"id":"R07-basin","room":"R07","label":"水盆与水壶"},
+    {"id":"R08-basin","room":"R08","label":"水盆与水壶"},
+    {"id":"R09-basin","room":"R09","label":"水盆与水壶"},
+    {"id":"R10-basin","room":"R10","label":"水盆与水壶"},
+    {"id":"R11-basin","room":"R11","label":"水盆与水壶"},
+    {"id":"R12-basin","room":"R12","label":"水盆与水壶"},
+    {"id":"R13-basin","room":"R13","label":"水盆与水壶"},
+    {"id":"R14-basin","room":"R14","label":"水盆与水壶"},
+    {"id":"R15-basin","room":"R15","label":"水盆与水壶"},
+    {"id":"R16-basin","room":"R16","label":"水盆与水壶"},
+    {"id":"granary.door","room":"U01-granary","label":"沉降石门"},
+    {"id":"granary.winch","room":"U01-granary","label":"门侧绞盘"},
+    {"id":"granary.lock","room":"U01-granary","label":"双排锁芯"},
+    {"id":"granary.ledger","room":"U01-granary","label":"粮药封签清册"},
+    {"id":"ration.ledger","room":"F03","label":"公共配给账簿"},
+    {"id":"ruan.board","room":"R10","label":"围棋盘与夹层"},
+    {"id":"monitor.gauge","room":"1F-Shaft-Monitor","label":"压差仪与风窗铭牌"},
+    {"id":"lucian.draft","room":"F03","label":"修改诗稿"},
+    {"id":"gu.folio","room":"T01","label":"晾干拓片"},
+    {"id":"su.instrument","room":"R08","label":"换弦试音"},
+    {"id":"elena.splint","room":"1F-Infirmary","label":"抬高伤踝"},
+    {"id":"medical.desk","room":"1F-Infirmary","label":"给伤踝与酸灼伤换药"},
+    {"id":"selma.instrument","room":"1F-Infirmary","label":"陪护伊莲娜"},
+    {"id":"bertrand.shield","room":"2F-cross-M","label":"检查公共通道"},
+    {"id":"moran.easel","room":"T01","label":"绘制连廊与人群草图"},
+    {"id":"academies.report_board","room":"2F-cross-M","label":"四院接驳路线牌与签名巡检簿"},
+    {"id":"W102.workbench","room":"W-102","label":"纸墨比较台与借阅牌"},
+    {"id":"B102.cabinet","room":"B-102","label":"洁净药柜与配制台"},
+    {"id":"F104.spares","room":"F-104","label":"备件检验台与配合样件"},
+    {"id":"S102.instruments","room":"S-102","label":"标尺仪器台与对照记录"}
+  ],
+  "display": {"action_reasons":false,"hidden_facts":[]},
+  "atomic_actions": true,
+  "actors": [
+    {
+      "id": "lucian",
+      "name": "卢西安",
+      "home_room": "R01",
+      "home_bed": "R01-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"lucian.room":"R01","lucian.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"recognition":1.4,"solidarity":1,"honesty":0.6},"modifiers":[]},
+      "actions": [
+        {"id":"lucian.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R01","minutes":1,"priority":80,"once":true,"focus":"R01-bed","interaction_slot":"R01-bed","writes":{"lucian.phys.asleep":false},"observes":["lucian.room","lucian.phys.asleep"],"add_buffs":["condition_lucian_day2"],"emotion":"安心"},
+        {"id":"lucian.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R01","minutes":6,"priority":22,"once":true,"focus":"R01-basin","interaction_slot":"R01-basin","when":{"lucian.phys.asleep":false,"event:lucian.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"lucian.to_work","label":"前往一楼大食堂","kind":"walk","at":"R01","minutes":3,"priority":32,"once":true,"focus":"lucian","when":{"lucian.phys.asleep":false,"event:lucian.morning_care.done":true},"writes":{"lucian.room":"F03"},"observes":["lucian.room"],"route_rooms":["R01","F03"],"not_before_game_minutes":550},
+        {"id":"lucian.daily_work","label":"修改诗稿，并尝试替忙碌同伴领取餐券","kind":"interact","at":"F03","minutes":25,"priority":35,"once":true,"focus":"lucian.draft","interaction_slot":"lucian.draft","when":{"lucian.phys.asleep":false,"event:lucian.to_work.done":true},"tags":["吟诗","社交"]},
+        {"id":"lucian.to_supper","label":"前往一楼大食堂","kind":"walk","at":"F03","minutes":3,"priority":26,"once":true,"focus":"lucian","when":{"lucian.phys.asleep":false,"event:lucian.daily_work.done":true},"writes":{"lucian.room":"F03"},"observes":["lucian.room"],"route_rooms":["F03","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"lucian.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":12,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-lucian","when":{"lucian.phys.asleep":false,"event:lucian.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_lucian.phys.consumed":true},"observes":["meal_day2_lucian.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"lucian.return_bed","label":"前往R01","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"lucian","when":{"lucian.phys.asleep":false,"event:lucian.eat_supper.done":true},"writes":{"lucian.room":"R01"},"observes":["lucian.room"],"route_rooms":["F03","R01"],"not_before_game_minutes":1260},
+        {"id":"lucian.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R01","minutes":2,"priority":50,"once":true,"focus":"R01-bed","interaction_slot":"R01-bed","when":{"lucian.phys.asleep":false,"event:lucian.return_bed.done":true},"writes":{"lucian.phys.asleep":true},"observes":["lucian.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"lucian.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"lucian","interaction_slot":"lucian","when":{"lucian.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"lucian.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R01","minutes":8,"priority":-12,"once":false,"focus":"lucian","interaction_slot":"lucian","when":{"lucian.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"lucian.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"lucian.room":"F03","lucian.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "gu",
+      "name": "顾平章",
+      "home_room": "R02",
+      "home_bed": "R02-bed",
+      "wake_at_game_minutes": 422,
+      "knows": {"gu.room":"R02","gu.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"honesty":1.3,"reason":1.3,"care":1},"modifiers":[]},
+      "actions": [
+        {"id":"gu.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R02","minutes":1,"priority":80,"once":true,"focus":"R02-bed","interaction_slot":"R02-bed","writes":{"gu.phys.asleep":false},"observes":["gu.room","gu.phys.asleep"],"add_buffs":["condition_gu_day2"],"emotion":"专注"},
+        {"id":"gu.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R02","minutes":6,"priority":22,"once":true,"focus":"R02-basin","interaction_slot":"R02-basin","when":{"gu.phys.asleep":false,"event:gu.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"gu.to_work","label":"前往二楼公共讲堂","kind":"walk","at":"R02","minutes":3,"priority":32,"once":true,"focus":"gu","when":{"gu.phys.asleep":false,"event:gu.morning_care.done":true},"writes":{"gu.room":"T01"},"observes":["gu.room"],"route_rooms":["R02","T01"],"not_before_game_minutes":550},
+        {"id":"gu.daily_work","label":"晾干拓片，校勘馆藏地名与院规版本","kind":"interact","at":"T01","minutes":25,"priority":35,"once":true,"focus":"gu.folio","interaction_slot":"gu.folio","when":{"gu.phys.asleep":false,"event:gu.to_work.done":true},"tags":["护书","记录"]},
+        {"id":"gu.to_academy_dispatch","label":"完成手边工作后，到中翼查看文契院·纸墨分析室巡检路线","kind":"walk","at":"T01","minutes":3,"priority":32,"once":true,"focus":"T01-door","when":{"gu.phys.asleep":false,"event:gu.daily_work.done":true},"writes":{"gu.room":"2F-cross-M"},"observes":["gu.room"],"route_rooms":["T01","2F-cross-M"],"tags":["护书","记录"]},
+        {"id":"gu.read_academy_route","label":"读取接驳图，确认风窗和归楼通路","kind":"read","at":"2F-cross-M","minutes":1,"priority":35,"once":true,"focus":"academies.report_board","when":{"gu.phys.asleep":false,"event:gu.to_academy_dispatch.done":true},"interaction_slot":"academies.report_board","observes":["academies.doc.route","island_environment.phys.wind_window"],"tags":["护书","记录"]},
+        {"id":"gu.to_W102","label":"按专业分工前往文契院·纸墨分析室","kind":"walk","at":"2F-cross-M","minutes":8,"priority":36,"once":false,"focus":"2F-cross-M-door","when":{"gu.phys.asleep":false,"event:gu.read_academy_route.done":true,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"writes":{"gu.room":"W-102"},"observes":["gu.room"],"route_rooms":["2F-cross-M","2F-M-interface","1F-M-interface","1F-gallery-W","1F-cross-S","AC-W-1-return","AC-W-1-cross","AC-W-1-long","W-102"],"requires":{"island_environment.phys.wind_window":true},"unknown":["event:gu.inspect_W102.done"],"not_after_game_minutes":990,"tags":["护书","记录"]},
+        {"id":"gu.inspect_W102","label":"校验纸墨样本与借阅登记，保留原卷封签","kind":"inspect","at":"W-102","minutes":4,"priority":42,"once":true,"focus":"W102.workbench","when":{"gu.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"interaction_slot":"W102.workbench","requires":{"island_environment.phys.wind_window":true},"not_after_game_minutes":1005,"observes":["W102.trace.paper_register"],"tags":["护书","记录"]},
+        {"id":"gu.return_from_W102","label":"沿原接驳廊从W-102回到中翼","kind":"walk","at":"W-102","minutes":8,"priority":8,"once":false,"focus":"W-102-door","when":{"gu.phys.asleep":false},"writes":{"gu.room":"2F-cross-M"},"observes":["gu.room"],"route_rooms":["W-102","AC-W-1-long","AC-W-1-cross","AC-W-1-return","1F-cross-S","1F-gallery-W","1F-M-interface","2F-M-interface","2F-cross-M"]},
+        {"id":"gu.file_W102_report","label":"签署并留下W-102实际巡检记录","kind":"interact","at":"2F-cross-M","minutes":2,"priority":40,"once":true,"focus":"academies.report_board","when":{"gu.phys.asleep":false,"event:gu.inspect_W102.done":true,"W102.trace.paper_register":"纸墨台上可比对旧纸纤维、样墨和刮擦痕；借阅牌要求保留原页与编号，原卷库封签不能凭一张旧签名拆开。"},"interaction_slot":"academies.report_board","writes":{"W102.doc.signed_report":"顾平章签名：已实查W-102纸墨台，样墨与旧纸可供比对；借阅登记须对应原页编号，旧签名不扩张授权，也不开放封存原卷。"},"observes":["W102.doc.signed_report"],"tags":["护书","记录"]},
+        {"id":"gu.return_from_academy","label":"登记完毕，返回原工作地点继续照应同伴","kind":"walk","at":"2F-cross-M","minutes":3,"priority":32,"once":true,"focus":"2F-cross-M-door","when":{"gu.phys.asleep":false,"event:gu.file_W102_report.done":true},"writes":{"gu.room":"T01"},"observes":["gu.room"],"route_rooms":["2F-cross-M","T01"],"tags":["护书","记录"]},
+        {"id":"gu.to_supper","label":"前往一楼大食堂","kind":"walk","at":"T01","minutes":3,"priority":26,"once":true,"focus":"gu","when":{"gu.phys.asleep":false,"event:gu.daily_work.done":true,"event:gu.return_from_academy.done":true},"writes":{"gu.room":"F03"},"observes":["gu.room"],"route_rooms":["T01","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"gu.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-gu","when":{"gu.phys.asleep":false,"event:gu.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_gu.phys.consumed":true},"observes":["meal_day2_gu.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"gu.return_bed","label":"前往R02","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"gu","when":{"gu.phys.asleep":false,"event:gu.eat_supper.done":true},"writes":{"gu.room":"R02"},"observes":["gu.room"],"route_rooms":["F03","R02"],"not_before_game_minutes":1264},
+        {"id":"gu.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R02","minutes":2,"priority":50,"once":true,"focus":"R02-bed","interaction_slot":"R02-bed","when":{"gu.phys.asleep":false,"event:gu.return_bed.done":true},"writes":{"gu.phys.asleep":true},"observes":["gu.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"gu.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"gu","interaction_slot":"gu","when":{"gu.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"gu.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R02","minutes":8,"priority":-12,"once":false,"focus":"gu","interaction_slot":"gu","when":{"gu.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"gu.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"T01","minutes":8,"priority":-12,"once":false,"focus":"gu","interaction_slot":"gu","when":{"gu.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"gu.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"gu.room":"F03","gu.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]},
+        {"id":"gu.academy_window_0","label":"查看接驳廊风窗状态牌和归楼指示","when":{"gu.room":"2F-cross-M","gu.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]},
+        {"id":"gu.academy_window_1","label":"查看接驳廊风窗状态牌和归楼指示","when":{"gu.room":"W-102","gu.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]}
+      ]
+    },
+    {
+      "id": "quer",
+      "name": "雀儿",
+      "home_room": "R03",
+      "home_bed": "R03-bed",
+      "wake_at_game_minutes": 424,
+      "knows": {"quer.room":"R03","quer.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"autonomy":1.4,"craft":1.3,"safety":0.9,"fairness":1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
+      "actions": [
+        {"id":"quer.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R03","minutes":1,"priority":80,"once":true,"focus":"R03-bed","interaction_slot":"R03-bed","writes":{"quer.phys.asleep":false},"observes":["quer.room","quer.phys.asleep"],"add_buffs":["condition_quer_day2"],"emotion":"专注"},
+        {"id":"quer.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R03","minutes":6,"priority":22,"once":true,"focus":"R03-basin","interaction_slot":"R03-basin","when":{"quer.phys.asleep":false,"event:quer.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"quer.to_granary","label":"前往B1主粮仓","kind":"walk","at":"R03","minutes":3,"priority":32,"once":true,"focus":"quer","when":{"quer.phys.asleep":false,"event:quer.morning_care.done":true},"writes":{"quer.room":"U01-granary"},"observes":["quer.room"],"route_rooms":["R03","U01-granary"],"not_before_game_minutes":535},
+        {"id":"quer.inspect_lock","label":"观察双排锁针受剪的位置","kind":"inspect","at":"U01-granary","minutes":5,"priority":35,"once":true,"focus":"granary.lock","interaction_slot":"granary.lock","when":{"quer.phys.asleep":false,"event:quer.to_granary.done":true,"island_environment.phys.wind_window":true},"observes":["granary.trace.lock_pin"]},
+        {"id":"quer.pick_granary_lock","label":"在支撑受力后挑开双排锁芯","kind":"interact","at":"U01-granary","minutes":6,"priority":35,"once":true,"focus":"granary.lock","interaction_slot":"granary.lock","when":{"quer.phys.asleep":false,"event:quer.inspect_lock.done":true,"granary.phys.structure_braced":true},"requires":{"granary.phys.structure_braced":true,"probes.phys.owner":"quer"},"writes":{"granary.lock.picked":true},"observes":["granary.lock.picked"],"tags":["破拆","协作"]},
+        {"id":"quer.to_canteen","label":"前往一楼大食堂","kind":"walk","at":"U01-granary","minutes":3,"priority":32,"once":true,"focus":"quer","when":{"quer.phys.asleep":false,"granary.lock.open":true},"writes":{"quer.room":"F03"},"observes":["quer.room"],"route_rooms":["U01-granary","F03"],"not_before_game_minutes":625},
+        {"id":"quer.declare_home_goal","label":"当面说起独立归乡与精钢探针的保管","kind":"interact","at":"F03","minutes":3,"priority":35,"once":true,"focus":"quer","interaction_slot":"quer","when":{"quer.phys.asleep":false,"event:quer.to_canteen.done":true},"observes":["quer.doc.willing_to_depart","probes.phys.owner","probes.phys.secured","probes.trace.custody_risk","quer.doc.custody_concern"],"tags":["闲聊"],"writes":{"quer.doc.custody_concern":true},"public_completion_text":"雀儿把磨松的束带绕回掌心：仓门开了，针也该点一遍。我想自己回家，工具也想自己收着。真有要借的人，把用途和什么时候还说给我听；别替我递出去。","tell":[{"actor":"detective","fields":["probes.trace.custody_risk"],"results":["quer.doc.custody_concern"],"room":"F03"}]},
+        {"id":"quer.to_supper","label":"前往一楼大食堂","kind":"walk","at":"F03","minutes":3,"priority":26,"once":true,"focus":"quer","when":{"quer.phys.asleep":false,"event:quer.declare_home_goal.done":true},"writes":{"quer.room":"F03"},"observes":["quer.room"],"route_rooms":["F03","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"quer.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":16,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-quer","when":{"quer.phys.asleep":false,"event:quer.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_quer.phys.consumed":true},"observes":["meal_day2_quer.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"quer.return_bed","label":"前往R03","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"quer","when":{"quer.phys.asleep":false,"event:quer.eat_supper.done":true},"writes":{"quer.room":"R03"},"observes":["quer.room"],"route_rooms":["F03","R03"],"not_before_game_minutes":1268},
+        {"id":"quer.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R03","minutes":2,"priority":50,"once":true,"focus":"R03-bed","interaction_slot":"R03-bed","when":{"quer.phys.asleep":false,"event:quer.return_bed.done":true},"writes":{"quer.phys.asleep":true},"observes":["quer.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"quer.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"quer","interaction_slot":"quer","when":{"quer.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"quer.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R03","minutes":8,"priority":-12,"once":false,"focus":"quer","interaction_slot":"quer","when":{"quer.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"quer.wind_open","label":"听见正式开窗钟，检查眼前风窗指示","when":{"quer.room":"U01-granary","quer.phys.asleep":false,"island_environment.phys.wind_window":true},"observes":["island_environment.phys.wind_window"]},
+        {"id":"quer.brace_seen","label":"看见支撑楔受力、锁针松开","when":{"quer.room":"U01-granary","quer.phys.asleep":false,"granary.phys.structure_braced":true},"observes":["granary.phys.structure_braced"]},
+        {"id":"quer.open_granary","label":"看见粮仓门已经打开","when":{"quer.room":"U01-granary","quer.phys.asleep":false,"granary.lock.open":true},"observes":["granary.lock.open"]},
+        {"id":"quer.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"quer.room":"F03","quer.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "ward",
+      "name": "沃德",
+      "home_room": "R04",
+      "home_bed": "R04-bed",
+      "wake_at_game_minutes": 426,
+      "knows": {"ward.room":"R04","ward.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.4,"fairness":1.1,"safety":0.8,"honesty":1.3},"modifiers":[]},
+      "actions": [
+        {"id":"ward.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R04","minutes":1,"priority":80,"once":true,"focus":"R04-bed","interaction_slot":"R04-bed","writes":{"ward.phys.asleep":false},"observes":["ward.room","ward.phys.asleep"],"add_buffs":["condition_ward_day2"],"emotion":"安心"},
+        {"id":"ward.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R04","minutes":6,"priority":22,"once":true,"focus":"R04-basin","interaction_slot":"R04-basin","when":{"ward.phys.asleep":false,"event:ward.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"ward.to_canteen","label":"前往一楼大食堂","kind":"walk","at":"R04","minutes":3,"priority":32,"once":true,"focus":"ward","when":{"ward.phys.asleep":false,"event:ward.morning_care.done":true},"writes":{"ward.room":"F03"},"observes":["ward.room"],"route_rooms":["R04","F03"],"not_before_game_minutes":580},
+        {"id":"ward.dispute_ration","label":"按在册人数核定份额，要求每次领用留名","kind":"interact","at":"F03","minutes":4,"priority":35,"once":true,"focus":"ration.ledger","interaction_slot":"ration.ledger","when":{"ward.phys.asleep":false,"ration.doc.ledger_posted":true},"observes":["ration.doc.portions"],"writes":{"ration.policy.disputed":true},"tags":["核账","防范"]},
+        {"id":"ward.to_supper","label":"前往一楼大食堂","kind":"walk","at":"F03","minutes":3,"priority":26,"once":true,"focus":"ward","when":{"ward.phys.asleep":false,"ration.policy.mediated":true},"writes":{"ward.room":"F03"},"observes":["ward.room"],"route_rooms":["F03","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"ward.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":18,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-ward","when":{"ward.phys.asleep":false,"event:ward.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_ward.phys.consumed":true},"observes":["meal_day2_ward.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"ward.return_bed","label":"前往R04","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"ward","when":{"ward.phys.asleep":false,"event:ward.eat_supper.done":true},"writes":{"ward.room":"R04"},"observes":["ward.room"],"route_rooms":["F03","R04"],"not_before_game_minutes":1272},
+        {"id":"ward.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R04","minutes":2,"priority":50,"once":true,"focus":"R04-bed","interaction_slot":"R04-bed","when":{"ward.phys.asleep":false,"event:ward.return_bed.done":true},"writes":{"ward.phys.asleep":true},"observes":["ward.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"ward.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"ward","interaction_slot":"ward","when":{"ward.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"ward.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R04","minutes":8,"priority":-12,"once":false,"focus":"ward","interaction_slot":"ward","when":{"ward.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"ward.ledger_arrived","label":"看见沈鼎带来的封签清点账","when":{"ward.room":"F03","ward.phys.asleep":false,"ration.doc.ledger_posted":true},"observes":["ration.doc.ledger_posted"]},
+        {"id":"ward.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"ward.room":"F03","ward.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "detective",
+      "name": "侦探",
+      "home_room": "R05",
+      "home_bed": "R05-bed",
+      "wake_at_game_minutes": 428,
+      "knows": {"detective.room":"R05","detective.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.4,"care":1.1,"safety":1},"modifiers":[]},
+      "actions": [
+        {"id":"detective.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R05","minutes":1,"priority":80,"once":true,"focus":"R05-bed","interaction_slot":"R05-bed","writes":{"detective.phys.asleep":false},"observes":["detective.room","detective.phys.asleep","R05.phys.drinking_water_available","detective.doc.water_return_room"],"add_buffs":["condition_detective_day2"],"emotion":"专注"},
+        {"id":"detective.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R05","minutes":6,"priority":22,"once":true,"focus":"R05-basin","interaction_slot":"R05-basin","when":{"detective.phys.asleep":false,"event:detective.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"detective.to_monitor","label":"前往一楼竖井监测壁龛","kind":"walk","at":"R05","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.morning_care.done":true},"writes":{"detective.room":"1F-Shaft-Monitor"},"observes":["detective.room"],"route_rooms":["R05","1F-Shaft-Monitor"],"not_before_game_minutes":535},
+        {"id":"detective.inspect_wind","label":"读取压差、风窗时段与四院接驳登记图","kind":"inspect","at":"1F-Shaft-Monitor","minutes":3,"priority":35,"once":true,"focus":"monitor.gauge","interaction_slot":"monitor.gauge","when":{"detective.phys.asleep":false,"island_environment.phys.wind_window":true},"observes":["monitor.doc.wind_limits","monitor.phys.pressure_clear","academies.doc.route"]},
+        {"id":"detective.to_granary","label":"前往B1主粮仓","kind":"walk","at":"1F-Shaft-Monitor","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.inspect_wind.done":true},"writes":{"detective.room":"U01-granary"},"observes":["detective.room"],"route_rooms":["1F-Shaft-Monitor","U01-granary"]},
+        {"id":"detective.inspect_granary","label":"核对门槛、锁针与复位绞盘的相互位置","kind":"inspect","at":"U01-granary","minutes":5,"priority":35,"once":true,"focus":"granary.door","interaction_slot":"granary.door","when":{"detective.phys.asleep":false,"granary.lock.open":true},"observes":["granary.trace.sill_level","granary.trace.winch_teeth","granary.trace.lock_pin","granary.phys.structure_braced","granary.lock.picked"]},
+        {"id":"detective.read_inventory","label":"按封签点验粮药清册","kind":"read","at":"U01-granary","minutes":4,"priority":35,"once":true,"focus":"granary.ledger","interaction_slot":"granary.ledger","when":{"detective.phys.asleep":false,"event:detective.inspect_granary.done":true},"observes":["granary.doc.inventory","supply.doc.day2_verified"],"requires":{"supply.doc.day2_verified":true}},
+        {"id":"detective.to_dining","label":"前往一楼大食堂","kind":"walk","at":"U01-granary","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.read_inventory.done":true},"writes":{"detective.room":"F03"},"observes":["detective.room"],"route_rooms":["U01-granary","F03"]},
+        {"id":"detective.read_ration_terms","label":"逐项比较在册份额与热厨领用记录","kind":"read","at":"F03","minutes":4,"priority":35,"once":true,"focus":"ration.ledger","interaction_slot":"ration.ledger","when":{"detective.phys.asleep":false,"ration.policy.disputed":true},"observes":["ration.doc.portions","ration.doc.cooking_loss"]},
+        {"id":"detective.deduce_ration","label":"脑内推演：三人开仓与等额热餐可以同时成立","kind":"deduce","at":"F03","minutes":3,"priority":45,"once":true,"focus":"ration.ledger","interaction_slot":"ration.ledger","when":{"detective.phys.asleep":false,"granary.phys.structure_braced":true,"granary.lock.picked":true,"ration.doc.portions":"十六名学员各有同额份额；卧床与值班者可由本人授权代领","ration.doc.cooking_loss":"把定额面粉统一煮成热食不会增加名额；灶火可顺带烧水"},"deduction":{"title":"三人开仓与等额热餐可以同时成立","evidence":[{"id":"e1","when":{"granary.phys.structure_braced":true},"label":"granary.phys.structure_braced"},{"id":"e2","when":{"granary.lock.picked":true},"label":"granary.lock.picked"},{"id":"e3","when":{"ration.doc.portions":"十六名学员各有同额份额；卧床与值班者可由本人授权代领"},"label":"十六人的等额份额"},{"id":"e4","when":{"ration.doc.cooking_loss":"把定额面粉统一煮成热食不会增加名额；灶火可顺带烧水"},"label":"集中烹煮与份额守恒"}],"rules":[{"id":"combine_deduce_ration","all":["e1","e2","e3","e4"],"then":"deduce_ration_supported","label":"三人开仓与等额热餐可以同时成立"}],"conclusion":"deduce_ration_supported","learns":{"detective.infer.dual_ration":true,"detective.infer.granary_cooperation":true},"qualification":"这只说明在册等额份额与共同热餐可以并行；集中烹煮不扩大领取人数，也不把尚未清点的库存算入共同物资。"},"tags":["推演","专注"]},
+        {"id":"detective.persuade_ward","label":"向沃德提议保留签收定额、由热厨集中烹煮","kind":"talk","at":"F03","minutes":2,"priority":43,"once":true,"focus":"ward","interaction_slot":"ward","when":{"detective.phys.asleep":false,"detective.infer.dual_ration":true,"detective.infer.granary_cooperation":true},"requires":{"ward.room":"F03"},"suggestion":{"target":"ward","evidence":["detective.infer.dual_ration","detective.infer.granary_cooperation"],"appeal":{"duty":0.7,"fairness":0.7},"cost":0.2,"risk":0.05,"result":"ration.doc.ward_accepted"},"tags":["协作","求证"],"writes":{"ration.doc.ward_signed":true},"observes":["ration.doc.ward_signed"],"completion_lines":[{"when":{"op":"equals","ref":{"type":"ref","object":"ration","facet":"doc","field":"ward_accepted"},"value":true},"text":"沃德：份额不改，锅可以共用。我的签字只管该管的事——你也得替我把授权写全。"}]},
+        {"id":"detective.persuade_shen","label":"请沈鼎按签收份额供餐，并保留伤员代领","kind":"talk","at":"F03","minutes":2,"priority":43,"once":true,"focus":"shen","interaction_slot":"shen","when":{"detective.phys.asleep":false,"detective.infer.dual_ration":true,"ration.doc.ward_accepted":true},"requires":{"shen.room":"F03"},"suggestion":{"target":"shen","evidence":["detective.infer.dual_ration"],"appeal":{"care":0.8,"solidarity":0.5},"cost":0.2,"risk":0.05,"result":"ration.doc.shen_accepted"},"tags":["协作","求证"],"writes":{"ration.policy.mediated":true},"observes":["ration.policy.mediated"],"tell":[{"actor":"ward","room":"F03","fields":[],"results":["ration.policy.mediated"]}],"completion_lines":[{"when":{"op":"equals","ref":{"type":"ref","object":"ration","facet":"doc","field":"shen_accepted"},"value":true},"text":"沈鼎：好，十六个名字我一一照着煮。代领记清楚，别让等签字的人把汤等凉了。"}]},
+        {"id":"detective.secure_probes","label":"建议雀儿把探针封入本人保管的工具卷","kind":"talk","at":"F03","minutes":2,"priority":20,"once":true,"focus":"quer","interaction_slot":"quer","when":{"detective.phys.asleep":false,"detective.infer.granary_cooperation":true,"quer.doc.custody_concern":true,"probes.trace.custody_risk":"开仓后两支细针沾有锁芯油，工具卷束带磨松；若把卷摊在共用桌上，下一位拿取者和物主容易说不清交接范围。"},"requires":{"quer.room":"F03","probes.phys.owner":"quer"},"suggestion":{"target":"quer","evidence":["detective.infer.granary_cooperation","probes.trace.custody_risk"],"appeal":{"autonomy":0.7,"craft":0.5},"cost":0.2,"risk":0.05,"result":"quer.doc.secure_tools_accepted"},"tags":["协作","求证"],"writes":{"probes.phys.secured":true},"observes":["probes.phys.secured"],"tell":[{"actor":"quer","fields":[],"results":["probes.phys.secured"],"room":"F03"}],"public_completion_text":"侦探：束带已经松了，先把数点清，封签仍由你自己保管。别人需要用，请来问你；保管不该变成替你作主。"},
+        {"id":"detective.seal_medical_records","label":"建议维罗妮卡把验药记录逐页编号封存","kind":"talk","at":"F03","minutes":2,"priority":43,"once":true,"focus":"veronica","interaction_slot":"veronica","when":{"detective.phys.asleep":false,"detective.infer.dual_ration":true,"veronica.doc.custody_concern":true,"medicine.doc.page_custody_risk":"从白塔带回的器具清单有逐件编号，个人验药卷仍只有封面题名；允许整理封面不等于允许移走原页。"},"requires":{"veronica.room":"F03","medicine.phys.seal_registered":false},"suggestion":{"target":"veronica","evidence":["detective.infer.dual_ration","medicine.doc.page_custody_risk"],"appeal":{"reason":0.7,"autonomy":0.6},"cost":0.2,"risk":0.05,"result":"veronica.doc.seal_records_accepted"},"tags":["协作","求证"],"writes":{"medicine.phys.seal_registered":true},"observes":["medicine.phys.seal_registered"],"tell":[{"actor":"veronica","fields":[],"results":["medicine.phys.seal_registered"],"room":"F03"}],"public_completion_text":"侦探：按你刚才划的范围，把页号、断口和许可写在骑缝签上。整理封面的人看得见，带走原页的人也再不能说范围没写明。"},
+        {"id":"detective.to_academy_dispatch","label":"午后前往中翼，按登记图开展四院初探","kind":"walk","at":"F03","minutes":3,"priority":32,"once":false,"focus":"F03-door","when":{"detective.phys.asleep":false,"ration.policy.mediated":true,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"writes":{"detective.room":"2F-cross-M"},"observes":["detective.room"],"route_rooms":["F03","2F-cross-M"],"unknown":["detective.infer.academy_resource_limits"],"not_before_game_minutes":750},
+        {"id":"detective.to_W102","label":"循已知通路前往文契院·纸墨分析室（16:30前）","kind":"walk","at":"2F-cross-M","minutes":8,"priority":38,"once":false,"focus":"2F-cross-M-door","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true,"ration.policy.mediated":true},"writes":{"detective.room":"W-102"},"observes":["detective.room"],"route_rooms":["2F-cross-M","2F-M-interface","1F-M-interface","1F-gallery-W","1F-cross-S","AC-W-1-return","AC-W-1-cross","AC-W-1-long","W-102"],"requires":{"island_environment.phys.wind_window":true},"unknown":["event:detective.inspect_W102.done"],"not_after_game_minutes":990},
+        {"id":"detective.inspect_W102","label":"比对纸样、刮痕示例与借阅牌的授权范围","kind":"inspect","at":"W-102","minutes":4,"priority":44,"once":true,"focus":"W102.workbench","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"interaction_slot":"W102.workbench","requires":{"island_environment.phys.wind_window":true},"not_after_game_minutes":1005,"observes":["W102.trace.paper_register"],"tags":["勘验","求证"]},
+        {"id":"detective.return_from_W102","label":"沿原接驳廊离开W-102，返回主楼中翼","kind":"walk","at":"W-102","minutes":8,"priority":8,"once":false,"focus":"W-102-door","when":{"detective.phys.asleep":false},"writes":{"detective.room":"2F-cross-M"},"observes":["detective.room"],"route_rooms":["W-102","AC-W-1-long","AC-W-1-cross","AC-W-1-return","1F-cross-S","1F-gallery-W","1F-M-interface","2F-M-interface","2F-cross-M"]},
+        {"id":"detective.to_B102","label":"循已知通路前往白塔院·配药清洁制备室（16:30前）","kind":"walk","at":"2F-cross-M","minutes":8,"priority":37,"once":false,"focus":"2F-cross-M-door","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true,"ration.policy.mediated":true},"writes":{"detective.room":"B-102"},"observes":["detective.room"],"route_rooms":["2F-cross-M","2F-M-interface","1F-M-interface","1F-cross-M","1F-gallery-E","1F-cross-S","AC-B-1-return","AC-B-1-cross","AC-B-1-long","B-102"],"requires":{"island_environment.phys.wind_window":true},"unknown":["event:detective.inspect_B102.done"],"not_after_game_minutes":990},
+        {"id":"detective.inspect_B102","label":"查看空瓶封口、量具与未配制的药剂标签","kind":"inspect","at":"B-102","minutes":4,"priority":44,"once":true,"focus":"B102.cabinet","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"interaction_slot":"B102.cabinet","requires":{"island_environment.phys.wind_window":true},"not_after_game_minutes":1005,"observes":["B102.trace.preparation_limits"],"tags":["勘验","求证"]},
+        {"id":"detective.return_from_B102","label":"沿原接驳廊离开B-102，返回主楼中翼","kind":"walk","at":"B-102","minutes":8,"priority":8,"once":false,"focus":"B-102-door","when":{"detective.phys.asleep":false},"writes":{"detective.room":"2F-cross-M"},"observes":["detective.room"],"route_rooms":["B-102","AC-B-1-long","AC-B-1-cross","AC-B-1-return","1F-cross-S","1F-gallery-E","1F-cross-M","1F-M-interface","2F-M-interface","2F-cross-M"]},
+        {"id":"detective.to_F104","label":"循已知通路前往铁工院·备件成品室（16:30前）","kind":"walk","at":"2F-cross-M","minutes":6,"priority":36,"once":false,"focus":"2F-cross-M-door","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true,"ration.policy.mediated":true},"writes":{"detective.room":"F-104"},"observes":["detective.room"],"route_rooms":["2F-cross-M","2F-gallery-E","2F-cross-N","F-104-public-approach","F-104"],"requires":{"island_environment.phys.wind_window":true},"unknown":["event:detective.inspect_F104.done"],"not_after_game_minutes":990},
+        {"id":"detective.inspect_F104","label":"量看止动销、棘齿样件与专用工具尺寸","kind":"inspect","at":"F-104","minutes":4,"priority":44,"once":true,"focus":"F104.spares","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"interaction_slot":"F104.spares","requires":{"island_environment.phys.wind_window":true},"not_after_game_minutes":1005,"observes":["F104.trace.parts_fit"],"tags":["勘验","求证"]},
+        {"id":"detective.return_from_F104","label":"沿原接驳廊离开F-104，返回主楼中翼","kind":"walk","at":"F-104","minutes":6,"priority":8,"once":false,"focus":"F-104-door","when":{"detective.phys.asleep":false},"writes":{"detective.room":"2F-cross-M"},"observes":["detective.room"],"route_rooms":["F-104","F-104-public-approach","2F-cross-N","2F-gallery-E","2F-cross-M"]},
+        {"id":"detective.to_S102","label":"循已知通路前往星仪院·精密仪器室（16:30前）","kind":"walk","at":"2F-cross-M","minutes":7,"priority":35,"once":false,"focus":"2F-cross-M-door","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true,"ration.policy.mediated":true},"writes":{"detective.room":"S-102"},"observes":["detective.room"],"route_rooms":["2F-cross-M","2F-gallery-E","2F-cross-N","2F-S-return","AC-S-1-return","AC-S-1-cross","AC-S-1-long","S-102"],"requires":{"island_environment.phys.wind_window":true},"unknown":["event:detective.inspect_S102.done"],"not_after_game_minutes":990},
+        {"id":"detective.inspect_S102","label":"核对仪器零点、记录时刻与压差对照表","kind":"inspect","at":"S-102","minutes":4,"priority":44,"once":true,"focus":"S102.instruments","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"interaction_slot":"S102.instruments","requires":{"island_environment.phys.wind_window":true},"not_after_game_minutes":1005,"observes":["S102.trace.reference_scale"],"tags":["勘验","求证"]},
+        {"id":"detective.return_from_S102","label":"沿原接驳廊离开S-102，返回主楼中翼","kind":"walk","at":"S-102","minutes":7,"priority":8,"once":false,"focus":"S-102-door","when":{"detective.phys.asleep":false},"writes":{"detective.room":"2F-cross-M"},"observes":["detective.room"],"route_rooms":["S-102","AC-S-1-long","AC-S-1-cross","AC-S-1-return","2F-S-return","2F-cross-N","2F-gallery-E","2F-cross-M"]},
+        {"id":"detective.read_academy_reports","label":"逐份核对四位巡检者的签名、实查地点和资源限制","kind":"read","at":"2F-cross-M","minutes":3,"priority":39,"once":true,"focus":"academies.report_board","when":{"detective.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","ration.policy.mediated":true},"interaction_slot":"academies.report_board","requires":{"W102.doc.signed_report":"顾平章签名：已实查W-102纸墨台，样墨与旧纸可供比对；借阅登记须对应原页编号，旧签名不扩张授权，也不开放封存原卷。","B102.doc.signed_report":"维罗妮卡签名：已实查B-102药柜与配制台，洁净器具可用但没有新增成药；三份螯合剂原料仍以主粮仓封签清册为准，领用后须实际配制验药。","F104.doc.signed_report":"霍铎签名：开仓后已实查F-104备件成品与止动配合，机械件须按尺寸选用；仓门仍依赖支撑、挑锁和反扣绞盘三种工作，备件不能代替个人专用工具。","S102.doc.signed_report":"玛格丽特签名：开仓后已实查S-102标尺零点与仪器对照，记录必须同时保留位置、时刻和机械读数；晶体亮色不能单独作为安全通行依据。"},"observes":["W102.doc.signed_report","B102.doc.signed_report","F104.doc.signed_report","S102.doc.signed_report"],"tags":["勘验","求证"]},
+        {"id":"detective.deduce_academy_resources","label":"脑内推演：把四院现场、空间接驳和封签清册合成可用资源判断","kind":"deduce","at":"2F-cross-M","minutes":4,"priority":48,"once":true,"focus":"academies.report_board","when":{"detective.phys.asleep":false,"event:detective.read_academy_reports.done":true,"W102.trace.paper_register":"纸墨台上可比对旧纸纤维、样墨和刮擦痕；借阅牌要求保留原页与编号，原卷库封签不能凭一张旧签名拆开。","B102.trace.preparation_limits":"洁净药柜只有空瓶、滤布和量具；配制牌写明原料须从已封签粮药清册领用，未制成的螯合剂不能按现成药发放。","F104.trace.parts_fit":"备件台列出棘齿、止动销和垫片的配合尺寸；现成备件只能替换匹配的机械件，不能代替雀儿的精钢探针或霍铎的棘轮扳手。","S102.trace.reference_scale":"仪器台保留机械标尺零点、读数时刻和压差对照表；晶体发亮只是单项显示，未对照机械读数与当前风窗就不能据此判定通路安全。"},"interaction_slot":"academies.report_board","unknown":["detective.infer.academy_resource_limits"],"tags":["推演","专注"],"deduction":{"title":"四院现场与资源使用边界","evidence":[{"id":"academy_routes","when":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"label":"实读的楼层接驳图与风窗、返程规则"},{"id":"sealed_inventory","when":{"granary.doc.inventory":"粮袋、煤饼与三份螯合剂原料均有封签；按十六人领用逐笔记账"},"label":"实点的主粮仓封签清册与三份药材原料"},{"id":"W102_field","when":{"W102.trace.paper_register":"纸墨台上可比对旧纸纤维、样墨和刮擦痕；借阅牌要求保留原页与编号，原卷库封签不能凭一张旧签名拆开。"},"label":"亲查W-102：纸墨台的旧纸、样墨与借阅边界"},{"id":"W102_report","when":{"W102.doc.signed_report":"顾平章签名：已实查W-102纸墨台，样墨与旧纸可供比对；借阅登记须对应原页编号，旧签名不扩张授权，也不开放封存原卷。"},"label":"顾平章实查后签署的W-102记录"},{"id":"B102_field","when":{"B102.trace.preparation_limits":"洁净药柜只有空瓶、滤布和量具；配制牌写明原料须从已封签粮药清册领用，未制成的螯合剂不能按现成药发放。"},"label":"亲查B-102：药柜的空瓶、量具与未配制标签"},{"id":"B102_report","when":{"B102.doc.signed_report":"维罗妮卡签名：已实查B-102药柜与配制台，洁净器具可用但没有新增成药；三份螯合剂原料仍以主粮仓封签清册为准，领用后须实际配制验药。"},"label":"维罗妮卡实查后签署的B-102记录"},{"id":"F104_field","when":{"F104.trace.parts_fit":"备件台列出棘齿、止动销和垫片的配合尺寸；现成备件只能替换匹配的机械件，不能代替雀儿的精钢探针或霍铎的棘轮扳手。"},"label":"亲查F-104：止动件规格与专用工具配合"},{"id":"F104_report","when":{"F104.doc.signed_report":"霍铎签名：开仓后已实查F-104备件成品与止动配合，机械件须按尺寸选用；仓门仍依赖支撑、挑锁和反扣绞盘三种工作，备件不能代替个人专用工具。"},"label":"霍铎实查后签署的F-104记录"},{"id":"S102_field","when":{"S102.trace.reference_scale":"仪器台保留机械标尺零点、读数时刻和压差对照表；晶体发亮只是单项显示，未对照机械读数与当前风窗就不能据此判定通路安全。"},"label":"亲查S-102：标尺零点与压差对照表"},{"id":"S102_report","when":{"S102.doc.signed_report":"玛格丽特签名：开仓后已实查S-102标尺零点与仪器对照，记录必须同时保留位置、时刻和机械读数；晶体亮色不能单独作为安全通行依据。"},"label":"玛格丽特实查后签署的S-102记录"}],"rules":[{"id":"verify_W102","all":["W102_field","W102_report"],"then":"W102_limits","label":"纸墨比对必须保留原始文本和授权范围"},{"id":"verify_B102","all":["B102_field","B102_report"],"then":"B102_limits","label":"洁净器具不能增加成药份额或替代实际配制"},{"id":"verify_F104","all":["F104_field","F104_report"],"then":"F104_limits","label":"匹配备件只能修机械件，三种专门工作仍不可互相替代"},{"id":"verify_S102","all":["S102_field","S102_report"],"then":"S102_limits","label":"仪器观察必须联系空间位置、时刻与机械对照"},{"id":"combine_academy_limits","all":["academy_routes","sealed_inventory","W102_limits","B102_limits","F104_limits","S102_limits"],"then":"bounded_academy_resources","label":"楼层与风窗限制决定何时能到场，原页、实物、配合与读数限制决定哪些资源真的可用"}],"conclusion":"bounded_academy_resources","learns":{"detective.infer.academy_resource_limits":true,"detective.infer.academies_personally_verified":true},"qualification":"四院均由侦探到场勘查，并与实际巡检者签名记录相互核对；没有增加药材、工具或解封权限。"}},
+        {"id":"detective.deduce_academy_reports","label":"关窗后的脑内推演：依据四院签名实查报告限定资源（转述）","kind":"deduce","at":"2F-cross-M","minutes":4,"priority":44,"once":true,"focus":"academies.report_board","when":{"detective.phys.asleep":false,"event:detective.read_academy_reports.done":true,"island_environment.phys.wind_window":false},"interaction_slot":"academies.report_board","requires":{"island_environment.phys.wind_window":false},"unknown":["detective.infer.academy_resource_limits"],"not_before_game_minutes":1021,"tags":["推演","专注"],"deduction":{"title":"关窗后依据签名报告作出的有限判断","evidence":[{"id":"academy_routes","when":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"label":"实读的楼层接驳图与风窗、返程规则"},{"id":"sealed_inventory","when":{"granary.doc.inventory":"粮袋、煤饼与三份螯合剂原料均有封签；按十六人领用逐笔记账"},"label":"实点的主粮仓封签清册与三份药材原料"},{"id":"W102_report","when":{"W102.doc.signed_report":"顾平章签名：已实查W-102纸墨台，样墨与旧纸可供比对；借阅登记须对应原页编号，旧签名不扩张授权，也不开放封存原卷。"},"label":"转述依据：顾平章的W-102签名记录"},{"id":"B102_report","when":{"B102.doc.signed_report":"维罗妮卡签名：已实查B-102药柜与配制台，洁净器具可用但没有新增成药；三份螯合剂原料仍以主粮仓封签清册为准，领用后须实际配制验药。"},"label":"转述依据：维罗妮卡的B-102签名记录"},{"id":"F104_report","when":{"F104.doc.signed_report":"霍铎签名：开仓后已实查F-104备件成品与止动配合，机械件须按尺寸选用；仓门仍依赖支撑、挑锁和反扣绞盘三种工作，备件不能代替个人专用工具。"},"label":"转述依据：霍铎的F-104签名记录"},{"id":"S102_report","when":{"S102.doc.signed_report":"玛格丽特签名：开仓后已实查S-102标尺零点与仪器对照，记录必须同时保留位置、时刻和机械读数；晶体亮色不能单独作为安全通行依据。"},"label":"转述依据：玛格丽特的S-102签名记录"}],"rules":[{"id":"reported_W102","all":["W102_report"],"then":"W102_limits","label":"按签名实查报告采用有限结论：纸墨比对必须保留原始文本和授权范围"},{"id":"reported_B102","all":["B102_report"],"then":"B102_limits","label":"按签名实查报告采用有限结论：洁净器具不能增加成药份额或替代实际配制"},{"id":"reported_F104","all":["F104_report"],"then":"F104_limits","label":"按签名实查报告采用有限结论：匹配备件只能修机械件，三种专门工作仍不可互相替代"},{"id":"reported_S102","all":["S102_report"],"then":"S102_limits","label":"按签名实查报告采用有限结论：仪器观察必须联系空间位置、时刻与机械对照"},{"id":"combine_academy_limits","all":["academy_routes","sealed_inventory","W102_limits","B102_limits","F104_limits","S102_limits"],"then":"bounded_academy_resources","label":"楼层与风窗限制决定何时能到场，原页、实物、配合与读数限制决定哪些资源真的可用"}],"conclusion":"bounded_academy_resources","learns":{"detective.infer.academy_resource_limits":true,"detective.infer.academies_report_basis":true},"qualification":"依据四名专业巡检者真实到场后留下的签名报告；未亲见的院内细节仍记作转述，没有解锁侦探的现场痕迹知识。"}},
+        {"id":"detective.finish_academy_survey","label":"带着四院资源判断回食堂，完成今日分工","kind":"walk","at":"2F-cross-M","minutes":3,"priority":32,"once":true,"focus":"2F-cross-M-door","when":{"detective.phys.asleep":false,"detective.infer.academy_resource_limits":true},"writes":{"detective.room":"F03"},"observes":["detective.room"],"route_rooms":["2F-cross-M","F03"],"completion_lines":[{"when":{"op":"equals","ref":{"type":"ref","object":"event:detective.finish_academy_survey","facet":"state","field":"done"},"value":true},"text":"案卷旁记：四院的器具各有用处，也各有边界。分工写下了，下一次交接时，还要看我们肯不肯照着做。"}]},
+        {"id":"detective.pause_academy_survey","label":"暂缓踏查，沿主楼公共通路返回食堂","kind":"walk","at":"2F-cross-M","minutes":3,"priority":32,"once":false,"focus":"2F-cross-M-door","when":{"detective.phys.asleep":false,"ration.policy.mediated":true,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"writes":{"detective.room":"F03"},"observes":["detective.room"],"route_rooms":["2F-cross-M","F03"],"unknown":["detective.infer.academy_resource_limits"],"manual_only":true},
+        {"id":"detective.to_supper","label":"前往一楼大食堂","kind":"walk","at":"F03","minutes":3,"priority":26,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"ration.policy.mediated":true,"detective.infer.academy_resource_limits":true},"writes":{"detective.room":"F03"},"observes":["detective.room"],"route_rooms":["F03","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"detective.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":12,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-detective","when":{"detective.phys.asleep":false,"event:detective.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_detective.phys.consumed":true},"observes":["meal_day2_detective.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"detective.return_bed","label":"前往R05","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"detective","when":{"detective.phys.asleep":false,"event:detective.eat_supper.done":true},"writes":{"detective.room":"R05"},"observes":["detective.room"],"route_rooms":["F03","R05"],"not_before_game_minutes":1260},
+        {"id":"detective.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R05","minutes":2,"priority":50,"once":true,"focus":"R05-bed","interaction_slot":"R05-bed","when":{"detective.phys.asleep":false,"event:detective.return_bed.done":true,"ration.policy.mediated":true},"writes":{"detective.phys.asleep":true},"observes":["detective.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"detective.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"detective","interaction_slot":"detective","when":{"detective.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"detective.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R05","minutes":8,"priority":-12,"once":false,"focus":"detective","interaction_slot":"detective","when":{"detective.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {
+          "id": "detective.wind_open",
+          "label": "听见正式开窗钟，检查眼前风窗指示",
+          "when": {
+            "detective.room": "1F-Shaft-Monitor",
+            "detective.phys.asleep": false,
+            "island_environment.phys.wind_window": true
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ]
+        },
+        {
+          "id": "detective.open_granary",
+          "label": "看见粮仓门已经打开",
+          "when": {
+            "detective.room": "U01-granary",
+            "detective.phys.asleep": false,
+            "granary.lock.open": true
+          },
+          "observes": [
+            "granary.lock.open"
+          ]
+        },
+        {
+          "id": "detective.ration_dispute",
+          "label": "听见关于定额与热餐的争论",
+          "when": {
+            "detective.room": "F03",
+            "detective.phys.asleep": false,
+            "ration.policy.disputed": true
+          },
+          "observes": [
+            "ration.policy.disputed"
+          ]
+        },
+        {
+          "id": "detective.day2_meal_ready",
+          "label": "闻到热食，看到已经出锅的晚餐",
+          "when": {
+            "detective.room": "F03",
+            "detective.phys.asleep": false,
+            "meal_day2.phys.ready": true
+          },
+          "observes": [
+            "meal_day2.phys.ready"
+          ]
+        },
+        {
+          "id": "detective.academy_window_0",
+          "label": "查看接驳廊风窗状态牌，留意关窗钟与归楼方向",
+          "when": {
+            "detective.room": "2F-cross-M",
+            "detective.phys.asleep": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ]
+        },
+        {
+          "id": "detective.academy_window_1",
+          "label": "查看接驳廊风窗状态牌，留意关窗钟与归楼方向",
+          "when": {
+            "detective.room": "F03",
+            "detective.phys.asleep": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ]
+        },
+        {
+          "id": "detective.academy_window_2",
+          "label": "查看接驳廊风窗状态牌，留意关窗钟与归楼方向",
+          "when": {
+            "detective.room": "W-102",
+            "detective.phys.asleep": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ]
+        },
+        {
+          "id": "detective.academy_window_3",
+          "label": "查看接驳廊风窗状态牌，留意关窗钟与归楼方向",
+          "when": {
+            "detective.room": "B-102",
+            "detective.phys.asleep": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ]
+        },
+        {
+          "id": "detective.academy_window_4",
+          "label": "查看接驳廊风窗状态牌，留意关窗钟与归楼方向",
+          "when": {
+            "detective.room": "F-104",
+            "detective.phys.asleep": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ]
+        },
+        {
+          "id": "detective.academy_window_5",
+          "label": "查看接驳廊风窗状态牌，留意关窗钟与归楼方向",
+          "when": {
+            "detective.room": "S-102",
+            "detective.phys.asleep": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ]
+        },
+        {
+          "id": "detective.academy_window_closed_0",
+          "label": "看见风窗状态牌已关闭，确认原接驳廊仍可归楼",
+          "when": {
+            "detective.room": "2F-cross-M",
+            "detective.phys.asleep": false,
+            "island_environment.phys.wind_window": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ],
+          "not_before_game_minutes": 1020
+        },
+        {
+          "id": "detective.academy_window_closed_1",
+          "label": "看见风窗状态牌已关闭，确认原接驳廊仍可归楼",
+          "when": {
+            "detective.room": "F03",
+            "detective.phys.asleep": false,
+            "island_environment.phys.wind_window": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ],
+          "not_before_game_minutes": 1020
+        },
+        {
+          "id": "detective.academy_window_closed_2",
+          "label": "看见风窗状态牌已关闭，确认原接驳廊仍可归楼",
+          "when": {
+            "detective.room": "W-102",
+            "detective.phys.asleep": false,
+            "island_environment.phys.wind_window": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ],
+          "not_before_game_minutes": 1020
+        },
+        {
+          "id": "detective.academy_window_closed_3",
+          "label": "看见风窗状态牌已关闭，确认原接驳廊仍可归楼",
+          "when": {
+            "detective.room": "B-102",
+            "detective.phys.asleep": false,
+            "island_environment.phys.wind_window": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ],
+          "not_before_game_minutes": 1020
+        },
+        {
+          "id": "detective.academy_window_closed_4",
+          "label": "看见风窗状态牌已关闭，确认原接驳廊仍可归楼",
+          "when": {
+            "detective.room": "F-104",
+            "detective.phys.asleep": false,
+            "island_environment.phys.wind_window": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ],
+          "not_before_game_minutes": 1020
+        },
+        {
+          "id": "detective.academy_window_closed_5",
+          "label": "看见风窗状态牌已关闭，确认原接驳廊仍可归楼",
+          "when": {
+            "detective.room": "S-102",
+            "detective.phys.asleep": false,
+            "island_environment.phys.wind_window": false
+          },
+          "knows": {
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"
+          },
+          "observes": [
+            "island_environment.phys.wind_window"
+          ],
+          "not_before_game_minutes": 1020
+        },
+        {
+          "id": "detective.quer_custody_note",
+          "label": "核对物主摊开的器具与注明的借用范围",
+          "when": {
+            "detective.room": "F03",
+            "detective.phys.asleep": false,
+            "quer.room": "F03",
+            "quer.doc.custody_concern": true
+          },
+          "observes": [
+            "probes.trace.custody_risk",
+            "quer.doc.custody_concern"
+          ]
+        },
+        {
+          "id": "detective.veronica_custody_note",
+          "label": "核对物主摊开的器具与注明的借用范围",
+          "when": {
+            "detective.room": "F03",
+            "detective.phys.asleep": false,
+            "veronica.room": "F03",
+            "veronica.doc.custody_concern": true
+          },
+          "observes": [
+            "medicine.doc.page_custody_risk",
+            "veronica.doc.custody_concern"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "huo",
+      "name": "霍铎",
+      "home_room": "R06",
+      "home_bed": "R06-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"huo.room":"R06","huo.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"craft":1.4,"safety":1.3,"duty":1.1},"modifiers":[{"when":{"airlock.lock.sealed":true},"score":0.8,"reason":"亲见言灵短时封住倒灌，机械作业风险下降"}]},
+      "actions": [
+        {"id":"huo.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R06","minutes":1,"priority":80,"once":true,"focus":"R06-bed","interaction_slot":"R06-bed","writes":{"huo.phys.asleep":false},"observes":["huo.room","huo.phys.asleep"],"add_buffs":["condition_huo_day2"],"emotion":"专注"},
+        {"id":"huo.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R06","minutes":6,"priority":22,"once":true,"focus":"R06-basin","interaction_slot":"R06-basin","when":{"huo.phys.asleep":false,"event:huo.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"huo.to_granary","label":"前往B1主粮仓","kind":"walk","at":"R06","minutes":3,"priority":32,"once":true,"focus":"huo","when":{"huo.phys.asleep":false,"event:huo.morning_care.done":true},"writes":{"huo.room":"U01-granary"},"observes":["huo.room"],"route_rooms":["R06","U01-granary"],"not_before_game_minutes":535},
+        {"id":"huo.inspect_winch","label":"检查反扣棘齿与绞盘制动器","kind":"inspect","at":"U01-granary","minutes":5,"priority":35,"once":true,"focus":"granary.winch","interaction_slot":"granary.winch","when":{"huo.phys.asleep":false,"event:huo.to_granary.done":true,"island_environment.phys.wind_window":true},"observes":["granary.trace.winch_teeth"]},
+        {"id":"huo.reset_granary_winch","label":"在锁芯脱开后反扣绞盘，撑开粮仓门","kind":"interact","at":"U01-granary","minutes":6,"priority":35,"once":true,"focus":"granary.winch","interaction_slot":"granary.winch","when":{"huo.phys.asleep":false,"event:huo.inspect_winch.done":true,"granary.lock.picked":true},"requires":{"granary.phys.structure_braced":true,"granary.lock.picked":true,"island_environment.phys.wind_window":true},"writes":{"granary.lock.open":true},"observes":["granary.lock.open"],"tags":["检修","协作"]},
+        {"id":"huo.to_academy_dispatch","label":"完成手边工作后，到中翼查看铁工院·备件成品室巡检路线","kind":"walk","at":"U01-granary","minutes":3,"priority":32,"once":true,"focus":"U01-granary-door","when":{"huo.phys.asleep":false,"event:huo.reset_granary_winch.done":true},"writes":{"huo.room":"2F-cross-M"},"observes":["huo.room"],"route_rooms":["U01-granary","2F-cross-M"],"tags":["检修","协作"]},
+        {"id":"huo.read_academy_route","label":"读取接驳图，确认风窗和归楼通路","kind":"read","at":"2F-cross-M","minutes":1,"priority":35,"once":true,"focus":"academies.report_board","when":{"huo.phys.asleep":false,"event:huo.to_academy_dispatch.done":true},"interaction_slot":"academies.report_board","observes":["academies.doc.route","island_environment.phys.wind_window"],"tags":["检修","协作"]},
+        {"id":"huo.to_F104","label":"按专业分工前往铁工院·备件成品室","kind":"walk","at":"2F-cross-M","minutes":6,"priority":36,"once":false,"focus":"2F-cross-M-door","when":{"huo.phys.asleep":false,"event:huo.read_academy_route.done":true,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"writes":{"huo.room":"F-104"},"observes":["huo.room"],"route_rooms":["2F-cross-M","2F-gallery-E","2F-cross-N","F-104-public-approach","F-104"],"requires":{"island_environment.phys.wind_window":true},"unknown":["event:huo.inspect_F104.done"],"not_after_game_minutes":990,"tags":["检修","协作"]},
+        {"id":"huo.inspect_F104","label":"验看备件配合与止动尺寸，记录能换和不能换的部件","kind":"inspect","at":"F-104","minutes":4,"priority":42,"once":true,"focus":"F104.spares","when":{"huo.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"interaction_slot":"F104.spares","requires":{"island_environment.phys.wind_window":true},"not_after_game_minutes":1005,"observes":["F104.trace.parts_fit"],"tags":["检修","协作"]},
+        {"id":"huo.return_from_F104","label":"沿原接驳廊从F-104回到中翼","kind":"walk","at":"F-104","minutes":6,"priority":8,"once":false,"focus":"F-104-door","when":{"huo.phys.asleep":false},"writes":{"huo.room":"2F-cross-M"},"observes":["huo.room"],"route_rooms":["F-104","F-104-public-approach","2F-cross-N","2F-gallery-E","2F-cross-M"]},
+        {"id":"huo.file_F104_report","label":"签署并留下F-104实际巡检记录","kind":"interact","at":"2F-cross-M","minutes":2,"priority":40,"once":true,"focus":"academies.report_board","when":{"huo.phys.asleep":false,"event:huo.inspect_F104.done":true,"F104.trace.parts_fit":"备件台列出棘齿、止动销和垫片的配合尺寸；现成备件只能替换匹配的机械件，不能代替雀儿的精钢探针或霍铎的棘轮扳手。"},"interaction_slot":"academies.report_board","writes":{"F104.doc.signed_report":"霍铎签名：开仓后已实查F-104备件成品与止动配合，机械件须按尺寸选用；仓门仍依赖支撑、挑锁和反扣绞盘三种工作，备件不能代替个人专用工具。"},"observes":["F104.doc.signed_report"],"tags":["检修","协作"]},
+        {"id":"huo.return_from_academy","label":"登记完毕，返回原工作地点继续照应同伴","kind":"walk","at":"2F-cross-M","minutes":3,"priority":32,"once":true,"focus":"2F-cross-M-door","when":{"huo.phys.asleep":false,"event:huo.file_F104_report.done":true},"writes":{"huo.room":"U01-granary"},"observes":["huo.room"],"route_rooms":["2F-cross-M","U01-granary"],"tags":["检修","协作"]},
+        {"id":"huo.to_supper","label":"前往一楼大食堂","kind":"walk","at":"U01-granary","minutes":3,"priority":26,"once":true,"focus":"huo","when":{"huo.phys.asleep":false,"granary.lock.open":true,"event:huo.return_from_academy.done":true},"writes":{"huo.room":"F03"},"observes":["huo.room"],"route_rooms":["U01-granary","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"huo.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-huo","when":{"huo.phys.asleep":false,"event:huo.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_huo.phys.consumed":true},"observes":["meal_day2_huo.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"huo.return_bed","label":"前往R06","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"huo","when":{"huo.phys.asleep":false,"event:huo.eat_supper.done":true},"writes":{"huo.room":"R06"},"observes":["huo.room"],"route_rooms":["F03","R06"],"not_before_game_minutes":1264},
+        {"id":"huo.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R06","minutes":2,"priority":50,"once":true,"focus":"R06-bed","interaction_slot":"R06-bed","when":{"huo.phys.asleep":false,"event:huo.return_bed.done":true},"writes":{"huo.phys.asleep":true},"observes":["huo.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"huo.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"huo","interaction_slot":"huo","when":{"huo.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"huo.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R06","minutes":8,"priority":-12,"once":false,"focus":"huo","interaction_slot":"huo","when":{"huo.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"huo.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"U01-granary","minutes":8,"priority":-12,"once":false,"focus":"huo","interaction_slot":"huo","when":{"huo.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"huo.wind_open","label":"听见正式开窗钟，检查眼前风窗指示","when":{"huo.room":"U01-granary","huo.phys.asleep":false,"island_environment.phys.wind_window":true},"observes":["island_environment.phys.wind_window"]},
+        {"id":"huo.lock_seen","label":"听见锁芯脱开的清响","when":{"huo.room":"U01-granary","huo.phys.asleep":false,"granary.lock.picked":true},"observes":["granary.lock.picked"]},
+        {"id":"huo.open_granary","label":"看见粮仓门已经打开","when":{"huo.room":"U01-granary","huo.phys.asleep":false,"granary.lock.open":true},"observes":["granary.lock.open"]},
+        {"id":"huo.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"huo.room":"F03","huo.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]},
+        {"id":"huo.academy_window_0","label":"查看接驳廊风窗状态牌和归楼指示","when":{"huo.room":"2F-cross-M","huo.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]},
+        {"id":"huo.academy_window_1","label":"查看接驳廊风窗状态牌和归楼指示","when":{"huo.room":"F-104","huo.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]}
+      ]
+    },
+    {
+      "id": "shen",
+      "name": "沈鼎",
+      "home_room": "R07",
+      "home_bed": "R07-bed",
+      "wake_at_game_minutes": 422,
+      "knows": {"shen.room":"R07","shen.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"solidarity":1.4,"fairness":1.1,"safety":0.9,"care":1.2},"modifiers":[]},
+      "actions": [
+        {"id":"shen.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R07","minutes":1,"priority":80,"once":true,"focus":"R07-bed","interaction_slot":"R07-bed","writes":{"shen.phys.asleep":false},"observes":["shen.room","shen.phys.asleep"],"add_buffs":["condition_shen_day2"],"emotion":"安心"},
+        {"id":"shen.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R07","minutes":6,"priority":22,"once":true,"focus":"R07-basin","interaction_slot":"R07-basin","when":{"shen.phys.asleep":false,"event:shen.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"shen.to_granary","label":"前往B1主粮仓","kind":"walk","at":"R07","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.morning_care.done":true},"writes":{"shen.room":"U01-granary"},"observes":["shen.room"],"route_rooms":["R07","U01-granary"],"not_before_game_minutes":540},
+        {"id":"shen.inventory","label":"逐袋核对粮食、煤饼与药材封签","kind":"inspect","at":"U01-granary","minutes":8,"priority":35,"once":true,"focus":"granary.ledger","interaction_slot":"granary.ledger","when":{"shen.phys.asleep":false,"granary.lock.open":true},"requires":{"granary.lock.open":true},"observes":["granary.doc.inventory","supply.doc.day2_verified"],"writes":{"supply.doc.day2_verified":true},"tags":["核账"]},
+        {"id":"shen.carry_flour","label":"前往一楼热厨","kind":"walk","at":"U01-granary","minutes":7,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.inventory.done":true},"writes":{"shen.room":"F05"},"observes":["shen.room"],"route_rooms":["U01-granary","F05"],"requires":{"granary.lock.open":true},"tags":["搬运"],"tell":[]},
+        {"id":"shen.store_flour","label":"将实点的面粉与煤饼交入热厨","kind":"interact","at":"F05","minutes":4,"priority":35,"once":true,"focus":"F05-stove","interaction_slot":"F05-stove","when":{"shen.phys.asleep":false,"event:shen.carry_flour.done":true},"writes":{"flour.phys.at_kitchen":true,"ration.doc.ledger_posted":true},"observes":["flour.phys.at_kitchen","ration.doc.ledger_posted"]},
+        {"id":"shen.to_canteen","label":"前往一楼大食堂","kind":"walk","at":"F05","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.store_flour.done":true},"writes":{"shen.room":"F03"},"observes":["shen.room"],"route_rooms":["F05","F03"]},
+        {"id":"shen.defend_hot_meal","label":"说明把同额面粉集中熬粥，伤员也能吃到热食","kind":"interact","at":"F03","minutes":3,"priority":35,"once":true,"focus":"ration.ledger","interaction_slot":"ration.ledger","when":{"shen.phys.asleep":false,"event:shen.to_canteen.done":true},"observes":["ration.doc.cooking_loss"],"writes":{"ration.policy.disputed":true}},
+        {"id":"shen.return_kitchen","label":"前往一楼热厨","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"ration.policy.mediated":true},"writes":{"shen.room":"F05"},"observes":["shen.room"],"route_rooms":["F03","F05"]},
+        {"id":"shen.cook_supper","label":"按已经签署的双轨办法熬煮十六份晚餐","kind":"interact","at":"F05","minutes":20,"priority":35,"once":true,"focus":"F05-stove","interaction_slot":"F05-stove","when":{"shen.phys.asleep":false,"event:shen.return_kitchen.done":true},"not_before_game_minutes":1040,"requires":{"flour.phys.at_kitchen":true,"ration.policy.mediated":true},"writes":{"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"],"tags":["厨务"]},
+        {"id":"shen.serve_supper","label":"前往一楼大食堂","kind":"walk","at":"F05","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.cook_supper.done":true},"writes":{"shen.room":"F03"},"observes":["shen.room"],"route_rooms":["F05","F03"]},
+        {"id":"shen.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":16,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-shen","when":{"shen.phys.asleep":false,"event:shen.serve_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_shen.phys.consumed":true},"observes":["meal_day2_shen.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"shen.return_bed","label":"前往R07","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"shen","when":{"shen.phys.asleep":false,"event:shen.eat_supper.done":true},"writes":{"shen.room":"R07"},"observes":["shen.room"],"route_rooms":["F03","R07"],"not_before_game_minutes":1268},
+        {"id":"shen.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R07","minutes":2,"priority":50,"once":true,"focus":"R07-bed","interaction_slot":"R07-bed","when":{"shen.phys.asleep":false,"event:shen.return_bed.done":true},"writes":{"shen.phys.asleep":true},"observes":["shen.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"shen.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"shen","interaction_slot":"shen","when":{"shen.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"shen.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R07","minutes":8,"priority":-12,"once":false,"focus":"shen","interaction_slot":"shen","when":{"shen.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"shen.wind_open","label":"听见正式开窗钟，检查眼前风窗指示","when":{"shen.room":"U01-granary","shen.phys.asleep":false,"island_environment.phys.wind_window":true},"observes":["island_environment.phys.wind_window"]},
+        {"id":"shen.open_granary","label":"看见粮仓门已经打开","when":{"shen.room":"U01-granary","shen.phys.asleep":false,"granary.lock.open":true},"observes":["granary.lock.open"]},
+        {"id":"shen.ration_settled","label":"核对双方签字的供餐办法","when":{"shen.room":"F03","shen.phys.asleep":false,"ration.policy.mediated":true},"observes":["ration.policy.mediated"]},
+        {"id":"shen.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"shen.room":"F03","shen.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "su",
+      "name": "苏泠",
+      "home_room": "R08",
+      "home_bed": "R08-bed",
+      "wake_at_game_minutes": 424,
+      "knows": {"su.room":"R08","su.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.2,"safety":1.2,"honesty":1.1},"modifiers":[]},
+      "actions": [
+        {"id":"su.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R08","minutes":1,"priority":80,"once":true,"focus":"R08-bed","interaction_slot":"R08-bed","writes":{"su.phys.asleep":false},"observes":["su.room","su.phys.asleep"],"add_buffs":["condition_su_day2"],"emotion":"安心"},
+        {"id":"su.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R08","minutes":6,"priority":22,"once":true,"focus":"R08-basin","interaction_slot":"R08-basin","when":{"su.phys.asleep":false,"event:su.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"su.to_work","label":"前往R08","kind":"walk","at":"R08","minutes":3,"priority":32,"once":true,"focus":"su","when":{"su.phys.asleep":false,"event:su.morning_care.done":true},"writes":{"su.room":"R08"},"observes":["su.room"],"route_rooms":["R08","R08"],"not_before_game_minutes":550},
+        {"id":"su.daily_work","label":"换弦试音，记下仍在耳边的高频泛音","kind":"interact","at":"R08","minutes":25,"priority":35,"once":true,"focus":"su.instrument","interaction_slot":"su.instrument","when":{"su.phys.asleep":false,"event:su.to_work.done":true},"tags":["听辨","休整"]},
+        {"id":"su.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R08","minutes":3,"priority":26,"once":true,"focus":"su","when":{"su.phys.asleep":false,"event:su.daily_work.done":true},"writes":{"su.room":"F03"},"observes":["su.room"],"route_rooms":["R08","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"su.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":18,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-su","when":{"su.phys.asleep":false,"event:su.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_su.phys.consumed":true},"observes":["meal_day2_su.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"su.return_bed","label":"前往R08","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"su","when":{"su.phys.asleep":false,"event:su.eat_supper.done":true},"writes":{"su.room":"R08"},"observes":["su.room"],"route_rooms":["F03","R08"],"not_before_game_minutes":1272},
+        {"id":"su.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R08","minutes":2,"priority":50,"once":true,"focus":"R08-bed","interaction_slot":"R08-bed","when":{"su.phys.asleep":false,"event:su.return_bed.done":true},"writes":{"su.phys.asleep":true},"observes":["su.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"su.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"su","interaction_slot":"su","when":{"su.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"su.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R08","minutes":8,"priority":-12,"once":false,"focus":"su","interaction_slot":"su","when":{"su.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"su.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"su.room":"F03","su.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "selma",
+      "name": "赛尔玛",
+      "home_room": "R09",
+      "home_bed": "R09-bed",
+      "wake_at_game_minutes": 426,
+      "knows": {"selma.room":"R09","selma.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.4,"solidarity":1.3,"safety":1.1},"modifiers":[]},
+      "actions": [
+        {"id":"selma.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R09","minutes":1,"priority":80,"once":true,"focus":"R09-bed","interaction_slot":"R09-bed","writes":{"selma.phys.asleep":false},"observes":["selma.room","selma.phys.asleep"],"add_buffs":["condition_selma_day2"],"emotion":"安心"},
+        {"id":"selma.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R09","minutes":6,"priority":22,"once":true,"focus":"R09-basin","interaction_slot":"R09-basin","when":{"selma.phys.asleep":false,"event:selma.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"selma.to_work","label":"前往一楼临时医疗角","kind":"walk","at":"R09","minutes":3,"priority":32,"once":true,"focus":"selma","when":{"selma.phys.asleep":false,"event:selma.morning_care.done":true},"writes":{"selma.room":"1F-Infirmary"},"observes":["selma.room"],"route_rooms":["R09","1F-Infirmary"],"not_before_game_minutes":550},
+        {"id":"selma.daily_work","label":"陪护伊莲娜，调弦安神","kind":"interact","at":"1F-Infirmary","minutes":25,"priority":35,"once":true,"focus":"selma.instrument","interaction_slot":"selma.instrument","when":{"selma.phys.asleep":false,"event:selma.to_work.done":true},"tags":["照护"]},
+        {"id":"selma.to_supper","label":"前往一楼大食堂","kind":"walk","at":"1F-Infirmary","minutes":3,"priority":26,"once":true,"focus":"selma","when":{"selma.phys.asleep":false,"event:selma.daily_work.done":true},"writes":{"selma.room":"F03"},"observes":["selma.room"],"route_rooms":["1F-Infirmary","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"selma.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":12,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-selma","when":{"selma.phys.asleep":false,"event:selma.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_selma.phys.consumed":true},"observes":["meal_day2_selma.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"selma.return_bed","label":"前往R09","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"selma","when":{"selma.phys.asleep":false,"event:selma.eat_supper.done":true},"writes":{"selma.room":"R09"},"observes":["selma.room"],"route_rooms":["F03","R09"],"not_before_game_minutes":1260},
+        {"id":"selma.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R09","minutes":2,"priority":50,"once":true,"focus":"R09-bed","interaction_slot":"R09-bed","when":{"selma.phys.asleep":false,"event:selma.return_bed.done":true},"writes":{"selma.phys.asleep":true},"observes":["selma.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"selma.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"1F-Infirmary","minutes":8,"priority":-12,"once":false,"focus":"selma","interaction_slot":"selma","when":{"selma.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"selma.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"selma","interaction_slot":"selma","when":{"selma.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"selma.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R09","minutes":8,"priority":-12,"once":false,"focus":"selma","interaction_slot":"selma","when":{"selma.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"selma.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"selma.room":"F03","selma.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "ruan",
+      "name": "阮清月",
+      "home_room": "R10",
+      "home_bed": "R10-bed",
+      "wake_at_game_minutes": 428,
+      "knows": {"ruan.room":"R10","ruan.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.5,"autonomy":1.2,"craft":1.1},"modifiers":[]},
+      "actions": [
+        {"id":"ruan.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R10","minutes":1,"priority":80,"once":true,"focus":"R10-bed","interaction_slot":"R10-bed","writes":{"ruan.phys.asleep":false},"observes":["ruan.room","ruan.phys.asleep"],"add_buffs":["condition_ruan_day2"],"emotion":"专注"},
+        {"id":"ruan.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R10","minutes":6,"priority":22,"once":true,"focus":"R10-basin","interaction_slot":"R10-basin","when":{"ruan.phys.asleep":false,"event:ruan.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"ruan.to_canteen","label":"前往一楼大食堂","kind":"walk","at":"R10","minutes":3,"priority":32,"once":true,"focus":"ruan","when":{"ruan.phys.asleep":false,"event:ruan.morning_care.done":true},"writes":{"ruan.room":"F03"},"observes":["ruan.room"],"route_rooms":["R10","F03"],"not_before_game_minutes":740},
+        {"id":"ruan.observe_custody","label":"旁听归乡议论，观察工具卷、药卷封签与领粮单","kind":"inspect","at":"F03","minutes":5,"priority":35,"once":true,"focus":"ration.ledger","interaction_slot":"ration.ledger","when":{"ruan.phys.asleep":false,"event:ruan.to_canteen.done":true},"requires":{"quer.room":"F03","veronica.room":"F03"},"observes":["quer.doc.willing_to_depart","probes.phys.owner","probes.phys.secured","medicine.doc.custody_weak","medicine.phys.seal_registered","ration.doc.receipt_copy_available"],"writes":{"ruan.doc.custody_observed":true},"tags":["观察"]},
+        {"id":"ruan.return_board","label":"前往R10","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"ruan","when":{"ruan.phys.asleep":false,"event:ruan.observe_custody.done":true},"writes":{"ruan.room":"R10"},"observes":["ruan.room"],"route_rooms":["F03","R10"]},
+        {"id":"ruan.plan_gambit","label":"独坐打谱，比较拿到工具、药柜与配给权的三种办法","kind":"strategy","at":"R10","minutes":30,"priority":35,"once":true,"focus":"ruan.board","interaction_slot":"ruan.board","when":{"ruan.phys.asleep":false,"event:ruan.return_board.done":true},"not_before_game_minutes":780,"strategy":{"output":"ruan.plan.selected","publish":true,"options":[{"id":"probe","label":"十四张赞成票与被骗走的探针","when":{"quer.doc.willing_to_depart":true,"probes.phys.owner":"quer","probes.phys.secured":false},"utility":17,"basis":"雀儿急于归乡且工具未封存，可用范围误导取得联锁工具"},{"id":"medicine","label":"完整门锁与缺页卷宗","when":{"medicine.doc.custody_weak":true,"medicine.phys.seal_registered":false},"utility":12,"basis":"验药原页未逐页封签，可借记录缺页激化药柜保管冲突"},{"id":"ration","label":"窄手签收与口粮失窃","when":{"ration.doc.receipt_copy_available":true},"utility":7,"basis":"旧签名单可被借用，但只能转移有限配给权且易留下刮痕"}]},"tags":["打谱","谋划"]},
+        {"id":"ruan.to_supper","label":"前往一楼大食堂","kind":"walk","at":"R10","minutes":3,"priority":26,"once":true,"focus":"ruan","when":{"ruan.phys.asleep":false,"event:ruan.plan_gambit.done":true},"writes":{"ruan.room":"F03"},"observes":["ruan.room"],"route_rooms":["R10","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"ruan.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-ruan","when":{"ruan.phys.asleep":false,"event:ruan.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_ruan.phys.consumed":true},"observes":["meal_day2_ruan.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"ruan.return_bed","label":"前往R10","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"ruan","when":{"ruan.phys.asleep":false,"event:ruan.eat_supper.done":true},"writes":{"ruan.room":"R10"},"observes":["ruan.room"],"route_rooms":["F03","R10"],"not_before_game_minutes":1264},
+        {"id":"ruan.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R10","minutes":2,"priority":50,"once":true,"focus":"R10-bed","interaction_slot":"R10-bed","when":{"ruan.phys.asleep":false,"event:ruan.return_bed.done":true},"writes":{"ruan.phys.asleep":true},"observes":["ruan.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"ruan.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"ruan","interaction_slot":"ruan","when":{"ruan.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"ruan.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R10","minutes":8,"priority":-12,"once":false,"focus":"ruan","interaction_slot":"ruan","when":{"ruan.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"ruan.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"ruan.room":"F03","ruan.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "elena",
+      "name": "伊莲娜",
+      "home_room": "R11",
+      "home_bed": "R11-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"elena.room":"R11","elena.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"autonomy":1.3,"care":1.2,"safety":1.2},"modifiers":[]},
+      "actions": [
+        {"id":"elena.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R11","minutes":1,"priority":80,"once":true,"focus":"R11-bed","interaction_slot":"R11-bed","writes":{"elena.phys.asleep":false},"observes":["elena.room","elena.phys.asleep"],"add_buffs":["condition_elena_day2"],"emotion":"安心"},
+        {"id":"elena.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R11","minutes":6,"priority":22,"once":true,"focus":"R11-basin","interaction_slot":"R11-basin","when":{"elena.phys.asleep":false,"event:elena.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"elena.to_work","label":"前往一楼临时医疗角","kind":"walk","at":"R11","minutes":3,"priority":32,"once":true,"focus":"elena","when":{"elena.phys.asleep":false,"event:elena.morning_care.done":true},"writes":{"elena.room":"1F-Infirmary"},"observes":["elena.room"],"route_rooms":["R11","1F-Infirmary"],"not_before_game_minutes":550},
+        {"id":"elena.daily_work","label":"抬高伤踝，在医生指导下试着短距离落脚","kind":"interact","at":"1F-Infirmary","minutes":25,"priority":35,"once":true,"focus":"elena.splint","interaction_slot":"elena.splint","when":{"elena.phys.asleep":false,"event:elena.to_work.done":true},"tags":["休养"]},
+        {"id":"elena.to_supper","label":"前往一楼大食堂","kind":"walk","at":"1F-Infirmary","minutes":3,"priority":26,"once":true,"focus":"elena","when":{"elena.phys.asleep":false,"event:elena.daily_work.done":true},"writes":{"elena.room":"F03"},"observes":["elena.room"],"route_rooms":["1F-Infirmary","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"elena.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":16,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-elena","when":{"elena.phys.asleep":false,"event:elena.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_elena.phys.consumed":true},"observes":["meal_day2_elena.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"elena.return_bed","label":"前往R11","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"elena","when":{"elena.phys.asleep":false,"event:elena.eat_supper.done":true},"writes":{"elena.room":"R11"},"observes":["elena.room"],"route_rooms":["F03","R11"],"not_before_game_minutes":1268},
+        {"id":"elena.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R11","minutes":2,"priority":50,"once":true,"focus":"R11-bed","interaction_slot":"R11-bed","when":{"elena.phys.asleep":false,"event:elena.return_bed.done":true},"writes":{"elena.phys.asleep":true},"observes":["elena.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"elena.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"1F-Infirmary","minutes":8,"priority":-12,"once":false,"focus":"elena","interaction_slot":"elena","when":{"elena.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"elena.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"elena","interaction_slot":"elena","when":{"elena.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"elena.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R11","minutes":8,"priority":-12,"once":false,"focus":"elena","interaction_slot":"elena","when":{"elena.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"elena.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"elena.room":"F03","elena.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "moran",
+      "name": "莫兰",
+      "home_room": "R12",
+      "home_bed": "R12-bed",
+      "wake_at_game_minutes": 422,
+      "knows": {"moran.room":"R12","moran.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"art":1.6,"autonomy":1.2,"care":0.8},"modifiers":[]},
+      "actions": [
+        {"id":"moran.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R12","minutes":1,"priority":80,"once":true,"focus":"R12-bed","interaction_slot":"R12-bed","writes":{"moran.phys.asleep":false},"observes":["moran.room","moran.phys.asleep"],"add_buffs":["condition_moran_day2"],"emotion":"安心"},
+        {"id":"moran.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R12","minutes":6,"priority":22,"once":true,"focus":"R12-basin","interaction_slot":"R12-basin","when":{"moran.phys.asleep":false,"event:moran.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"moran.to_work","label":"前往二楼公共讲堂","kind":"walk","at":"R12","minutes":3,"priority":32,"once":true,"focus":"moran","when":{"moran.phys.asleep":false,"event:moran.morning_care.done":true},"writes":{"moran.room":"T01"},"observes":["moran.room"],"route_rooms":["R12","T01"],"not_before_game_minutes":550},
+        {"id":"moran.daily_work","label":"绘制连廊与人群草图，留意窗外风色","kind":"interact","at":"T01","minutes":25,"priority":35,"once":true,"focus":"moran.easel","interaction_slot":"moran.easel","when":{"moran.phys.asleep":false,"event:moran.to_work.done":true},"tags":["写生"]},
+        {"id":"moran.to_supper","label":"前往一楼大食堂","kind":"walk","at":"T01","minutes":3,"priority":26,"once":true,"focus":"moran","when":{"moran.phys.asleep":false,"event:moran.daily_work.done":true},"writes":{"moran.room":"F03"},"observes":["moran.room"],"route_rooms":["T01","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"moran.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":18,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-moran","when":{"moran.phys.asleep":false,"event:moran.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_moran.phys.consumed":true},"observes":["meal_day2_moran.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"moran.return_bed","label":"前往R12","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"moran","when":{"moran.phys.asleep":false,"event:moran.eat_supper.done":true},"writes":{"moran.room":"R12"},"observes":["moran.room"],"route_rooms":["F03","R12"],"not_before_game_minutes":1272},
+        {"id":"moran.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R12","minutes":2,"priority":50,"once":true,"focus":"R12-bed","interaction_slot":"R12-bed","when":{"moran.phys.asleep":false,"event:moran.return_bed.done":true},"writes":{"moran.phys.asleep":true},"observes":["moran.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"moran.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"moran","interaction_slot":"moran","when":{"moran.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"moran.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R12","minutes":8,"priority":-12,"once":false,"focus":"moran","interaction_slot":"moran","when":{"moran.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"moran.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"T01","minutes":8,"priority":-12,"once":false,"focus":"moran","interaction_slot":"moran","when":{"moran.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"moran.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"moran.room":"F03","moran.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "veronica",
+      "name": "维罗妮卡",
+      "home_room": "R13",
+      "home_bed": "R13-bed",
+      "wake_at_game_minutes": 424,
+      "knows": {"veronica.room":"R13","veronica.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"reason":1.3,"craft":1.2,"care":0.9,"autonomy":1},"modifiers":[]},
+      "actions": [
+        {
+          "id": "veronica.wake",
+          "label": "醒来，确认此刻身处自己的卧室",
+          "kind": "interact",
+          "at": "R13",
+          "minutes": 1,
+          "priority": 80,
+          "once": true,
+          "focus": "R13-bed",
+          "interaction_slot": "R13-bed",
+          "writes": {
+            "veronica.phys.asleep": false
+          },
+          "observes": [
+            "veronica.room",
+            "veronica.phys.asleep"
+          ],
+          "add_buffs": [
+            "condition_veronica_day2"
+          ],
+          "emotion": "专注"
+        },
+        {
+          "id": "veronica.morning_care",
+          "label": "饮水洗漱，整理随身器具",
+          "kind": "interact",
+          "at": "R13",
+          "minutes": 6,
+          "priority": 22,
+          "once": true,
+          "focus": "R13-basin",
+          "interaction_slot": "R13-basin",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.wake.done": true
+          },
+          "perceived_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "completed_need_effects": {
+            "thirst": 35,
+            "hygiene": 40,
+            "comfort": 15
+          },
+          "tags": [
+            "自护",
+            "清洁"
+          ]
+        },
+        {
+          "id": "veronica.to_canteen",
+          "label": "前往一楼大食堂",
+          "kind": "walk",
+          "at": "R13",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "veronica",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.morning_care.done": true
+          },
+          "writes": {
+            "veronica.room": "F03"
+          },
+          "observes": [
+            "veronica.room"
+          ],
+          "route_rooms": [
+            "R13",
+            "F03"
+          ],
+          "not_before_game_minutes": 650
+        },
+        {
+          "id": "veronica.to_academy_dispatch",
+          "label": "完成手边工作后，到中翼查看白塔院·配药清洁制备室巡检路线",
+          "kind": "walk",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "F03-door",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.to_canteen.done": true
+          },
+          "writes": {
+            "veronica.room": "2F-cross-M"
+          },
+          "observes": [
+            "veronica.room"
+          ],
+          "route_rooms": [
+            "F03",
+            "2F-cross-M"
+          ],
+          "tags": [
+            "化验",
+            "配药"
+          ]
+        },
+        {
+          "id": "veronica.read_academy_route",
+          "label": "读取接驳图，确认风窗和归楼通路",
+          "kind": "read",
+          "at": "2F-cross-M",
+          "minutes": 1,
+          "priority": 35,
+          "once": true,
+          "focus": "academies.report_board",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.to_academy_dispatch.done": true
+          },
+          "interaction_slot": "academies.report_board",
+          "observes": [
+            "academies.doc.route",
+            "island_environment.phys.wind_window"
+          ],
+          "tags": [
+            "化验",
+            "配药"
+          ]
+        },
+        {
+          "id": "veronica.to_B102",
+          "label": "按专业分工前往白塔院·配药清洁制备室",
+          "kind": "walk",
+          "at": "2F-cross-M",
+          "minutes": 8,
+          "priority": 36,
+          "once": false,
+          "focus": "2F-cross-M-door",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.read_academy_route.done": true,
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+            "island_environment.phys.wind_window": true
+          },
+          "writes": {
+            "veronica.room": "B-102"
+          },
+          "observes": [
+            "veronica.room"
+          ],
+          "route_rooms": [
+            "2F-cross-M",
+            "2F-M-interface",
+            "1F-M-interface",
+            "1F-cross-M",
+            "1F-gallery-E",
+            "1F-cross-S",
+            "AC-B-1-return",
+            "AC-B-1-cross",
+            "AC-B-1-long",
+            "B-102"
+          ],
+          "requires": {
+            "island_environment.phys.wind_window": true
+          },
+          "unknown": [
+            "event:veronica.inspect_B102.done"
+          ],
+          "not_after_game_minutes": 990,
+          "tags": [
+            "化验",
+            "配药"
+          ]
+        },
+        {
+          "id": "veronica.inspect_B102",
+          "label": "检查洁净器具和配制条件，不重复计入粮仓药材",
+          "kind": "inspect",
+          "at": "B-102",
+          "minutes": 4,
+          "priority": 42,
+          "once": true,
+          "focus": "B102.cabinet",
+          "when": {
+            "veronica.phys.asleep": false,
+            "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+            "island_environment.phys.wind_window": true
+          },
+          "interaction_slot": "B102.cabinet",
+          "requires": {
+            "island_environment.phys.wind_window": true
+          },
+          "not_after_game_minutes": 1005,
+          "observes": [
+            "B102.trace.preparation_limits"
+          ],
+          "tags": [
+            "化验",
+            "配药"
+          ]
+        },
+        {
+          "id": "veronica.return_from_B102",
+          "label": "沿原接驳廊从B-102回到中翼",
+          "kind": "walk",
+          "at": "B-102",
+          "minutes": 8,
+          "priority": 8,
+          "once": false,
+          "focus": "B-102-door",
+          "when": {
+            "veronica.phys.asleep": false
+          },
+          "writes": {
+            "veronica.room": "2F-cross-M"
+          },
+          "observes": [
+            "veronica.room"
+          ],
+          "route_rooms": [
+            "B-102",
+            "AC-B-1-long",
+            "AC-B-1-cross",
+            "AC-B-1-return",
+            "1F-cross-S",
+            "1F-gallery-E",
+            "1F-cross-M",
+            "1F-M-interface",
+            "2F-M-interface",
+            "2F-cross-M"
+          ]
+        },
+        {
+          "id": "veronica.file_B102_report",
+          "label": "签署并留下B-102实际巡检记录",
+          "kind": "interact",
+          "at": "2F-cross-M",
+          "minutes": 2,
+          "priority": 40,
+          "once": true,
+          "focus": "academies.report_board",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.inspect_B102.done": true,
+            "B102.trace.preparation_limits": "洁净药柜只有空瓶、滤布和量具；配制牌写明原料须从已封签粮药清册领用，未制成的螯合剂不能按现成药发放。"
+          },
+          "interaction_slot": "academies.report_board",
+          "writes": {
+            "B102.doc.signed_report": "维罗妮卡签名：已实查B-102药柜与配制台，洁净器具可用但没有新增成药；三份螯合剂原料仍以主粮仓封签清册为准，领用后须实际配制验药。"
+          },
+          "observes": [
+            "B102.doc.signed_report"
+          ],
+          "tags": [
+            "化验",
+            "配药"
+          ]
+        },
+        {
+          "id": "veronica.return_from_academy",
+          "label": "登记完毕，返回原工作地点继续照应同伴",
+          "kind": "walk",
+          "at": "2F-cross-M",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "2F-cross-M-door",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.file_B102_report.done": true
+          },
+          "writes": {
+            "veronica.room": "F03"
+          },
+          "observes": [
+            "veronica.room"
+          ],
+          "route_rooms": [
+            "2F-cross-M",
+            "F03"
+          ],
+          "tags": [
+            "化验",
+            "配药"
+          ]
+        },
+        {
+          "id": "veronica.to_supper",
+          "label": "前往一楼大食堂",
+          "kind": "walk",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 26,
+          "once": true,
+          "focus": "veronica",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.to_canteen.done": true,
+            "event:veronica.return_from_academy.done": true
+          },
+          "writes": {
+            "veronica.room": "F03"
+          },
+          "observes": [
+            "veronica.room"
+          ],
+          "route_rooms": [
+            "F03",
+            "F03"
+          ],
+          "not_before_game_minutes": 1080,
+          "perceived_need_effects": {
+            "hunger": 25,
+            "social": 10
+          },
+          "tags": [
+            "用餐"
+          ]
+        },
+        {
+          "id": "veronica.eat_supper",
+          "label": "在餐桌上领取一份热食，与同伴吃完晚餐",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 12,
+          "priority": 34,
+          "once": true,
+          "focus": "F03-table",
+          "interaction_slot": "F03-seat-veronica",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.to_supper.done": true,
+            "meal_day2.phys.ready": true
+          },
+          "requires": {
+            "meal_day2.phys.ready": true
+          },
+          "writes": {
+            "meal_day2_veronica.phys.consumed": true
+          },
+          "observes": [
+            "meal_day2_veronica.phys.consumed"
+          ],
+          "perceived_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "completed_need_effects": {
+            "hunger": 75,
+            "comfort": 20,
+            "social": 20,
+            "thirst": 40
+          },
+          "add_buffs": [
+            "buff_warm_porridge"
+          ],
+          "emotion": "安心",
+          "tags": [
+            "用餐"
+          ]
+        },
+        {
+          "id": "veronica.return_bed",
+          "label": "前往R13",
+          "kind": "walk",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 32,
+          "once": true,
+          "focus": "veronica",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.eat_supper.done": true
+          },
+          "writes": {
+            "veronica.room": "R13"
+          },
+          "observes": [
+            "veronica.room"
+          ],
+          "route_rooms": [
+            "F03",
+            "R13"
+          ],
+          "not_before_game_minutes": 1260
+        },
+        {
+          "id": "veronica.sleep_night",
+          "label": "洗漱后躺回自己的床，安眠至翌晨",
+          "kind": "interact",
+          "at": "R13",
+          "minutes": 2,
+          "priority": 50,
+          "once": true,
+          "focus": "R13-bed",
+          "interaction_slot": "R13-bed",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.return_bed.done": true
+          },
+          "writes": {
+            "veronica.phys.asleep": true
+          },
+          "observes": [
+            "veronica.phys.asleep"
+          ],
+          "emotion": "睡眠",
+          "tags": [
+            "睡眠"
+          ],
+          "perceived_need_effects": {
+            "energy": 85
+          },
+          "completed_need_effects": {
+            "energy": 85
+          }
+        },
+        {
+          "id": "veronica.rest_0",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "F03",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "veronica",
+          "interaction_slot": "veronica",
+          "when": {
+            "veronica.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "veronica.rest_1",
+          "label": "稍作歇息，等待手边工作可以继续",
+          "kind": "interact",
+          "at": "R13",
+          "minutes": 8,
+          "priority": -12,
+          "once": false,
+          "focus": "veronica",
+          "interaction_slot": "veronica",
+          "when": {
+            "veronica.phys.asleep": false
+          },
+          "need_below": {
+            "energy": 35
+          },
+          "perceived_need_effects": {
+            "energy": 25
+          },
+          "completed_need_effects": {
+            "energy": 25
+          },
+          "tags": [
+            "休息"
+          ]
+        },
+        {
+          "id": "veronica.review_page_custody",
+          "label": "把巡检清单与自己的药卷对照，指出逐页授权的缺口",
+          "kind": "inspect",
+          "at": "F03",
+          "minutes": 3,
+          "priority": 36,
+          "once": true,
+          "focus": "veronica",
+          "interaction_slot": "veronica",
+          "when": {
+            "veronica.phys.asleep": false,
+            "event:veronica.return_from_academy.done": true
+          },
+          "observes": [
+            "medicine.doc.page_custody_risk",
+            "medicine.phys.seal_registered",
+            "veronica.doc.custody_concern"
+          ],
+          "writes": {
+            "veronica.doc.custody_concern": true
+          },
+          "tags": [
+            "化验",
+            "核查"
+          ],
+          "public_completion_text": "维罗妮卡：白塔的空瓶都有编号，我自己的验药原页倒只靠一张封面。我准许整理，不等于谁都能带走；该把这一层写清楚。",
+          "tell": [
+            {
+              "actor": "detective",
+              "fields": [
+                "medicine.doc.page_custody_risk"
+              ],
+              "results": [
+                "veronica.doc.custody_concern"
+              ],
+              "room": "F03"
+            }
+          ]
+        }
+      ],
+      "perceptions": [
+        {"id":"veronica.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"veronica.room":"F03","veronica.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]},
+        {"id":"veronica.academy_window_0","label":"查看接驳廊风窗状态牌和归楼指示","when":{"veronica.room":"2F-cross-M","veronica.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]},
+        {"id":"veronica.academy_window_1","label":"查看接驳廊风窗状态牌和归楼指示","when":{"veronica.room":"B-102","veronica.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]}
+      ]
+    },
+    {
+      "id": "bertrand",
+      "name": "贝尔特朗",
+      "home_room": "R14",
+      "home_bed": "R14-bed",
+      "wake_at_game_minutes": 426,
+      "knows": {"bertrand.room":"R14","bertrand.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.5,"care":1.2,"solidarity":1.2},"modifiers":[]},
+      "actions": [
+        {"id":"bertrand.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R14","minutes":1,"priority":80,"once":true,"focus":"R14-bed","interaction_slot":"R14-bed","writes":{"bertrand.phys.asleep":false},"observes":["bertrand.room","bertrand.phys.asleep"],"add_buffs":["condition_bertrand_day2"],"emotion":"安心"},
+        {"id":"bertrand.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R14","minutes":6,"priority":22,"once":true,"focus":"R14-basin","interaction_slot":"R14-basin","when":{"bertrand.phys.asleep":false,"event:bertrand.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"bertrand.to_work","label":"前往二楼中翼交汇处","kind":"walk","at":"R14","minutes":3,"priority":32,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"event:bertrand.morning_care.done":true},"writes":{"bertrand.room":"2F-cross-M"},"observes":["bertrand.room"],"route_rooms":["R14","2F-cross-M"],"not_before_game_minutes":550},
+        {"id":"bertrand.daily_work","label":"检查公共通道，练习包扎后的持盾姿势","kind":"interact","at":"2F-cross-M","minutes":25,"priority":35,"once":true,"focus":"bertrand.shield","interaction_slot":"bertrand.shield","when":{"bertrand.phys.asleep":false,"event:bertrand.to_work.done":true},"tags":["护卫"]},
+        {"id":"bertrand.to_supper","label":"前往一楼大食堂","kind":"walk","at":"2F-cross-M","minutes":3,"priority":26,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"event:bertrand.daily_work.done":true},"writes":{"bertrand.room":"F03"},"observes":["bertrand.room"],"route_rooms":["2F-cross-M","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"bertrand.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":14,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-bertrand","when":{"bertrand.phys.asleep":false,"event:bertrand.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_bertrand.phys.consumed":true},"observes":["meal_day2_bertrand.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"bertrand.return_bed","label":"前往R14","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"bertrand","when":{"bertrand.phys.asleep":false,"event:bertrand.eat_supper.done":true},"writes":{"bertrand.room":"R14"},"observes":["bertrand.room"],"route_rooms":["F03","R14"],"not_before_game_minutes":1264},
+        {"id":"bertrand.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R14","minutes":2,"priority":50,"once":true,"focus":"R14-bed","interaction_slot":"R14-bed","when":{"bertrand.phys.asleep":false,"event:bertrand.return_bed.done":true},"writes":{"bertrand.phys.asleep":true},"observes":["bertrand.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"bertrand.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"2F-cross-M","minutes":8,"priority":-12,"once":false,"focus":"bertrand","interaction_slot":"bertrand","when":{"bertrand.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"bertrand.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"bertrand","interaction_slot":"bertrand","when":{"bertrand.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"bertrand.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R14","minutes":8,"priority":-12,"once":false,"focus":"bertrand","interaction_slot":"bertrand","when":{"bertrand.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"bertrand.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"bertrand.room":"F03","bertrand.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "margaret",
+      "name": "玛格丽特",
+      "home_room": "R15",
+      "home_bed": "R15-bed",
+      "wake_at_game_minutes": 428,
+      "knows": {"margaret.room":"R15","margaret.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"craft":1.3,"safety":1.3,"duty":1.2},"modifiers":[]},
+      "actions": [
+        {"id":"margaret.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R15","minutes":1,"priority":80,"once":true,"focus":"R15-bed","interaction_slot":"R15-bed","writes":{"margaret.phys.asleep":false},"observes":["margaret.room","margaret.phys.asleep"],"add_buffs":["condition_margaret_day2"],"emotion":"专注"},
+        {"id":"margaret.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R15","minutes":6,"priority":22,"once":true,"focus":"R15-basin","interaction_slot":"R15-basin","when":{"margaret.phys.asleep":false,"event:margaret.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"margaret.to_granary","label":"前往B1主粮仓","kind":"walk","at":"R15","minutes":3,"priority":32,"once":true,"focus":"margaret","when":{"margaret.phys.asleep":false,"event:margaret.morning_care.done":true},"writes":{"margaret.room":"U01-granary"},"observes":["margaret.room"],"route_rooms":["R15","U01-granary"],"not_before_game_minutes":535},
+        {"id":"margaret.inspect_granary_door","label":"测量沉降门槛，确认可支撑的受力点","kind":"inspect","at":"U01-granary","minutes":5,"priority":35,"once":true,"focus":"granary.door","interaction_slot":"granary.door","when":{"margaret.phys.asleep":false,"event:margaret.to_granary.done":true,"island_environment.phys.wind_window":true},"observes":["granary.trace.sill_level"]},
+        {"id":"margaret.brace_granary","label":"打入支撑楔，卸去锁芯上的剪力","kind":"interact","at":"U01-granary","minutes":6,"priority":35,"once":true,"focus":"granary.door","interaction_slot":"granary.door","when":{"margaret.phys.asleep":false,"event:margaret.inspect_granary_door.done":true},"writes":{"granary.phys.structure_braced":true},"observes":["granary.phys.structure_braced"],"tell":[{"actor":"quer","room":"U01-granary","fields":[],"results":["granary.phys.structure_braced"]},{"actor":"huo","room":"U01-granary","fields":[],"results":["granary.phys.structure_braced"]}],"tags":["协作","测绘"]},
+        {"id":"margaret.to_academy_dispatch","label":"完成手边工作后，到中翼查看星仪院·精密仪器室巡检路线","kind":"walk","at":"U01-granary","minutes":3,"priority":32,"once":true,"focus":"U01-granary-door","when":{"margaret.phys.asleep":false,"event:margaret.brace_granary.done":true,"granary.lock.open":true},"writes":{"margaret.room":"2F-cross-M"},"observes":["margaret.room"],"route_rooms":["U01-granary","2F-cross-M"],"tags":["测绘","结构分析"]},
+        {"id":"margaret.read_academy_route","label":"读取接驳图，确认风窗和归楼通路","kind":"read","at":"2F-cross-M","minutes":1,"priority":35,"once":true,"focus":"academies.report_board","when":{"margaret.phys.asleep":false,"event:margaret.to_academy_dispatch.done":true},"interaction_slot":"academies.report_board","observes":["academies.doc.route","island_environment.phys.wind_window"],"tags":["测绘","结构分析"]},
+        {"id":"margaret.to_S102","label":"按专业分工前往星仪院·精密仪器室","kind":"walk","at":"2F-cross-M","minutes":7,"priority":36,"once":false,"focus":"2F-cross-M-door","when":{"margaret.phys.asleep":false,"event:margaret.read_academy_route.done":true,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"writes":{"margaret.room":"S-102"},"observes":["margaret.room"],"route_rooms":["2F-cross-M","2F-gallery-E","2F-cross-N","2F-S-return","AC-S-1-return","AC-S-1-cross","AC-S-1-long","S-102"],"requires":{"island_environment.phys.wind_window":true},"unknown":["event:margaret.inspect_S102.done"],"not_after_game_minutes":990,"tags":["测绘","结构分析"]},
+        {"id":"margaret.inspect_S102","label":"复核标尺零点和机械读数，记录晶体显示的判断限度","kind":"inspect","at":"S-102","minutes":4,"priority":42,"once":true,"focus":"S102.instruments","when":{"margaret.phys.asleep":false,"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。","island_environment.phys.wind_window":true},"interaction_slot":"S102.instruments","requires":{"island_environment.phys.wind_window":true},"not_after_game_minutes":1005,"observes":["S102.trace.reference_scale"],"tags":["测绘","结构分析"]},
+        {"id":"margaret.return_from_S102","label":"沿原接驳廊从S-102回到中翼","kind":"walk","at":"S-102","minutes":7,"priority":8,"once":false,"focus":"S-102-door","when":{"margaret.phys.asleep":false},"writes":{"margaret.room":"2F-cross-M"},"observes":["margaret.room"],"route_rooms":["S-102","AC-S-1-long","AC-S-1-cross","AC-S-1-return","2F-S-return","2F-cross-N","2F-gallery-E","2F-cross-M"]},
+        {"id":"margaret.file_S102_report","label":"签署并留下S-102实际巡检记录","kind":"interact","at":"2F-cross-M","minutes":2,"priority":40,"once":true,"focus":"academies.report_board","when":{"margaret.phys.asleep":false,"event:margaret.inspect_S102.done":true,"S102.trace.reference_scale":"仪器台保留机械标尺零点、读数时刻和压差对照表；晶体发亮只是单项显示，未对照机械读数与当前风窗就不能据此判定通路安全。"},"interaction_slot":"academies.report_board","writes":{"S102.doc.signed_report":"玛格丽特签名：开仓后已实查S-102标尺零点与仪器对照，记录必须同时保留位置、时刻和机械读数；晶体亮色不能单独作为安全通行依据。"},"observes":["S102.doc.signed_report"],"tags":["测绘","结构分析"]},
+        {"id":"margaret.return_from_academy","label":"登记完毕，返回原工作地点继续照应同伴","kind":"walk","at":"2F-cross-M","minutes":3,"priority":32,"once":true,"focus":"2F-cross-M-door","when":{"margaret.phys.asleep":false,"event:margaret.file_S102_report.done":true},"writes":{"margaret.room":"U01-granary"},"observes":["margaret.room"],"route_rooms":["2F-cross-M","U01-granary"],"tags":["测绘","结构分析"]},
+        {"id":"margaret.to_supper","label":"前往一楼大食堂","kind":"walk","at":"U01-granary","minutes":3,"priority":26,"once":true,"focus":"margaret","when":{"margaret.phys.asleep":false,"granary.lock.open":true,"event:margaret.return_from_academy.done":true},"writes":{"margaret.room":"F03"},"observes":["margaret.room"],"route_rooms":["U01-granary","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"margaret.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":16,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-margaret","when":{"margaret.phys.asleep":false,"event:margaret.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_margaret.phys.consumed":true},"observes":["meal_day2_margaret.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"margaret.return_bed","label":"前往R15","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"margaret","when":{"margaret.phys.asleep":false,"event:margaret.eat_supper.done":true},"writes":{"margaret.room":"R15"},"observes":["margaret.room"],"route_rooms":["F03","R15"],"not_before_game_minutes":1268},
+        {"id":"margaret.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R15","minutes":2,"priority":50,"once":true,"focus":"R15-bed","interaction_slot":"R15-bed","when":{"margaret.phys.asleep":false,"event:margaret.return_bed.done":true},"writes":{"margaret.phys.asleep":true},"observes":["margaret.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"margaret.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"margaret","interaction_slot":"margaret","when":{"margaret.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"margaret.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R15","minutes":8,"priority":-12,"once":false,"focus":"margaret","interaction_slot":"margaret","when":{"margaret.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"margaret.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"U01-granary","minutes":8,"priority":-12,"once":false,"focus":"margaret","interaction_slot":"margaret","when":{"margaret.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"margaret.wind_open","label":"听见正式开窗钟，检查眼前风窗指示","when":{"margaret.room":"U01-granary","margaret.phys.asleep":false,"island_environment.phys.wind_window":true},"observes":["island_environment.phys.wind_window"]},
+        {"id":"margaret.open_granary","label":"看见粮仓门已经打开","when":{"margaret.room":"U01-granary","margaret.phys.asleep":false,"granary.lock.open":true},"observes":["granary.lock.open"]},
+        {"id":"margaret.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"margaret.room":"F03","margaret.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]},
+        {"id":"margaret.academy_window_0","label":"查看接驳廊风窗状态牌和归楼指示","when":{"margaret.room":"2F-cross-M","margaret.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]},
+        {"id":"margaret.academy_window_1","label":"查看接驳廊风窗状态牌和归楼指示","when":{"margaret.room":"S-102","margaret.phys.asleep":false},"knows":{"academies.doc.route":"四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。"},"observes":["island_environment.phys.wind_window"]}
+      ]
+    },
+    {
+      "id": "mora",
+      "name": "茉拉",
+      "home_room": "R16",
+      "home_bed": "R16-bed",
+      "wake_at_game_minutes": 420,
+      "knows": {"mora.room":"R16","mora.phys.asleep":true},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"care":1.5,"safety":1.3,"solidarity":1.1},"modifiers":[]},
+      "actions": [
+        {"id":"mora.wake","label":"醒来，确认此刻身处自己的卧室","kind":"interact","at":"R16","minutes":1,"priority":80,"once":true,"focus":"R16-bed","interaction_slot":"R16-bed","writes":{"mora.phys.asleep":false},"observes":["mora.room","mora.phys.asleep"],"add_buffs":["condition_mora_day2"],"emotion":"安心"},
+        {"id":"mora.morning_care","label":"饮水洗漱，整理随身器具","kind":"interact","at":"R16","minutes":6,"priority":22,"once":true,"focus":"R16-basin","interaction_slot":"R16-basin","when":{"mora.phys.asleep":false,"event:mora.wake.done":true},"perceived_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"completed_need_effects":{"thirst":35,"hygiene":40,"comfort":15},"tags":["自护","清洁"]},
+        {"id":"mora.to_work","label":"前往一楼临时医疗角","kind":"walk","at":"R16","minutes":3,"priority":32,"once":true,"focus":"mora","when":{"mora.phys.asleep":false,"event:mora.morning_care.done":true},"writes":{"mora.room":"1F-Infirmary"},"observes":["mora.room"],"route_rooms":["R16","1F-Infirmary"],"not_before_game_minutes":550},
+        {"id":"mora.daily_work","label":"给伤踝与酸灼伤换药，记下复查时间","kind":"interact","at":"1F-Infirmary","minutes":25,"priority":35,"once":true,"focus":"medical.desk","interaction_slot":"medical.desk","when":{"mora.phys.asleep":false,"event:mora.to_work.done":true},"tags":["医护","照护"]},
+        {"id":"mora.to_supper","label":"前往一楼大食堂","kind":"walk","at":"1F-Infirmary","minutes":3,"priority":26,"once":true,"focus":"mora","when":{"mora.phys.asleep":false,"event:mora.daily_work.done":true},"writes":{"mora.room":"F03"},"observes":["mora.room"],"route_rooms":["1F-Infirmary","F03"],"not_before_game_minutes":1080,"perceived_need_effects":{"hunger":25,"social":10},"tags":["用餐"]},
+        {"id":"mora.eat_supper","label":"在餐桌上领取一份热食，与同伴吃完晚餐","kind":"interact","at":"F03","minutes":18,"priority":34,"once":true,"focus":"F03-table","interaction_slot":"F03-seat-mora","when":{"mora.phys.asleep":false,"event:mora.to_supper.done":true,"meal_day2.phys.ready":true},"requires":{"meal_day2.phys.ready":true},"writes":{"meal_day2_mora.phys.consumed":true},"observes":["meal_day2_mora.phys.consumed"],"perceived_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"completed_need_effects":{"hunger":75,"comfort":20,"social":20,"thirst":40},"add_buffs":["buff_warm_porridge"],"emotion":"安心","tags":["用餐"]},
+        {"id":"mora.return_bed","label":"前往R16","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"mora","when":{"mora.phys.asleep":false,"event:mora.eat_supper.done":true},"writes":{"mora.room":"R16"},"observes":["mora.room"],"route_rooms":["F03","R16"],"not_before_game_minutes":1272},
+        {"id":"mora.sleep_night","label":"洗漱后躺回自己的床，安眠至翌晨","kind":"interact","at":"R16","minutes":2,"priority":50,"once":true,"focus":"R16-bed","interaction_slot":"R16-bed","when":{"mora.phys.asleep":false,"event:mora.return_bed.done":true},"writes":{"mora.phys.asleep":true},"observes":["mora.phys.asleep"],"emotion":"睡眠","tags":["睡眠"],"perceived_need_effects":{"energy":85},"completed_need_effects":{"energy":85}},
+        {"id":"mora.rest_0","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"1F-Infirmary","minutes":8,"priority":-12,"once":false,"focus":"mora","interaction_slot":"mora","when":{"mora.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"mora.rest_1","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"F03","minutes":8,"priority":-12,"once":false,"focus":"mora","interaction_slot":"mora","when":{"mora.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]},
+        {"id":"mora.rest_2","label":"稍作歇息，等待手边工作可以继续","kind":"interact","at":"R16","minutes":8,"priority":-12,"once":false,"focus":"mora","interaction_slot":"mora","when":{"mora.phys.asleep":false},"need_below":{"energy":35},"perceived_need_effects":{"energy":25},"completed_need_effects":{"energy":25},"tags":["休息"]}
+      ],
+      "perceptions": [
+        {"id":"mora.day2_meal_ready","label":"闻到热食，看到已经出锅的晚餐","when":{"mora.room":"F03","mora.phys.asleep":false,"meal_day2.phys.ready":true},"observes":["meal_day2.phys.ready"]}
+      ]
+    },
+    {
+      "id": "demon",
+      "name": "代管者",
+      "home_room": "1F-Shaft-Monitor",
+      "knows": {"demon.room":"1F-Shaft-Monitor","demon.phys.asleep":false},
+      "opinion": {"base_trust":0.2,"threshold":1.55,"evidence_weight":0.4,"cost_aversion":0.6,"risk_aversion":1.2,"values":{"duty":1.5,"reason":1.2,"art":1},"modifiers":[]},
+      "actions": [
+        {"id":"demon.open_wind","label":"按契约开启日间风窗，并敲响开窗钟","kind":"interact","at":"1F-Shaft-Monitor","minutes":0.5,"priority":70,"once":true,"focus":"demon","interaction_slot":"demon","when":{"demon.phys.asleep":false},"not_before_game_minutes":540,"writes":{"island_environment.phys.wind_window":true},"observes":["island_environment.phys.wind_window"]},
+        {"id":"demon.close_wind","label":"关闭日间风窗，敲响归楼钟","kind":"interact","at":"1F-Shaft-Monitor","minutes":0.5,"priority":70,"once":true,"focus":"demon","interaction_slot":"demon","when":{"demon.phys.asleep":false,"event:demon.open_wind.done":true},"not_before_game_minutes":1020,"writes":{"island_environment.phys.wind_window":false},"observes":["island_environment.phys.wind_window"]},
+        {"id":"demon.to_sign_empty_crates","label":"前往一楼大食堂","kind":"walk","at":"1F-Shaft-Monitor","minutes":3,"priority":32,"once":true,"focus":"demon","when":{"demon.phys.asleep":false,"event:demon.open_wind.done":true},"writes":{"demon.room":"F03"},"observes":["demon.room"],"route_rooms":["1F-Shaft-Monitor","F03"],"not_before_game_minutes":660},
+        {"id":"demon.sign_empty_crates","label":"签收六只空箱，明确签名只认证这次回收","kind":"interact","at":"F03","minutes":2,"priority":35,"once":true,"focus":"ration.ledger","interaction_slot":"ration.ledger","when":{"demon.phys.asleep":false,"event:demon.to_sign_empty_crates.done":true},"writes":{"receipt.doc.old_text":"归还空箱六只；此签字只确认收回空箱，不授权新增领取口粮","receipt.doc.old_signed":true},"observes":["receipt.doc.old_text","receipt.doc.old_signed"]},
+        {"id":"demon.return_monitor","label":"前往一楼竖井监测壁龛","kind":"walk","at":"F03","minutes":3,"priority":32,"once":true,"focus":"demon","when":{"demon.phys.asleep":false,"event:demon.sign_empty_crates.done":true},"writes":{"demon.room":"1F-Shaft-Monitor"},"observes":["demon.room"],"route_rooms":["F03","1F-Shaft-Monitor"]}
+      ],
+      "perceptions": []
+    }
+  ],
+  "facts": {
+    "lucian.room": "R01",
+    "lucian.phys.asleep": true,
+    "gu.room": "R02",
+    "gu.phys.asleep": true,
+    "quer.room": "R03",
+    "quer.phys.asleep": true,
+    "ward.room": "R04",
+    "ward.phys.asleep": true,
+    "detective.room": "R05",
+    "detective.phys.asleep": true,
+    "huo.room": "R06",
+    "huo.phys.asleep": true,
+    "shen.room": "R07",
+    "shen.phys.asleep": true,
+    "su.room": "R08",
+    "su.phys.asleep": true,
+    "selma.room": "R09",
+    "selma.phys.asleep": true,
+    "ruan.room": "R10",
+    "ruan.phys.asleep": true,
+    "elena.room": "R11",
+    "elena.phys.asleep": true,
+    "moran.room": "R12",
+    "moran.phys.asleep": true,
+    "veronica.room": "R13",
+    "veronica.phys.asleep": true,
+    "bertrand.room": "R14",
+    "bertrand.phys.asleep": true,
+    "margaret.room": "R15",
+    "margaret.phys.asleep": true,
+    "mora.room": "R16",
+    "mora.phys.asleep": true,
+    "demon.room": "1F-Shaft-Monitor",
+    "demon.phys.asleep": false,
+    "island_environment.phys.wind_window": false,
+    "granary.lock.open": false,
+    "granary.trace.sill_level": "门槛沉降四毫米；卸去上侧剪力后锁芯可以旋转",
+    "granary.trace.winch_teeth": "绞盘棘齿卡死在反扣位置，必须先卸载再复位",
+    "granary.trace.lock_pin": "双排锁针被门扇剪力压住；结构支撑解除后可挑开",
+    "granary.phys.structure_braced": false,
+    "granary.lock.picked": false,
+    "granary.doc.inventory": "粮袋、煤饼与三份螯合剂原料均有封签；按十六人领用逐笔记账",
+    "flour.phys.at_kitchen": false,
+    "ration.doc.ledger_posted": false,
+    "ration.doc.portions": "十六名学员各有同额份额；卧床与值班者可由本人授权代领",
+    "ration.doc.cooking_loss": "把定额面粉统一煮成热食不会增加名额；灶火可顺带烧水",
+    "ration.policy.disputed": false,
+    "ration.policy.mediated": false,
+    "ration.doc.ward_accepted": false,
+    "ration.doc.shen_accepted": false,
+    "probes.phys.owner": "quer",
+    "probes.phys.secured": false,
+    "quer.doc.willing_to_depart": true,
+    "medicine.doc.custody_weak": true,
+    "medicine.phys.seal_registered": false,
+    "ration.doc.receipt_copy_available": true,
+    "ruan.plan.selected": "",
+    "ruan.doc.custody_observed": false,
+    "supply.doc.day2_verified": false,
+    "monitor.doc.wind_limits": "风窗只在09:00至17:00开放；四院16:30停止出发、16:45停止新作业，归楼通路始终保留；压差合格仍须守住联锁门",
+    "monitor.phys.pressure_clear": true,
+    "meal_day2.phys.ready": false,
+    "academies.doc.route": "四院初探登记图：文契W-102纸墨分析与白塔B-102配药室由主楼一层公共横路接入；铁工F-104备件室经二层北横路门前接道进入，星仪S-102精密仪器室由二层星仪接驳内廊进入。四院风窗09:00至17:00，16:30停止出发、16:45停止新作业；已在院内者始终可沿原接驳廊回楼。完成巡检者回二楼中翼签名登记，登记只报告可用设施与限制，不授权拆封院藏或增领物资。",
+    "W102.trace.paper_register": "纸墨台上可比对旧纸纤维、样墨和刮擦痕；借阅牌要求保留原页与编号，原卷库封签不能凭一张旧签名拆开。",
+    "W102.doc.signed_report": "",
+    "B102.trace.preparation_limits": "洁净药柜只有空瓶、滤布和量具；配制牌写明原料须从已封签粮药清册领用，未制成的螯合剂不能按现成药发放。",
+    "B102.doc.signed_report": "",
+    "F104.trace.parts_fit": "备件台列出棘齿、止动销和垫片的配合尺寸；现成备件只能替换匹配的机械件，不能代替雀儿的精钢探针或霍铎的棘轮扳手。",
+    "F104.doc.signed_report": "",
+    "S102.trace.reference_scale": "仪器台保留机械标尺零点、读数时刻和压差对照表；晶体发亮只是单项显示，未对照机械读数与当前风窗就不能据此判定通路安全。",
+    "S102.doc.signed_report": "",
+    "R05.phys.drinking_water_available": true,
+    "detective.doc.water_return_room": "",
+    "probes.trace.custody_risk": "开仓后两支细针沾有锁芯油，工具卷束带磨松；若把卷摊在共用桌上，下一位拿取者和物主容易说不清交接范围。",
+    "medicine.doc.page_custody_risk": "从白塔带回的器具清单有逐件编号，个人验药卷仍只有封面题名；允许整理封面不等于允许移走原页。",
+    "quer.doc.custody_concern": false,
+    "veronica.doc.custody_concern": false
+  },
+  "fact_labels": {
+    "island_environment.phys.wind_window": "island_environment.phys.wind_window",
+    "granary.lock.open": "granary.lock.open",
+    "granary.trace.sill_level": "门槛沉降与受力测量",
+    "granary.trace.winch_teeth": "绞盘反扣棘齿",
+    "granary.trace.lock_pin": "受剪锁针",
+    "granary.phys.structure_braced": "granary.phys.structure_braced",
+    "granary.lock.picked": "granary.lock.picked",
+    "granary.doc.inventory": "带封签的粮药清册",
+    "flour.phys.at_kitchen": "flour.phys.at_kitchen",
+    "ration.doc.ledger_posted": "ration.doc.ledger_posted",
+    "ration.doc.portions": "十六人的等额份额",
+    "ration.doc.cooking_loss": "集中烹煮与份额守恒",
+    "ration.policy.disputed": "ration.policy.disputed",
+    "ration.policy.mediated": "ration.policy.mediated",
+    "ration.doc.ward_accepted": "ration.doc.ward_accepted",
+    "ration.doc.shen_accepted": "ration.doc.shen_accepted",
+    "probes.phys.owner": "probes.phys.owner",
+    "probes.phys.secured": "probes.phys.secured",
+    "quer.doc.willing_to_depart": "quer.doc.willing_to_depart",
+    "medicine.doc.custody_weak": "medicine.doc.custody_weak",
+    "medicine.phys.seal_registered": "medicine.phys.seal_registered",
+    "ration.doc.receipt_copy_available": "ration.doc.receipt_copy_available",
+    "ruan.plan.selected": "ruan.plan.selected",
+    "ruan.doc.custody_observed": "ruan.doc.custody_observed",
+    "supply.doc.day2_verified": "supply.doc.day2_verified",
+    "monitor.doc.wind_limits": "风窗时段及联锁约束",
+    "monitor.phys.pressure_clear": "此刻压差检查合格",
+    "meal_day2.phys.ready": "第2日晚餐已备好",
+    "academies.doc.route": "四院楼层接驳、巡检登记与返程规则",
+    "W102.trace.paper_register": "纸墨台的旧纸、样墨与借阅边界",
+    "W102.doc.signed_report": "顾平章的W-102签名实查报告",
+    "B102.trace.preparation_limits": "药柜的空瓶、量具与未配制标签",
+    "B102.doc.signed_report": "维罗妮卡的B-102签名实查报告",
+    "F104.trace.parts_fit": "止动件规格与专用工具配合",
+    "F104.doc.signed_report": "霍铎的F-104签名实查报告",
+    "S102.trace.reference_scale": "标尺零点与压差对照表",
+    "S102.doc.signed_report": "玛格丽特的S-102签名实查报告",
+    "probes.trace.custody_risk": "开仓后实际检查到的工具卷交接风险",
+    "medicine.doc.page_custody_risk": "维罗妮卡核对出的卷页授权边界",
+    "quer.doc.custody_concern": "雀儿已经提出本人保管工具的顾虑",
+    "veronica.doc.custody_concern": "维罗妮卡已经提出药卷原页的保管顾虑"
+  },
+  "expectations": [
+    {"id":"lucian.sleep_night","action":"lucian.sleep_night"},
+    {"id":"gu.sleep_night","action":"gu.sleep_night"},
+    {"id":"quer.sleep_night","action":"quer.sleep_night"},
+    {"id":"ward.sleep_night","action":"ward.sleep_night"},
+    {"id":"detective.sleep_night","action":"detective.sleep_night"},
+    {"id":"huo.sleep_night","action":"huo.sleep_night"},
+    {"id":"shen.sleep_night","action":"shen.sleep_night"},
+    {"id":"su.sleep_night","action":"su.sleep_night"},
+    {"id":"selma.sleep_night","action":"selma.sleep_night"},
+    {"id":"ruan.sleep_night","action":"ruan.sleep_night"},
+    {"id":"elena.sleep_night","action":"elena.sleep_night"},
+    {"id":"moran.sleep_night","action":"moran.sleep_night"},
+    {"id":"veronica.sleep_night","action":"veronica.sleep_night"},
+    {"id":"bertrand.sleep_night","action":"bertrand.sleep_night"},
+    {"id":"margaret.sleep_night","action":"margaret.sleep_night"},
+    {"id":"mora.sleep_night","action":"mora.sleep_night"},
+    {"id":"margaret.brace_granary","action":"margaret.brace_granary"},
+    {"id":"quer.pick_granary_lock","action":"quer.pick_granary_lock"},
+    {"id":"huo.reset_granary_winch","action":"huo.reset_granary_winch"},
+    {"id":"shen.inventory","action":"shen.inventory"},
+    {"id":"detective.deduce_ration","action":"detective.deduce_ration"},
+    {"id":"detective.persuade_ward","action":"detective.persuade_ward"},
+    {"id":"detective.persuade_shen","action":"detective.persuade_shen"},
+    {"id":"ruan.plan_gambit","action":"ruan.plan_gambit"},
+    {"id":"granary.lock.open","condition":{"op":"equals","ref":{"type":"ref","object":"granary","facet":"lock","field":"open"},"value":true}},
+    {"id":"flour.phys.at_kitchen","condition":{"op":"equals","ref":{"type":"ref","object":"flour","facet":"phys","field":"at_kitchen"},"value":true}},
+    {"id":"ration.policy.mediated","condition":{"op":"equals","ref":{"type":"ref","object":"ration.policy","facet":"state","field":"mediated"},"value":true}},
+    {"id":"academy.route_observed","evidence_source":{"actor":"detective","object":"academies","facet":"doc","field":"route","action":"detective.inspect_wind"}},
+    {"id":"academy.W102.professional_inspection","action":"gu.inspect_W102"},
+    {"id":"academy.W102.signed_report","action":"gu.file_W102_report"},
+    {"id":"academy.W102.inspection_before_report","before":"gu.inspect_W102","after":"gu.file_W102_report"},
+    {"id":"academy.W102.report_before_read","before":"gu.file_W102_report","after":"detective.read_academy_reports"},
+    {"id":"academy.W102.professional_observation_source","evidence_source":{"actor":"gu","object":"W102","facet":"trace","field":"paper_register","action":"gu.inspect_W102"}},
+    {"id":"academy.W102.signed_document_source","evidence_source":{"actor":"detective","object":"W102","facet":"doc","field":"signed_report","action":"detective.read_academy_reports"}},
+    {"id":"academy.W102.personal_visit_or_qualified_report","condition":{"op":"not","item":{"op":"all","items":[{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.inspect_W102","facet":"state","field":"done"},"value":true}},{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.deduce_academy_reports","facet":"state","field":"done"},"value":true}}]}}},
+    {"id":"academy.B102.professional_inspection","action":"veronica.inspect_B102"},
+    {"id":"academy.B102.signed_report","action":"veronica.file_B102_report"},
+    {"id":"academy.B102.inspection_before_report","before":"veronica.inspect_B102","after":"veronica.file_B102_report"},
+    {"id":"academy.B102.report_before_read","before":"veronica.file_B102_report","after":"detective.read_academy_reports"},
+    {"id":"academy.B102.professional_observation_source","evidence_source":{"actor":"veronica","object":"B102","facet":"trace","field":"preparation_limits","action":"veronica.inspect_B102"}},
+    {"id":"academy.B102.signed_document_source","evidence_source":{"actor":"detective","object":"B102","facet":"doc","field":"signed_report","action":"detective.read_academy_reports"}},
+    {"id":"academy.B102.personal_visit_or_qualified_report","condition":{"op":"not","item":{"op":"all","items":[{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.inspect_B102","facet":"state","field":"done"},"value":true}},{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.deduce_academy_reports","facet":"state","field":"done"},"value":true}}]}}},
+    {"id":"academy.F104.professional_inspection","action":"huo.inspect_F104"},
+    {"id":"academy.F104.signed_report","action":"huo.file_F104_report"},
+    {"id":"academy.F104.inspection_before_report","before":"huo.inspect_F104","after":"huo.file_F104_report"},
+    {"id":"academy.F104.report_before_read","before":"huo.file_F104_report","after":"detective.read_academy_reports"},
+    {"id":"academy.F104.professional_observation_source","evidence_source":{"actor":"huo","object":"F104","facet":"trace","field":"parts_fit","action":"huo.inspect_F104"}},
+    {"id":"academy.F104.signed_document_source","evidence_source":{"actor":"detective","object":"F104","facet":"doc","field":"signed_report","action":"detective.read_academy_reports"}},
+    {"id":"academy.F104.personal_visit_or_qualified_report","condition":{"op":"not","item":{"op":"all","items":[{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.inspect_F104","facet":"state","field":"done"},"value":true}},{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.deduce_academy_reports","facet":"state","field":"done"},"value":true}}]}}},
+    {"id":"academy.S102.professional_inspection","action":"margaret.inspect_S102"},
+    {"id":"academy.S102.signed_report","action":"margaret.file_S102_report"},
+    {"id":"academy.S102.inspection_before_report","before":"margaret.inspect_S102","after":"margaret.file_S102_report"},
+    {"id":"academy.S102.report_before_read","before":"margaret.file_S102_report","after":"detective.read_academy_reports"},
+    {"id":"academy.S102.professional_observation_source","evidence_source":{"actor":"margaret","object":"S102","facet":"trace","field":"reference_scale","action":"margaret.inspect_S102"}},
+    {"id":"academy.S102.signed_document_source","evidence_source":{"actor":"detective","object":"S102","facet":"doc","field":"signed_report","action":"detective.read_academy_reports"}},
+    {"id":"academy.S102.personal_visit_or_qualified_report","condition":{"op":"not","item":{"op":"all","items":[{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.inspect_S102","facet":"state","field":"done"},"value":true}},{"op":"not","item":{"op":"equals","ref":{"type":"ref","object":"event:detective.deduce_academy_reports","facet":"state","field":"done"},"value":true}}]}}},
+    {"id":"academy.resource_judgment_is_known","actor":"detective","condition":{"op":"equals","ref":{"type":"ref","object":"detective","facet":"infer","field":"academy_resource_limits"},"value":true}},
+    {"id":"academy.return_to_mainline","action":"detective.finish_academy_survey"},
+    {"id":"academy.mainline_before_supper","before":"detective.finish_academy_survey","after":"detective.to_supper"}
+  ],
+  "knowledge_boundaries": [
+    {"actor":"detective","ref":{"type":"ref","object":"academies","facet":"doc","field":"route"},"after":"detective.inspect_wind"},
+    {"actor":"gu","ref":{"type":"ref","object":"W102","facet":"trace","field":"paper_register"},"after":"gu.inspect_W102"},
+    {"actor":"gu","ref":{"type":"ref","object":"academies","facet":"doc","field":"route"},"after":"gu.read_academy_route"},
+    {"actor":"detective","ref":{"type":"ref","object":"W102","facet":"trace","field":"paper_register"},"after":"detective.inspect_W102"},
+    {"actor":"detective","ref":{"type":"ref","object":"W102","facet":"doc","field":"signed_report"},"after":"detective.read_academy_reports"},
+    {"actor":"veronica","ref":{"type":"ref","object":"B102","facet":"trace","field":"preparation_limits"},"after":"veronica.inspect_B102"},
+    {"actor":"veronica","ref":{"type":"ref","object":"academies","facet":"doc","field":"route"},"after":"veronica.read_academy_route"},
+    {"actor":"detective","ref":{"type":"ref","object":"B102","facet":"trace","field":"preparation_limits"},"after":"detective.inspect_B102"},
+    {"actor":"detective","ref":{"type":"ref","object":"B102","facet":"doc","field":"signed_report"},"after":"detective.read_academy_reports"},
+    {"actor":"huo","ref":{"type":"ref","object":"F104","facet":"trace","field":"parts_fit"},"after":"huo.inspect_F104"},
+    {"actor":"huo","ref":{"type":"ref","object":"academies","facet":"doc","field":"route"},"after":"huo.read_academy_route"},
+    {"actor":"detective","ref":{"type":"ref","object":"F104","facet":"trace","field":"parts_fit"},"after":"detective.inspect_F104"},
+    {"actor":"detective","ref":{"type":"ref","object":"F104","facet":"doc","field":"signed_report"},"after":"detective.read_academy_reports"},
+    {"actor":"margaret","ref":{"type":"ref","object":"S102","facet":"trace","field":"reference_scale"},"after":"margaret.inspect_S102"},
+    {"actor":"margaret","ref":{"type":"ref","object":"academies","facet":"doc","field":"route"},"after":"margaret.read_academy_route"},
+    {"actor":"detective","ref":{"type":"ref","object":"S102","facet":"trace","field":"reference_scale"},"after":"detective.inspect_S102"},
+    {"actor":"detective","ref":{"type":"ref","object":"S102","facet":"doc","field":"signed_report"},"after":"detective.read_academy_reports"}
+  ]
+} }

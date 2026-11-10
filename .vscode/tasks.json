@@ -2,6 +2,14 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "run: five-day autonomous CLI (600s)",
+      "type": "process",
+      "command": "${workspaceFolder}/.runtime/python/Scripts/python.exe",
+      "args": ["${workspaceFolder}/mcp/game/run_auto.py", "--backend", "cli", "--duration-seconds", "600", "--receipt", "${workspaceFolder}/.runtime/runs/latest-auto-receipt.json"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
       "label": "build: Godot C# (incremental)",
       "type": "process",
       "command": "powershell.exe",

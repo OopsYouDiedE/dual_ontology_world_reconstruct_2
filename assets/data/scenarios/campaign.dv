@@ -1,0 +1,51 @@
+schema "dv-script-v1";
+data runtime.character_session { value = {
+    campaign = [
+        { source = "res://assets/data/scenarios/day1-morning.dv"; offset_minutes = 0; },
+        { source = "res://assets/data/scenarios/day2.dv"; offset_minutes = 1440; },
+        { source = "res://assets/data/scenarios/day3.dv"; offset_minutes = 2880; },
+        { source = "res://assets/data/scenarios/day4.dv"; offset_minutes = 4320; },
+        { source = "res://assets/data/scenarios/day5.dv"; offset_minutes = 5760; }
+    ];
+    shared_sources = [
+        { source = "res://assets/data/scenarios/daily-life.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-lucian-gu.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-quer-ward.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-detective-huo.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-shen-su.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-selma-ruan.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-elena-moran.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-veronica-bertrand.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-margaret-mora.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/life-demon.dv"; days = [1]; },
+        { source = "res://assets/data/scenarios/open-day5-lucian-gu.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/open-day5-quer-ward.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/open-day5-detective-huo.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/open-day5-shen-su.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/open-day5-selma-ruan.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/open-day5-elena-moran.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/open-day5-veronica-bertrand.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/open-day5-margaret-mora.dv"; days = [5]; },
+        { source = "res://assets/data/scenarios/social-schemes.dv"; days = [5]; }
+    ];
+    planning = { source = "res://assets/data/scenarios/detective-planning.dv"; definition = "runtime.character_planning"; };
+    scenario_label = "安眠者有福 · 前五日";
+    presentation = {
+        host = "campaign_rooms";
+        source = "res://assets/data/presentation/campaign_rooms.dv";
+        definition = "campaign.rooms";
+        receipt_directory = "res://artifacts/five-day/godot";
+    };
+    autonomy_phase = {
+        start_minutes = 5760;
+        label = "自主观察日";
+        description = "各人依据已经知道的事、身体需要与自己的责任安排生活。";
+        task_guidance = false;
+    };
+    run = { end_minutes = 7200; };
+    completion = {
+        mode = "observation_window";
+        end_minutes = 7200;
+        label = "第五日观察结束";
+    };
+}; }

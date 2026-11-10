@@ -1,0 +1,2329 @@
+{
+  "run_id": "cli-7535e8587a53c95cb48fb0ce",
+  "statuses": {
+    "refuted": 2233,
+    "unknown": 14087,
+    "proved": 1275
+  },
+  "unknown_leaks": [],
+  "proof_source_references": 6109,
+  "missing_same_actor_references": [],
+  "withdrawal_examples": [
+    {
+      "actor": "shen",
+      "target": "shen",
+      "field": "music",
+      "previous": "proved",
+      "status": "refuted",
+      "time": 445.65
+    },
+    {
+      "actor": "shen",
+      "target": "shen",
+      "field": "possible_practice",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 445.65
+    },
+    {
+      "actor": "shen",
+      "target": "shen",
+      "field": "possible_company",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 445.65
+    },
+    {
+      "actor": "shen",
+      "target": "lucian",
+      "field": "audible_source",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 445.65
+    },
+    {
+      "actor": "shen",
+      "target": "lucian",
+      "field": "can_request_food",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 445.65
+    },
+    {
+      "actor": "shen",
+      "target": "quer",
+      "field": "can_request_food",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 464.65
+    },
+    {
+      "actor": "lucian",
+      "target": "quer",
+      "field": "can_request_food",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 465.0833333333333
+    },
+    {
+      "actor": "lucian",
+      "target": "shen",
+      "field": "can_request_food",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 465.0833333333333
+    },
+    {
+      "actor": "ruan",
+      "target": "quer",
+      "field": "can_request_food",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 489.8666666666667
+    },
+    {
+      "actor": "quer",
+      "target": "ruan",
+      "field": "can_request_food",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 505.0833333333333
+    },
+    {
+      "actor": "detective",
+      "target": "ruan",
+      "field": "can_request_food",
+      "previous": "proved",
+      "status": "unknown",
+      "time": 507.05
+    },
+    {
+      "actor": "quer",
+      "target": "quer",
+      "field": "music",
+      "previous": "proved",
+      "status": "refuted",
+      "time": 508.3333333333333
+    }
+  ],
+  "evidence_counts": {
+    "detective": 6524,
+    "quer": 6736,
+    "lucian": 6371,
+    "ruan": 6780,
+    "shen": 6709
+  },
+  "proof_examples": [
+    {
+      "receipt_index": 570,
+      "kind": "inference",
+      "start_time": 423.65,
+      "recorded_time": 423.7,
+      "duration": 0,
+      "actor": "shen",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 132,
+      "evidence_id": "cognition/shen/possible_practice/423.65",
+      "source": {
+        "actor": "shen",
+        "rule": "cognition/possible_practice",
+        "label": "声响的一种解释：有人练习",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "possible_practice",
+          "Args": [],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p7",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "possible_practice",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "sound_practice_possibility",
+                "Parents": [
+                  "p0"
+                ],
+                "Substitution": {}
+              }
+            ],
+            "TheoryHash": "F4E159E4B1EAD9BB545389D12822D976B0C2D0B574AD17B0C2994CA14FD71B03"
+          },
+          "Axioms": [
+            "hears_music"
+          ],
+          "Rules": [
+            "sound_practice_possibility"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "shen",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/shen/FieldKey { Object = shen, Facet = trace, Field = music_audible }/true/423.65"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 423.65,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "shen",
+        "Facet": "infer",
+        "Field": "possible_practice"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    },
+    {
+      "receipt_index": 571,
+      "kind": "inference",
+      "start_time": 423.65,
+      "recorded_time": 423.7,
+      "duration": 0,
+      "actor": "shen",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 133,
+      "evidence_id": "cognition/shen/possible_company/423.65",
+      "source": {
+        "actor": "shen",
+        "rule": "cognition/possible_company",
+        "label": "声响的另一种解释：有人寻求陪伴",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "possible_company",
+          "Args": [],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p8",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "possible_company",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "sound_company_possibility",
+                "Parents": [
+                  "p0"
+                ],
+                "Substitution": {}
+              }
+            ],
+            "TheoryHash": "F4E159E4B1EAD9BB545389D12822D976B0C2D0B574AD17B0C2994CA14FD71B03"
+          },
+          "Axioms": [
+            "hears_music"
+          ],
+          "Rules": [
+            "sound_company_possibility"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "shen",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/shen/FieldKey { Object = shen, Facet = trace, Field = music_audible }/true/423.65"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 423.65,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "shen",
+        "Facet": "infer",
+        "Field": "possible_company"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    },
+    {
+      "receipt_index": 582,
+      "kind": "inference",
+      "start_time": 423.65,
+      "recorded_time": 423.7,
+      "duration": 0,
+      "actor": "shen",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 144,
+      "evidence_id": "cognition/shen/source_lucian/423.65",
+      "source": {
+        "actor": "shen",
+        "rule": "cognition/source_lucian",
+        "label": "lucian是当前可归因的演奏声源",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "audible_source",
+          "Args": [
+            "lucian"
+          ],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p3",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "visible",
+                  "Args": [
+                    "lucian"
+                  ],
+                  "Negative": false
+                },
+                "Reference": "sees_lucian",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p5",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "piano_gesture",
+                  "Args": [
+                    "lucian"
+                  ],
+                  "Negative": false
+                },
+                "Reference": "piano_lucian",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p9",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "audible_source",
+                  "Args": [
+                    "lucian"
+                  ],
+                  "Negative": false
+                },
+                "Reference": "attribute_visible_performance",
+                "Parents": [
+                  "p3",
+                  "p5",
+                  "p0"
+                ],
+                "Substitution": {
+                  "?person": "lucian"
+                }
+              }
+            ],
+            "TheoryHash": "F4E159E4B1EAD9BB545389D12822D976B0C2D0B574AD17B0C2994CA14FD71B03"
+          },
+          "Axioms": [
+            "hears_music",
+            "sees_lucian",
+            "piano_lucian"
+          ],
+          "Rules": [
+            "attribute_visible_performance"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "shen",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/shen/FieldKey { Object = shen, Facet = trace, Field = music_audible }/true/423.65"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 423.65,
+            "confidence": 1
+          },
+          {
+            "Id": "sees_lucian",
+            "Literal": {
+              "Predicate": "visible",
+              "Args": [
+                "lucian"
+              ],
+              "Negative": false
+            },
+            "key": {
+              "Object": "lucian",
+              "Facet": "trace",
+              "Field": "in_view"
+            },
+            "evidence_ids": [
+              "life/fragment/shen/FieldKey { Object = lucian, Facet = trace, Field = in_view }/true/423.65"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 423.65,
+            "confidence": 1
+          },
+          {
+            "Id": "piano_lucian",
+            "Literal": {
+              "Predicate": "piano_gesture",
+              "Args": [
+                "lucian"
+              ],
+              "Negative": false
+            },
+            "key": {
+              "Object": "lucian",
+              "Facet": "trace",
+              "Field": "piano_gesture"
+            },
+            "evidence_ids": [
+              "life/fragment/shen/FieldKey { Object = lucian, Facet = trace, Field = piano_gesture }/true/423.65"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 423.65,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "lucian",
+        "Facet": "infer",
+        "Field": "audible_source"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    },
+    {
+      "receipt_index": 1081,
+      "kind": "inference",
+      "start_time": 505.0833333333333,
+      "recorded_time": 505.1166666666667,
+      "duration": 0,
+      "actor": "quer",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 227,
+      "evidence_id": "cognition/quer/possible_practice/505.0833333333333",
+      "source": {
+        "actor": "quer",
+        "rule": "cognition/possible_practice",
+        "label": "声响的一种解释：有人练习",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "possible_practice",
+          "Args": [],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p11",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "possible_practice",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "sound_practice_possibility",
+                "Parents": [
+                  "p0"
+                ],
+                "Substitution": {}
+              }
+            ],
+            "TheoryHash": "E87B8B6B216A6F7516E2271021F66B6D73F4A706C8F2F0D65ED9B734FD1E6514"
+          },
+          "Axioms": [
+            "hears_music"
+          ],
+          "Rules": [
+            "sound_practice_possibility"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "quer",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/quer/FieldKey { Object = quer, Facet = trace, Field = music_audible }/true/505.0833333333333"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 505.0833333333333,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "quer",
+        "Facet": "infer",
+        "Field": "possible_practice"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    },
+    {
+      "receipt_index": 1082,
+      "kind": "inference",
+      "start_time": 505.0833333333333,
+      "recorded_time": 505.1166666666667,
+      "duration": 0,
+      "actor": "quer",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 228,
+      "evidence_id": "cognition/quer/possible_company/505.0833333333333",
+      "source": {
+        "actor": "quer",
+        "rule": "cognition/possible_company",
+        "label": "声响的另一种解释：有人寻求陪伴",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "possible_company",
+          "Args": [],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p12",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "possible_company",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "sound_company_possibility",
+                "Parents": [
+                  "p0"
+                ],
+                "Substitution": {}
+              }
+            ],
+            "TheoryHash": "E87B8B6B216A6F7516E2271021F66B6D73F4A706C8F2F0D65ED9B734FD1E6514"
+          },
+          "Axioms": [
+            "hears_music"
+          ],
+          "Rules": [
+            "sound_company_possibility"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "quer",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/quer/FieldKey { Object = quer, Facet = trace, Field = music_audible }/true/505.0833333333333"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 505.0833333333333,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "quer",
+        "Facet": "infer",
+        "Field": "possible_company"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    },
+    {
+      "receipt_index": 1098,
+      "kind": "inference",
+      "start_time": 505.0833333333333,
+      "recorded_time": 505.1166666666667,
+      "duration": 0,
+      "actor": "quer",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 244,
+      "evidence_id": "cognition/quer/source_shen/505.0833333333333",
+      "source": {
+        "actor": "quer",
+        "rule": "cognition/source_shen",
+        "label": "shen是当前可归因的演奏声源",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "audible_source",
+          "Args": [
+            "shen"
+          ],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p8",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "visible",
+                  "Args": [
+                    "shen"
+                  ],
+                  "Negative": false
+                },
+                "Reference": "sees_shen",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p10",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "piano_gesture",
+                  "Args": [
+                    "shen"
+                  ],
+                  "Negative": false
+                },
+                "Reference": "piano_shen",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p13",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "audible_source",
+                  "Args": [
+                    "shen"
+                  ],
+                  "Negative": false
+                },
+                "Reference": "attribute_visible_performance",
+                "Parents": [
+                  "p8",
+                  "p10",
+                  "p0"
+                ],
+                "Substitution": {
+                  "?person": "shen"
+                }
+              }
+            ],
+            "TheoryHash": "E87B8B6B216A6F7516E2271021F66B6D73F4A706C8F2F0D65ED9B734FD1E6514"
+          },
+          "Axioms": [
+            "hears_music",
+            "sees_shen",
+            "piano_shen"
+          ],
+          "Rules": [
+            "attribute_visible_performance"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "quer",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/quer/FieldKey { Object = quer, Facet = trace, Field = music_audible }/true/505.0833333333333"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 505.0833333333333,
+            "confidence": 1
+          },
+          {
+            "Id": "sees_shen",
+            "Literal": {
+              "Predicate": "visible",
+              "Args": [
+                "shen"
+              ],
+              "Negative": false
+            },
+            "key": {
+              "Object": "shen",
+              "Facet": "trace",
+              "Field": "in_view"
+            },
+            "evidence_ids": [
+              "life/fragment/quer/FieldKey { Object = shen, Facet = trace, Field = in_view }/true/505.0833333333333"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 505.0833333333333,
+            "confidence": 1
+          },
+          {
+            "Id": "piano_shen",
+            "Literal": {
+              "Predicate": "piano_gesture",
+              "Args": [
+                "shen"
+              ],
+              "Negative": false
+            },
+            "key": {
+              "Object": "shen",
+              "Facet": "trace",
+              "Field": "piano_gesture"
+            },
+            "evidence_ids": [
+              "life/fragment/quer/FieldKey { Object = shen, Facet = trace, Field = piano_gesture }/true/505.0833333333333"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 505.0833333333333,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "shen",
+        "Facet": "infer",
+        "Field": "audible_source"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    },
+    {
+      "receipt_index": 1603,
+      "kind": "inference",
+      "start_time": 537.0833333333334,
+      "recorded_time": 537.1166666666667,
+      "duration": 0,
+      "actor": "lucian",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 386,
+      "evidence_id": "cognition/lucian/possible_practice/537.0833333333334",
+      "source": {
+        "actor": "lucian",
+        "rule": "cognition/possible_practice",
+        "label": "声响的一种解释：有人练习",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "possible_practice",
+          "Args": [],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p11",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "possible_practice",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "sound_practice_possibility",
+                "Parents": [
+                  "p0"
+                ],
+                "Substitution": {}
+              }
+            ],
+            "TheoryHash": "1AD34F07B6FFAA83AF0A1DE5A175F563049EE43AC564D0B10294E106C626DA00"
+          },
+          "Axioms": [
+            "hears_music"
+          ],
+          "Rules": [
+            "sound_practice_possibility"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "lucian",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/lucian/FieldKey { Object = lucian, Facet = trace, Field = music_audible }/true/536.8"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 536.8,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "lucian",
+        "Facet": "infer",
+        "Field": "possible_practice"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    },
+    {
+      "receipt_index": 1604,
+      "kind": "inference",
+      "start_time": 537.0833333333334,
+      "recorded_time": 537.1166666666667,
+      "duration": 0,
+      "actor": "lucian",
+      "action": "",
+      "label": "[推理更新] ",
+      "outcome": "completed",
+      "room": "house",
+      "actor_evidence_sequence": 387,
+      "evidence_id": "cognition/lucian/possible_company/537.0833333333334",
+      "source": {
+        "actor": "lucian",
+        "rule": "cognition/possible_company",
+        "label": "声响的另一种解释：有人寻求陪伴",
+        "scope": "subjective",
+        "query": {
+          "Predicate": "possible_company",
+          "Args": [],
+          "Negative": false
+        },
+        "status": "proved",
+        "support": {
+          "Certificate": {
+            "Scope": "subjective",
+            "Nodes": [
+              {
+                "Id": "p0",
+                "Kind": "axiom",
+                "Conclusion": {
+                  "Predicate": "music_audible",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "hears_music",
+                "Parents": [],
+                "Substitution": {}
+              },
+              {
+                "Id": "p12",
+                "Kind": "apply",
+                "Conclusion": {
+                  "Predicate": "possible_company",
+                  "Args": [],
+                  "Negative": false
+                },
+                "Reference": "sound_company_possibility",
+                "Parents": [
+                  "p0"
+                ],
+                "Substitution": {}
+              }
+            ],
+            "TheoryHash": "1AD34F07B6FFAA83AF0A1DE5A175F563049EE43AC564D0B10294E106C626DA00"
+          },
+          "Axioms": [
+            "hears_music"
+          ],
+          "Rules": [
+            "sound_company_possibility"
+          ]
+        },
+        "refutation": null,
+        "premises": [
+          {
+            "Id": "hears_music",
+            "Literal": {
+              "Predicate": "music_audible",
+              "Args": [],
+              "Negative": false
+            },
+            "key": {
+              "Object": "lucian",
+              "Facet": "trace",
+              "Field": "music_audible"
+            },
+            "evidence_ids": [
+              "life/fragment/lucian/FieldKey { Object = lucian, Facet = trace, Field = music_audible }/true/536.8"
+            ],
+            "origin": "subjective_evidence",
+            "observed_at": 536.8,
+            "confidence": 1
+          }
+        ]
+      },
+      "fact_ref": {
+        "Object": "lucian",
+        "Facet": "infer",
+        "Field": "possible_company"
+      },
+      "fact_value": "proved",
+      "confidence": 1,
+      "method": "inference"
+    }
+  ],
+  "decision_examples": [
+    {
+      "actor": "lucian",
+      "action": "lucian.life.request.complain.detective",
+      "time": 537.5666666666667,
+      "outcome": "completed",
+      "knowledge_basis": [
+        {
+          "key": {
+            "Object": "detective",
+            "Facet": "trace",
+            "Field": "in_view"
+          },
+          "fact": {
+            "Value": true,
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 533.8,
+            "Revision": 21
+          },
+          "sources": [
+            {
+              "id": "life/fragment/lucian/FieldKey { Object = detective, Facet = trace, Field = in_view }/true/533.8",
+              "time": 533.8,
+              "method": "observation",
+              "source": {
+                "actor": "lucian",
+                "channel": "visual_attention",
+                "fragment": {
+                  "Object": "detective",
+                  "Facet": "trace",
+                  "Field": "in_view"
+                },
+                "observed_at": 533.8
+              }
+            }
+          ]
+        },
+        {
+          "key": {
+            "Object": "detective",
+            "Facet": "infer",
+            "Field": "audible_source"
+          },
+          "fact": {
+            "Value": "proved",
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 537.0833333333334,
+            "Revision": 22
+          },
+          "sources": [
+            {
+              "id": "cognition/lucian/source_detective/537.0833333333334",
+              "time": 537.0833333333334,
+              "method": "inference",
+              "source": {
+                "actor": "lucian",
+                "rule": "cognition/source_detective",
+                "label": "detective是当前可归因的演奏声源",
+                "scope": "subjective",
+                "query": {
+                  "Predicate": "audible_source",
+                  "Args": [
+                    "detective"
+                  ],
+                  "Negative": false
+                },
+                "status": "proved",
+                "support": {
+                  "Certificate": {
+                    "Scope": "subjective",
+                    "Nodes": [
+                      {
+                        "Id": "p0",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "music_audible",
+                          "Args": [],
+                          "Negative": false
+                        },
+                        "Reference": "hears_music",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p1",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "visible",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "sees_detective",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p3",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "piano_gesture",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "piano_detective",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p13",
+                        "Kind": "apply",
+                        "Conclusion": {
+                          "Predicate": "audible_source",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "attribute_visible_performance",
+                        "Parents": [
+                          "p1",
+                          "p3",
+                          "p0"
+                        ],
+                        "Substitution": {
+                          "?person": "detective"
+                        }
+                      }
+                    ],
+                    "TheoryHash": "1AD34F07B6FFAA83AF0A1DE5A175F563049EE43AC564D0B10294E106C626DA00"
+                  },
+                  "Axioms": [
+                    "hears_music",
+                    "sees_detective",
+                    "piano_detective"
+                  ],
+                  "Rules": [
+                    "attribute_visible_performance"
+                  ]
+                },
+                "refutation": null,
+                "premises": [
+                  {
+                    "Id": "hears_music",
+                    "Literal": {
+                      "Predicate": "music_audible",
+                      "Args": [],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "lucian",
+                      "Facet": "trace",
+                      "Field": "music_audible"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/lucian/FieldKey { Object = lucian, Facet = trace, Field = music_audible }/true/536.8"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 536.8,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "sees_detective",
+                    "Literal": {
+                      "Predicate": "visible",
+                      "Args": [
+                        "detective"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "detective",
+                      "Facet": "trace",
+                      "Field": "in_view"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/lucian/FieldKey { Object = detective, Facet = trace, Field = in_view }/true/533.8"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 533.8,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "piano_detective",
+                    "Literal": {
+                      "Predicate": "piano_gesture",
+                      "Args": [
+                        "detective"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "detective",
+                      "Facet": "trace",
+                      "Field": "piano_gesture"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/lucian/FieldKey { Object = detective, Facet = trace, Field = piano_gesture }/true/536.8"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 536.8,
+                    "confidence": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "actor": "shen",
+      "action": "shen.life.request.complain.detective",
+      "time": 673.3833333333333,
+      "outcome": "standing_resource_busy",
+      "knowledge_basis": [
+        {
+          "key": {
+            "Object": "detective",
+            "Facet": "trace",
+            "Field": "in_view"
+          },
+          "fact": {
+            "Value": true,
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 665.9,
+            "Revision": 63
+          },
+          "sources": [
+            {
+              "id": "life/fragment/shen/FieldKey { Object = detective, Facet = trace, Field = in_view }/true/665.9",
+              "time": 665.9,
+              "method": "observation",
+              "source": {
+                "actor": "shen",
+                "channel": "visual_attention",
+                "fragment": {
+                  "Object": "detective",
+                  "Facet": "trace",
+                  "Field": "in_view"
+                },
+                "observed_at": 665.9
+              }
+            }
+          ]
+        },
+        {
+          "key": {
+            "Object": "detective",
+            "Facet": "infer",
+            "Field": "audible_source"
+          },
+          "fact": {
+            "Value": "proved",
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 665.9,
+            "Revision": 63
+          },
+          "sources": [
+            {
+              "id": "cognition/shen/source_detective/665.9",
+              "time": 665.9,
+              "method": "inference",
+              "source": {
+                "actor": "shen",
+                "rule": "cognition/source_detective",
+                "label": "detective是当前可归因的演奏声源",
+                "scope": "subjective",
+                "query": {
+                  "Predicate": "audible_source",
+                  "Args": [
+                    "detective"
+                  ],
+                  "Negative": false
+                },
+                "status": "proved",
+                "support": {
+                  "Certificate": {
+                    "Scope": "subjective",
+                    "Nodes": [
+                      {
+                        "Id": "p0",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "music_audible",
+                          "Args": [],
+                          "Negative": false
+                        },
+                        "Reference": "hears_music",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p1",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "visible",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "sees_detective",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p3",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "piano_gesture",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "piano_detective",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p15",
+                        "Kind": "apply",
+                        "Conclusion": {
+                          "Predicate": "audible_source",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "attribute_visible_performance",
+                        "Parents": [
+                          "p1",
+                          "p3",
+                          "p0"
+                        ],
+                        "Substitution": {
+                          "?person": "detective"
+                        }
+                      }
+                    ],
+                    "TheoryHash": "180D06EA535742D2FC087C0412E13C4EFEB292D2E6737A2FFBA3DE8819EA866B"
+                  },
+                  "Axioms": [
+                    "hears_music",
+                    "sees_detective",
+                    "piano_detective"
+                  ],
+                  "Rules": [
+                    "attribute_visible_performance"
+                  ]
+                },
+                "refutation": null,
+                "premises": [
+                  {
+                    "Id": "hears_music",
+                    "Literal": {
+                      "Predicate": "music_audible",
+                      "Args": [],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "shen",
+                      "Facet": "trace",
+                      "Field": "music_audible"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = shen, Facet = trace, Field = music_audible }/true/665.9"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 665.9,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "sees_detective",
+                    "Literal": {
+                      "Predicate": "visible",
+                      "Args": [
+                        "detective"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "detective",
+                      "Facet": "trace",
+                      "Field": "in_view"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = detective, Facet = trace, Field = in_view }/true/665.9"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 665.9,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "piano_detective",
+                    "Literal": {
+                      "Predicate": "piano_gesture",
+                      "Args": [
+                        "detective"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "detective",
+                      "Facet": "trace",
+                      "Field": "piano_gesture"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = detective, Facet = trace, Field = piano_gesture }/true/665.9"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 665.9,
+                    "confidence": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "actor": "shen",
+      "action": "shen.life.request.complain.detective",
+      "time": 679.3833333333333,
+      "outcome": "completed",
+      "knowledge_basis": [
+        {
+          "key": {
+            "Object": "detective",
+            "Facet": "trace",
+            "Field": "in_view"
+          },
+          "fact": {
+            "Value": true,
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 665.9,
+            "Revision": 63
+          },
+          "sources": [
+            {
+              "id": "life/fragment/shen/FieldKey { Object = detective, Facet = trace, Field = in_view }/true/665.9",
+              "time": 665.9,
+              "method": "observation",
+              "source": {
+                "actor": "shen",
+                "channel": "visual_attention",
+                "fragment": {
+                  "Object": "detective",
+                  "Facet": "trace",
+                  "Field": "in_view"
+                },
+                "observed_at": 665.9
+              }
+            }
+          ]
+        },
+        {
+          "key": {
+            "Object": "detective",
+            "Facet": "infer",
+            "Field": "audible_source"
+          },
+          "fact": {
+            "Value": "proved",
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 665.9,
+            "Revision": 63
+          },
+          "sources": [
+            {
+              "id": "cognition/shen/source_detective/665.9",
+              "time": 665.9,
+              "method": "inference",
+              "source": {
+                "actor": "shen",
+                "rule": "cognition/source_detective",
+                "label": "detective是当前可归因的演奏声源",
+                "scope": "subjective",
+                "query": {
+                  "Predicate": "audible_source",
+                  "Args": [
+                    "detective"
+                  ],
+                  "Negative": false
+                },
+                "status": "proved",
+                "support": {
+                  "Certificate": {
+                    "Scope": "subjective",
+                    "Nodes": [
+                      {
+                        "Id": "p0",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "music_audible",
+                          "Args": [],
+                          "Negative": false
+                        },
+                        "Reference": "hears_music",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p1",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "visible",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "sees_detective",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p3",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "piano_gesture",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "piano_detective",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p15",
+                        "Kind": "apply",
+                        "Conclusion": {
+                          "Predicate": "audible_source",
+                          "Args": [
+                            "detective"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "attribute_visible_performance",
+                        "Parents": [
+                          "p1",
+                          "p3",
+                          "p0"
+                        ],
+                        "Substitution": {
+                          "?person": "detective"
+                        }
+                      }
+                    ],
+                    "TheoryHash": "180D06EA535742D2FC087C0412E13C4EFEB292D2E6737A2FFBA3DE8819EA866B"
+                  },
+                  "Axioms": [
+                    "hears_music",
+                    "sees_detective",
+                    "piano_detective"
+                  ],
+                  "Rules": [
+                    "attribute_visible_performance"
+                  ]
+                },
+                "refutation": null,
+                "premises": [
+                  {
+                    "Id": "hears_music",
+                    "Literal": {
+                      "Predicate": "music_audible",
+                      "Args": [],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "shen",
+                      "Facet": "trace",
+                      "Field": "music_audible"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = shen, Facet = trace, Field = music_audible }/true/665.9"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 665.9,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "sees_detective",
+                    "Literal": {
+                      "Predicate": "visible",
+                      "Args": [
+                        "detective"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "detective",
+                      "Facet": "trace",
+                      "Field": "in_view"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = detective, Facet = trace, Field = in_view }/true/665.9"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 665.9,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "piano_detective",
+                    "Literal": {
+                      "Predicate": "piano_gesture",
+                      "Args": [
+                        "detective"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "detective",
+                      "Facet": "trace",
+                      "Field": "piano_gesture"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = detective, Facet = trace, Field = piano_gesture }/true/665.9"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 665.9,
+                    "confidence": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "actor": "quer",
+      "action": "quer.life.request.ask_share.shen",
+      "time": 826.0666666666667,
+      "outcome": "completed",
+      "knowledge_basis": [
+        {
+          "key": {
+            "Object": "shen",
+            "Facet": "trace",
+            "Field": "in_view"
+          },
+          "fact": {
+            "Value": true,
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 804.1333333333333,
+            "Revision": 66
+          },
+          "sources": [
+            {
+              "id": "life/fragment/quer/FieldKey { Object = shen, Facet = trace, Field = in_view }/true/804.1333333333333",
+              "time": 804.1333333333333,
+              "method": "observation",
+              "source": {
+                "actor": "quer",
+                "channel": "visual_attention",
+                "fragment": {
+                  "Object": "shen",
+                  "Facet": "trace",
+                  "Field": "in_view"
+                },
+                "observed_at": 804.1333333333333
+              }
+            }
+          ]
+        },
+        {
+          "key": {
+            "Object": "shen",
+            "Facet": "infer",
+            "Field": "can_request_food"
+          },
+          "fact": {
+            "Value": "proved",
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 822.65,
+            "Revision": 70
+          },
+          "sources": [
+            {
+              "id": "cognition/quer/ask_shen/822.65",
+              "time": 822.65,
+              "method": "inference",
+              "source": {
+                "actor": "quer",
+                "rule": "cognition/ask_shen",
+                "label": "可尝试向shen请求口粮",
+                "scope": "subjective",
+                "query": {
+                  "Predicate": "can_request_food",
+                  "Args": [
+                    "shen"
+                  ],
+                  "Negative": false
+                },
+                "status": "proved",
+                "support": {
+                  "Certificate": {
+                    "Scope": "subjective",
+                    "Nodes": [
+                      {
+                        "Id": "p10",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "visible",
+                          "Args": [
+                            "shen"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "sees_shen",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p11",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "holding_food",
+                          "Args": [
+                            "shen"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "food_shen",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p15",
+                        "Kind": "apply",
+                        "Conclusion": {
+                          "Predicate": "can_request_food",
+                          "Args": [
+                            "shen"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "visible_food_request",
+                        "Parents": [
+                          "p10",
+                          "p11"
+                        ],
+                        "Substitution": {
+                          "?person": "shen"
+                        }
+                      }
+                    ],
+                    "TheoryHash": "BFC8BC1EFBF222FCE2888D2D3F4246FCF4606B2AEA2E1C64CD2EE38430C6A126"
+                  },
+                  "Axioms": [
+                    "sees_shen",
+                    "food_shen"
+                  ],
+                  "Rules": [
+                    "visible_food_request"
+                  ]
+                },
+                "refutation": null,
+                "premises": [
+                  {
+                    "Id": "sees_shen",
+                    "Literal": {
+                      "Predicate": "visible",
+                      "Args": [
+                        "shen"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "shen",
+                      "Facet": "trace",
+                      "Field": "in_view"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/quer/FieldKey { Object = shen, Facet = trace, Field = in_view }/true/804.1333333333333"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 804.1333333333333,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "food_shen",
+                    "Literal": {
+                      "Predicate": "holding_food",
+                      "Args": [
+                        "shen"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "shen",
+                      "Facet": "trace",
+                      "Field": "holding_food"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/quer/FieldKey { Object = shen, Facet = trace, Field = holding_food }/true/822.65"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 822.65,
+                    "confidence": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "actor": "quer",
+      "action": "quer.life.request.complain.ruan",
+      "time": 829.5666666666667,
+      "outcome": "completed",
+      "knowledge_basis": [
+        {
+          "key": {
+            "Object": "ruan",
+            "Facet": "trace",
+            "Field": "in_view"
+          },
+          "fact": {
+            "Value": true,
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 814.6166666666667,
+            "Revision": 69
+          },
+          "sources": [
+            {
+              "id": "life/fragment/quer/FieldKey { Object = ruan, Facet = trace, Field = in_view }/true/814.6166666666667",
+              "time": 814.6166666666667,
+              "method": "observation",
+              "source": {
+                "actor": "quer",
+                "channel": "visual_attention",
+                "fragment": {
+                  "Object": "ruan",
+                  "Facet": "trace",
+                  "Field": "in_view"
+                },
+                "observed_at": 814.6166666666667
+              }
+            }
+          ]
+        },
+        {
+          "key": {
+            "Object": "ruan",
+            "Facet": "infer",
+            "Field": "audible_source"
+          },
+          "fact": {
+            "Value": "proved",
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 829.0666666666667,
+            "Revision": 72
+          },
+          "sources": [
+            {
+              "id": "cognition/quer/source_ruan/829.0666666666667",
+              "time": 829.0666666666667,
+              "method": "inference",
+              "source": {
+                "actor": "quer",
+                "rule": "cognition/source_ruan",
+                "label": "ruan是当前可归因的演奏声源",
+                "scope": "subjective",
+                "query": {
+                  "Predicate": "audible_source",
+                  "Args": [
+                    "ruan"
+                  ],
+                  "Negative": false
+                },
+                "status": "proved",
+                "support": {
+                  "Certificate": {
+                    "Scope": "subjective",
+                    "Nodes": [
+                      {
+                        "Id": "p0",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "music_audible",
+                          "Args": [],
+                          "Negative": false
+                        },
+                        "Reference": "hears_music",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p7",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "visible",
+                          "Args": [
+                            "ruan"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "sees_ruan",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p9",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "piano_gesture",
+                          "Args": [
+                            "ruan"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "piano_ruan",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p15",
+                        "Kind": "apply",
+                        "Conclusion": {
+                          "Predicate": "audible_source",
+                          "Args": [
+                            "ruan"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "attribute_visible_performance",
+                        "Parents": [
+                          "p7",
+                          "p9",
+                          "p0"
+                        ],
+                        "Substitution": {
+                          "?person": "ruan"
+                        }
+                      }
+                    ],
+                    "TheoryHash": "FFF5ADC64614BF2A1C21F1D45C2B9DFD4806032BFEF2493027A767DBA819147E"
+                  },
+                  "Axioms": [
+                    "hears_music",
+                    "sees_ruan",
+                    "piano_ruan"
+                  ],
+                  "Rules": [
+                    "attribute_visible_performance"
+                  ]
+                },
+                "refutation": null,
+                "premises": [
+                  {
+                    "Id": "hears_music",
+                    "Literal": {
+                      "Predicate": "music_audible",
+                      "Args": [],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "quer",
+                      "Facet": "trace",
+                      "Field": "music_audible"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/quer/FieldKey { Object = quer, Facet = trace, Field = music_audible }/true/827.6166666666667"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 827.6166666666667,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "sees_ruan",
+                    "Literal": {
+                      "Predicate": "visible",
+                      "Args": [
+                        "ruan"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "ruan",
+                      "Facet": "trace",
+                      "Field": "in_view"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/quer/FieldKey { Object = ruan, Facet = trace, Field = in_view }/true/814.6166666666667"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 814.6166666666667,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "piano_ruan",
+                    "Literal": {
+                      "Predicate": "piano_gesture",
+                      "Args": [
+                        "ruan"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "ruan",
+                      "Facet": "trace",
+                      "Field": "piano_gesture"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/quer/FieldKey { Object = ruan, Facet = trace, Field = piano_gesture }/true/827.6166666666667"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 827.6166666666667,
+                    "confidence": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "actor": "shen",
+      "action": "shen.life.request.complain.ruan",
+      "time": 846.6333333333333,
+      "outcome": "completed",
+      "knowledge_basis": [
+        {
+          "key": {
+            "Object": "ruan",
+            "Facet": "trace",
+            "Field": "in_view"
+          },
+          "fact": {
+            "Value": true,
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 814.6166666666667,
+            "Revision": 93
+          },
+          "sources": [
+            {
+              "id": "life/fragment/shen/FieldKey { Object = ruan, Facet = trace, Field = in_view }/true/814.6166666666667",
+              "time": 814.6166666666667,
+              "method": "observation",
+              "source": {
+                "actor": "shen",
+                "channel": "visual_attention",
+                "fragment": {
+                  "Object": "ruan",
+                  "Facet": "trace",
+                  "Field": "in_view"
+                },
+                "observed_at": 814.6166666666667
+              }
+            }
+          ]
+        },
+        {
+          "key": {
+            "Object": "ruan",
+            "Facet": "infer",
+            "Field": "audible_source"
+          },
+          "fact": {
+            "Value": "proved",
+            "Known": true,
+            "Conflicted": false,
+            "Confidence": 1,
+            "ObservedAt": 841.15,
+            "Revision": 97
+          },
+          "sources": [
+            {
+              "id": "cognition/shen/source_ruan/841.15",
+              "time": 841.15,
+              "method": "inference",
+              "source": {
+                "actor": "shen",
+                "rule": "cognition/source_ruan",
+                "label": "ruan是当前可归因的演奏声源",
+                "scope": "subjective",
+                "query": {
+                  "Predicate": "audible_source",
+                  "Args": [
+                    "ruan"
+                  ],
+                  "Negative": false
+                },
+                "status": "proved",
+                "support": {
+                  "Certificate": {
+                    "Scope": "subjective",
+                    "Nodes": [
+                      {
+                        "Id": "p0",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "music_audible",
+                          "Args": [],
+                          "Negative": false
+                        },
+                        "Reference": "hears_music",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p10",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "visible",
+                          "Args": [
+                            "ruan"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "sees_ruan",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p12",
+                        "Kind": "axiom",
+                        "Conclusion": {
+                          "Predicate": "piano_gesture",
+                          "Args": [
+                            "ruan"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "piano_ruan",
+                        "Parents": [],
+                        "Substitution": {}
+                      },
+                      {
+                        "Id": "p15",
+                        "Kind": "apply",
+                        "Conclusion": {
+                          "Predicate": "audible_source",
+                          "Args": [
+                            "ruan"
+                          ],
+                          "Negative": false
+                        },
+                        "Reference": "attribute_visible_performance",
+                        "Parents": [
+                          "p10",
+                          "p12",
+                          "p0"
+                        ],
+                        "Substitution": {
+                          "?person": "ruan"
+                        }
+                      }
+                    ],
+                    "TheoryHash": "C35F187829C16FC1CECEC37117DB9A07DB297427C8B65554A24C1C26A9A81E61"
+                  },
+                  "Axioms": [
+                    "hears_music",
+                    "sees_ruan",
+                    "piano_ruan"
+                  ],
+                  "Rules": [
+                    "attribute_visible_performance"
+                  ]
+                },
+                "refutation": null,
+                "premises": [
+                  {
+                    "Id": "hears_music",
+                    "Literal": {
+                      "Predicate": "music_audible",
+                      "Args": [],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "shen",
+                      "Facet": "trace",
+                      "Field": "music_audible"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = shen, Facet = trace, Field = music_audible }/true/827.6166666666667"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 827.6166666666667,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "sees_ruan",
+                    "Literal": {
+                      "Predicate": "visible",
+                      "Args": [
+                        "ruan"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "ruan",
+                      "Facet": "trace",
+                      "Field": "in_view"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = ruan, Facet = trace, Field = in_view }/true/814.6166666666667"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 814.6166666666667,
+                    "confidence": 1
+                  },
+                  {
+                    "Id": "piano_ruan",
+                    "Literal": {
+                      "Predicate": "piano_gesture",
+                      "Args": [
+                        "ruan"
+                      ],
+                      "Negative": false
+                    },
+                    "key": {
+                      "Object": "ruan",
+                      "Facet": "trace",
+                      "Field": "piano_gesture"
+                    },
+                    "evidence_ids": [
+                      "life/fragment/shen/FieldKey { Object = ruan, Facet = trace, Field = piano_gesture }/true/827.6166666666667"
+                    ],
+                    "origin": "subjective_evidence",
+                    "observed_at": 827.6166666666667,
+                    "confidence": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "completed_inspections": 48,
+  "inventory_errors": [],
+  "final_inventory": {
+    "supplied": 97,
+    "consumed": 91,
+    "stock": 6,
+    "carried": 0
+  },
+  "raw_files": {
+    "actions.yaml": {
+      "bytes": 74968351,
+      "sha256": "162279c12a98c0b5b220ee816842420af22698ab228663ff5bd70bd006671647"
+    },
+    "actions.states.yaml": {
+      "bytes": 27696457,
+      "sha256": "1905a2bcde68e8c30e8fbecd348f79e61043f23aadbd04c306d7d0ec954fbab0"
+    }
+  }
+}

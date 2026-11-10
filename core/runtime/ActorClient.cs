@@ -15,7 +15,7 @@ public sealed record RefreshWorkState(RefreshCause Cause,Observation[] Remaining
     Dictionary<string,JsonElement> Map,Evidence[] Evidence,string[] Queue,InferenceConclusionCheckpoint[] Conclusions);
 public sealed record ActorClientState(string Actor,FactStoreState Knowledge,Evidence[] Evidence,Observation[] Inbox,
     Dictionary<string,JsonElement> RememberedMap,FieldKey[] ExplicitFocus,FieldKey[] ActionFocus,string? ObservationToken,
-    long NextObservation,long MapRevision,long ReceivedCount,long IgnoredCount,long RefreshCount,long InferenceEvaluations,RefreshWorkState? Refresh);
+    long NextObservation,long MapRevision,long ReceivedCount,long IgnoredCount,long RefreshCount,long InferenceEvaluations,RefreshWorkState? Refresh,Observation[]? SensoryFrontier=null);
 
 /// <summary>
 /// An actor owns a persistent subjective replica. Reception only runs an inexpensive
@@ -30,6 +30,7 @@ public sealed class ActorClient
     private Dictionary<FieldKey, List<Observation>> inbox = [];
     private HashSet<(string, FieldKey)> pendingIds = [];
     private readonly List<Evidence> evidence = [];
+    private readonly Dictionary<FieldKey,Observation> sensoryFrontier=[];
     private readonly Dictionary<string, JsonElement> rememberedMap = new(StringComparer.Ordinal);
     private readonly HashSet<FieldKey> explicitFocus = [];
     private readonly HashSet<FieldKey> actionFocus = [];
@@ -41,6 +42,7 @@ public sealed class ActorClient
     private string? observationToken;
     private long nextObservation;
     private readonly SingleStepPolicy singleStep;
+    private readonly ActorCognition? cognition;
     public string Id { get; }
     public long KnowledgeRevision => knowledge.Revision;
     public long MapRevision { get; private set; }
@@ -86,6 +88,7 @@ public sealed class ActorClient
         }
         RebuildGoalFocus();
         singleStep = new(this);
+        if(declaration.Get("cognition").ValueKind==JsonValueKind.Object)cognition=new(Id,declaration.Get("cognition"));
     }
 
     public Fact? Recall(FieldKey key) => knowledge.Read(key);
@@ -102,7 +105,7 @@ public sealed class ActorClient
         }
         return new(Id,knowledge.SaveState(),evidence.ToArray(),inbox.Values.SelectMany(items=>items).ToArray(),
             new(rememberedMap,StringComparer.Ordinal),explicitFocus.ToArray(),actionFocus.ToArray(),observationToken,nextObservation,
-            MapRevision,ReceivedCount,IgnoredCount,RefreshCount,InferenceEvaluations,pending);
+            MapRevision,ReceivedCount,IgnoredCount,RefreshCount,InferenceEvaluations,pending,sensoryFrontier.Values.ToArray());
     }
     public void RestoreState(ActorClientState state)
     {
@@ -120,6 +123,10 @@ public sealed class ActorClient
             if(item is null || string.IsNullOrWhiteSpace(item.Id) || !ValidKey(item.Key) || item.Value.ValueKind==JsonValueKind.Undefined || item.Source.ValueKind==JsonValueKind.Undefined ||
                !seen.Add((item.Id,item.Key)) || !double.IsFinite(item.Confidence) || item.Confidence is <0 or >1 || !double.IsFinite(item.Time) || item.Time<0)
                 throw new InvalidDataException("Invalid buffered observation in checkpoint.");
+        if(state.SensoryFrontier is {} frontier&&(frontier.Any(item=>item is null)||frontier.Select(item=>item.Key).Distinct().Count()!=frontier.Length||
+            frontier.Any(item=>!ValidKey(item.Key)||item.Value.ValueKind==JsonValueKind.Undefined||item.Source.ValueKind==JsonValueKind.Undefined||
+                item.Origin!=InformationOrigin.Passive||!double.IsFinite(item.Time)||item.Time<0||!double.IsFinite(item.Confidence)||item.Confidence is <0 or >1)))
+            throw new InvalidDataException("Invalid sensory frontier checkpoint.");
         if(state.RememberedMap.Any(item=>string.IsNullOrWhiteSpace(item.Key)||item.Value.ValueKind==JsonValueKind.Undefined) ||
            state.ExplicitFocus.Any(key=>!ValidKey(key)) || state.ActionFocus.Any(key=>!ValidKey(key)))throw new InvalidDataException("Invalid remembered map or focus in actor checkpoint.");
         if(state.Refresh is { } staged && (staged.Remaining is null || staged.Writes is null || staged.Map is null || staged.Evidence is null || staged.Queue is null || staged.Conclusions is null ||
@@ -130,6 +137,7 @@ public sealed class ActorClient
             throw new InvalidDataException("Invalid cognitive work checkpoint.");
         knowledge.RestoreState(state.Knowledge);
         evidence.Clear();evidence.AddRange(state.Evidence);
+        sensoryFrontier.Clear();foreach(var sample in state.SensoryFrontier??[])sensoryFrontier.Add(sample.Key,sample);
         inbox.Clear();pendingIds.Clear();
         foreach(var item in state.Inbox)
         {
@@ -140,6 +148,7 @@ public sealed class ActorClient
         explicitFocus.Clear();explicitFocus.UnionWith(state.ExplicitFocus);actionFocus.Clear();actionFocus.UnionWith(state.ActionFocus);
         observationToken=state.ObservationToken;nextObservation=state.NextObservation;MapRevision=state.MapRevision;
         ReceivedCount=state.ReceivedCount;IgnoredCount=state.IgnoredCount;RefreshCount=state.RefreshCount;InferenceEvaluations=state.InferenceEvaluations;
+        refresh?.Cognition?.Dispose();
         refresh=null;
         if(state.Refresh is { } saved)
         {
@@ -207,6 +216,14 @@ public sealed class ActorClient
         if (!inbox.TryGetValue(information.Key, out var entries)) inbox.Add(information.Key, entries = []);
         entries.Add(information);
         return true;
+    }
+
+    internal void ReceiveFragment(Observation sample)
+    {
+        if(sample.Origin!=InformationOrigin.Passive)throw new InvalidDataException("Sensory fragments must be passive observations.");
+        if(sensoryFrontier.TryGetValue(sample.Key,out var previous)&&Values.Same(previous.Value,sample.Value)&&previous.Confidence==sample.Confidence)return;
+        sensoryFrontier[sample.Key]=sample;
+        ReceiveSalient(sample);
     }
 
     private bool IsImportant(Observation item)
@@ -339,7 +356,19 @@ public sealed class ActorClient
             }
         }
         if (work.Queue.Count > 0) return false;
-        var changes = knowledge.Apply(work.Writes);
+        if(cognition is not null&&cognition.NeedsRefresh(work.Writes,knowledge.Read))
+        {
+            work.Cognition??=cognition.Begin(Read,evidence.Concat(work.Evidence));
+            if(!work.Cognition.Advance(ruleBudget))return false;
+            var time=work.Evidence.Select(item=>item.Time).DefaultIfEmpty().Max();
+            foreach(var result in work.Cognition.Results(time))
+            {
+                work.Writes[result.Key]=result.Fact;
+                work.Evidence.Add(result.Evidence);
+            }
+            work.Cognition.Dispose();
+        }
+        var changes = knowledge.Apply(work.Writes,true);
         evidence.AddRange(work.Evidence);
         var mapChanged = false;
         foreach (var (key, value) in work.Map)
@@ -367,5 +396,6 @@ public sealed class ActorClient
         internal Queue<string> Queue { get; } = [];
         internal HashSet<string> Queued { get; } = [];
         internal HashSet<(string, FieldKey)> Conclusions { get; } = [];
+        internal ActorCognition.Work? Cognition;
     }
 }

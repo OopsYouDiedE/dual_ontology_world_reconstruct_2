@@ -1,0 +1,57 @@
+{
+  "tool": "on",
+  "is_error": false,
+  "data": {
+    "controls": [
+      {
+        "height": 39.0,
+        "text": "五人生活推演 · Reconstruct 2",
+        "width": 420.0,
+        "x": 510.0,
+        "y": 350.0
+      },
+      {
+        "height": 31.0,
+        "text": "开始生活新局",
+        "width": 420.0,
+        "x": 510.0,
+        "y": 393.0
+      },
+      {
+        "height": 31.0,
+        "text": "打开建筑设计工具",
+        "width": 420.0,
+        "x": 510.0,
+        "y": 428.0
+      },
+      {
+        "height": 23.0,
+        "text": "侦探 · 雀儿 · 卢西安 · 阮清月 · 沈鼐",
+        "width": 420.0,
+        "x": 510.0,
+        "y": 463.0
+      }
+    ],
+    "faulted": false,
+    "host_errors": [],
+    "scene": "res://scenes/main/Main.tscn",
+    "started": false,
+    "state": {
+      "active": true,
+      "campaign_completed": false
+    },
+    "ui": {
+      "paused": false,
+      "speed": 20.0,
+      "status": ""
+    },
+    "session_id": "26a8cb0bd830bbd2",
+    "mode": "godot_manual"
+  },
+  "text": [
+    "{\"controls\": [{\"height\": 39.0, \"text\": \"五人生活推演 · Reconstruct 2\", \"width\": 420.0, \"x\": 510.0, \"y\": 350.0}, {\"height\": 31.0, \"text\": \"开始生活新局\", \"width\": 420.0, \"x\": 510.0, \"y\": 393.0}, {\"height\": 31.0, \"text\": \"打开建筑设计工具\", \"width\": 420.0, \"x\": 510.0, \"y\": 428.0}, {\"height\": 23.0, \"text\": \"侦探 · 雀儿 · 卢西安 · 阮清月 · 沈鼐\", \"width\": 420.0, \"x\": 510.0, \"y\": 463.0}], \"faulted\": false, \"host_errors\": [], \"scene\": \"res://scenes/main/Main.tscn\", \"started\": false, \"state\": {\"active\": true, \"campaign_completed\": false}, \"ui\": {\"paused\": false, \"speed\": 20.0, \"status\": \"\"}, \"session_id\": \"26a8cb0bd830bbd2\", \"mode\": \"godot_manual\"}"
+  ],
+  "images": [
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\input-client\\4d1c50594aff3a80\\000012-0.png"
+  ]
+}

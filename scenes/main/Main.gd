@@ -338,6 +338,11 @@ func _refresh() -> void:
 		text += str(actor.purpose) + "\n\n"
 		for need in actor.needs: text += "%s: %.0f\n" % [str(rules.needs[need].label), float(actor.needs[need])]
 		text += "口粮 %s · 证据 %s\n" % [actor.food, actor.evidence_count]
+		text += "\n人物主观认知（观察片段与推论）\n"
+		var cognition: Dictionary = actor.get("cognition", {})
+		var status_labels := {"proved":"有依据", "refuted":"有反证", "conflicted":"证据冲突", "unknown":"未知", "pending":"整理中"}
+		for query in cognition.get("queries", []):
+			text += "%s：%s\n" % [query.label, status_labels.get(query.status, query.status)]
 		if refresh_choices:
 			for choice in actor.choices:
 				choice_pick.add_item(choice.label)

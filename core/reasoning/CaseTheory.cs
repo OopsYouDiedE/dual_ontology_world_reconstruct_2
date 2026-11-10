@@ -123,6 +123,13 @@ public sealed class CaseTheory
         if (!CaseProofChecker.ValidLiteral(goal, true)) throw new ArgumentException("Goal must be a well-formed ground literal", nameof(goal));
         goal = goal with { Args = System.Array.AsReadOnly(goal.Args.ToArray()) };
         var closure = Infer(scope, maxNodes, maxMatches);
+        return ClassifyProof(scope, goal, closure);
+    }
+
+    public CaseGoalResult ClassifyProof(string scope, CaseLiteral goal, CaseProof closure)
+    {
+        if (!CaseProofChecker.ValidLiteral(goal, true)) throw new ArgumentException("Goal must be a well-formed ground literal", nameof(goal));
+        if (closure.Scope != scope || closure.TheoryHash != Fingerprint(Scopes[scope])) throw new ArgumentException("Proof belongs to another theory", nameof(closure));
         var support = Slice(Scopes[scope], closure, goal);
         var refutation = Slice(Scopes[scope], closure, goal.Opposite);
         var status = support is not null && refutation is not null ? "conflicted" : support is not null ? "proved" : refutation is not null ? "refuted" : "unknown";

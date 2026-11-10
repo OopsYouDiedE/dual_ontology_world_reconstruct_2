@@ -80,6 +80,7 @@ public partial class LifeBridge : Node
     }
     public void Place(string actor,double positionX,double positionY,double positionZ,double yaw)=>session?.ReportPlacement(actor,positionX,positionY,positionZ,yaw,"house");
     public string Observe()=>Encode(SnapshotValue());
+    public string InspectCognition(string actor)=>Encode(session?.CognitionAudit(actor,true));
     public string Navigation()=>Encode(decisions.Values.Where(decision=>session?.Activity(decision.Actor)?.Phase=="approaching")
         .Select(decision=>new {execution=decision.Execution,actor=decision.Actor,meta=decision.Action.Declaration.GetProperty("life"),label=Label(decision.Action.Declaration)}));
     private object SnapshotValue()
@@ -93,7 +94,7 @@ public partial class LifeBridge : Node
                 return new {id,name=profile.GetProperty("name").GetString(),needs=session.Needs(id),placement=session.Placement(id),activity,
                     food=session.World.Read(new(id,"state","food"))?.Value,book=session.World.Read(new(id,"state","book"))?.Value,
                     purpose=session.View(id).Knowledge.GetValueOrDefault(new(id,"doc","personal_purpose"))?.Value,
-                    evidence_count=session.EvidenceCount(id),choices=definition.Declaration.GetProperty("actors").EnumerateArray().First(actor=>actor.GetProperty("id").GetString()==id).GetProperty("actions").EnumerateArray()
+                    evidence_count=session.EvidenceCount(id),cognition=session.CognitionAudit(id),choices=definition.Declaration.GetProperty("actors").EnumerateArray().First(actor=>actor.GetProperty("id").GetString()==id).GetProperty("actions").EnumerateArray()
                         .Where(action=>session.Available(id,action.GetProperty("id").GetString()!)).Select(action=>new {id=action.GetProperty("id").GetString(),label=Label(action)}).ToArray()};
             }).ToArray(),
             objects=life.GetProperty("objects").EnumerateArray().Select(item=>new {id=item.GetProperty("id").GetString(),lamp=session.World.Read(new(item.GetProperty("id").GetString()!,"state","lamp"))?.Value}).ToArray(),

@@ -21,6 +21,7 @@ public static class LifeScenario
     {
         if(manifest.Get("life_source").Text().Length==0)return manifest;
         var rules=Read(manifest.Get("life_source").Text(),"runtime.life",read);
+        var cognition=Read(rules.Get("cognition_source").Text(),"runtime.life_cognition",read);
         var building=Read(manifest.Get("building_source").Text(),"life.building",read);
         var roots=building.Get("layers").Items().Where(layer=>layer.Get("roomFaces").Items().Any()).ToArray();
         if(roots.Length==0)throw new InvalidDataException("生活建筑缺少封闭房间。");
@@ -30,6 +31,7 @@ public static class LifeScenario
         if(props.Select(prop=>prop.Get("id").Text()).Distinct().Count()!=props.Length)throw new InvalidDataException("生活建筑家具 ID 重复。");
         var life=JsonNode.Parse(rules.GetRawText())!.AsObject();
         life["building"]=Copy(building);life["layer_y"]=height;
+        life["senses"]=Copy(cognition.Get("senses"));
         life["rooms"]=new JsonArray(rooms.Select(Copy).ToArray());
         var objects=new JsonArray();var facts=new JsonObject();var slots=new JsonArray();
         var root=JsonNode.Parse(manifest.GetRawText())!.AsObject();
@@ -111,7 +113,7 @@ public static class LifeScenario
                     life=new {action=definition.Name,obj=objectId,slot},motor=new {posture=action.Get("pose").Text(),animation=definition.Name,target=new[]{item["x"]!.GetValue<double>(),height,item["z"]!.GetValue<double>()}}});
                 spec["when"]=when;spec["requires"]=All(requires.Select(value=>value!).ToArray());
                 spec["writes"]=writes;spec["increments"]=increments;
-                spec["observes"]=new JsonArray(new[]{id+".zone",id+".food",id+".book",objectId+".stock",objectId+".lamp"}.Select(value=>(JsonNode)JsonValue.Create(value)!).ToArray());
+                spec["observes"]=new JsonArray(new[]{id+".zone",id+".food",id+".book"}.Concat(action.Get("reveals").Items().Select(field=>objectId+"."+field.Text())).Select(value=>(JsonNode)JsonValue.Create(value)!).ToArray());
                 spec["reserve"]=new JsonArray("life.slot."+objectId+"."+slot);
                 spec["completed_need_effects"]=effects;spec["perceived_need_effects"]=predicted;
                 var below=Copy(action.Get("when")) as JsonObject??new();
@@ -128,11 +130,16 @@ public static class LifeScenario
                     life=new {action=fulfil?"fulfil":"request",target=other,category=category.Name},
                     perceived_need_effects=category.Value.Get("need"),completed_need_effects=new {},motor=new {posture="stand",animation="talk"}});
                 var predicted=spec["perceived_need_effects"]!.AsObject();
+                var cognitionGate=new JsonObject{[other+".trace.in_view"]=true};
+                var cognitiveField=cognition.Get("social_requirements").Get(category.Name).Text();
+                if(!fulfil&&cognitiveField.Length>0)cognitionGate[other+".infer."+cognitiveField]="proved";
+                spec["because"]=cognitionGate;
                 foreach(var gain in profile.Get("social_motives").Get(category.Name).Fields())predicted[gain.Name]=gain.Value.Number();
                 spec["reserve"]=new JsonArray("life.social."+id,"life.social."+other);
                 actions.Add(spec);
             }
             actors.Add(new JsonObject{["id"]=id,["label"]=profile.Get("name").Text(),["autonomous"]=true,["knows"]=knows,["actions"]=actions,
+                ["cognition"]=LifeCognitionScenario.Expand(cognition,id,actorIds),
                 ["autonomy"]=new JsonObject{["commodity_needs"]=needs,["need_decay_per_second"]=decay,["autonomy_weights"]=weights,["score_scale"]=1,["time_cost"]=0.0005},
                 ["policy"]=new JsonObject{["goals"]=new JsonArray()}});
         }
@@ -144,6 +151,7 @@ public static class LifeScenario
             facts[pair+".day"]=-1;facts[pair+".up"]=new JsonObject();facts[pair+".down"]=new JsonObject();facts[pair+".habit"]=new JsonObject();facts[pair+".stage"]="生疏";
         }
         root["actors"]=actors;root.Remove("life_source");root.Remove("building_source");
+        LifeCognitionScenario.Acceptance(root,cognition,actorIds);
         return JsonSerializer.SerializeToElement(root);
     }
     internal static int Zone(JsonElement[] rooms,double positionX,double positionZ)

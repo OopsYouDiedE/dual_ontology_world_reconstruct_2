@@ -1,6 +1,7 @@
 schema "dv-script-v1";
 data runtime.life { value = {
   "_comment": "C# Core 权威生活规则；速率单位为每内容分钟。人格保持中性，生活偏好是显式适配；个人目的、职业记忆及动机初值引用正式 daily-life.dv。",
+  "cognition_source":"res://assets/data/life_simulation/cognition.dv",
   "time": {
     "start_minute": 420,
     "minutes_per_second": 0.5,
@@ -100,6 +101,7 @@ data runtime.life { value = {
     "queue_wait_limit": 25
   },
   "actions": {
+    "inspect_pantry":{"label":"打开储物柜查看口粮","kinds":["cabinet"],"pose":"stand","dur":[2,2],"fx":{"curiosity":2},"reveals":["stock"],"cooldown":60},
     "join_seat": {"label":"履行座位约定", "kinds":["sofa","bench","chair"], "pose":"sit", "dur":[40,40], "fx":{}, "chain_gain":{"social":40,"comfort":40,"purpose":10}, "commitment_only":true},
     "sleep": {
       "label": "睡觉",
@@ -180,6 +182,7 @@ data runtime.life { value = {
       "importance": 0.15
     },
     "prepare_meal": {
+      "reveals":["stock"],
       "label": "准备餐食",
       "kinds": [
         "cabinet"

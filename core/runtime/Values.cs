@@ -129,14 +129,14 @@ public sealed class FactStore
                         cell.Get("conflicted").Flag(), cell.Get("confidence").Number(), cell.Get("time").Number(), 0));
                 }
     }
-    internal IReadOnlyList<FieldChange> Apply(IReadOnlyDictionary<FieldKey, Fact> writes)
+    internal IReadOnlyList<FieldChange> Apply(IReadOnlyDictionary<FieldKey, Fact> writes,bool trackObservationTime=false)
     {
         var changes = new List<FieldChange>();
         foreach (var (key, value) in writes)
         {
             var before = Read(key);
             if (before is not null && before.Known == value.Known && before.Conflicted == value.Conflicted &&
-                before.Confidence == value.Confidence && Values.Same(before.Value, value.Value)) continue;
+                before.Confidence == value.Confidence && Values.Same(before.Value, value.Value)&&(!trackObservationTime||before.ObservedAt==value.ObservedAt)) continue;
             changes.Add(new(key, before, value with { Revision = Revision + 1 }));
         }
         if (changes.Count == 0) return changes;

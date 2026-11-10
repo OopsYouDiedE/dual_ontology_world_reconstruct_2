@@ -33,7 +33,7 @@ public sealed partial class RuntimeSession
     private void LifeObserve(string actor,FieldKey key)
     {
         var client=actors[actor];var fact=World.Read(key);
-        if(fact is not {Known:true,Conflicted:false}||client.Recall(key) is { } old&&Values.Same(old.Value,fact.Value))return;
+        if(fact is not {Known:true,Conflicted:false}||client.Recall(key) is {Known:true,Conflicted:false} old&&Values.Same(old.Value,fact.Value))return;
         client.ReceiveSalient(new("life/"+actor+"/"+key+"/"+fact.Revision,key,fact.Value,fact.Confidence,ContentTime,InformationOrigin.Passive,
             JsonSerializer.SerializeToElement(new {actor,channel="life_sense",physical_field=key,world_revision=fact.Revision})));
     }
@@ -85,14 +85,7 @@ public sealed partial class RuntimeSession
         AdvanceLifeSeating();
         foreach(var actor in actors.Keys)
         {
-            foreach(var field in new[]{"zone","food","book","noise_until","quiet_until","seat_plan"})LifeObserve(actor,PathKey(actor+"."+field));
-            var zone=LifeNumber(actor+".zone");
-            foreach(var item in lifeDefinition.Get("objects").Items().Where(item=>item.Get("zone").Number()==zone))
-                foreach(var field in new[]{"stock","lamp","occupants"})LifeObserve(actor,PathKey(item.Get("id").Text()+"."+field));
-            foreach(var other in actors.Keys.Where(other=>other!=actor&&LifeNumber(other+".zone")==zone))
-            {
-                foreach(var field in new[]{"zone","food","noise_until"})LifeObserve(actor,PathKey(other+"."+field));
-            }
+            SenseLife(actor);
             if(!running.ContainsKey(actor)&&!actors[actor].IsUpdating&&!actors[actor].IsObserving)actors[actor].BeginRefresh(RefreshCause.Deliberate);
         }
         ValidateLifeInventory();
@@ -128,21 +121,22 @@ public sealed partial class RuntimeSession
         if(seatPlan is not null)return false;
         if(kind is "request" or "fulfil")
         {
+            if(client.Recall(new(target,"trace","in_view")) is not {Known:true,Conflicted:false} sight||!sight.Value.Flag())return false;
             var remembered=client.Recall(PathKey(target+".zone"));
             if(remembered is not {Known:true}||!Values.Same(remembered.Value,client.Recall(PathKey(actor+".zone"))?.Value??default))return false;
             var category=meta.Get("category").Text();var rule=lifeDefinition.Get("social").Get("categories").Get(category);
             if(kind=="fulfil")return LifeContract(actor,target,category) is { } contract&&contract.Get("status").Text()=="pending"&&ContentTime>=contract.Get("due").Number()&&
                 (contract.Get("mode").Text()!="conditional"||Needs(actor).GetValueOrDefault("calm")>=lifeDefinition.Get("response").Get("calm_condition").Number());
             if(LifeContract(actor,target,category) is not null||LifeContract(target,actor,category) is not null)return false;
-            if(category=="complain")return (client.Recall(PathKey(target+".noise_until"))?.Value.Number()??0)>ContentTime;
-            if(category=="ask_share")return Needs(actor).GetValueOrDefault("hunger")<lifeDefinition.Get("response").Get("spontaneous_below").Number()&&LifeNumber(actor+".food")==0&&
-                (client.Recall(PathKey(target+".food"))?.Value.Number()??0)>0;
-            if(category=="share_food")return LifeNumber(actor+".food")>0&&(client.Recall(PathKey(target+".food"))?.Value.Number()??1)==0;
-            if(category=="apologize")return LifeNumber(Pair(actor,target)+".tension")>=rule.Get("tension_above").Number();
+            if(category=="complain")return LifeProved(actor,target,"audible_source");
+            if(category=="ask_share")return Needs(actor).GetValueOrDefault("hunger")<lifeDefinition.Get("response").Get("spontaneous_below").Number()&&(client.Recall(PathKey(actor+".food"))?.Value.Number()??1)==0&&LifeProved(actor,target,"can_request_food");
+            if(category=="share_food")return (client.Recall(PathKey(actor+".food"))?.Value.Number()??0)>0&&LifeProved(actor,target,"may_need_food");
+            if(category=="apologize")return LifeKnownNumber(actor,Pair(actor,target)+".tension")>=rule.Get("tension_above").Number();
             return rule.Get("need").Fields().Any(need=>Needs(actor).GetValueOrDefault(need.Name)<lifeDefinition.Get("response").Get("spontaneous_below").Number());
         }
         var definition=lifeDefinition.Get("actions").Get(kind);var item=LifeObject(meta.Get("obj").Text());
         if(item.ValueKind!=JsonValueKind.Object)return false;
+        if(kind=="inspect_pantry")return client.Recall(PathKey(item.Get("id").Text()+".stock")) is not {Known:true,Conflicted:false} stock||stock.Value.Number()==0&&ContentTime-stock.ObservedAt>=lifeDefinition.Get("inventory").Get("inspect_retry_minutes").Number(60);
         var hour=ContentTime%1440/60;var timing=lifeDefinition.Get("time");
         var night=hour>=timing.Get("night_from").Number()||hour<timing.Get("night_to").Number();
         if(definition.Get("day_only").Flag()&&night)return false;
@@ -154,7 +148,7 @@ public sealed partial class RuntimeSession
         if((definition.Get("light").Flag()||definition.Get("needs_light").Flag())&&!LifeLitKnown(actor,zone))return false;
         if(kind=="light_lamp")return !LifeLitKnown(actor,zone);
         if(kind=="douse_lamp")return LifeLitKnown(actor,zone)&&ContentTime%1440/60>=lifeDefinition.Get("time").Get("night_from").Number();
-        if(kind=="play_piano"&&LifeNumber(actor+".quiet_until")>ContentTime)return false;
+        if(kind=="play_piano"&&LifeKnownNumber(actor,actor+".quiet_until")>ContentTime)return false;
         if(definition.Get("near").Items().Any()&&!lifeDefinition.Get("objects").Items().Any(other=>
             definition.Get("near").Items().Any(kind=>kind.Text()==other.Get("kind").Text())&&other.Get("zone").Number()==zone&&
             Math.Pow(other.Get("x").Number()-item.Get("x").Number(),2)+Math.Pow(other.Get("z").Number()-item.Get("z").Number(),2)<Math.Pow(definition.Get("near_dist").Number(),2)))return false;
@@ -185,10 +179,10 @@ public sealed partial class RuntimeSession
         var response=lifeDefinition.Get("response");var pair=Pair(responder,requester);
         var profile=lifeDefinition.Get("agents").Items().First(item=>item.Get("id").Text()==responder);
         var rule=lifeDefinition.Get("social").Get("categories").Get(category);
-        var terms=new Dictionary<string,double>{["affinity"]=LifeNumber(pair+".affinity")/100,["trust"]=LifeNumber(pair+".trust")/100,
-            ["tension"]=LifeNumber(pair+".tension")/100,["cost"]=rule.Get("cost").Number(),["intrusion"]=rule.Get("intr").Number(),
+        var terms=new Dictionary<string,double>{["affinity"]=LifeKnownNumber(responder,pair+".affinity")/100,["trust"]=LifeKnownNumber(responder,pair+".trust")/100,
+            ["tension"]=LifeKnownNumber(responder,pair+".tension")/100,["cost"]=rule.Get("cost").Number(),["intrusion"]=rule.Get("intr").Number(),
             ["calm"]=Needs(responder).GetValueOrDefault("calm")/100,["agreeable"]=profile.Get("traits").Get("A").Number(),
-            ["busy"]=running.ContainsKey(responder)?1:0,["debt"]=LifeNumber(pair+".owe"),["benefit"]=rule.Get("benefit").Number(rule.Get("weight").Number()),
+            ["busy"]=running.ContainsKey(responder)?1:0,["debt"]=LifeKnownNumber(responder,pair+".owe"),["benefit"]=rule.Get("benefit").Number(rule.Get("weight").Number()),
             ["coercion"]=rule.Get("coercion").Number()};
         var result=new Dictionary<string,double>();
         foreach(var mode in response.Get("scores").Fields())
@@ -283,7 +277,7 @@ public sealed partial class RuntimeSession
         }
         else
         {
-            scores=LifeReply(responder,requester,category,LifeCanDeliver(responder,requester,category));
+            scores=LifeReply(responder,requester,category,LifeBelievesCanDeliver(responder,requester,category));
             var maximum=scores.Values.Max();var weights=scores.ToDictionary(pair=>pair.Key,pair=>Math.Exp((pair.Value-maximum)/response.Get("temperature").Number()));
             var random=(uint)LifeNumber("life.rng");random=unchecked(random*1664525+1013904223);
             writes[PathKey("life.rng")]=LifeFact(random);var pick=random/(double)uint.MaxValue*weights.Values.Sum();
@@ -337,9 +331,10 @@ public sealed partial class RuntimeSession
         writes[PathKey("life.contracts")]=LifeFact(contracts);
         var result=JsonSerializer.SerializeToElement(new {requester,responder,category,mode,accepted,delivered,scores,contract=action=="fulfil",effect});
         RecordMechanic(decision,"life_response",true,result);
+        var message=JsonSerializer.SerializeToElement(new {requester,responder,category,mode,accepted,delivered,contract=action=="fulfil",effect,channel="communication"});
         foreach(var participant in new[]{requester,responder})
         {
-            var key=PathKey(participant+".last_response");var observation=new Observation("life/"+(++nextEvidence),key,result,1,ContentTime,InformationOrigin.Communication,result);
+            var key=PathKey(participant+".last_response");var observation=new Observation("life/"+(++nextEvidence),key,message,1,ContentTime,InformationOrigin.Communication,message);
             if(participant==actor)feedback.Add(observation);else actors[participant].ReceiveDirected(observation);
         }
         return true;
@@ -363,6 +358,8 @@ public sealed partial class RuntimeSession
         stock=lifeDefinition.Get("objects").Items().Sum(item=>LifeNumber(item.Get("id").Text()+".stock")),
         carried=actors.Keys.Sum(actor=>LifeNumber(actor+".food")),
         contracts=LifeValue("life.contracts"),seating=LifeValue("life.seating"),
+        cognition=actors.Values.Select(client=>new {actor=client.Id,revision=client.KnowledgeRevision,updating=client.IsUpdating,
+            results=client.View().Knowledge.Where(item=>item.Key.Facet=="infer"&&item.Value.Known).Select(item=>new {key=item.Key,status=item.Value.Value}).ToArray()}).ToArray(),
         relations=actors.Keys.SelectMany(from=>actors.Keys.Where(to=>to!=from).Select(to=>new {from,to,affinity=LifeNumber(Pair(from,to)+".affinity"),trust=LifeNumber(Pair(from,to)+".trust"),tension=LifeNumber(Pair(from,to)+".tension"),stage=LifeValue(Pair(from,to)+".stage").Text()})).ToArray()
     };
 }

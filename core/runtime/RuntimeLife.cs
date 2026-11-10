@@ -81,6 +81,7 @@ public sealed partial class RuntimeSession
         }
         if(expired)writes[PathKey("life.contracts")]=LifeFact(contracts);
         if(writes.Count>0)Rules.Changed(World.Apply(writes));
+        AdvanceLifeExpectations();
         AdvanceLifeSound();
         AdvanceLifeSeating();
         foreach(var actor in actors.Keys)
@@ -126,7 +127,7 @@ public sealed partial class RuntimeSession
             if(remembered is not {Known:true}||!Values.Same(remembered.Value,client.Recall(PathKey(actor+".zone"))?.Value??default))return false;
             var category=meta.Get("category").Text();var rule=lifeDefinition.Get("social").Get("categories").Get(category);
             if(kind=="fulfil")return LifeContract(actor,target,category) is { } contract&&contract.Get("status").Text()=="pending"&&ContentTime>=contract.Get("due").Number()&&
-                (contract.Get("mode").Text()!="conditional"||Needs(actor).GetValueOrDefault("calm")>=lifeDefinition.Get("response").Get("calm_condition").Number());
+                (contract.Get("mode").Text()!="defer"||Needs(actor).GetValueOrDefault("calm")>=lifeDefinition.Get("response").Get("calm_condition").Number());
             if(LifeContract(actor,target,category) is not null||LifeContract(target,actor,category) is not null)return false;
             if(category=="complain")return LifeProved(actor,target,"audible_source");
             if(category=="ask_share")return Needs(actor).GetValueOrDefault("hunger")<lifeDefinition.Get("response").Get("spontaneous_below").Number()&&(client.Recall(PathKey(actor+".food"))?.Value.Number()??1)==0&&LifeProved(actor,target,"can_request_food");
@@ -136,6 +137,7 @@ public sealed partial class RuntimeSession
         }
         var definition=lifeDefinition.Get("actions").Get(kind);var item=LifeObject(meta.Get("obj").Text());
         if(item.ValueKind!=JsonValueKind.Object)return false;
+        if(LifeUselessReason(actor,kind) is not null)return false;
         if(kind=="inspect_pantry")return client.Recall(PathKey(item.Get("id").Text()+".stock")) is not {Known:true,Conflicted:false} stock||stock.Value.Number()==0&&ContentTime-stock.ObservedAt>=lifeDefinition.Get("inventory").Get("inspect_retry_minutes").Number(60);
         var hour=ContentTime%1440/60;var timing=lifeDefinition.Get("time");
         var night=hour>=timing.Get("night_from").Number()||hour<timing.Get("night_to").Number();
@@ -184,11 +186,13 @@ public sealed partial class RuntimeSession
             ["calm"]=Needs(responder).GetValueOrDefault("calm")/100,["agreeable"]=profile.Get("traits").Get("A").Number(),
             ["busy"]=running.ContainsKey(responder)?1:0,["debt"]=LifeKnownNumber(responder,pair+".owe"),["benefit"]=rule.Get("benefit").Number(rule.Get("weight").Number()),
             ["coercion"]=rule.Get("coercion").Number()};
+        var stage=actors[responder].Recall(PathKey(pair+".stage")) is {Known:true} known?known.Value.Text():"";
         var result=new Dictionary<string,double>();
         foreach(var mode in response.Get("scores").Fields())
         {
             if(!possible&&mode.Name is "accept" or "comply")continue;
-            result[mode.Name]=mode.Value.Get("base").Number()+mode.Value.Fields().Where(term=>term.Name!="base").Sum(term=>term.Value.Number()*terms.GetValueOrDefault(term.Name));
+            result[mode.Name]=mode.Value.Get("base").Number()+mode.Value.Fields().Where(term=>term.Name!="base").Sum(term=>term.Value.Number()*terms.GetValueOrDefault(term.Name))+
+                response.Get("nature_bias").Get(rule.Get("nature").Text()).Get(mode.Name).Number()+response.Get("stage_bias").Get(stage).Get(mode.Name).Number();
         }
         return result;
     }
@@ -199,7 +203,8 @@ public sealed partial class RuntimeSession
         var fresh=Current("day").Number()!=day;
         var up=fresh?new JsonObject():JsonNode.Parse(Current("up").GetRawText())!.AsObject();
         var down=fresh?new JsonObject():JsonNode.Parse(Current("down").GetRawText())!.AsObject();
-        var habit=fresh?new JsonObject():JsonNode.Parse(Current("habit").GetRawText())!.AsObject();
+        var habit=JsonNode.Parse(Current("habit").GetRawText())!.AsObject();
+        if(fresh)foreach(var name in habit.Select(entry=>entry.Key).ToArray())habit[name]=(int)Math.Floor(habit[name]!.GetValue<int>()*policy.Get("habit_carry").Number());
         var count=habit[kind]?.GetValue<int>()??0;
         foreach(var change in effects.Fields())
         {
@@ -266,13 +271,14 @@ public sealed partial class RuntimeSession
         var categoryRule=lifeDefinition.Get("social").Get("categories").Get(category);
         if(running.TryGetValue(target,out var targetWork)&&lifeDefinition.Get("actions").Get(targetWork.Decision.Action.Declaration.Get("life").Get("action").Text()).Get("pose").Text()=="lie")return false;
         var response=lifeDefinition.Get("response");var contracts=JsonNode.Parse(LifeValue("life.contracts").GetRawText())!.AsArray();
+        var expectations=LifeArray("life.expectations");var utterances=LifeArray("life.utterances");
         var mode="accept";var responder=target;var requester=actor;var scores=new Dictionary<string,double>();
         if(action=="fulfil")
         {
             responder=actor;requester=target;
             var contract=LifeContract(responder,requester,category);
             if(contract is null||contract.Value.Get("status").Text()!="pending"||ContentTime<contract.Value.Get("due").Number()||ContentTime>=contract.Value.Get("expires").Number()||
-                contract.Value.Get("mode").Text()=="conditional"&&Needs(responder).GetValueOrDefault("calm")<response.Get("calm_condition").Number()||!LifeCanDeliver(responder,requester,category))return false;
+                contract.Value.Get("mode").Text()=="defer"&&Needs(responder).GetValueOrDefault("calm")<response.Get("calm_condition").Number()||!LifeCanDeliver(responder,requester,category))return false;
             contracts.OfType<JsonObject>().First(item=>item["id"]!.GetValue<string>()==contract.Value.Get("id").Text())["status"]="fulfilled";
         }
         else
@@ -282,7 +288,7 @@ public sealed partial class RuntimeSession
             var random=(uint)LifeNumber("life.rng");random=unchecked(random*1664525+1013904223);
             writes[PathKey("life.rng")]=LifeFact(random);var pick=random/(double)uint.MaxValue*weights.Values.Sum();
             foreach(var optionWeight in weights){mode=optionWeight.Key;pick-=optionWeight.Value;if(pick<=0)break;}
-            if(mode is "conditional" or "defer")
+            if(mode=="defer")
                 contracts.Add(LifeScenario.Object(new {id="promise/"+decision.Execution,actor=responder,target=requester,category,mode,status="pending",due=ContentTime+response.Get("delay_minutes").Number(),expires=ContentTime+response.Get("expiry_minutes").Number()}));
         }
         var accepted=mode is "accept" or "comply";
@@ -319,6 +325,8 @@ public sealed partial class RuntimeSession
             needEffects.Add((requester,JsonSerializer.SerializeToElement(gains)));
             if(effect is "talk" or "hangout")needEffects.Add((responder,JsonSerializer.SerializeToElement(gains)));
         }
+        LifeMeaning(decision,requester,responder,category,mode,delivered,effect,writes,contracts,expectations,utterances,feedback);
+        writes[PathKey("life.expectations")]=LifeFact(expectations);writes[PathKey("life.utterances")]=LifeFact(utterances);
         var modeRule=lifeDefinition.Get("social").Get("mode_effects").Get(mode);
         var weight=categoryRule.Get("weight").Number();
         foreach(var side in new[]{(From:requester,To:responder,Prefix:"q_"),(From:responder,To:requester,Prefix:"r_")})
@@ -357,7 +365,7 @@ public sealed partial class RuntimeSession
         supplied=LifeNumber("life.supplied"),consumed=LifeNumber("life.consumed"),
         stock=lifeDefinition.Get("objects").Items().Sum(item=>LifeNumber(item.Get("id").Text()+".stock")),
         carried=actors.Keys.Sum(actor=>LifeNumber(actor+".food")),
-        contracts=LifeValue("life.contracts"),seating=LifeValue("life.seating"),
+        contracts=LifeValue("life.contracts"),seating=LifeValue("life.seating"),reasoning=LifeReasoningAudit(),lexicon=LifeLexiconAudit(),
         cognition=actors.Values.Select(client=>new {actor=client.Id,revision=client.KnowledgeRevision,updating=client.IsUpdating,
             results=client.View().Knowledge.Where(item=>item.Key.Facet=="infer"&&item.Value.Known).Select(item=>new {key=item.Key,status=item.Value.Value}).ToArray()}).ToArray(),
         relations=actors.Keys.SelectMany(from=>actors.Keys.Where(to=>to!=from).Select(to=>new {from,to,affinity=LifeNumber(Pair(from,to)+".affinity"),trust=LifeNumber(Pair(from,to)+".trust"),tension=LifeNumber(Pair(from,to)+".tension"),stage=LifeValue(Pair(from,to)+".stage").Text()})).ToArray()

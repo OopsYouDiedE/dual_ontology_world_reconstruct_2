@@ -43,7 +43,7 @@ public static class LifeScenario
         facts["clock.minutes"]=manifest.Get("start_minutes").Number();
         facts["life.supplied"]=0;facts["life.consumed"]=0;facts["life.supply_day"]=-1;
         facts["life.rng"]=rules.Get("response").Get("initial_seed").Number(7);
-        facts["life.contracts"]=new JsonArray();facts["life.seating"]=new JsonArray();facts["life.last_decay"]=manifest.Get("start_minutes").Number();facts["life.last_sense"]=manifest.Get("start_minutes").Number();
+        facts["life.contracts"]=new JsonArray();facts["life.expectations"]=new JsonArray();facts["life.utterances"]=new JsonArray();facts["life.seating"]=new JsonArray();facts["life.last_decay"]=manifest.Get("start_minutes").Number();facts["life.last_sense"]=manifest.Get("start_minutes").Number();
         var supplied=0.0;
         foreach(var prop in props)
         {

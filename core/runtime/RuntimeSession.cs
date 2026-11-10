@@ -417,7 +417,7 @@ public sealed partial class RuntimeSession
         contentTimeUnit = sessionPolicy.Get("content_time_unit_seconds").Number(1);
         if (!double.IsFinite(contentTimeUnit) || contentTimeUnit <= 0) throw new InvalidDataException("Invalid content time unit.");
         if (inferenceBudget < 1 || workBudget < 1) throw new InvalidDataException("Positive session work budget required.");
-        Scheduler = new(scheduling,PositionEligible,(_,action)=>TimeEligible(action));
+        Scheduler = new(scheduling,PositionEligible,(_,action)=>TimeEligible(action),LifePlanBias);
         Clock = new(clockPolicy, initialTime);
         Rooms = new(residency);
         Rules = new(World, contentTimeUnit);

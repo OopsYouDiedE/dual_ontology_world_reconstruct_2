@@ -560,25 +560,14 @@ data runtime.life { value = {
     }
   },
   "social": {
-    "modes": [
-      "accept",
-      "comply",
-      "conditional",
-      "defer",
-      "decline",
-      "refuse",
-      "ignore",
-      "confront"
-    ],
+    "modes": ["accept","comply","defer","decline","ignore","confront"],
     "mode_labels": {
       "accept": "接受",
-      "conditional": "有条件接受",
-      "defer": "推迟敷衍",
-      "decline": "婉拒",
-      "ignore": "冷处理",
-      "confront": "对抗斥责",
       "comply": "勉强答应",
-      "refuse": "明确拒绝"
+      "defer": "延后答应",
+      "decline": "婉拒或明确拒绝",
+      "ignore": "冷处理",
+      "confront": "对抗斥责"
     },
     "temperature": 0.45,
     "talk_cooldown": 45,
@@ -594,33 +583,21 @@ data runtime.life { value = {
         "r_stress": 0,
         "fulfil": 1
       },
-      "conditional": {
-        "q_aff": 0.6,
-        "q_trust": 0.5,
-        "q_tension": -0.2,
-        "r_aff": 0.1,
-        "r_trust": 0.1,
+      "defer": {
+        "q_aff": 0.25,
+        "q_trust": 0.15,
+        "q_tension": -0.05,
+        "r_aff": 0.05,
+        "r_trust": 0.05,
         "r_tension": 0,
         "q_stress": 0,
         "r_stress": 0.01,
-        "fulfil": 0.6,
-        "debt": 1
-      },
-      "defer": {
-        "q_aff": -0.15,
-        "q_trust": -0.2,
-        "q_tension": 0.1,
-        "r_aff": 0,
-        "r_trust": 0,
-        "r_tension": 0,
-        "q_stress": 0.01,
-        "r_stress": 0,
-        "fulfil": 0
+        "fulfil": 0.6
       },
       "decline": {
-        "q_aff": -0.5,
+        "q_aff": -0.6,
         "q_trust": -0.2,
-        "q_tension": 0.8,
+        "q_tension": 1.0,
         "r_aff": -0.05,
         "r_trust": 0,
         "r_tension": 0.1,
@@ -663,18 +640,6 @@ data runtime.life { value = {
         "q_stress": -0.02,
         "r_stress": 0,
         "fulfil": 1
-      },
-      "refuse": {
-        "q_aff": -1,
-        "q_trust": -0.2,
-        "q_tension": 1.5,
-        "r_aff": -0.05,
-        "r_trust": 0,
-        "r_tension": 0.1,
-        "q_stress": 0.03,
-        "r_stress": 0.01,
-        "fulfil": 0,
-        "expect": 1
       }
     },
     "caps": {
@@ -700,10 +665,10 @@ data runtime.life { value = {
       "far_factor": 0.1
     },
     "categories": {
-      "ask_help": {"label":"请求协助整理思路", "cost":0.3, "intr":0.25, "benefit":0.7, "coercion":0, "weight":0.8, "need":{"growth":8,"agency":5}, "fx":"talk"},
-      "apologize": {"label":"道歉和解", "cost":0.08, "intr":0.1, "benefit":0.8, "coercion":0, "weight":1, "tension_above":5, "need":{"calm":10}, "fx":"talk"},
-      "share_food": {"label":"主动分享口粮", "cost":0.05, "intr":0.1, "benefit":1, "coercion":0, "weight":1, "need":{"social":6}, "fx":"offer_food"},
-      "greet": {
+      "ask_help": {"nature":"favor", "label":"请求协助整理思路", "cost":0.3, "intr":0.25, "benefit":0.7, "coercion":0, "weight":0.8, "need":{"growth":8,"agency":5}, "fx":"talk"},
+      "apologize": {"nature":"amends", "label":"道歉和解", "cost":0.08, "intr":0.1, "benefit":0.8, "coercion":0, "weight":1, "tension_above":5, "need":{"calm":10}, "fx":"talk"},
+      "share_food": {"nature":"offer", "label":"主动分享口粮", "cost":0.05, "intr":0.1, "benefit":1, "coercion":0, "weight":1, "need":{"social":6}, "fx":"offer_food"},
+      "greet": {"nature":"bonding", 
         "label": "问候",
         "cost": 0.03,
         "intr": 0.05,
@@ -715,7 +680,7 @@ data runtime.life { value = {
         },
         "fx": "talk"
       },
-      "chat": {
+      "chat": {"nature":"bonding", 
         "label": "闲聊",
         "cost": 0.12,
         "intr": 0.2,
@@ -728,7 +693,7 @@ data runtime.life { value = {
         },
         "fx": "talk"
       },
-      "ask_info": {
+      "ask_info": {"nature":"question", 
         "label": "打听/提问",
         "cost": 0.18,
         "intr": 0.25,
@@ -741,7 +706,7 @@ data runtime.life { value = {
         },
         "fx": "talk"
       },
-      "confide": {
+      "confide": {"nature":"bonding", 
         "label": "倾诉心事",
         "cost": 0.3,
         "intr": 0.45,
@@ -754,7 +719,7 @@ data runtime.life { value = {
         },
         "fx": "talk"
       },
-      "ask_share": {
+      "ask_share": {"nature":"favor", 
         "label": "请求分享食物",
         "cost": 0.5,
         "intr": 0.4,
@@ -766,7 +731,7 @@ data runtime.life { value = {
         },
         "fx": "share_food"
       },
-      "ask_seat": {
+      "ask_seat": {"nature":"demand", 
         "coercion": 0.4,
         "label": "请求让位",
         "cost": 0.55,
@@ -779,7 +744,7 @@ data runtime.life { value = {
         },
         "fx": "yield_object"
       },
-      "invite": {
+      "invite": {"nature":"bonding", 
         "label": "邀约同坐",
         "cost": 0.3,
         "intr": 0.35,
@@ -791,7 +756,7 @@ data runtime.life { value = {
         },
         "fx": "hangout"
       },
-      "complain": {
+      "complain": {"nature":"demand", 
         "coercion": 0.65,
         "label": "抱怨/要求停止噪音",
         "cost": 0.45,
@@ -804,7 +769,7 @@ data runtime.life { value = {
         },
         "fx": "stop_noise"
       },
-      "tease": {
+      "tease": {"nature":"bonding", 
         "label": "调侃",
         "cost": 0,
         "intr": 0.5,
@@ -858,37 +823,12 @@ data runtime.life { value = {
         ]
       },
       "reply": {
-        "accept": [
-          "好啊。",
-          "没问题。",
-          "当然可以。"
-        ],
-        "conditional": [
-          "可以,不过下次轮到你。",
-          "行,但你得答应我一件事。"
-        ],
-        "defer": [
-          "等会儿吧,我现在顾不上。",
-          "嗯……待会再说。"
-        ],
-        "decline": [
-          "抱歉,这次不方便。",
-          "不好意思,我想自己待会儿。"
-        ],
-        "ignore": [
-          "(没有回应)",
-          "(转过头去)"
-        ],
-        "confront": [
-          "别来烦我!",
-          "你凭什么这样要求我?"
-        ],
-        "comply": [
-          "可以，但我并不情愿。"
-        ],
-        "refuse": [
-          "不，这件事我不答应。"
-        ]
+        "accept": ["好啊。","没问题。","当然可以。"],
+        "defer": ["等会儿吧,我现在顾不上。","可以,不过现在不方便,晚点我来找你。","嗯……待会再说。"],
+        "decline": ["抱歉,这次不方便。","不好意思,我想自己待会儿。","不,这件事我不答应。"],
+        "ignore": ["(没有回应)","(转过头去)"],
+        "confront": ["别来烦我!","你凭什么这样要求我?"],
+        "comply": ["可以，但我并不情愿。"]
       }
     }
   },
@@ -1010,6 +950,8 @@ data runtime.life { value = {
       "tension": 6,
       "familiarity": 0
     },
+    "habit_carry": 0.5,
+    "reciprocity_effects": {"trust": 1.5, "affinity": 1.2},
     "habit_positive": 0.35,
     "habit_negative": 0.2,
     "tension_half_life_days": 3,
@@ -1073,34 +1015,22 @@ data runtime.life { value = {
         "debt": 0.6,
         "busy": -0.3
       },
-      "conditional": {
-        "base": -0.2,
-        "affinity": 0.5,
-        "trust": 0.5,
-        "cost": 0.8,
-        "busy": 0.2
-      },
       "defer": {
-        "base": -0.6,
-        "busy": 1.2,
-        "cost": 0.6,
-        "calm": -0.5
+        "base": -0.5,
+        "affinity": 0.3,
+        "trust": 0.3,
+        "busy": 1.0,
+        "cost": 0.7,
+        "calm": -0.3
       },
       "decline": {
         "base": -0.2,
         "cost": 0.7,
-        "intrusion": 0.5,
+        "intrusion": 0.6,
+        "coercion": 0.35,
         "affinity": -0.7,
-        "tension": 0.7
-      },
-      "refuse": {
-        "coercion":0.7,
-        "base": -0.6,
-        "cost": 0.7,
-        "intrusion": 1,
-        "affinity": -0.6,
-        "tension": 1.2,
-        "agreeable": -0.5
+        "tension": 0.8,
+        "agreeable": -0.2
       },
       "ignore": {
         "base": -1,
@@ -1115,7 +1045,51 @@ data runtime.life { value = {
         "calm": -0.5,
         "agreeable": -0.8
       }
+    },
+    "nature_bias": {
+      "question": {"accept":0.3,"ignore":-0.2},
+      "favor": {"comply":0.1,"defer":0.15},
+      "demand": {"accept":-0.2,"comply":0.2,"decline":0.2,"confront":0.3},
+      "offer": {"accept":0.4,"decline":-0.2,"ignore":-0.3},
+      "amends": {"accept":0.2,"comply":0.3,"ignore":0.1},
+      "bonding": {"accept":0.1,"defer":0.1}
+    },
+    "stage_bias": {
+      "亲近": {"accept":0.4,"comply":0.2,"ignore":-0.4,"confront":-0.5},
+      "友善": {"accept":0.2,"confront":-0.2},
+      "熟识": {},
+      "生疏": {"decline":0.15,"defer":0.1},
+      "敌视": {"accept":-0.7,"comply":-0.2,"decline":0.2,"ignore":0.4,"confront":0.5}
     }
+  },
+  "reasoning": {
+    "_comment": "推理层：只依据人物本人认知推出达成需要的步骤；没有可行下游用途的备料动作被禁止，信息缺口会奖励探查。",
+    "plan_bonus": 6,
+    "info_bonus": 4,
+    "tie_jitter": 0.8,
+    "distance_per_m": 0.08,
+    "plan_needs": {"hunger": 85, "growth": 92}
+  },
+  "lexicon": {
+    "_comment": "同一个词在不同人脑中对应不同事实。世界只保存各人的义项与实际行动；各人保存自己的理解，分歧在期待落空时才显现。",
+    "terms": {
+      "give_back": {"word":"借/分一点","uses":{"categories":["ask_share","share_food"]},"default":"free",
+        "senses":{"return":{"repay":1,"label":"借：日后要还"},"free":{"repay":0,"label":"分：不必归还"}}},
+      "quiet": {"word":"小声点","uses":{"categories":["complain"]},"default":"short",
+        "senses":{"short":{"minutes":30,"label":"暂时收敛"},"long":{"minutes":240,"label":"今晚别再吵"}}},
+      "later": {"word":"待会儿","uses":{"modes":["defer"]},"default":"soon",
+        "senses":{"soon":{"minutes":15,"label":"十几分钟内"},"whenever":{"minutes":150,"label":"有空再说"}}}
+    },
+    "agents": {
+      "detective": {"give_back":"return","quiet":"long","later":"soon"},
+      "quer": {"give_back":"free","quiet":"short","later":"whenever"},
+      "lucian": {"give_back":"free","quiet":"long","later":"whenever"},
+      "ruan": {"give_back":"return","quiet":"short","later":"soon"},
+      "shen": {"give_back":"free","quiet":"short","later":"soon"}
+    },
+    "return_grace_minutes": 360,
+    "grievance": {"tension": 3, "trust": -2, "calm": -8},
+    "history_limit": 40
   },
   "capacities": {
     "sofa": 2,

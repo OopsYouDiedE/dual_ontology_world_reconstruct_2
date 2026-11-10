@@ -55,6 +55,7 @@ public sealed class DecisionScheduler
     private readonly double minimumUtility;
     private readonly Func<string,ActionCandidate,bool> eligible;
     private readonly Func<string,ActionCandidate,bool> modelEligible;
+    private readonly Func<string,ActionCandidate,double> reasoningBias;
     private int cursor;
     private long nextExecution;
     public long Evaluations { get; private set; }
@@ -98,8 +99,9 @@ public sealed class DecisionScheduler
         return decisions;
     }
 
-    public DecisionScheduler(JsonElement policy,Func<string,ActionCandidate,bool>? eligibility=null,Func<string,ActionCandidate,bool>? modelEligibility=null)
+    public DecisionScheduler(JsonElement policy,Func<string,ActionCandidate,bool>? eligibility=null,Func<string,ActionCandidate,bool>? modelEligibility=null,Func<string,ActionCandidate,double>? planningBias=null)
     {
+        reasoningBias=planningBias??((_,_)=>0);
         eligible=eligibility??((_,_)=>true);
         modelEligible=modelEligibility??((_,_)=>true);
         interval = Positive(policy, "decision_interval_seconds");
@@ -294,7 +296,7 @@ public sealed class DecisionScheduler
     public IEnumerable<(string Actor,AffectEvent Event)> DrainAffectEvents()=>slots.SelectMany(slot=>slot.Needs.DrainEvents().Select(item=>(slot.Actor.Id,item)));
     public object Affect(string actor)=>new {emotion=byActor[actor].Needs.Emotion,buffs=byActor[actor].Needs.Buffs};
     public object Paths(string actor,double now)=>byActor[actor].Planner.View(now,byActor[actor].Autonomous);
-    private double Score(Slot slot,ActionCandidate action,double now)=>slot.Needs.Score(action,now)+slot.Actor.GoalScore(action,now/contentTimeUnit)+slot.Goals.Score(action.Id)-slot.Failures.Penalty(action.Id,now);
+    private double Score(Slot slot,ActionCandidate action,double now)=>slot.Needs.Score(action,now)+slot.Actor.GoalScore(action,now/contentTimeUnit)+slot.Goals.Score(action.Id)+reasoningBias(slot.Actor.Id,action)-slot.Failures.Penalty(action.Id,now);
     public object GoalAudit(string actor)=>byActor[actor].Goals.Audit();
     public object FailureAudit(string actor,double now)=>byActor[actor].Failures.Audit(now);
     internal ActionFailureCheckpoint? RecordOutcome(Decision decision,bool success,string reason,IEnumerable<FieldKey> basis,double now,string[]? blockedResources=null)

@@ -32,7 +32,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 
 建筑器顶部“生活模拟”使用当前未保存建筑开启独立新局；退出后恢复原建筑器实例。建筑先导出到工具候选区，经 C# DV 解析器加载，不覆盖正式资源。当前支持首个包含封闭房间的单层；GLB 保留原姿态，坐卧骨骼动画尚未接入。
 
-生活入口为 `assets/data/scenarios/life_simulation.dv`，规则与宅邸位于 `assets/data/life_simulation/`。五人的个人目的、职业记忆和动机初值引用正式 `daily-life.dv`；新增生活偏好明确写在 DV 中。有限口粮、库存补给、八种回应、延期与条件承诺、实际座位履行及关系账本均由 C# Core 执行。
+生活入口为 `assets/data/scenarios/life_simulation.dv`，规则与宅邸位于 `assets/data/life_simulation/`。五人的个人目的、职业记忆和动机初值引用正式 `daily-life.dv`；新增生活偏好明确写在 DV 中。有限口粮、库存补给、六种回应（接受、勉强答应、延后答应、婉拒或拒绝、冷处理、对抗斥责）、延期与条件承诺、实际座位履行及关系账本均由 C# Core 执行。
 
 正式五日生活自动入口为 VSCode 任务 `run: five-day life CLI (720s)`；原剧情 CLI 入口仍使用下述 campaign。截止时长包括构建启动，达到截止时间不代表通过五日验收。
 

@@ -2,6 +2,22 @@ extends RefCounted
 ## Statement-for-statement native port of buildSingleProp3D.
 const Geo = preload("../Shared/ArchitectGeometry.gd")
 const Plant = preload("ArchitectPlant.gd")
+const Components = preload("../Shared/ComponentFactory.gd")
+const PROPS_ROOT = "res://tools/building_construction/BuildingConstruction/Props/"
+## Web preset kinds that have no dedicated builder here; they use the native recipe components.
+## kind -> [script, {recipe parameter: preset field}]
+const RECIPE_KINDS = {
+	"lectern":["RecipeLectern.gd",{"height":"lec_h"}],
+	"chalkboard":["RecipeChalkboard.gd",{"width":"board_w","height":"board_h"}],
+	"upright_piano":["RecipeUprightPiano.gd",{"width":"piano_w","height":"piano_h"}],
+	"easel":["RecipeEasel.gd",{"height":"easel_h"}],
+}
+## Light energy of a preset at its default "光强" value; the field scales it linearly.
+const LIGHT_BASE = {"wall_lantern":[1.2,15.0],"banker_lamp":[1.0,8.0],"pendant_lamp":[2.0,22.0]}
+
+static func light_scale(kind: String, params: Dictionary) -> float:
+	var spec = LIGHT_BASE[kind]
+	return clampf(float(params.get("lamp_energy",spec[1]))/spec[1],0.0,10.0)
 
 static func build(pObj: Dictionary) -> Node3D:
 	var type = pObj.kind
@@ -11,7 +27,14 @@ static func build(pObj: Dictionary) -> Node3D:
 	var yaw = pObj.get("yaw",0)
 	var params = pObj.get("params",{})
 	var root = Node3D.new()
-	if type == "planter": root = Plant.build(params)
+	if RECIPE_KINDS.has(type):
+		var spec = RECIPE_KINDS[type]
+		var recipe = Components.create(PROPS_ROOT+spec[0])
+		if recipe!=null:
+			root = recipe
+			for key in spec[1]:
+				if params.has(spec[1][key]): recipe.set(key,float(params[spec[1][key]]))
+	elif type == "planter": root = Plant.build(params)
 	elif type == "pedestal":
 		var pw = params.get("width",0.52)
 		var ph = params.get("height",0.75)
@@ -303,6 +326,7 @@ static func build(pObj: Dictionary) -> Node3D:
 		root.add_child(bulb)
 		var pLight = Geo.light(0xffd58b, 1.2, 5.0, 1.5)
 		pLight.position = Vector3(0, -0.04, 0.26)
+		pLight.light_energy *= light_scale(type,params)
 		root.add_child(pLight)
 	elif type == 'banker_lamp':
 		var base = Geo.mesh(Geo.cylinder(0.09, 0.11, 0.03, 12), "gold")
@@ -319,6 +343,7 @@ static func build(pObj: Dictionary) -> Node3D:
 		root.add_child(emissionCore)
 		var deskLight = Geo.light(0xffe6a3, 1.0, 3.2, 1.6)
 		deskLight.position = Vector3(0, 0.27, 0)
+		deskLight.light_energy *= light_scale(type,params)
 		root.add_child(deskLight)
 	elif type == 'pendant_lamp':
 		var drop = params.get("drop_length",1.4)
@@ -339,6 +364,7 @@ static func build(pObj: Dictionary) -> Node3D:
 			root.add_child(bulb)
 		var chLight = Geo.light(0xffeaad, 2.0, 9.0, 1.2)
 		chLight.position.y = -0.1
+		chLight.light_energy *= light_scale(type,params)
 		root.add_child(chLight)
 	elif type == 'painting':
 		var pw = params.get("frame_w",1.35)
@@ -402,17 +428,92 @@ static func build(pObj: Dictionary) -> Node3D:
 			fabric.position = Vector3(px, sh * 0.5, pz)
 			root.add_child(fabric)
 	elif type == 'crates':
-		var c1 = Geo.box(Vector3(0.70, 0.70, 0.70), "wood")
-		c1.position = Vector3(0, 0.35, 0)
-		root.add_child(c1)
-		var c2 = Geo.box(Vector3(0.55, 0.55, 0.55), "wood_light")
-		c2.position = Vector3(0.12, 0.70 + 0.275, -0.05)
-		c2.rotation.y = 0.25
-		root.add_child(c2)
+		# Stack of crate_tier crates, each smaller and slightly twisted, sitting on the previous one.
+		var tiers = clampi(int(params.get("crate_tier",2)),1,5)
+		var level_y = 0.0
+		for tier in range(tiers):
+			var size = maxf(0.3,0.70-0.15*tier)
+			var crate = Geo.box(Vector3(size, size, size), "wood" if tier%2==0 else "wood_light")
+			crate.position = Vector3(0.12*minf(tier,1)*(1 if tier%2==1 else -0.5), level_y+size*0.5, -0.05*minf(tier,1))
+			crate.rotation.y = 0.25*tier
+			root.add_child(crate)
+			var band = Geo.box(Vector3(size+0.02, 0.04, size+0.02), "wood_dark")
+			band.position = crate.position+Vector3(0,size*0.3,0)
+			band.rotation.y = crate.rotation.y
+			root.add_child(band)
+			level_y += size
+	elif type == 'sofa':
+		var sw = params.get("sofa_w",2.0)
+		var sd = params.get("sofa_d",0.9)
+		var seat_h = 0.42
+		var base = Geo.box(Vector3(sw, 0.22, sd), "wood_dark")
+		base.position.y = 0.11
+		root.add_child(base)
+		var arm_w = 0.2
+		for sx in [-1, 1]:
+			var arm = Geo.box(Vector3(arm_w, 0.30, sd), "green")
+			arm.position = Vector3(sx * (sw * 0.5 - arm_w * 0.5), 0.22 + 0.15, 0)
+			root.add_child(arm)
+		var seat = Geo.box(Vector3(sw - arm_w * 2.0, 0.14, sd - 0.2), "green")
+		seat.position = Vector3(0, seat_h - 0.05, 0.1)
+		root.add_child(seat)
+		var back = Geo.box(Vector3(sw - 0.04, 0.46, 0.2), "green")
+		back.position = Vector3(0, seat_h + 0.16, -sd * 0.5 + 0.12)
+		root.add_child(back)
+		var cushions = maxi(2, int(round((sw - arm_w * 2.0) / 0.62)))
+		for ci in range(cushions):
+			var cw = (sw - arm_w * 2.0 - 0.04) / cushions
+			var cushion = Geo.box(Vector3(cw - 0.02, 0.07, sd - 0.34), "cream")
+			cushion.position = Vector3(-(sw - arm_w * 2.0 - 0.04) * 0.5 + cw * (ci + 0.5), seat_h + 0.05, 0.12)
+			root.add_child(cushion)
+		for sx in [-1, 1]:
+			for sz in [-1, 1]:
+				var foot = Geo.box(Vector3(0.06, 0.06, 0.06), "wood")
+				foot.position = Vector3(sx * (sw * 0.5 - 0.06), 0.03, sz * (sd * 0.5 - 0.06))
+				root.add_child(foot)
+	elif type == 'nightstand':
+		var nw = params.get("stand_w",0.5)
+		var nh = params.get("stand_h",0.6)
+		var nd = 0.42
+		var nbody = Geo.box(Vector3(nw, nh - 0.1, nd), "wood")
+		nbody.position.y = 0.1 + (nh - 0.1) * 0.5
+		root.add_child(nbody)
+		var ntop = Geo.box(Vector3(nw + 0.04, 0.04, nd + 0.04), "wood_light")
+		ntop.position.y = nh - 0.02
+		root.add_child(ntop)
+		for dy in [0.28, 0.46]:
+			var front = Geo.box(Vector3(nw - 0.08, (nh - 0.2) * 0.4, 0.02), "wood_dark")
+			front.position = Vector3(0, dy * nh / 0.6, nd * 0.5 + 0.01)
+			root.add_child(front)
+			var knob = Geo.mesh(Geo.cylinder(0.015, 0.015, 0.03, 8), "gold")
+			knob.rotation.x = PI * 0.5
+			knob.position = Vector3(0, dy * nh / 0.6, nd * 0.5 + 0.03)
+			root.add_child(knob)
+		for sx in [-1, 1]:
+			for sz in [-1, 1]:
+				var leg = Geo.box(Vector3(0.05, 0.1, 0.05), "wood_dark")
+				leg.position = Vector3(sx * (nw * 0.5 - 0.04), 0.05, sz * (nd * 0.5 - 0.04))
+				root.add_child(leg)
+	elif type == 'round_table':
+		var rr = params.get("table_r",0.6)
+		var rh = params.get("table_h",0.75)
+		var rtop = Geo.mesh(Geo.cylinder(rr, rr, 0.05, 20), "wood_light")
+		rtop.position.y = rh - 0.025
+		root.add_child(rtop)
+		var rrim = Geo.mesh(Geo.cylinder(rr - 0.03, rr - 0.05, 0.06, 20), "wood_dark")
+		rrim.position.y = rh - 0.08
+		root.add_child(rrim)
+		var column = Geo.mesh(Geo.cylinder(0.07, 0.09, rh - 0.12, 10), "wood")
+		column.position.y = (rh - 0.12) * 0.5 + 0.06
+		root.add_child(column)
+		var rfoot = Geo.mesh(Geo.cylinder(rr * 0.45, rr * 0.5, 0.06, 16), "wood_dark")
+		rfoot.position.y = 0.03
+		root.add_child(rfoot)
 	else:
 		var box = Geo.box(Vector3(0.6, 0.6, 0.6), "wood")
 		box.position.y = 0.3
 		root.add_child(box)
+	if not RECIPE_KINDS.has(type): Geo.bake(root)
 	root.position = Vector3(position_x,baseY,position_z)
 	root.rotation.y = deg_to_rad(yaw)
 	return root

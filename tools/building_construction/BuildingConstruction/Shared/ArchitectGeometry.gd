@@ -205,3 +205,68 @@ static func prism(poly: Array, bottom: float, top: float, key: String) -> MeshIn
 		var b = ring[(i+1)%ring.size()]
 		quad(vertices,Vector3(a[0],bottom,a[1]),Vector3(b[0],bottom,b[1]),Vector3(b[0],top,b[1]),Vector3(a[0],top,a[1]))
 	return surface(vertices,key)
+
+## Merge every static primitive MeshInstance3D below `root` into one MeshInstance3D holding one surface per
+## material. A table made of 20 boxes becomes a single node; lights and other nodes are left untouched.
+## Returns the number of mesh nodes that were merged away.
+static func bake(root: Node3D) -> int:
+	var groups = {}
+	var merged = []
+	for node in root.find_children("*","MeshInstance3D",true,false):
+		if node.mesh==null or node.material_override==null or not node.visible: continue
+		var xf = Transform3D.IDENTITY
+		var current: Node = node
+		var ok = true
+		while current!=root:
+			if not current is Node3D: ok = false; break
+			xf = current.transform*xf
+			current = current.get_parent()
+		if not ok or current==null: continue
+		var normal_basis = xf.basis.inverse().transposed()
+		var material = node.material_override
+		if not groups.has(material): groups[material] = {"v":PackedVector3Array(),"n":PackedVector3Array(),"i":PackedInt32Array()}
+		var group = groups[material]
+		var used = false
+		for si in range(node.mesh.get_surface_count()):
+			if node.mesh is ArrayMesh and node.mesh.surface_get_primitive_type(si)!=Mesh.PRIMITIVE_TRIANGLES: continue
+			var arrays = node.mesh.surface_get_arrays(si)
+			if arrays.is_empty() or arrays[Mesh.ARRAY_VERTEX]==null: continue
+			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var normals = arrays[Mesh.ARRAY_NORMAL]
+			var indices = arrays[Mesh.ARRAY_INDEX]
+			var offset = group.v.size()
+			# Rigid transforms (no scale, the normal case) can be applied to whole packed arrays at once.
+			var rigid = absf(xf.basis.x.length()-1.0)<0.0001 and absf(xf.basis.y.length()-1.0)<0.0001 and absf(xf.basis.z.length()-1.0)<0.0001
+			group.v.append_array(xf*verts)
+			if normals!=null and normals.size()==verts.size():
+				if rigid: group.n.append_array(Transform3D(xf.basis,Vector3.ZERO)*normals)
+				else:
+					for k in range(verts.size()): group.n.append((normal_basis*normals[k]).normalized())
+			else:
+				for k in range(verts.size()): group.n.append(Vector3.UP)
+			if indices==null or indices.is_empty():
+				for k in range(verts.size()): group.i.append(offset+k)
+			else:
+				for k in indices: group.i.append(offset+k)
+			used = true
+		if used: merged.append(node)
+	if merged.size()<2: return 0
+	for node in merged:
+		node.get_parent().remove_child(node)
+		node.free()
+	var mesh = ArrayMesh.new()
+	for material in groups:
+		var group = groups[material]
+		if group.i.is_empty(): continue
+		var arrays = []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = group.v
+		arrays[Mesh.ARRAY_NORMAL] = group.n
+		arrays[Mesh.ARRAY_INDEX] = group.i
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+		mesh.surface_set_material(mesh.get_surface_count()-1,material)
+	var baked = MeshInstance3D.new()
+	baked.name = "Baked"
+	baked.mesh = mesh
+	root.add_child(baked)
+	return merged.size()-1

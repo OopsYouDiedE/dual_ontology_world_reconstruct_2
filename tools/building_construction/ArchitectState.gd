@@ -2,6 +2,7 @@ extends RefCounted
 ## Original serializeSceneState schema and wall editing transitions.
 const Geo = preload("BuildingConstruction/Shared/ArchitectGeometry.gd")
 const Topology = preload("RoomTopology.gd")
+const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
 var data = {"activeLayerId":null,"layers":[],"walls":[],"stairs":[],"railings":[],"props":[]}
 var selected: Dictionary = {}
 var history: Array[String] = []
@@ -28,6 +29,11 @@ func remember() -> void:
 	history.append(text)
 	if history.size()>40: history.pop_front()
 	history_index = history.size()-1
+const OPENING_DEFAULTS = {"width":1.2,"height":2.0,"bottom":0.0,"rise":0.4,"center":1.0}
+const OPENING_TYPES = ["arched_window","rectangular_window","round_window","double_door","closed_door","arched_closed_door","portal_arch"]
+const STAIR_DEFAULTS = {"rise":2.4,"run":3.2,"risers":12,"width":1.2,"railingPos":"both","yaw":0.0,"nosing":0.03,"x":0.0,"y":0.0,"z":0.0}
+var message = ""
+
 func restore(text: String) -> bool:
 	var parsed = preload("ArchitectYaml.gd").new().parse(text)
 	if not parsed is Dictionary: return false
@@ -40,12 +46,62 @@ func restore(text: String) -> bool:
 			if not pt is Array or pt.size()!=3: return false
 		for key in ["height","thickness"]:
 			if not (wall.get(key) is float or wall.get(key) is int): return false
-		wall["openings"] = wall.get("openings",[])
+	for item in parsed.layers:
+		if not item is Dictionary or not (item.get("y") is float or item.get("y") is int): return false
+	sanitize(parsed)
 	data = {"activeLayerId":parsed.get("activeLayerId"),"layers":parsed.layers,"walls":parsed.walls,"stairs":parsed.stairs,"railings":parsed.railings,"props":parsed.props}
 	if not data.get("activeLayerId") and not data.layers.is_empty(): data.activeLayerId = data.layers[0].id
 	selected = {}
 	sync_rooms()
 	return true
+
+## Fill defaults and drop unusable records so later code never meets a missing key.
+func sanitize(parsed: Dictionary) -> void:
+	for item in parsed.layers:
+		if not item.has("id"): item.id = uid("fl")
+		if not item.has("name"): item.name = "标高 %.1fm" % float(item.y)
+		if not item.has("polygons") or not item.polygons is Array: item.polygons = []
+		if not item.has("style"): item.style = "octagonal_tile"
+	for wall in parsed.walls:
+		if not wall.has("id"): wall.id = uid("wall")
+		if not wall.has("name"): wall.name = "墙体 "+str(wall.id)
+		wall.closed = bool(wall.get("closed",false))
+		wall.height = clampf(float(wall.height),0.3,40.0)
+		wall.thickness = clampf(float(wall.thickness),0.02,3.0)
+		if not wall.has("baseY"): wall.baseY = wall.points[0][1]
+		if not wall.has("style"): wall.style = "classical"
+		if not wall.has("hasPillars"): wall.hasPillars = true
+		var clean = []
+		for op in wall.get("openings",[]):
+			if not op is Dictionary: continue
+			if not op.has("id"): op.id = uid("op")
+			if not OPENING_TYPES.has(str(op.get("type",""))): op.type = "rectangular_window"
+			for key in OPENING_DEFAULTS:
+				if not (op.get(key) is float or op.get(key) is int): op[key] = OPENING_DEFAULTS[key]
+			op.segment = clampi(int(op.get("segment",0)),0,wall.points.size()-2)
+			clean.append(op)
+		wall.openings = clean
+	for item in parsed.stairs:
+		if not item is Dictionary: continue
+		for key in STAIR_DEFAULTS:
+			if not item.has(key): item[key] = STAIR_DEFAULTS[key]
+		if not item.has("id"): item.id = uid("st")
+	for rail in parsed.railings:
+		if not rail is Dictionary: continue
+		if not rail.has("id"): rail.id = uid("rail")
+		if not rail.has("height"): rail.height = 0.9
+		if not rail.has("spacing"): rail.spacing = 0.18
+	var props = []
+	for item in parsed.props:
+		if not item is Dictionary or not item.has("x") or not item.has("z"): continue
+		if not item.has("id"): item.id = uid("prop")
+		if not item.has("y"): item.y = 0.0
+		if not item.has("yaw"): item.yaw = 0.0
+		if not item.get("params") is Dictionary: item.params = {}
+		if not item.has("kind"): item.kind = "native_recipe" if item.get("path","")!="" else "crates"
+		if not item.has("name"): item.name = str(item.kind)
+		props.append(item)
+	parsed.props = props
 
 func sync_rooms() -> void:
 	for item in data.layers:
@@ -166,18 +222,107 @@ func nearest_wall(point: Vector2, max_distance := 0.8) -> Dictionary:
 				best.centerDist = snap(hit.t*hit.len)
 	return best
 
+## Position along a wall of an opening, in plan.
+func opening_world(wall: Dictionary, op: Dictionary) -> Vector2:
+	var a = wall.points[op.segment]
+	var b = wall.points[op.segment+1]
+	var pa = Vector2(a[0],a[2])
+	var pb = Vector2(b[0],b[2])
+	var length = pa.distance_to(pb)
+	return pa+(pb-pa)/(length if length>0 else 1.0)*op.center
+
+func opening_positions(wall: Dictionary) -> Array:
+	var result = []
+	for op in wall.openings:
+		result.append(opening_world(wall,op) if op.segment>=0 and op.segment<wall.points.size()-1 else null)
+	return result
+
+## After the polyline changed, re-attach every opening to the nearest segment at its old plan position.
+func rebind_openings(wall: Dictionary, positions: Array) -> void:
+	for i in range(wall.openings.size()):
+		var op = wall.openings[i]
+		if positions[i]==null: continue
+		var best = {}
+		for si in range(wall.points.size()-1):
+			var a = wall.points[si]
+			var b = wall.points[si+1]
+			var hit = project(positions[i],Vector2(a[0],a[2]),Vector2(b[0],b[2]))
+			if best.is_empty() or hit.dist<best.dist-0.0001:
+				best = hit
+				best.segment = si
+		if best.is_empty(): continue
+		op.segment = best.segment
+		var half = op.width*0.5+0.05
+		var center = best.t*best.len
+		if best.len>=op.width+0.1: center = clampf(center,half,best.len-half)
+		else: center = best.len*0.5
+		op.center = Geo.js_round(center*100)/100
+
+## Nearest free position for an opening of `width` on a segment, or -1 when the wall is too crowded.
+func free_opening_center(wall: Dictionary, segment: int, wanted: float, width: float, length: float, ignore := -1) -> float:
+	var lo = width*0.5+0.1
+	var hi = length-width*0.5-0.1
+	if hi<lo: return -1.0
+	var candidates = [clampf(wanted,lo,hi)]
+	for i in range(wall.openings.size()):
+		var other = wall.openings[i]
+		if i==ignore or other.segment!=segment: continue
+		var gap = (width+other.width)*0.5+0.05
+		candidates.append(clampf(other.center-gap,lo,hi))
+		candidates.append(clampf(other.center+gap,lo,hi))
+	candidates.sort_custom(func(a,b): return absf(a-wanted)<absf(b-wanted))
+	for candidate in candidates:
+		var clear = true
+		for i in range(wall.openings.size()):
+			var other = wall.openings[i]
+			if i==ignore or other.segment!=segment: continue
+			if absf(candidate-other.center)<(width+other.width)*0.5+0.049: clear = false; break
+		if clear: return candidate
+	return -1.0
+
 func add_opening(point: Vector2, params: Dictionary) -> bool:
+	message = ""
 	var hit = nearest_wall(point,0.9)
-	if hit.is_empty(): return false
+	if hit.is_empty(): message = "附近没有墙段"; return false
+	var wall = data.walls[hit.wallIndex]
+	var center = free_opening_center(wall,hit.segIndex,hit.centerDist,params.width,hit.len)
+	if center<0:
+		message = "该墙段放不下（宽 %.2f m，墙长 %.2f m）或已被门窗占满" % [params.width,hit.len]
+		return false
 	var opening = params.duplicate(true)
 	opening.id = uid("op")
 	opening.segment = hit.segIndex
-	opening.center = max(opening.width*0.5+0.1,min(hit.len-opening.width*0.5-0.1,hit.centerDist))
-	opening.center = Geo.js_round(opening.center*100)/100
-	data.walls[hit.wallIndex].openings.append(opening)
-	selected = {"kind":"opening","wallIndex":hit.wallIndex,"opIndex":data.walls[hit.wallIndex].openings.size()-1}
+	opening.center = Geo.js_round(center*100)/100
+	wall.openings.append(opening)
+	selected = {"kind":"opening","wallIndex":hit.wallIndex,"opIndex":wall.openings.size()-1}
 	remember()
 	return true
+
+## Magnet used by the drawing tools: snap to a wall node, else to the nearest wall centre-line (T junction).
+func magnet(point: Vector2, tolerance: float, elevation: float) -> Dictionary:
+	var best = {}
+	for wall in data.walls:
+		for pt in wall.points:
+			if abs(pt[1]-elevation)>0.3: continue
+			var d = point.distance_to(Vector2(pt[0],pt[2]))
+			if d<=tolerance and (best.is_empty() or d<best.dist): best = {"point":Vector2(pt[0],pt[2]),"dist":d,"kind":"node"}
+	if not best.is_empty(): return best
+	for wall in data.walls:
+		for si in range(wall.points.size()-1):
+			var a = wall.points[si]
+			var b = wall.points[si+1]
+			if abs(a[1]-elevation)>0.3 or abs(b[1]-elevation)>0.3: continue
+			var hit = project(point,Vector2(a[0],a[2]),Vector2(b[0],b[2]))
+			if hit.dist<=tolerance*0.6 and (best.is_empty() or hit.dist<best.dist): best = {"point":hit.point,"dist":hit.dist,"kind":"wall"}
+	return best
+
+## Index of the derived room containing a plan point on the active layer, or -1.
+func room_at(point: Vector2, layer_index := -1) -> int:
+	var item = data.layers[layer_index] if layer_index>=0 else layer()
+	if item.is_empty() or not item.has("roomFaces"): return -1
+	for i in range(item.roomFaces.size()):
+		if Geometry2D.is_point_in_polygon(point,Geo.points2(item.roomFaces[i].polygon)): return i
+	return -1
 
 func auto_walls(params: Dictionary) -> bool:
 	var active = layer()
@@ -239,9 +384,9 @@ func insert_wall_node(point: Vector2, tolerance: float) -> bool:
 			var hit = project(point,Vector2(a[0],a[2]),Vector2(b[0],b[2]))
 			if hit.dist<=max(wall.thickness*0.6,tolerance):
 				var y = Geo.js_round((a[1]*(1-hit.t)+b[1]*hit.t)*100)/100
+				var anchors = opening_positions(wall)
 				wall.points.insert(si+1,[snap(hit.point.x),y,snap(hit.point.y)])
-				for op in wall.openings:
-					if op.segment>si: op.segment += 1
+				rebind_openings(wall,anchors)
 				selected = {"kind":"wallNode","wallIndex":wi,"ptIndex":si+1}
 				remember()
 				return true
@@ -268,9 +413,11 @@ func delete_selected() -> void:
 			var count = wall.points.size()-(1 if wall.closed else 0)
 			if count<=2: data.walls.remove_at(s.wallIndex)
 			else:
+				var anchors = opening_positions(wall)
 				wall.points.remove_at(s.ptIndex)
 				if wall.closed and s.ptIndex==0: wall.points[-1] = wall.points[0].duplicate()
-				wall.openings = wall.openings.filter(func(op): return op.segment<wall.points.size()-1)
+				# Openings keep their plan position; those on a removed span snap to the nearest remaining wall.
+				rebind_openings(wall,anchors)
 		"opening": data.walls[s.wallIndex].openings.remove_at(s.opIndex)
 		"floorPoly": data.layers[s.layerIndex].polygons.remove_at(s.polyIndex)
 		"floorNode":
@@ -289,3 +436,76 @@ func delete_selected() -> void:
 		"prop": data.props.remove_at(s.index)
 	selected = {}
 	remember()
+
+## Nearest wall face to a plan point: centre-line hit, inward normal (towards the cursor) and half thickness.
+func wall_snap(point: Vector2, max_distance: float, elevation: float) -> Dictionary:
+	var best = {}
+	for wall in data.walls:
+		for si in range(wall.points.size()-1):
+			var a = wall.points[si]
+			var b = wall.points[si+1]
+			if abs(a[1]-elevation)>0.3 or abs(b[1]-elevation)>0.3: continue
+			var pa = Vector2(a[0],a[2])
+			var pb = Vector2(b[0],b[2])
+			if pa.distance_to(pb)<0.01: continue
+			var hit = project(point,pa,pb)
+			var face = hit.dist-float(wall.thickness)*0.5
+			if face>max_distance or (not best.is_empty() and face>=best.face): continue
+			var along = (pb-pa).normalized()
+			var normal = Vector2(-along.y,along.x)
+			if (point-hit.point).dot(normal)<0: normal = -normal
+			best = {"point":hit.point,"normal":normal,"half":float(wall.thickness)*0.5,"face":face}
+	return best
+
+## Floor pieces that overlap each other or stand outside every derived room: {prop index: "overlap"|"outside"}.
+func prop_conflicts() -> Dictionary:
+	var result = {}
+	var items = data.props
+	var radius = []
+	for item in items:
+		var f = Footprint.info(item)
+		radius.append(Vector2(f.w,f.d).length()*0.5)
+	for i in range(items.size()):
+		if not Footprint.blocks(items[i]): continue
+		for j in range(i+1,items.size()):
+			if not Footprint.blocks(items[j]): continue
+			if prop_layer_index(items[i])!=prop_layer_index(items[j]): continue
+			if Vector2(items[i].x-items[j].x,items[i].z-items[j].z).length()>radius[i]+radius[j]: continue
+			# Seating tucked under a table is normal.
+			var pair = [str(items[i].kind),str(items[j].kind)]
+			if (pair[0] in ["chair","bench"] and pair[1] in ["table","round_table","reception_desk"]) or (pair[1] in ["chair","bench"] and pair[0] in ["table","round_table","reception_desk"]): continue
+			if Footprint.overlaps(items[i],items[j],-0.02):
+				result[i] = "overlap"; result[j] = "overlap"
+	for i in range(items.size()):
+		if result.has(i) or not Footprint.blocks(items[i]): continue
+		var inside = false
+		var any_rooms = false
+		for item in data.layers:
+			if abs(float(item.y)-float(items[i].get("y",0)))>0.5 or not item.has("roomFaces") or item.roomFaces.is_empty(): continue
+			any_rooms = true
+			for face in item.roomFaces:
+				if Geometry2D.is_point_in_polygon(Vector2(items[i].x,items[i].z),Geo.points2(face.polygon)): inside = true; break
+		if any_rooms and not inside: result[i] = "outside"
+	return result
+
+## Props whose centre lies inside the given room polygon.
+func prop_layer_index(prop: Dictionary) -> int:
+	var best_index = -1
+	var best_height = -INF
+	var prop_height = float(prop.get("y",0))
+	for index in range(data.layers.size()):
+		var floor_height = float(data.layers[index].y)
+		if floor_height<=prop_height+0.05 and floor_height>best_height:
+			best_index = index
+			best_height = floor_height
+	return best_index
+
+func props_in_room(layer_index: int, room_index: int) -> Array:
+	var item = data.layers[layer_index]
+	var result = []
+	if not item.has("roomFaces") or room_index>=item.roomFaces.size(): return result
+	var ring = Geo.points2(item.roomFaces[room_index].polygon)
+	for i in range(data.props.size()):
+		var p = data.props[i]
+		if prop_layer_index(p)==layer_index and Geometry2D.is_point_in_polygon(Vector2(p.x,p.z),ring): result.append(i)
+	return result

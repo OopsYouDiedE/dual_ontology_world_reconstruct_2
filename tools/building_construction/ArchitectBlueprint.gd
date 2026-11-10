@@ -14,7 +14,62 @@ func _ready() -> void:
 func world(point: Vector2) -> Vector2: return (point-pan)/zoom
 func screen(point: Vector2) -> Vector2: return point*zoom+pan
 func p2(point: Array) -> Vector2: return Vector2(point[0],point[2])
-func _process(_dt: float) -> void: queue_redraw()
+func _process(_dt: float) -> void:
+	if is_visible_in_tree(): queue_redraw()
+
+const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
+const PROP_COLORS = {"floor":Color("8cbd9f"),"wall":Color("9fb4d9"),"top":Color("e0c27a"),"ceiling":Color("c8a2d8"),"flat":Color("6f8f7a")}
+var magnet_hit: Dictionary = {}
+
+func label_at(text: String, at: Vector2, color := Color("c9d1da"), size := 12) -> void:
+	var font = ThemeDB.fallback_font
+	var extent = font.get_string_size(text,HORIZONTAL_ALIGNMENT_LEFT,-1,size)
+	draw_rect(Rect2(at-Vector2(extent.x*0.5+3,extent.y*0.5+1),extent+Vector2(6,2)),Color(0.06,0.07,0.09,0.78))
+	draw_string(font,at+Vector2(-extent.x*0.5,extent.y*0.5-3),text,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
+
+func segment_label(a: Vector2, b: Vector2, thickness: float, color := Color("9aa6b4")) -> void:
+	var length = a.distance_to(b)
+	if length<0.05 or length*zoom<46: return
+	var mid = screen((a+b)*0.5)
+	var normal = (b-a).normalized().orthogonal()
+	label_at("%.2f m" % length,mid+normal*(thickness*zoom*0.5+11),color,11)
+
+func draw_prop(prop: Dictionary, selected: bool, conflict: String) -> void:
+	var f = Footprint.info(prop)
+	var color = PROP_COLORS.get(f.mount,Color("8cbd9f"))
+	if conflict!="": color = Color("e5675b")
+	var points = PackedVector2Array()
+	for p in Footprint.corners(prop): points.append(screen(p))
+	if f.mount in ["wall","top","ceiling"] and points.size()==4 and (f.w*zoom<10 or f.d*zoom<6):
+		# Thin or tiny pieces: draw a marker so they stay selectable.
+		var c = screen(Vector2(prop.x,prop.z))
+		draw_circle(c,5 if f.mount!="wall" else 4,color)
+		var facing = Vector2(sin(deg_to_rad(prop.get("yaw",0))),cos(deg_to_rad(prop.get("yaw",0))))
+		draw_line(c,c+facing*11,color,2)
+		if selected: draw_arc(c,9,0,TAU,20,Color.WHITE,2)
+		return
+	var fill = Color(color.r,color.g,color.b,0.14 if f.mount==Footprint.FLAT else 0.34)
+	draw_colored_polygon(points,fill)
+	var outline = points.duplicate()
+	outline.append(points[0])
+	draw_polyline(outline,Color.WHITE if selected else color,3 if selected else 1.5)
+	# Front edge (local +z) is thick, so orientation is readable at a glance.
+	var front_a = screen(Footprint.to_world(prop,Vector2(local_x(prop,-1),local_z(prop,1))))
+	var front_b = screen(Footprint.to_world(prop,Vector2(local_x(prop,1),local_z(prop,1))))
+	draw_line(front_a,front_b,color.lightened(0.35),3)
+	if f.w*zoom>38 and f.d*zoom>16:
+		label_at(short_name(prop),screen(Vector2(prop.x,prop.z)),Color("dbe3ea"),10)
+
+func local_x(prop: Dictionary, sign: float) -> float:
+	var r = Footprint.local_rect(prop)
+	return r.position.x if sign<0 else r.end.x
+func local_z(prop: Dictionary, sign: float) -> float:
+	var r = Footprint.local_rect(prop)
+	return r.position.y if sign<0 else r.end.y
+func short_name(prop: Dictionary) -> String:
+	var names = editor.prop_presets.get(str(prop.get("kind","")),{}) if editor!=null else {}
+	return str(names.get("name",prop.get("name","")))
+
 
 func _input(event: InputEvent) -> void:
 	# Match the source editor's window-level mouseup, including release outside the canvas.
@@ -55,6 +110,7 @@ func _draw() -> void:
 	for wi in range(state.data.walls.size()):
 		var wall = state.data.walls[wi]
 		var color = Color("d4a373")
+		if absf(float(wall.get("baseY",0))-float(state.layer().get("y",0)))>0.3: color = Color(0.83,0.64,0.45,0.28)
 		if state.selected.get("wallIndex",-1)==wi: color = Color("f7d27e")
 		for si in range(wall.points.size()-1):
 			draw_line(screen(p2(wall.points[si])),screen(p2(wall.points[si+1])),color,maxf(3,wall.thickness*zoom))
@@ -74,7 +130,22 @@ func _draw() -> void:
 		var center = screen(Vector2(stair.x,stair.z))
 		draw_circle(center,8,Color("bd9fca"))
 		draw_line(center,center+Vector2(cos(deg_to_rad(-stair.yaw)),sin(deg_to_rad(-stair.yaw)))*stair.run*zoom,Color("bd9fca"),stair.width*zoom)
-	for prop in state.data.props: draw_circle(screen(Vector2(prop.x,prop.z)),7,Color("8cbd9f"))
+	var conflicts = editor.conflicts
+	for pi in range(state.data.props.size()):
+		var prop = state.data.props[pi]
+		draw_prop(prop,state.selected.get("kind","")=="prop" and state.selected.get("index",-1)==pi,str(conflicts.get(pi,"")))
+	# Room names and areas on the active layer.
+	var active = state.layer()
+	if active.has("roomFaces"):
+		for ri in range(active.roomFaces.size()):
+			var face = active.roomFaces[ri]
+			label_at("房间 %d · %.1f m²" % [ri+1,face.get("area",0.0)],screen(Vector2(face.centroid[0],face.centroid[1]))+Vector2(0,-14),Color("e9d8b4"),12)
+	# Dimensions of the selected wall and of the segment being drawn.
+	if state.selected.get("kind","") in ["wall","wallNode"]:
+		var sel = state.data.walls[state.selected.wallIndex]
+		for si in range(sel.points.size()-1): segment_label(p2(sel.points[si]),p2(sel.points[si+1]),sel.thickness)
+	if not magnet_hit.is_empty() and editor.tool in ["wall","floor","railing"]:
+		draw_arc(screen(magnet_hit.point),9,0,TAU,24,Color("70e1e8") if magnet_hit.kind=="node" else Color("f7d27e"),2)
 	if not editor.drawing.is_empty():
 		var points = PackedVector2Array()
 		for p in editor.drawing:
@@ -82,6 +153,10 @@ func _draw() -> void:
 			draw_circle(points[-1],5,Color("f7d27e"))
 		points.append(screen(hover))
 		if points.size()>1: draw_polyline(points,Color("f7d27e"),2)
+		var last = Vector2(editor.drawing[-1][0],editor.drawing[-1][1])
+		if last.distance_to(hover)>0.05:
+			var delta = hover-last
+			label_at("%.2f m · %d°" % [delta.length(),int(round(fposmod(rad_to_deg(atan2(-delta.y,delta.x)),360)))],screen((last+hover)*0.5)+Vector2(0,-14),Color("f7d27e"),12)
 	if editor.tool=="opening":
 		var hit = state.nearest_wall(hover,0.9)
 		if not hit.is_empty(): draw_circle(screen(hit.point),8,Color("70e1e8"),false,2)
@@ -124,9 +199,14 @@ func hit_test(point: Vector2) -> Dictionary:
 			var length = (b-a).length()
 			var center = a+(b-a)/(length if length>0 else 1.0)*op.center
 			if point.distance_to(center)<=maxf(op.width*0.45,tol*1.4): return {"kind":"opening","wallIndex":wi,"opIndex":oi}
-	for i in range(state.data.props.size()-1,-1,-1):
-		var p = state.data.props[i]
-		if point.distance_to(Vector2(p.x,p.z))<=0.42: return {"kind":"prop","index":i}
+	# Small hanging / tabletop pieces win over the big piece they sit on; rugs come last.
+	for pass_index in range(3):
+		for i in range(state.data.props.size()-1,-1,-1):
+			var p = state.data.props[i]
+			var mount = Footprint.info(p).mount
+			var rank = 0 if mount in ["wall","top","ceiling"] else (2 if mount=="flat" else 1)
+			if rank!=pass_index: continue
+			if Footprint.contains(p,point,0.06) or (rank==0 and point.distance_to(Vector2(p.x,p.z))<=0.3): return {"kind":"prop","index":i}
 	for i in range(state.data.stairs.size()-1,-1,-1):
 		var p = state.data.stairs[i]
 		var rad = deg_to_rad(p.get("yaw",0))
@@ -176,6 +256,10 @@ func _gui_input(event: InputEvent) -> void:
 					var sx = state.snap(point.x)
 					var sz = state.snap(point.y)
 					var p = Vector2(sx,sz)
+					var pull = state.magnet(point,14/zoom,editor.wall_params.baseY if editor.tool=="wall" else state.layer().get("y",0.0)) if editor.tool!="railing" else {}
+					if not pull.is_empty():
+						sx = snappedf(pull.point.x,0.01); sz = snappedf(pull.point.y,0.01)
+						p = Vector2(sx,sz)
 					if editor.drawing.size()>=3 and p.distance_to(Vector2(editor.drawing[0][0],editor.drawing[0][1]))<=12/zoom: editor.finish_path(true)
 					else:
 						var y = editor.wall_params.baseY if editor.tool=="wall" else state.layer().get("y",0)
@@ -183,6 +267,7 @@ func _gui_input(event: InputEvent) -> void:
 						editor.update_status()
 				"opening":
 					if state.add_opening(point,editor.opening_params): editor.refresh()
+					else: editor.status.text = state.message
 				"prop": editor.place_prop(point)
 				_:
 					state.selected = hit_test(point)
@@ -194,6 +279,11 @@ func _gui_input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		var point = world(event.position)
 		hover = Vector2(state.snap(point.x),state.snap(point.y))
+		magnet_hit = {}
+		if editor.tool in ["wall","floor"]:
+			magnet_hit = state.magnet(point,14/zoom,editor.wall_params.baseY if editor.tool=="wall" else state.layer().get("y",0.0))
+			if not magnet_hit.is_empty(): hover = Vector2(snappedf(magnet_hit.point.x,0.01),snappedf(magnet_hit.point.y,0.01))
+		editor.update_cursor(hover)
 		if panning: pan += event.relative
 		elif dragging and not state.selected.is_empty():
 			var s = state.selected
@@ -225,8 +315,9 @@ func _gui_input(event: InputEvent) -> void:
 				"prop":
 					state.data.props[s.index].x = state.snap(point.x)
 					state.data.props[s.index].z = state.snap(point.y)
+					if not Input.is_key_pressed(KEY_ALT): editor.snap_prop(state.data.props[s.index],point)
 				"stair":
 					state.data.stairs[s.index].x = editor.Geo.js_round((snapshot.stairs[s.index].x+delta.x)*100)/100
 					state.data.stairs[s.index].z = editor.Geo.js_round((snapshot.stairs[s.index].z+delta.y)*100)/100
-			editor.rebuild()
+			editor.request_rebuild()
 			editor.refresh_inspector()

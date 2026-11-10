@@ -91,4 +91,15 @@ public sealed class SlotReservations
 
     public IReadOnlyCollection<string> Held(ReservationOwner owner)=>owners.TryGetValue(owner,out var held)?held.ToArray():[];
     public int Occupants(string id)=>slots[id].Actors.Count;
+    public bool Handoff(string source,ReservationOwner recipient,string resource)
+    {
+        if(!slots.TryGetValue(resource,out var slot)||slot.Actors.Keys.Any(actor=>actor!=source&&actor!=recipient.Actor))return false;
+        foreach(var owner in owners.Keys.Where(owner=>owner.Actor==source).ToArray())
+        {
+            if(!owners[owner].Remove(resource))continue;
+            if(owners[owner].Count==0)owners.Remove(owner);
+        }
+        slot.Actors.Remove(source);
+        return TryAcquire(recipient,[resource]);
+    }
 }

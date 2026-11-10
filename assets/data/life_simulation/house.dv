@@ -1,0 +1,1318 @@
+schema "dv-script-v1";
+data life.building { value = {
+  "activeLayerId": "fl_209795_9582",
+  "layers": [
+    {
+      "id": "fl_209795_9582",
+      "name": "1F 示范住宅",
+      "polygons": [
+        [
+          [
+            0.1,
+            0.1
+          ],
+          [
+            4.9,
+            0.1
+          ],
+          [
+            4.9,
+            5.4
+          ],
+          [
+            0.1,
+            5.4
+          ]
+        ],
+        [
+          [
+            5.1,
+            0.1
+          ],
+          [
+            15.9,
+            0.1
+          ],
+          [
+            15.9,
+            5.4
+          ],
+          [
+            11,
+            5.4
+          ],
+          [
+            5.1,
+            5.4
+          ]
+        ],
+        [
+          [
+            15.9,
+            5.6
+          ],
+          [
+            15.9,
+            10.9
+          ],
+          [
+            11.1,
+            10.9
+          ],
+          [
+            11.1,
+            5.6
+          ]
+        ],
+        [
+          [
+            10.9,
+            10.9
+          ],
+          [
+            5.1,
+            10.9
+          ],
+          [
+            5.1,
+            5.6
+          ],
+          [
+            10.9,
+            5.6
+          ]
+        ],
+        [
+          [
+            4.9,
+            10.9
+          ],
+          [
+            0.1,
+            10.9
+          ],
+          [
+            0.1,
+            5.6
+          ],
+          [
+            4.9,
+            5.6
+          ]
+        ]
+      ],
+      "roomFaces": [
+        {
+          "area": 25.44,
+          "centroid": [
+            2.5,
+            2.75
+          ],
+          "exteriorEdges": 2,
+          "neighbors": [
+            1,
+            4
+          ],
+          "nodes": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              5,
+              5.5
+            ],
+            [
+              0,
+              5.5
+            ]
+          ],
+          "perimeter": 20.2,
+          "polygon": [
+            [
+              0.1,
+              0.1
+            ],
+            [
+              4.9,
+              0.1
+            ],
+            [
+              4.9,
+              5.4
+            ],
+            [
+              0.1,
+              5.4
+            ]
+          ],
+          "walls": [
+            "outer",
+            "w_west_east",
+            "w_cross",
+            "outer"
+          ]
+        },
+        {
+          "area": 57.24,
+          "centroid": [
+            10.5,
+            2.75
+          ],
+          "exteriorEdges": 2,
+          "neighbors": [
+            2,
+            3,
+            0
+          ],
+          "nodes": [
+            [
+              5,
+              0
+            ],
+            [
+              16,
+              0
+            ],
+            [
+              16,
+              5.5
+            ],
+            [
+              11,
+              5.5
+            ],
+            [
+              5,
+              5.5
+            ]
+          ],
+          "perimeter": 32.2,
+          "polygon": [
+            [
+              5.1,
+              0.1
+            ],
+            [
+              15.9,
+              0.1
+            ],
+            [
+              15.9,
+              5.4
+            ],
+            [
+              11,
+              5.4
+            ],
+            [
+              5.1,
+              5.4
+            ]
+          ],
+          "walls": [
+            "outer",
+            "outer",
+            "w_cross",
+            "w_cross",
+            "w_west_east"
+          ]
+        },
+        {
+          "area": 25.44,
+          "centroid": [
+            13.5,
+            8.25
+          ],
+          "exteriorEdges": 2,
+          "neighbors": [
+            3,
+            1
+          ],
+          "nodes": [
+            [
+              16,
+              5.5
+            ],
+            [
+              16,
+              11
+            ],
+            [
+              11,
+              11
+            ],
+            [
+              11,
+              5.5
+            ]
+          ],
+          "perimeter": 20.2,
+          "polygon": [
+            [
+              15.9,
+              5.6
+            ],
+            [
+              15.9,
+              10.9
+            ],
+            [
+              11.1,
+              10.9
+            ],
+            [
+              11.1,
+              5.6
+            ]
+          ],
+          "walls": [
+            "outer",
+            "outer",
+            "w_study",
+            "w_cross"
+          ]
+        },
+        {
+          "area": 30.74,
+          "centroid": [
+            8,
+            8.25
+          ],
+          "exteriorEdges": 1,
+          "neighbors": [
+            4,
+            1,
+            2
+          ],
+          "nodes": [
+            [
+              11,
+              11
+            ],
+            [
+              5,
+              11
+            ],
+            [
+              5,
+              5.5
+            ],
+            [
+              11,
+              5.5
+            ]
+          ],
+          "perimeter": 22.2,
+          "polygon": [
+            [
+              10.9,
+              10.9
+            ],
+            [
+              5.1,
+              10.9
+            ],
+            [
+              5.1,
+              5.6
+            ],
+            [
+              10.9,
+              5.6
+            ]
+          ],
+          "walls": [
+            "outer",
+            "w_west_east",
+            "w_cross",
+            "w_study"
+          ]
+        },
+        {
+          "area": 25.44,
+          "centroid": [
+            2.5,
+            8.25
+          ],
+          "exteriorEdges": 2,
+          "neighbors": [
+            0,
+            3
+          ],
+          "nodes": [
+            [
+              5,
+              11
+            ],
+            [
+              0,
+              11
+            ],
+            [
+              0,
+              5.5
+            ],
+            [
+              5,
+              5.5
+            ]
+          ],
+          "perimeter": 20.2,
+          "polygon": [
+            [
+              4.9,
+              10.9
+            ],
+            [
+              0.1,
+              10.9
+            ],
+            [
+              0.1,
+              5.6
+            ],
+            [
+              4.9,
+              5.6
+            ]
+          ],
+          "walls": [
+            "outer",
+            "outer",
+            "w_cross",
+            "w_west_east"
+          ]
+        }
+      ],
+      "style": "parquet_wood",
+      "y": 0
+    }
+  ],
+  "props": [
+    {
+      "id": "extra_bed_0",
+      "kind": "bed",
+      "name": "bed",
+      "params": {
+        "bed_l": 2,
+        "bed_w": 1.1
+      },
+      "room_kind": "bedroom",
+      "x": 3.75,
+      "y": 0,
+      "yaw": -90,
+      "z": 1.05
+    },
+    {
+      "id": "auto_bed_210884_1",
+      "kind": "bed",
+      "name": "bed",
+      "params": {
+        "bed_l": 2.1,
+        "bed_w": 1.8,
+        "head_h": 1.35
+      },
+      "room_kind": "bedroom",
+      "x": 3.8,
+      "y": 0,
+      "yaw": -90,
+      "z": 4.4
+    },
+    {
+      "id": "auto_cabinet_211285_4",
+      "kind": "cabinet",
+      "name": "cabinet",
+      "params": {
+        "cab_h": 2,
+        "cab_w": 1.2
+      },
+      "room_kind": "bedroom",
+      "x": 0.46,
+      "y": 0,
+      "yaw": 90,
+      "z": 2.75
+    },
+    {
+      "id": "auto_table_211801_5",
+      "kind": "table",
+      "name": "table",
+      "params": {
+        "table_d": 0.7,
+        "table_h": 0.75,
+        "table_w": 1.4
+      },
+      "room_kind": "bedroom",
+      "x": 0.5,
+      "y": 0,
+      "yaw": 90,
+      "z": 4.6
+    },
+    {
+      "id": "auto_chair_212668_6",
+      "kind": "chair",
+      "name": "chair",
+      "params": {
+        "seat_d": 0.48,
+        "seat_w": 0.48
+      },
+      "room_kind": "bedroom",
+      "x": 1.21,
+      "y": 0,
+      "yaw": 270,
+      "z": 4.6
+    },
+    {
+      "id": "auto_rug_212814_7",
+      "kind": "rug",
+      "name": "rug",
+      "params": {
+        "rug_d": 1.6,
+        "rug_w": 2.2
+      },
+      "room_kind": "bedroom",
+      "x": 2.5,
+      "y": 0,
+      "yaw": -90,
+      "z": 2.75
+    },
+    {
+      "id": "auto_painting_212848_8",
+      "kind": "painting",
+      "name": "painting",
+      "params": {
+        "frame_h": 0.95,
+        "frame_w": 1.35,
+        "mount_y": 1.65
+      },
+      "room_kind": "bedroom",
+      "x": 4.85,
+      "y": 1.65,
+      "yaw": -90,
+      "z": 1.43
+    },
+    {
+      "id": "auto_wall_lantern_212880_9",
+      "kind": "wall_lantern",
+      "name": "wall_lantern",
+      "params": {
+        "lamp_energy": 15,
+        "lamp_height": 2.3
+      },
+      "room_kind": "bedroom",
+      "x": 0.15,
+      "y": 2.3,
+      "yaw": 90,
+      "z": 2.75
+    },
+    {
+      "id": "extra_wash_table_8",
+      "kind": "wash_table",
+      "name": "wash_table",
+      "params": {},
+      "room_kind": "bedroom",
+      "x": 0.96,
+      "y": 0,
+      "yaw": 0,
+      "z": 0.55
+    },
+    {
+      "id": "auto_sofa_216201_1",
+      "kind": "sofa",
+      "name": "sofa",
+      "params": {
+        "sofa_d": 0.9,
+        "sofa_w": 2
+      },
+      "room_kind": "living",
+      "x": 7.8,
+      "y": 0,
+      "yaw": 0,
+      "z": 0.6
+    },
+    {
+      "id": "auto_round_table_216451_2",
+      "kind": "round_table",
+      "name": "round_table",
+      "params": {
+        "table_h": 0.45,
+        "table_r": 0.45
+      },
+      "room_kind": "living",
+      "x": 7.8,
+      "y": 0,
+      "yaw": 0,
+      "z": 2.05
+    },
+    {
+      "id": "auto_bench_216720_3",
+      "kind": "bench",
+      "name": "bench",
+      "params": {
+        "bench_len": 1.6,
+        "bench_w": 0.5
+      },
+      "room_kind": "living",
+      "x": 13.2,
+      "y": 0,
+      "yaw": 0,
+      "z": 0.4
+    },
+    {
+      "id": "auto_cabinet_217250_4",
+      "kind": "cabinet",
+      "name": "cabinet",
+      "params": {
+        "cab_h": 2,
+        "cab_w": 1.2
+      },
+      "room_kind": "living",
+      "x": 9.52,
+      "y": 0,
+      "yaw": -180,
+      "z": 5.04
+    },
+    {
+      "id": "auto_planter_218963_5",
+      "kind": "planter",
+      "name": "planter",
+      "params": {
+        "flower_count": 7,
+        "plant_h": 0.85,
+        "plant_w": 0.65
+      },
+      "room_kind": "living",
+      "x": 5.51,
+      "y": 0,
+      "yaw": 0,
+      "z": 0.5
+    },
+    {
+      "id": "auto_rug_219288_6",
+      "kind": "rug",
+      "name": "rug",
+      "params": {
+        "rug_d": 1.8,
+        "rug_w": 2.6
+      },
+      "room_kind": "living",
+      "x": 10.5,
+      "y": 0,
+      "yaw": 0,
+      "z": 2.75
+    },
+    {
+      "id": "auto_painting_219324_7",
+      "kind": "painting",
+      "name": "painting",
+      "params": {
+        "frame_h": 0.95,
+        "frame_w": 1.35,
+        "mount_y": 1.65
+      },
+      "room_kind": "living",
+      "x": 7.8,
+      "y": 1.65,
+      "yaw": 0,
+      "z": 0.15
+    },
+    {
+      "id": "auto_wall_lantern_219356_8",
+      "kind": "wall_lantern",
+      "name": "wall_lantern",
+      "params": {
+        "lamp_energy": 15,
+        "lamp_height": 2.3
+      },
+      "room_kind": "living",
+      "x": 9.52,
+      "y": 2.3,
+      "yaw": -180,
+      "z": 5.35
+    },
+    {
+      "id": "extra_upright_piano_17",
+      "kind": "upright_piano",
+      "name": "upright_piano",
+      "params": {},
+      "room_kind": "living",
+      "x": 15.4,
+      "y": 0,
+      "yaw": -90,
+      "z": 1.05
+    },
+    {
+      "id": "extra_easel_18",
+      "kind": "easel",
+      "name": "easel",
+      "params": {},
+      "room_kind": "living",
+      "x": 6.63,
+      "y": 0,
+      "yaw": -180,
+      "z": 4.95
+    },
+    {
+      "id": "auto_table_231617_1",
+      "kind": "table",
+      "name": "table",
+      "params": {
+        "table_d": 0.95,
+        "table_h": 0.75,
+        "table_w": 1.8
+      },
+      "room_kind": "study",
+      "x": 15.38,
+      "y": 0,
+      "yaw": -90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_chair_232012_2",
+      "kind": "chair",
+      "name": "chair",
+      "params": {
+        "seat_d": 0.48,
+        "seat_w": 0.48
+      },
+      "room_kind": "study",
+      "x": 14.55,
+      "y": 0,
+      "yaw": 90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_banker_lamp_232438_3",
+      "kind": "banker_lamp",
+      "name": "banker_lamp",
+      "params": {
+        "lamp_energy": 8,
+        "mount_y": 0.76
+      },
+      "room_kind": "study",
+      "x": 15.38,
+      "y": 0.76,
+      "yaw": 0,
+      "z": 8.25
+    },
+    {
+      "id": "auto_bookshelf_232462_4",
+      "kind": "bookshelf",
+      "name": "bookshelf",
+      "params": {
+        "shelf_h": 2.2,
+        "shelf_layers": 5,
+        "shelf_w": 1.5
+      },
+      "room_kind": "study",
+      "x": 15.64,
+      "y": 0,
+      "yaw": -90,
+      "z": 6.45
+    },
+    {
+      "id": "auto_bookshelf_234155_5",
+      "kind": "bookshelf",
+      "name": "bookshelf",
+      "params": {
+        "shelf_h": 2.2,
+        "shelf_layers": 5,
+        "shelf_w": 1.5
+      },
+      "room_kind": "study",
+      "x": 15.64,
+      "y": 0,
+      "yaw": -90,
+      "z": 10.05
+    },
+    {
+      "id": "auto_chest_236237_6",
+      "kind": "chest",
+      "name": "chest",
+      "params": {
+        "chest_d": 0.55,
+        "chest_h": 0.5,
+        "chest_w": 0.95
+      },
+      "room_kind": "study",
+      "x": 11.43,
+      "y": 0,
+      "yaw": 90,
+      "z": 6.92
+    },
+    {
+      "id": "auto_rug_239784_7",
+      "kind": "rug",
+      "name": "rug",
+      "params": {
+        "rug_d": 1.7,
+        "rug_w": 2.4
+      },
+      "room_kind": "study",
+      "x": 13.5,
+      "y": 0,
+      "yaw": -90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_painting_239820_8",
+      "kind": "painting",
+      "name": "painting",
+      "params": {
+        "frame_h": 0.95,
+        "frame_w": 1.35,
+        "mount_y": 1.65
+      },
+      "room_kind": "study",
+      "x": 15.85,
+      "y": 1.65,
+      "yaw": -90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_wall_lantern_239847_9",
+      "kind": "wall_lantern",
+      "name": "wall_lantern",
+      "params": {
+        "lamp_energy": 15,
+        "lamp_height": 2.3
+      },
+      "room_kind": "study",
+      "x": 11.15,
+      "y": 2.3,
+      "yaw": 90,
+      "z": 9.57
+    },
+    {
+      "id": "auto_table_239943_1",
+      "kind": "table",
+      "name": "table",
+      "params": {
+        "table_d": 1,
+        "table_h": 0.75,
+        "table_w": 2.2
+      },
+      "room_kind": "dining",
+      "x": 8,
+      "y": 0,
+      "yaw": -180,
+      "z": 8.25
+    },
+    {
+      "id": "auto_chair_240484_2",
+      "kind": "chair",
+      "name": "chair",
+      "params": {
+        "seat_d": 0.48,
+        "seat_w": 0.48
+      },
+      "room_kind": "dining",
+      "x": 8,
+      "y": 0,
+      "yaw": 0,
+      "z": 7.41
+    },
+    {
+      "id": "auto_chair_241065_3",
+      "kind": "chair",
+      "name": "chair",
+      "params": {
+        "seat_d": 0.48,
+        "seat_w": 0.48
+      },
+      "room_kind": "dining",
+      "x": 8,
+      "y": 0,
+      "yaw": -180,
+      "z": 9.09
+    },
+    {
+      "id": "auto_chair_241648_4",
+      "kind": "chair",
+      "name": "chair",
+      "params": {
+        "seat_d": 0.48,
+        "seat_w": 0.48
+      },
+      "room_kind": "dining",
+      "x": 6.56,
+      "y": 0,
+      "yaw": -270,
+      "z": 8.25
+    },
+    {
+      "id": "auto_chair_242243_5",
+      "kind": "chair",
+      "name": "chair",
+      "params": {
+        "seat_d": 0.48,
+        "seat_w": 0.48
+      },
+      "room_kind": "dining",
+      "x": 9.44,
+      "y": 0,
+      "yaw": -90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_cabinet_242839_6",
+      "kind": "cabinet",
+      "name": "cabinet",
+      "params": {
+        "cab_h": 2,
+        "cab_w": 1.2
+      },
+      "room_kind": "dining",
+      "x": 8,
+      "y": 0,
+      "yaw": -180,
+      "z": 10.54
+    },
+    {
+      "id": "auto_planter_243483_7",
+      "kind": "planter",
+      "name": "planter",
+      "params": {
+        "flower_count": 7,
+        "plant_h": 0.85,
+        "plant_w": 0.65
+      },
+      "room_kind": "dining",
+      "x": 10.49,
+      "y": 0,
+      "yaw": -180,
+      "z": 10.49
+    },
+    {
+      "id": "auto_pendant_lamp_244150_8",
+      "kind": "pendant_lamp",
+      "name": "pendant_lamp",
+      "params": {
+        "drop_length": 1.1,
+        "lamp_energy": 22
+      },
+      "room_kind": "dining",
+      "x": 8,
+      "y": 2.07,
+      "yaw": -180,
+      "z": 8.25
+    },
+    {
+      "id": "auto_wall_lantern_244176_9",
+      "kind": "wall_lantern",
+      "name": "wall_lantern",
+      "params": {
+        "lamp_energy": 15,
+        "lamp_height": 2.3
+      },
+      "room_kind": "dining",
+      "x": 8,
+      "y": 2.3,
+      "yaw": -180,
+      "z": 10.85
+    },
+    {
+      "id": "extra_wash_table_37",
+      "kind": "wash_table",
+      "name": "wash_table",
+      "params": {},
+      "room_kind": "dining",
+      "x": 6.14,
+      "y": 0,
+      "yaw": -180,
+      "z": 10.45
+    },
+    {
+      "id": "extra_bed_38",
+      "kind": "bed",
+      "name": "bed",
+      "params": {
+        "bed_l": 2,
+        "bed_w": 1.1
+      },
+      "room_kind": "bedroom",
+      "x": 1.25,
+      "y": 0,
+      "yaw": 90,
+      "z": 9.95
+    },
+    {
+      "id": "auto_bed_251292_1",
+      "kind": "bed",
+      "name": "bed",
+      "params": {
+        "bed_l": 2.1,
+        "bed_w": 1.8,
+        "head_h": 1.35
+      },
+      "room_kind": "bedroom",
+      "x": 1.2,
+      "y": 0,
+      "yaw": 90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_nightstand_252809_3",
+      "kind": "nightstand",
+      "name": "nightstand",
+      "params": {
+        "stand_h": 0.6,
+        "stand_w": 0.5
+      },
+      "room_kind": "bedroom",
+      "x": 0.38,
+      "y": 0,
+      "yaw": 90,
+      "z": 7
+    },
+    {
+      "id": "auto_cabinet_253565_4",
+      "kind": "cabinet",
+      "name": "cabinet",
+      "params": {
+        "cab_h": 2,
+        "cab_w": 1.2
+      },
+      "room_kind": "bedroom",
+      "x": 4.54,
+      "y": 0,
+      "yaw": -90,
+      "z": 6.92
+    },
+    {
+      "id": "auto_table_259609_5",
+      "kind": "table",
+      "name": "table",
+      "params": {
+        "table_d": 0.7,
+        "table_h": 0.75,
+        "table_w": 1.4
+      },
+      "room_kind": "bedroom",
+      "x": 4.5,
+      "y": 0,
+      "yaw": -90,
+      "z": 10.1
+    },
+    {
+      "id": "auto_chair_266634_6",
+      "kind": "chair",
+      "name": "chair",
+      "params": {
+        "seat_d": 0.48,
+        "seat_w": 0.48
+      },
+      "room_kind": "bedroom",
+      "x": 3.79,
+      "y": 0,
+      "yaw": 90,
+      "z": 10.1
+    },
+    {
+      "id": "auto_rug_267463_7",
+      "kind": "rug",
+      "name": "rug",
+      "params": {
+        "rug_d": 1.6,
+        "rug_w": 2.2
+      },
+      "room_kind": "bedroom",
+      "x": 2.5,
+      "y": 0,
+      "yaw": 90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_painting_267502_8",
+      "kind": "painting",
+      "name": "painting",
+      "params": {
+        "frame_h": 0.95,
+        "frame_w": 1.35,
+        "mount_y": 1.65
+      },
+      "room_kind": "bedroom",
+      "x": 0.15,
+      "y": 1.65,
+      "yaw": 90,
+      "z": 8.25
+    },
+    {
+      "id": "auto_wall_lantern_267529_9",
+      "kind": "wall_lantern",
+      "name": "wall_lantern",
+      "params": {
+        "lamp_energy": 15,
+        "lamp_height": 2.3
+      },
+      "room_kind": "bedroom",
+      "x": 4.85,
+      "y": 2.3,
+      "yaw": -90,
+      "z": 6.92
+    }
+  ],
+  "railings": [],
+  "stairs": [],
+  "walls": [
+    {
+      "baseY": 0,
+      "closed": true,
+      "hasPillars": false,
+      "height": 3.2,
+      "id": "outer",
+      "name": "outer",
+      "openings": [
+        {
+          "bottom": 0,
+          "center": 11,
+          "height": 2.1,
+          "id": "door_front",
+          "segment": 0,
+          "type": "closed_door",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 2.5,
+          "height": 1.3,
+          "id": "win_a",
+          "segment": 0,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 7,
+          "height": 1.3,
+          "id": "win_l1",
+          "segment": 0,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 14,
+          "height": 1.3,
+          "id": "win_l2",
+          "segment": 0,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 2.7,
+          "height": 1.3,
+          "id": "win_l3",
+          "segment": 1,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 8.2,
+          "height": 1.3,
+          "id": "win_s",
+          "segment": 1,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 2.5,
+          "height": 1.3,
+          "id": "win_st",
+          "segment": 2,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 8,
+          "height": 1.3,
+          "id": "win_d",
+          "segment": 2,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 13.5,
+          "height": 1.3,
+          "id": "win_b",
+          "segment": 2,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 2.75,
+          "height": 1.3,
+          "id": "win_bb",
+          "segment": 3,
+          "type": "rectangular_window",
+          "width": 1.3
+        },
+        {
+          "bottom": 0.95,
+          "center": 8.25,
+          "height": 1.3,
+          "id": "win_ba",
+          "segment": 3,
+          "type": "rectangular_window",
+          "width": 1.3
+        }
+      ],
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          16,
+          0,
+          0
+        ],
+        [
+          16,
+          0,
+          11
+        ],
+        [
+          0,
+          0,
+          11
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "style": "plain",
+      "thickness": 0.2
+    },
+    {
+      "baseY": 0,
+      "closed": false,
+      "hasPillars": false,
+      "height": 3.2,
+      "id": "w_west_east",
+      "name": "w_west_east",
+      "openings": [
+        {
+          "bottom": 0,
+          "center": 2.75,
+          "height": 2.1,
+          "id": "door_a",
+          "segment": 0,
+          "type": "closed_door",
+          "width": 1.1
+        },
+        {
+          "bottom": 0,
+          "center": 8.25,
+          "height": 2.1,
+          "id": "door_b",
+          "segment": 0,
+          "type": "closed_door",
+          "width": 1.1
+        }
+      ],
+      "points": [
+        [
+          5,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          11
+        ]
+      ],
+      "style": "plain",
+      "thickness": 0.2
+    },
+    {
+      "baseY": 0,
+      "closed": false,
+      "hasPillars": false,
+      "height": 3.2,
+      "id": "w_cross",
+      "name": "w_cross",
+      "openings": [
+        {
+          "bottom": 0,
+          "center": 8,
+          "height": 2.1,
+          "id": "door_ld",
+          "segment": 0,
+          "type": "portal_arch",
+          "width": 1.4
+        },
+        {
+          "bottom": 0,
+          "center": 13.5,
+          "height": 2.1,
+          "id": "door_ls",
+          "segment": 0,
+          "type": "closed_door",
+          "width": 1.1
+        }
+      ],
+      "points": [
+        [
+          0,
+          0,
+          5.5
+        ],
+        [
+          16,
+          0,
+          5.5
+        ]
+      ],
+      "style": "plain",
+      "thickness": 0.2
+    },
+    {
+      "baseY": 0,
+      "closed": false,
+      "hasPillars": false,
+      "height": 3.2,
+      "id": "w_study",
+      "name": "w_study",
+      "openings": [
+        {
+          "bottom": 0,
+          "center": 2.75,
+          "height": 2.1,
+          "id": "arch_ds",
+          "segment": 0,
+          "type": "portal_arch",
+          "width": 1.4
+        }
+      ],
+      "points": [
+        [
+          11,
+          0,
+          5.5
+        ],
+        [
+          11,
+          0,
+          11
+        ]
+      ],
+      "style": "plain",
+      "thickness": 0.2
+    }
+  ]
+}; }

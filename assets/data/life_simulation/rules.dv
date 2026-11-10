@@ -1,0 +1,1121 @@
+schema "dv-script-v1";
+data runtime.life { value = {
+  "_comment": "C# Core 权威生活规则；速率单位为每内容分钟。人格保持中性，生活偏好是显式适配；个人目的、职业记忆及动机初值引用正式 daily-life.dv。",
+  "time": {
+    "start_minute": 420,
+    "minutes_per_second": 0.5,
+    "walk_speed_per_min": 2.8,
+    "max_step": 0.5,
+    "logical_approach_seconds": 30,
+    "logical_social_approach_seconds": 10,
+    "night_from": 22,
+    "night_to": 6.5,
+    "day_from": 6.5,
+    "dusk": 18
+  },
+  "needs": {
+    "curiosity": {"label":"求知", "decay":0.06, "character_source":true},
+    "purpose": {"label":"个人目的", "decay":0.048, "character_source":true},
+    "agency": {"label":"自主权", "decay":0.03, "character_source":true},
+    "hunger": {
+      "label": "饥饿",
+      "group": "body",
+      "decay": 0.11
+    },
+    "thirst": {
+      "label": "口渴",
+      "group": "body",
+      "decay": 0.17
+    },
+    "energy": {
+      "label": "精力",
+      "group": "body",
+      "decay": 0.07
+    },
+    "hygiene": {
+      "label": "清洁",
+      "group": "body",
+      "decay": 0.05
+    },
+    "social": {
+      "label": "社交",
+      "group": "mind",
+      "decay": 0.08
+    },
+    "fun": {
+      "label": "娱乐",
+      "group": "mind",
+      "decay": 0.08
+    },
+    "comfort": {
+      "label": "舒适",
+      "group": "mind",
+      "decay": 0.05
+    },
+    "growth": {
+      "label": "成长",
+      "group": "mind",
+      "decay": 0.045
+    },
+    "calm": {
+      "label": "平静",
+      "group": "mind",
+      "decay": 0.04
+    }
+  },
+  "mood": {
+    "weights": {
+      "hunger": 1.2,
+      "thirst": 1,
+      "energy": 1.2,
+      "hygiene": 0.6,
+      "social": 1,
+      "fun": 0.9,
+      "comfort": 0.7,
+      "growth": 0.5,
+      "calm": 1
+    },
+    "critical": 20,
+    "stress_gain_per_min": 0.012,
+    "stress_relax_per_min": 0.006,
+    "stress_event_cap": 0.5
+  },
+  "brain": {
+    "satisfied_below": 92,
+    "urgency_power": 2,
+    "critical": 20,
+    "survival_penalty": 0.25,
+    "distance_cost": 0.02,
+    "noise": 0.15,
+    "repeat_penalty": 0.5,
+    "repeat_memory": 3,
+    "idle_threshold": 0.7,
+    "temperature": 0.35,
+    "night_sleep_bonus": 2.5,
+    "day_sleep_penalty": 0.4,
+    "foreign_bed_penalty": 0.05,
+    "own_bed_bonus": 1.4,
+    "social_base": 1,
+    "social_distance_cost": 0.02,
+    "queue_wait_limit": 25
+  },
+  "actions": {
+    "join_seat": {"label":"履行座位约定", "kinds":["sofa","bench","chair"], "pose":"sit", "dur":[40,40], "fx":{}, "chain_gain":{"social":40,"comfort":40,"purpose":10}, "commitment_only":true},
+    "sleep": {
+      "label": "睡觉",
+      "kinds": [
+        "bed",
+        "sofa"
+      ],
+      "kind_penalty": {
+        "sofa": 0.35
+      },
+      "pose": "lie",
+      "dur": [
+        360,
+        540
+      ],
+      "fx": {
+        "energy": 0.24,
+        "comfort": 0.04,
+        "calm": 0.05
+      },
+      "when": {
+        "energy": 60
+      },
+      "when_night": {
+        "energy": 80
+      },
+      "day_when": {
+        "energy": 22
+      },
+      "decay_mult": 0.35,
+      "importance": 0.85,
+      "noise_sensitive": true,
+      "owner_bed": true
+    },
+    "nap": {
+      "label": "小憩",
+      "kinds": [
+        "sofa",
+        "bed"
+      ],
+      "pose": "lie",
+      "dur": [
+        30,
+        75
+      ],
+      "fx": {
+        "energy": 0.2,
+        "comfort": 0.1
+      },
+      "when": {
+        "energy": 38
+      },
+      "decay_mult": 0.6,
+      "importance": 0.5,
+      "noise_sensitive": true,
+      "day_only": true
+    },
+    "rest": {
+      "label": "坐下休息",
+      "kinds": [
+        "sofa",
+        "bench",
+        "chair"
+      ],
+      "pose": "sit",
+      "dur": [
+        10,
+        35
+      ],
+      "fx": {
+        "comfort": 0.5,
+        "calm": 0.18,
+        "energy": 0.04
+      },
+      "when": {
+        "comfort": 78
+      },
+      "importance": 0.15
+    },
+    "prepare_meal": {
+      "label": "准备餐食",
+      "kinds": [
+        "cabinet"
+      ],
+      "pose": "work",
+      "dur": [
+        8,
+        14
+      ],
+      "fx": {
+        "fun": 0.05
+      },
+      "when": {
+        "hunger": 62
+      },
+      "gives": "food",
+      "requires_not": "food",
+      "chain_gain": {
+        "hunger": 38
+      },
+      "importance": 0.3,
+      "pantry": true,
+      "stock_cost": 1
+    },
+    "eat_meal": {
+      "label": "用餐",
+      "kinds": [
+        "chair",
+        "bench",
+        "sofa"
+      ],
+      "near": [
+        "table",
+        "round_table"
+      ],
+      "near_dist": 1.5,
+      "pose": "sit",
+      "anim": "eat",
+      "dur": [
+        14,
+        22
+      ],
+      "fx": {
+        "hunger": 2.4,
+        "thirst": 0.35,
+        "comfort": 0.05,
+        "fun": 0.1
+      },
+      "when": {
+        "hunger": 85
+      },
+      "requires": "food",
+      "consumes": "food",
+      "importance": 0.55,
+      "meal": true
+    },
+    "eat_standing": {
+      "label": "站着吃",
+      "kinds": [
+        "cabinet",
+        "table",
+        "round_table"
+      ],
+      "pose": "stand",
+      "anim": "eat",
+      "dur": [
+        10,
+        16
+      ],
+      "fx": {
+        "hunger": 2,
+        "thirst": 0.25
+      },
+      "when": {
+        "hunger": 85
+      },
+      "requires": "food",
+      "consumes": "food",
+      "importance": 0.4,
+      "penalty": 0.45,
+      "meal": true
+    },
+    "drink": {
+      "label": "喝水",
+      "kinds": [
+        "wash_table"
+      ],
+      "pose": "stand",
+      "anim": "drink",
+      "dur": [
+        1.5,
+        3
+      ],
+      "fx": {
+        "thirst": 15
+      },
+      "when": {
+        "thirst": 72
+      },
+      "importance": 0.1
+    },
+    "wash": {
+      "label": "洗漱",
+      "kinds": [
+        "wash_table"
+      ],
+      "pose": "work",
+      "anim": "wash",
+      "dur": [
+        6,
+        12
+      ],
+      "fx": {
+        "hygiene": 6.5,
+        "comfort": 0.3,
+        "calm": 0.2,
+        "thirst": 0.5
+      },
+      "when": {
+        "hygiene": 62
+      },
+      "importance": 0.3,
+      "trait": {
+        "C": 0.5
+      }
+    },
+    "study": {
+      "label": "伏案学习",
+      "kinds": [
+        "chair"
+      ],
+      "near": [
+        "table",
+        "round_table"
+      ],
+      "near_dist": 1.2,
+      "pose": "sit",
+      "anim": "write",
+      "dur": [
+        40,
+        90
+      ],
+      "fx": {
+        "growth": 0.4,
+        "fun": -0.03,
+        "calm": -0.03
+      },
+      "when": {
+        "growth": 82
+      },
+      "needs_light": true,
+      "importance": 0.55,
+      "noise_sensitive": true,
+      "trait": {
+        "C": 0.6,
+        "O": 0.2
+      }
+    },
+    "read": {
+      "label": "取书",
+      "kinds": [
+        "bookshelf"
+      ],
+      "pose": "stand",
+      "dur": [
+        1,
+        2
+      ],
+      "fx": {},
+      "gives": "book",
+      "requires_not": "book",
+      "chain_gain": {
+        "growth": 30
+      },
+      "importance": 0.2
+    },
+    "play_piano": {
+      "label": "弹钢琴",
+      "kinds": [
+        "upright_piano"
+      ],
+      "pose": "stand",
+      "anim": "play",
+      "dur": [
+        20,
+        55
+      ],
+      "fx": {
+        "fun": 0.3,
+        "calm": 0.15,
+        "growth": 0.12
+      },
+      "when": {
+        "fun": 80
+      },
+      "noise": 0.8,
+      "importance": 0.4,
+      "trait": {
+        "O": 0.8,
+        "E": 0.2
+      }
+    },
+    "paint": {
+      "label": "作画",
+      "kinds": [
+        "easel"
+      ],
+      "pose": "stand",
+      "anim": "paint",
+      "dur": [
+        30,
+        70
+      ],
+      "fx": {
+        "fun": 0.28,
+        "growth": 0.18,
+        "calm": 0.12
+      },
+      "when": {
+        "fun": 82
+      },
+      "needs_light": true,
+      "importance": 0.4,
+      "trait": {
+        "O": 0.8
+      }
+    },
+    "admire": {
+      "label": "欣赏画作",
+      "kinds": [
+        "painting"
+      ],
+      "pose": "stand",
+      "dur": [
+        2,
+        5
+      ],
+      "fx": {
+        "fun": 2,
+        "calm": 1.5
+      },
+      "when": {
+        "fun": 85
+      },
+      "importance": 0.1,
+      "trait": {
+        "O": 0.5
+      }
+    },
+    "tend_plant": {
+      "label": "照料盆栽",
+      "kinds": [
+        "planter"
+      ],
+      "pose": "work",
+      "dur": [
+        4,
+        9
+      ],
+      "fx": {
+        "calm": 1.2,
+        "fun": 0.4
+      },
+      "when": {
+        "calm": 85
+      },
+      "importance": 0.1,
+      "trait": {
+        "A": 0.3,
+        "C": 0.2
+      }
+    },
+    "light_lamp": {
+      "label": "点灯",
+      "kinds": [
+        "wall_lantern"
+      ],
+      "pose": "stand",
+      "dur": [
+        0.5,
+        1
+      ],
+      "fx": {},
+      "importance": 0.05,
+      "special": "lamp_on",
+      "chain_gain": {
+        "growth": 8,
+        "fun": 8
+      }
+    },
+    "douse_lamp": {
+      "label": "熄灯",
+      "kinds": [
+        "wall_lantern"
+      ],
+      "pose": "stand",
+      "dur": [
+        0.5,
+        1
+      ],
+      "fx": {},
+      "importance": 0.05,
+      "special": "lamp_off",
+      "chain_gain": {
+        "energy": 5
+      }
+    },
+    "wander": {
+      "label": "四处走动",
+      "kinds": [],
+      "pose": "stand",
+      "dur": [
+        3,
+        8
+      ],
+      "fx": {
+        "fun": 0.05
+      },
+      "importance": 0
+    },
+    "hangout": {
+      "label": "一同闲坐",
+      "kinds": [],
+      "pose": "sit",
+      "anim": "talk",
+      "dur": [
+        20,
+        40
+      ],
+      "fx": {
+        "social": 0.5,
+        "fun": 0.2,
+        "calm": 0.05,
+        "comfort": 0.05
+      },
+      "importance": 0.3,
+      "joint": true
+    },
+    "read_seated": {
+      "label": "就座阅读",
+      "kinds": [
+        "chair",
+        "bench",
+        "sofa"
+      ],
+      "pose": "sit",
+      "dur": [
+        15,
+        25
+      ],
+      "fx": {
+        "growth": 1.2,
+        "fun": 0.4
+      },
+      "requires": "book",
+      "light": true,
+      "importance": 0.5
+    },
+    "return_book": {
+      "label": "归还书籍",
+      "kinds": [
+        "bookshelf"
+      ],
+      "pose": "stand",
+      "dur": [
+        1,
+        2
+      ],
+      "fx": {
+        "calm": 1
+      },
+      "requires": "book",
+      "consumes": "book",
+      "importance": 0.1
+    }
+  },
+  "social": {
+    "modes": [
+      "accept",
+      "comply",
+      "conditional",
+      "defer",
+      "decline",
+      "refuse",
+      "ignore",
+      "confront"
+    ],
+    "mode_labels": {
+      "accept": "接受",
+      "conditional": "有条件接受",
+      "defer": "推迟敷衍",
+      "decline": "婉拒",
+      "ignore": "冷处理",
+      "confront": "对抗斥责",
+      "comply": "勉强答应",
+      "refuse": "明确拒绝"
+    },
+    "temperature": 0.45,
+    "talk_cooldown": 45,
+    "mode_effects": {
+      "accept": {
+        "q_aff": 1,
+        "q_trust": 1,
+        "q_tension": -0.8,
+        "r_aff": 0.35,
+        "r_trust": 0.2,
+        "r_tension": -0.2,
+        "q_stress": -0.02,
+        "r_stress": 0,
+        "fulfil": 1
+      },
+      "conditional": {
+        "q_aff": 0.6,
+        "q_trust": 0.5,
+        "q_tension": -0.2,
+        "r_aff": 0.1,
+        "r_trust": 0.1,
+        "r_tension": 0,
+        "q_stress": 0,
+        "r_stress": 0.01,
+        "fulfil": 0.6,
+        "debt": 1
+      },
+      "defer": {
+        "q_aff": -0.15,
+        "q_trust": -0.2,
+        "q_tension": 0.1,
+        "r_aff": 0,
+        "r_trust": 0,
+        "r_tension": 0,
+        "q_stress": 0.01,
+        "r_stress": 0,
+        "fulfil": 0
+      },
+      "decline": {
+        "q_aff": -0.5,
+        "q_trust": -0.2,
+        "q_tension": 0.8,
+        "r_aff": -0.05,
+        "r_trust": 0,
+        "r_tension": 0.1,
+        "q_stress": 0.03,
+        "r_stress": 0.01,
+        "fulfil": 0,
+        "expect": 1
+      },
+      "ignore": {
+        "q_aff": -1.2,
+        "q_trust": -0.6,
+        "q_tension": 2.2,
+        "r_aff": -0.1,
+        "r_trust": 0,
+        "r_tension": 0.2,
+        "q_stress": 0.07,
+        "r_stress": 0,
+        "fulfil": 0,
+        "expect": 1
+      },
+      "confront": {
+        "q_aff": -2.6,
+        "q_trust": -1.6,
+        "q_tension": 5,
+        "r_aff": -0.6,
+        "r_trust": -0.3,
+        "r_tension": 2.2,
+        "q_stress": 0.14,
+        "r_stress": 0.08,
+        "fulfil": 0,
+        "expect": 1
+      },
+      "comply": {
+        "q_aff": 0.5,
+        "q_trust": 1,
+        "q_tension": -0.8,
+        "r_aff": -0.15,
+        "r_trust": 0.2,
+        "r_tension": 0.6,
+        "q_stress": -0.02,
+        "r_stress": 0,
+        "fulfil": 1
+      },
+      "refuse": {
+        "q_aff": -1,
+        "q_trust": -0.2,
+        "q_tension": 1.5,
+        "r_aff": -0.05,
+        "r_trust": 0,
+        "r_tension": 0.1,
+        "q_stress": 0.03,
+        "r_stress": 0.01,
+        "fulfil": 0,
+        "expect": 1
+      }
+    },
+    "caps": {
+      "aff_gain": 4,
+      "aff_loss": 6,
+      "trust_gain": 3,
+      "trust_loss": 4,
+      "tension_gain": 8,
+      "familiarity_gain": 3
+    },
+    "decay": {
+      "tension_per_hour": 0.012,
+      "affinity_per_hour": 0.0015,
+      "trust_per_hour": 0.0008,
+      "familiarity_per_hour": 0.0004
+    },
+    "irritation": {
+      "threshold": 22,
+      "per_noise_min": 2,
+      "decay_per_min": 0.5,
+      "silent_tension": 1.5,
+      "adjacent_room_factor": 0.75,
+      "far_factor": 0.1
+    },
+    "categories": {
+      "ask_help": {"label":"请求协助整理思路", "cost":0.3, "intr":0.25, "benefit":0.7, "coercion":0, "weight":0.8, "need":{"growth":8,"agency":5}, "fx":"talk"},
+      "apologize": {"label":"道歉和解", "cost":0.08, "intr":0.1, "benefit":0.8, "coercion":0, "weight":1, "tension_above":5, "need":{"calm":10}, "fx":"talk"},
+      "share_food": {"label":"主动分享口粮", "cost":0.05, "intr":0.1, "benefit":1, "coercion":0, "weight":1, "need":{"social":6}, "fx":"offer_food"},
+      "greet": {
+        "label": "问候",
+        "cost": 0.03,
+        "intr": 0.05,
+        "legit": 0.8,
+        "fam": 0,
+        "weight": 0.45,
+        "need": {
+          "social": 5
+        },
+        "fx": "talk"
+      },
+      "chat": {
+        "label": "闲聊",
+        "cost": 0.12,
+        "intr": 0.2,
+        "legit": 0.6,
+        "fam": 0.05,
+        "weight": 0.8,
+        "need": {
+          "social": 16,
+          "fun": 4
+        },
+        "fx": "talk"
+      },
+      "ask_info": {
+        "label": "打听/提问",
+        "cost": 0.18,
+        "intr": 0.25,
+        "legit": 0.6,
+        "fam": 0.05,
+        "weight": 0.7,
+        "need": {
+          "social": 8,
+          "growth": 5
+        },
+        "fx": "talk"
+      },
+      "confide": {
+        "label": "倾诉心事",
+        "cost": 0.3,
+        "intr": 0.45,
+        "legit": 0.5,
+        "fam": 0.4,
+        "weight": 1.2,
+        "need": {
+          "social": 14,
+          "calm": 14
+        },
+        "fx": "talk"
+      },
+      "ask_share": {
+        "label": "请求分享食物",
+        "cost": 0.5,
+        "intr": 0.4,
+        "legit": 0.55,
+        "fam": 0.25,
+        "weight": 1,
+        "need": {
+          "hunger": 22
+        },
+        "fx": "share_food"
+      },
+      "ask_seat": {
+        "coercion": 0.4,
+        "label": "请求让位",
+        "cost": 0.55,
+        "intr": 0.5,
+        "legit": 0.5,
+        "fam": 0,
+        "weight": 0.9,
+        "need": {
+          "comfort": 8
+        },
+        "fx": "yield_object"
+      },
+      "invite": {
+        "label": "邀约同坐",
+        "cost": 0.3,
+        "intr": 0.35,
+        "legit": 0.5,
+        "fam": 0.2,
+        "weight": 1,
+        "need": {
+          "social": 10
+        },
+        "fx": "hangout"
+      },
+      "complain": {
+        "coercion": 0.65,
+        "label": "抱怨/要求停止噪音",
+        "cost": 0.45,
+        "intr": 0.7,
+        "legit": 0.6,
+        "fam": 0,
+        "weight": 1.3,
+        "need": {
+          "calm": 10
+        },
+        "fx": "stop_noise"
+      },
+      "tease": {
+        "label": "调侃",
+        "cost": 0,
+        "intr": 0.5,
+        "legit": 0.2,
+        "fam": 0.3,
+        "weight": 0.7,
+        "need": {
+          "fun": 6,
+          "social": 5
+        },
+        "fx": "talk"
+      }
+    },
+    "lines": {
+      "request": {
+        "greet": [
+          "早啊,{t}。",
+          "{t},你好。"
+        ],
+        "chat": [
+          "{t},聊两句?",
+          "最近怎么样,{t}?"
+        ],
+        "ask_info": [
+          "{t},问你件事。",
+          "请问,你知道这附近……"
+        ],
+        "confide": [
+          "{t},我有点心事想说说。",
+          "{t},能听我讲讲吗?"
+        ],
+        "ask_share": [
+          "{t},你那份能分我一点吗?",
+          "我饿得不行了,{t}。"
+        ],
+        "ask_seat": [
+          "{t},能不能把位置让给我?",
+          "{t},我想用这个。"
+        ],
+        "invite": [
+          "{t},过来一起坐坐吧。",
+          "一起歇会儿?"
+        ],
+        "complain": [
+          "{t},能不能小声点?",
+          "{t},你太吵了!"
+        ],
+        "tease": [
+          "{t},你这副样子可真有趣。",
+          "哟,{t},又在磨蹭?"
+        ]
+      },
+      "reply": {
+        "accept": [
+          "好啊。",
+          "没问题。",
+          "当然可以。"
+        ],
+        "conditional": [
+          "可以,不过下次轮到你。",
+          "行,但你得答应我一件事。"
+        ],
+        "defer": [
+          "等会儿吧,我现在顾不上。",
+          "嗯……待会再说。"
+        ],
+        "decline": [
+          "抱歉,这次不方便。",
+          "不好意思,我想自己待会儿。"
+        ],
+        "ignore": [
+          "(没有回应)",
+          "(转过头去)"
+        ],
+        "confront": [
+          "别来烦我!",
+          "你凭什么这样要求我?"
+        ],
+        "comply": [
+          "可以，但我并不情愿。"
+        ],
+        "refuse": [
+          "不，这件事我不答应。"
+        ]
+      }
+    }
+  },
+  "agents": [
+    {
+      "id": "detective",
+      "weights":{"growth":1.5,"social":0.9},
+      "action_motives":{"read_seated":{"curiosity":18,"purpose":12},"study":{"curiosity":12,"purpose":8}},
+      "social_motives":{"ask_info":{"curiosity":12,"purpose":10},"ask_help":{"agency":8}},
+      "name": "侦探",
+      "color": "#4f9dde",
+      "traits": {
+        "O": 0.5,
+        "C": 0.5,
+        "E": 0.5,
+        "A": 0.5,
+        "N": 0.5
+      }
+    },
+    {
+      "id": "quer",
+      "weights":{"growth":1.2,"calm":1.1},
+      "action_motives":{"study":{"curiosity":14,"purpose":16,"agency":10},"read_seated":{"curiosity":8}},
+      "social_motives":{"ask_help":{"purpose":10,"agency":12}},
+      "name": "雀儿",
+      "color": "#e0709a",
+      "traits": {
+        "O": 0.5,
+        "C": 0.5,
+        "E": 0.5,
+        "A": 0.5,
+        "N": 0.5
+      }
+    },
+    {
+      "id": "lucian",
+      "weights":{"social":1.3,"fun":1.2},
+      "action_motives":{"play_piano":{"curiosity":8,"purpose":12,"agency":6},"read_seated":{"curiosity":10}},
+      "social_motives":{"chat":{"purpose":10,"agency":6},"confide":{"purpose":12}},
+      "name": "卢西安",
+      "color": "#d3b56b",
+      "traits": {
+        "O": 0.5,
+        "C": 0.5,
+        "E": 0.5,
+        "A": 0.5,
+        "N": 0.5
+      }
+    },
+    {
+      "id": "ruan",
+      "weights":{"growth":1.4,"social":1.1},
+      "action_motives":{"read_seated":{"curiosity":10,"purpose":12},"study":{"curiosity":10,"agency":10}},
+      "social_motives":{"ask_info":{"curiosity":12,"purpose":12,"agency":8},"tease":{"agency":8}},
+      "name": "阮清月",
+      "color": "#86bfa7",
+      "traits": {
+        "O": 0.5,
+        "C": 0.5,
+        "E": 0.5,
+        "A": 0.5,
+        "N": 0.5
+      }
+    },
+    {
+      "id": "shen",
+      "weights":{"hunger":1.2,"social":1.1},
+      "action_motives":{"prepare_meal":{"purpose":16,"agency":8},"wash":{"purpose":8},"read_seated":{"curiosity":10}},
+      "social_motives":{"share_food":{"purpose":18,"agency":8},"ask_help":{"curiosity":8}},
+      "name": "沈鼐",
+      "color": "#a786c7",
+      "traits": {
+        "O": 0.5,
+        "C": 0.5,
+        "E": 0.5,
+        "A": 0.5,
+        "N": 0.5
+      }
+    }
+  ],
+  "character_source": "res://assets/data/scenarios/daily-life.dv",
+  "initial_needs": {
+    "hunger": 78,
+    "thirst": 80,
+    "energy": 85,
+    "hygiene": 80,
+    "social": 65,
+    "fun": 70,
+    "comfort": 75,
+    "growth": 65,
+    "calm": 75
+  },
+  "inventory": {
+    "initial_carried": 1,
+    "initial_per_pantry": 8,
+    "capacity": 12,
+    "daily_supply": 12,
+    "supply_hour": 6
+  },
+  "relationship": {
+    "fulfilled_effects":{"trust":1.5,"affinity":0.5},
+    "broken_effects":{"trust":-1,"tension":1},
+    "initial": {
+      "affinity": 8,
+      "trust": 28,
+      "tension": 0,
+      "familiarity": 20,
+      "owe": 0
+    },
+    "daily_up": {
+      "affinity": 4,
+      "trust": 3,
+      "tension": 8,
+      "familiarity": 5
+    },
+    "daily_down": {
+      "affinity": 6,
+      "trust": 4.5,
+      "tension": 6,
+      "familiarity": 0
+    },
+    "habit_positive": 0.35,
+    "habit_negative": 0.2,
+    "tension_half_life_days": 3,
+    "affinity_half_life_days": 30,
+    "stage_hysteresis": 5,
+    "stages": [
+      {
+        "id": "亲近",
+        "affinity": 55,
+        "trust": 50
+      },
+      {
+        "id": "友善",
+        "affinity": 25,
+        "trust": 30
+      },
+      {
+        "id": "熟识",
+        "affinity": 5,
+        "trust": 15
+      }
+    ],
+    "hostile_tension": 55
+  },
+  "response": {
+    "request_minutes":3,
+    "seat_range_m":3,
+    "seat_overlap_minutes":10,
+    "noise_calm_per_minute":0.2,
+    "temperature": 0.75,
+    "initial_seed": 7,
+    "cooldown_minutes": 60,
+    "delay_minutes": 30,
+    "expiry_minutes": 180,
+    "calm_condition": 45,
+    "range_m": 1.5,
+    "spontaneous_below": 65,
+    "scores": {
+      "accept": {
+        "benefit":0.5,
+        "coercion":-0.6,
+        "base": 0.3,
+        "affinity": 1.4,
+        "trust": 0.9,
+        "calm": 0.5,
+        "agreeable": 0.8,
+        "cost": -1.1,
+        "intrusion": -0.9,
+        "tension": -1.5,
+        "debt": 0.25,
+        "busy": -0.7
+      },
+      "comply": {
+        "coercion":0.5,
+        "base": 0,
+        "trust": 0.8,
+        "agreeable": 0.5,
+        "cost": -0.4,
+        "intrusion": 0.3,
+        "tension": -0.7,
+        "debt": 0.6,
+        "busy": -0.3
+      },
+      "conditional": {
+        "base": -0.2,
+        "affinity": 0.5,
+        "trust": 0.5,
+        "cost": 0.8,
+        "busy": 0.2
+      },
+      "defer": {
+        "base": -0.6,
+        "busy": 1.2,
+        "cost": 0.6,
+        "calm": -0.5
+      },
+      "decline": {
+        "base": -0.2,
+        "cost": 0.7,
+        "intrusion": 0.5,
+        "affinity": -0.7,
+        "tension": 0.7
+      },
+      "refuse": {
+        "coercion":0.7,
+        "base": -0.6,
+        "cost": 0.7,
+        "intrusion": 1,
+        "affinity": -0.6,
+        "tension": 1.2,
+        "agreeable": -0.5
+      },
+      "ignore": {
+        "base": -1,
+        "busy": 0.7,
+        "tension": 0.8,
+        "affinity": -0.6
+      },
+      "confront": {
+        "base": -1.4,
+        "tension": 2,
+        "intrusion": 1.2,
+        "calm": -0.5,
+        "agreeable": -0.8
+      }
+    }
+  },
+  "capacities": {
+    "sofa": 2,
+    "bench": 2
+  }
+}; }

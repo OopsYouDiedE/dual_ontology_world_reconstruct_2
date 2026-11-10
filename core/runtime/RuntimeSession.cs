@@ -261,6 +261,7 @@ public sealed partial class RuntimeSession
         var hadPrior=placements.TryGetValue(actor,out var prior);
         var roomChanged=!hadPrior||prior!.Room!=room;
         placements[actor]=new(x,y,z,yaw,room,Clock.Now);
+        UpdateLifePlacement(actor,x,z);
         var radiusChanged=hadPrior && presenceGroups.Any(group=>group.Center is not null && group.Members.Contains(actor,StringComparer.Ordinal)
             && InRadius(prior!,group)!=InRadius(placements[actor],group));
         if(roomChanged||radiusChanged)UpdatePresenceGroups();
@@ -455,6 +456,7 @@ public sealed partial class RuntimeSession
         if(Incapacitated(actor))return false;
         if(!KnowledgeEligible(action))return false;
         if(!MechanicEligible(actor,action))return false;
+        if(!LifeEligible(actor,action))return false;
         if(strategyBindings.TryGetValue(action.Id,out var strategy) && strategy.LastAttemptRevision==actors[actor].KnowledgeRevision)return false;
         if(!TimeEligible(action))return false;
         var minimum=action.Declaration.Get("minimum_travel_distance_m");
@@ -817,6 +819,7 @@ public sealed partial class RuntimeSession
         if (paused) return;
         AdvanceSpatialNavigation();
         AdvanceMechanics();
+        AdvanceLife();
         foreach(var sensor in sensoryEvents)
         {
             if(ContentTime<sensor.Data.Get("not_before_game_minutes").Number())continue;
@@ -911,6 +914,7 @@ public sealed partial class RuntimeSession
     private void Commit(Execution execution)
     {
         var decision = execution.Decision;
+        var needsBefore=Needs(decision.Actor);
         if (!Scheduler.Owns(decision) || Clock.Now < execution.DueAt) throw new InvalidOperationException("Invalid action commit.");
         var objectiveTruth=execution.CompletionGate.Evaluate(World.Read);
         var timeEligible=TimeEligible(decision.Action);var knowledgeEligible=KnowledgeEligible(decision.Action);
@@ -932,6 +936,7 @@ public sealed partial class RuntimeSession
         if(strategyBindings.ContainsKey(decision.Action.Id) && (!completedStrategies.TryGetValue(decision.Execution,out var strategyResult) || strategyResult.Revision!=client.KnowledgeRevision))
         {success=false;failureReason="strategy_basis_changed";}
         var feedback = new List<Observation>();
+        var lifeNeedEffects=new List<(string Actor,JsonElement Effects)>();
         if(success && strategyBindings.TryGetValue(decision.Action.Id,out var binding) && completedStrategies.TryGetValue(decision.Execution,out var result))
         {
             var best=result.Choices.Where(choice=>choice.Ready).OrderByDescending(choice=>choice.Utility).FirstOrDefault();
@@ -960,6 +965,7 @@ public sealed partial class RuntimeSession
         {success=EvaluateSuggestion(decision,writes,feedback,changes);if(!success)failureReason="suggestion_rejected";}
         if(success&&decision.Action.Declaration.Get("incantation").ValueKind==JsonValueKind.Object)
         {success=EvaluateIncantation(decision,writes,feedback);if(!success)failureReason="incantation_precondition_failed";}
+        if(success&&!EvaluateLife(decision,writes,feedback,lifeNeedEffects)){success=false;failureReason="life_condition_changed";}
         var grants = decision.Action.Declaration.Get(success ? "grants" : "failure_grants");
         foreach (var grant in grants.Items())
         {
@@ -981,6 +987,8 @@ public sealed partial class RuntimeSession
         if (success)
         {
             var committedChanges=World.Apply(writes);changes.AddRange(committedChanges);Rules.Changed(committedChanges);
+            foreach(var effect in lifeNeedEffects)Scheduler.ApplyNeedEffects(effect.Actor,effect.Effects,Clock.Now);
+            CommitLifeConsequences(decision);
             var handoffs=decision.Action.Declaration.Get("handoffs").Items().ToList();
             if(decision.Action.Declaration.Get("handoff").ValueKind==JsonValueKind.Object)handoffs.Add(decision.Action.Declaration.Get("handoff"));
             foreach(var handoff in handoffs)
@@ -1018,7 +1026,6 @@ public sealed partial class RuntimeSession
                     recipient.BeginRefresh(RefreshCause.Deliberate);
             }
         client.FocusAction([]);
-        var needsBefore=Needs(decision.Actor);
         Scheduler.Complete(decision, Clock.Now, success,execution.HostElapsed||spatialNavigation.TryGetValue(decision.Execution,out var nav)&&nav.PureMovement);
         if(success&&decision.Action.Declaration.Get("cooldown_minutes").Number()>0)
             actionCooldowns[decision.Action.Id]=ContentTime+decision.Action.Declaration.Get("cooldown_minutes").Number();

@@ -182,6 +182,14 @@ func _make_ui() -> void:
 	button(header,"角色模型",func():
 		var gallery = preload("res://tools/characters/CharacterGallery.tscn").instantiate()
 		add_child(gallery))
+	button(header,"生活模拟",func():
+		state.sync_rooms()
+		var main = get_tree().current_scene
+		if main.has_method("open_life"): main.open_life(state.data.duplicate(true))
+		else:
+			var preview = preload("res://scenes/main/Main.tscn").instantiate()
+			add_child(preview)
+			preview.open_life(state.data.duplicate(true)))
 	var body = HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(body)

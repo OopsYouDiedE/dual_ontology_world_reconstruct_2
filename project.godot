@@ -10,13 +10,14 @@ config_version=5
 
 [application]
 
-config/name="建筑模拟器 · Reconstruct 2"
-run/main_scene="res://tools/building_construction/BuildingSimulator.tscn"
+config/name="五人生活推演 · Reconstruct 2"
+run/main_scene="res://scenes/main/Main.tscn"
 config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
 
 [autoload]
 
 BuildingMcp="*res://mcp/building/GodotControl.gd"
+GameMcp="*res://mcp/game/GameControl.gd"
 
 [display]
 

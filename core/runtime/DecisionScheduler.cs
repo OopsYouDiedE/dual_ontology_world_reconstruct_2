@@ -59,6 +59,7 @@ public sealed class DecisionScheduler
     private long nextExecution;
     public long Evaluations { get; private set; }
     public void SetAutonomy(string actor,bool enabled)=>byActor[actor].Autonomous=enabled;
+    internal void ApplyNeedEffects(string actor,JsonElement effects,double now)=>byActor[actor].Needs.ApplyNeedEffects(effects,now);
     public DecisionSchedulerState SaveState()=>new(slots.Select(slot=>new SchedulerSlotCheckpoint(slot.Actor.Id,slot.Due,slot.Cursor,slot.Best?.Id,
         double.IsFinite(slot.BestScore)?slot.BestScore:null,slot.Revision,slot.Autonomous,slot.Held,slot.Needs.SaveState(),
         slot.Selection.Select(action=>action.Id).ToArray(),slot.SelectionTime,slot.Running is { } run?new(run.Actor,run.Action.Id,run.StartedAt,run.DueAt,run.Execution,run.Intent):null,slot.Planner.SaveState(),slot.Failures.Save(),slot.Goals.Save())).ToArray(),

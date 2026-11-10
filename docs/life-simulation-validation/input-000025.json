@@ -1,0 +1,843 @@
+{
+  "tool": "step",
+  "is_error": false,
+  "data": {
+    "controls": [
+      {
+        "height": 31.0,
+        "text": "返回主菜单",
+        "width": 88.0,
+        "x": 0.0,
+        "y": 0.0
+      },
+      {
+        "height": 31.0,
+        "text": "暂停／继续",
+        "width": 88.0,
+        "x": 92.0,
+        "y": 0.0
+      },
+      {
+        "height": 31.0,
+        "text": "20×",
+        "width": 77.0,
+        "x": 184.0,
+        "y": 0.0
+      },
+      {
+        "height": 31.0,
+        "text": "保存进度",
+        "width": 72.0,
+        "x": 265.0,
+        "y": 0.0
+      },
+      {
+        "height": 31.0,
+        "text": "读取进度",
+        "width": 72.0,
+        "x": 341.0,
+        "y": 0.0
+      },
+      {
+        "height": 31.0,
+        "text": "重载内容",
+        "width": 72.0,
+        "x": 417.0,
+        "y": 0.0
+      },
+      {
+        "height": 31.0,
+        "text": "切换墙体",
+        "width": 72.0,
+        "x": 493.0,
+        "y": 0.0
+      },
+      {
+        "height": 23.0,
+        "text": "第1日 07:33",
+        "width": 87.0,
+        "x": 569.0,
+        "y": 4.0
+      },
+      {
+        "height": 31.0,
+        "text": "侦探",
+        "width": 300.0,
+        "x": 0.0,
+        "y": 35.0
+      },
+      {
+        "height": 31.0,
+        "text": "提交当前可用行动",
+        "width": 300.0,
+        "x": 0.0,
+        "y": 842.0
+      },
+      {
+        "height": 23.0,
+        "text": "库存 44 · 携带 4 · 已消耗 1 · 总供给 49　|　原模型姿态显示，坐卧骨骼动作未接入",
+        "width": 1440.0,
+        "x": 0.0,
+        "y": 877.0
+      }
+    ],
+    "faulted": false,
+    "host_errors": [],
+    "scene": "res://scenes/main/Main.tscn",
+    "started": true,
+    "state": {
+      "active": true,
+      "actors": [
+        {
+          "activity": {
+            "Action": "detective.life.study.auto_chair_212668_6.0",
+            "Actor": "detective",
+            "Execution": 1.0,
+            "HostCompleted": false,
+            "Phase": "working",
+            "WorkEndsAt": 29104.0,
+            "WorkStartedAt": 25204.0
+          },
+          "book": false,
+          "choices": [],
+          "evidence_count": 24.0,
+          "food": 1.0,
+          "id": "detective",
+          "name": "侦探",
+          "needs": {
+            "agency": 58.7813767950418,
+            "calm": 73.6459742167131,
+            "comfort": 73.3074677708913,
+            "curiosity": 22.5627535900835,
+            "energy": 82.6304548792479,
+            "fun": 67.2919484334261,
+            "growth": 63.4767209938022,
+            "hunger": 74.2764290959609,
+            "hygiene": 78.3074677708913,
+            "purpose": 42.9689613250696,
+            "social": 62.2919484334261,
+            "thirst": 74.2453904210305
+          },
+          "placement": {
+            "Room": "house",
+            "Time": 25204.0,
+            "X": 1.22500002384186,
+            "Y": 0.0,
+            "Yaw": 0.0,
+            "Z": 3.97499990463257
+          },
+          "purpose": "我要找到能被反驳和复查的解释，让别人的选择有真实依据。"
+        },
+        {
+          "activity": {
+            "Action": "quer.life.study.auto_chair_240484_2.0",
+            "Actor": "quer",
+            "Execution": 6.0,
+            "HostCompleted": false,
+            "Phase": "working",
+            "WorkEndsAt": 29135.1911177778,
+            "WorkStartedAt": 25235.1911177778
+          },
+          "book": false,
+          "choices": [],
+          "evidence_count": 32.0,
+          "food": 1.0,
+          "id": "quer",
+          "name": "雀儿",
+          "needs": {
+            "agency": 20.7813767950418,
+            "calm": 73.5752394463427,
+            "comfort": 73.3074677708913,
+            "curiosity": 46.5782729275487,
+            "energy": 82.6304548792479,
+            "fun": 67.2919484334261,
+            "growth": 63.4767209938022,
+            "hunger": 74.2764290959609,
+            "hygiene": 78.3074677708913,
+            "purpose": 57.9689613250696,
+            "social": 62.2919484334261,
+            "thirst": 74.2453904210305
+          },
+          "placement": {
+            "Room": "house",
+            "Time": 25235.1911177778,
+            "X": 7.97499990463257,
+            "Y": 0.0,
+            "Yaw": 0.0,
+            "Z": 6.72499990463257
+          },
+          "purpose": "我要握住自己的工具和答应别人的权利；愿意帮忙，不等于谁能替我一直答应。"
+        },
+        {
+          "activity": {
+            "Action": "lucian.life.play_piano.extra_upright_piano_17.0",
+            "Actor": "lucian",
+            "Execution": 3.0,
+            "HostCompleted": false,
+            "Phase": "working",
+            "WorkEndsAt": 27463.0,
+            "WorkStartedAt": 25213.0
+          },
+          "book": false,
+          "choices": [],
+          "evidence_count": 21.0,
+          "food": 1.0,
+          "id": "lucian",
+          "name": "卢西安",
+          "needs": {
+            "agency": 38.7813767950418,
+            "calm": 73.6459742167131,
+            "comfort": 73.3074677708913,
+            "curiosity": 38.5782729275487,
+            "energy": 82.6304548792479,
+            "fun": 67.2919484334261,
+            "growth": 63.4767209938022,
+            "hunger": 74.2764290959609,
+            "hygiene": 78.3074677708913,
+            "purpose": 52.9689613250696,
+            "social": 62.2919484334261,
+            "thirst": 74.2453904210305
+          },
+          "placement": {
+            "Room": "house",
+            "Time": 25213.0,
+            "X": 15.4750003814697,
+            "Y": 0.0,
+            "Yaw": 0.0,
+            "Z": 2.47499990463257
+          },
+          "purpose": "别人可以笑我的诗，不能因为雀儿没有家世，就把她的同意也一并收走。"
+        },
+        {
+          "activity": {
+            "Action": "ruan.life.study.auto_chair_241065_3.0",
+            "Actor": "ruan",
+            "Execution": 7.0,
+            "HostCompleted": false,
+            "Phase": "working",
+            "WorkEndsAt": 29137.1567711111,
+            "WorkStartedAt": 25237.1567711111
+          },
+          "book": false,
+          "choices": [],
+          "evidence_count": 31.0,
+          "food": 1.0,
+          "id": "ruan",
+          "name": "阮清月",
+          "needs": {
+            "agency": 16.7813767950418,
+            "calm": 73.6459742167131,
+            "comfort": 73.3074677708913,
+            "curiosity": 15.5627535900835,
+            "energy": 82.6304548792479,
+            "fun": 67.2919484334261,
+            "growth": 63.4767209938022,
+            "hunger": 74.2764290959609,
+            "hygiene": 78.3074677708913,
+            "purpose": 47.9689613250696,
+            "social": 62.2919484334261,
+            "thirst": 74.2453904210305
+          },
+          "placement": {
+            "Room": "house",
+            "Time": 25237.1567711111,
+            "X": 8.72500038146973,
+            "Y": 0.0,
+            "Yaw": 0.0,
+            "Z": 8.97500038146973
+          },
+          "purpose": "我要试出他人真正肯守的边界，争取判断上的先手；路被堵住，就借堵路的人留下的新条件。"
+        },
+        {
+          "activity": {
+            "Action": "shen.life.paint.extra_easel_18.0",
+            "Actor": "shen",
+            "Execution": 12.0,
+            "HostCompleted": false,
+            "Phase": "working",
+            "WorkEndsAt": 29572.3428759653,
+            "WorkStartedAt": 26572.3428759653
+          },
+          "book": true,
+          "choices": [],
+          "evidence_count": 140.0,
+          "food": 0.0,
+          "id": "shen",
+          "name": "沈鼐",
+          "needs": {
+            "agency": 63.7813767950418,
+            "calm": 67.3163294706543,
+            "comfort": 74.2074677708913,
+            "curiosity": 76.5782729275487,
+            "energy": 82.6304548792479,
+            "fun": 69.0919484334261,
+            "growth": 63.4767209938022,
+            "hunger": 98.3917077396646,
+            "hygiene": 78.3074677708913,
+            "purpose": 22.9689613250696,
+            "social": 62.2919484334261,
+            "thirst": 80.5453904210305
+          },
+          "placement": {
+            "Room": "house",
+            "Time": 26572.3428759653,
+            "X": 7.47499990463257,
+            "Y": 0.0,
+            "Yaw": 0.0,
+            "Z": 4.97499990463257
+          },
+          "purpose": "我要让伤员和忙碌的人吃到热饭；谁想拿孩子和伤员换一份漂亮结论，我就拦着。"
+        }
+      ],
+      "audit": {
+        "carried": 4.0,
+        "consumed": 1.0,
+        "contracts": [],
+        "relations": [
+          {
+            "affinity": 8.0,
+            "from": "detective",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "quer",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "detective",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "lucian",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "detective",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "ruan",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "detective",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "shen",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "quer",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "detective",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "quer",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "lucian",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "quer",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "ruan",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "quer",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "shen",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "lucian",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "detective",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "lucian",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "quer",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "lucian",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "ruan",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "lucian",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "shen",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "ruan",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "detective",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "ruan",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "quer",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "ruan",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "lucian",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "ruan",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "shen",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "shen",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "detective",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "shen",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "quer",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "shen",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "lucian",
+            "trust": 28.0
+          },
+          {
+            "affinity": 8.0,
+            "from": "shen",
+            "stage": "生疏",
+            "tension": 0.0,
+            "to": "ruan",
+            "trust": 28.0
+          }
+        ],
+        "seating": [],
+        "stock": 44.0,
+        "supplied": 49.0
+      },
+      "audit_directory": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/life-sessions/29be7dab4fbb4152bbb1f583d2848744",
+      "audit_status": {
+        "blocked_attempt_count": 5.0,
+        "receipt_count": 7.0,
+        "recoverable_cancellations": 0.0,
+        "rejected_count": 0.0,
+        "successful_count": 2.0,
+        "unexpected_failure_count": 0.0
+      },
+      "campaign_completed": false,
+      "disabled": {},
+      "error": "",
+      "mechanics": [
+        {
+          "Action": "life.supply.0",
+          "Actor": "world",
+          "Details": {
+            "amount": 12.0,
+            "day": 0.0
+          },
+          "Execution": 0.0,
+          "Kind": "life_supply",
+          "Success": true,
+          "Time": 420.0
+        }
+      ],
+      "objects": [
+        {
+          "id": "extra_bed_0",
+          "lamp": false
+        },
+        {
+          "id": "auto_bed_210884_1",
+          "lamp": false
+        },
+        {
+          "id": "auto_cabinet_211285_4",
+          "lamp": false
+        },
+        {
+          "id": "auto_table_211801_5",
+          "lamp": false
+        },
+        {
+          "id": "auto_chair_212668_6",
+          "lamp": false
+        },
+        {
+          "id": "auto_rug_212814_7",
+          "lamp": false
+        },
+        {
+          "id": "extra_wash_table_8",
+          "lamp": false
+        },
+        {
+          "id": "auto_sofa_216201_1",
+          "lamp": false
+        },
+        {
+          "id": "auto_round_table_216451_2",
+          "lamp": false
+        },
+        {
+          "id": "auto_bench_216720_3",
+          "lamp": false
+        },
+        {
+          "id": "auto_cabinet_217250_4",
+          "lamp": false
+        },
+        {
+          "id": "auto_planter_218963_5",
+          "lamp": false
+        },
+        {
+          "id": "auto_rug_219288_6",
+          "lamp": false
+        },
+        {
+          "id": "extra_upright_piano_17",
+          "lamp": false
+        },
+        {
+          "id": "extra_easel_18",
+          "lamp": false
+        },
+        {
+          "id": "auto_table_231617_1",
+          "lamp": false
+        },
+        {
+          "id": "auto_chair_232012_2",
+          "lamp": false
+        },
+        {
+          "id": "auto_bookshelf_232462_4",
+          "lamp": false
+        },
+        {
+          "id": "auto_bookshelf_234155_5",
+          "lamp": false
+        },
+        {
+          "id": "auto_chest_236237_6",
+          "lamp": false
+        },
+        {
+          "id": "auto_rug_239784_7",
+          "lamp": false
+        },
+        {
+          "id": "auto_table_239943_1",
+          "lamp": false
+        },
+        {
+          "id": "auto_chair_240484_2",
+          "lamp": false
+        },
+        {
+          "id": "auto_chair_241065_3",
+          "lamp": false
+        },
+        {
+          "id": "auto_chair_241648_4",
+          "lamp": false
+        },
+        {
+          "id": "auto_chair_242243_5",
+          "lamp": false
+        },
+        {
+          "id": "auto_cabinet_242839_6",
+          "lamp": false
+        },
+        {
+          "id": "auto_planter_243483_7",
+          "lamp": false
+        },
+        {
+          "id": "extra_wash_table_37",
+          "lamp": false
+        },
+        {
+          "id": "extra_bed_38",
+          "lamp": false
+        },
+        {
+          "id": "auto_bed_251292_1",
+          "lamp": false
+        },
+        {
+          "id": "auto_nightstand_252809_3",
+          "lamp": false
+        },
+        {
+          "id": "auto_cabinet_253565_4",
+          "lamp": false
+        },
+        {
+          "id": "auto_table_259609_5",
+          "lamp": false
+        },
+        {
+          "id": "auto_chair_266634_6",
+          "lamp": false
+        },
+        {
+          "id": "auto_rug_267463_7",
+          "lamp": false
+        }
+      ],
+      "progress": {
+        "completed": false,
+        "end_minutes": 7200.0,
+        "label": "五日生活观察",
+        "mode": "observation_window",
+        "phase": {
+          "active": false,
+          "description": "",
+          "label": "",
+          "start_minutes": null,
+          "task_guidance": true
+        },
+        "window_completed": false
+      },
+      "receipts": [
+        {
+          "Action": "quer.life.study.auto_chair_212668_6.0",
+          "Actor": "quer",
+          "Committed": false,
+          "Execution": 2.0,
+          "Intent": {
+            "GoalAlgorithm": null,
+            "GoalObjectives": null,
+            "GoalSequence": null,
+            "Path": "daily",
+            "PhysiologicalNeed": null,
+            "PhysiologicalRoute": null,
+            "Reason": "尚未选择行动。",
+            "RouteAction": null,
+            "Step": null,
+            "Task": null
+          },
+          "Interruption": null,
+          "Narrative": [],
+          "Reason": "standing_resource_busy",
+          "Time": 25202.0
+        },
+        {
+          "Action": "ruan.life.study.auto_chair_212668_6.0",
+          "Actor": "ruan",
+          "Committed": false,
+          "Execution": 4.0,
+          "Intent": {
+            "GoalAlgorithm": null,
+            "GoalObjectives": null,
+            "GoalSequence": null,
+            "Path": "daily",
+            "PhysiologicalNeed": null,
+            "PhysiologicalRoute": null,
+            "Reason": "尚未选择行动。",
+            "RouteAction": null,
+            "Step": null,
+            "Task": null
+          },
+          "Interruption": null,
+          "Narrative": [],
+          "Reason": "standing_resource_busy",
+          "Time": 25206.0
+        },
+        {
+          "Action": "shen.life.study.auto_chair_212668_6.0",
+          "Actor": "shen",
+          "Committed": false,
+          "Execution": 5.0,
+          "Intent": {
+            "GoalAlgorithm": null,
+            "GoalObjectives": null,
+            "GoalSequence": null,
+            "Path": "daily",
+            "PhysiologicalNeed": null,
+            "PhysiologicalRoute": null,
+            "Reason": "尚未选择行动。",
+            "RouteAction": null,
+            "Step": null,
+            "Task": null
+          },
+          "Interruption": null,
+          "Narrative": [],
+          "Reason": "standing_resource_busy",
+          "Time": 25208.0
+        },
+        {
+          "Action": "shen.life.eat_meal.auto_chair_212668_6.0",
+          "Actor": "shen",
+          "Committed": false,
+          "Execution": 8.0,
+          "Intent": {
+            "GoalAlgorithm": null,
+            "GoalObjectives": null,
+            "GoalSequence": null,
+            "Path": "daily",
+            "PhysiologicalNeed": null,
+            "PhysiologicalRoute": null,
+            "Reason": "尚未选择行动。",
+            "RouteAction": null,
+            "Step": null,
+            "Task": null
+          },
+          "Interruption": null,
+          "Narrative": [],
+          "Reason": "standing_resource_busy",
+          "Time": 25238.0
+        },
+        {
+          "Action": "shen.life.eat_meal.auto_sofa_216201_1.0",
+          "Actor": "shen",
+          "Committed": true,
+          "Execution": 9.0,
+          "Intent": {
+            "GoalAlgorithm": null,
+            "GoalObjectives": null,
+            "GoalSequence": null,
+            "Path": "daily",
+            "PhysiologicalNeed": null,
+            "PhysiologicalRoute": null,
+            "Reason": "尚未选择行动。",
+            "RouteAction": null,
+            "Step": null,
+            "Task": null
+          },
+          "Interruption": null,
+          "Narrative": [
+            {
+              "EvidenceId": "",
+              "Kind": "reflection",
+              "Recipients": [
+                "shen"
+              ],
+              "Speaker": "shen",
+              "SpeakerLabel": "shen",
+              "Text": "用餐"
+            }
+          ],
+          "Reason": "completed",
+          "Time": 26353.7883511111
+        },
+        {
+          "Action": "shen.life.read.auto_bookshelf_232462_4.0",
+          "Actor": "shen",
+          "Committed": true,
+          "Execution": 10.0,
+          "Intent": {
+            "GoalAlgorithm": null,
+            "GoalObjectives": null,
+            "GoalSequence": null,
+            "Path": "daily",
+            "PhysiologicalNeed": null,
+            "PhysiologicalRoute": null,
+            "Reason": "尚未选择行动。",
+            "RouteAction": null,
+            "Step": null,
+            "Task": null
+          },
+          "Interruption": null,
+          "Narrative": [
+            {
+              "EvidenceId": "",
+              "Kind": "reflection",
+              "Recipients": [
+                "shen"
+              ],
+              "Speaker": "shen",
+              "SpeakerLabel": "shen",
+              "Text": "取书"
+            }
+          ],
+          "Reason": "completed",
+          "Time": 26508.2212311162
+        },
+        {
+          "Action": "shen.life.read_seated.auto_chair_212668_6.0",
+          "Actor": "shen",
+          "Committed": false,
+          "Execution": 11.0,
+          "Intent": {
+            "GoalAlgorithm": null,
+            "GoalObjectives": null,
+            "GoalSequence": null,
+            "Path": "daily",
+            "PhysiologicalNeed": null,
+            "PhysiologicalRoute": null,
+            "Reason": "尚未选择行动。",
+            "RouteAction": null,
+            "Step": null,
+            "Task": null
+          },
+          "Interruption": null,
+          "Narrative": [],
+          "Reason": "standing_resource_busy",
+          "Time": 26538.2212311162
+        }
+      ],
+      "started": true,
+      "time": 453.850644582173
+    },
+    "ui": {
+      "paused": false,
+      "speed": 20.0,
+      "status": ""
+    },
+    "session_id": "eedbc394144e9289",
+    "mode": "godot_manual"
+  },
+  "text": [
+    "{\"controls\": [{\"height\": 31.0, \"text\": \"返回主菜单\", \"width\": 88.0, \"x\": 0.0, \"y\": 0.0}, {\"height\": 31.0, \"text\": \"暂停／继续\", \"width\": 88.0, \"x\": 92.0, \"y\": 0.0}, {\"height\": 31.0, \"text\": \"20×\", \"width\": 77.0, \"x\": 184.0, \"y\": 0.0}, {\"height\": 31.0, \"text\": \"保存进度\", \"width\": 72.0, \"x\": 265.0, \"y\": 0.0}, {\"height\": 31.0, \"text\": \"读取进度\", \"width\": 72.0, \"x\": 341.0, \"y\": 0.0}, {\"height\": 31.0, \"text\": \"重载内容\", \"width\": 72.0, \"x\": 417.0, \"y\": 0.0}, {\"height\": 31.0, \"text\": \"切换墙体\", \"width\": 72.0, \"x\": 493.0, \"y\": 0.0}, {\"height\": 23.0, \"text\": \"第1日 07:33\", \"width\": 87.0, \"x\": 569.0, \"y\": 4.0}, {\"height\": 31.0, \"text\": \"侦探\", \"width\": 300.0, \"x\": 0.0, \"y\": 35.0}, {\"height\": 31.0, \"text\": \"提交当前可用行动\", \"width\": 300.0, \"x\": 0.0, \"y\": 842.0}, {\"height\": 23.0, \"text\": \"库存 44 · 携带 4 · 已消耗 1 · 总供给 49　|　原模型姿态显示，坐卧骨骼动作未接入\", \"width\": 1440.0, \"x\": 0.0, \"y\": 877.0}], \"faulted\": false, \"host_errors\": [], \"scene\": \"res://scenes/main/Main.tscn\", \"started\": true, \"state\": {\"active\": true, \"actors\": [{\"activity\": {\"Action\": \"detective.life.study.auto_chair_212668_6.0\", \"Actor\": \"detective\", \"Execution\": 1.0, \"HostCompleted\": false, \"Phase\": \"working\", \"WorkEndsAt\": 29104.0, \"WorkStartedAt\": 25204.0}, \"book\": false, \"choices\": [], \"evidence_count\": 24.0, \"food\": 1.0, \"id\": \"detective\", \"name\": \"侦探\", \"needs\": {\"agency\": 58.7813767950418, \"calm\": 73.6459742167131, \"comfort\": 73.3074677708913, \"curiosity\": 22.5627535900835, \"energy\": 82.6304548792479, \"fun\": 67.2919484334261, \"growth\": 63.4767209938022, \"hunger\": 74.2764290959609, \"hygiene\": 78.3074677708913, \"purpose\": 42.9689613250696, \"social\": 62.2919484334261, \"thirst\": 74.2453904210305}, \"placement\": {\"Room\": \"house\", \"Time\": 25204.0, \"X\": 1.22500002384186, \"Y\": 0.0, \"Yaw\": 0.0, \"Z\": 3.97499990463257}, \"purpose\": \"我要找到能被反驳和复查的解释，让别人的选择有真实依据。\"}, {\"activity\": {\"Action\": \"quer.life.study.auto_chair_240484_2.0\", \"Actor\": \"quer\", \"Execution\": 6.0, \"HostCompleted\": false, \"Phase\": \"working\", \"WorkEndsAt\": 29135.1911177778, \"WorkStartedAt\": 25235.1911177778}, \"book\": false, \"choices\": [], \"evidence_count\": 32.0, \"food\": 1.0, \"id\": \"quer\", \"name\": \"雀儿\", \"needs\": {\"agency\": 20.7813767950418, \"calm\": 73.5752394463427, \"comfort\": 73.3074677708913, \"curiosity\": 46.5782729275487, \"energy\": 82.6304548792479, \"fun\": 67.2919484334261, \"growth\": 63.4767209938022, \"hunger\": 74.2764290959609, \"hygiene\": 78.3074677708913, \"purpose\": 57.9689613250696, \"social\": 62.2919484334261, \"thirst\": 74.2453904210305}, \"placement\": {\"Room\": \"house\", \"Time\": 25235.1911177778, \"X\": 7.97499990463257, \"Y\": 0.0, \"Yaw\": 0.0, \"Z\": 6.72499990463257}, \"purpose\": \"我要握住自己的工具和答应别人的权利；愿意帮忙，不等于谁能替我一直答应。\"}, {\"activity\": {\"Action\": \"lucian.life.play_piano.extra_upright_piano_17.0\", \"Actor\": \"lucian\", \"Execution\": 3.0, \"HostCompleted\": false, \"Phase\": \"working\", \"WorkEndsAt\": 27463.0, \"WorkStartedAt\": 25213.0}, \"book\": false, \"choices\": [], \"evidence_count\": 21.0, \"food\": 1.0, \"id\": \"lucian\", \"name\": \"卢西安\", \"needs\": {\"agency\": 38.7813767950418, \"calm\": 73.6459742167131, \"comfort\": 73.3074677708913, \"curiosity\": 38.5782729275487, \"energy\": 82.6304548792479, \"fun\": 67.2919484334261, \"growth\": 63.4767209938022, \"hunger\": 74.2764290959609, \"hygiene\": 78.3074677708913, \"purpose\": 52.9689613250696, \"social\": 62.2919484334261, \"thirst\": 74.2453904210305}, \"placement\": {\"Room\": \"house\", \"Time\": 25213.0, \"X\": 15.4750003814697, \"Y\": 0.0, \"Yaw\": 0.0, \"Z\": 2.47499990463257}, \"purpose\": \"别人可以笑我的诗，不能因为雀儿没有家世，就把她的同意也一并收走。\"}, {\"activity\": {\"Action\": \"ruan.life.study.auto_chair_241065_3.0\", \"Actor\": \"ruan\", \"Execution\": 7.0, \"HostCompleted\": false, \"Phase\": \"working\", \"WorkEndsAt\": 29137.1567711111, \"WorkStartedAt\": 25237.1567711111}, \"book\": false, \"choices\": [], \"evidence_count\": 31.0, \"food\": 1.0, \"id\": \"ruan\", \"name\": \"阮清月\", \"needs\": {\"agency\": 16.7813767950418, \"calm\": 73.6459742167131, \"comfort\": 73.3074677708913, \"curiosity\": 15.5627535900835, \"energy\": 82.6304548792479, \"fun\": 67.2919484334261, \"growth\": 63.4767209938022, \"hunger\": 74.2764290959609, \"hygiene\": 78.3074677708913, \"purpose\": 47.9689613250696, \"social\": 62.2919484334261, \"thirst\": 74.2453904210305}, \"placement\": {\"Room\": \"house\", \"Time\": 25237.1567711111, \"X\": 8.72500038146973, \"Y\": 0.0, \"Yaw\": 0.0, \"Z\": 8.97500038146973}, \"purpose\": \"我要试出他人真正肯守的边界，争取判断上的先手；路被堵住，就借堵路的人留下的新条件。\"}, {\"activity\": {\"Action\": \"shen.life.paint.extra_easel_18.0\", \"Actor\": \"shen\", \"Execution\": 12.0, \"HostCompleted\": false, \"Phase\": \"working\", \"WorkEndsAt\": 29572.3428759653, \"WorkStartedAt\": 26572.3428759653}, \"book\": true, \"choices\": [], \"evidence_count\": 140.0, \"food\": 0.0, \"id\": \"shen\", \"name\": \"沈鼐\", \"needs\": {\"agency\": 63.7813767950418, \"calm\": 67.3163294706543, \"comfort\": 74.2074677708913, \"curiosity\": 76.5782729275487, \"energy\": 82.6304548792479, \"fun\": 69.0919484334261, \"growth\": 63.4767209938022, \"hunger\": 98.3917077396646, \"hygiene\": 78.3074677708913, \"purpose\": 22.9689613250696, \"social\": 62.2919484334261, \"thirst\": 80.5453904210305}, \"placement\": {\"Room\": \"house\", \"Time\": 26572.3428759653, \"X\": 7.47499990463257, \"Y\": 0.0, \"Yaw\": 0.0, \"Z\": 4.97499990463257}, \"purpose\": \"我要让伤员和忙碌的人吃到热饭；谁想拿孩子和伤员换一份漂亮结论，我就拦着。\"}], \"audit\": {\"carried\": 4.0, \"consumed\": 1.0, \"contracts\": [], \"relations\": [{\"affinity\": 8.0, \"from\": \"detective\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"quer\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"detective\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"lucian\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"detective\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"ruan\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"detective\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"shen\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"quer\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"detective\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"quer\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"lucian\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"quer\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"ruan\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"quer\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"shen\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"lucian\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"detective\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"lucian\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"quer\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"lucian\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"ruan\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"lucian\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"shen\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"ruan\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"detective\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"ruan\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"quer\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"ruan\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"lucian\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"ruan\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"shen\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"shen\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"detective\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"shen\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"quer\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"shen\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"lucian\", \"trust\": 28.0}, {\"affinity\": 8.0, \"from\": \"shen\", \"stage\": \"生疏\", \"tension\": 0.0, \"to\": \"ruan\", \"trust\": 28.0}], \"seating\": [], \"stock\": 44.0, \"supplied\": 49.0}, \"audit_directory\": \"C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/life-sessions/29be7dab4fbb4152bbb1f583d2848744\", \"audit_status\": {\"blocked_attempt_count\": 5.0, \"receipt_count\": 7.0, \"recoverable_cancellations\": 0.0, \"rejected_count\": 0.0, \"successful_count\": 2.0, \"unexpected_failure_count\": 0.0}, \"campaign_completed\": false, \"disabled\": {}, \"error\": \"\", \"mechanics\": [{\"Action\": \"life.supply.0\", \"Actor\": \"world\", \"Details\": {\"amount\": 12.0, \"day\": 0.0}, \"Execution\": 0.0, \"Kind\": \"life_supply\", \"Success\": true, \"Time\": 420.0}], \"objects\": [{\"id\": \"extra_bed_0\", \"lamp\": false}, {\"id\": \"auto_bed_210884_1\", \"lamp\": false}, {\"id\": \"auto_cabinet_211285_4\", \"lamp\": false}, {\"id\": \"auto_table_211801_5\", \"lamp\": false}, {\"id\": \"auto_chair_212668_6\", \"lamp\": false}, {\"id\": \"auto_rug_212814_7\", \"lamp\": false}, {\"id\": \"extra_wash_table_8\", \"lamp\": false}, {\"id\": \"auto_sofa_216201_1\", \"lamp\": false}, {\"id\": \"auto_round_table_216451_2\", \"lamp\": false}, {\"id\": \"auto_bench_216720_3\", \"lamp\": false}, {\"id\": \"auto_cabinet_217250_4\", \"lamp\": false}, {\"id\": \"auto_planter_218963_5\", \"lamp\": false}, {\"id\": \"auto_rug_219288_6\", \"lamp\": false}, {\"id\": \"extra_upright_piano_17\", \"lamp\": false}, {\"id\": \"extra_easel_18\", \"lamp\": false}, {\"id\": \"auto_table_231617_1\", \"lamp\": false}, {\"id\": \"auto_chair_232012_2\", \"lamp\": false}, {\"id\": \"auto_bookshelf_232462_4\", \"lamp\": false}, {\"id\": \"auto_bookshelf_234155_5\", \"lamp\": false}, {\"id\": \"auto_chest_236237_6\", \"lamp\": false}, {\"id\": \"auto_rug_239784_7\", \"lamp\": false}, {\"id\": \"auto_table_239943_1\", \"lamp\": false}, {\"id\": \"auto_chair_240484_2\", \"lamp\": false}, {\"id\": \"auto_chair_241065_3\", \"lamp\": false}, {\"id\": \"auto_chair_241648_4\", \"lamp\": false}, {\"id\": \"auto_chair_242243_5\", \"lamp\": false}, {\"id\": \"auto_cabinet_242839_6\", \"lamp\": false}, {\"id\": \"auto_planter_243483_7\", \"lamp\": false}, {\"id\": \"extra_wash_table_37\", \"lamp\": false}, {\"id\": \"extra_bed_38\", \"lamp\": false}, {\"id\": \"auto_bed_251292_1\", \"lamp\": false}, {\"id\": \"auto_nightstand_252809_3\", \"lamp\": false}, {\"id\": \"auto_cabinet_253565_4\", \"lamp\": false}, {\"id\": \"auto_table_259609_5\", \"lamp\": false}, {\"id\": \"auto_chair_266634_6\", \"lamp\": false}, {\"id\": \"auto_rug_267463_7\", \"lamp\": false}], \"progress\": {\"completed\": false, \"end_minutes\": 7200.0, \"label\": \"五日生活观察\", \"mode\": \"observation_window\", \"phase\": {\"active\": false, \"description\": \"\", \"label\": \"\", \"start_minutes\": null, \"task_guidance\": true}, \"window_completed\": false}, \"receipts\": [{\"Action\": \"quer.life.study.auto_chair_212668_6.0\", \"Actor\": \"quer\", \"Committed\": false, \"Execution\": 2.0, \"Intent\": {\"GoalAlgorithm\": null, \"GoalObjectives\": null, \"GoalSequence\": null, \"Path\": \"daily\", \"PhysiologicalNeed\": null, \"PhysiologicalRoute\": null, \"Reason\": \"尚未选择行动。\", \"RouteAction\": null, \"Step\": null, \"Task\": null}, \"Interruption\": null, \"Narrative\": [], \"Reason\": \"standing_resource_busy\", \"Time\": 25202.0}, {\"Action\": \"ruan.life.study.auto_chair_212668_6.0\", \"Actor\": \"ruan\", \"Committed\": false, \"Execution\": 4.0, \"Intent\": {\"GoalAlgorithm\": null, \"GoalObjectives\": null, \"GoalSequence\": null, \"Path\": \"daily\", \"PhysiologicalNeed\": null, \"PhysiologicalRoute\": null, \"Reason\": \"尚未选择行动。\", \"RouteAction\": null, \"Step\": null, \"Task\": null}, \"Interruption\": null, \"Narrative\": [], \"Reason\": \"standing_resource_busy\", \"Time\": 25206.0}, {\"Action\": \"shen.life.study.auto_chair_212668_6.0\", \"Actor\": \"shen\", \"Committed\": false, \"Execution\": 5.0, \"Intent\": {\"GoalAlgorithm\": null, \"GoalObjectives\": null, \"GoalSequence\": null, \"Path\": \"daily\", \"PhysiologicalNeed\": null, \"PhysiologicalRoute\": null, \"Reason\": \"尚未选择行动。\", \"RouteAction\": null, \"Step\": null, \"Task\": null}, \"Interruption\": null, \"Narrative\": [], \"Reason\": \"standing_resource_busy\", \"Time\": 25208.0}, {\"Action\": \"shen.life.eat_meal.auto_chair_212668_6.0\", \"Actor\": \"shen\", \"Committed\": false, \"Execution\": 8.0, \"Intent\": {\"GoalAlgorithm\": null, \"GoalObjectives\": null, \"GoalSequence\": null, \"Path\": \"daily\", \"PhysiologicalNeed\": null, \"PhysiologicalRoute\": null, \"Reason\": \"尚未选择行动。\", \"RouteAction\": null, \"Step\": null, \"Task\": null}, \"Interruption\": null, \"Narrative\": [], \"Reason\": \"standing_resource_busy\", \"Time\": 25238.0}, {\"Action\": \"shen.life.eat_meal.auto_sofa_216201_1.0\", \"Actor\": \"shen\", \"Committed\": true, \"Execution\": 9.0, \"Intent\": {\"GoalAlgorithm\": null, \"GoalObjectives\": null, \"GoalSequence\": null, \"Path\": \"daily\", \"PhysiologicalNeed\": null, \"PhysiologicalRoute\": null, \"Reason\": \"尚未选择行动。\", \"RouteAction\": null, \"Step\": null, \"Task\": null}, \"Interruption\": null, \"Narrative\": [{\"EvidenceId\": \"\", \"Kind\": \"reflection\", \"Recipients\": [\"shen\"], \"Speaker\": \"shen\", \"SpeakerLabel\": \"shen\", \"Text\": \"用餐\"}], \"Reason\": \"completed\", \"Time\": 26353.7883511111}, {\"Action\": \"shen.life.read.auto_bookshelf_232462_4.0\", \"Actor\": \"shen\", \"Committed\": true, \"Execution\": 10.0, \"Intent\": {\"GoalAlgorithm\": null, \"GoalObjectives\": null, \"GoalSequence\": null, \"Path\": \"daily\", \"PhysiologicalNeed\": null, \"PhysiologicalRoute\": null, \"Reason\": \"尚未选择行动。\", \"RouteAction\": null, \"Step\": null, \"Task\": null}, \"Interruption\": null, \"Narrative\": [{\"EvidenceId\": \"\", \"Kind\": \"reflection\", \"Recipients\": [\"shen\"], \"Speaker\": \"shen\", \"SpeakerLabel\": \"shen\", \"Text\": \"取书\"}], \"Reason\": \"completed\", \"Time\": 26508.2212311162}, {\"Action\": \"shen.life.read_seated.auto_chair_212668_6.0\", \"Actor\": \"shen\", \"Committed\": false, \"Execution\": 11.0, \"Intent\": {\"GoalAlgorithm\": null, \"GoalObjectives\": null, \"GoalSequence\": null, \"Path\": \"daily\", \"PhysiologicalNeed\": null, \"PhysiologicalRoute\": null, \"Reason\": \"尚未选择行动。\", \"RouteAction\": null, \"Step\": null, \"Task\": null}, \"Interruption\": null, \"Narrative\": [], \"Reason\": \"standing_resource_busy\", \"Time\": 26538.2212311162}], \"started\": true, \"time\": 453.850644582173}, \"ui\": {\"paused\": false, \"speed\": 20.0, \"status\": \"\"}, \"session_id\": \"eedbc394144e9289\", \"mode\": \"godot_manual\"}"
+  ],
+  "images": [
+    "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\input-client\\6a94ebec5aede285\\000025-0.png"
+  ]
+}

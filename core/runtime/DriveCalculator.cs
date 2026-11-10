@@ -208,6 +208,15 @@ public sealed class DriveCalculator
         return score;
     }
 
+    internal void ApplyNeedEffects(JsonElement effects,double now)
+    {
+        ValidateTime(now);
+        foreach(var effect in effects.Fields())
+        {
+            if(!needs.TryGetValue(effect.Name,out var before)||!double.IsFinite(effect.Value.Number(double.NaN)))throw new InvalidDataException("Invalid need effect: "+effect.Name);
+            needs[effect.Name]=before with {Value=Math.Clamp(At(before,now)+effect.Value.Number(),0,100),Time=now};
+        }
+    }
     internal void Complete(ActionCandidate action, double now)
     {
         ValidateTime(now);

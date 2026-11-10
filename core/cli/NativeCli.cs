@@ -71,6 +71,7 @@ internal sealed class NativeCli : IDisposable
         viewer=Text(Get(options,"viewer"),Text(Get(content,"viewer")));
         if(!Actors.Any(a=>Text(Get(a,"id"))==viewer))throw new InvalidDataException("Unknown viewer.");
         session=definition.Create();
+        session.ConfigureLifeSeed((int)Num(Get(options,"seed"),1));
         foreach(var item in Items(Get(content,"deductions")))session.ConfigureDeduction(File.ReadAllText(PathOf(Text(Get(item,"source")))),item);
         foreach(var item in Items(Get(content,"strategy_activities")))session.ConfigureStrategy(File.ReadAllText(PathOf(Text(Get(item,"source")))),item);
         end=Num(Get(Get(content,"run"),"end_minutes"));
@@ -203,9 +204,9 @@ internal sealed class NativeCli : IDisposable
     {
         version++;
         if(r.Committed){successfulActions++;completed[r.Action]=completed.GetValueOrDefault(r.Action)+1;firstCompletion.TryAdd(r.Action,r.Time);}
-        else if(r.Interruption is not null)recoverableCancellations++;
+        else if(r.Interruption is not null||session.IsLifeSession&&r.Reason=="cancelled")recoverableCancellations++;
         else if(r.Reason is "deduction_unproved" or "suggestion_rejected" or "incantation_precondition_failed")rejectedAttempts++;
-        else if(r.Reason is "objective_condition_failed" or "standing_resource_busy")blockedAttempts++;
+        else if(r.Reason is "objective_condition_failed" or "standing_resource_busy" or "life_condition_changed")blockedAttempts++;
         else failures++;
         started.Remove(r.Execution,out var execution);
         decisionDrives.Remove(r.Execution,out var drive);
@@ -238,12 +239,13 @@ internal sealed class NativeCli : IDisposable
             ["version"]=version,["chapter"]=(int)(start/60/1440)+1,["day"]=(int)(start/60/1440)+1,["start_time"]=start/60,["duration"]=(r.Time-start)/60,["actor"]=r.Actor,["action"]=r.Action,
             ["label"]=execution is null?"":Text(Get(execution.Action.Declaration,"label")),
             ["outcome"]=r.Committed?"completed":r.Reason,["execution_event"]=r.Execution,
-            ["outcome_category"]=r.Committed?"completed":r.Interruption is not null?"recoverable_cancellation":r.Reason is "deduction_unproved" or "suggestion_rejected" or "incantation_precondition_failed"?"rejected":r.Reason is "objective_condition_failed" or "standing_resource_busy"?"blocked_attempt":"unexpected_failure",["interruption"]=r.Interruption,
+            ["outcome_category"]=r.Committed?"completed":r.Interruption is not null||session.IsLifeSession&&r.Reason=="cancelled"?"recoverable_cancellation":r.Reason is "deduction_unproved" or "suggestion_rejected" or "incantation_precondition_failed"?"rejected":r.Reason is "objective_condition_failed" or "standing_resource_busy" or "life_condition_changed"?"blocked_attempt":"unexpected_failure",["interruption"]=r.Interruption,
             ["decision_drive"]=drive,["candidate_scores"]=execution?.Options,["decision_intent"]=r.Intent,
             ["decision_basis"]=reasons,["reason"]=execution is null?"":Text(Get(execution.Action.Declaration,"reason")),
             ["decision_audit"]=decisionAudit,
             ["actual_effects"]=outcome,
             ["mechanics"]=session.MechanicHistory.Where(item=>item.Execution==r.Execution).ToArray(),
+            ["life_audit"]=session.IsLifeSession?session.LifeAudit():null,
             ["narrative"]=r.Narrative??[],
             ["needs"]=session.Needs(r.Actor),["room"]=Room(r.Actor),["knowledge_revision_before_refresh"]=session.View(r.Actor).KnowledgeRevision};
         AppendRecord(log,row,version);

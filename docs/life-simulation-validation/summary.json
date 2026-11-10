@@ -1,0 +1,694 @@
+{
+  "source": "Postprocessed actual formal MCP receipts; no replay or state injection",
+  "runs": [
+    {
+      "run_id": "cli-1554b7727e8627568c6acf0d",
+      "status": "completed",
+      "seed": 7,
+      "content": {
+        "hash": "dbfbcd4b97d276aab1989a0161c1d3b13a6fe7a6a9525624cd16821a28500119",
+        "schema": "dv-script-v1"
+      },
+      "completed_actions": 1328,
+      "total_action_receipts": 2441,
+      "unexpected_action_failures": 0,
+      "recoverable_cancellations": 13,
+      "blocked_action_attempts": 1100,
+      "deadline": "2026-11-10T16:45:07.884246+00:00",
+      "graceful_exit": true,
+      "acceptance": {
+        "passed": true,
+        "content_hash": "dbfbcd4b97d276aab1989a0161c1d3b13a6fe7a6a9525624cd16821a28500119",
+        "game_time": 7200,
+        "campaign_completed": true,
+        "campaign_progress": {
+          "mode": "observation_window",
+          "completed": true,
+          "window_completed": true,
+          "end_minutes": 7200,
+          "label": "五日生活观察",
+          "phase": {
+            "active": false,
+            "start_minutes": null,
+            "label": "",
+            "description": "",
+            "task_guidance": true
+          }
+        },
+        "assessment_scope": "runtime_conditions_and_mechanics",
+        "emergence_assessment": "requires_independent_causal_review",
+        "missing_completion": [],
+        "failures": 0,
+        "rejected_attempts": 0,
+        "blocked_attempts": 1100,
+        "total_action_receipts": 2441,
+        "successful_action_receipts": 1328,
+        "recoverable_cancellations": 13,
+        "invariant_failures": [],
+        "checks": [],
+        "mechanics": []
+      },
+      "receipt_sha256": "af46b889023f5d3d67a7ff1484c3ada094bdb501605b319ce953f255903b0e47",
+      "raw_receipt_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-1554b7727e8627568c6acf0d\\actions.yaml",
+      "response_modes": {
+        "accept": 146,
+        "conditional": 73,
+        "decline": 41,
+        "defer": 42,
+        "comply": 60,
+        "ignore": 21,
+        "refuse": 28,
+        "confront": 5
+      },
+      "social_categories": {
+        "chat": 89,
+        "ask_help": 80,
+        "tease": 68,
+        "confide": 30,
+        "ask_info": 57,
+        "greet": 8,
+        "invite": 20,
+        "complain": 24,
+        "ask_share": 7,
+        "apologize": 33
+      },
+      "inventory": {
+        "supplied": 97,
+        "consumed": 88,
+        "stock": 9,
+        "carried": 0
+      },
+      "inventory_violations": 0,
+      "seating_status": {
+        "fulfilled": 5
+      },
+      "seating_examples": [
+        {
+          "id": "seating/656",
+          "requester": "ruan",
+          "responder": "lucian",
+          "category": "invite",
+          "effect": "hangout",
+          "contract": "",
+          "status": "fulfilled",
+          "participants": [
+            {
+              "actor": "ruan",
+              "obj": "auto_sofa_216201_1",
+              "slot": 0
+            },
+            {
+              "actor": "lucian",
+              "obj": "auto_sofa_216201_1",
+              "slot": 1
+            }
+          ],
+          "overlap": 10,
+          "last": 2016,
+          "expires": 2183,
+          "executions": [
+            661,
+            660
+          ]
+        },
+        {
+          "id": "seating/846",
+          "requester": "shen",
+          "responder": "detective",
+          "category": "invite",
+          "effect": "hangout",
+          "contract": "",
+          "status": "fulfilled",
+          "participants": [
+            {
+              "actor": "shen",
+              "obj": "auto_sofa_216201_1",
+              "slot": 0
+            },
+            {
+              "actor": "detective",
+              "obj": "auto_sofa_216201_1",
+              "slot": 1
+            }
+          ],
+          "overlap": 10,
+          "last": 2273.383333333333,
+          "expires": 2440.133333333333,
+          "executions": [
+            847,
+            848
+          ]
+        }
+      ],
+      "contracts": {
+        "fulfilled": 32,
+        "expired": 81,
+        "pending": 2
+      },
+      "relation_ranges": {
+        "affinity": [
+          7.877875205589688,
+          16.839711889986017
+        ],
+        "trust": [
+          30.244455643187923,
+          36.29614438431714
+        ],
+        "tension": [
+          0.40960482141634613,
+          14.751990516861822
+        ]
+      },
+      "actions_per_actor": {
+        "shen": 257,
+        "lucian": 243,
+        "detective": 296,
+        "quer": 228,
+        "ruan": 304
+      },
+      "first_completed_examples": [
+        {
+          "actor": "detective",
+          "receipt_index": 15,
+          "action": "detective.life.study.auto_chair_212668_6.0",
+          "needs_after": {
+            "hunger": 70.84816666666667,
+            "thirst": 68.94716666666666,
+            "energy": 80.44883333333334,
+            "hygiene": 76.74916666666667,
+            "social": 59.79866666666667,
+            "fun": 62.84866666666666,
+            "comfort": 71.74916666666667,
+            "growth": 88.07425,
+            "calm": 70.44933333333334,
+            "curiosity": 32.3188,
+            "purpose": 49.099000000000004,
+            "agency": 57.6594
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 2,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "quer",
+          "receipt_index": 16,
+          "action": "quer.life.study.auto_chair_240484_2.0",
+          "needs_after": {
+            "hunger": 70.7895,
+            "thirst": 68.8565,
+            "energy": 80.4115,
+            "hygiene": 76.7225,
+            "social": 75.75600000000001,
+            "fun": 66.80599999999998,
+            "comfort": 71.7225,
+            "growth": 88.05025,
+            "calm": 70.428,
+            "curiosity": 59.2469,
+            "purpose": 82.067,
+            "agency": 35.6402
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 16,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "lucian",
+          "receipt_index": 8,
+          "action": "lucian.life.play_piano.extra_upright_piano_17.0",
+          "needs_after": {
+            "hunger": 73.86583333333333,
+            "thirst": 73.61083333333333,
+            "energy": 82.36916666666667,
+            "hygiene": 78.12083333333334,
+            "social": 61.99333333333333,
+            "fun": 78.24333333333333,
+            "comfort": 73.12083333333334,
+            "growth": 67.80875,
+            "calm": 79.12166666666667,
+            "curiosity": 46.421499999999995,
+            "purpose": 64.745,
+            "agency": 44.647
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 1,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "ruan",
+          "receipt_index": 17,
+          "action": "ruan.life.study.auto_chair_241065_3.0",
+          "needs_after": {
+            "hunger": 70.78216666666667,
+            "thirst": 68.84516666666667,
+            "energy": 80.40683333333334,
+            "hygiene": 76.71916666666667,
+            "social": 59.75066666666667,
+            "fun": 62.80066666666666,
+            "comfort": 71.71916666666667,
+            "growth": 88.04725,
+            "calm": 70.42533333333334,
+            "curiosity": 23.2756,
+            "purpose": 46.063,
+            "agency": 25.637800000000002
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 14,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "shen",
+          "receipt_index": 5,
+          "action": "shen.life.eat_meal.auto_sofa_216201_1.0",
+          "needs_after": {
+            "hunger": 99.99816666666666,
+            "thirst": 83.0445,
+            "energy": 83.6595,
+            "hygiene": 79.0425,
+            "social": 63.468,
+            "fun": 70.268,
+            "comfort": 74.94250000000001,
+            "growth": 64.13825,
+            "calm": 74.234,
+            "curiosity": 77.1957,
+            "purpose": 23.851,
+            "agency": 64.3106
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 18,
+          "knowledge_basis_count": 1
+        }
+      ]
+    },
+    {
+      "run_id": "cli-092fcd5720045106c07efc9e",
+      "status": "completed",
+      "seed": 13,
+      "content": {
+        "hash": "dbfbcd4b97d276aab1989a0161c1d3b13a6fe7a6a9525624cd16821a28500119",
+        "schema": "dv-script-v1"
+      },
+      "completed_actions": 1336,
+      "total_action_receipts": 2646,
+      "unexpected_action_failures": 0,
+      "recoverable_cancellations": 7,
+      "blocked_action_attempts": 1303,
+      "deadline": "2026-11-10T16:47:52.746298+00:00",
+      "graceful_exit": true,
+      "acceptance": {
+        "passed": true,
+        "content_hash": "dbfbcd4b97d276aab1989a0161c1d3b13a6fe7a6a9525624cd16821a28500119",
+        "game_time": 7200,
+        "campaign_completed": true,
+        "campaign_progress": {
+          "mode": "observation_window",
+          "completed": true,
+          "window_completed": true,
+          "end_minutes": 7200,
+          "label": "五日生活观察",
+          "phase": {
+            "active": false,
+            "start_minutes": null,
+            "label": "",
+            "description": "",
+            "task_guidance": true
+          }
+        },
+        "assessment_scope": "runtime_conditions_and_mechanics",
+        "emergence_assessment": "requires_independent_causal_review",
+        "missing_completion": [],
+        "failures": 0,
+        "rejected_attempts": 0,
+        "blocked_attempts": 1303,
+        "total_action_receipts": 2646,
+        "successful_action_receipts": 1336,
+        "recoverable_cancellations": 7,
+        "invariant_failures": [],
+        "checks": [],
+        "mechanics": []
+      },
+      "receipt_sha256": "37d285a5071e8e58212adb0e857a4b25635ebbbdfb23ca0f3de281c6769301a2",
+      "raw_receipt_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\runs\\cli-092fcd5720045106c07efc9e\\actions.yaml",
+      "response_modes": {
+        "accept": 147,
+        "conditional": 57,
+        "decline": 46,
+        "defer": 54,
+        "comply": 58,
+        "ignore": 24,
+        "refuse": 26,
+        "confront": 4
+      },
+      "social_categories": {
+        "chat": 89,
+        "ask_help": 89,
+        "tease": 61,
+        "confide": 36,
+        "ask_info": 52,
+        "greet": 16,
+        "invite": 17,
+        "complain": 22,
+        "ask_share": 7,
+        "apologize": 27
+      },
+      "inventory": {
+        "supplied": 97,
+        "consumed": 90,
+        "stock": 7,
+        "carried": 0
+      },
+      "inventory_violations": 0,
+      "seating_status": {
+        "fulfilled": 4
+      },
+      "seating_examples": [
+        {
+          "id": "seating/831",
+          "requester": "shen",
+          "responder": "detective",
+          "category": "invite",
+          "effect": "hangout",
+          "contract": "",
+          "status": "fulfilled",
+          "participants": [
+            {
+              "actor": "shen",
+              "obj": "auto_sofa_216201_1",
+              "slot": 0
+            },
+            {
+              "actor": "detective",
+              "obj": "auto_sofa_216201_1",
+              "slot": 1
+            }
+          ],
+          "overlap": 10,
+          "last": 2250.633333333333,
+          "expires": 2418.133333333333,
+          "executions": [
+            832,
+            833
+          ]
+        },
+        {
+          "id": "seating/968",
+          "requester": "shen",
+          "responder": "ruan",
+          "category": "invite",
+          "effect": "hangout",
+          "contract": "",
+          "status": "fulfilled",
+          "participants": [
+            {
+              "actor": "shen",
+              "obj": "auto_sofa_216201_1",
+              "slot": 0
+            },
+            {
+              "actor": "ruan",
+              "obj": "auto_sofa_216201_1",
+              "slot": 1
+            }
+          ],
+          "overlap": 10,
+          "last": 2519.133333333333,
+          "expires": 2684.133333333333,
+          "executions": [
+            974,
+            973
+          ]
+        }
+      ],
+      "contracts": {
+        "fulfilled": 29,
+        "expired": 79,
+        "pending": 3
+      },
+      "relation_ranges": {
+        "affinity": [
+          8.820128344485587,
+          15.77598431167904
+        ],
+        "trust": [
+          30.554362502839624,
+          36.2280031844184
+        ],
+        "tension": [
+          2.5512631084626465,
+          11.987712266076992
+        ]
+      },
+      "actions_per_actor": {
+        "shen": 223,
+        "lucian": 262,
+        "detective": 284,
+        "quer": 263,
+        "ruan": 304
+      },
+      "first_completed_examples": [
+        {
+          "actor": "detective",
+          "receipt_index": 15,
+          "action": "detective.life.study.auto_chair_212668_6.0",
+          "needs_after": {
+            "hunger": 70.84816666666667,
+            "thirst": 68.94716666666666,
+            "energy": 80.44883333333334,
+            "hygiene": 76.74916666666667,
+            "social": 59.79866666666667,
+            "fun": 62.84866666666666,
+            "comfort": 71.74916666666667,
+            "growth": 88.07425,
+            "calm": 70.44933333333334,
+            "curiosity": 32.3188,
+            "purpose": 49.099000000000004,
+            "agency": 57.6594
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 2,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "quer",
+          "receipt_index": 16,
+          "action": "quer.life.study.auto_chair_240484_2.0",
+          "needs_after": {
+            "hunger": 70.7895,
+            "thirst": 68.8565,
+            "energy": 80.4115,
+            "hygiene": 76.7225,
+            "social": 75.75600000000001,
+            "fun": 66.80599999999998,
+            "comfort": 71.7225,
+            "growth": 88.05025,
+            "calm": 70.428,
+            "curiosity": 59.2469,
+            "purpose": 82.067,
+            "agency": 35.6402
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 16,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "lucian",
+          "receipt_index": 8,
+          "action": "lucian.life.play_piano.extra_upright_piano_17.0",
+          "needs_after": {
+            "hunger": 73.86583333333333,
+            "thirst": 73.61083333333333,
+            "energy": 82.36916666666667,
+            "hygiene": 78.12083333333334,
+            "social": 61.99333333333333,
+            "fun": 78.24333333333333,
+            "comfort": 73.12083333333334,
+            "growth": 67.80875,
+            "calm": 79.12166666666667,
+            "curiosity": 46.421499999999995,
+            "purpose": 64.745,
+            "agency": 44.647
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 1,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "ruan",
+          "receipt_index": 17,
+          "action": "ruan.life.study.auto_chair_241065_3.0",
+          "needs_after": {
+            "hunger": 70.78216666666667,
+            "thirst": 68.84516666666667,
+            "energy": 80.40683333333334,
+            "hygiene": 76.71916666666667,
+            "social": 59.75066666666667,
+            "fun": 62.80066666666666,
+            "comfort": 71.71916666666667,
+            "growth": 88.04725,
+            "calm": 70.42533333333334,
+            "curiosity": 23.2756,
+            "purpose": 46.063,
+            "agency": 25.637800000000002
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 14,
+          "knowledge_basis_count": 0
+        },
+        {
+          "actor": "shen",
+          "receipt_index": 5,
+          "action": "shen.life.eat_meal.auto_sofa_216201_1.0",
+          "needs_after": {
+            "hunger": 99.99816666666666,
+            "thirst": 83.0445,
+            "energy": 83.6595,
+            "hygiene": 79.0425,
+            "social": 63.468,
+            "fun": 70.268,
+            "comfort": 74.94250000000001,
+            "growth": 64.13825,
+            "calm": 74.234,
+            "curiosity": 77.1957,
+            "purpose": 23.851,
+            "agency": 64.3106
+          },
+          "intent": {
+            "Path": "daily",
+            "Task": null,
+            "Step": null,
+            "PhysiologicalNeed": null,
+            "Reason": "尚未选择行动。",
+            "PhysiologicalRoute": null,
+            "RouteAction": null,
+            "GoalAlgorithm": null,
+            "GoalSequence": null,
+            "GoalObjectives": null
+          },
+          "candidate_count": 18,
+          "knowledge_basis_count": 1
+        }
+      ]
+    },
+    {
+      "run_id": "godot-426736943e6acc1d3439545f",
+      "status": "deadline_reached",
+      "seed": 11,
+      "content": null,
+      "completed_actions": 5,
+      "total_action_receipts": 13,
+      "unexpected_action_failures": 0,
+      "recoverable_cancellations": 0,
+      "blocked_action_attempts": 8,
+      "deadline": "2026-11-10T16:34:53.902807+00:00",
+      "graceful_exit": false,
+      "last_game_time": 470.20910931953,
+      "host_errors": [],
+      "audit_status": {
+        "blocked_attempt_count": 8.0,
+        "receipt_count": 13.0,
+        "recoverable_cancellations": 0.0,
+        "rejected_count": 0.0,
+        "successful_count": 5.0,
+        "unexpected_failure_count": 0.0
+      }
+    }
+  ]
+}

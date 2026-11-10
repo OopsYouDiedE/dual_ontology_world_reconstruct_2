@@ -1,0 +1,10 @@
+schema "dv-script-v1";
+data runtime.character_session { value = {
+    life_source = "res://assets/data/life_simulation/rules.dv";
+    building_source = "res://assets/data/life_simulation/house.dv";
+    viewer = "detective";
+    scenario_label = "五人生活推演";
+    start_minutes = 420;
+    run = { end_minutes = 7200; };
+    completion = { mode = "observation_window"; end_minutes = 7200; label = "五日生活观察"; };
+}; }

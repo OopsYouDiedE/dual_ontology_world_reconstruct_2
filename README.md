@@ -1,6 +1,6 @@
 # Dual Ontology World Reconstruct 2
 
-Godot .NET 4.7.2 / .NET 8。当前 Godot 入口为建筑模拟器；共用 C# 包含 DV、Reasoning 与 Runtime，并保留正式 CLI 数日自主决策宿主。
+Godot .NET 4.7.2 / .NET 8。正式入口为 `scenes/main/Main.tscn`，提供五人生活新局与建筑设计工具；C# DV、Reasoning、Runtime 共用于 Godot 和 CLI。
 
 ## VSCode 构建
 
@@ -24,7 +24,17 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 
 环境要求：本目录 `.runtime/godot/4.7.2/` 中的完整 .NET 引擎及 .NET SDK 8.0.4xx；不使用标准版 Godot。SDK 由 `global.json` 限定 .NET 8 补丁系列。
 
-迁移计划、逐批状态与验证边界见 [实施与验收](docs/33%20实施与验收.md)。
+迁移、融合实施与验证边界见 [实施与验收](docs/33%20实施与验收.md)。
+
+## 五人生活新局
+
+运行 VSCode 任务 `run: five-person life (Godot)`，在主菜单选择“开始生活新局”。侦探、雀儿、卢西安、阮清月、沈鼐通过 Core 自主选择日常行动和互动，Godot 负责实际路径移动。左侧是作者检查器，可以查看本人目的、需要与有向关系，并提交 Core 当前允许的行动。顶部提供暂停、倍率、存读档、兼容内容重载和墙体显示。
+
+建筑器顶部“生活模拟”使用当前未保存建筑开启独立新局；退出后恢复原建筑器实例。建筑先导出到工具候选区，经 C# DV 解析器加载，不覆盖正式资源。当前支持首个包含封闭房间的单层；GLB 保留原姿态，坐卧骨骼动画尚未接入。
+
+生活入口为 `assets/data/scenarios/life_simulation.dv`，规则与宅邸位于 `assets/data/life_simulation/`。五人的个人目的、职业记忆和动机初值引用正式 `daily-life.dv`；新增生活偏好明确写在 DV 中。有限口粮、库存补给、八种回应、延期与条件承诺、实际座位履行及关系账本均由 C# Core 执行。
+
+正式五日生活自动入口为 VSCode 任务 `run: five-day life CLI (720s)`；原剧情 CLI 入口仍使用下述 campaign。截止时长包括构建启动，达到截止时间不代表通过五日验收。
 
 ## 数日自主决策
 
@@ -40,7 +50,7 @@ AI／人工 CLI 输入使用 `.runtime/python/Scripts/python.exe mcp/game/input_
 
 ## 五人角色模型
 
-建筑器顶部点击“角色模型”，查看侦探、雀儿、卢西安、阮清月、沈鼐，可左右旋转并返回。也可在 Godot 打开 `tools/characters/CharacterGallery.tscn` 运行当前场景。模型映射、高度和朝向由 `assets/data/character_models.dv` 声明，经 C# DV 解析器读取；GLB 保留原网格、内嵌纹理、蒙皮与动画资源。本预览不运行游戏规则，模型尚未接入正式 Godot 游戏会话。
+建筑器顶部点击“角色模型”，查看侦探、雀儿、卢西安、阮清月、沈鼐，可左右旋转并返回。也可在 Godot 打开 `tools/characters/CharacterGallery.tscn` 运行当前场景。模型映射、高度和朝向由 `assets/data/character_models.dv` 声明，经 C# DV 解析器读取；GLB 保留原网格、内嵌纹理、蒙皮与动画资源。同一套模型用于生活会话；独立模型预览不运行游戏规则。
 
 ## 建筑组件加载
 

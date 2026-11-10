@@ -16,8 +16,8 @@ public sealed class CharacterSessionDefinition
         var document=DvDocument.Parse(source);
         if(document.Definition("data","runtime.character_session").GetProperty("value").Get("compact").Flag() && source.Count(c=>c=='\n')>2000)
             throw new InvalidDataException("Compact scenario source exceeds the 2000-line authoring limit.");
-        Declaration=CampaignScenario.Expand(document.Definition("data","runtime.character_session").GetProperty("value"),
-            readSource??(path=>File.ReadAllText(path.Replace("res://",""))));
+        var read=readSource??(path=>File.ReadAllText(path.Replace("res://","")));
+        Declaration=CampaignScenario.Expand(LifeScenario.Expand(document.Definition("data","runtime.character_session").GetProperty("value"),read),read);
         CampaignProgress.Validate(Declaration);
         ValidateReservations(Declaration);
         Hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Declaration.GetRawText()))).ToLowerInvariant();
@@ -164,6 +164,7 @@ public sealed class CharacterSessionDefinition
         session.ConfigurePresenceGroups(Declaration.Get("presence_groups"));
         session.ConfigureAccumulators(Declaration.Get("objective_accumulators"));
         session.ConfigureMechanics(Declaration);
+        session.ConfigureLife(Declaration.Get("life"));
         if(Declaration.Get("deduction").ValueKind==JsonValueKind.Object)
             session.ConfigureDeduction(deductionSource??throw new InvalidDataException("Deduction source is required."),Declaration.Get("deduction"));
         return session;

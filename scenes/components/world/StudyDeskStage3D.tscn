@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/world/StudyDeskStage3D.gd" id="1_stage"]
+
+[node name="StudyDeskStage3D" type="Node3D"]
+script = ExtResource("1_stage")

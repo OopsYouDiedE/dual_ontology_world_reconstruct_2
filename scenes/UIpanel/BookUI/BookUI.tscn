@@ -1,0 +1,132 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/BookUI/BookUI.gd" id="1_book"]
+[ext_resource type="PackedScene" path="res://scenes/UIpanel/SaveUI/SaveUI.tscn" id="2_save"]
+[ext_resource type="PackedScene" path="res://scenes/UIpanel/SettingUI/SettingUI.tscn" id="3_setting"]
+
+[node name="BookUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_book")
+
+[node name="PageViewport" type="SubViewport" parent="."]
+disable_3d = true
+transparent_bg = true
+gui_embed_subwindows = true
+size = Vector2i(1500, 1000)
+render_target_update_mode = 0
+
+[node name="Spread" type="Control" parent="PageViewport"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1500.0
+offset_bottom = 1000.0
+mouse_filter = 2
+
+[node name="Pages" type="Control" parent="PageViewport/Spread"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="GalleryPage" type="Control" parent="PageViewport/Spread/Pages"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Header" type="Label" parent="PageViewport/Spread/Pages/GalleryPage"]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 82.0
+offset_right = 668.0
+offset_bottom = 160.0
+theme_type_variation = &"HeaderLabel"
+text = "图录"
+
+[node name="Caption" type="Label" parent="PageViewport/Spread/Pages/GalleryPage"]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 160.0
+offset_right = 668.0
+offset_bottom = 192.0
+theme_type_variation = &"CaptionLabel"
+text = "尚未收录画面"
+
+[node name="SavePage" parent="PageViewport/Spread/Pages" instance=ExtResource("2_save")]
+visible = false
+layout_mode = 1
+
+[node name="SettingsPage" parent="PageViewport/Spread/Pages" instance=ExtResource("3_setting")]
+visible = false
+layout_mode = 1
+
+[node name="Chrome" type="Control" parent="PageViewport/Spread"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Tabs" type="HBoxContainer" parent="PageViewport/Spread/Chrome"]
+layout_mode = 0
+offset_left = 900.0
+offset_right = 1420.0
+offset_bottom = 54.0
+alignment = 2
+theme_override_constants/separation = 10
+
+[node name="CloseButton" type="Button" parent="PageViewport/Spread/Chrome"]
+layout_mode = 0
+offset_left = 72.0
+offset_top = 8.0
+offset_right = 252.0
+offset_bottom = 50.0
+text = "合上案卷"
+
+[node name="PrevButton" type="Button" parent="PageViewport/Spread/Chrome"]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 936.0
+offset_right = 200.0
+offset_bottom = 984.0
+text = "‹ 前页"
+
+[node name="LeftFolio" type="Label" parent="PageViewport/Spread/Chrome"]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 940.0
+offset_right = 464.0
+offset_bottom = 980.0
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+
+[node name="RightFolio" type="Label" parent="PageViewport/Spread/Chrome"]
+layout_mode = 0
+offset_left = 1036.0
+offset_top = 940.0
+offset_right = 1200.0
+offset_bottom = 980.0
+theme_type_variation = &"CaptionLabel"
+horizontal_alignment = 1
+
+[node name="NextButton" type="Button" parent="PageViewport/Spread/Chrome"]
+layout_mode = 0
+offset_left = 1300.0
+offset_top = 936.0
+offset_right = 1436.0
+offset_bottom = 984.0
+text = "后页 ›"

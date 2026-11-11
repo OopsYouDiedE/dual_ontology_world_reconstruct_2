@@ -12,29 +12,40 @@ public partial class LifeBridge : Node
     private readonly Dictionary<long,Decision> decisions=[];
     private readonly List<ActionReceipt> receipts=[];
     private string contentPath="res://assets/data/scenarios/life_simulation.dv";
+    private string sourceManifest="";
+    private bool customBuilding;
     private string error="";
     private string auditDirectory="";
     private readonly Dictionary<string,string> disabledReasons=[];
+    private JsonObject notes=new();
     private static string Encode(object? value)=>JsonSerializer.Serialize(value);
     private static string Read(string path)=>System.IO.File.ReadAllText(ProjectSettings.GlobalizePath(path));
+    private static CharacterSessionDefinition Prepare(string source,string buildingJson)
+    {
+        const string buildingPath="res://session-building.dv";
+        if(buildingJson.Length>0)
+        {
+            var document=DuelView.Dv.DvDocument.Parse(source).Definition("data","runtime.character_session").GetProperty("value");
+            var root=JsonNode.Parse(document.GetRawText())!.AsObject();root["building_source"]=buildingPath;
+            source="schema \"dv-script-v1\";\ndata runtime.character_session { value = "+root.ToJsonString()+"; }\n";
+        }
+        string ReadContent(string path)=>path==buildingPath
+            ?"schema \"dv-script-v1\";\ndata life.building { value = "+JsonNode.Parse(buildingJson)!.ToJsonString()+"; }\n":Read(path);
+        var prepared=new CharacterSessionDefinition(source,Read("res://assets/data/98-runtime-session.data.dv"),ReadContent);
+        if(!prepared.Create().IsLifeSession)throw new InvalidDataException("此入口需要生活场景；案件场景请使用 CLI 宿主。");
+        return prepared;
+    }
     public string Open(string path,string buildingJson,int seed)
     {
         try
         {
             contentPath=path.Length==0?contentPath:path;
             var source=Read(contentPath);
-            if(buildingJson.Length>0)
-            {
-                var candidate="res://tools/building_construction/candidates/life-"+Guid.NewGuid().ToString("N")+".dv";
-                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(ProjectSettings.GlobalizePath(candidate))!);
-                System.IO.File.WriteAllText(ProjectSettings.GlobalizePath(candidate),"schema \"dv-script-v1\";\ndata life.building { value = "+JsonNode.Parse(buildingJson)!.ToJsonString()+"; }\n");
-                var document=DuelView.Dv.DvDocument.Parse(source).Definition("data","runtime.character_session").GetProperty("value");
-                var root=JsonNode.Parse(document.GetRawText())!.AsObject();root["building_source"]=candidate;
-                source="schema \"dv-script-v1\";\ndata runtime.character_session { value = "+root.ToJsonString()+"; }\n";
-            }
-            definition=new(source,Read("res://assets/data/98-runtime-session.data.dv"),Read);
+            sourceManifest=source;
+            customBuilding=buildingJson.Length>0;
+            definition=Prepare(source,buildingJson);
             session=definition.Create();session.ConfigureLifeSeed(seed);session.ConfigureVisibleRoom("house");
-            decisions.Clear();receipts.Clear();disabledReasons.Clear();error="";
+            decisions.Clear();receipts.Clear();disabledReasons.Clear();notes=new();error="";
             auditDirectory=ProjectSettings.GlobalizePath("res://.runtime/life-sessions/"+Guid.NewGuid().ToString("N"));
             System.IO.Directory.CreateDirectory(auditDirectory);
             System.IO.File.WriteAllText(System.IO.Path.Combine(auditDirectory,"content.dv"),source);
@@ -80,7 +91,32 @@ public partial class LifeBridge : Node
     }
     public void Place(string actor,double positionX,double positionY,double positionZ,double yaw)=>session?.ReportPlacement(actor,positionX,positionY,positionZ,yaw,"house");
     public string Observe()=>Encode(SnapshotValue());
+    public string Definition()=>Encode(session?.LifeDefinition);
     public string InspectCognition(string actor)=>Encode(session?.CognitionAudit(actor,true));
+    public string Journal(string actor)
+    {
+        if(session is null)return Encode(new {viewer=actor});
+        var view=session.View(actor);
+        var cognition=definition!.Declaration.GetProperty("actors").EnumerateArray().Single(profile=>profile.GetProperty("id").GetString()==actor);
+        return Encode(new {viewer=actor,time=session.ContentTime,knowledge=view.Knowledge.Where(item=>item.Value.Known)
+            .Select(item=>new {key=item.Key.ToString(),subject=item.Key.Object,facet=item.Key.Facet,field=item.Key.Field,fact=item.Value}).ToArray(),
+            evidence=session.Evidence(actor),map=view.RememberedMap,cognition=session.CognitionAudit(actor,true),
+            rules=cognition.TryGetProperty("cognition",out var mind)&&mind.TryGetProperty("theory",out var theory)?theory:default(JsonElement?),
+            notes=notes[actor]?.DeepClone(),receipts=receipts.Where(item=>item.Actor==actor).TakeLast(60).ToArray()});
+    }
+    public string SaveNote(string actor,string title,string text,string related,string judgement,string identity)
+    {
+        if(session is null)return "尚未开局";
+        _=session.View(actor);
+        var entries=notes[actor] as JsonArray;
+        if(entries is null){entries=new();notes[actor]=entries;}
+        if(identity.Length==0)identity=Guid.NewGuid().ToString("N");
+        var index=entries.Select((item,index)=>(item,index)).FirstOrDefault(item=>item.item?["id"]?.GetValue<string>()==identity).index;
+        var existing=entries.FirstOrDefault(item=>item?["id"]?.GetValue<string>()==identity);
+        var note=JsonSerializer.SerializeToNode(new {id=identity,title,text,related,judgement,time=session.ContentTime});
+        if(existing is null)entries.Add(note);else entries[index]=note;
+        return "";
+    }
     public string Navigation()=>Encode(decisions.Values.Where(decision=>session?.Activity(decision.Actor)?.Phase=="approaching")
         .Select(decision=>new {execution=decision.Execution,actor=decision.Actor,meta=decision.Action.Declaration.GetProperty("life"),label=Label(decision.Action.Declaration)}));
     private object SnapshotValue()
@@ -113,22 +149,40 @@ public partial class LifeBridge : Node
     public string Save(string path)
     {
         if(session is null||definition is null)return "尚未开局";
-        System.IO.File.WriteAllText(ProjectSettings.GlobalizePath(path),Encode(new {hash=definition.Hash,state=session.SaveState(),receipts}));return "";
+        try
+        {
+            var destination=ProjectSettings.GlobalizePath(path);
+            var temporary=destination+".tmp";
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destination)!);
+            System.IO.File.WriteAllText(temporary,Encode(new {hash=definition.Hash,state=session.SaveState(),receipts,notes,building=session.LifeDefinition.GetProperty("building"),game_time=session.ContentTime,content_path=contentPath,source=sourceManifest,custom_building=customBuilding}));
+            System.IO.File.Move(temporary,destination,true);
+            return "";
+        }
+        catch(Exception exception){return exception.Message;}
     }
+
     public string Load(string path)
     {
-        if(session is null||definition is null)return "尚未开局";
         try
         {
             using var document=JsonDocument.Parse(Read(path));var root=document.RootElement;
-            if(root.GetProperty("hash").GetString()!=definition.Hash)return "存档内容版本不同，需要兼容迁移或新局。";
-            var replacement=definition.Create();replacement.RestoreState(root.GetProperty("state").Deserialize<RuntimeSessionState>()!);
-            session=replacement;decisions.Clear();
-            receipts.Clear();disabledReasons.Clear();
-            if(root.TryGetProperty("receipts",out var savedReceipts))receipts.AddRange(savedReceipts.Deserialize<ActionReceipt[]>()!);
-            System.IO.File.AppendAllText(System.IO.Path.Combine(auditDirectory,"session-events.jsonl"),Encode(new {kind="load",path,time=session.ContentTime,hash=definition.Hash})+"\n");
-            foreach(var execution in session.SaveState().Executions)
-                if(session.DecisionFor(execution.Execution) is { } decision)decisions.Add(execution.Execution,decision);
+            var source=root.TryGetProperty("source",out var storedSource)?storedSource.GetString()!:sourceManifest;
+            var restoredDefinition=root.TryGetProperty("source",out _)?Prepare(source,root.TryGetProperty("custom_building",out var custom)&&custom.GetBoolean()?root.GetProperty("building").GetRawText():""):definition??Prepare(Read(contentPath),"");
+            if(restoredDefinition is null||root.GetProperty("hash").GetString()!=restoredDefinition.Hash)return "存档内容版本不同，需要兼容迁移或新局。";
+            var replacement=restoredDefinition.Create();replacement.RestoreState(root.GetProperty("state").Deserialize<RuntimeSessionState>()!);
+            var restoredReceipts=root.TryGetProperty("receipts",out var savedReceipts)?savedReceipts.Deserialize<ActionReceipt[]>()!:[];
+            var restoredNotes=root.TryGetProperty("notes",out var storedNotes)?JsonNode.Parse(storedNotes.GetRawText())!.AsObject():new JsonObject();
+            var restoredDecisions=new Dictionary<long,Decision>();
+            foreach(var execution in replacement.SaveState().Executions)
+                if(replacement.DecisionFor(execution.Execution) is { } decision)restoredDecisions.Add(execution.Execution,decision);
+            var destination=auditDirectory.Length>0?auditDirectory:ProjectSettings.GlobalizePath("res://.runtime/life-sessions/"+Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(destination);
+            System.IO.File.AppendAllText(System.IO.Path.Combine(destination,"session-events.jsonl"),Encode(new {kind="load",path,time=replacement.ContentTime,hash=restoredDefinition.Hash})+"\n");
+            session=replacement;definition=restoredDefinition;sourceManifest=source;auditDirectory=destination;error="";
+            customBuilding=root.TryGetProperty("custom_building",out var restoredCustom)&&restoredCustom.GetBoolean();
+            if(root.TryGetProperty("content_path",out var savedPath))contentPath=savedPath.GetString()!;
+            decisions.Clear();foreach(var item in restoredDecisions)decisions.Add(item.Key,item.Value);
+            receipts.Clear();receipts.AddRange(restoredReceipts);disabledReasons.Clear();notes=restoredNotes;
             return "";
         }
         catch(Exception exception){return exception.Message;}
@@ -143,7 +197,7 @@ public partial class LifeBridge : Node
             CharacterContentRevisions.ValidateDeclarations(definition.Declaration,replacement.Declaration,saved);
             var restored=replacement.Create();restored.RestoreState(saved);
             CharacterContentRevisions.AssertStatePreserved(saved,restored.SaveState());
-            definition=replacement;session=restored;contentPath=path;
+            definition=replacement;session=restored;contentPath=path;sourceManifest=Read(path);customBuilding=false;
             decisions.Clear();
             foreach(var execution in saved.Executions)
                 if(session.DecisionFor(execution.Execution) is { } decision)decisions.Add(execution.Execution,decision);

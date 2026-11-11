@@ -1,0 +1,115 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/TitleUI/TitleUI.gd" id="1_title"]
+
+[sub_resource type="Gradient" id="Gradient_shade"]
+offsets = PackedFloat32Array(0, 0.42, 1)
+colors = PackedColorArray(0.02, 0.015, 0.02, 0, 0.02, 0.015, 0.02, 0.72, 0.02, 0.015, 0.02, 0.9)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_shade"]
+gradient = SubResource("Gradient_shade")
+width = 256
+height = 8
+
+[node name="TitleUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_title")
+
+[node name="Shade" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 0
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_shade")
+expand_mode = 1
+
+[node name="Menu" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.66
+anchor_top = 0.14
+anchor_right = 0.95
+anchor_bottom = 0.92
+grow_horizontal = 0
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="Menu"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "安眠者有福"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Menu"]
+layout_mode = 2
+theme_type_variation = &"SubtitleLabel"
+text = "BEATI QUI DORMIUNT"
+horizontal_alignment = 1
+
+[node name="Rule" type="TextureRect" parent="Menu"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+
+[node name="Spacer" type="Control" parent="Menu"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NewButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "开始生活新局"
+
+[node name="ContinueButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "继续生活"
+
+[node name="RecordsButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "生活手记"
+
+[node name="CampaignButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "打开案件案卷"
+
+[node name="BuilderButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "打开建筑设计工具"
+
+[node name="SettingsButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "设置"
+
+[node name="QuitButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "离开书房"
+
+[node name="Hint" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.03
+anchor_top = 0.93
+anchor_right = 0.6
+anchor_bottom = 0.98
+theme_type_variation = &"HintLabel"
+text = "点击桌上的案卷，翻阅生活手记或案件案卷"
+
+[node name="Fade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

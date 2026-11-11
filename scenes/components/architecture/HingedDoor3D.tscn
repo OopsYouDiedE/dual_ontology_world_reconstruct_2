@@ -1,0 +1,80 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/HingedDoor3D.gd" id="1_door_script"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_leaf"]
+size = Vector3(0.9, 2.1, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.219608, 0.227451, 0.215686, 1)
+metallic = 0.8
+roughness = 0.3
+
+[sub_resource type="BoxMesh" id="BoxMesh_handle"]
+size = Vector3(0.12, 0.03, 0.05)
+
+[sub_resource type="BoxMesh" id="BoxMesh_latch"]
+size = Vector3(0.06, 0.04, 0.03)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_door"]
+size = Vector3(0.9, 2.1, 0.05)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_interaction"]
+size = Vector3(1.5, 2.1, 1.8)
+
+[node name="HingedDoor3D" type="Node3D"]
+script = ExtResource("1_door_script")
+leaf_width = 0.9
+leaf_height = 2.1
+leaf_thickness = 0.05
+minimum_angle = -90.0
+maximum_angle = 0.0
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="Hinge" type="Node3D" parent="VisualRoot"]
+
+[node name="DoorLeafMesh" type="MeshInstance3D" parent="VisualRoot/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.05, 0)
+mesh = SubResource("BoxMesh_leaf")
+
+[node name="Handle_Outer" type="MeshInstance3D" parent="VisualRoot/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.765, 0.98, 0.05)
+mesh = SubResource("BoxMesh_handle")
+surface_material_override/0 = SubResource("StandardMaterial3D_metal")
+
+[node name="Handle_Inner" type="MeshInstance3D" parent="VisualRoot/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.765, 0.98, -0.05)
+mesh = SubResource("BoxMesh_handle")
+surface_material_override/0 = SubResource("StandardMaterial3D_metal")
+
+[node name="Latch_Inner" type="MeshInstance3D" parent="VisualRoot/Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.765, 1.1, -0.04)
+mesh = SubResource("BoxMesh_latch")
+surface_material_override/0 = SubResource("StandardMaterial3D_metal")
+
+[node name="CollisionRoot" type="Node3D" parent="VisualRoot/Hinge"]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="VisualRoot/Hinge/CollisionRoot"]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VisualRoot/Hinge/CollisionRoot/StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.05, 0)
+shape = SubResource("BoxShape3D_door")
+
+[node name="InteractionArea" type="Area3D" parent="."]
+collision_layer = 16
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.05, 0)
+shape = SubResource("BoxShape3D_interaction")
+
+[node name="InteractionSlots" type="Node3D" parent="."]
+
+[node name="InnerSlot" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0, -0.9)
+
+[node name="OuterSlot" type="Marker3D" parent="InteractionSlots"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0, 0.9)

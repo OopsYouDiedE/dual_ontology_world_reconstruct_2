@@ -71,7 +71,7 @@ func _handle(request: Dictionary) -> void:
 	match str(request.get("type","observe")):
 		"close":
 			_reply(id,{"closed":true})
-			get_tree().quit()
+			await preload("res://scenes/components/shared/HostLifecycle.gd").quit(get_tree())
 			return
 		"click":
 			var point := Vector2(float(request.get("x",-1)),float(request.get("y",-1)))

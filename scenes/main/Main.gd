@@ -1,14 +1,19 @@
 extends Control
 
+const TITLE_UI_SCENE := preload("res://scenes/UIpanel/TitleUI/TitleUI.tscn")
+const BOOK_UI_SCENE := preload("res://scenes/UIpanel/BookUI/BookUI.tscn")
+const STUDY_STAGE_SCENE := preload("res://scenes/components/world/StudyDeskStage3D.tscn")
+const Sound := preload("res://scenes/components/shared/Sound.gd")
+
 const Space = preload("res://scenes/components/life/BuildingSpace.gd")
 const Components = preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
 const Wall = preload("res://tools/building_construction/BuildingConstruction/Walls/WallPathGeometry.gd")
 const Floor = preload("res://tools/building_construction/BuildingConstruction/Floors/ArchitectFloor.gd")
 const Props = preload("res://tools/building_construction/BuildingConstruction/Props/ArchitectProps.gd")
 const DEFAULT_CONTENT := "res://assets/data/scenarios/life_simulation.dv"
+const CAMPAIGN_PANEL := preload("res://scenes/main/CampaignPanel.gd")
 
 var bridge: Node
-var menu: Control
 var builder: Control
 var life_ui: Control
 var space: RefCounted
@@ -40,14 +45,117 @@ var seed_value := 7
 var content_path := DEFAULT_CONTENT
 var initial_building: Dictionary = {}
 var status_text := ""
+var title_ui: Control
+var book_ui: Control
+var stage: Node3D
+var book_paused := false
+var campaign_panel: Control
+var shutting_down := false
 
 func _ready() -> void:
+	add_to_group("lifecycle_hosts")
 	bridge = load("res://scenes/main/LifeBridge.cs").new()
 	add_child(bridge)
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--dv-content="): content_path = argument.trim_prefix("--dv-content=")
 		elif argument.begins_with("--dv-seed="): seed_value = int(argument.trim_prefix("--dv-seed="))
-	_make_menu()
+	_title_setup()
+	Sound.music("main_theme", 2.0)
+
+func _title_setup() -> void:
+	stage = STUDY_STAGE_SCENE.instantiate()
+	add_child(stage)
+	book_ui = BOOK_UI_SCENE.instantiate()
+	add_child(book_ui)
+	book_ui.configure(stage, self)
+	book_ui.closed.connect(_book_closed)
+	title_ui = TITLE_UI_SCENE.instantiate()
+	add_child(title_ui)
+	title_ui.new_game_requested.connect(func(): open_life())
+	title_ui.continue_requested.connect(_continue_game)
+	title_ui.book_requested.connect(_open_book_page)
+	title_ui.quit_requested.connect(_quit)
+	title_ui.builder_requested.connect(open_building)
+	title_ui.campaign_requested.connect(open_campaign)
+	title_ui.show_title(has_progress(), true)
+	GameSettings.settings_requested.connect(_settings_requested)
+	campaign_panel = CAMPAIGN_PANEL.new()
+	add_child(campaign_panel)
+	campaign_panel.closed.connect(func(): title_ui.show_title(has_progress()))
+
+func _open_book_page(page_id: String) -> void:
+	if is_instance_valid(campaign_panel) and campaign_panel.visible:
+		campaign_panel.hide()
+		title_ui.show_title(has_progress())
+		return
+	if book_ui.is_open:
+		book_ui.goto_page(page_id)
+		return
+	if book_ui.busy(): return
+	book_paused = paused
+	paused = true
+	if is_instance_valid(life_ui): life_ui.hide()
+	if is_instance_valid(builder): builder.hide()
+	title_ui.hide_title()
+	stage.set_active(true)
+	book_ui.open(page_id, active)
+
+func _book_closed() -> void:
+	paused = book_paused
+	if active:
+		stage.set_active(false)
+		life_ui.show()
+	elif is_instance_valid(builder):
+		stage.set_active(false)
+		builder.show()
+	else:
+		title_ui.show_title(has_progress())
+
+func _settings_requested() -> void:
+	if is_instance_valid(campaign_panel) and campaign_panel.visible:
+		campaign_panel.hide()
+		title_ui.show_title(has_progress())
+		return
+	if book_ui.is_open and book_ui.page_id() == "settings": book_ui.close()
+	else: _open_book_page("settings")
+
+func _quit() -> void:
+	if is_instance_valid(campaign_panel) and campaign_panel.visible: campaign_panel.begin_shutdown()
+	var audio := get_node_or_null("/root/GameAudio")
+	if audio != null: audio.quit_cleanly()
+	else: get_tree().quit()
+
+func _input(event: InputEvent) -> void:
+	if book_ui != null and book_ui.route_input(event): get_viewport().set_input_as_handled()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not active and title_ui.interactive and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and stage.pick_book(event.position):
+		_open_book_page("journal")
+
+func begin_shutdown() -> void:
+	shutting_down = true
+	paused = true
+	if active: status_text = bridge.Save(_slot_path("auto"))
+	if is_instance_valid(campaign_panel) and campaign_panel.visible: campaign_panel.begin_shutdown()
+	bridge.Close()
+	GameSettings.flush()
+
+func wait_for_shutdown() -> void:
+	await get_tree().process_frame
+
+func _continue_game() -> void:
+	var candidates := [_auto_path()]
+	for index in range(1, 7): candidates.append(_slot_path(str(index)))
+	var selected_path := ""
+	var latest := -1
+	for path in candidates:
+		if FileAccess.file_exists(path):
+			var modified := FileAccess.get_modified_time(path)
+			if modified > latest:
+				latest = modified
+				selected_path = path
+	if selected_path.is_empty(): return
+	_load_save(selected_path)
 
 func _button(parent: Node, text: String, callback: Callable) -> Button:
 	var button := Button.new()
@@ -56,28 +164,22 @@ func _button(parent: Node, text: String, callback: Callable) -> Button:
 	parent.add_child(button)
 	return button
 
-func _make_menu() -> void:
-	menu = VBoxContainer.new()
-	menu.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	menu.position = Vector2(-210, -100)
-	menu.custom_minimum_size = Vector2(420, 240)
-	add_child(menu)
-	var title := Label.new()
-	title.text = "五人生活推演 · Reconstruct 2"
-	title.add_theme_font_size_override("font_size", 28)
-	menu.add_child(title)
-	_button(menu, "开始生活新局", func(): open_life())
-	_button(menu, "打开建筑设计工具", open_building)
-	var note := Label.new()
-	note.text = "侦探 · 雀儿 · 卢西安 · 阮清月 · 沈鼐"
-	menu.add_child(note)
-
 func open_building() -> void:
-	menu.hide()
+	if is_instance_valid(campaign_panel): campaign_panel.hide()
+	book_ui.close_immediately()
+	title_ui.hide_title(0.0)
+	stage.set_active(false)
 	if not is_instance_valid(builder):
 		builder = preload("res://tools/building_construction/BuildingSimulator.tscn").instantiate()
 		add_child(builder)
 	builder.show()
+
+func open_campaign() -> void:
+	if active or is_instance_valid(builder) and builder.visible: return
+	book_ui.close_immediately()
+	title_ui.hide_title(0.0)
+	if is_instance_valid(campaign_panel):
+		campaign_panel.open_campaign()
 
 func open_life(building: Dictionary = {}) -> void:
 	if active: return
@@ -88,6 +190,12 @@ func open_life(building: Dictionary = {}) -> void:
 		push_error(status_text)
 		return
 	rules = result.definition
+	_present_life(false)
+
+func _present_life(restored: bool) -> void:
+	if is_instance_valid(life_ui):
+		remove_child(life_ui)
+		life_ui.queue_free()
 	selected = rules.agents[0].id
 	speed = 20.0
 	space = Space.new()
@@ -95,7 +203,9 @@ func open_life(building: Dictionary = {}) -> void:
 	for index in range(rules.building.layers.size()):
 		if not rules.building.layers[index].get("roomFaces", []).is_empty(): layer_index = index; break
 	space.setup(rules.building, layer_index, rules.capacities)
-	menu.hide()
+	if is_instance_valid(title_ui): title_ui.hide_title()
+	book_ui.close_immediately()
+	stage.set_active(false)
 	if is_instance_valid(builder): builder.hide()
 	paths.clear()
 	figures.clear()
@@ -122,13 +232,17 @@ func open_life(building: Dictionary = {}) -> void:
 		camera.get_parent().add_child(caption)
 		captions[profile.id] = caption
 	for actor in snapshot.actors:
-		var position: Vector2 = space.nearest_free(Vector2(actor.placement.X, actor.placement.Z))
+		var position := Vector2(actor.placement.X, actor.placement.Z)
+		if not restored: position = space.nearest_free(position)
 		if position == Vector2.INF: push_error("人物没有可用出生位置"); continue
-		bridge.Place(actor.id, position.x, space.layer_y, position.y, 0.0)
+		if not restored: bridge.Place(actor.id, position.x, space.layer_y, position.y, 0.0)
 		figures[actor.id].position = Vector3(position.x, space.layer_y, position.y)
 	active = true
-	paused = false
+	paused = restored
 	status_text = ""
+	if restored:
+		var navigation: Array = JSON.parse_string(bridge.Navigation())
+		for action in navigation: _dispatch(action)
 	_refresh()
 
 func _make_life_ui() -> void:
@@ -148,8 +262,11 @@ func _make_life_ui() -> void:
 	speeds.select(2)
 	speeds.item_selected.connect(func(index): speed = speeds.get_item_id(index))
 	header.add_child(speeds)
-	_button(header, "保存进度", func(): status_text = bridge.Save("user://life-save.json"))
-	_button(header, "读取进度", _load_save)
+	_button(header, "保存进度", func(): status_text = bridge.Save(_slot_path("auto")))
+	_button(header, "读取进度", func(): _load_save(_auto_path()))
+	_button(header, "手记", func(): _open_book_page("journal"))
+	_button(header, "存档", func(): _open_book_page("save"))
+	_button(header, "设置", func(): _open_book_page("settings"))
 	_button(header, "重载内容", func():
 		status_text = bridge.Reload(content_path)
 		if status_text.is_empty(): status_text = "内容已重载，运行状态与证据保留。")
@@ -271,9 +388,11 @@ func _move(seconds: float) -> void:
 			if profile.id == actor and profile.activity != null:
 				current = profile.activity.Execution == movement.execution and profile.activity.Phase == "approaching"
 		if not current:
+			figures[actor].set_motion(false)
 			paths.erase(actor)
 			continue
 		var model: Node3D = figures[actor]
+		model.set_motion(true)
 		var position := Vector2(model.position.x, model.position.z)
 		var budget := seconds * 2.4
 		while budget > 0.0 and not movement.route.is_empty():
@@ -284,14 +403,22 @@ func _move(seconds: float) -> void:
 				var direction := position.direction_to(waypoint)
 				position += direction * budget
 				model.rotation.y = atan2(direction.x, direction.y)
+				if model.has_method("set_motion"): model.set_motion(true, false)
 				budget = 0
 		model.position = Vector3(position.x, space.layer_y, position.y)
+		if model.has_method("set_motion") and movement.route.is_empty(): model.set_motion(false)
 		bridge.Progress(movement.execution, position.x, space.layer_y, position.y, space.path_length(position, movement.route))
 		if movement.route.is_empty():
 			if not bridge.Arrive(movement.execution, position.x, space.layer_y, position.y): bridge.Fail(movement.execution, "arrival_rejected")
 			paths.erase(actor)
 
 func _process(delta: float) -> void:
+	if shutting_down: return
+	if is_instance_valid(campaign_panel) and campaign_panel.visible: return
+	if stage != null and stage.visible:
+		var pointer := get_viewport().get_mouse_position()
+		stage.set_pointer(pointer / get_viewport_rect().size.max(Vector2.ONE) * 2.0 - Vector2.ONE)
+		stage.set_hover(title_ui.interactive and stage.pick_book(pointer))
 	if not active: return
 	if not paused and snapshot.get("active", true):
 		var remaining := minf(delta, 0.2) * speed
@@ -306,6 +433,7 @@ func _process(delta: float) -> void:
 			remaining -= seconds
 	for actor in snapshot.get("actors", []):
 		if not figures.has(actor.id): continue
+		figures[actor.id].pause_animation(paused)
 		var placement: Dictionary = actor.placement
 		figures[actor.id].position = Vector3(placement.X, placement.Y, placement.Z)
 		var text: String = actor.name
@@ -314,6 +442,7 @@ func _process(delta: float) -> void:
 		captions[actor.id].text = text
 		captions[actor.id].position = figures[actor.id].position + Vector3(0, 1.65, 0)
 	var hour := fmod(float(snapshot.get("time", 420)), 1440.0) / 60.0
+	get_node("/root/GameAudio").apply_music_scene(snapshot)
 	var daylight := clampf(sin((hour - 6) / 12 * PI), 0, 1)
 	sun.light_energy = 0.12 + daylight
 	sun.rotation_degrees = Vector3(-15 - daylight * 55, 35 + (hour - 12) * 6, 0)
@@ -365,28 +494,103 @@ func _refresh() -> void:
 	if not status_text.is_empty(): status_label.text = status_text
 	elif not audit.is_empty(): status_label.text = "库存 %.0f · 携带 %.0f · 已消耗 %.0f · 总供给 %.0f　|　原模型姿态显示，坐卧骨骼动作未接入" % [audit.stock, audit.carried, audit.consumed, audit.supplied]
 
-func _load_save() -> void:
-	paused = true
-	status_text = bridge.Load("user://life-save.json")
+func _load_save(path: String) -> void:
+	status_text = bridge.Load(path)
 	if status_text.is_empty():
-		paths.clear()
-		snapshot = JSON.parse_string(bridge.Observe())
-		for actor in snapshot.actors:
-			figures[actor.id].position = Vector3(actor.placement.X, actor.placement.Y, actor.placement.Z)
-		var navigation: Array = JSON.parse_string(bridge.Navigation())
-		for action in navigation: _dispatch(action)
+		rules = JSON.parse_string(bridge.Definition())
+		_present_life(true)
+		book_paused = true
 		status_text = "已恢复；保持暂停。"
 	_refresh()
 
 func close_life() -> void:
+	if active: status_text = bridge.Save(_slot_path("auto"))
 	active = false
 	bridge.Close()
 	paths.clear()
-	if is_instance_valid(life_ui): life_ui.queue_free()
+	if is_instance_valid(life_ui):
+		remove_child(life_ui)
+		life_ui.queue_free()
+	life_ui = null
 	if is_instance_valid(builder): builder.show()
-	else: menu.show()
+	else:
+		stage.set_active(true)
+		title_ui.show_title(has_progress())
+		Sound.music("main_theme")
+
+func has_progress() -> bool:
+	if FileAccess.file_exists(_auto_path()): return true
+	for index in range(1, 7):
+		if FileAccess.file_exists(_slot_path(str(index))): return true
+	return false
+
+func can_save() -> bool:
+	return active
+
+func journal() -> Dictionary:
+	return JSON.parse_string(bridge.Journal(selected))
+
+func journal_actions() -> Array:
+	for actor in snapshot.get("actors", []):
+		if actor.id == selected: return actor.choices
+	return []
+
+func journal_submit(action: String) -> void:
+	status_text = bridge.Submit(selected, action)
+
+func journal_save_note(title: String, text: String, related: String, judgement: String, identity: String) -> String:
+	return bridge.SaveNote(selected, title, text, related, judgement, identity)
+
+func save_slots() -> Array:
+	var slots: Array = []
+	var auto_path := _auto_path()
+	slots.append(_slot_summary("auto", "自动记录", auto_path))
+	for index in range(1, 7):
+		var path := _slot_path(str(index))
+		slots.append(_slot_summary(str(index), "手记 " + ["一", "二", "三", "四", "五", "六"][index - 1], path))
+	return slots
+
+func _slot_summary(id: String, label: String, path: String) -> Dictionary:
+	var exists := FileAccess.file_exists(path)
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if exists else null
+	var minute := float(data.get("game_time", 0.0)) if data is Dictionary else 0.0
+	return {"id":id, "label":label, "kind":"auto" if id == "auto" else "manual", "exists":exists, "saved_at":FileAccess.get_modified_time(path) if exists else 0, "place":"生活宅邸" if exists else "—", "game_time":"第%d日 %02d:%02d" % [int(minute / 1440) + 1, int(minute) % 1440 / 60, int(minute) % 60] if exists else "—"}
+
+func save_to_slot(id: String) -> String:
+	if id == "auto": return "自动记录由生活进程写入。"
+	if not id.is_valid_int() or int(id) < 1 or int(id) > 6: return "无效的手记页。"
+	return bridge.Save(_slot_path(id))
+
+func load_slot(id: String) -> String:
+	if id != "auto" and (not id.is_valid_int() or int(id) < 1 or int(id) > 6): return "无效的手记页。"
+	var path := _auto_path() if id == "auto" else _slot_path(id)
+	if not FileAccess.file_exists(path): return "这一页的记录无法读取。"
+	_load_save(path)
+	return "" if status_text == "已恢复；保持暂停。" else status_text
+
+func delete_slot(id: String) -> String:
+	if id == "auto": return "自动记录不能撕去。"
+	if not id.is_valid_int() or int(id) < 1 or int(id) > 6: return "无效的手记页。"
+	var path := _slot_path(id)
+	if FileAccess.file_exists(path):
+		var error := DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		return "" if error == OK else error_string(error)
+	return ""
+
+func _slot_path(id: String) -> String:
+	return _slot_directory().path_join("slot-%s.json" % id)
+
+func _auto_path() -> String:
+	var path := _slot_path("auto")
+	return "user://life-save.json" if _slot_directory() == "user://life-slots" and not FileAccess.file_exists(path) else path
+
+func _slot_directory() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--dv-save-slot="): return "user://sessions/%s/life-slots" % argument.trim_prefix("--dv-save-slot=")
+	return "user://life-slots"
 
 func mcp_observe() -> Dictionary:
+	if is_instance_valid(campaign_panel) and campaign_panel.visible: return campaign_panel.observation()
 	var result := {"started": active, "state": snapshot if active else {"active": true, "campaign_completed": false}, "faulted": not str(snapshot.get("error", "")).is_empty(), "host_errors": [], "ui": {"paused": paused, "speed": speed, "status": status_text}}
 	if is_instance_valid(builder):
 		result["authored_scene"] = builder.state.data.duplicate(true)

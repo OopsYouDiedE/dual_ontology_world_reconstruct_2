@@ -1,0 +1,94 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/SaveUI/SaveUI.gd" id="1_save"]
+
+[node name="SaveUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_save")
+
+[node name="LeftHeader" type="Label" parent="."]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 82.0
+offset_right = 668.0
+offset_bottom = 160.0
+theme_type_variation = &"HeaderLabel"
+text = "调查记录"
+
+[node name="LeftCaption" type="Label" parent="."]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 160.0
+offset_right = 668.0
+offset_bottom = 192.0
+theme_type_variation = &"CaptionLabel"
+text = "一页自动记录，六页手记"
+
+[node name="SlotList" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 222.0
+offset_right = 668.0
+offset_bottom = 900.0
+theme_override_constants/separation = 8
+
+[node name="RightHeader" type="Label" parent="."]
+layout_mode = 0
+offset_left = 832.0
+offset_top = 82.0
+offset_right = 1404.0
+offset_bottom = 160.0
+theme_type_variation = &"HeaderLabel"
+text = "记录详情"
+
+[node name="SlotTitle" type="Label" parent="."]
+layout_mode = 0
+offset_left = 836.0
+offset_top = 214.0
+offset_right = 1404.0
+offset_bottom = 262.0
+theme_type_variation = &"GroupLabel"
+
+[node name="Detail" type="Label" parent="."]
+layout_mode = 0
+offset_left = 836.0
+offset_top = 276.0
+offset_right = 1404.0
+offset_bottom = 600.0
+autowrap_mode = 3
+theme_override_constants/line_spacing = 10
+
+[node name="Actions" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 836.0
+offset_top = 640.0
+offset_right = 1404.0
+offset_bottom = 692.0
+theme_override_constants/separation = 16
+
+[node name="WriteButton" type="Button" parent="Actions"]
+layout_mode = 2
+text = "写入此页"
+
+[node name="LoadButton" type="Button" parent="Actions"]
+layout_mode = 2
+text = "读取"
+
+[node name="DeleteButton" type="Button" parent="Actions"]
+layout_mode = 2
+text = "撕去"
+
+[node name="Status" type="Label" parent="."]
+layout_mode = 0
+offset_left = 836.0
+offset_top = 712.0
+offset_right = 1404.0
+offset_bottom = 860.0
+theme_type_variation = &"CaptionLabel"
+autowrap_mode = 3

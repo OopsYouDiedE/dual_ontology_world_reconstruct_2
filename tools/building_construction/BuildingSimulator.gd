@@ -10,6 +10,7 @@ const Railing = preload("BuildingConstruction/Railings/ArchitectRailing.gd")
 const WebProps = preload("BuildingConstruction/Props/ArchitectProps.gd")
 const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
 const Furnish = preload("AutoFurnish.gd")
+const RoomLibrary = preload("res://scenes/components/world/RoomLibrary.gd")
 const STYLES = {"classical":"古典护墙板（踢脚＋腰线＋顶线）","dado":"半高木护墙","stone":"原石砌块墙","plain":"素面粉刷墙"}
 const OPENINGS = {"arched_window":"半圆拱窗","rectangular_window":"矩形多格窗","round_window":"圆形牛眼窗","double_door":"双开实木大门","closed_door":"单开平顶木门","arched_closed_door":"单开拱顶木门","portal_arch":"敞开式拱形门洞"}
 const FLOOR_STYLES = {"octagonal_tile":"八角拼花砖","parquet_wood":"胡桃木拼花","stone_slab":"原石大板","plain_grout":"素面灰石"}
@@ -61,6 +62,7 @@ var furnish_room: OptionButton
 var furnish_report: Label
 var component_list: ItemList
 var component_filter = ""
+var art_room: Node3D
 
 func _process(_dt: float) -> void:
 	# Drag handlers only request a rebuild; it runs at most once per frame.
@@ -372,6 +374,12 @@ func _make_ui() -> void:
 			state.remember()
 			refresh()
 			reset_views())
+	label(presets,"原版房间美术（保留碰撞与交互槽）")
+	var art_select := OptionButton.new()
+	presets.add_child(art_select)
+	for identity in RoomLibrary.rooms(): art_select.add_item(identity)
+	button(presets,"查看原版房间",func(): show_art_room(art_select.get_item_text(art_select.selected)))
+	button(presets,"返回参数化建筑",clear_art_room)
 	outline = ItemList.new()
 	outline.custom_minimum_size.y = 125
 	side.add_child(outline)
@@ -512,12 +520,42 @@ func delete_selected() -> void:
 	state.delete_selected()
 	refresh()
 func refresh() -> void:
+	clear_art_room()
 	conflicts = state.prop_conflicts()
 	rebuild()
 	refresh_layers()
 	refresh_outline()
 	refresh_inspector()
 	update_status()
+
+func clear_art_room() -> void:
+	if is_instance_valid(art_room):
+		art_room.get_parent().remove_child(art_room)
+		art_room.queue_free()
+	art_room = null
+	if is_instance_valid(candidates): candidates.show()
+
+func show_art_room(identity: String) -> void:
+	var replacement := RoomLibrary.instantiate(identity)
+	if replacement == null:
+		status.text = "房间载入失败：" + identity
+		return
+	clear_art_room()
+	art_room = replacement
+	candidates.get_parent().add_child(art_room)
+	candidates.hide()
+	wire_mesh.hide()
+	var bounds := AABB()
+	var initialized := false
+	for mesh: MeshInstance3D in art_room.find_children("*", "MeshInstance3D", true, false):
+		var box: AABB = mesh.global_transform * mesh.get_aabb()
+		bounds = bounds.merge(box) if initialized else box
+		initialized = true
+	if initialized:
+		target = bounds.get_center()
+		distance = maxf(bounds.size.length(), 8.0)
+		_update_camera()
+	status.text = "原版房间 " + identity + " · %d 个实例 · 只读美术视图；参数化建筑可继续编辑。" % art_room.get_child_count()
 func rebuild() -> void:
 	state.sync_rooms()
 	# Only items whose data changed are rebuilt; untouched parts keep their meshes (big win while dragging).

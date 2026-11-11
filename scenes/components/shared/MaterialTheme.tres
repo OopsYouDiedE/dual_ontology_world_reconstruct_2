@@ -1,0 +1,132 @@
+[gd_resource type="Theme" load_steps=9 format=3]
+
+[sub_resource type="StyleBoxFlat" id="surface"]
+bg_color = Color(0.96, 0.93, 0.86, 1)
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="button"]
+bg_color = Color(0.18, 0.28, 0.25, 1)
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="hover"]
+bg_color = Color(0.25, 0.35, 0.32, 1)
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="pressed"]
+bg_color = Color(0.32, 0.41, 0.38, 1)
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="disabled"]
+bg_color = Color(0.72, 0.71, 0.67, 1)
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+draw_center = false
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.83, 0.36, 1)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+expand_margin_left = 3.0
+expand_margin_top = 3.0
+expand_margin_right = 3.0
+expand_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="selected"]
+bg_color = Color(0.78, 0.85, 0.79, 1)
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="inverse"]
+bg_color = Color(0.16, 0.18, 0.17, 1)
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[resource]
+default_font_size = 18
+Label/colors/font_color = Color(0.12, 0.13, 0.12, 1)
+Button/colors/font_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/colors/font_disabled_color = Color(0.26, 0.26, 0.25, 1)
+Button/styles/normal = SubResource("button")
+Button/styles/hover = SubResource("hover")
+Button/styles/pressed = SubResource("pressed")
+Button/styles/hover_pressed = SubResource("pressed")
+Button/styles/disabled = SubResource("disabled")
+Button/styles/focus = SubResource("focus")
+CheckButton/colors/font_color = Color(1, 1, 1, 1)
+CheckButton/colors/font_hover_color = Color(1, 1, 1, 1)
+CheckButton/colors/font_pressed_color = Color(1, 1, 1, 1)
+CheckButton/colors/font_focus_color = Color(1, 1, 1, 1)
+CheckButton/colors/font_disabled_color = Color(0.26, 0.26, 0.25, 1)
+CheckButton/styles/focus = SubResource("focus")
+PanelContainer/styles/panel = SubResource("surface")
+AcceptDialog/styles/panel = SubResource("surface")
+ItemList/colors/font_color = Color(0.12, 0.13, 0.12, 1)
+ItemList/colors/font_selected_color = Color(0.12, 0.13, 0.12, 1)
+ItemList/styles/panel = SubResource("surface")
+ItemList/styles/selected = SubResource("selected")
+ItemList/styles/selected_focus = SubResource("selected")
+ItemList/styles/focus = SubResource("focus")
+TabContainer/styles/panel = SubResource("surface")
+TabBar/colors/font_selected_color = Color(0.12, 0.13, 0.12, 1)
+TabBar/colors/font_unselected_color = Color(0.22, 0.23, 0.22, 1)
+TabBar/colors/font_hovered_color = Color(0.12, 0.13, 0.12, 1)
+TabBar/styles/tab_selected = SubResource("selected")
+TabBar/styles/tab_unselected = SubResource("surface")
+TabBar/styles/tab_hovered = SubResource("selected")
+TabBar/styles/focus = SubResource("focus")
+SnackbarPanel/base_type = &"PanelContainer"
+SnackbarPanel/styles/panel = SubResource("inverse")
+SnackbarText/base_type = &"Label"
+SnackbarText/colors/font_color = Color(0.98, 0.97, 0.93, 1)

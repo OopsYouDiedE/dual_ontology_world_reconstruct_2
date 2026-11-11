@@ -223,7 +223,7 @@ class Endpoint:
         self.serial = 0
         self.token = secrets.token_hex(24)
         self.closed = False
-        self.content_path = str(ROOT / "assets/data/scenarios/campaign.dv")
+        self.content_path = str(ROOT / ("assets/data/scenarios/campaign.dv" if self.backend == "cli" else "assets/data/scenarios/life_simulation.dv"))
         self.deadline = deadline
         self.stop_lock = threading.RLock()
         self.movie_path = None

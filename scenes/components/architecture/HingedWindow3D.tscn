@@ -1,0 +1,63 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/components/architecture/HingedWindow3D.gd" id="1_script"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_frame"]
+albedo_color = Color(0.31, 0.23, 0.17, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_glass"]
+transparency = 1
+albedo_color = Color(0.72, 0.85, 0.94, 0.38)
+roughness = 0.12
+metallic = 0.05
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_brass"]
+albedo_color = Color(0.83, 0.69, 0.22, 1)
+metallic = 0.85
+roughness = 0.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_glass"]
+size = Vector3(0.7, 0.9, 0.014)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sash"]
+size = Vector3(0.8, 1, 0.04)
+
+[node name="HingedWindow3D" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="HingeRoot" type="Node3D" parent="."]
+
+[node name="VisualRoot" type="Node3D" parent="HingeRoot"]
+
+[node name="Frame_Bottom" type="MeshInstance3D" parent="HingeRoot/VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.025, 0)
+surface_material_override/0 = SubResource("StandardMaterial3D_frame")
+
+[node name="Frame_Top" type="MeshInstance3D" parent="HingeRoot/VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.975, 0)
+surface_material_override/0 = SubResource("StandardMaterial3D_frame")
+
+[node name="Frame_HingeSide" type="MeshInstance3D" parent="HingeRoot/VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.025, 0.5, 0)
+surface_material_override/0 = SubResource("StandardMaterial3D_frame")
+
+[node name="Frame_LockSide" type="MeshInstance3D" parent="HingeRoot/VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.775, 0.5, 0)
+surface_material_override/0 = SubResource("StandardMaterial3D_frame")
+
+[node name="SashGlass" type="MeshInstance3D" parent="HingeRoot/VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.5, 0)
+mesh = SubResource("BoxMesh_glass")
+surface_material_override/0 = SubResource("StandardMaterial3D_glass")
+
+[node name="WindowHandle" type="MeshInstance3D" parent="HingeRoot/VisualRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77, 0.5, 0.035)
+surface_material_override/0 = SubResource("StandardMaterial3D_brass")
+
+[node name="CollisionRoot" type="StaticBody3D" parent="HingeRoot"]
+collision_layer = 1
+collision_mask = 0
+
+[node name="WindowSashCollision" type="CollisionShape3D" parent="HingeRoot/CollisionRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.5, 0)
+shape = SubResource("BoxShape3D_sash")

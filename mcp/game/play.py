@@ -1,4 +1,4 @@
-"""Prepare, build, and open the production five-day Godot game."""
+"""Prepare, build, and open the production life simulation."""
 import argparse
 import asyncio
 import sys
@@ -20,7 +20,7 @@ def main():
     if options.editor:
         command.append("--editor")
     else:
-        command += ["--", "--dv-content=" + str(ROOT / "assets/data/scenarios/campaign.dv"),
+        command += ["--", "--dv-content=" + str(ROOT / "assets/data/scenarios/life_simulation.dv"),
                     "--dv-controller=" + ("ai" if options.ai else "player")]
     process = spawn(command)
     try:

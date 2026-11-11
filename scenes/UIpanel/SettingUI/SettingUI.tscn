@@ -1,0 +1,73 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/UIpanel/SettingUI/SettingUI.gd" id="1_setting"]
+
+[node name="SettingUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_setting")
+
+[node name="LeftHeader" type="Label" parent="."]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 82.0
+offset_right = 668.0
+offset_bottom = 160.0
+theme_type_variation = &"HeaderLabel"
+text = "设置"
+
+[node name="LeftCaption" type="Label" parent="."]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 160.0
+offset_right = 668.0
+offset_bottom = 192.0
+theme_type_variation = &"CaptionLabel"
+text = "画面、语言与阅读"
+
+[node name="LeftColumn" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 214.0
+offset_right = 668.0
+offset_bottom = 900.0
+theme_override_constants/separation = 4
+
+[node name="RightHeader" type="Label" parent="."]
+layout_mode = 0
+offset_left = 832.0
+offset_top = 82.0
+offset_right = 1404.0
+offset_bottom = 160.0
+theme_type_variation = &"HeaderLabel"
+text = "声与光"
+
+[node name="RightCaption" type="Label" parent="."]
+layout_mode = 0
+offset_left = 836.0
+offset_top = 160.0
+offset_right = 1404.0
+offset_bottom = 192.0
+theme_type_variation = &"CaptionLabel"
+text = "声音与辅助功能，修改后立即生效"
+
+[node name="RightColumn" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 836.0
+offset_top = 214.0
+offset_right = 1404.0
+offset_bottom = 840.0
+theme_override_constants/separation = 4
+
+[node name="ResetButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 1196.0
+offset_top = 852.0
+offset_right = 1404.0
+offset_bottom = 900.0
+text = "恢复默认"

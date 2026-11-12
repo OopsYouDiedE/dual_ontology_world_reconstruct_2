@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>安眠者有福 · 门的这一侧 — 双本体世界重构</title>
+<title>安眠者有福 · 门的这一侧</title>
 <style>/* 《安眠者有福 · 门的这一侧》UI —— 胡桃木 / 黄铜 / 亚麻案卷，纯内联，无外部资源 */
 :root {
   --ink: #221c15; --paper: #eae0c4; --paper2: #e1d5b5; --brass: #b89758; --brass2: #7e6f58;
@@ -191,6 +191,52 @@ canvas { display: block; }
   #right { width: 280px; flex-basis: 280px; }
   #topbar .title { display: none; }
 }
+
+/* ── v2：普通界面更干净的补充 ── */
+.btn-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.dev-toggle { opacity: .55; letter-spacing: 0; font-size: 13px; padding: 3px 8px; }
+.dev-toggle:hover { opacity: 1; border-color: var(--amber); }
+.say-line { margin: 5px 0; font-family: var(--serif); font-size: 13px; line-height: 1.7; }
+.opt.selected { border-color: var(--amber); background: rgba(217,161,58,.14); }
+.opt.selected b { color: #fff1cf; }
+.ded-ev { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 6px 0; background: rgba(0,0,0,.2); font-size: 11.5px; }
+.ded-ev.locked { opacity: .6; }
+.ded-ev input[type="checkbox"] { accent-color: var(--amber); width: 15px; height: 15px; flex: 0 0 15px; }
+.ev-sketch.tiny-sketch { flex: 0 0 38px; width: 38px; height: 38px; }
+.ev-sketch.tiny-sketch svg { width: 34px; height: 34px; }
+
+/* ── 调试台 ── */
+#debugRoot { position: fixed; z-index: 70; right: 0; top: 0; bottom: 0; width: min(880px, 94vw);
+  display: flex; flex-direction: column; background: linear-gradient(180deg,#1b1610,#12100d 70%);
+  border-left: 2px solid var(--brass); box-shadow: -18px 0 60px rgba(0,0,0,.75);
+  transform: translateX(102%); transition: transform .22s ease; visibility: hidden; }
+#debugRoot.show { transform: none; visibility: visible; }
+.debug-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: rgba(0,0,0,.3); }
+#debugTabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--line); background: rgba(0,0,0,.2); flex: 0 0 auto; }
+#debugTabs button { flex: 0 0 auto; border: 0; background: transparent; color: var(--muted); padding: 7px 10px; font-size: 11px; border-bottom: 2px solid transparent; }
+#debugTabs button:hover { color: var(--text); }
+#debugTabs button.on { color: #f0dfb8; border-bottom-color: var(--amber); background: rgba(217,161,58,.07); }
+#debugBody { overflow-y: auto; flex: 1; min-height: 0; padding: 10px 12px 40px; font-size: 11px; }
+.dbg-card { border: 1px solid var(--line); border-radius: 7px; background: rgba(0,0,0,.22); padding: 9px 10px; margin-bottom: 10px; }
+.dbg-card h4 { margin: 0 0 7px; font-family: var(--serif); font-size: 13px; color: #e9c98a; font-weight: normal; }
+.dbg-table { width: 100%; border-collapse: collapse; font-size: 10.5px; line-height: 1.5; }
+.dbg-table th { text-align: left; color: var(--brass); font-weight: normal; border-bottom: 1px solid var(--line); padding: 4px 6px; white-space: nowrap; }
+.dbg-table td { vertical-align: top; border-bottom: 1px dashed rgba(184,151,88,.16); padding: 4px 6px; color: #d8ccb4; }
+.dbg-table td b { color: #f0dfb8; font-weight: normal; }
+.dbg-pre { margin: 3px 0; padding: 6px 8px; background: rgba(0,0,0,.35); border: 1px solid rgba(184,151,88,.18); border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; line-height: 1.45;
+  white-space: pre-wrap; word-break: break-word; color: #c9b89a; max-height: 300px; overflow: auto; }
+.dbg-ops { display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* ── 角色画廊 / 骨骼检视 ── */
+#galleryBar { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #4a3b2d; background: #1d1712; }
+#galleryInfo { position: absolute; left: 12px; top: 58px; width: min(360px, 42vw); max-height: calc(100% - 130px); overflow-y: auto;
+  background: rgba(14,11,9,.88); border: 1px solid var(--brass); border-radius: 7px; padding: 9px 11px; z-index: 3; }
+.gallery-info-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.gallery-poses { display: flex; flex-wrap: wrap; gap: 4px; margin: 7px 0; }
+.gallery-bones { max-height: 260px; overflow-y: auto; border-top: 1px solid var(--line); padding-top: 6px; margin-top: 6px; }
+.gallery-bones .tiny { padding: 2px 0; color: #c9b89a; }
+.gallery-fallback { display: grid; place-items: center; height: 100%; color: var(--muted); font-family: var(--serif); padding: 20px; text-align: center; }
 </style>
 </head>
 <body>
@@ -209,28 +255,23 @@ canvas { display: block; }
         </svg>
       </div>
       <h1 class="menu-title">安眠者有福</h1>
-      <div class="menu-sub">门 的 这 一 侧 · 双 本 体 世 界 重 构</div>
-      <p class="menu-quote">「昨夜没有任何人在求救。」——这句话字字属实。<br>可是四区醒来的人，各自听见了完全不同的那一夜。<br>你不缺证物，你缺的是一门叫「源质」的知识。</p>
+      <div class="menu-sub">门 的 这 一 侧</div>
+      <p class="menu-quote">「昨夜没有任何人在求救。」<br>这句话字字属实。<br>可是四区醒来的人，各自记得完全不同的那一夜。</p>
       <div class="menu-buttons">
-        <button class="btn hot" data-act="new">开 始 新 局 · 第 一 天 清 晨</button>
-        <button class="btn" data-act="continue">读 取 存 档（槽位 1）</button>
+        <button class="btn hot" data-act="new">开 始 新 局</button>
+        <button class="btn" data-act="continue">读 取 存 档</button>
         <button class="btn" data-act="editor">2D 场 景 编 辑 器</button>
-        <button class="btn" data-act="gallery">角 色 模 型 画 廊</button>
-        <button class="btn" data-act="readme">设 计 说 明 ／ 操 作</button>
       </div>
-      <div class="menu-foot">
-        <b>2D</b> 完整场景图（房间路径一律虚线，单间内摆放按真实占地） · <b>3D</b> 单房间剖面实机 · <b>低多边形</b> 程序化模型<br>
-        音乐由 Web Audio 实时合成 · 光照随昼夜与源质变化 · 不使用原版音频、不依赖网络与服务
-      </div>
+      <div class="menu-foot">单文件网页 · 音乐实时生成 · 昼夜光照变化 · 无需网络与服务<br><span class="muted tiny">按 ~ 打开调试台</span></div>
     </div>
   </section>
 
-  <!-- 游戏主界面 -->
+  <!-- 侦探视角主界面 -->
   <section id="game" class="screen hidden">
     <header id="topbar"></header>
     <div class="layout">
       <aside id="left">
-        <div class="pane-head">场 景 与 人 物</div>
+        <div class="pane-head">当 前 位 置</div>
         <div class="pane-scroll" id="leftPane"></div>
       </aside>
       <main id="viewport">
@@ -242,10 +283,11 @@ canvas { display: block; }
         <div id="editorBar" class="hidden"></div>
         <div id="editorInfo" class="hidden"></div>
         <div id="subtitle"></div>
-        <div id="mapHint" class="hidden"></div>
+        <div id="mapHint" class="hidden">点击房间 · 双击进入 · 拖拽平移 · 滚轮缩放</div>
         <div id="lightBadge"></div>
       </main>
       <aside id="right">
+        <div class="pane-head">案 卷</div>
         <nav id="tabs"></nav>
         <div id="panel"></div>
       </aside>
@@ -253,23 +295,36 @@ canvas { display: block; }
     <footer id="ticker"></footer>
   </section>
 
-  <!-- 角色画廊 -->
+  <!-- 角色画廊：由调试台进入，检视完整骨架与姿态 -->
   <section id="gallery" class="screen hidden">
-    <header id="galleryBar" style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #4a3b2d;background:#1d1712">
+    <header id="galleryBar">
       <button class="btn" data-act="gallery-back">← 返回</button>
-      <span class="serif gold" style="letter-spacing:.16em">十七具程序化低多边形人物模型</span>
-      <span class="muted small">与 3D 实机同一套 buildCharacter() · 拖拽旋转</span>
+      <span class="serif gold">角 色 与 骨 架</span>
+      <span class="muted small">拖拽旋转 · 切换姿态</span>
       <div class="spacer"></div>
       <button class="btn" data-act="gallery-prev">‹ 上一位</button>
       <button class="btn" data-act="gallery-next">下一位 ›</button>
       <button class="btn" data-act="gallery-auto">自动旋转</button>
     </header>
     <div id="galleryHost"></div>
+    <div id="galleryInfo"></div>
     <div class="gallery-strip" id="galleryStrip"></div>
   </section>
 
   <div id="modalRoot"><div class="modal" id="modalBox"></div></div>
   <div id="toasts"></div>
+
+  <!-- 调试台：解释、作者检视、骨骼参数、结构校验、设计操作 -->
+  <div id="debugRoot">
+    <div class="debug-head">
+      <span class="serif gold">调 试 台 · 作 者 检 视</span>
+      <span class="muted tiny">普通游戏不显示这些内容（~ 开关）</span>
+      <div class="spacer"></div>
+      <button class="btn sm" data-act="debug-close">关闭 ✕</button>
+    </div>
+    <nav id="debugTabs"></nav>
+    <div id="debugBody"></div>
+  </div>
 </div>
 <script>console.warn('Scripts "build/three.js" and "build/three.min.js" are deprecated with r150+, and will be removed with r160. Please use ES Modules or alternatives: https://threejs.org/docs/index.html#manual/en/introduction/Installation'),
 /**
@@ -630,6 +685,57 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     TL("清场·丁", "丁区", "正压气流冲通压差计外采样孔，读数恢复；恶魔将撬棍放回 R14 工具架，合死防爆外闩。", "「撬棍一直在架子上，说明根本没人撬门。」", ["k_gauge", "k_cleanup"], ["bertrand", "margaret"]),
     TL("次日清晨", "四区", "学院相关书籍、衣物与笔记被搬空，个人随身器具仍在；四区大门被封死，门厅留下抢险痕迹。", "「有人把我们锁在这里做实验。」", ["k_contract", "k_cleanup"], D.HUMANS),
   ];
+
+  // ────────────────────────────── 完整人物骨架参数 ──────────────────────────────
+  // 正式 Bone 层级（THREE.Bone）驱动程序化模型：关节名、偏移、骨长、半径、旋转限位，
+  // 以及姿态库。原 Godot 侧 character_models.dv 的 height / 朝向约定在此映射为 scale 与 yaw。
+  // 这些参数只供 3D 演出与调试台检视，不在正常游戏界面上出现。
+  D.RIG_SPEC = {
+    schema: "dowr2.rig-v1",
+    note: "原点在脚底，朝向 +z；单位米；20 根 Bone；建模后按 look.height 统一缩放。Bone 层级直接挂可视网格，姿态库写欧拉角（度）。",
+    bones: [
+      { name: "pelvis", parent: null, offset: [0, 0.78, 0], length: 0.18, radius: 0.15, limit: [[-20, 20], [-25, 25], [-15, 15]] },
+      { name: "spine", parent: "pelvis", offset: [0, 0, 0], length: 0.28, radius: 0.15, limit: [[-15, 15], [-20, 20], [-12, 12]] },
+      { name: "chest", parent: "spine", offset: [0, 0.28, 0], length: 0.28, radius: 0.165, limit: [[-12, 12], [-18, 18], [-10, 10]] },
+      { name: "neck", parent: "chest", offset: [0, 0.26, 0], length: 0.08, radius: 0.05, limit: [[-20, 20], [-35, 35], [-15, 15]] },
+      { name: "head", parent: "neck", offset: [0, 0.08, 0], length: 0.26, radius: 0.13, limit: [[-25, 25], [-60, 60], [-20, 20]] },
+      { name: "jaw", parent: "head", offset: [0, 0.10, 0.09], length: 0.06, radius: 0.04, limit: [[-8, 12], [-10, 10], [-5, 5]] },
+      { name: "clavicle.L", parent: "chest", offset: [0.20, 0.20, 0], length: 0.10, radius: 0.05, limit: [[-10, 10], [-10, 10], [-15, 25]] },
+      { name: "upperArm.L", parent: "clavicle.L", offset: [0, 0, 0], length: 0.26, radius: 0.048, limit: [[-150, 90], [-60, 60], [-80, 30]] },
+      { name: "forearm.L", parent: "upperArm.L", offset: [0, -0.26, 0], length: 0.24, radius: 0.042, limit: [[-140, 10], [-30, 30], [-20, 20]] },
+      { name: "hand.L", parent: "forearm.L", offset: [0, -0.24, 0], length: 0.09, radius: 0.045, limit: [[-40, 40], [-40, 40], [-30, 30]] },
+      { name: "clavicle.R", parent: "chest", offset: [-0.20, 0.20, 0], length: 0.10, radius: 0.05, limit: [[-10, 10], [-10, 10], [-25, 15]] },
+      { name: "upperArm.R", parent: "clavicle.R", offset: [0, 0, 0], length: 0.26, radius: 0.048, limit: [[-150, 90], [-60, 60], [-30, 80]] },
+      { name: "forearm.R", parent: "upperArm.R", offset: [0, -0.26, 0], length: 0.24, radius: 0.042, limit: [[-140, 10], [-30, 30], [-20, 20]] },
+      { name: "hand.R", parent: "forearm.R", offset: [0, -0.24, 0], length: 0.09, radius: 0.045, limit: [[-40, 40], [-40, 40], [-30, 30]] },
+      { name: "thigh.L", parent: "pelvis", offset: [0.075, 0, 0], length: 0.36, radius: 0.058, limit: [[-110, 60], [-15, 15], [-12, 12]] },
+      { name: "shin.L", parent: "thigh.L", offset: [0, -0.36, 0], length: 0.36, radius: 0.05, limit: [[0, 120], [-8, 8], [-8, 8]] },
+      { name: "foot.L", parent: "shin.L", offset: [0, -0.36, 0.04], length: 0.20, radius: 0.05, limit: [[-25, 25], [-15, 15], [-10, 10]] },
+      { name: "thigh.R", parent: "pelvis", offset: [-0.075, 0, 0], length: 0.36, radius: 0.058, limit: [[-110, 60], [-15, 15], [-12, 12]] },
+      { name: "shin.R", parent: "thigh.R", offset: [0, -0.36, 0], length: 0.36, radius: 0.05, limit: [[0, 120], [-8, 8], [-8, 8]] },
+      { name: "foot.R", parent: "shin.R", offset: [0, -0.36, 0.04], length: 0.20, radius: 0.05, limit: [[-25, 25], [-15, 15], [-10, 10]] },
+    ],
+    poses: {
+      stand: { armL: [0, 0, 8], armR: [0, 0, -8], legL: [0, 0, 0], legR: [0, 0, 0], head: [0, 0, 0], body: 0 },
+      walk: { armL: [0, 0, 8], armR: [0, 0, -8], legL: [0, 0, 0], legR: [0, 0, 0], head: [0, 0, 0], body: 0 },
+      sit: { armL: [-34, 0, 8], armR: [-34, 0, -8], legL: [-80, 0, 0], legR: [-80, 0, 0], head: [0, 0, 0], body: -0.30 },
+      wave: { armL: [0, 0, 8], armR: [-140, 0, -8], legL: [0, 0, 0], legR: [0, 0, 0], head: [0, 0, 0], body: 0 },
+      think: { armL: [0, 0, 10], armR: [-62, 0, -22], legL: [0, 0, 0], legR: [0, 0, 0], head: [8, 12, 0], body: 0 },
+      argue: { armL: [18, 0, 20], armR: [-58, 0, -32], legL: [0, 0, 0], legR: [0, 0, 0], head: [-4, 8, 0], body: 0 },
+      point: { armL: [0, 0, 8], armR: [-86, 0, -10], legL: [0, 0, 0], legR: [0, 0, 0], head: [0, 8, 0], body: 0 },
+      talk: { armL: [0, 0, 10], armR: [-20, 0, -12], legL: [0, 0, 0], legR: [0, 0, 0], head: [0, 6, 0], body: 0 },
+      work: { armL: [-38, 0, 12], armR: [-38, 0, -12], legL: [0, 0, 0], legR: [0, 0, 0], head: [12, 0, 0], body: 0 },
+      tend: { armL: [-46, 0, 14], armR: [-46, 0, -14], legL: [-12, 0, 0], legR: [-12, 0, 0], head: [14, 0, 0], body: -0.06 },
+    },
+    actors: Object.fromEntries(D.ACTORS.map((a) => [a.id, {
+      height: a.look.height, build: a.look.build, coat: a.look.coat, hair: a.look.hair,
+      hat: a.look.hat, hairStyle: a.look.hairStyle,
+      shoulder: +(0.20 * a.look.build).toFixed(3),
+      hip: +(0.075 * a.look.build).toFixed(3),
+      limb: +(0.98 + (a.look.build - 1) * 0.12).toFixed(3),
+      model: `res://assets/characters/UserModels/model_${String(D.ACTORS.indexOf(a) + 1).padStart(2, "0")}.glb`,
+    }])),
+  };
 })();
 
 /* ===== data2.js ===== */
@@ -689,86 +795,214 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   })();
   D.EVIDENCE_BY_ID = Object.fromEntries(D.EVIDENCE.map((e) => [e.id, e]));
 
-  // ────────────────────────────── 认知冲突：对质台 ──────────────────────────────
-  // 正确选项需要「分辨义项」；错误选项会把期待落空变成单方面申诉（另一方永远不知情）
-  const C = (id, day, title, word, parties, wrong, options, correct, need, note, permanent) => ({
-    id, day, title, word, parties, wrong, options, correct, need: need || [], note: note || "", permanent: !!permanent,
-  });
+  // ────────────────────────────── 争执现场 ──────────────────────────────
+  // lines = 现场对白（人物不会谈论「词义」「认知」这类作者概念，只照自己所见说话）
+  // options = 侦探当下可做的事，只有台词，没有任何后果提示
+  // correct / need / wrong / note / senses 只供调试台检视，正常游玩不显示
+  const C = (id, day, title, word, parties, lines, options, correct, need, cfg) => Object.assign({
+    id, day, title, word, parties, lines, options, correct, need: need || [],
+    deduction: null, wrong: "", note: "", permanent: false,
+  }, cfg || {});
   D.CONFLICTS = [
-    C("c_demon", 1, "★ 第一天 · 代管者的一句话", "present", ["ward", "huo", "moran", "su", "detective", "ruan"],
-      "四区对账时，同一句「关门时在下始终在场」被听成六种事实：沃德认定走廊里的卢西安把人锁死；莫兰认定代管者否认窗外求救者；苏泠认定有人替她决定了生死；霍铎认定只是事后复位。谁也不肯退让。",
+    C("c_door", 1, "乙区门厅", "save", ["detective", "su"],
+      [["detective", "拖痕朝内。昨夜有人从门外被拉回屋里。"],
+       ["su", "可我听见的是「开门逃生」。你是说，我该留在里面？"],
+       ["huo", "曲柄销在我工具箱里，棘轮是反扣的。谁动过锁，我一点不记得。"]],
       [
-        { id: "lie", label: "代管者在撒谎，第八条被破坏了", note: "它每句字面都为真；把「撒谎」当结论，会立刻被契约打回，指控转向同伴。" },
-        { id: "forgery", label: "有人伪造了清场记录，先查内鬼", note: "于是四区互相搜身、扣工具、拒绝交出探针卷。" },
-        { id: "lexeme", label: "同一批词，各人取了不同义项；我们缺的是源质知识", note: "关门／在场／求救／同意都不是同一个事实。先记录每人义项，再谈责任。" },
-        { id: "forget", label: "我们只是失忆了，别争了，先吃饭", note: "争执被压下，但每人心里的申诉没有被听见，裂痕照旧生效。" },
+        { id: "blame", label: "「是我越界了。苏泠小姐，对不起。」" },
+        { id: "deny", label: "「那句话你听岔了，先别想了。」" },
+        { id: "echo", label: "「去传声管那儿，把她听见的那句再放一遍。」" },
+      ], "echo", ["k_acoustic"],
+      { deduction: "ded_drag", wrong: "侦探／苏泠对「救」的方向理解相反。", note: "星仪院音簧实验可复现漏音掩蔽。" }),
+
+    C("c_handcuff", 1, "甲区检修间", "cleanup", ["ward", "quer"],
+      [["ward", "钥匙呢？昨夜谁碰过我的手铐？"],
+       ["quer", "看清楚我手腕上的压痕！我自己也被铐着。"],
+       ["lucian", "二位且慢，拔剑之前先听我一言——"]],
+      [
+        { id: "accuse", label: "「按沃德先生说的，先封存工具。」" },
+        { id: "dismiss", label: "「让雀儿把手腕给大家看。」" },
+        { id: "split", label: "「把托盘上的手铐和交接册一起摊开。」" },
+      ], "split", ["k_cleanup"],
+      { deduction: "ded_cuffs", wrong: "沃德把钥匙失踪记成盗窃，雀儿把扣押记成羞辱。", note: "交接册自述来源与物证互证时才能撤回指控。" }),
+
+    C("c_wetcloth", 1, "乙区小厨房", "cleanup", ["shen", "detective"],
+      [["shen", "布是我浸的，塞在门底。"],
+       ["detective", "可它现在挂在钩上，还在滴水。门槛到这儿，一路没有水迹。"],
+       ["shen", "……那你是说我记错了？"]],
+      [
+        { id: "lie", label: "「照您说的写：记错了。」" },
+        { id: "someone", label: "「夜里有人替您挂回去的。」" },
+        { id: "fifth", label: "「先量门槛到挂钩这段地，再看布上的灰。」" },
+      ], "fifth", ["k_cleanup", "k_density"],
+      { deduction: "ded_cloth", wrong: "沈鼎把「没有水迹」听成对自己记性的质疑。", note: "湿布是清场干预的物理痕迹。" }),
+
+    C("c_window", 1, "丙区观察窗", "help", ["moran", "selma", "ruan"],
+      [["moran", "窗外那个人在求救！你们把我绑起来，还把窗擦干净了？"],
+       ["selma", "我听见的是屋里有人喊。不把你拖开，铁网就被你砸穿了。"],
+       ["ruan", "两截绷带叠得倒很齐。"]],
+      [
+        { id: "moran", label: "「照莫兰说的记：有人见死不救。」" },
+        { id: "selma", label: "「照赛尔玛说的记：画家看花了眼。」" },
+        { id: "imprint", label: "「把速写本和窗台上的结晶摆在一起。」" },
+      ], "imprint", ["k_imprint"],
+      { deduction: "ded_window", wrong: "莫兰的「求救者」与赛尔玛的「呼救」不是同一次听见。", note: "证人不说谎，证言却与现场相悖。" }),
+
+    C("c_gauge", 2, "丁区门框", "danger", ["bertrand", "margaret", "veronica"],
+      [["bertrand", "读数说里头危险，我从里面撬！"],
+       ["margaret", "我打钢楔是钉死门缝，不是堵你。"],
+       ["veronica", "酸是我泼的。前臂我负责换药。"]],
+      [
+        { id: "sabotage", label: "「先查谁动过仪表。」" },
+        { id: "panic", label: "「记作丁区误操作。」" },
+        { id: "reverse", label: "「拆开外采样孔，再读一次。」" },
+      ], "reverse", ["k_gauge"],
+      { deduction: "ded_gauge", wrong: "三个人各自按仪表读数行动。", note: "采样孔被结晶堵住时读数反相。" }),
+
+    C("c_demon", 1, "二楼中翼", "present", ["ward", "huo", "moran", "su", "detective", "ruan"],
+      [["ward", "三句答复，四份记录，没有一份对得上。按程序，工具、钥匙、清册先封存。"],
+       ["quer", "我的探针卷不交。要查就查记录，别查人。"],
+       ["moran", "谁擦的窗，谁别再看我的速写本。"],
+       ["su", "……我只是想知道，那句「开门」到底是谁说的。"],
+       ["demon", "（传声管）诸位若还有疑问，在下随时恭候。"]],
+      [
+        { id: "lie", label: "「代管者撒了谎。先把这几句记作伪证。」" },
+        { id: "forgery", label: "「有人动过交接册。先查谁碰过记录。」" },
+        { id: "lexeme", label: "「把三句答复逐字抄下来，请每人复述自己听到的那句。」" },
+        { id: "forget", label: "「都别争了，先去吃饭。」" },
       ], "lexeme", ["k_contract"],
-      "这是恶魔第一天摆的一道：它不必违反第八条，只要让十六个人各自听懂一句真话，就足以制造不可弥合的矛盾。若选错，沃德／雀儿、莫兰／赛尔玛、苏泠／侦探三组信任永久受损，事后查明真相也不会复原。", true),
-    C("c_handcuff", 1, "甲区 · 手铐与钥匙", "cleanup", ["ward", "quer"],
-      "沃德：「钥匙呢？昨夜谁碰过我的手铐？」雀儿：「看清楚我手腕上的压痕，我自己也被铐着！」两人说的「清场」一个是盗窃，一个是消毒／通风。",
+      { deduction: "ded_truth", permanent: true, wrong: "三句字面为真的答复被听成六种事实。",
+        note: "恶魔第一天摆的一道：不必违反第八条，只让在场者各自听懂一句真话。选错即造成沃德／雀儿、莫兰／赛尔玛、苏泠／侦探三组永久损伤。" }),
+
+    C("c_vote", 3, "配膳收发台", "agree", ["ward", "quer", "ruan", "su"],
+      [["ward", "已投十四票，无一反对。全体同意归乡。雀儿，把精钢探针卷交出来。"],
+       ["quer", "我没投。苏泠也没说好。"],
+       ["ruan", "（落子）好。这一手先记着。"]],
       [
-        { id: "accuse", label: "支持沃德：先按程序扣押工具", note: "雀儿交出探针卷，从此不再替任何人开锁。" },
-        { id: "dismiss", label: "支持雀儿：律师在无理取闹", note: "沃德把「程序」记成私怨，之后每次表决都要求书面授权。" },
-        { id: "split", label: "把「清场」拆成搬走物品与复位痕迹两件事", note: "手铐、钥匙、湿布、撬棍属于复位，不是盗窃。" },
-      ], "split", ["k_cleanup"], "交接册自述来源与物证相互印证时才能撤回指控。", false),
-    C("c_wetcloth", 1, "乙区 · 湿抹布没有水印", "cleanup", ["shen", "detective"],
-      "沈鼎：「布是我浸的，塞在门底。」侦探：「可它是干的、挂在厨房，沿路没有一滴水。」沈鼎以为对方在指控自己撒谎。",
+        { id: "accept", label: "「十四票既然无一反对，按全体同意办。」" },
+        { id: "count", label: "「再补两张票就齐了。」" },
+        { id: "quantifier", label: "「把登记册、投票单和苏泠本人的话分开核。」" },
+      ], "quantifier", ["k_contract", "k_binding"],
+      { deduction: "ded_vote", wrong: "「已投十四票」被扩张成「全体在册一致同意」。", note: "量词范围／本人态度／第十一条资格须分别成立。" }),
+
+    C("c_borrow", 1, "大食堂", "share", ["quer", "lucian"],
+      [["lucian", "分一点糖给我，待会儿还你。"],
+       ["quer", "拿去。谁要你还了？"]],
       [
-        { id: "lie", label: "沈鼎记错了，写进案卷", note: "厨子从此不再主动报告现场细节。" },
-        { id: "someone", label: "一定是某个学员半夜替他挂回去的", note: "第五实体被误判成人，四区开始互相排查。" },
-        { id: "fifth", label: "正压启动后有人悬空搬运了它", note: "先承认「不是人走的地面」，再谈是谁。" },
-      ], "fifth", ["k_cleanup", "k_density"], "湿布不是矛盾证言，是清场干预的物理痕迹。", false),
-    C("c_door", 1, "乙区 · 「救」的两个方向", "save", ["detective", "su"],
-      "侦探：「我把你从门外拖回来了。」苏泠：「我听见的是开门逃生，你却把我按在门里。」两个人都用了「救」，方向相反。",
+        { id: "gift", label: "「记一笔：送出去的。」" },
+        { id: "loan", label: "「记一笔：借出去的。」" },
+        { id: "both", label: "「先问清楚再落笔。」" },
+      ], "both", [], { wrong: "受方与施方各自记了不同的账。", note: "期待落空时只有一方申诉。" }),
+
+    C("c_quiet", 2, "中翼", "quiet", ["su", "lucian"],
+      [["su", "小声点。"], ["lucian", "……整晚没敢念，这总可以了吧？"]],
       [
-        { id: "blame", label: "侦探越界，应当道歉", note: "他道歉了，但苏泠仍认定门是被故意关上的。" },
-        { id: "deny", label: "苏泠听错了，不要再追问", note: "她的经历被否认，之后不再提供证言。" },
-        { id: "echo", label: "传声管余音被泛音扭曲；两人各自按真话行动", note: "「不要开门」只剩重读的「……开门！」" },
-      ], "echo", ["k_acoustic"], "星仪院音簧实验可复现漏音掩蔽；证人与物理现实同时成立。", false),
-    C("c_window", 1, "丙区 · 窗外的求救者", "help", ["moran", "selma"],
-      "莫兰：「我亲眼看见窗外有人求救，你们把我绑起来！」赛尔玛：「我听见的是屋里有人呼救，不绑你你就砸穿铁网了。」",
+        { id: "short", label: "「就这会儿。」" },
+        { id: "long", label: "「一整晚。」" },
+        { id: "both", label: "「报个钟点吧。」" },
+      ], "both", [], { wrong: "「小声点」的时长各人不同。", note: "" }),
+
+    C("c_later", 2, "热厨", "later", ["shen", "huo"],
+      [["shen", "待会儿来修暖气阀。"], ["huo", "我等了半个钟头，人呢？"]],
       [
-        { id: "moran", label: "采信莫兰：赛尔玛见死不救", note: "博物学者被排除在照护轮值之外。" },
-        { id: "selma", label: "采信赛尔玛：画家产生了幻觉", note: "莫兰不再让人看速写本——唯一能穿透模因盲区的物证。" },
-        { id: "imprint", label: "两人所见不同：一个是残影，一个是余音", note: "源质把 30 秒前的身影拓在结晶上。" },
-      ], "imprint", ["k_imprint"], "证人没有说谎，证言却与物理现实相悖。", false),
-    C("c_gauge", 2, "丁区 · 读数反相", "danger", ["bertrand", "margaret", "veronica"],
-      "贝尔特朗：「读数说室内危险，我从里面撬！」玛格丽特：「我打钢楔是钉死门缝！」维罗妮卡：「酸是我泼的，我负责。」三个人说的「危险」不是一回事。",
-      [
-        { id: "sabotage", label: "仪表被人动过手脚，查破坏者", note: "调查方向转向人，源质被当成借口。" },
-        { id: "panic", label: "丁区集体恐慌，记录为误操作", note: "伤者承担了本不属于自己的责任。" },
-        { id: "reverse", label: "外采样孔被源质堵住，读数反相", note: "正压冲通后读数恢复，反相可由备件复现。" },
-      ], "reverse", ["k_gauge"], "", false),
-    C("c_vote", 3, "第三日 · 十四张赞成票", "agree", ["ruan", "ward", "quer", "su"],
-      "「已投十四票，无一反对，所以全体同意归乡。」——十四张已投票全部赞成，不等于其余全部在册学员一致同意；苏泠本人尚未同意，且她「深属此岛」，第十一条对她的条件根本不成立。",
-      [
-        { id: "accept", label: "十四票就是全体同意，交出精钢探针卷", note: "雀儿可以拒绝；拒绝应形成未遂误导，不自动改变物品归属。" },
-        { id: "count", label: "只要再补两张票就能成立", note: "把量词错误当成计数错误，仍会把苏泠算进可归乡者。" },
-        { id: "quantifier", label: "核对量词范围、本人态度与深绑定资格", note: "「无一反对」只覆盖已投票者；「全部在册」是另一个集合。" },
-      ], "quantifier", ["k_contract", "k_binding"], "阮清月的三套候选案都建立在这类量词／持有链错位上。", false),
-    C("c_borrow", 1, "食堂 · 借还是分一点", "share", ["quer", "lucian"],
-      "卢西安：「分一点糖给我，待会儿还你。」雀儿把「分一点」记成送；卢西安按「借」记了账，第二天来还，雀儿觉得他在羞辱人。",
-      [
-        { id: "gift", label: "按雀儿：不必还", note: "卢西安的账本上多了一笔没结的债。" },
-        { id: "loan", label: "按卢西安：应当归还", note: "雀儿认为还回来等于不把她当同伴。" },
-        { id: "both", label: "两人各自记下自己的义项，下次先问清楚", note: "世界只记录行为，各人只保存自己的理解。" },
-      ], "both", [], "期待落空时只有一方得到申诉证据，另一方不知情。", false),
-    C("c_quiet", 2, "中翼 · 小声点", "quiet", ["su", "lucian"],
-      "苏泠说「小声点」，指的是安静三十分钟；卢西安按「安静一整晚」安排，结果整晚没敢朗诵，第二天抱怨被剥夺了发言。",
-      [
-        { id: "short", label: "只管三十分钟", note: "" },
-        { id: "long", label: "管一整晚", note: "" },
-        { id: "both", label: "把两人的时长写在纸上再执行", note: "" },
-      ], "both", [], "", false),
-    C("c_later", 2, "热厨 · 待会儿", "later", ["shen", "huo"],
-      "沈鼎：「待会儿来修暖气阀。」他指两个半小时后，霍铎按一刻钟等；期待落空时只有霍铎得到申诉证据，沈鼎完全不知情。",
-      [
-        { id: "soon", label: "一刻钟", note: "" },
-        { id: "late", label: "两个半小时", note: "" },
-        { id: "both", label: "当场报出具体钟点", note: "" },
-      ], "both", [], "", false),
+        { id: "soon", label: "「一刻钟以后。」" },
+        { id: "late", label: "「两个半小时以后。」" },
+        { id: "both", label: "「下次直接报钟点。」" },
+      ], "both", [], { wrong: "「待会儿」的到期时刻各人不同。", note: "" }),
   ];
   D.CONFLICT_BY_ID = Object.fromEntries(D.CONFLICTS.map((c) => [c.id, c]));
+
+  // ────────────────────────────── 推演（争执之前必经的一步） ──────────────────────────────
+  // 侦探把已入册的证物摊在案卷上，先形成一个假设，才进入现场对质。
+  // 假设写成侦探自己的笔迹，不是系统提示；对错与后果不当场告知。
+  const DD = (id, title, at, room, prompt, evidence, hypotheses, correct, note, debug) => ({
+    id, title, at, room, prompt, evidence, hypotheses, correct, note, debug: debug || "",
+  });
+  D.DEDUCTIONS = [
+    DD("ded_drag", "门厅的先后", T(1, 8, 0), "B-P",
+      "把乙区门厅的几处痕迹按先后摆一摆。",
+      ["e_b_sleeve", "e_b_drag", "e_b_water", "e_b_ratchet"],
+      [
+        { id: "out", label: "有人被拖出门外，之后有人从外面把门反扣。" },
+        { id: "in", label: "有人被拖回门内；湿布塞在拖痕之后，棘轮最晚。" },
+        { id: "same", label: "拖痕、湿布和棘轮是同一个人一次做完的。" },
+      ], "in",
+      "拖回在前，塞布在中，反扣在末。门底那块布，不是谁事后清洗的痕迹。",
+      "正确假设需要 e_b_drag + e_b_water + e_b_ratchet 三件证物。"),
+    DD("ded_cuffs", "托盘与夹层", T(1, 8, 50), "A-P",
+      "甲区的手铐、钥匙和检修篦，能拼出什么？",
+      ["e_a_cuffs", "e_a_grate", "e_a_basin", "e_m_log"],
+      [
+        { id: "theft", label: "有人偷了钥匙，自己开了手铐。" },
+        { id: "reset", label: "手铐和撬痕是两件事；钥匙是被收走的，不是被偷的。" },
+        { id: "fire", label: "昨夜甲区失火，手铐是在救火时撬开的。" },
+      ], "reset",
+      "手铐摆在托盘上，篦子被撬过，夹层里另有东西。先别急着定谁拿了钥匙。",
+      "正确假设需要 e_a_cuffs + e_a_grate。"),
+    DD("ded_cloth", "没有水的路", T(1, 10, 0), "B-P",
+      "一块还在滴水的抹布，怎么会一路没有水迹？",
+      ["e_b_cloth", "e_b_water", "e_b_boots", "e_b_seal"],
+      [
+        { id: "dry", label: "布其实早干了，沈师傅记错了。" },
+        { id: "carried", label: "布不是沿地面被拿回去的。" },
+        { id: "window", label: "有人从高窗把布递出去又递回来。" },
+      ], "carried",
+      "门槛到挂钩之间没有滴点，窗和篦都没动过。先记「不是走地面」，不急着写是谁。",
+      "正确假设需要 e_b_cloth + e_b_boots + e_b_seal。"),
+    DD("ded_window", "窗上与窗下", T(1, 10, 15), "C-P",
+      "内侧铁网被砸凹，窗外却擦得干净。",
+      ["e_c_window", "e_c_bandage", "e_c_copper"],
+      [
+        { id: "neglect", label: "窗外确有人求救，被丙区忽略了。" },
+        { id: "ghost", label: "砸的是内侧，窗外的东西不必是人。" },
+        { id: "quarrel", label: "丙区内部先起了争执，才有人砸窗。" },
+      ], "ghost",
+      "铁网凹向室外，绷带是剪开后叠齐的。莫兰看见的，和赛尔玛听见的，未必是同一次。",
+      "正确假设需要 e_c_window + e_c_bandage。"),
+    DD("ded_gauge", "两只仪表", T(2, 10, 30), "F-104",
+      "丁区的读数，和铁工院备件上的刻度，对不上。",
+      ["e_d_gauge", "e_d_chisel", "e_f_gauge", "e_m_timeshare"],
+      [
+        { id: "tamper", label: "仪表被人动过手脚。" },
+        { id: "reverse", label: "采样孔堵住的时候，指针会指反。" },
+        { id: "interval", label: "两只钟没校准，读数只是晚了些。" },
+      ], "reverse",
+      "23:31 到 23:55 之间，门缝的气流方向变过一次。丁区四人是照着反的读数动的。",
+      "正确假设需要 e_d_gauge + e_f_gauge + e_m_timeshare。"),
+    DD("ded_truth", "三句答复", T(1, 11, 20), "1F-Shaft-Monitor",
+      "把传声管里的三句答复，和四区各自的记录摆在一起。",
+      ["e_m_pillar", "e_m_record", "e_m_log", "e_m_timeshare", "e_b_boots", "e_c_window"],
+      [
+        { id: "lie", label: "三句里至少有一句是假的，先找破绽。" },
+        { id: "forged", label: "记录被人改过，四区才会对不上。" },
+        { id: "literal", label: "三句都照字面成立；对不上的是我们各自记下的那句。" },
+        { id: "later", label: "先吃饭，下午再核。" },
+      ], "literal",
+      "第八条只管字面。先把每个人听到的原句逐字抄下来，再谈是谁关了门。",
+      "★ 第一天的关键推演：正确假设 + 至少三件相关证物，才能在争执里选到「逐字复述」；未做推演直接进入争执，选项会少一条。"),
+    DD("ded_vote", "十四与十六", T(3, 8, 30), "F04",
+      "投票单、登记册和回收原账，先数清楚再说话。",
+      ["e_u_crate", "e_w_paper", "e_m_pillar", "e_n_archive"],
+      [
+        { id: "all", label: "十四票无一反对，就是全体同意。" },
+        { id: "more", label: "再补两张票，人数就齐了。" },
+        { id: "scope", label: "投过票的人，和在册的人，不是同一张名单。" },
+      ], "scope",
+      "「无一反对」只覆盖投过票的十四个人。苏泠还没被问到。",
+      "量词范围与第十一条资格分别成立。"),
+    DD("ded_valve", "阀路", T(4, 17, 35), "B2-valve",
+      "低位阀松了。旁路回流要多久，药在哪儿？",
+      ["e_v_valve", "e_b_vials", "e_m_timeshare"],
+      [
+        { id: "close", label: "把阀关死就行。" },
+        { id: "watch", label: "机械反扣加轮值，才盖得住整个危险窗口。" },
+        { id: "wait", label: "等明早风窗开了再说。" },
+      ], "watch",
+      "阀路图上的旁路不在主阀后面。先把门反扣，再把人排开。",
+      "第四夜的推演：决定稍后可选的策略。"),
+  ];
+  D.DEDUCTION_BY_ID = Object.fromEntries(D.DEDUCTIONS.map((d) => [d.id, d]));
+  D.DEDUCTION_BY_ID.ded_truth.minEvidence = 3; // 第一天的关键推演：三件相关证物才够
 
   // ────────────────────────────── 章节阶段 ──────────────────────────────
   D.PHASES = [
@@ -800,34 +1034,55 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       ["quer", "（甲区）看清楚我手腕上的压痕！我自己也被铐着！"],
       ["bertrand", "（丁区）读数说室内危险——茉拉！我的胳膊，是酸！"],
       ["moran", "（丙区）窗外那个人在求救！你们为什么把我绑起来？"],
-    ], { present: ["detective", "huo", "shen", "su"], tip: "四区同时醒来：甲、丙、丁区的台词是隔门／隔区传来的，人物不在乙区这间房里。" }),
-    B("d1_brief", 1, 7, 25, "2F-cross-M", "作者按语 · 你缺少一门知识", [
-      ["narrator", "你醒来时知道自己的名字、职业与手艺，却不知道「源质」是什么；不知道它比空气重，不知道它会扭曲声音、折出幻火、堵住仪表、拓下残影。"],
-      ["narrator", "于是第一章的每一次归因都会错：把救火当毁证，把救人当囚禁，把复位现场当盗窃。这不是人物愚蠢，是必需知识缺席。"],
-    ], { present: ["detective"] }),
+    ], { present: ["detective", "huo", "shen", "su"] }),
+    B("d1_deduce_drag", 1, 8, 0, "B-P", "摊开笔记", [
+      ["detective", "把门厅这几处，按先后摆一摆。"],
+    ], { deduction: "ded_drag", present: ["detective", "huo", "shen", "su"] }),
     B("d1_inspect", 1, 8, 10, "B-P", "逆向拖痕", [
       ["detective", "拖痕朝内，闭门器回弹与袖口受力一致——有人被拖回了门内。"],
       ["su", "被拖回来？我听见的是「开门逃生」。你是说，有人不让我出去？", "confront"],
-      ["detective", "我说的「救」是把你拉回屋里；你等的「救」是把你拉出门外。"],
-      ["narrator", "两个人都没撒谎。世界只记录行为，各人只保存自己的理解。"],
+      ["detective", "门外的风是往里灌的。你当时站在哪一侧？"],
+      ["shen", "先别吵，门底那块布还没看呢。"],
     ], { present: ["detective", "su", "huo", "shen"], openConflict: "c_door" }),
-    B("d1_accuse", 1, 9, 0, "A-P", "甲区指控", [
+    B("d1_deduce_cuffs", 1, 8, 50, "A-P", "甲区走廊", [
+      ["detective", "手铐、钥匙、检修篦，先各归各。"],
+    ], { deduction: "ded_cuffs", present: ["detective", "ward", "quer"] }),
+    B("d1_accuse", 1, 9, 0, "A-P", "甲区检修间", [
       ["ward", "手铐被打开、钥匙失踪、通风篦有新撬痕。按程序，我先扣押工具。"],
-      ["quer", "「分一点」和「借」都不一样，你倒先把「清场」定成盗窃了。"],
+      ["quer", "我手腕还肿着，你倒先问钥匙。"],
       ["lucian", "二位且慢！拔剑之前，先听我一言——"],
     ], { present: ["ward", "quer", "lucian", "gu"], openConflict: "c_handcuff" }),
+    B("d1_deduce_cloth", 1, 10, 0, "B-P", "灶边", [
+      ["detective", "一块还在滴水的布，怎么会一路没有水迹？"],
+    ], { deduction: "ded_cloth", present: ["detective", "shen"] }),
+    B("d1_cloth", 1, 10, 5, "B-P", "挂钩上的抹布", [
+      ["shen", "布是我浸的，塞在门底。"],
+      ["detective", "可它现在挂在钩上，还在滴水。门槛到这儿，一路没有水迹。"],
+      ["shen", "……那你是说我记错了？"],
+    ], { present: ["detective", "shen"], openConflict: "c_wetcloth" }),
+    B("d1_deduce_window", 1, 10, 15, "C-P", "丙区窗前", [
+      ["detective", "内侧铁网被砸凹，窗外却擦得干净。"],
+    ], { deduction: "ded_window", present: ["detective", "moran", "selma"] }),
+    B("d1_window", 1, 10, 20, "C-P", "观察窗", [
+      ["moran", "窗外那个人在求救！你们把我绑起来，还把窗擦干净了？"],
+      ["selma", "我听见的是屋里有人喊。不把你拖开，铁网就被你砸穿了。"],
+      ["ruan", "两截绷带叠得倒很齐。"],
+    ], { present: ["detective", "moran", "selma", "ruan"], openConflict: "c_window" }),
     B("d1_route", 1, 10, 30, "service_stair_M", "勤务暗井", [
       ["quer", "图上画着 16 世纪传菜井旁的独立检修通道。我没走甲区正门。"],
-      ["lucian", "「留在屋里」在我这儿从来不等于「不许出去」。"],
+      ["lucian", "我陪她走这趟。"],
       ["ward", "（隔门）所以昨夜在走廊上喊话的那个人，果然是你。", "confront"],
     ], { present: ["quer", "lucian", "ward"], flag: "service_map" }),
-    B("d1_meeting", 1, 11, 10, "2F-cross-M", "四区对账 · 各说各的", [
+    B("d1_meeting", 1, 11, 10, "2F-cross-M", "四区对账", [
       ["ward", "甲区：手铐被人打开，钥匙不见，有人从外面把门合死了。"],
-      ["huo", "乙区：棘轮反扣、曲柄销在我工具箱，门底还塞过湿布。这是工程处置。"],
+      ["huo", "乙区：棘轮反扣、曲柄销在我工具箱，门底还塞过湿布。"],
       ["ruan", "丙区：伊莲娜左踝扭伤，外侧偏心轮卡死，窗外有人求救。"],
       ["margaret", "丁区：压差计显示室外危险，可门是从里面撬的。"],
-      ["detective", "四份报告没有一份在撒谎，却拼不出同一夜。先记下每个人用的词。"],
+      ["detective", "四份报告摆在一起，先抄原话。"],
     ], { present: ALL }),
+    B("d1_deduce_truth", 1, 11, 20, "1F-Shaft-Monitor", "传声管旁", [
+      ["detective", "三句答复，四份记录。先把原句逐字抄下来。"],
+    ], { deduction: "ded_truth", present: ["detective"] }),
     B("d1_q1", 1, 11, 30, "1F-Shaft-Monitor", "传声管问答 · 之一", [
       ["detective", "代管者，昨夜有人替我们关上了门吗？"],
       ["demon", "四区的门，最终都是由在下合上的。字面无虚。", "truth"],
@@ -847,20 +1102,18 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       ["demon", "关门时，在下始终在场。字面无虚。", "truth"],
       ["ward", "在场就是门外走廊——23:32 卢西安就在那儿。是他。"],
       ["detective", "在场是这间房；那我或霍铎才该被怀疑。"],
-      ["ruan", "在场也可以是记录里被点到名的人。诸位在争的是三个不同的集合。"],
-      ["narrator", "它一次也没有撒谎。第八条只保证字面，不保证听者取到同一个义项。"],
+      ["ruan", "记录上也有名字。先别急着认人。"],
     ], { present: ["detective", "ward", "ruan", "huo", "lucian", "moran"], demon: true }),
-    B("d1_trap", 1, 11, 55, "2F-cross-M", "★ 第一天 · 摆了一道", [
-      ["narrator", "四区带着三句字面为真的答复回来对账。六个人听到六种事实，谁也不肯退让。"],
-      ["ward", "要么代管者撒谎，要么我们中间有人撒谎。我要求立刻扣押所有工具与钥匙。"],
-      ["quer", "「分一点」是我的，「借」是他的；现在连「在场」都要由律师定？我不交。"],
-      ["moran", "谁把窗外的求救者擦掉的，谁就别再看我的速写本。"],
-      ["demon", "（传声管，礼貌地）诸位若还有疑问，在下随时恭候。——第八条回答完毕。", "truth"],
+    B("d1_trap", 1, 11, 55, "2F-cross-M", "午前的争执", [
+      ["ward", "三句答复，四份记录，没有一份对得上。按程序，工具、钥匙、清册先封存。"],
+      ["quer", "工具是我的，我不交。要查就查记录。"],
+      ["moran", "谁擦的窗，谁别再看我的速写本。"],
+      ["su", "……我只是想知道，那句「开门」到底是谁说的。"],
+      ["demon", "（传声管）诸位若还有疑问，在下随时恭候。"],
     ], { present: ALL, demon: true, openConflict: "c_demon", mustChoose: true }),
-    B("d1_contract", 1, 12, 20, "2F-cross-M", "中央石柱 · 第八条", [
+    B("d1_contract", 1, 12, 20, "2F-cross-M", "中央石柱", [
       ["gu", "「代管者对在册学员所作之一切事实陈述，其字面语义在客观现实中不得为假。」"],
-      ["detective", "不得为假，不等于不会被人听成别的事实。它把义项留给了我们。"],
-      ["narrator", "获得源质知识：第八条只管字面。"],
+      ["detective", "（笔记）字面不得为假。那就先把字面抄下来。"],
     ], { present: ["detective", "gu", "ward"], grant: "k_contract" }),
     B("d1_poem", 1, 13, 30, "T01", "下午 · 黑板诗", [
       ["lucian", "诸位！讲堂黑板上——凭空出现了远古先知的灭世神谕！"],
@@ -871,126 +1124,136 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       choice: {
         id: "poem", prompt: "怎么处理卢西安的「神谕」？", auto: "expose",
         options: [
-          { id: "stakeout", label: "提前蹲点抓现行", note: "发现蓝粉笔线索后去讲堂守着，在他写诗时当场撞见；两条路线汇流。", set: { poem: "stakeout" } },
-          { id: "expose", label: "事后依证据拆穿", note: "核对典故年代、押韵腔调、书写高度、袖口粉笔灰与半截蓝粉笔。", set: { poem: "expose" } },
-          { id: "indulge", label: "由他去，恐慌里需要个故事", note: "温情，但神谕会被当成世界规则，之后每次量词争议都更难拆。", set: { poem: "indulge" } },
+          { id: "stakeout", label: "去讲堂守着，等他动笔", note: "", set: { poem: "stakeout" } },
+          { id: "expose", label: "把典故年代、起笔高度和粉笔灰摆出来", note: "", set: { poem: "expose" } },
+          { id: "indulge", label: "由他去，恐慌里需要个故事", note: "", set: { poem: "indulge" } },
         ],
       } }),
     B("d1_dumpling", 1, 17, 30, "F03", "傍晚 · 岁寒包饺子", [
       ["shen", "（传声管）都别愣着了！面已经醒好——今晚包饺子，十六个人一起吃！"],
       ["quer", "擀皮我来。卢西安再吟一句，就拿热饼堵他的嘴。"],
-      ["huo", "暖气阀和桌腿我同玛格丽特修。「待会儿」是几点？先说清楚。"],
+      ["huo", "暖气阀和桌腿我同玛格丽特修。待会儿是几点，先说清楚。"],
       ["mora", "伊莲娜的踝、贝尔特朗的胳膊，换药我来。药箱钥匙在我这儿。"],
-      ["su", "我坐暖处吃就好。……「小声点」是三十分钟，不是一整晚。"],
-      ["narrator", "三百二十只饺子。第一章收束在共同劳动里，不是全故事终局。"],
+      ["su", "我坐暖处吃就好。安静一会儿。"],
     ], { present: ALL, openConflict: "c_borrow" }),
     B("d1_plan", 1, 21, 35, "F03", "开仓分工", [
       ["detective", "明天风窗一开：玛格丽特测门扇，霍铎顶千斤顶，雀儿挑锁，沈师傅核对补给。"],
       ["margaret", "斜向卡死的门，我来算角度。"],
     ], { present: ["detective", "margaret", "huo", "quer", "shen"], flag: "day2_plan" }),
 
-    B("d2_wind", 2, 9, 0, "Wind-Corridor", "第二天 · 风窗开放", [
-      ["narrator", "09:00 压差实测达标，四院接驳廊可通行（第九条）。17:00 联锁落下。"],
-      ["detective", "先补知识，再补结论：白塔院讲义、星仪院音簧、铁工院采样孔、文契院纸样。"],
+    B("d2_wind", 2, 9, 0, "Wind-Corridor", "第二天 · 风窗", [
+      ["detective", "四个院子，今天各走一遍。"],
     ], { present: ["detective", "huo", "margaret", "quer"], flag: "wind" }),
     B("d2_granary", 2, 10, 0, "U01-granary", "开 B1 主粮仓", [
       ["margaret", "门扇斜向卡死，先量角度。"],
       ["huo", "千斤顶复位。"],
-      ["quer", "锁我来挑。——「借」还是「分一点」？这次先问清楚。"],
-      ["shen", "封签清册、粮药工具逐项点验。口粮份额等额，集中热餐可以并行。"],
+      ["quer", "锁我来挑。"],
+      ["shen", "封签清册、粮药工具逐项点验。"],
     ], { present: ["margaret", "huo", "quer", "shen", "detective"], flag: "granary", openConflict: "c_quiet" }),
+    B("d2_deduce_gauge", 2, 10, 30, "F-104", "铁工院备件台", [
+      ["detective", "丁区的读数，和这只备件上的刻度，对不上。"],
+    ], { deduction: "ded_gauge", present: ["detective", "huo"] }),
+    B("d2_gauge", 2, 10, 40, "D-P", "丁区门框", [
+      ["bertrand", "读数说里头危险，我从里面撬！"],
+      ["margaret", "我打钢楔是钉死门缝，不是堵你。"],
+      ["veronica", "酸是我泼的。前臂我负责换药。"],
+    ], { present: ["detective", "bertrand", "margaret", "veronica"], openConflict: "c_gauge" }),
     B("d2_ration", 2, 12, 0, "F04", "配给争议", [
       ["ward", "等额份额与集中热餐，账面上是两笔，不能混。"],
       ["detective", "那就写成共同协议：份额登记到人，热餐登记到锅。"],
     ], { present: ["ward", "detective", "shen"], flag: "ration" }),
-    B("d2_plan", 2, 14, 0, "R10", "第二天下午 · 阮清月打谱", [
-      ["ruan", "显眼包一人，冲突二人，争工具、药柜或配给的控制权，兼试侦探。"],
-      ["narrator", "打谱占用本人 30 个游戏分钟；三案是候选替代关系，不是三宗依次播放。"],
+    B("d2_plan", 2, 14, 0, "R10", "第二天下午 · 打谱", [
+      ["ruan", "一枚显眼包，两枚对头，够试一手了。"],
     ], { present: ["ruan"],
       choice: {
-        id: "ruanCase", prompt: "按阮清月掌握的信任、物品与授权条件，她会选哪一案？（效用 17／12／7）", auto: "probe",
+        id: "ruanCase", prompt: "棋盘上三枚子，先看哪一枚？", auto: "probe",
         options: [
-          { id: "probe", label: "十四张赞成票与被骗走的探针（效用 17）", note: "卢西安夜间改单领口粮；沃德与雀儿对立；把「已投十四票无一反对」扩张成全体同意归乡。", set: { ruanCase: "probe" } },
-          { id: "page", label: "完整门锁与缺页卷宗（效用 12）", note: "莫兰窗前写生留影；沃德／茉拉与维罗妮卡对立；争夺白塔药柜钥匙。", set: { ruanCase: "page" } },
-          { id: "ration", label: "窄手签收与口粮失窃（效用 7）", note: "霍铎夜查管路、遗落工具；贝尔特朗与卢西安对立；两处签收争议掩护配给清册调动。", set: { ruanCase: "ration" } },
+          { id: "probe", label: "领口粮的单子", note: "", set: { ruanCase: "probe" } },
+          { id: "page", label: "缺了一页的卷宗", note: "", set: { ruanCase: "page" } },
+          { id: "ration", label: "空箱回收原账", note: "", set: { ruanCase: "ration" } },
         ],
       } }),
-    B("d2_night", 2, 19, 0, "2F-cross-M", "「小声点」与「待会儿」", [
-      ["su", "我说的小声点，是三十分钟。"],
+    B("d2_night", 2, 19, 0, "2F-cross-M", "夜里", [
+      ["su", "我说的小声点，是这会儿。"],
       ["lucian", "我按一整晚安排的……整晚没敢念诗。"],
-      ["shen", "「待会儿」在我这儿是两个半小时以后。"],
+      ["shen", "待会儿，是掌灯以后。"],
       ["huo", "我按一刻钟等了，暖气阀白跑一趟。"],
     ], { present: ["su", "lucian", "shen", "huo"], openConflict: "c_later" }),
 
-    B("d3_case", 3, 9, 0, "2F-cross-M", "第三天 · 被选中的案件爆发", [
+    B("d3_deduce_vote", 3, 8, 30, "F04", "收发台", [
+      ["detective", "投票单、登记册、回收原账，先数清楚。"],
+    ], { deduction: "ded_vote", present: ["detective", "ward"] }),
+    B("d3_case", 3, 9, 0, "2F-cross-M", "第三天 · 领口粮的单子", [
       ["ward", "已投十四票，无一反对——全体同意归乡。雀儿，把精钢探针卷交出来。"],
-      ["quer", "「无一反对」只覆盖投过票的十四个人。苏泠本人还没同意，我也没答应。"],
-      ["ruan", "（落子）好。这一手是试应手，不是结案。"],
-      ["narrator", "核对量词范围、苏泠当前态度、阮清月当时是否知情，以及探针卷的实际交接与持有人。"],
+      ["quer", "我没投。苏泠也没说好。"],
+      ["ruan", "（落子）好。这一手先记着。"],
     ], { present: ALL, openConflict: "c_vote",
       choice: {
-        id: "d3", prompt: "侦探先拆哪一处？", auto: "quantifier",
+        id: "d3", prompt: "先拆哪一处？", auto: "quantifier",
         options: [
-          { id: "quantifier", label: "拆量词：十四票 ≠ 全部在册学员", note: "第十一条要求其余全部在册学员一致同意；苏泠尚未同意，且她深属此岛。", set: { d3: "quantifier" }, correct: true },
-          { id: "clocks", label: "拆两只未校准的钟", note: "时间对不上，但量词错位仍在；阮清月的清册调动不受影响。", set: { d3: "clocks" } },
-          { id: "signature", label: "拆旧签名与刮改正文", note: "能证明伪造，却证明不了「全体同意」不成立；探针卷仍会被交出。", set: { d3: "signature" } },
+          { id: "quantifier", label: "把登记册和投票单分开数", note: "", set: { d3: "quantifier" }, correct: true },
+          { id: "clocks", label: "对两只钟", note: "", set: { d3: "clocks" } },
+          { id: "signature", label: "看旧签名和刮改的墨", note: "", set: { d3: "signature" } },
         ],
       } }),
-    B("d3_probe", 3, 11, 0, "F04", "探针卷的持有人", [
-      ["quer", "我可以拒绝。拒绝只形成未遂误导，不会自动把工具变成别人的。"],
-      ["detective", "那就记下：交接没有发生，持有链没断。阮清月，你承认这是试探吗？"],
+    B("d3_probe", 3, 11, 0, "F04", "探针卷", [
+      ["quer", "我不交。东西还在我手里。"],
+      ["detective", "那就记下：交接没有发生。阮清月，这一手是试探？"],
       ["ruan", "我承认。棋盘上，能问出对方肯守哪条边界，比赢一目有用。"],
     ], { present: ["quer", "detective", "ruan", "ward"], flag: "d3_resolved" }),
 
-    B("d4_day", 4, 10, 0, "B2-control", "第四天 · 第七条的条件", [
-      ["detective", "第七条只含「使其知情」与「移离」两项义务，不含替我们守夜。"],
-      ["mora", "善意谎言也要零伤亡、且我事后确认，我才认。"],
+    B("d4_day", 4, 10, 0, "B2-control", "第四天 · 条文", [
+      ["detective", "（笔记）第七条只写了两件事：让他知道，把他带开。"],
+      ["mora", "善意也要我先看过伤者，才认。"],
       ["elena", "别替我决定我该不知道什么。"],
     ], { present: ["detective", "mora", "elena", "huo"] }),
-    B("d4_quake", 4, 17, 30, "B2-valve", "17:30 · 微震与倒灌", [
-      ["narrator", "地板与灯具短促震颤，楼下传来金属碰响：低位联锁阀松动，源质沿旁路倒灌。"],
-      ["moran", "毒雾里的紫金……这种颜色值得画一张。"],
-      ["bertrand", "他明知危险还进去；我明知危险也得进去把他拖出来。", "confront"],
-      ["demon", "（显形）两位已经知情，第七条不触发免死保护。药剂在白塔院，路我可以让开。", "truth"],
-    ], { present: ["detective", "moran", "bertrand", "huo", "quer", "margaret"], demon: true,
+    B("d4_quake", 4, 17, 30, "B2-valve", "17:30 · 微震", [
+      ["huo", "楼下有金属碰响——低位阀松了。"],
+      ["moran", "那边的颜色值得画一张。"],
+      ["bertrand", "他往里去了，我得把他拖出来。", "confront"],
+      ["demon", "（显形）药剂在白塔院，路我可以让开。", "truth"],
+    ], { present: ["detective", "moran", "bertrand", "huo", "quer", "margaret"], demon: true }),
+    B("d4_deduce_valve", 4, 17, 35, "B2-valve", "阀路图前", [
+      ["detective", "旁路回流要多久，药在哪儿？"],
+    ], { deduction: "ded_valve", present: ["detective", "huo", "margaret"] }),
+    B("d4_strategy", 4, 17, 45, "B2-valve", "第四夜", [
+      ["huo", "阀还松着。现在怎么办？"],
+    ], { present: ["detective", "huo", "quer", "margaret", "mora"],
       choice: {
-        id: "d4", prompt: "第四夜的防护策略（奇策已被后续设定修订，不是可靠通关方案）", auto: "lock",
+        id: "d4", prompt: "现在怎么办？", auto: "lock",
         options: [
-          { id: "lock", label: "与雀儿、霍铎共同机械锁门（效用 16）", note: "探针卷仍可用、取得合作、实际完成机械反扣与锁芯封闭。", set: { d4: "lock" }, correct: true },
-          { id: "watch", label: "公开险情并组织正常轮值（效用 11）", note: "物资药剂到位、公开危险、实际到岗轮班。", set: { d4: "watch" }, correct: true },
-          { id: "diversion", label: "虚构内务盘点把人留在室内（效用 13）", note: "以账目核查覆盖危险窗口；沃德看穿造假会谴责程序欺诈。", set: { d4: "diversion" } },
-          { id: "trap", label: "给伊莲娜戴耳罩坐阀，逼代管者整夜按阀", note: "反制：她可以摘耳罩，恶魔可以直接把她抱去安全房间；信任创伤留下。", set: { d4: "trap" } },
+          { id: "lock", label: "请雀儿和霍铎把阀廊机械反扣", note: "", set: { d4: "lock" }, correct: true },
+          { id: "watch", label: "把险情说开，排轮值", note: "", set: { d4: "watch" }, correct: true },
+          { id: "diversion", label: "请沃德发一纸紧急盘点，把人留在屋里", note: "", set: { d4: "diversion" } },
+          { id: "trap", label: "让伊莲娜戴耳罩坐在阀上", note: "", set: { d4: "trap" } },
         ],
       } }),
-    B("d4_night", 4, 22, 0, "B1-hazard", "第四夜结果", [
-      ["mora", "R-07 螯合剂及时，两人都救回来了。"],
+    B("d4_night", 4, 22, 0, "B1-hazard", "第四夜之后", [
+      ["mora", "药及时，两人都救回来了。"],
       ["elena", "（摘下耳罩）我听得见。以后别再替我决定。"],
-      ["narrator", "知情涉险不触发无知免死保护；机械防护或公开轮值才真正覆盖危险窗口。"],
     ], { present: ["mora", "elena", "detective", "bertrand", "moran"] }),
 
     B("d5_morning", 5, 9, 0, "N01", "第五日 · 名录库", [
-      ["narrator", "封存匣、十六人逐一亲口授权的录音、两截叠好的绷带。取回记忆会加深源质耦合与夜半唤名之症，其果自负。"],
-      ["detective", "不必取回记忆也能还原昨夜：知识补齐以后，动机自己会浮出来。"],
+      ["detective", "（笔记）匣子里的东西，先不碰。原话已经够多了。"],
     ], { present: ["detective", "ruan", "ward"], grant: "k_meme" }),
-    B("d5_final", 5, 14, 0, "2F-cross-M", "最终判答 · 谁关上了门", [
+    B("d5_final", 5, 14, 0, "2F-cross-M", "结案页", [
       ["ward", "所以昨夜到底是谁要害我们？"],
-      ["detective", "没有人。四区都在按自己听到、看到的「事实」救人；代管者只在事后把门合上、把东西复位。"],
-      ["su", "而「开门」是泛音，「求救」是残影，「危险」是反相的读数，「火」是折光。", "truth"],
-      ["huo", "23:31 断路，23:55 正压。中间那二十多分钟，才是所有动作的动机。"],
-      ["demon", "（脱帽）诸位总算问到了字面之外。在下从未说过一句假话。", "truth"],
+      ["detective", "没有人。四区都在照自己听见、看见的动手；代管者只在事后把门合上、把东西归位。"],
+      ["su", "管子里的后半句、窗上的人影、反着的读数……都不是人。"],
+      ["huo", "23:31 断了闸，23:55 才来正压。中间那二十多分钟，什么都够了。"],
+      ["demon", "（脱帽）在下从未说过一句假话。"],
     ], { present: ALL, demon: true,
       choice: {
-        id: "final", prompt: "把哪一句写进《案卷册子》的结案页？", auto: "lexeme",
+        id: "final", prompt: "结案页上写哪一句？", auto: "lexeme",
         options: [
-          { id: "lexeme", label: "同一词，不同事实；缺的是源质知识", note: "动机错位不是恶意，误会也不因真相自动愈合。", set: { final: "lexeme" }, correct: true },
-          { id: "demon", label: "恶魔用真话骗了所有人，它是唯一的加害者", note: "字面为真成立；把责任全推给它，会漏掉第一天自己造成的裂痕。", set: { final: "demon" } },
-          { id: "fate", label: "这是灾变，没有人需要负责", note: "结论温和，但不可弥合的三组关系不会被记入案卷。", set: { final: "fate" } },
+          { id: "lexeme", label: "把四区原话并列，写明昨夜无人加害", note: "", set: { final: "lexeme" }, correct: true },
+          { id: "demon", label: "写明代管者以真话设局，责任归它", note: "", set: { final: "demon" } },
+          { id: "fate", label: "只记灾变，不记责任", note: "", set: { final: "fate" } },
         ],
       } }),
-    B("d5_end", 5, 21, 0, "F03", "第五日 · 自主观察日收束", [
+    B("d5_end", 5, 21, 0, "F03", "入夜", [
       ["shen", "今天的汤比昨天少了一味百里香。——咦，这话谁说的？"],
       ["demon", "（窗外，半透明）三百年前那位修士也这么说。晚安，诸位。", "truth"],
-      ["narrator", "第二章善后到此。第三章之后的四锚、归乡与黄金迷梦，是另一份案卷。"],
     ], { present: ALL, demon: true }),
   ];
 
@@ -1002,11 +1265,12 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   // ────────────────────────────── 结局文本 ──────────────────────────────
   D.ENDINGS = {
-    best: { title: "《门的这一侧 · 破晓》", color: "#e9c98a", text: "你在第一天就认出「同一批词，各人取了不同义项」，四区的对账没有变成搜身；源质知识补齐后，昨夜的每一次「加害」都还原成救人。苏泠的深绑定被如实记录，第十一条的量词没有被偷偷扩张。裂痕仍在，但没有一条是不可弥合的。" },
-    bitter: { title: "《门的这一侧 · 迟到》", color: "#c8b456", text: "你最终查清了 23:31 与 23:55 的分别、泛音、残影与反相读数，也拆穿了代管者的真话。可是第一天上午那三句话已经落地：沃德与雀儿、莫兰与赛尔玛、苏泠与侦探之间的信任永久受损。真相可以恢复，期待落空时那一方单方面的申诉，不会因为它被证明而消失。" },
-    lost: { title: "《门的这一侧 · 各自为真》", color: "#8a3324", text: "源质知识始终缺席，四区把清场当盗窃、把复位当囚禁、把救人当加害。案卷上写满了真诚的证词，却拼不出同一夜。代管者一句假话也没有说，礼貌地合上门。" },
-    trapped: { title: "《黄金迷梦 · 序》", color: "#6b3fa0", text: "你把「待会儿」「小声点」「同意」都交给别人去定义，最后连结案页也交给别人写。代管者温好茶，说第一天午后的阳光其实一直都在，只要不再追问就行。" },
+    best: { title: "《门的这一侧 · 破晓》", color: "#e9c98a", text: "第一天午前，你把四份记录和传声管里的原句逐字并在一起，没有让人先搜身。后来在四院补齐的笔记，把每一次看似加害的动作都还原成当时的救人。裂痕还在，但没有一条走到无法回头。" },
+    bitter: { title: "《门的这一侧 · 迟到》", color: "#c8b456", text: "你最终查清了 23:31 与 23:55 的分别、管里的余音、窗上的影子和反着的读数，也拆穿了那三句真话。可是第一天上午的话已经落地：沃德与雀儿、莫兰与赛尔玛、苏泠与你之间，有些东西事后也补不回来。" },
+    lost: { title: "《门的这一侧 · 各自为真》", color: "#8a3324", text: "案卷上写满了真诚的证词，却拼不出同一夜。四区把清场当盗窃、把复位当囚禁、把救人当加害。代管者一句假话也没有说，礼貌地合上门。" },
+    trapped: { title: "《黄金迷梦 · 序》", color: "#6b3fa0", text: "你把「待会儿」「小声点」「同意」都交给别人去定，最后连结案页也交给别人写。代管者温好茶，说第一天午后的阳光其实一直都在，只要不再追问就行。" },
   };
+
 })();
 
 /* ===== geom.js ===== */
@@ -1847,95 +2111,132 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     return m;
   }
 
-  // ───────────────────────── 角色程序化模型（移植自 web 展示版 buildCharacter） ─────────────────────────
+  // ───────────────────────── 角色：由 D.RIG_SPEC 的 THREE.Bone 骨架驱动 ─────────────────────────
+  // 每位角色都持有完整骨骼（20 根 Bone、父子偏移、长度、半径、关节限位）与姿态库；
+  // 低多边形外壳直接挂在对应骨骼上，animateRig 只写骨骼欧拉角，绝不把关节写死在网格里。
   function buildCharacter(a) {
-    const L = a.look, b = L.build;
+    const L = a.look, spec = D.RIG_SPEC, AR = spec.actors[a.id] || spec.actors.detective, b = AR.build;
     const skin = mat(L.skin, { roughness: 0.7 }), hair = mat(L.hair), coat = mat(L.coat), accent = mat(L.accent, { metalness: 0.25 });
     const pants = mat(a.id === "ruan" ? L.coat : "#262833"), shoe = mat("#1b1714"), dark = mat("#0e0c10");
-    const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-    const mkLeg = (side) => {
-      const g = new THREE.Group(); g.position.set(0.075 * side * b, 0.78, 0);
-      g.add(cyl(0.058 * b, 0.05 * b, 0.72, pants, 0, -0.36, 0, 10));
-      g.add(box(0.1 * b, 0.07, 0.2, shoe, 0, -0.74, 0.04));
-      body.add(g); return g;
-    };
-    const legL = mkLeg(1), legR = mkLeg(-1);
-    const torso = new THREE.Group(); torso.position.y = 0.78; body.add(torso);
     const coatMat = a.id === "demon" ? dark : coat;
-    torso.add(cyl(0.16 * b, 0.15 * b, 0.56, coatMat, 0, 0.28, 0, 12));
-    torso.add(new THREE.Mesh(new THREE.SphereGeometry(0.16 * b, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), coatMat));
+    const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+    const bones = {};
+    const limbName = /^(upperArm|forearm|hand|thigh|shin|foot)\./;
+    for (const def of spec.bones) {
+      const bone = new THREE.Bone(); bone.name = def.name;
+      let [ox, oy, oz] = def.offset;
+      if (def.name.startsWith("clavicle.")) ox = Math.sign(ox) * AR.shoulder;
+      if (def.name.startsWith("thigh.")) ox = Math.sign(ox) * AR.hip;
+      if (limbName.test(def.name) && oy) oy *= AR.limb;
+      bone.position.set(ox, oy, oz);
+      const isLimb = limbName.test(def.name);
+      bone.userData.rig = {
+        parent: def.parent, length: def.length * (isLimb ? AR.limb : 1),
+        radius: def.radius * b, limit: def.limit,
+      };
+      if (def.parent) bones[def.parent].add(bone); else body.add(bone);
+      bones[def.name] = bone;
+    }
+    const on = (name, mesh, x, y, z) => { mesh.position.set(x || 0, y || 0, z || 0); bones[name].add(mesh); return mesh; };
+    const link = (name, rTop, rBot, color, seg, opts) => {
+      const len = bones[name].userData.rig.length;
+      const m = cyl(rTop * b, rBot * b, len, typeof color === "string" ? mat(color, opts) : color, 0, -len / 2, 0, seg || 10, opts);
+      bones[name].add(m); return m;
+    };
+    const sphere = (r, color, x, y, z, seg) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, seg || 12, (seg || 12) - 4), typeof color === "string" ? mat(color) : color);
+      m.position.set(x || 0, y || 0, z || 0); m.castShadow = true; m.receiveShadow = true; return m;
+    };
+
+    // 躯干：pelvis → spine → chest，外套、衬衫、礼服下摆按角色分别挂在 spine / chest 上
+    link("spine", 0.16, 0.15, coatMat, 12);
+    on("spine", new THREE.Mesh(new THREE.SphereGeometry(0.16 * b, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), coatMat), 0, 0.56, 0);
     if (a.id === "demon") {
-      torso.add(box(0.28 * b, 0.5, 0.02, "#f5f0e2", 0, 0.18, 0.155 * b)); // 衬衫前襟
-      torso.add(box(0.055, 0.24, 0.03, "#8a3324", 0, 0.42, 0.17 * b)); // 领结
-      const tail = cyl(0.15 * b, 0.22 * b, 0.46, dark, 0, -0.22, -0.02, 12, { side: THREE.DoubleSide });
-      torso.add(tail);
+      on("spine", box(0.28 * b, 0.5, 0.02, "#f5f0e2", 0, 0.18, 0.155 * b));
+      on("spine", box(0.055, 0.24, 0.03, "#8a3324", 0, 0.42, 0.17 * b));
+      on("spine", cyl(0.15 * b, 0.22 * b, 0.46, dark, 0, -0.22, -0.02, 12, { side: THREE.DoubleSide }));
     }
     if (a.id === "detective" || a.id === "lucian" || a.id === "ward")
-      torso.add(cyl(0.155 * b, 0.21 * b, 0.42, coatMat, 0, -0.18, 0.02, 12, { side: THREE.DoubleSide }));
-    if (a.id === "ruan") { torso.add(cyl(0.15 * b, 0.2 * b, 0.62, coatMat, 0, -0.28, 0, 12)); torso.add(cyl(0.07, 0.08, 0.08, accent, 0, 0.6, 0, 10)); }
-    if (a.id === "quer") {
-      torso.add(cyl(0.15 * b, 0.19 * b, 0.25, coatMat, 0, -0.08, 0, 12));
-      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.155 * b, 0.018, 6, 20), mat("#5a3a22")); belt.rotation.x = Math.PI / 2; torso.add(belt);
-      for (let i = 0; i < 3; i++) torso.add(box(0.035, 0.05, 0.025, "#b9a07a", -0.08 + i * 0.07, 0.03, 0.16 * b, { metalness: 0.6 }));
+      on("spine", cyl(0.155 * b, 0.21 * b, 0.42, coatMat, 0, -0.18, 0.02, 12, { side: THREE.DoubleSide }));
+    if (a.id === "ruan") {
+      on("spine", cyl(0.15 * b, 0.2 * b, 0.62, coatMat, 0, -0.28, 0, 12));
+      on("spine", cyl(0.07, 0.08, 0.08, accent, 0, 0.6, 0, 10));
     }
-    if (a.id === "shen") { torso.add(box(0.24 * b, 0.62, 0.02, accent, 0, 0.12, 0.155 * b)); }
-    if (a.id === "lucian") { const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.035, 6, 18), accent); scarf.rotation.x = Math.PI / 2; torso.add(scarf); }
-    if (a.id === "detective") { torso.add(box(0.1, 0.2, 0.02, "#d8d2c4", 0, 0.46, 0.15 * b)); torso.add(box(0.03, 0.14, 0.022, accent, 0, 0.44, 0.162 * b)); }
-    const mkArm = (side) => {
-      const g = new THREE.Group(); g.position.set(0.2 * side * b, 0.52, 0);
-      g.add(cyl(0.045 * b, 0.04 * b, 0.5, coatMat, 0, -0.25, 0, 8));
-      g.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), a.id === "demon" ? mat("#f5f0e2") : skin));
-      torso.add(g); return g;
-    };
-    const armL = mkArm(1), armR = mkArm(-1);
-    const head = new THREE.Group(); head.position.y = 0.66; torso.add(head);
-    head.add(cyl(0.045, 0.05, 0.08, skin, 0, 0.02, 0, 8));
-    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), skin));
+    if (a.id === "quer") {
+      on("spine", cyl(0.15 * b, 0.19 * b, 0.25, coatMat, 0, -0.08, 0, 12));
+      const belt = new THREE.Mesh(new THREE.TorusGeometry(0.155 * b, 0.018, 6, 20), mat("#5a3a22")); belt.rotation.x = Math.PI / 2;
+      on("spine", belt, 0, 0.03, 0);
+      for (let i = 0; i < 3; i++) on("spine", box(0.035, 0.05, 0.025, "#b9a07a", -0.08 + i * 0.07, 0.03, 0.16 * b, { metalness: 0.6 }));
+    }
+    if (a.id === "shen") on("chest", box(0.24 * b, 0.62, 0.02, accent, 0, -0.16, 0.155 * b));
+    if (a.id === "lucian") {
+      const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.035, 6, 18), accent); scarf.rotation.x = Math.PI / 2;
+      on("neck", scarf, 0, 0, 0);
+    }
+    if (a.id === "detective") {
+      on("chest", box(0.1, 0.2, 0.02, "#d8d2c4", 0, 0.20, 0.15 * b));
+      on("chest", box(0.03, 0.14, 0.022, accent, 0, 0.18, 0.162 * b));
+    }
+
+    // 四肢：每根 Bone 自带一段低模外壳，肩 / 手 / 鞋作为末端附件
+    for (const side of ["L", "R"]) {
+      const sgn = side === "L" ? 1 : -1;
+      on(`clavicle.${side}`, sphere(0.05 * b, coatMat, 0, 0, 0, 10));
+      link(`upperArm.${side}`, 0.045, 0.04, coatMat, 8);
+      link(`forearm.${side}`, 0.042, 0.038, coatMat, 8);
+      on(`hand.${side}`, sphere(0.045 * b, a.id === "demon" ? mat("#f5f0e2") : skin, 0, -0.045, 0, 10));
+      link(`thigh.${side}`, 0.058, 0.05, pants, 10);
+      link(`shin.${side}`, 0.05, 0.044, pants, 10);
+      on(`foot.${side}`, box(0.1 * b, 0.07, 0.2, shoe, 0, -0.035, 0.06));
+    }
+
+    // 头：neck → head，眼 / 嘴 / 发式 / 帽子都随 head 骨骼转动
+    on("neck", cyl(0.045, 0.05, 0.08, skin, 0, 0.02, 0, 8));
+    on("head", sphere(0.13 * b, skin, 0, 0.13, 0, 16));
     const eyeMat = a.id === "demon" ? mat("#d9a13a", { emissive: "#d9a13a", emissiveIntensity: 0.9 }) : mat("#1d1612");
     if (a.id === "demon") {
-      head.add(new THREE.Mesh(new THREE.SphereGeometry(0.021, 8, 8), eyeMat)); // 占位
-      for (const sx of [-0.045, 0.045]) {
-        const eye = new THREE.Mesh(new THREE.BoxGeometry(0.017, 0.055, 0.012), eyeMat);
-        eye.position.set(sx, 0.18, 0.122); head.add(eye);
-      }
+      for (const sx of [-0.045, 0.045]) on("head", box(0.017, 0.055, 0.012, eyeMat, sx, 0.15, 0.122 * b));
     } else {
-      for (const sx of [-0.045, 0.045]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8), eyeMat); e.position.set(sx, 0.18, 0.118); head.add(e); }
+      for (const sx of [-0.045, 0.045]) on("head", sphere(0.015, eyeMat, sx, 0.15, 0.118 * b, 8));
     }
-    head.add(box(0.05, 0.008, 0.01, "#8a4a3a", 0, 0.12, 0.125));
+    on("jaw", box(0.05, 0.008, 0.01, "#8a4a3a", 0, -0.02, 0.035 * b));
     const cap = (sc, phi) => {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(0.13 * sc, 16, 12, 0, Math.PI * 2, 0, phi), hair);
-      m.position.set(0, 0.18, -0.008); m.rotation.x = -0.25; head.add(m);
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.13 * b * sc, 16, 12, 0, Math.PI * 2, 0, phi), hair);
+      m.position.set(0, 0.18, -0.008); m.rotation.x = -0.25; bones.head.add(m);
     };
-    switch (L.hairStyle) {
+    switch (AR.hairStyle) {
       case "short": cap(1.07, Math.PI * 0.5); break;
       case "buns":
         cap(1.07, Math.PI * 0.55);
-        for (const sx of [-0.11, 0.11]) head.add(new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), hair).translateX(sx).translateY(0.3).translateZ(-0.02));
+        for (const sx of [-0.11, 0.11]) on("head", sphere(0.055, hair, sx, 0.3, -0.02, 10));
         break;
       case "curly":
         for (let i = 0; i < 16; i++) {
           const ang = (i / 16) * Math.PI * 2;
-          const s = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 6), hair);
-          s.position.set(Math.cos(ang) * 0.11, 0.24 + Math.sin(i * 1.7) * 0.025, Math.sin(ang) * 0.1); head.add(s);
+          on("head", sphere(0.042, hair, Math.cos(ang) * 0.11, 0.24 + Math.sin(i * 1.7) * 0.025, Math.sin(ang) * 0.1, 8));
         }
         cap(1.02, Math.PI * 0.4); break;
       case "bun":
         cap(1.06, Math.PI * 0.55);
-        head.add(new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), hair).translateY(0.3).translateZ(-0.08));
-        head.add(box(0.22, 0.2, 0.05, hair, 0, 0.1, -0.11));
+        on("head", sphere(0.06, hair, 0, 0.3, -0.08, 10));
+        on("head", box(0.22, 0.2, 0.05, hair, 0, 0.1, -0.11));
         break;
       case "cap": cap(1.05, Math.PI * 0.42); break;
     }
-    if (L.hat === "fedora") {
-      head.add(cyl(0.22, 0.22, 0.015, "#2f2a26", 0, 0.27, 0, 20));
-      head.add(cyl(0.12, 0.135, 0.13, "#3c3530", 0, 0.34, 0, 16));
-      head.add(cyl(0.137, 0.137, 0.03, a.color, 0, 0.3, 0, 16));
+    if (AR.hat === "fedora") {
+      on("head", cyl(0.22, 0.22, 0.015, "#2f2a26", 0, 0.27, 0, 20));
+      on("head", cyl(0.12, 0.135, 0.13, "#3c3530", 0, 0.34, 0, 16));
+      on("head", cyl(0.137, 0.137, 0.03, a.color, 0, 0.3, 0, 16));
     }
-    if (L.hat === "chef") {
-      head.add(cyl(0.12, 0.13, 0.12, accent, 0, 0.32, 0, 16));
-      for (let i = 0; i < 5; i++) { const ang = (i / 5) * Math.PI * 2; const s = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), accent); s.position.set(Math.cos(ang) * 0.07, 0.42, Math.sin(ang) * 0.07); head.add(s); }
+    if (AR.hat === "chef") {
+      on("head", cyl(0.12, 0.13, 0.12, accent, 0, 0.32, 0, 16));
+      for (let i = 0; i < 5; i++) {
+        const ang = (i / 5) * Math.PI * 2;
+        on("head", sphere(0.07, accent, Math.cos(ang) * 0.07, 0.42, Math.sin(ang) * 0.07, 10));
+      }
     }
-    // 名牌
+
+    // 名牌（不参与骨骼缩放计算）
     const cv = document.createElement("canvas"); cv.width = 256; cv.height = 64;
     const c = cv.getContext("2d");
     c.fillStyle = "rgba(20,16,12,0.72)"; c.fillRect(0, 0, 256, 64);
@@ -1944,20 +2245,58 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     c.fillText(a.name, 128, 34);
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
     const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
-    label.scale.set(1.15, 0.29, 1); label.position.y = 1.86; root.add(label);
-    const bb = new THREE.Box3().setFromObject(root);
-    const h = Math.max(0.1, bb.max.y - bb.min.y);
-    root.scale.setScalar(L.height / h);
-    return { root, body, armL, armR, legL, legR, head, label };
+    label.scale.set(1.15, 0.29, 1); root.add(label);
+
+    body.updateMatrixWorld(true);
+    const bb = new THREE.Box3().setFromObject(body);
+    const h = Math.max(0.1, bb.max.y - bb.min.y), baseScale = AR.height / h;
+    body.scale.setScalar(baseScale);
+    label.position.y = AR.height + 0.17;
+    body.updateMatrixWorld(true);
+    const skeleton = new THREE.Skeleton(spec.bones.map((d) => bones[d.name]));
+    skeleton.calculateInverses();
+    return {
+      root, body, bones, skeleton, baseScale, actorRig: AR, label,
+      armL: bones["upperArm.L"], armR: bones["upperArm.R"],
+      legL: bones["thigh.L"], legR: bones["thigh.R"], head: bones.head,
+    };
+  }
+  const DEG = (v) => THREE.MathUtils.degToRad(v || 0);
+  function poseBone(r, name, deg, extra) {
+    const bone = r.bones && r.bones[name]; if (!bone) return;
+    const lim = bone.userData.rig.limit, e = extra || [0, 0, 0];
+    const v = [0, 1, 2].map((i) => THREE.MathUtils.clamp(
+      DEG((deg[i] || 0) + e[i]), DEG(lim[i][0]), DEG(lim[i][1])));
+    bone.rotation.set(v[0], v[1], v[2]);
   }
   function animateRig(r, t, pose) {
-    r.body.position.y = 0; r.legL.rotation.x = 0; r.legR.rotation.x = 0;
-    r.armL.rotation.set(0, 0, 0.08); r.armR.rotation.set(0, 0, -0.08);
-    r.head.rotation.set(0, Math.sin(t * 0.5 + r.root.position.x) * 0.13, 0);
-    r.body.scale.set(1, 1 + Math.sin(t * 1.8 + r.root.position.z) * 0.012, 1);
-    if (pose === "walk") { const s = Math.sin(t * 6); r.legL.rotation.x = s * 0.5; r.legR.rotation.x = -s * 0.5; r.armL.rotation.x = -s * 0.45; r.armR.rotation.x = s * 0.45; r.body.position.y = Math.abs(Math.cos(t * 6)) * 0.02; }
-    else if (pose === "sit") { r.body.position.y = -0.3; r.legL.rotation.x = -1.4; r.legR.rotation.x = -1.4; r.armL.rotation.x = -0.6; r.armR.rotation.x = -0.6; }
-    else if (pose === "wave") r.armR.rotation.z = -2.4 + Math.sin(t * 8) * 0.3;
+    if (!r || !r.bones) return;
+    const spec = D.RIG_SPEC, p = spec.poses[pose] || spec.poses.stand;
+    for (const n of Object.keys(r.bones)) r.bones[n].rotation.set(0, 0, 0);
+    const idle = THREE.MathUtils.radToDeg(Math.sin(t * 0.5 + r.root.position.x) * 0.11);
+    const walk = pose === "walk" ? Math.sin(t * 6) : 0;
+    const swing = THREE.MathUtils.radToDeg(walk * 0.46);
+    poseBone(r, "head", p.head, [0, idle, 0]);
+    poseBone(r, "upperArm.L", p.armL, [-swing, 0, 0]);
+    poseBone(r, "upperArm.R", p.armR, [swing, 0, 0]);
+    poseBone(r, "forearm.L", [p.armL[0] * 0.45, 0, 0]);
+    poseBone(r, "forearm.R", [p.armR[0] * 0.45, 0, 0]);
+    poseBone(r, "hand.L", [0, 0, 0]); poseBone(r, "hand.R", [0, 0, 0]);
+    poseBone(r, "thigh.L", p.legL, [swing, 0, 0]);
+    poseBone(r, "thigh.R", p.legR, [-swing, 0, 0]);
+    poseBone(r, "shin.L", [-p.legL[0] * 0.9, 0, 0]);
+    poseBone(r, "shin.R", [-p.legR[0] * 0.9, 0, 0]);
+    poseBone(r, "foot.L", [0, 0, 0]); poseBone(r, "foot.R", [0, 0, 0]);
+    const lean = p.body * 14;
+    for (const n of ["pelvis", "spine", "chest"]) poseBone(r, n, [lean, 0, 0]);
+    if (pose === "wave") poseBone(r, "hand.R", [0, 0, Math.sin(t * 8) * 26]);
+    if (pose === "talk" || pose === "argue") {
+      poseBone(r, "hand.R", [0, 0, Math.sin(t * 5) * 8]);
+      poseBone(r, "jaw", [Math.sin(t * 7) * 5, 0, 0]);
+    }
+    r.body.position.y = p.body + (pose === "walk" ? Math.abs(Math.cos(t * 6)) * 0.02 : 0);
+    const breath = 1 + Math.sin(t * 1.8 + r.root.position.z) * 0.012, k = r.baseScale || 1;
+    r.body.scale.set(k, k * breath, k);
   }
 
   // ───────────────────────── 墙体 / 地板生成 ─────────────────────────
@@ -2500,8 +2839,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     // 动画
     for (const id of Object.keys(rigs)) {
       const rig = rigs[id];
-      animateRig(rig, clockT, id === state.speaking ? "wave" : "stand");
-      if (rig.head) rig.head.rotation.y = Math.sin(clockT * 0.4 + rig.root.position.x) * 0.18;
+      animateRig(rig, clockT, id === state.speaking ? (state.pose || "talk") : "stand");
     }
     if (roomGroup) roomGroup.traverse((o) => {
       if (o.userData && o.userData.kind === "evidence" && o.userData.gem) {
@@ -2547,6 +2885,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   };
   R.debugScene = () => ({ scene, camera, renderer, design });
   R.hasWebGL = () => !!renderer;
+  R.rigInfo = function (id) {
+    const r = rigs[id]; if (!r) return null;
+    return { spec: D.RIG_SPEC, actorRig: r.actorRig, skeleton: r.skeleton, bones: r.bones };
+  };
+  R.allRigs = () => ({ ...rigs });
   R.getOrbit = () => ({ ...orbit });
   // 供角色画廊复用同一套程序化模型
   R.makeCharacter = function (actor) { return THREE_OK ? buildCharacter(actor) : null; };
@@ -2653,10 +2996,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     for (const [a, b] of D.RELATION_PAIRS) rel[pairKey(a, b)] = { trust: 62, damage: 0, permanent: false, grievances: [] };
     return {
       version: 1, t: T(1, 7, 0), playing: true, speed: 20, waiting: false,
-      day: 1, room: "B-P", mode: "2d", tab: "story", authorView: false,
+      day: 1, room: "B-P", mode: "2d", tab: "log", authorView: false,
       beatCursor: 0, pendingChoice: null, pendingConflict: null, conflictQueue: [], currentBeat: null,
       evidence: {}, knowledge: {}, beliefs: {}, misconceptions: [], log: [],
       conflicts: {}, choices: {}, flags: {}, relations: rel, irreparable: false,
+      deductions: {}, caseNotes: [], debugLog: [], pendingDeduction: null, pose: "stand",
       doors: {}, foundCount: 0, inspectedRooms: {}, ending: null, finalChoice: null,
       selectedActor: "detective", selectedEvidence: null, lastLines: [], notices: [],
       subtitle: "", subtitleActor: "", subtitleUntil: 0, anim: 0, showSnow: false,
@@ -2677,6 +3021,12 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   E.togglePlay = () => { E.state.playing = !E.state.playing; E.emit("play"); };
   E.setPlaying = (v) => { E.state.playing = !!v; E.emit("play"); };
 
+  function debug(kind, text) {
+    const s = E.state;
+    s.debugLog.push({ t: s.t, kind, text });
+    if (s.debugLog.length > 300) s.debugLog.shift();
+  }
+  E.debug = debug;
   function log(kind, text, who) {
     const s = E.state;
     s.log.push({ t: s.t, kind, text, who: who || [] });
@@ -2692,6 +3042,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   E.say = function (who, text, kind) {
     const s = E.state;
     s.subtitle = text; s.subtitleActor = who || "narrator";
+    s.pose = kind === "confront" ? "argue" : kind === "truth" ? "point" : kind === "think" ? "think" : "talk";
     s.subtitleKind = kind || "";
     s.subtitleUntil = performance.now() + Math.max(3200, 1500 + text.length * 65);
     s.lastLines.push({ who, text, kind, t: s.t });
@@ -2740,7 +3091,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const s = E.state;
     if (!D.ROOM_BY_ID[id]) return false;
     const path = E.pathTo(id);
-    if (!path && !s.authorView) { E.notice("路径锁闭：按时间推进，或开启「作者视角」自由参观"); G.Audio.sfx("error"); return false; }
+    if (!path && !s.authorView) { E.notice("门从里面闩着，现在过不去。"); G.Audio.sfx("error"); return false; }
     s.room = id;
     s.inspectedRooms[id] = true;
     if (!silent) {
@@ -2757,9 +3108,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const s = E.state, k = D.KNOW_BY_ID[id];
     if (!k || s.knowledge[id]) return false;
     s.knowledge[id] = { at: s.t, why: why || "" };
-    log("knowledge", `补齐源质知识【${k.title}】：${k.text}`, []);
-    E.notice("源质知识 +1 · " + k.title);
-    G.Audio.sfx("chime");
+    log("knowledge", "在案卷边角添了一行小字。", []);
+    debug("knowledge", `【${k.title}】${k.text}`);
+    G.Audio.sfx("page");
     E.emit("knowledge");
     return true;
   };
@@ -2774,16 +3125,14 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const s = E.state, e = D.EVIDENCE_BY_ID[eid];
     if (!e) return false;
     if (s.room !== e.room && !s.authorView) {
-      E.notice(`需要先进入「${D.ROOM_BY_ID[e.room].label}」才能检视这件物证`);
-      G.Audio.sfx("error");
-      return false;
+      E.notice("得先到那间房去。"); G.Audio.sfx("error"); return false;
     }
     const first = !s.evidence[eid];
     s.evidence[eid] = { at: s.t, room: e.room };
     s.selectedEvidence = eid;
     const r = E.readEvidence(eid);
     s.evidence[eid].correct = r.correct;
-    log("evidence", `检视【${e.label}】：${r.text}${r.authorOnly ? "（作者视角；人物认知仍按误读保存）" : ""}`, e.actors);
+    log("evidence", `【${e.label}】${r.text}`, e.actors);
     E.say("detective", r.text, r.correct ? "truth" : "think");
     G.Audio.sfx("pen");
     // 主观认知：各人保存自己那一份（知识补齐才会改）
@@ -2798,8 +3147,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     }
     // 直接授予知识（无前置，或前置已补齐）
     if ((e.grants || []).length && r.correct) e.grants.forEach((k) => E.grantKnowledge(k, e.label));
-    if (first) s.foundCount++;
-    if (e.conflict && !s.conflicts[e.conflict]) E.openConflict(e.conflict);
+    if (first) {
+      s.foundCount++;
+      s.caseNotes.push({ eid, at: s.t, text: r.text }); // 侦探当场写下的观察，不带作者解释
+    }
+    debug("evidence", `${e.label} → ${r.correct ? "客观读法" : "当前读法"}：${r.text}`);
     E.emit("evidence");
     return true;
   };
@@ -2810,14 +3162,59 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (!c) return [];
     return c.parties.map((id) => ({ id, name: D.ACTOR_BY_ID[id].name, sense: D.senseLabel(id, c.word), color: D.ACTOR_BY_ID[id].color }));
   };
+  E.openDeduction = function (did, next) {
+    const s = E.state, d = D.DEDUCTION_BY_ID[did];
+    if (!d || s.deductions[did]) { if (next) E.openConflict(next); return; }
+    s.pendingDeduction = { id: did, next: next || null };
+    s.waiting = true;
+    log("beat", `摊开案卷 · ${d.title}`, [s.selectedActor]);
+    debug("deduction", `推演开启 ${did}（争执前必经的一步）`);
+    G.Audio.sfx("page");
+    E.emit("deduction");
+  };
+  E.solveDeduction = function (did, hypId, picked) {
+    const s = E.state, d = D.DEDUCTION_BY_ID[did];
+    if (!d || !s.pendingDeduction || s.pendingDeduction.id !== did) return;
+    const relevant = (picked || d.evidence.filter((e) => s.evidence[e])).filter((e) => d.evidence.includes(e));
+    const min = d.minEvidence || 2;
+    s.deductionScores = s.deductionScores || {};
+    s.deductionScores[did] = relevant.length;
+    const solved = hypId === d.correct && relevant.length >= min;
+    s.deductions[did] = solved ? "solved" : "wrong";
+    s.caseNotes.push({ did, at: s.t, text: solved ? d.note : "这一页先空着，回头再核。" });
+    const next = s.pendingDeduction.next;
+    s.pendingDeduction = null;
+    s.waiting = !!(s.pendingChoice || s.pendingConflict || s.pendingDeduction);
+    log("deduce", `案卷推演 · ${d.title}`, [s.selectedActor]);
+    debug("deduction", `${did} → ${s.deductions[did]}（假设 ${hypId}，证物 ${relevant.length}/${min} 件）`);
+    G.Audio.sfx("pen");
+    if (next) E.openConflict(next);
+    E.emit("deduction");
+  };
+  E.retryDeduction = function (did) {
+    const s = E.state, d = D.DEDUCTION_BY_ID[did];
+    if (!d || s.pendingDeduction || s.pendingConflict) return false;
+    delete s.deductions[did];
+    E.openDeduction(did, null);
+    return true;
+  };
+  E.conflictOptions = function (cid) {
+    const s = E.state, c = D.CONFLICT_BY_ID[cid];
+    if (!c) return [];
+    // 争执里的正解，只有先完成对应推演才出现在侦探眼前
+    return c.options.filter((o) => !(c.deduction && o.id === c.correct && s.deductions[c.deduction] !== "solved"));
+  };
   E.openConflict = function (cid) {
     const s = E.state, c = D.CONFLICT_BY_ID[cid];
     if (!c || s.conflicts[cid]) return;
+    // 争执之前必经的推演：未做过就先摊开案卷，不直接跳到对质
+    if (c.deduction && !s.deductions[c.deduction]) { E.openDeduction(c.deduction, cid); return; }
     s.conflictQueue = s.conflictQueue || [];
     if (!s.conflictQueue.includes(cid)) s.conflictQueue.push(cid);
     s.pendingConflict = s.conflictQueue[0];
     s.waiting = true;
-    log("confront", `认知冲突【${c.title}】：${c.wrong}`, c.parties);
+    log("confront", `争执 · ${c.title}`, c.parties);
+    debug("conflict", `${c.title}（${cid}）：${c.wrong}${c.note ? " " + c.note : ""}`);
     G.Audio.sfx("error");
     E.emit("conflict");
   };
@@ -2825,7 +3222,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const s = E.state;
     s.conflictQueue = (s.conflictQueue || []).filter((x) => x !== cid);
     s.pendingConflict = s.conflictQueue[0] || null;
-    s.waiting = !!(s.pendingChoice || s.pendingConflict);
+    s.waiting = !!(s.pendingChoice || s.pendingConflict || s.pendingDeduction);
   };
   E.resolveConflict = function (cid, optionId, defer) {
     const s = E.state, c = D.CONFLICT_BY_ID[cid];
@@ -2834,15 +3231,16 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (defer && !c.permanent) {
       // 搁置：从队列中取出，但保留为「未拆解」，义项分歧照旧落空
       popConflict(cid);
-      log("system", `暂时搁置【${c.title}】；义项分歧仍在，期待照旧落空。`, c.parties);
+      log("say", `【${c.title}】先搁下，这一页留白。`, c.parties);
+      debug("conflict", `${c.title}：被搁置，未拆解`);
       E.emit("conflict");
       return;
     }
     s.conflicts[cid] = wrong ? "failed" : "resolved";
     popConflict(cid);
     const opt = c.options.find((o) => o.id === optionId);
-    log(wrong ? "confront" : "ontology",
-      `${c.title} → ${wrong ? "误判" : "拆开义项"}：${defer ? "未及时对质" : opt ? opt.label : ""}${opt && opt.note ? "。" + opt.note : ""}`, c.parties);
+    log("say", `${c.title} · ${opt ? opt.label : "先搁下"}`, c.parties);
+    debug("conflict", `${c.title} → ${wrong ? "误判" : "正确"}（${optionId || "defer"}）；词义 ${c.word}，判定 ${c.correct}`);
     if (wrong) {
       G.Audio.sfx("error");
       // 期待落空：只有一方得到申诉证据，另一方不知情
@@ -2865,8 +3263,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
           s.relations[k2].permanent = true;
           s.relations[k2].grievances.push({ who: x, other: y, oneSided: true, at: s.t, text: "第一天的真话被各自听成不同事实。事后查明真相也不会复原这一条。" });
         }
-        log("system", "★ 不可弥合：沃德／雀儿、莫兰／赛尔玛、苏泠／侦探三组信任永久受损。代管者一句假话也没说。", []);
-        E.notice("不可逆：三组信任永久受损");
+        debug("relation", "不可弥合：沃德／雀儿、莫兰／赛尔玛、苏泠／侦探三组信任永久受损；事后查明真相也不会复原。");
       }
     } else {
       G.Audio.sfx("success");
@@ -2876,7 +3273,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       // 拆开义项可补齐与冲突相关的知识
       (c.need || []).forEach((k) => { if (s.knowledge[k]) E.grantKnowledge(k, c.title); });
       if (cid === "c_demon") E.grantKnowledge("k_contract", "第一天的对照");
-      E.notice("义项已拆开 · " + c.title);
+      debug("conflict", `${c.title}：${cid} 已按 ${optionId} 处理（正确）`);
     }
     E.emit("conflict");
   };
@@ -2888,13 +3285,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     s.choices[beat.choice.id] = optionId;
     Object.assign(s.flags, opt.set || {});
     if (beat.choice.id === "final") s.finalChoice = optionId;
-    s.pendingChoice = null; s.waiting = !!s.pendingConflict;
-    log("choice", `${beat.title} → ${opt.label}${opt.note ? "（" + opt.note + "）" : ""}`, [s.selectedActor]);
+    s.pendingChoice = null; s.waiting = !!(s.pendingConflict || s.pendingDeduction);
+    log("choice", `${beat.title} → ${opt.label}`, [s.selectedActor]);
+    debug("choice", `${beat.title} / ${optionId}${opt.note ? "（" + opt.note + "）" : ""}${opt.correct ? "（设计中为正解）" : ""}`);
     E.say("detective", opt.label, "");
     G.Audio.sfx(opt.correct === false ? "error" : "click");
     if (beat.choice.id === "d4" && optionId === "trap") {
-      log("system", "第四夜反制：伊莲娜可以摘下耳罩，代管者可以直接把她抱去安全房间；无知险情解除后它即可离开。未做机械防护的知情同伴仍会遭倒灌，且留下信任创伤。", ["elena", "demon"]);
-      E.notice("奇策被第七条拦截 · 信任创伤");
+      debug("beat", "第四夜反制：伊莲娜可摘耳罩，代管者可直接移离；无知险情解除后它即可离开，信任创伤留下。");
     }
     E.emit("choice");
   };
@@ -2931,12 +3328,14 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       }
       if (b.grant) E.grantKnowledge(b.grant, b.title);
       if (b.flag) s.flags[b.flag] = true;
+      if (b.deduction && !s.deductions[b.deduction]) E.openDeduction(b.deduction, null);
       if (b.openConflict && !s.conflicts[b.openConflict]) E.openConflict(b.openConflict);
       if (b.choice) { s.pendingChoice = { beatId: b.id, choice: b.choice }; s.waiting = true; }
       if (b.mustChoose && !s.conflicts["c_demon"] && !(s.conflictQueue || []).includes("c_demon")) {
         E.openConflict("c_demon");
       }
       fired++;
+      if (s.pendingChoice || s.pendingConflict || s.pendingDeduction) break; // 必须先处理眼前这一步
       if (fired > 12) break;
     }
     s.day = E.clock().day;
@@ -3012,7 +3411,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (s.ending) return;
     s.ending = E.computeEnding();
     s.playing = false;
-    log("system", `五日观察窗结束 · 结局：${D.ENDINGS[s.ending].title}`, []);
+    debug("ending", `结局 ${s.ending} · ${D.ENDINGS[s.ending].title}`);
     G.Audio.sfx("chime");
     E.emit("ending");
   };
@@ -3039,7 +3438,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       const st = JSON.parse(raw);
       E.state = Object.assign(newState(), st);
       E.state.conflictQueue = E.state.conflictQueue || (E.state.pendingConflict ? [E.state.pendingConflict] : []);
-      E.state.waiting = !!(E.state.pendingChoice || E.state.pendingConflict);
+      E.state.caseNotes = E.state.caseNotes || []; E.state.debugLog = E.state.debugLog || [];
+      E.state.deductions = E.state.deductions || {}; E.state.pendingDeduction = E.state.pendingDeduction || null;
+      E.state.waiting = !!(E.state.pendingChoice || E.state.pendingConflict || E.state.pendingDeduction);
       E.notice(`已读取槽位 ${slot || 1}`);
       E.emit("load");
       return true;
@@ -3049,15 +3450,17 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const keep = { music: E.state.music, musicVolume: E.state.musicVolume, authorView: E.state.authorView };
     E.state = Object.assign(newState(), keep);
     E.setDoorFlags();
-    log("system", "《安眠者有福 · 门的这一侧》—— 第一章，第一天清晨。你不知道源质是什么。", []);
+    log("system", "《安眠者有福 · 门的这一侧》—— 第一天清晨。四区刚刚醒来。", []);
+    debug("new", "新局：源质知识为空；第一章的错误动机由缺知识驱动。");
     E.emit("new");
   };
   E.setDoorFlags();
-  log("system", "《安眠者有福 · 门的这一侧》—— 第一章，第一天清晨。你不知道源质是什么。", []);
+  log("system", "《安眠者有福 · 门的这一侧》—— 第一天清晨。四区刚刚醒来。", []);
 })();
 
 /* ===== ui.js ===== */
-/* UI 层：主菜单 / 2D 场景图 / 3D 单房间实机 / 2D 可视化编辑器 / 案卷·认知·时间轴 / 角色画廊 */
+/* UI 层：普通游戏只有侦探视角；解释、作者检视、骨骼参数、设计校验全部收进调试台。
+   2D 完整场景图 / 3D 单房间实机 / 2D 蓝图编辑器沿用同一份房间设计数据。 */
 (function () {
   const G = (window.G = window.G || {});
   const D = G.DATA, GEOM = G.GEOM, R3D = G.R3D, AU = G.Audio, E = G.Engine;
@@ -3066,14 +3469,23 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const nameOf = (id) => id === "narrator" ? "旁白" : (D.ACTOR_BY_ID[id] ? D.ACTOR_BY_ID[id].name : id);
   const colorOf = (id) => id === "narrator" ? "#a8957b" : (D.ACTOR_BY_ID[id] ? D.ACTOR_BY_ID[id].color : "#c79bff");
-  let screen = "menu", mode = "2d", dirty = true, modalType = null, modalData = null;
+  const TAB_LIST = [["log", "现场"], ["evidence", "证物"], ["notes", "笔记"]];
+  const tabList = () => mode === "editor" ? TAB_LIST.concat([["editor", "编辑"]]) : TAB_LIST;
+  const DEBUG_TABS = [
+    ["state", "状态"], ["logic", "词义"], ["conflict", "争执"], ["deduce", "推演"],
+    ["evidence", "证物"], ["knowledge", "知识"], ["contract", "契约"], ["people", "人物"],
+    ["rig", "骨骼"], ["geom", "校验"], ["beats", "节拍"], ["log", "日志"], ["ops", "操作"], ["readme", "说明"],
+  ];
+  let screen = "menu", mode = "2d", dirty = true, debugDirty = true, modalType = null, modalData = null;
   let mapView = { scale: 6, ox: 20, oy: 20 }, bpView = { scale: 40, ox: 0, oy: 0 };
   let hoverRoom = null, lastRoomClick = { id: "", at: 0 }, designCache = {};
   let r3dReady = false, dragMap = null, dragProp = null, bpHover = null, editorTool = "select";
-  let lastTime = performance.now(), uiAcc = 0, musicAcc = 0, lastLogLen = -1, lastTab = "";
-  let gallery = null;
+  let lastTime = performance.now(), uiAcc = 0, musicAcc = 0, lastLogLen = -1;
+  let gallery = null, galleryPose = "stand", galleryInfo = true;
+  let debugOpen = false, debugTab = "state", dedPaused = false;
+  let dedHyp = null, dedEv = new Set();
 
-  // ───────────────────────── 设计数据 ─────────────────────────
+  // ───────────────────────── 房间设计 ─────────────────────────
   U.getDesign = function (roomId) {
     const s = E.state;
     if (s.designOverrides[roomId]) return s.designOverrides[roomId];
@@ -3086,13 +3498,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     E.state.designOverrides[roomId] = d;
     designCache[roomId] = d;
     if (mode === "3d" && E.state.room === roomId) sync3D();
-    dirty = true;
+    dirty = true; debugDirty = true;
   };
   U.resetDesign = function (roomId) {
     delete E.state.designOverrides[roomId];
     designCache[roomId] = GEOM.makeDesign(D.ROOM_BY_ID[roomId]);
     if (mode === "3d") sync3D();
-    dirty = true;
+    dirty = true; debugDirty = true;
   };
 
   // ───────────────────────── 屏幕 / 模式 ─────────────────────────
@@ -3101,7 +3513,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     ["menu", "game", "gallery"].forEach((k) => $(k).classList.toggle("hidden", k !== n));
     if (n === "gallery") initGallery();
     if (n === "game") setTimeout(() => resizeCanvases(), 0);
-    dirty = true;
+    dirty = true; debugDirty = true;
   }
   U.showScreen = showScreen;
   function setMode(m) {
@@ -3114,15 +3526,15 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     $("editorInfo").classList.toggle("hidden", m !== "editor");
     $("mapHint").classList.toggle("hidden", m !== "2d");
     if (m === "3d" || m === "editor3d") { init3D(); sync3D(); }
+    if (m === "editor") E.state.tab = "editor";
+    else if (E.state.tab === "editor") E.state.tab = "log";
     resizeCanvases();
     setTimeout(resizeCanvases, 40);
-    E.state.tab = m === "editor" ? "editor" : E.state.tab;
     dirty = true;
   }
   U.setMode = setMode;
   function init3D() {
     if (r3dReady) { R3D.resize(); return; }
-    // init 返回 false 只代表 WebGL 不可用（已自动切换 Canvas2D 后备），仍须继续喂数据
     R3D.init($("threeHost"), { onPick: on3DPick });
     r3dReady = true;
   }
@@ -3131,307 +3543,176 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const s = E.state, d = U.getDesign(s.room);
     R3D.setDesign(d, {
       hour: E.clock().hour, actors: E.actorsInRoom(s.room), evidence: s.evidence,
-      knowledgeCount: E.knowledgeCount(), authorView: s.authorView,
-      showSnow: s.showSnow, speaking: s.subtitleActor,
+      knowledgeCount: E.knowledgeCount(), authorView: s.authorView, showSnow: s.showSnow,
+      speaking: s.subtitleActor, pose: s.pose,
     });
     R3D.resize();
   }
   function on3DPick(hit) {
     const s = E.state;
     if (hit.type === "evidence") { E.inspectEvidence(hit.id); openModal("evidence", hit.id); AU.sfx("page"); }
-    else if (hit.type === "actor") { s.selectedActor = hit.id; s.tab = "cognition"; dirty = true; AU.sfx("click"); }
+    else if (hit.type === "actor") { s.selectedActor = hit.id; AU.sfx("click"); }
     else if (hit.type === "prop") {
       const d = U.getDesign(s.room), p = d.props.find((q) => q.id === hit.id);
-      if (p) E.notice(`${GEOM.PROP_LABELS[p.kind] || p.kind} · (${p.x.toFixed(2)}, ${p.z.toFixed(2)}) · ${p.yaw}°`);
+      if (p) E.notice(GEOM.PROP_LABELS[p.kind] || p.kind);
     }
     dirty = true;
   }
 
-  // ───────────────────────── 顶栏 ─────────────────────────
+  // ───────────────────────── 普通界面：顶栏 / 左栏 / 右栏 ─────────────────────────
   function topbarHTML() {
     const s = E.state, c = E.clock(), ph = E.phase();
-    const night = c.hour >= 19 || c.hour < 6;
     return `
-      <button class="btn" data-act="menu">← 主菜单</button>
-      <span class="title">安眠者有福</span>
-      <div class="clockbox"><span>${night ? "🌙" : c.hour >= 17.5 ? "🌆" : "☀️"}</span>
-        <span class="t" id="clockT">${c.text}</span><span class="d" id="clockD">第 ${c.day} 日</span></div>
-      <div class="phasebox"><b id="phaseT">${esc(ph.title)}</b><span id="phaseS">${esc(ph.sub)}</span></div>
-      <div class="seg">
-        <button class="btn ${mode === "2d" ? "on" : ""}" data-act="mode" data-v="2d">2D 场景图</button>
-        <button class="btn ${mode === "3d" ? "on" : ""}" data-act="mode" data-v="3d">3D 实机</button>
-        <button class="btn ${mode === "editor" ? "on" : ""}" data-act="mode" data-v="editor">场景编辑器</button>
-      </div>
-      <button class="btn ${s.playing && !s.waiting ? "" : "on"}" data-act="pause" ${s.waiting ? "disabled" : ""}>${s.waiting ? "⏸ 等待抉择" : s.playing ? "❚❚ 暂停" : "▶ 继续"}</button>
-      <div class="seg">${[6, 20, 60, 240].map((v) => `<button class="btn ${s.speed === v ? "on" : ""}" data-act="speed" data-v="${v}">×${v}</button>`).join("")}</div>
-      <button class="btn" data-act="next-beat" title="跳到下一节拍">⏭ 节拍</button>
-      <div class="seg">${[1, 2, 3, 4, 5].map((d) => `<button class="btn ${c.day === d ? "on" : ""}" data-act="day" data-v="${d}">D${d}</button>`).join("")}</div>
+      <button class="btn sm" data-act="menu">←</button>
+      <span class="title">门的这一侧</span>
+      <div class="clockbox"><span class="t" id="clockT">${c.text}</span><span class="d" id="clockD">第 ${c.day} 日</span></div>
+      <div class="phasebox"><b id="phaseT">${esc(ph.title)}</b></div>
       <div class="spacer"></div>
-      <button class="btn ${s.authorView ? "on" : ""}" data-act="author" title="作者视角：直接看客观事实，不改变人物认知">👁 作者视角</button>
-      <button class="btn ${s.music ? "on" : ""}" data-act="music">${s.music ? "♫ 音乐" : "♫ 静音"}</button>
-      ${c.day >= 5 ? '<button class="btn hot" data-act="force-end">结案</button>' : ""}
-      <button class="btn" data-act="save">💾</button><button class="btn" data-act="load">📂</button>
-      <button class="btn" data-act="help">？</button>`;
-  }
-  function tabHTML() {
-    const tabs = [["story", "剧情"], ["cognition", "认知"], ["dossier", "案卷"], ["timeline", "时间轴"], ["knowledge", "源质"], ["editor", "编辑器"], ["check", "校验"]];
-    return tabs.map(([k, l]) => `<button class="${E.state.tab === k ? "on" : ""}" data-act="tab" data-v="${k}">${l}</button>`).join("");
+      <div class="seg">
+        <button class="btn ${mode === "2d" ? "on" : ""}" data-act="mode" data-v="2d">场景</button>
+        <button class="btn ${mode === "3d" ? "on" : ""}" data-act="mode" data-v="3d">实机</button>
+        <button class="btn ${mode === "editor" ? "on" : ""}" data-act="mode" data-v="editor">编辑</button>
+      </div>
+      <button class="btn" data-act="pause">${s.waiting ? "· · ·" : s.playing ? "暂停" : "继续"}</button>
+      <button class="btn sm" data-act="speed" data-v="${s.speed === 6 ? 20 : s.speed === 20 ? 60 : s.speed === 60 ? 240 : 6}">${s.speed}×</button>
+      <button class="btn sm" data-act="music">${s.music ? "♪" : "♪̸"}</button>
+      <button class="btn" data-act="casebook">案卷</button>
+      <button class="btn sm dev-toggle" data-act="debug" title="调试台（~）">⌁</button>`;
   }
   function leftHTML() {
-    const s = E.state, occ = E.roomOccupants();
-    const floors = ["2F", "1F", "OUT", "B1", "B2", "4F"];
-    let rooms = `<div class="pane-head" style="margin:0 -8px 8px">场 景 · ${D.ROOMS.length} 间</div>`;
-    for (const f of floors) {
-      const rs = D.ROOMS.filter((r) => r.floor === f);
-      if (!rs.length) continue;
-      rooms += `<div class="tiny muted" style="margin:6px 0 2px;letter-spacing:.1em">${f}</div>`;
-      for (const r of rs) {
-        const evs = D.EVIDENCE_BY_ROOM[r.id] || [], found = evs.filter((e) => s.evidence[e.id]).length;
-        const unlocked = Object.values(s.doors || {}).some(Boolean);
-        rooms += `<div class="room-item ${s.room === r.id ? "cur" : ""}" data-act="room" data-id="${r.id}" title="${esc(r.note)}">
-          <span class="dot" style="background:${zoneColor(r.zone)}"></span><span>${esc(r.label.replace(/^.*?\s/, "").slice(0, 13))}</span>
-          <span class="ev">${(occ[r.id] || []).length ? "●" + (occ[r.id] || []).length + " " : ""}${evs.length ? found + "/" + evs.length : ""}</span></div>`;
-      }
-    }
-    let actors = `<div class="pane-head" style="margin:10px -8px 8px">十 七 人 · 点 选 查 认 知</div>`;
-    for (const a of D.ACTORS) {
-      actors += `<div class="actor-item ${s.selectedActor === a.id ? "sel" : ""}" data-act="actor" data-id="${a.id}">
-        <span class="avatar" style="background:${a.color}">${esc(a.name[0])}</span>
-        <span style="color:${a.color}">${esc(a.name)}</span><span class="muted tiny" style="margin-left:auto">${esc(a.role)}</span></div>`;
-    }
-    return rooms + actors;
+    const s = E.state, r = D.ROOM_BY_ID[s.room], occ = E.roomOccupants();
+    const here = (occ[s.room] || []).map((x) => `<span class="chip" style="color:${colorOf(x)}">${esc(nameOf(x))}</span>`).join(" ") || `<span class="muted small">无人</span>`;
+    const near = D.DOORS.filter((dr) => dr.a === s.room || dr.b === s.room)
+      .map((dr) => dr.a === s.room ? dr.b : dr.a).filter((v, i, a) => a.indexOf(v) === i).slice(0, 8)
+      .map((id) => `<button class="btn sm" data-act="travel" data-id="${id}">→ ${esc(D.ROOM_BY_ID[id].label.slice(0, 9))}</button>`).join(" ");
+    return `
+      <div class="card"><h4>${esc(r.label)}</h4>
+        <div class="small muted">${esc(r.floor)} · ${esc(r.w.toFixed(1))} × ${esc(r.d.toFixed(1))} m</div>
+        <div class="small" style="margin-top:6px">${here}</div></div>
+      <div class="card"><h4>就近</h4><div class="btn-row">${near || `<span class="muted small">没有相邻的门</span>`}</div></div>
+      <div class="card"><h4>案卷</h4>
+        <div class="row"><span>已记证物</span><b class="gold">${s.foundCount}/${D.EVIDENCE.length}</b></div>
+        <div class="row"><span>手记</span><b class="gold">${s.caseNotes.length}</b></div>
+        <button class="btn sm" style="margin-top:7px" data-act="casebook">翻开案卷</button></div>
+      ${s.pendingDeduction && dedPaused ? `<div class="card"><h4>摊开的案卷</h4><button class="btn hot sm" data-act="ded-resume">继续推演</button></div>` : ""}`;
   }
-  const zoneColor = (z) => ({ A: "#6f8fbf", B: "#c08f62", C: "#76b0a2", D: "#b681b1", M: "#a89a86", F: "#c4a46b", X: "#8fbf6f", U: "#8b95a3", S: "#9b7fc4" }[z] || "#888");
-
-  // ───────────────────────── 右侧面板 ─────────────────────────
+  function tabHTML() {
+    return tabList().map(([k, l]) => `<button class="${E.state.tab === k ? "on" : ""}" data-act="tab" data-v="${k}">${l}</button>`).join("");
+  }
   function panelHTML() {
-    const tab = E.state.tab;
-    if (tab === "story") return storyPanel();
-    if (tab === "cognition") return cognitionPanel();
-    if (tab === "dossier") return dossierPanel();
-    if (tab === "timeline") return timelinePanel();
-    if (tab === "knowledge") return knowledgePanel();
+    const tab = E.state.tab === "story" ? "log" : E.state.tab;
+    if (tab === "evidence") return evidencePanel();
+    if (tab === "notes") return notesPanel();
     if (tab === "editor") return editorPanel();
-    if (tab === "check") return checkPanel();
-    return "";
+    return logPanel();
   }
-  function storyPanel() {
-    const s = E.state, ph = E.phase();
-    const beat = D.BEATS.find((b) => b.id === s.currentBeat);
-    const lines = beat ? beat.lines.map(([who, text, kind]) =>
-      `<div class="logline say"><b style="color:${colorOf(who)}">${esc(nameOf(who))}</b>　${esc(text)}</div>`).join("") : "";
-    const logs = s.log.slice(-70).reverse().map((l) =>
-      `<div class="logline ${l.kind}">${l.kind === "say" ? "" : `<span class="tiny muted">${shortTime(l.t)}　</span>`}${esc(l.text)}</div>`).join("");
-    return `<div class="card"><h4>${esc(ph.title)}</h4><div class="small muted">${esc(ph.sub)}</div>
-      <div class="row" style="margin-top:6px"><span>证物 <b class="gold">${s.foundCount}/${D.EVIDENCE.length}</b></span>
-      <span>源质知识 <b class="gold">${E.knowledgeCount()}/${D.KNOWLEDGE.length}</b></span>
-      <span>冲突 <b class="gold">${Object.keys(s.conflicts).length}/${D.CONFLICTS.length}</b></span></div>
-      ${s.irreparable ? `<div style="margin-top:7px" class="tag red">★ 不可弥合：第一天已造成永久信任损伤</div>` : ""}</div>
-      ${beat ? `<div class="card"><h4>当前节拍 · ${esc(beat.title)}</h4><div class="tiny muted">${esc(D.ROOM_BY_ID[beat.room] ? D.ROOM_BY_ID[beat.room].label : "")} · ${shortTime(beat.at)}</div>${lines}</div>` : ""}
-      <div class="card"><h4>抉择记录</h4>${Object.keys(s.choices).length ? Object.entries(s.choices).map(([k, v]) => `<div class="row"><span>${esc(k)}</span><b class="gold">${esc(v)}</b></div>`).join("") : `<div class="small muted">尚无抉择。关键节拍会暂停时间等待选择。</div>`}</div>
-      <div class="card"><h4>剧情日志（最近 70 条）</h4>${logs}</div>`;
-  }
-  function cognitionPanel() {
-    const s = E.state, a = D.ACTOR_BY_ID[s.selectedActor] || D.ACTOR_BY_ID.detective;
-    let lex = "";
-    for (const [k, t] of Object.entries(D.TERMS)) {
-      lex += `<div class="lex-row"><span>「<b class="gold">${esc(t.word)}</b>」<div class="tiny muted">${esc(t.note)}</div></span>
-        <span style="text-align:right;color:#d1b3ef">${esc(D.senseLabel(a.id, k))}<div class="tiny muted">${esc((t.senses[D.senseOf(a.id, k)] || {}).desc || "")}</div></span></div>`;
-    }
-    const beliefs = Object.entries(s.beliefs[a.id] || {}).map(([eid, v]) => {
-      const e = D.EVIDENCE_BY_ID[eid];
-      return `<div class="logline ${v === "truth" ? "knowledge" : "confront"}">${esc(e ? e.label : eid)}：${v === "truth" ? "已按客观事实理解" : "按本人义项理解"}</div>`;
-    }).join("") || `<div class="small muted">尚未形成对证物的认知。</div>`;
-    const rels = Object.entries(s.relations).map(([k, r]) => {
-      const [x, y] = k.split("|");
-      return `<div class="rel-row"><span style="width:96px">${esc(nameOf(x))}↔${esc(nameOf(y))}</span>
-        <span class="bar"><i style="width:${r.trust}%"></i></span><span style="width:34px;text-align:right">${r.trust}</span>
-        ${r.permanent ? `<span class="tag red" title="事后查明真相也不会复原">不可弥合</span>` : ""}</div>`;
-    }).join("");
-    const grievances = Object.values(s.relations).flatMap((r) => r.grievances || []).slice(-8).reverse()
-      .map((g) => `<div class="logline confront"><b>${esc(nameOf(g.who))}</b> 单方面申诉：<span class="small">${esc(g.text)}</span>
-        <div class="tiny muted">${esc(nameOf(g.other))} 始终不知情 · ${shortTime(g.at)}</div></div>`).join("") || `<div class="small muted">尚无期待落空的申诉。</div>`;
-    const open = D.CONFLICTS.filter((c) => !s.conflicts[c.id]).map((c) =>
-      `<div class="row" style="margin:4px 0"><span>${esc(c.title)}</span><button class="btn sm" data-act="conflict" data-id="${c.id}">对质</button></div>`).join("");
-    const mis = s.misconceptions.slice(-8).reverse().map((m) => {
-      const e = D.EVIDENCE_BY_ID[m.eid];
-      return `<div class="logline confront">${esc(e ? e.label : m.eid)}：<span class="small">${esc(m.text)}</span>
-        <div class="tiny muted">缺：${(m.need || []).map((k) => D.KNOW_BY_ID[k] ? D.KNOW_BY_ID[k].title : k).join("、") || "—"}</div></div>`;
-    }).join("") || `<div class="small muted">暂无未拆解的误读。</div>`;
-    return `<div class="card"><h4 style="color:${a.color}">${esc(a.name)} <span class="small muted">· ${esc(a.role)}</span></h4>
-      <div class="small">${esc(a.purpose)}</div><div class="tiny muted" style="margin-top:4px">${esc(a.memory)}</div></div>
-      <div class="card"><h4>主观词义 · 同一词，不同事实</h4>${lex}</div>
-      <div class="card"><h4>本人认知中的证物</h4>${beliefs}</div>
-      <div class="card"><h4>冲突账本 · 关系与永久损伤</h4>${rels}</div>
-      <div class="card"><h4>期待落空（只有一方申诉）</h4>${grievances}</div>
-      <div class="card"><h4>待对质的义项分歧</h4>${open}</div>
-      <div class="card"><h4>第一章尚未拆解的误读</h4>${mis}</div>`;
-  }
-  function dossierPanel() {
+  function logPanel() {
     const s = E.state;
-    const inRoom = D.EVIDENCE.filter((e) => e.room === s.room);
-    const other = D.EVIDENCE.filter((e) => e.room !== s.room);
+    const lines = s.log.slice(-90).reverse().map((l) =>
+      `<div class="logline ${l.kind}">${l.kind === "say" ? "" : `<span class="tiny muted">${shortTime(l.t)}　</span>`}${esc(l.text)}</div>`).join("");
+    return `<div class="card"><h4>现场记录</h4><div class="small muted">只记此刻听见、看见与写下的话。</div></div>
+      <div class="card"><h4>最近</h4>${lines || `<div class="small muted">还没有记录。</div>`}</div>`;
+  }
+  function evidencePanel() {
+    const s = E.state;
     const card = (e) => {
       const found = !!s.evidence[e.id], r = E.readEvidence(e.id);
       return `<div class="ev-card ${found ? "found" : ""}" data-act="evidence" data-id="${e.id}">
-        <div class="ev-sketch">${GEOM.sketchSVG(e.sketch, 56)}</div>
-        <div style="min-width:0;flex:1"><div class="serif" style="color:#e9c98a">${esc(e.label)}</div>
-        <div class="tiny muted">${esc(D.ROOM_BY_ID[e.room] ? D.ROOM_BY_ID[e.room].label : e.room)} · ${found ? (r.correct ? "已按真相补记" : "按误读记录在册") : "未检视"}</div>
-        <div class="small" style="margin-top:3px">${found ? esc(r.text).slice(0, 46) + "…" : esc(e.naive).slice(0, 40) + "…"}</div></div></div>`;
+        <div class="ev-sketch">${GEOM.sketchSVG(e.sketch, 52)}</div>
+        <div style="min-width:0;flex:1"><div class="serif gold">${esc(e.label)}</div>
+        <div class="tiny muted">${esc(D.ROOM_BY_ID[e.room] ? D.ROOM_BY_ID[e.room].label : e.room)} · ${found ? "已入册" : "未检视"}</div>
+        <div class="small" style="margin-top:3px">${found ? esc(r.text).slice(0, 42) + "…" : "（尚未落笔）"}</div></div></div>`;
     };
-    return `<div class="card"><h4>《案卷册子》 · 手绘速写入册</h4>
-      <div class="small muted">检视证物时由程序化笔触直接画在纸页上；后续补齐源质知识，会在原速写旁以朱砂红墨补记，而不新建词条。</div>
-      <div class="row" style="margin-top:6px"><span>已入册 <b class="gold">${s.foundCount}</b> / ${D.EVIDENCE.length}</span>
-      <span>补记 <b class="gold">${Object.values(s.evidence).filter((x) => x.correct).length}</b></span></div></div>
-      <div class="pane-head" style="margin:6px -12px;padding-left:12px">当前房间 · ${esc(D.ROOM_BY_ID[s.room].label)}</div>
-      ${inRoom.length ? inRoom.map(card).join("") : `<div class="small muted">本房间没有证物标记。2D 场景图上带 ◉ 的房间有可检视物证。</div>`}
-      <div class="pane-head" style="margin:10px -12px;padding-left:12px">其他房间</div>${other.map(card).join("")}`;
-  }
-  function timelinePanel() {
-    const s = E.state, av = s.authorView;
-    const rows = D.TIMELINE.map((t) => {
-      const need = t.need.filter((k) => !s.knowledge[k]);
-      const canSee = av || need.length === 0;
-      return `<div class="tl-row"><div class="tl-time">${esc(t.t)}<div class="tiny muted">${esc(t.zone)}</div></div>
-        <div class="tl-fact">${canSee ? esc(t.fact) : `<span class="tl-locked">???　缺知识：${need.map((k) => esc(D.KNOW_BY_ID[k] ? D.KNOW_BY_ID[k].title : k)).join("、")}</span>`}
-        <div class="tl-naive">误读（第一章）：${esc(t.naive)}</div></div></div>`;
-    }).join("");
-    const contract = D.CONTRACT.map(([a, b]) => `<div class="logline"><b class="gold">${esc(a)}</b>　${esc(b)}</div>`).join("");
-    return `<div class="card"><h4>灾变前后时间轴 · 客观事实</h4>
-      <div class="small muted">下表不等于失忆人物开局已知的内容。人物不能开局直接知道泛音扭曲、幻火、残影、压差计反相、契约封存或恶魔清场；缺源质知识时，只能看到「误读」一行。</div>
-      <div style="margin-top:6px"><button class="btn sm ${av ? "on" : ""}" data-act="author">👁 ${av ? "关闭" : "开启"}作者视角（只改变显示，不改变认知）</button></div></div>
-      ${rows}
-      <div class="card" style="margin-top:12px"><h4>《十二条对赌契约》摘要</h4>${contract}</div>`;
-  }
-  function knowledgePanel() {
-    const s = E.state;
-    return `<div class="card"><h4>源质知识 · 第一章全员缺席的必需课</h4>
-      <div class="small muted">在白塔院、星仪院、铁工院、文契院与中央石柱补齐知识后，原证物的「误读」会在案卷里被朱砂补记覆盖。知识只改变你与后来听到的证言，不改变各人已经存好的主观认知。</div>
-      <div class="row" style="margin-top:6px"><span>已补齐 <b class="gold">${E.knowledgeCount()}</b> / ${D.KNOWLEDGE.length}</span>
-      <button class="btn sm" data-act="snow">${s.showSnow ? "关闭" : "显示"}源质黑雪</button></div></div>
-      <div class="k-grid">${D.KNOWLEDGE.map((k) => {
-        const got = !!s.knowledge[k.id];
-        return `<div class="k-card ${got ? "" : "locked"}"><div class="serif ${got ? "gold" : ""}">${got ? esc(k.title) : "???"}</div>
-        <div class="tiny muted" style="margin:4px 0">${got ? esc(k.text) : "线索：" + esc(k.unlock)}</div>
-        ${got ? `<div class="tag green">第 ${k.day} 日可及</div>` : `<div class="tag">待补</div>`}</div>`;
-      }).join("")}</div>`;
+    const here = D.EVIDENCE.filter((e) => e.room === s.room), other = D.EVIDENCE.filter((e) => e.room !== s.room);
+    return `<div class="card"><h4>此处的物证</h4>${here.map(card).join("") || `<div class="small muted">这间房没有要记的东西。</div>`}</div>
+      <div class="card"><h4>别处</h4>${other.map(card).join("")}</div>`;
   }
   function editorPanel() {
-    const s = E.state, d = U.getDesign(s.room), ed = s.editor;
+    const s = E.state, d = U.getDesign(s.room), ed = s.editor, v = GEOM.validate(d);
     const p = d.props.find((q) => q.id === ed.selected);
-    const val = GEOM.validate(d);
-    let props = "";
-    if (p) {
-      props = `<div class="card"><h4>${esc(GEOM.PROP_LABELS[p.kind] || p.kind)} · 选中</h4>
-        <div class="row"><label>X <input data-edit="x" type="number" step="0.05" value="${p.x}" style="width:70px"></label>
-        <label>Z <input data-edit="z" type="number" step="0.05" value="${p.z}" style="width:70px"></label></div>
-        <div class="row" style="margin-top:5px"><span>朝向 ${p.yaw}°</span><span>
-          <button class="btn sm" data-act="rot" data-v="-90">⟲</button><button class="btn sm" data-act="rot" data-v="90">⟳</button>
-          <button class="btn sm" data-act="dup">复制</button><button class="btn sm red" data-act="del">删除</button></span></div>
-        <div class="tiny muted" style="margin-top:5px">占地 ${GEOM.propDims(p).w.toFixed(2)} × ${GEOM.propDims(p).d.toFixed(2)} m · ${GEOM.propDims(p).mounted ? "挂墙" : GEOM.propDims(p).flat ? "平铺" : "落地"}</div></div>`;
-    }
     const pal = Object.keys(GEOM.PROP_LABELS).filter((k) => k !== "evidence_marker").map((k) =>
       `<button class="btn sm ${editorTool === "place:" + k ? "on" : ""}" data-act="pal" data-v="${k}">${esc(GEOM.PROP_LABELS[k])}</button>`).join(" ");
-    return `<div class="card"><h4>2D 场景编辑器 · ${esc(D.ROOM_BY_ID[s.room].label)}</h4>
-      <div class="small muted">墙体由中线闭环派生地板；门窗开洞不破坏闭环；家具按真实占地有向绘制，前沿加粗标朝向。所有摆放立即同步到 3D 单房间。</div>
-      <div class="row" style="margin-top:6px"><span>${d.w.toFixed(1)} × ${d.d.toFixed(1)} m · ${d.props.length} 件</span>
-      <button class="btn sm" data-act="preview3d">▶ 3D 预览</button></div></div>
-      ${props}
-      <div class="card"><h4>组件库（点击后在蓝图上放置）</h4><div style="display:flex;flex-wrap:wrap;gap:4px">${pal}</div></div>
-      <div class="card"><h4>结构校验 · ${val.ok ? '<span class="greentxt">通过</span>' : '<span class="redtxt">未通过</span>'}</h4>
-        ${val.issues.map((i) => `<div class="row"><span>${i.ok ? '<span class="greentxt">✓</span>' : '<span class="redtxt">!</span>'} ${esc(i.text)}</span></div>`).join("")}</div>
-      <div class="card"><h4>数据</h4><div style="display:flex;gap:5px;flex-wrap:wrap">
+    const sel = p ? `<div class="card"><h4>${esc(GEOM.PROP_LABELS[p.kind] || p.kind)} · 选中</h4>
+      <div class="row"><label>X <input data-edit="x" type="number" step="0.05" value="${p.x}" style="width:70px"></label>
+      <label>Z <input data-edit="z" type="number" step="0.05" value="${p.z}" style="width:70px"></label></div>
+      <div class="btn-row" style="margin-top:6px"><span class="tiny muted">朝向 ${p.yaw}°</span>
+        <button class="btn sm" data-act="rot" data-v="-90">⟲</button><button class="btn sm" data-act="rot" data-v="90">⟳</button>
+        <button class="btn sm" data-act="dup">复制</button><button class="btn sm red" data-act="del">删除</button></div></div>` : "";
+    return `<div class="card"><h4>${esc(D.ROOM_BY_ID[s.room].label)} · 蓝图</h4>
+      <div class="row"><span>${d.w.toFixed(1)} × ${d.d.toFixed(1)} m · ${d.props.length} 件</span>
+        <button class="btn sm" data-act="preview3d">▶ 3D 预览</button></div>
+      <div class="tiny muted" style="margin-top:5px">${v.ok ? "结构校验通过" : "存在摆放冲突"}</div></div>
+      ${sel}
+      <div class="card"><h4>组件库</h4><div class="btn-row">${pal}</div></div>
+      <div class="card"><h4>数据</h4><div class="btn-row">
         <button class="btn sm" data-act="undo">↶ 撤销</button><button class="btn sm" data-act="redo">↷ 重做</button>
         <button class="btn sm" data-act="export">导出 JSON</button><button class="btn sm" data-act="import">导入</button>
-        <button class="btn sm" data-act="reset-room">自动重布置</button></div>
-        <div class="tiny muted" style="margin-top:6px">快捷键：R 旋转 · Delete 删除 · Ctrl+D 复制 · Ctrl+Z/Y 撤销重做 · 拖动时按 Shift 吸附 0.25 m。</div></div>`;
+        <button class="btn sm" data-act="reset-room">自动重布置</button></div></div>`;
   }
-  function checkPanel() {
-    const s = E.state, k = E.knowledgeCount();
-    const items = [
-      ["第一章侦探不全知昨夜真相", !s.flags.night0_truth, "作者事实与主观认知保持分离"],
-      ["23:31 断路 ≠ 23:55 正压恢复", !!s.knowledge.k_pressure, "分时日志／四锚仪表"],
-      ["源质五类误判已补齐", ["k_density", "k_acoustic", "k_refraction", "k_gauge", "k_imprint"].every((x) => !!s.knowledge[x]), "白塔／星仪／铁工／文契四院"],
-      ["第八条只管字面，已在第一天识别", !!s.knowledge.k_contract && s.conflicts.c_demon === "resolved", "代管者的真话被拆成六个义项"],
-      ["未制造不可弥合矛盾", !s.irreparable, "沃德／雀儿、莫兰／赛尔玛、苏泠／侦探"],
-      ["黑板诗两条路线汇流", !!s.choices.poem, "提前阻拦或事后拆穿"],
-      ["阮清月三案为候选替代关系", !!s.choices.ruanCase, "打谱占用本人活动时间"],
-      ["第三日量词范围已核对", s.choices.d3 === "quantifier", "十四票 ≠ 全部在册学员"],
-      ["第四夜未依赖耳罩奇策", s.choices.d4 === "lock" || s.choices.d4 === "watch", "第七条只含知情与移离义务"],
-      ["苏泠深绑定与第十一条资格", !!s.knowledge.k_binding, "临床极值录／名录库"],
-      ["证物入册 ≥ 12 件", s.foundCount >= 12, `当前 ${s.foundCount}`],
-      ["第五日观察窗完整走完", !!s.ending, "结案页"],
-    ];
-    return `<div class="card"><h4>核心剧情校验 · ${items.filter((i) => i[1]).length}/${items.length}</h4>
-      <div class="small muted">参照精简剧情演出台的回归校验：区分「客观发生」「本人认知」与「作者视角」，不以全知掩码代替误解与信念强度。</div></div>
-      ${items.map(([label, ok, note]) => `<div class="row" style="padding:5px 0;border-bottom:1px solid rgba(184,151,88,.15)">
-        <span>${ok ? '<span class="greentxt">✓</span>' : '<span class="redtxt">✗</span>'} ${esc(label)}<div class="tiny muted">${esc(note)}</div></span></div>`).join("")}
-      <div class="card" style="margin-top:12px"><h4>房间几何 · 共面审计</h4>
-        <div class="small">${GEOM.validate(U.getDesign(s.room)).issues.map((i) => `<div>${i.ok ? "✓" : "!"} ${esc(i.text)}</div>`).join("")}</div></div>`;
-  }
-  function shortTime(t) {
-    const day = Math.floor(t / 1440) + 1, m = ((t % 1440) + 1440) % 1440;
-    return `D${day} ${String(Math.floor(m / 60)).padStart(2, "0")}:${String(Math.floor(m % 60)).padStart(2, "0")}`;
+  function notesPanel() {
+    const s = E.state;
+    const notes = s.caseNotes.slice().reverse().map((n) =>
+      `<div class="logline evidence"><span class="tiny muted">${shortTime(n.at)}　</span>${esc(n.text)}
+        ${n.did && s.deductions[n.did] === "wrong" ? `<button class="btn sm" style="margin-left:6px" data-act="ded-retry" data-id="${n.did}">重摊</button>` : ""}</div>`).join("");
+    const deds = D.DEDUCTIONS.map((d) => {
+      const st = s.deductions[d.id];
+      return `<div class="row" style="padding:4px 0;border-bottom:1px dashed rgba(184,151,88,.15)">
+        <span>${esc(d.title)}</span>
+        ${st === "wrong" ? `<button class="btn sm" data-act="ded-retry" data-id="${d.id}">重摊</button>` : `<span class="tiny muted">${st ? "已记" : "未及"}</span>`}
+      </div>`;
+    }).join("");
+    return `<div class="card"><h4>侦探手记</h4>${notes || `<div class="small muted">还没有落下笔。</div>`}</div>
+      <div class="card"><h4>摊过的案卷</h4>${deds}</div>`;
   }
 
-  // ───────────────────────── HUD / 工具条 ─────────────────────────
+  // ───────────────────────── HUD / 视口 ─────────────────────────
   function hudHTML() {
     const s = E.state, r = D.ROOM_BY_ID[s.room];
     if (mode === "editor") return "";
     const evs = D.EVIDENCE_BY_ROOM[s.room] || [];
     return `<div class="hud-card"><b>${esc(r.label)}</b>
-      <div class="sub">${esc(r.floor)} · ${esc(r.note || r.type)} · ${esc(r.w.toFixed(1))}×${esc(r.d.toFixed(1))} m</div>
-      <div class="sub">${mode === "2d" ? "完整场景图：虚线为路径，不要求 3D 空间成立" : "3D 实机：仅显示本房间剖面 · 拖拽旋转 / 滚轮缩放"}</div>
-      ${evs.length ? `<div class="sub">◉ 本房间证物 ${evs.filter((e) => s.evidence[e.id]).length}/${evs.length} ${mode === "3d" ? "· 点击发光标记检视" : ""}</div>` : ""}</div>`;
+      <div class="sub">${mode === "2d" ? "虚线为可行路径" : "仅本房间 · 拖拽旋转 / 滚轮缩放"}</div>
+      ${evs.length ? `<div class="sub">此处物证 ${evs.filter((e) => s.evidence[e.id]).length}/${evs.length}</div>` : ""}</div>`;
   }
   function viewToolsHTML() {
     const s = E.state;
     if (mode === "editor") return `<button class="btn sm" data-act="preview3d">▶ 3D 预览本房间</button>`;
     const evs = D.EVIDENCE_BY_ROOM[s.room] || [];
-    return `<div class="seg">${D.DOORS.filter((dr) => dr.a === s.room || dr.b === s.room).slice(0, 6).map((dr) => {
-      const nb = dr.a === s.room ? dr.b : dr.a;
-      const ok = E.unlocked(dr);
-      return `<button class="btn sm" data-act="travel" data-id="${nb}" title="${esc(dr.label || "路径")} ${ok ? "已开放" : "锁闭"}">${ok ? "→" : "🔒"} ${esc(D.ROOM_BY_ID[nb].label.slice(0, 9))}</button>`;
-    }).join("")}</div>
-    ${mode === "2d" && hoverRoom ? `<div class="seg"><button class="btn sm hot" data-act="enter-room" data-id="${hoverRoom}">进入 ${esc(D.ROOM_BY_ID[hoverRoom].label.slice(0, 10))}</button></div>` : ""}
-    ${mode === "3d" ? `<div class="seg">${evs.map((e) => `<button class="btn sm ${s.evidence[e.id] ? "on" : ""}" data-act="evidence" data-id="${e.id}">${esc(e.label.slice(0, 8))}</button>`).join("")}</div>` : ""}
-    ${hoverRoom && mode === "2d" ? `<div class="hud-card" style="pointer-events:none;max-width:260px"><b>${esc(D.ROOM_BY_ID[hoverRoom].label)}</b>
-      <div class="sub">${esc(D.ROOM_BY_ID[hoverRoom].note)}</div>
-      <div class="sub">证物 ${(D.EVIDENCE_BY_ROOM[hoverRoom] || []).length} 件 · ${(E.roomOccupants()[hoverRoom] || []).map((x) => esc(nameOf(x))).join("、") || "无人"}</div></div>` : ""}`;
+    return `${mode === "2d" && hoverRoom ? `<div class="seg"><button class="btn sm hot" data-act="enter-room" data-id="${hoverRoom}">进入 ${esc(D.ROOM_BY_ID[hoverRoom].label.slice(0, 10))}</button></div>` : ""}
+      ${mode === "3d" ? `<div class="seg">${evs.map((e) => `<button class="btn sm ${s.evidence[e.id] ? "on" : ""}" data-act="evidence" data-id="${e.id}">${esc(e.label.slice(0, 8))}</button>`).join("")}</div>` : ""}
+      ${s.pendingDeduction && dedPaused ? `<button class="btn hot sm" data-act="ded-resume">继续推演</button>` : ""}`;
   }
   function editorBarHTML() {
-    const tools = [["select", "选择/拖动 V"], ["wall", "墙体 W"], ["door", "门 D"], ["window", "窗 O"], ["erase", "删除 E"]];
+    const tools = [["select", "选择 V"], ["wall", "墙 W"], ["door", "门 D"], ["window", "窗 O"], ["erase", "删 E"]];
     return tools.map(([k, l]) => `<button class="btn sm ${editorTool === k ? "on" : ""}" data-act="tool" data-v="${k}">${l}</button>`).join("") +
       `<button class="btn sm" data-act="tool" data-v="undo">↶</button><button class="btn sm" data-act="tool" data-v="redo">↷</button>`;
   }
   function editorInfoHTML() {
-    const d = U.getDesign(E.state.room);
-    const v = GEOM.validate(d);
-    return `工具：<b class="gold">${esc(editorTool)}</b> · 网格 0.25 m · 家具 ${d.props.length} · 门窗 ${d.walls[0].openings.length}
-      · <span class="${v.ok ? "greentxt" : "redtxt"}">${v.ok ? "结构校验通过 / 0 组共面重叠" : "存在摆放冲突"}</span>`;
+    const d = U.getDesign(E.state.room), v = GEOM.validate(d);
+    return `工具 <b class="gold">${esc(editorTool)}</b> · 网格 0.25 m · 家具 ${d.props.length} · ${v.ok ? '<span class="greentxt">校验通过</span>' : '<span class="redtxt">摆放冲突</span>'}`;
   }
   function tickerHTML() {
     const s = E.state, last = s.log[s.log.length - 1];
-    return `<span class="tag">双本体</span><span class="flow" id="tickerFlow">${last ? esc(last.text) : ""}</span>
-      <span>证物 ${s.foundCount}/${D.EVIDENCE.length}</span><span>知识 ${E.knowledgeCount()}/${D.KNOWLEDGE.length}</span>
-      <span class="${s.irreparable ? "redtxt" : "greentxt"}">${s.irreparable ? "不可弥合 ✗" : "信任未破裂"}</span>`;
+    return `<span class="flow" id="tickerFlow">${last ? esc(last.text) : ""}</span><span class="muted tiny">点击房间 · 拖拽平移 · 滚轮缩放 · 空格暂停 · ~ 调试台</span>`;
   }
 
-  // ───────────────────────── 弹窗 ─────────────────────────
+  // ───────────────────────── 弹窗：推演 / 抉择 / 争执 / 案卷 ─────────────────────────
   function openModal(type, data) { modalType = type; modalData = data; dirty = true; }
   U.openModal = openModal;
   function closeModal() { modalType = null; modalData = null; dirty = true; }
   function modalHTML() {
     const s = E.state;
+    if (s.pendingDeduction && !dedPaused) return deductionModal(s.pendingDeduction.id);
     if (s.pendingChoice) return choiceModal(s.pendingChoice);
     if (s.pendingConflict) return conflictModal(s.pendingConflict);
     if (s.ending) return endingModal();
     if (!modalType) return "";
     const box = $("modalBox");
-    if (["help", "readme", "export", "import", "save", "load"].includes(modalType)) box.classList.add("wide");
+    if (["help", "readme", "export", "import", "save", "load", "casebook"].includes(modalType)) box.classList.add("wide");
     else box.classList.remove("wide");
     switch (modalType) {
       case "evidence": return evidenceModal(modalData);
+      case "casebook": return casebookModal();
       case "help": return helpModal();
       case "readme": return readmeModal();
       case "export": return exportModal();
@@ -3441,114 +3722,257 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       default: return "";
     }
   }
+  function deductionModal(did) {
+    const s = E.state, d = D.DEDUCTION_BY_ID[did];
+    const evs = d.evidence.map((eid) => {
+      const e = D.EVIDENCE_BY_ID[eid], found = !!s.evidence[eid], r = E.readEvidence(eid);
+      return `<label class="ded-ev ${found ? "" : "locked"}">
+        <input type="checkbox" data-act="ded-ev" data-id="${eid}" ${dedEv.has(eid) ? "checked" : ""} ${found ? "" : "disabled"}>
+        <span class="ev-sketch tiny-sketch">${GEOM.sketchSVG(e.sketch, 34)}</span>
+        <span style="flex:1"><b>${esc(e.label)}</b>
+          <span class="tiny muted" style="display:block">${found ? esc(r.text).slice(0, 44) + "…" : "尚未入册"}</span></span>
+        ${found ? "" : `<button class="btn sm" data-act="ded-fetch" data-id="${eid}">去取来</button>`}
+      </label>`;
+    }).join("");
+    const hyps = d.hypotheses.map((h) =>
+      `<button class="opt ${dedHyp === h.id ? "selected" : ""}" data-act="ded-hyp" data-id="${h.id}"><b>${esc(h.label)}</b></button>`).join("");
+    return `<div class="meta">案卷推演 · ${shortTime(s.t)}</div><h2>${esc(d.title)}</h2>
+      <p class="small">${esc(d.prompt)}</p>
+      <div class="card"><h4>摊在桌上的东西</h4><div class="small muted">把要并在一起看的挑出来。</div>${evs}</div>
+      <div class="card"><h4>写下一句假设</h4>${hyps}</div>
+      <div class="modal-actions">
+        <button class="btn" data-act="ded-pause">先去看看别处</button>
+        <button class="btn hot" data-act="ded-submit">落笔</button></div>`;
+  }
   function choiceModal(pc) {
     const c = pc.choice;
-    return `<div class="meta">${shortTime(E.state.t)} · 抉择</div><h2>${esc(c.prompt)}</h2>
-      <div class="small muted">时间已暂停。两条正道路线会汇流；错误或取巧的路线会写进关系账本。</div>
-      ${c.options.map((o) => `<button class="opt ${o.id === c.auto ? "correct" : ""}" data-act="opt" data-bid="${pc.beatId}" data-oid="${o.id}">
-        <b>${esc(o.label)}${o.id === c.auto ? ' <span class="tag green">正式回归记录</span>' : ""}</b><span>${esc(o.note)}</span></button>`).join("")}`;
+    return `<div class="meta">${shortTime(E.state.t)} · 要做个决定</div><h2>${esc(c.prompt)}</h2>
+      ${c.options.map((o) => `<button class="opt" data-act="opt" data-bid="${pc.beatId}" data-oid="${o.id}"><b>${esc(o.label)}</b></button>`).join("")}`;
   }
   function conflictModal(cid) {
-    const c = D.CONFLICT_BY_ID[cid], senses = E.conflictSenses(cid);
-    return `<div class="meta">认知对质 · ${shortTime(E.state.t)} · 词「${esc(D.TERMS[c.word].word)}」</div>
-      <h2>${esc(c.title)}</h2>
-      <div class="small">${esc(c.wrong)}</div>
-      <div class="lexbox">${senses.map((x) => `<div><b style="color:${x.color}">${esc(x.name)}</b><div class="muted">把「${esc(D.TERMS[c.word].word)}」理解为：</div><span class="gold">${esc(x.sense)}</span></div>`).join("")}</div>
-      <div class="small muted">${esc(c.note)}</div><hr>
-      ${c.options.map((o) => `<button class="opt" data-act="resolve" data-cid="${cid}" data-oid="${o.id}"><b>${esc(o.label)}</b><span>${esc(o.note || "按此义项处理，期待落空只由一方申诉。")}</span></button>`).join("")}
-      ${c.permanent ? `<div class="tag red" style="margin-top:8px">★ 此题不可搁置：代管者第一天摆的一道，选错即永久损伤</div>` :
-        `<div class="modal-actions"><button class="btn" data-act="defer" data-cid="${cid}">暂不处理（义项分歧仍在）</button></div>`}`;
+    const c = D.CONFLICT_BY_ID[cid], opts = E.conflictOptions(cid);
+    const lines = c.lines.map(([who, text]) =>
+      `<p class="say-line"><b style="color:${colorOf(who)}">${esc(nameOf(who))}</b>　${esc(text)}</p>`).join("");
+    return `<div class="meta">现场 · ${shortTime(E.state.t)}</div><h2>${esc(c.title)}</h2>
+      <div class="card">${lines}</div><hr>
+      ${opts.map((o) => `<button class="opt" data-act="resolve" data-cid="${cid}" data-oid="${o.id}"><b>${esc(o.label)}</b></button>`).join("")}
+      ${c.permanent ? "" : `<div class="modal-actions"><button class="btn" data-act="defer" data-cid="${cid}">先搁下</button></div>`}`;
   }
   function endingModal() {
     const s = E.state, en = D.ENDINGS[s.ending];
-    const rel = Object.entries(s.relations).filter(([, r]) => r.permanent).length;
     return `<div class="meta">第五日 · 结案页</div><h2 style="color:${en.color}">${esc(en.title)}</h2>
-      <div class="paper-page" style="margin-top:10px"><h3>案卷结案页 · 侦探手记</h3><div class="rule"></div>
-      ${esc(en.text)}<div class="rule"></div>
-      源质知识 ${E.knowledgeCount()}/${D.KNOWLEDGE.length} · 证物入册 ${s.foundCount}/${D.EVIDENCE.length} ·
-      认知对质 ${Object.values(s.conflicts).filter((v) => v === "resolved").length}/${D.CONFLICTS.length} ·
-      永久损伤关系 ${rel} 组${s.irreparable ? "（不可弥合）" : ""}。<br>
-      最终判答：${esc(s.finalChoice === "lexeme" ? "同一词，不同事实；缺的是源质知识" : s.finalChoice || "未写入")}。
-      </div>
+      <div class="paper-page" style="margin-top:10px"><h3>侦探手记 · 结案</h3><div class="rule"></div>${esc(en.text)}</div>
       <div class="modal-actions"><button class="btn" data-act="close">回到案卷</button>
-      <button class="btn" data-act="gallery">角色画廊</button><button class="btn hot" data-act="new">重开新局</button></div>`;
+        <button class="btn" data-act="gallery">角色模型</button><button class="btn hot" data-act="new">重开新局</button></div>`;
   }
   function evidenceModal(eid) {
     const s = E.state, e = D.EVIDENCE_BY_ID[eid], r = E.readEvidence(eid), found = !!s.evidence[eid];
-    return `<div class="meta">证物 · ${esc(D.ROOM_BY_ID[e.room].label)} · ${shortTime(s.t)}</div><h2>${esc(e.label)}</h2>
+    return `<div class="meta">物证 · ${esc(D.ROOM_BY_ID[e.room].label)} · ${shortTime(s.t)}</div><h2>${esc(e.label)}</h2>
       <div style="display:flex;gap:14px;align-items:flex-start">
         <div class="ev-sketch" style="width:120px;height:120px;flex:0 0 120px">${GEOM.sketchSVG(e.sketch, 110)}</div>
-        <div style="flex:1"><div class="tag ${r.correct ? "green" : "red"}">${r.correct ? "按客观事实补记" : "第一章的误读"}</div>
-        <p class="small" style="line-height:1.8">${esc(r.text)}</p>
-        ${r.correct ? `<div class="small redtxt">朱砂补记：原速写「${esc(e.naive)}」已作废，但不新建词条。</div>` :
-          `<div class="small muted">尚缺：${r.need.map((k) => esc(D.KNOW_BY_ID[k].title)).join("、") || "—"}。补齐后在同一张速写旁补记。</div>`}
-        ${e.lex.length ? `<div class="tiny muted" style="margin-top:6px">涉及词义：${e.lex.map((k) => "「" + esc(D.TERMS[k].word) + "」").join(" ")}</div>` : ""}
-        </div></div>
+        <div style="flex:1"><p class="small" style="line-height:1.8">${esc(r.text)}</p>
+        ${found ? "" : `<div class="small muted">还没落笔。</div>`}</div></div>
       <div class="modal-actions"><button class="btn" data-act="close">合上册子</button>
-        ${e.room !== s.room && !s.authorView ? `<button class="btn" data-act="goto-evidence" data-id="${e.room}" data-eid="${eid}">前往房间并检视</button>` : ""}
-        ${e.room === s.room || s.authorView ? `<button class="btn hot" data-act="inspect" data-id="${eid}">${found ? "重新检视（补记）" : "检视并入册"}</button>` : ""}</div>`;
+        ${e.room !== s.room && !s.authorView ? `<button class="btn" data-act="goto-evidence" data-id="${e.room}" data-eid="${eid}">前往房间并记下</button>` : ""}
+        ${e.room === s.room || s.authorView ? `<button class="btn hot" data-act="inspect" data-id="${eid}">${found ? "再记一遍" : "检视并入册"}</button>` : ""}</div>`;
+  }
+  function casebookModal() {
+    const s = E.state;
+    const notes = s.caseNotes.slice(-14).reverse().map((n) => `<div class="logline evidence"><span class="tiny muted">${shortTime(n.at)}　</span>${esc(n.text)}</div>`).join("") || `<div class="small muted">还没有落下笔。</div>`;
+    return `<div class="meta">案卷册子</div><h2>侦探手记</h2>
+      <div class="paper-page"><h3>已记下的</h3><div class="rule"></div>${notes}</div>
+      <div class="modal-actions" style="margin-top:12px">
+        <button class="btn" data-act="save">存档</button><button class="btn" data-act="load">读档</button>
+        <button class="btn" data-act="help">操作</button><button class="btn" data-act="menu">主菜单</button>
+        <button class="btn" data-act="close">合上</button></div>`;
   }
   function helpModal() {
-    return `<div class="meta">操作说明</div><h2>怎么玩这一版</h2>
-      <div class="paper-page">
-      <h3>三种视图</h3><div class="rule"></div>
-      <b>2D 场景图</b>：显示全部 ${D.ROOMS.length} 间场景；房间之间的路径一律虚线，只表达可达关系，不要求在 3D 里空间成立。点击房间选中，再点「进入」；拖拽平移、滚轮缩放。人物圆点按当前节拍显示所在房间。<br>
-      <b>3D 实机</b>：一次只生成当前这一间，剖面视角（朝向相机的墙整段移除）。拖拽旋转、滚轮缩放；点击发光证物标记检视，点击人物查看其认知。低多边形模型与家具全部程序化生成。<br>
-      <b>场景编辑器</b>：2D 蓝图设计房间。墙体中线自动生成地板（逐边半墙厚内偏移）、门窗开洞；家具按真实占地有向矩形绘制，前沿加粗标朝向。拖动、R 旋转、Delete 删除、Ctrl+Z/Y 撤销；右侧组件库点击后在蓝图上放置；校验会检查越界、占地重叠与共面。改动立即同步到 3D 预览。<br>
-      <h3 style="margin-top:10px">双本体：词义与真相</h3><div class="rule"></div>
-      世界事实只有一份，每个人只保存自己听到、看到、推断到的那一份。同一个词（关门／求救／危险／同意／在场／清场／待会儿）在每人脑中对应不同义项；期待落空时只有一方得到申诉证据，另一方始终不知情。<br>
-      第一天的传声管问答里，代管者的每句话都「字面为真」，却被六个人听成六种事实。对质时必须拆开义项；选错或搁置会留下<b class="redtxt">不可弥合</b>的三组关系，事后查明真相也不会复原。<br>
-      第一章缺的是「源质」知识：泛音扭曲、折光幻火、残影拓印、压差计反相、比空气重的沉降。补齐知识后，案卷里原有速写会用朱砂补记，而不是新建词条。<br>
-      <h3 style="margin-top:10px">时间 / 光 / 音乐</h3><div class="rule"></div>
-      顶栏可暂停、调速、跳节拍、跳日；昼夜改变 3D 太阳角度、色温、灯光强度、雾与 2D 地图暗度。音乐由 Web Audio 实时合成；代管者显形时句末走阻碍终止 V→VI。按「作者视角」可以直接看客观时间轴，但不改变人物认知。
-      </div><div class="modal-actions"><button class="btn hot" data-act="close">明白</button></div>`;
+    return `<div class="meta">操作</div><h2>怎么走这一趟</h2>
+      <div class="paper-page"><h3>三种视图</h3><div class="rule"></div>
+      <b>场景</b>：完整地图；虚线是可行路径。点一下房间选中，再点一下进入；拖拽平移、滚轮缩放。<br>
+      <b>实机</b>：只看当前这一间，剖面视角。拖拽旋转、滚轮缩放，点发光标记记下物证。<br>
+      <b>编辑</b>：2D 蓝图改这一间的墙、门窗和家具；右侧组件库点一下，再到蓝图上放置。改动会同步到 3D。<br>
+      <h3 style="margin-top:10px">案卷</h3><div class="rule"></div>
+      争执之前先把物证摊开、写一句假设。时间会停在需要你落笔的地方。音乐由程序实时生成；昼夜会改变光。<br>
+      <span class="muted small">按 ~ 打开调试台，可检视作者设定、角色骨骼与结构校验。</span></div>
+      <div class="modal-actions"><button class="btn hot" data-act="close">明白</button></div>`;
   }
   function readmeModal() {
-    return `<div class="meta">设计说明 · 依据与调整</div><h2>《门的这一侧》设计取舍</h2>
-      <div class="paper-page">
-      <h3>依据</h3><div class="rule"></div>
-      docs/灾变前后时间轴（Gemini设定）.md（23:20—00:12 秒级事实、四区并行抢险、契约与清场、次晨现场）、第一至四天剧情与分支（Gemini设定）.md（第一章在第一天收束、黑板诗两条路径、包饺子、阮清月三案、第四夜反制）、世界卡与美术／音乐设计案（十二条契约、源质五类认知妨碍、案卷手绘、阻碍终止）、两个压缩包（Web 展示版的 UI／建筑结构生成器／程序化角色模型；Godot 简化版的五日剧情与 2D 舞台图）。<br>
-      <h3 style="margin-top:10px">对时间轴设定的调整</h3><div class="rule"></div>
-      ① 原文「丙区残影来自 30 秒前」与 23:34:00 入门、23:35:00 砸窗存在秒级出入：保留为「来源待核」，游戏内以残影拓印解释，不改写为一致的秒级事实。<br>
-      ② 第一章仍在第一天收束（下午黑板诗、傍晚包饺子），第二至四天归属第二章善后；第五天作为「自主观察日 + 结案页」，让第一章的动机误判在补齐源质知识后被一次性翻案。<br>
-      ③ 恶魔第一天的「摆了一道」按用户要求扩写为可玩核心：三句字面为真的答复 + 主观词义对照台。它不违反第八条，只让在场者各自取到不同义项，从而制造不可弥合的矛盾。<br>
-      ④ 第四夜「耳罩坐阀」按后续修订保留反制，不作为可靠通关方案。<br>
-      <h3 style="margin-top:10px">技术</h3><div class="rule"></div>
-      单文件 HTML，内联 Three.js（本地 vendored，无 CDN）；2D 用 Canvas，3D 用 WebGL（不可用时自动降级 Canvas2D 等距视图）。地板单面 + 墙体不生成底面／接缝端面 + Y 层 EPS + polygonOffset + 剖面移除前墙，杜绝共面闪烁。音乐、贴图、模型、证物速写全部程序化生成，零外部资源、零服务。
-      </div><div class="modal-actions"><button class="btn hot" data-act="close">返回</button></div>`;
+    return `<div class="meta">调试台 · 设计说明</div><h2>依据与调整</h2>
+      <div class="paper-page">${esc(DEBUG_README)}</div>
+      <div class="modal-actions"><button class="btn hot" data-act="close">返回</button></div>`;
   }
+  const DEBUG_README = `依据 docs/灾变前后时间轴（Gemini设定）.md、第一至四天剧情与分支（Gemini设定）.md、世界卡／美术／音乐设计案，以及两个参考压缩包（Web 展示版 UI、建筑结构生成器、程序化角色；Godot 版五日剧情与 2D 舞台图）。
+调整：① 丙区残影的秒级出入保留为「来源待核」，不改写秒级事实。② 第一章在第一天收束，第五日为自主观察与结案页。③ 第一天传声管的三句答复扩写为可玩核心：字面均真，听者各自取到不同事实。④ 第四夜耳罩奇策保留反制，不作为可靠方案。
+技术：单文件 HTML、内联本地 Three.js、无 CDN / 无服务；2D Canvas 全图，3D WebGL 单房间剖面，WebGL 不可用时 Canvas2D 等距后备；地板单面 + 墙体不生成底面与接缝端面 + Y 层 EPS + polygonOffset + 剖面移除前墙，避免共面闪烁；音乐、贴图、模型、速写全部程序化生成。`;
   function exportModal() {
-    return `<div class="meta">导出 · 当前房间的 2D 设计数据</div><h2>建筑数据 JSON / DV 片段</h2>
+    return `<div class="meta">导出 · 当前房间设计</div><h2>建筑数据 JSON</h2>
       <textarea id="exportText" readonly>${esc(JSON.stringify(U.getDesign(E.state.room), null, 2))}</textarea>
       <div class="modal-actions"><button class="btn" data-act="copy-export">复制</button><button class="btn hot" data-act="close">关闭</button></div>`;
   }
   function importModal() {
-    return `<div class="meta">导入 · 粘贴 JSON（walls / props）</div><h2>载入房间设计</h2>
+    return `<div class="meta">导入 · 粘贴 JSON</div><h2>载入房间设计</h2>
       <textarea id="importText" placeholder='{"w":5.4,"d":4.6,"walls":[...],"props":[...]}'></textarea>
       <div class="modal-actions"><button class="btn" data-act="close">取消</button><button class="btn hot" data-act="do-import">解析并载入</button></div>`;
   }
   function slotsModal(kind) {
     const rows = [1, 2, 3].map((n) => {
       let meta = "空";
-      try { const raw = (window.G.Engine.storeGet ? window.G.Engine.storeGet(`dowr2.save.${n}`) : localStorage.getItem(`dowr2.save.${n}`)); if (raw) { const j = JSON.parse(raw); meta = `D${Math.floor(j.t / 1440) + 1} ${String(Math.floor((j.t % 1440) / 60)).padStart(2, "0")}:00 · 证物 ${Object.keys(j.evidence || {}).length}`; } } catch (_) {}
+      try { const raw = E.storeGet(`dowr2.save.${n}`); if (raw) { const j = JSON.parse(raw); meta = `D${Math.floor(j.t / 1440) + 1} ${String(Math.floor((j.t % 1440) / 60)).padStart(2, "0")}:00`; } } catch (_) {}
       return `<button class="opt" data-act="${kind === "save" ? "do-save" : "do-load"}" data-v="${n}"><b>槽位 ${n}</b><span>${esc(meta)}</span></button>`;
     }).join("");
-    return `<div class="meta">${kind === "save" ? "存档" : "读档"}</div><h2>本地存档（localStorage）</h2>${rows}
+    return `<div class="meta">${kind === "save" ? "存档" : "读档"}</div><h2>本地存档</h2>${rows}
       <div class="modal-actions"><button class="btn" data-act="close">取消</button></div>`;
   }
   function roomModal(id) {
     const r = D.ROOM_BY_ID[id], evs = D.EVIDENCE_BY_ROOM[id] || [];
-    return `<div class="meta">2D 场景图 · ${esc(r.floor)} / ${esc(r.zone)}</div><h2>${esc(r.label)}</h2>
+    return `<div class="meta">场景 · ${esc(r.floor)} / ${esc(r.zone)}</div><h2>${esc(r.label)}</h2>
       <div class="small">${esc(r.note)}　${r.w.toFixed(1)} × ${r.d.toFixed(1)} m</div>
-      <div class="card" style="margin-top:10px"><h4>本房间证物 ${evs.length}</h4>${evs.map((e) => `<div class="row"><span>${esc(e.label)}</span><span class="tag">${E.state.evidence[e.id] ? "已入册" : "未检视"}</span></div>`).join("") || `<div class="small muted">无</div>`}</div>
+      <div class="card" style="margin-top:10px"><h4>此处物证</h4>${evs.map((e) => `<div class="row"><span>${esc(e.label)}</span><span class="tag">${E.state.evidence[e.id] ? "已入册" : "未检视"}</span></div>`).join("") || `<div class="small muted">无</div>`}</div>
       <div class="modal-actions"><button class="btn" data-act="close">取消</button>
-      <button class="btn" data-act="editor-room" data-id="${id}">在编辑器中打开</button>
-      <button class="btn hot" data-act="enter-room" data-id="${id}">进入房间</button></div>`;
+        <button class="btn" data-act="editor-room" data-id="${id}">在编辑器中打开</button>
+        <button class="btn hot" data-act="enter-room" data-id="${id}">进入房间</button></div>`;
+  }
+  function shortTime(t) {
+    const day = Math.floor(t / 1440) + 1, m = ((t % 1440) + 1440) % 1440;
+    return `D${day} ${String(Math.floor(m / 60)).padStart(2, "0")}:${String(Math.floor(m % 60)).padStart(2, "0")}`;
+  }
+
+  // ───────────────────────── 调试台（作者检视） ─────────────────────────
+  const dbgT = (head, rows) => `<table class="dbg-table"><thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const dbgPre = (o) => `<pre class="dbg-pre">${esc(typeof o === "string" ? o : JSON.stringify(o, null, 2))}</pre>`;
+  const dbgCard = (title, body) => `<div class="dbg-card"><h4>${esc(title)}</h4>${body}</div>`;
+  function debugBodyHTML() {
+    const s = E.state;
+    switch (debugTab) {
+      case "state": {
+        const rows = [
+          ["时间", `${E.clock().text} / 第 ${E.clock().day} 日 / t=${s.t}`],
+          ["所在", s.room], ["模式", mode], ["播放", `${s.playing} / ${s.speed}× / waiting=${s.waiting}`],
+          ["待处理", `choice=${s.pendingChoice ? s.pendingChoice.beatId : "—"} / conflict=${s.pendingConflict || "—"} / deduction=${s.pendingDeduction ? s.pendingDeduction.id : "—"}`],
+          ["证物", `${s.foundCount}/${D.EVIDENCE.length}`], ["知识", `${E.knowledgeCount()}/${D.KNOWLEDGE.length}`],
+          ["争执", `${Object.keys(s.conflicts).length}/${D.CONFLICTS.length}`], ["推演", `${Object.keys(s.deductions).length}/${D.DEDUCTIONS.length}`],
+          ["不可弥合", String(s.irreparable)], ["作者视角", String(s.authorView)], ["结局", s.ending || "—"],
+        ];
+        return dbgCard("运行摘要", dbgT(["字段", "值"], rows)) + dbgCard("完整 state", dbgPre(s));
+      }
+      case "logic": {
+        const rows = Object.entries(D.TERMS).map(([k, t]) => [
+          `<b>${esc(t.word)}</b><div class="muted tiny">${esc(k)}</div>`, esc(t.note),
+          Object.entries(t.senses).map(([id, x]) => `${esc(id)}：${esc(x.label)}`).join("<br>"),
+          D.ACTORS.map((a) => `${esc(a.name)}=${esc(D.senseLabel(a.id, k))}`).join(" · "),
+        ]);
+        return dbgCard("同一词的主观义项（作者表）", dbgT(["词", "注", "义项", "各人取值"], rows));
+      }
+      case "conflict": {
+        const rows = D.CONFLICTS.map((c) => [
+          esc(c.id), esc(c.title), `D${c.day}`, `「${esc(D.TERMS[c.word].word)}」`,
+          c.parties.map((p) => esc(nameOf(p))).join("／"),
+          c.lines.map(([w, t]) => `${esc(nameOf(w))}：${esc(t)}`).join("<br>"),
+          c.options.map((o) => `${esc(o.id)} ${esc(o.label)}`).join("<br>"),
+          `<b class="gold">${esc(c.correct)}</b>`, (c.need || []).join("、") || "—",
+          c.deduction || "—", esc(c.wrong), esc(c.note), String(c.permanent),
+          esc(s.conflicts[c.id] || "未处理"),
+        ]);
+        return dbgCard("争执节点（含判定与后果，仅调试台）", dbgT(["id", "题", "日", "词", "在场", "对白", "选项", "正解", "需知识", "前置推演", "误判说明", "作者注", "永久", "状态"], rows));
+      }
+      case "deduce": {
+        const rows = D.DEDUCTIONS.map((d) => [
+          esc(d.id), esc(d.title), shortTime(d.at), esc(d.room), esc(d.prompt),
+          d.evidence.join("<br>"), d.hypotheses.map((h) => `${esc(h.id)} ${esc(h.label)}`).join("<br>"),
+          `<b class="gold">${esc(d.correct)}</b>`, String(d.minEvidence || 2), esc(d.note), esc(d.debug),
+          esc(s.deductions[d.id] || "未做"), String((s.deductionScores || {})[d.id] || 0),
+        ]);
+        return dbgCard("争执前的推演（作者表）", dbgT(["id", "题", "时", "房", "提示", "证物", "假设", "正解", "最少证物", "结案句", "调试注", "状态", "选中数"], rows));
+      }
+      case "evidence": {
+        const rows = D.EVIDENCE.map((e) => [
+          esc(e.id), esc(e.room), esc(e.label), esc(e.naive), esc(e.truth),
+          (e.need || []).join("、") || "—", (e.grants || []).join("、") || "—", (e.lex || []).join("、") || "—",
+          (e.actors || []).join("、") || "—", e.conflict || "—", esc(e.note),
+          s.evidence[e.id] ? `<b class="greentxt">已入册 ${shortTime(s.evidence[e.id].at)}</b>` : "未检视",
+        ]);
+        return dbgCard("物证：误读 / 客观事实 / 知识门槛", dbgT(["id", "房", "名", "缺知识时", "客观", "需", "授予", "词义", "人物", "争执", "注", "状态"], rows));
+      }
+      case "knowledge": {
+        const rows = D.KNOWLEDGE.map((k) => [esc(k.id), esc(k.title), `D${k.day}`, esc(k.text), esc(k.unlock), (k.fixes || []).join("／"), s.knowledge[k.id] ? "✓" : "—"]);
+        return dbgCard("源质知识（第一章缺席的课）", dbgT(["id", "题", "日", "正文", "解锁", "修正", "已得"], rows));
+      }
+      case "contract": return dbgCard("《十二条对赌契约》摘要", dbgT(["条", "文"], D.CONTRACT.map(([a, b]) => [esc(a), esc(b)])));
+      case "people": {
+        const aRows = D.ACTORS.map((a) => [esc(a.id), esc(a.name), esc(a.role), esc(a.purpose), esc(a.memory), dbgPre(a.look), dbgPre(D.LEX_OVERRIDES[a.id] || {}), dbgPre(s.beliefs[a.id] || {})]);
+        const rRows = Object.entries(s.relations).map(([k, r]) => [esc(k), String(r.trust), String(r.damage), String(r.permanent), (r.grievances || []).map((g) => esc(g.text)).join("<br>") || "—"]);
+        return dbgCard("十七人（含缺省／覆盖义项与当前信念）", dbgT(["id", "名", "职", "目的", "记忆", "外观", "义项覆盖", "证物信念"], aRows)) +
+          dbgCard("关系账本", dbgT(["对", "信任", "损伤", "永久", "单方申诉"], rRows)) +
+          dbgCard("未拆解误读", dbgPre(s.misconceptions));
+      }
+      case "rig": {
+        const spec = D.RIG_SPEC;
+        const bones = spec.bones.map((b) => [esc(b.name), esc(b.parent || "—"), dbgPre(b.offset), String(b.length), String(b.radius), dbgPre(b.limit)]);
+        const poses = Object.entries(spec.poses).map(([k, p]) => [esc(k), dbgPre(p)]);
+        const actors = Object.entries(spec.actors).map(([id, a]) => [esc(id), esc(nameOf(id)), String(a.height), String(a.build), String(a.shoulder), String(a.hip), String(a.limb), esc(a.hairStyle), esc(a.hat), esc(a.model)]);
+        const live = Object.entries(R3D.allRigs()).map(([id, r]) => [esc(id), String(r.skeleton.bones.length), String(r.baseScale.toFixed(3)), esc(r.actorRig.model)]);
+        return dbgCard(`骨骼规格 ${esc(spec.schema)} · ${spec.bones.length} 根 Bone`, `<div class="small muted">${esc(spec.note)}</div>` + dbgT(["骨", "父", "偏移 [x,y,z]", "长", "半径", "限位 [x,y,z] 度"], bones)) +
+          dbgCard("姿态库（欧拉角，度）", dbgT(["姿态", "参数"], poses)) +
+          dbgCard("逐角色 rig 参数", dbgT(["id", "名", "身高", "体格", "肩", "髋", "肢长系数", "发式", "帽", "模型路径"], actors)) +
+          dbgCard("当前场景已实例化骨架", dbgT(["角色", "Bone 数", "缩放", "模型"], live)) +
+          `<button class="btn hot sm" data-act="gallery">打开角色画廊（可切姿态）</button>`;
+      }
+      case "geom": {
+        const rows = D.ROOMS.map((r) => { const v = GEOM.validate(U.getDesign(r.id)); return [esc(r.id), esc(r.label), v.ok ? '<b class="greentxt">通过</b>' : '<b class="redtxt">冲突</b>', String(v.issues.filter((i) => !i.ok).length)]; });
+        const cur = GEOM.validate(U.getDesign(s.room));
+        return dbgCard(`全部 ${D.ROOMS.length} 间结构校验`, dbgT(["id", "名", "结果", "问题数"], rows)) +
+          dbgCard("当前房间逐条", dbgT(["✓", "审计项"], cur.issues.map((i) => [i.ok ? "✓" : "!", esc(i.text)]))) +
+          dbgCard("防共面参数", dbgPre(GEOM.EPS)) +
+          dbgCard("设计数据", dbgPre(U.getDesign(s.room)));
+      }
+      case "beats": {
+        const rows = D.BEATS.map((b) => [esc(b.id), shortTime(b.at), esc(b.room), esc(b.title), String((b.lines || []).length), (b.present || []).join("、") || "—", b.deduction || "—", b.openConflict || "—", b.choice ? esc(b.choice.id) : "—", b.grant || "—", b.flag || "—", String(!!b.demon), String(!!b.mustChoose)]);
+        return dbgCard(`节拍 ${D.BEATS.length} 个`, dbgT(["id", "时", "房", "题", "台词", "在场", "推演", "争执", "抉择", "知识", "旗标", "显形", "必选"], rows)) + dbgCard("原始 BEATS", dbgPre(D.BEATS));
+      }
+      case "log": {
+        const drows = s.debugLog.slice().reverse().map((x) => [shortTime(x.t), esc(x.kind), esc(x.text)]);
+        const lrows = s.log.slice().reverse().map((x) => [shortTime(x.t), esc(x.kind), esc(x.text), (x.who || []).map((w) => esc(nameOf(w))).join("、")]);
+        return dbgCard("作者调试日志", dbgT(["时", "类", "内容"], drows) + `<button class="btn sm" data-act="dbg-clear-log">清空调试日志</button>`) +
+          dbgCard("游戏日志", dbgT(["时", "类", "文本", "人物"], lrows)) + dbgCard("手记", dbgPre(s.caseNotes)) + dbgCard("提示", dbgPre(s.notices));
+      }
+      case "ops": {
+        const conflicts = D.CONFLICTS.map((c) => `<button class="btn sm" data-act="dbg-open-conflict" data-id="${c.id}">${esc(c.title)}</button>`).join(" ");
+        const deds = D.DEDUCTIONS.map((d) => `<button class="btn sm" data-act="dbg-open-deduction" data-id="${d.id}">${esc(d.title)}</button> <button class="btn sm" data-act="dbg-solve-deduction" data-id="${d.id}">解</button>`).join(" ");
+        return dbgCard("作者操作", `
+          <div class="dbg-ops">
+            <button class="btn sm ${s.authorView ? "on" : ""}" data-act="dbg-author">作者视角 ${s.authorView ? "开" : "关"}</button>
+            ${[1, 2, 3, 4, 5].map((d) => `<button class="btn sm" data-act="dbg-day" data-v="${d}">跳 D${d}</button>`).join("")}
+            <button class="btn sm" data-act="dbg-next-beat">下一节拍</button>
+            <button class="btn sm" data-act="dbg-grant">补齐全部知识</button>
+            <button class="btn sm" data-act="dbg-reveal">记下全部物证</button>
+            <button class="btn sm" data-act="dbg-force-end">结案</button>
+            <button class="btn sm" data-act="dbg-snow">黑雪 ${s.showSnow ? "开" : "关"}</button>
+            <button class="btn sm" data-act="dbg-gallery">角色画廊</button>
+            <button class="btn sm" data-act="readme">设计说明</button>
+            <button class="btn sm" data-act="save">存档</button><button class="btn sm" data-act="load">读档</button>
+            <button class="btn sm" data-act="dbg-copy-state">复制 state</button>
+          </div>`) +
+          dbgCard("直接开争执", `<div class="dbg-ops">${conflicts}</div>`) +
+          dbgCard("直接开推演 / 强制解", `<div class="dbg-ops">${deds}</div>`) +
+          dbgCard("音乐", dbgPre({ mood: AU.getMood ? AU.getMood() : "—", music: s.music, volume: s.musicVolume }));
+      }
+      case "readme": return dbgCard("设计说明（作者检视）", `<div class="paper-page" style="white-space:pre-wrap">${esc(DEBUG_README)}</div>`);
+      default: return "";
+    }
+  }
+  function renderDebug() {
+    const root = $("debugRoot");
+    root.classList.toggle("show", debugOpen);
+    if (!debugOpen) return;
+    $("debugTabs").innerHTML = DEBUG_TABS.map(([k, l]) => `<button class="${debugTab === k ? "on" : ""}" data-act="debug-tab" data-v="${k}">${l}</button>`).join("");
+    $("debugBody").innerHTML = debugBodyHTML();
+    debugDirty = false;
   }
 
   // ───────────────────────── 渲染调度 ─────────────────────────
   function fullRender() {
-    if (screen !== "game") { $("modalRoot").classList.remove("show"); return; }
+    if (screen !== "game") { $("modalRoot").classList.remove("show"); renderDebug(); return; }
     $("topbar").innerHTML = topbarHTML();
     $("leftPane").innerHTML = leftHTML();
     $("tabs").innerHTML = tabHTML();
@@ -3562,6 +3986,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     $("modalRoot").classList.toggle("show", !!m);
     if (m) $("modalBox").innerHTML = m;
     renderToasts();
+    if (debugDirty || !debugOpen) renderDebug();
     dirty = false;
   }
   function renderToasts() {
@@ -3572,13 +3997,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   function liveUpdate() {
     if (screen !== "game") return;
     const s = E.state, c = E.clock(), ph = E.phase();
-    const ct = $("clockT"), cd = $("clockD"), pt = $("phaseT"), ps = $("phaseS");
+    const ct = $("clockT"), cd = $("clockD"), pt = $("phaseT");
     if (ct) ct.textContent = c.text; if (cd) cd.textContent = `第 ${c.day} 日`;
-    if (pt) pt.textContent = ph.title; if (ps) ps.textContent = ph.sub;
+    if (pt) pt.textContent = ph.title;
     const badge = $("lightBadge");
     if (badge) {
       const dark = GEOM.darkness(c.hour);
-      badge.textContent = `${dark < 0.05 ? "☀ 白昼" : dark < 0.4 ? "🌆 暮光" : "🌙 夜灯"} · ${c.text} · 光照随时刻变化`;
+      badge.textContent = `${dark < 0.05 ? "☀ 白昼" : dark < 0.4 ? "🌆 暮光" : "🌙 夜灯"} · ${c.text}`;
     }
     const flow = $("tickerFlow"); if (flow && s.log.length) flow.textContent = s.log[s.log.length - 1].text;
     const sub = $("subtitle");
@@ -3590,12 +4015,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
         sub.innerHTML = `<span class="who" style="color:${colorOf(s.subtitleActor)}">${esc(nameOf(s.subtitleActor))}</span>${esc(s.subtitle)}`;
       }
     }
-    if (s.log.length !== lastLogLen && s.tab === "story") { lastLogLen = s.log.length; dirty = true; }
+    if (s.log.length !== lastLogLen) { lastLogLen = s.log.length; dirty = true; debugDirty = true; }
   }
   function resizeCanvases() {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const vp = $("viewport");
-    // 隐藏图层 clientWidth 为 0：统一按视口尺寸设置，切换模式时画布不会塌成 2×2
     const w = Math.max(2, Math.floor((vp.clientWidth || 900) * dpr));
     const h = Math.max(2, Math.floor((vp.clientHeight || 620) * dpr));
     for (const id of ["mapCanvas", "blueprintCanvas"]) {
@@ -3618,6 +4042,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
   function drawView() {
     const s = E.state, c = E.clock();
+    E.setDoorFlags();
     const chk = $(mode === "editor" ? "blueprintCanvas" : "mapCanvas");
     if (chk.width < 60 || chk.height < 60) resizeCanvases();
     if (mode === "2d") {
@@ -3694,12 +4119,10 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       if (editorTool === "select") {
         const p = GEOM.hitProp(d, x, z);
         s.editor.selected = p ? p.id : null;
-        if (p) { s.editor.undo.push(JSON.parse(JSON.stringify(d))); dragProp = { id: p.id, dx: x - p.x, dz: z - p.z, before: JSON.parse(JSON.stringify(d)) }; }
+        if (p) { s.editor.undo.push(JSON.parse(JSON.stringify(d))); dragProp = { id: p.id, dx: x - p.x, dz: z - p.z }; }
         try { bp.setPointerCapture && bp.setPointerCapture(e.pointerId); } catch (_) {}
       } else if (editorTool.startsWith("place:")) {
-        commitEdit(d, (nd) => {
-          nd.props.push({ id: `ed_${Date.now().toString(36)}_${Math.floor(Math.random() * 999)}`, kind: editorTool.slice(6), x: +GEOM.snap(x, grid).toFixed(3), z: +GEOM.snap(z, grid).toFixed(3), yaw: 0, params: {} });
-        });
+        commitEdit(d, (nd) => { nd.props.push({ id: `ed_${Date.now().toString(36)}_${Math.floor(Math.random() * 999)}`, kind: editorTool.slice(6), x: +GEOM.snap(x, grid).toFixed(3), z: +GEOM.snap(z, grid).toFixed(3), yaw: 0, params: {} }); });
       } else if (editorTool === "door" || editorTool === "window" || editorTool === "wall") {
         const hit = GEOM.hitWall(d, x, z);
         if (hit) commitEdit(d, (nd) => {
@@ -3755,39 +4178,32 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const a = el.dataset.act, v = el.dataset.v, id = el.dataset.id, s = E.state;
     AU.ensure(); AU.sfx("click");
     switch (a) {
-      case "new": E.newGame(); closeModal(); showScreen("game"); setMode("2d"); AU.setEnabled(s.music); AU.start(); E.notice("第一章 · 第一天清晨：你不知道源质是什么"); break;
+      case "new": E.newGame(); closeModal(); dedPaused = false; dedHyp = null; dedEv = new Set(); showScreen("game"); setMode("2d"); AU.setEnabled(s.music); AU.start(); break;
       case "continue": if (E.load(1)) { closeModal(); showScreen("game"); setMode(E.state.mode || "2d"); AU.setEnabled(E.state.music); } break;
       case "menu": showScreen("menu"); break;
-      case "editor": showScreen("game"); s.tab = "editor"; setMode("editor"); AU.ensure(); AU.setEnabled(s.music); break;
-      case "gallery": showScreen("gallery"); break;
-      case "gallery-back": showScreen("menu"); break;
+      case "editor": showScreen("game"); setMode("editor"); AU.ensure(); AU.setEnabled(s.music); break;
+      case "gallery": case "dbg-gallery": showScreen("gallery"); break;
+      case "gallery-back": showScreen("game"); break;
       case "readme": openModal("readme"); break;
       case "help": openModal("help"); break;
+      case "casebook": openModal("casebook"); break;
       case "close": closeModal(); break;
       case "mode": setMode(v); break;
       case "pause": E.togglePlay(); break;
       case "speed": E.setSpeed(+v); break;
-      case "next-beat": E.nextBeat(); break;
-      case "day": E.jumpDay(+v); break;
-      case "author": s.authorView = !s.authorView; E.setDoorFlags(); E.notice(s.authorView ? "作者视角：可看客观事实，不改变人物认知" : "回到失忆者视角"); break;
-      case "music": s.music = !s.music; AU.setEnabled(s.music); if (s.music) AU.start(); E.notice(s.music ? "程序化音乐已开启" : "已静音"); break;
-      case "snow": s.showSnow = !s.showSnow; break;
+      case "music": s.music = !s.music; AU.setEnabled(s.music); if (s.music) AU.start(); break;
       case "save": openModal("save"); break;
       case "load": openModal("load"); break;
       case "do-save": E.save(+v); closeModal(); break;
-      case "do-load": if (E.load(+v)) { closeModal(); sync3D(); } break;
+      case "do-load": if (E.load(+v)) { closeModal(); dedPaused = false; dedHyp = null; dedEv = new Set(); sync3D(); } break;
       case "tab": s.tab = v; break;
       case "room": hoverRoom = id; openModal("room", id); break;
       case "enter-room": E.enterRoom(id); closeModal(); if (mode === "3d") sync3D(); break;
       case "travel": E.enterRoom(id); if (mode === "3d") sync3D(); break;
-      case "goto": E.enterRoom(id); closeModal(); break;
       case "editor-room": E.state.room = id; closeModal(); setMode("editor"); break;
-      case "actor": s.selectedActor = id; s.tab = "cognition"; break;
       case "evidence": openModal("evidence", id); break;
       case "inspect": if (E.inspectEvidence(id)) closeModal(); break;
       case "goto-evidence": if (E.enterRoom(id)) { closeModal(); openModal("evidence", el.dataset.eid); if (mode === "3d") sync3D(); } break;
-      case "force-end": E.forceEnding(); break;
-      case "conflict": E.openConflict(id); break;
       case "resolve": E.resolveConflict(el.dataset.cid, el.dataset.oid, false); closeModal(); break;
       case "defer": E.resolveConflict(el.dataset.cid, null, true); closeModal(); break;
       case "opt": E.choose(el.dataset.bid, el.dataset.oid); closeModal(); break;
@@ -3806,39 +4222,63 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
         } catch (err) { E.notice("解析失败：" + err.message); }
         break;
       }
-      case "undo": {
-        const u = s.editor.undo.pop(); if (u) { s.editor.redo.push(JSON.parse(JSON.stringify(U.getDesign(s.room)))); U.setDesign(s.room, u); }
-        break;
-      }
-      case "redo": {
-        const r = s.editor.redo.pop(); if (r) { s.editor.undo.push(JSON.parse(JSON.stringify(U.getDesign(s.room)))); U.setDesign(s.room, r); }
-        break;
-      }
-      case "reset-room": U.resetDesign(s.room); E.notice("已按房间模板自动重布置"); break;
+      case "undo": { const u = s.editor.undo.pop(); if (u) { s.editor.redo.push(JSON.parse(JSON.stringify(U.getDesign(s.room)))); U.setDesign(s.room, u); } break; }
+      case "redo": { const r = s.editor.redo.pop(); if (r) { s.editor.undo.push(JSON.parse(JSON.stringify(U.getDesign(s.room)))); U.setDesign(s.room, r); } break; }
+      case "reset-room": U.resetDesign(s.room); break;
       case "pal": editorTool = "place:" + v; break;
-      case "tool": if (v === "undo" || v === "redo") { act({ dataset: { act: v } }); } else editorTool = v; break;
-      case "rot": {
-        const d = U.getDesign(s.room), p = d.props.find((q) => q.id === s.editor.selected);
-        if (p) commitEdit(d, (nd) => { nd.props.find((q) => q.id === p.id).yaw += +v; });
-        break;
-      }
-      case "del": {
-        const d = U.getDesign(s.room);
-        if (s.editor.selected) commitEdit(d, (nd) => { nd.props = nd.props.filter((q) => q.id !== s.editor.selected); s.editor.selected = null; });
-        break;
-      }
-      case "dup": {
-        const d = U.getDesign(s.room), p = d.props.find((q) => q.id === s.editor.selected);
-        if (p) commitEdit(d, (nd) => { const q = JSON.parse(JSON.stringify(p)); q.id = `ed_${Date.now().toString(36)}`; q.x += 0.5; q.z += 0.5; nd.props.push(q); s.editor.selected = q.id; });
-        break;
-      }
+      case "tool": if (v === "undo" || v === "redo") act({ dataset: { act: v } }); else editorTool = v; break;
+      case "rot": { const d = U.getDesign(s.room), p = d.props.find((q) => q.id === s.editor.selected); if (p) commitEdit(d, (nd) => { nd.props.find((q) => q.id === p.id).yaw += +v; }); break; }
+      case "del": { const d = U.getDesign(s.room); if (s.editor.selected) commitEdit(d, (nd) => { nd.props = nd.props.filter((q) => q.id !== s.editor.selected); s.editor.selected = null; }); break; }
+      case "dup": { const d = U.getDesign(s.room), p = d.props.find((q) => q.id === s.editor.selected); if (p) commitEdit(d, (nd) => { const q = JSON.parse(JSON.stringify(p)); q.id = `ed_${Date.now().toString(36)}`; q.x += 0.5; q.z += 0.5; nd.props.push(q); s.editor.selected = q.id; }); break; }
       case "gallery-prev": galleryIndex(-1); break;
       case "gallery-next": galleryIndex(1); break;
-      case "gallery-auto": if (gallery) { gallery.auto = !gallery.auto; E.notice(gallery.auto ? "自动旋转已开启" : "自动旋转已关闭"); } break;
+      case "gallery-auto": if (gallery) gallery.auto = !gallery.auto; break;
       case "gallery-select": gallerySelect(+v); break;
+      case "gallery-pose": galleryPose = v; renderGalleryInfo(); break;
+      case "gallery-rig": galleryInfo = !galleryInfo; renderGalleryInfo(); break;
+      // 推演
+      case "ded-hyp": dedHyp = id; break;
+      case "ded-fetch": {
+        const e = D.EVIDENCE_BY_ID[id];
+        if (e && E.enterRoom(e.room, true)) { E.inspectEvidence(id); dedEv.add(id); }
+        else E.notice("现在过不去。");
+        break;
+      }
+      case "ded-pause": dedPaused = true; closeModal(); break;
+      case "ded-resume": dedPaused = false; break;
+      case "ded-submit": {
+        if (!s.pendingDeduction) break;
+        if (!dedHyp) { E.notice("先写下一句假设。"); break; }
+        if (!dedEv.size) { E.notice("还没把东西摆上来。"); break; }
+        E.solveDeduction(s.pendingDeduction.id, dedHyp, [...dedEv]);
+        dedHyp = null; dedEv = new Set(); dedPaused = false; closeModal();
+        break;
+      }
+      case "ded-retry": if (E.retryDeduction(id)) { dedPaused = false; dedHyp = null; dedEv = new Set(); } break;
+      // 调试台
+      case "debug": debugOpen = !debugOpen; debugDirty = true; break;
+      case "debug-close": debugOpen = false; break;
+      case "debug-tab": debugTab = v; debugDirty = true; break;
+      case "dbg-author": s.authorView = !s.authorView; E.setDoorFlags(); break;
+      case "dbg-day": E.jumpDay(+v); break;
+      case "dbg-next-beat": E.nextBeat(); break;
+      case "dbg-grant": D.KNOWLEDGE.forEach((k) => E.grantKnowledge(k.id, "调试台")); break;
+      case "dbg-reveal": { const av = s.authorView; s.authorView = true; D.EVIDENCE.forEach((e) => E.inspectEvidence(e.id)); s.authorView = av; break; }
+      case "dbg-force-end": E.forceEnding(); break;
+      case "dbg-snow": s.showSnow = !s.showSnow; break;
+      case "dbg-open-conflict": E.openConflict(id); break;
+      case "dbg-open-deduction": E.openDeduction(id, null); break;
+      case "dbg-solve-deduction": {
+        const d = D.DEDUCTION_BY_ID[id];
+        if (d) { delete s.deductions[id]; E.openDeduction(id, null); E.solveDeduction(id, d.correct, d.evidence); }
+        break;
+      }
+      case "dbg-clear-log": s.debugLog = []; break;
+      case "dbg-copy-state": { try { navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(s)); E.notice("state 已复制"); } catch (_) {} break; }
       default: break;
     }
-    dirty = true;
+    dirty = true; debugDirty = true;
+    if (a === "debug" || a === "debug-close" || a === "debug-tab") renderDebug();
   }
   function bindEvents() {
     document.addEventListener("click", (e) => {
@@ -3846,19 +4286,25 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       if (el) { e.preventDefault(); act(el); return; }
       if (e.target && e.target.id === "modalRoot") {
         const s = E.state;
-        if (!s.pendingChoice && !s.pendingConflict && !s.ending) closeModal();
+        if (!s.pendingChoice && !s.pendingConflict && !s.ending && (!s.pendingDeduction || dedPaused)) closeModal();
       }
     });
     document.addEventListener("change", (e) => {
       const el = e.target, s = E.state;
+      if (el.dataset && el.dataset.act === "ded-ev") {
+        if (el.checked) dedEv.add(el.dataset.id); else dedEv.delete(el.dataset.id);
+        dirty = true; return;
+      }
       if (el.dataset && el.dataset.edit) {
         const d = U.getDesign(s.room), p = d.props.find((q) => q.id === s.editor.selected);
         if (p) commitEdit(d, (nd) => { nd.props.find((q) => q.id === p.id)[el.dataset.edit] = +el.value; });
       }
     });
     document.addEventListener("keydown", (e) => {
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (["INPUT", "TEXTAREA"].includes(tag)) return;
+      if (e.key === "`" || e.key === "~" || e.code === "Backquote") { e.preventDefault(); debugOpen = !debugOpen; debugDirty = true; dirty = true; return; }
       if (screen !== "game") return;
-      if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
       const s = E.state;
       if (e.ctrlKey && e.key.toLowerCase() === "z") { e.preventDefault(); act({ dataset: { act: "undo" } }); return; }
       if (e.ctrlKey && e.key.toLowerCase() === "y") { e.preventDefault(); act({ dataset: { act: "redo" } }); return; }
@@ -3870,14 +4316,14 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       else if (e.key === "d") editorTool = "door";
       else if (e.key === "o") editorTool = "window";
       else if (e.key === "e") editorTool = "erase";
-      else if (e.key === "Tab") { e.preventDefault(); const tabs = ["story", "cognition", "dossier", "timeline", "knowledge", "editor", "check"]; s.tab = tabs[(tabs.indexOf(s.tab) + 1) % tabs.length]; }
+      else if (e.key === "Tab") { e.preventDefault(); const tabs = tabList().map((x) => x[0]); s.tab = tabs[(tabs.indexOf(s.tab) + 1) % tabs.length]; }
       else if (e.key === "1") setMode("2d");
       else if (e.key === "2") setMode("3d");
       else if (e.key === "3") setMode("editor");
       else if (e.key === " ") { e.preventDefault(); E.togglePlay(); }
       dirty = true;
     });
-    E.subscribe(() => { dirty = true; });
+    E.subscribe(() => { dirty = true; debugDirty = true; });
     window.addEventListener("resize", () => { resizeCanvases(); });
     if (window.ResizeObserver) {
       const ro = new ResizeObserver(() => resizeCanvases());
@@ -3885,15 +4331,17 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     }
   }
 
-  // ───────────────────────── 角色画廊 ─────────────────────────
+  // ───────────────────────── 角色画廊（调试台入口 / 骨骼姿态检视） ─────────────────────────
   function initGallery() {
-    if (gallery) { setTimeout(() => gallery.resize(), 30); return; }
+    if (gallery) { setTimeout(() => gallery.resize(), 30); renderGalleryInfo(); return; }
     const host = $("galleryHost");
     if (!window.THREE || !R3D.makeCharacter) {
-      host.innerHTML = `<div style="display:grid;place-items:center;height:100%;color:#a8957b">WebGL 不可用，角色画廊需要 Three.js。</div>`;
-      return;
+      host.innerHTML = `<div class="gallery-fallback">WebGL 不可用；骨骼参数仍可在调试台「骨骼」页检视。</div>`;
+      renderGalleryInfo(); return;
     }
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true }); }
+    catch (err) { host.innerHTML = `<div class="gallery-fallback">WebGL 初始化失败：${esc(err.message)}；骨骼参数见调试台。</div>`; renderGalleryInfo(); return; }
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     if ("outputColorSpace" in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
     host.appendChild(renderer.domElement);
@@ -3915,18 +4363,30 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     };
     let dragging = false, lx = 0;
-    renderer.domElement.addEventListener("pointerdown", (e) => { dragging = true; lx = e.clientX; });
+    renderer.domElement.addEventListener("pointerdown", (e) => { dragging = true; lx = e.clientX; try { renderer.domElement.setPointerCapture(e.pointerId); } catch (_) {} });
     window.addEventListener("pointermove", (e) => { if (dragging && gallery) { gallery.targetYaw += (e.clientX - lx) * 0.01; lx = e.clientX; } });
     window.addEventListener("pointerup", () => { dragging = false; });
     gallery.resize();
     if (window.ResizeObserver) new ResizeObserver(() => gallery.resize()).observe(host);
-    renderStrip();
+    renderStrip(); renderGalleryInfo();
   }
   function renderStrip() {
     $("galleryStrip").innerHTML = D.ACTORS.map((a, i) =>
-      `<button class="btn sm ${gallery && gallery.idx === i ? "on" : ""}" data-act="gallery-select" data-v="${i}" style="color:${a.color}">${esc(a.name)} <span class="muted tiny">${esc(a.role)}</span></button>`).join("");
+      `<button class="btn sm ${gallery && gallery.idx === i ? "on" : ""}" data-act="gallery-select" data-v="${i}" style="color:${a.color}">${esc(a.name)}</button>`).join("");
   }
-  function gallerySelect(i) { if (!gallery) return; gallery.idx = (i + D.ACTORS.length) % D.ACTORS.length; E.state.galleryIndex = gallery.idx; renderStrip(); dirty = true; }
+  function renderGalleryInfo() {
+    const box = $("galleryInfo"); if (!box) return;
+    const a = D.ACTORS[gallery ? gallery.idx : (E.state.galleryIndex || 0)], ar = D.RIG_SPEC.actors[a.id];
+    const poses = Object.keys(D.RIG_SPEC.poses).map((p) => `<button class="btn sm ${galleryPose === p ? "on" : ""}" data-act="gallery-pose" data-v="${p}">${p}</button>`).join(" ");
+    const bones = D.RIG_SPEC.bones.map((b) => `<div class="tiny"><b>${esc(b.name)}</b> ← ${esc(b.parent || "root")} · ${esc(JSON.stringify(b.offset))} · L${b.length} R${b.radius} · 限位 ${esc(JSON.stringify(b.limit))}</div>`).join("");
+    box.innerHTML = `<div class="gallery-info-head"><b class="serif gold">${esc(a.name)}</b> <span class="muted small">${esc(a.role)}</span>
+      <button class="btn sm" data-act="gallery-rig">${galleryInfo ? "收起骨骼" : "展开骨骼"}</button></div>
+      <div class="tiny muted">高 ${ar.height} m · 体格 ${ar.build} · 肩 ${ar.shoulder} · 髋 ${ar.hip} · 肢长系数 ${ar.limb} · ${esc(ar.hairStyle)} / ${esc(ar.hat)} · ${esc(ar.model)}</div>
+      <div class="tiny muted">骨架 ${D.RIG_SPEC.bones.length} 根 Bone · 姿态库 ${Object.keys(D.RIG_SPEC.poses).length} 组 · ${esc(D.RIG_SPEC.schema)}</div>
+      <div class="gallery-poses">${poses}</div>
+      ${galleryInfo ? `<div class="gallery-bones">${bones}</div>` : ""}`;
+  }
+  function gallerySelect(i) { if (!gallery) return; gallery.idx = (i + D.ACTORS.length) % D.ACTORS.length; E.state.galleryIndex = gallery.idx; renderStrip(); renderGalleryInfo(); }
   function galleryIndex(d) { gallerySelect((gallery ? gallery.idx : 0) + d); }
   function tickGallery(dt) {
     if (screen !== "gallery" || !gallery) return;
@@ -3935,7 +4395,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     gallery.yaw += (gallery.targetYaw - gallery.yaw) * 0.12;
     gallery.rigs.forEach((r, i) => {
       r.root.visible = i === gallery.idx;
-      if (i === gallery.idx) { r.root.rotation.y = gallery.yaw; R3D.animateCharacter(r, gallery.t, "stand"); }
+      if (i === gallery.idx) { r.root.rotation.y = gallery.yaw; R3D.animateCharacter(r, gallery.t, galleryPose); }
     });
     gallery.renderer.render(gallery.scene, gallery.camera);
   }
@@ -3956,7 +4416,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       if ((mode === "3d" || mode === "editor3d") && r3dReady) {
         R3D.update({ hour: E.clock().hour, actors: E.actorsInRoom(E.state.room), evidence: E.state.evidence,
           knowledgeCount: E.knowledgeCount(), authorView: E.state.authorView, showSnow: E.state.showSnow,
-          speaking: E.state.subtitleActor });
+          speaking: E.state.subtitleActor, pose: E.state.pose });
         R3D.tick(dt);
       }
       liveUpdate();
@@ -3969,6 +4429,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   U.init = function () {
     bindCanvas(); bindEvents();
     E.setDoorFlags();
+    E.state.tab = "log";
     showScreen("menu");
     resizeCanvases();
     requestAnimationFrame(loop);
@@ -3994,5 +4455,5 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
 })();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a596a6b37bd4c255',t:'MTc5NDQ5ODE5NA=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a596a6b37bd4c255',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

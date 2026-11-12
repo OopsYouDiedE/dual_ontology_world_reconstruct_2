@@ -26,6 +26,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 
 迁移、融合实施与验证边界见 [实施与验收](docs/33%20实施与验收.md)。
 
+剧情设定查阅：[灾变前后时间轴（Gemini 设定）](docs/灾变前后时间轴（Gemini设定）.md)，包含灾变前 23:20 至次日 00:12 的具体时刻与次晨现场。
+
 ## 五人生活新局
 
 运行 VSCode 任务 `run: five-person life (Godot)`，在主菜单选择“开始生活新局”。侦探、雀儿、卢西安、阮清月、沈鼐通过 Core 自主选择日常行动和互动，Godot 负责实际路径移动。左侧是作者检查器，可以查看本人目的、需要与有向关系，并提交 Core 当前允许的行动。顶部提供暂停、倍率、存读档、兼容内容重载和墙体显示。

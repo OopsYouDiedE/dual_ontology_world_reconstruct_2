@@ -11,6 +11,7 @@ const WebProps = preload("BuildingConstruction/Props/ArchitectProps.gd")
 const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
 const Furnish = preload("AutoFurnish.gd")
 const RoomLibrary = preload("res://scenes/components/world/RoomLibrary.gd")
+const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const STYLES = {"classical":"古典护墙板（踢脚＋腰线＋顶线）","dado":"半高木护墙","stone":"原石砌块墙","plain":"素面粉刷墙"}
 const OPENINGS = {"arched_window":"半圆拱窗","rectangular_window":"矩形多格窗","round_window":"圆形牛眼窗","double_door":"双开实木大门","closed_door":"单开平顶木门","arched_closed_door":"单开拱顶木门","portal_arch":"敞开式拱形门洞"}
 const FLOOR_STYLES = {"octagonal_tile":"八角拼花砖","parquet_wood":"胡桃木拼花","stone_slab":"原石大板","plain_grout":"素面灰石"}
@@ -25,6 +26,7 @@ var auto_y = true
 var blueprint: Control
 var candidates: Node3D
 var wireframe = false
+var auto_cutaway = true  # 剖面：自动隐藏朝相机的墙段，露出室内（3D 截图里墙挡住室内的问题）
 var hidden_parts: Dictionary = {}
 var visibility_window: Window
 var wire_mesh: MeshInstance3D
@@ -93,8 +95,13 @@ func _ready() -> void:
 	prop_presets = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_prop_presets.json"))
 	_make_ui()
 	refresh()
+	# 等布局真正完成再 fit：原先只等一帧，blueprint.size 还是 0/很小，
+	# reset_views 算出的 zoom/pan 把房间缩到左上角（实机截图：2D 房间只有一小块）。
+	await get_tree().process_frame
 	await get_tree().process_frame
 	reset_views()
+	if blueprint != null:
+		blueprint.resized.connect(_on_blueprint_resized)
 
 func button(parent: Node, text: String, callback: Callable, tip := "") -> Button:
 	var item = Button.new()
@@ -160,7 +167,11 @@ func page(tabs: TabContainer, title: String) -> VBoxContainer:
 
 func _make_ui() -> void:
 	var theme = Theme.new()
-	theme.default_font_size = 14
+	# 编辑器原先用 Godot 内置字体 14px：中文细、糊、按钮文字溢出。改用项目自带的 NotoSansSC 16px。
+	theme.default_font = SANS_FONT
+	theme.default_font_size = 16
+	theme.set_font_size("font_size", "Button", 15)
+	theme.set_font_size("font_size", "TabContainer", 15)
 	self.theme = theme
 	var root = VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -175,12 +186,24 @@ func _make_ui() -> void:
 	button(header,"撤销",func(): if state.undo(-1): refresh(),"Ctrl+Z")
 	button(header,"重做",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
 	header.add_child(VSeparator.new())
-	button(header,"导入 JSON／YAML",func(): open_file("import"),"载入 ArchBuilder 场景；数据缺字段时自动补全")
-	button(header,"保存 JSON",func(): open_file("json"))
-	button(header,"保存 YAML",func(): open_file("yaml"))
-	button(header,"导出 Godot",func(): open_file("scene"))
-	header.add_child(VSeparator.new())
-	button(header,"清空场景",clear_dialog,"可撤销")
+	# 文件操作收进菜单：顶栏只留常用按钮，避免 20 个按钮挤一行（实机截图问题）。
+	var file_menu = MenuButton.new()
+	file_menu.text = "文件 ▾"
+	file_menu.tooltip_text = "导入 / 保存 / 导出（JSON、YAML、Godot 场景）"
+	var fmp = file_menu.get_popup()
+	fmp.add_item("导入 JSON／YAML…", 0)
+	fmp.add_item("保存 JSON…", 1)
+	fmp.add_item("保存 YAML…", 2)
+	fmp.add_item("导出 Godot 场景…", 3)
+	fmp.add_separator()
+	fmp.add_item("清空场景（可撤销）", 4)
+	fmp.id_pressed.connect(func(id: int):
+		if id == 0: open_file("import")
+		elif id == 1: open_file("json")
+		elif id == 2: open_file("yaml")
+		elif id == 3: open_file("scene")
+		elif id == 4: clear_dialog())
+	header.add_child(file_menu)
 	button(header,"角色模型",func():
 		var gallery = preload("res://tools/characters/CharacterGallery.tscn").instantiate()
 		add_child(gallery))
@@ -211,11 +234,26 @@ func _make_ui() -> void:
 		tool_buttons[spec[0]] = tool_button
 	actions.add_child(VSeparator.new())
 	choice(actions,"吸附",{"0":"自由","0.1":"0.10m","0.2":"0.20m","0.5":"0.50m","1":"1m"},"0.2",func(v): state.grid_snap = float(v))
-	button(actions,"居中",reset_views)
-	button(actions,"线框",func(): wireframe = not wireframe; update_wireframe())
-	button(actions,"完成／闭合",func(): finish_path(tool!="railing"))
-	button(actions,"开放折线",func(): finish_path(false))
-	button(actions,"显示／隐藏",show_visibility)
+	button(actions,"居中 (F)",reset_views,"把当前建筑移到画面中央")
+	var view_menu = MenuButton.new()
+	view_menu.text = "视图 ▾"
+	view_menu.tooltip_text = "线框 / 完成闭合 / 开放折线 / 显示隐藏"
+	var vmp = view_menu.get_popup()
+	vmp.add_item("线框开关", 0)
+	vmp.add_item("完成／闭合当前折线", 1)
+	vmp.add_item("开放折线（保留开口）", 2)
+	vmp.add_item("显示／隐藏构件…", 3)
+	vmp.add_item("剖面：隐藏朝相机墙（开）", 4)
+	vmp.id_pressed.connect(func(id: int):
+		if id == 0: wireframe = not wireframe; update_wireframe()
+		elif id == 1: finish_path(tool!="railing")
+		elif id == 2: finish_path(false)
+		elif id == 3: show_visibility()
+		elif id == 4:
+			auto_cutaway = not auto_cutaway
+			vmp.set_item_text(4, "剖面：隐藏朝相机墙（%s）" % ("开" if auto_cutaway else "关"))
+			apply_visibility())
+	actions.add_child(view_menu)
 	cursor_label = label(actions,"")
 	cursor_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cursor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -251,13 +289,13 @@ func _make_ui() -> void:
 	env.background_color = Color("12151a")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("ffedd3")
-	env.ambient_light_energy = 0.7
+	env.ambient_light_energy = 0.55
 	environment.environment = env
 	world.add_child(environment)
 	var light = DirectionalLight3D.new()
 	light.rotation_degrees = Vector3(-50,-35,0)
 	light.light_color = Color("ffe5c5")
-	light.light_energy = 1.4
+	light.light_energy = 1.0
 	light.shadow_enabled = true
 	world.add_child(light)
 	camera = Camera3D.new()
@@ -279,18 +317,18 @@ func _make_ui() -> void:
 		state.data.activeLayerId = layer_select.get_item_metadata(index)
 		if auto_y: sync_wall("baseY",state.layer().y)
 		refresh_layers())
-	button(floors,"新增标高图层",func(): state.new_layer(); state.remember(); refresh_layers())
-	ui_fields.layer_y = number(floors,"图层标高 Y",0,func(v):
+	button(floors,"新增楼层",func(): state.new_layer(); state.remember(); refresh_layers())
+	ui_fields.layer_y = number(floors,"楼层高度 (m)",0,func(v):
 		state.layer().y = v
 		if auto_y: sync_wall("baseY",v)
 		commit())
 	ui_fields.floor_style = choice(floors,"地板铺装",FLOOR_STYLES,"octagonal_tile",func(v): state.layer().style = v; commit())
 	button(floors,"在 2D 放线绘制地板",func(): set_tool("floor"))
-	label(floors,"相近标高 ≤ 0.3m 自动裁剪重叠地板")
+	label(floors,"高度相差 ≤0.3m 的地板会自动合并，不会重叠")
 	var walls = page(tabs,"墙体")
 	check(walls,"自动跟随图层标高",true,func(v): auto_y = v; if v: sync_wall("baseY",state.layer().get("y",0)))
 	choice(walls,"立面风格",STYLES,"classical",func(v): wall_params.style = v)
-	for spec in [["height","墙高 (m)",0.1],["thickness","墙厚 (m)",0.02],["baseY","初始点位标高 Y",0.1]]:
+	for spec in [["height","墙高 (m)",0.1],["thickness","墙厚 (m)",0.02],["baseY","起始高度 (m)",0.1]]:
 		var key = spec[0]
 		ui_fields[key] = number(walls,spec[1],wall_params[key],func(v): sync_wall(key,v),spec[2])
 	label(walls,"墙两侧自动贴合房间；端点与交点共用节点")
@@ -414,7 +452,7 @@ func set_tool(value: String) -> void:
 	if tool=="wall" and auto_y: sync_wall("baseY",state.layer().get("y",0))
 	update_status()
 func update_status() -> void:
-	status.text = {"select":"左键选择／拖拽 · 双击节点或 E 编辑 · 双击线段插点 · Delete 删除 · Ctrl+Z 撤销", "wall":"绘墙：依次点击节点；点击起点或 Enter 闭合；开放折线按钮保留开口", "floor":"绘地板：依次点击顶点，点击起点或 Enter 完成", "opening":"安装门窗：点击已有墙段；选择模式下可沿墙拖动", "railing":"绘栏杆：依次点击节点，Enter 完成", "prop":"在 2D 点击放置当前组件"}.get(tool,tool)+"  |  节点："+str(drawing.size())
+	status.text = {"select":"选择：左键点选/拖拽 · 双击节点或按 E 编辑 · Delete 删除 · Ctrl+Z 撤销 · F 居中", "wall":"绘墙：依次点击节点；点击起点或 Enter 闭合；开放折线按钮保留开口", "floor":"绘地板：依次点击顶点，点击起点或 Enter 完成", "opening":"安装门窗：点击已有墙段；选择模式下可沿墙拖动", "railing":"绘栏杆：依次点击节点，Enter 完成", "prop":"在 2D 点击放置当前组件"}.get(tool,tool)+"  |  节点："+str(drawing.size())
 func finish_path(close: bool) -> void:
 	if drawing.size()<2: return
 	var active = state.layer()
@@ -604,7 +642,29 @@ func add_view_part(node: Node3D, category: String, item: Dictionary) -> void:
 	node.set_meta("view_id",str(item.id))
 	candidates.add_child(node)
 
+func _cutaway_hidden() -> Dictionary:
+	var out: Dictionary = {}
+	if not auto_cutaway or camera == null or candidates == null: return out
+	var cam_dir: Vector3 = camera.position - target
+	cam_dir.y = 0.0
+	if cam_dir.length() < 0.01: return out
+	cam_dir = cam_dir.normalized()
+	for node in candidates.get_children():
+		if str(node.get_meta("view_category", "")) != "walls": continue
+		var wall: Dictionary = node.get_meta("wall_path", {})
+		var pts: Array = wall.get("points", [])
+		var wid := str(node.get_meta("view_id", ""))
+		for i in range(pts.size() - 1):
+			var mid := Vector3((float(pts[i][0]) + float(pts[i + 1][0])) * 0.5, 0.0, (float(pts[i][2]) + float(pts[i + 1][2])) * 0.5)
+			var rel: Vector3 = mid - target
+			rel.y = 0.0
+			if rel.dot(cam_dir) > 0.4:
+				out[wid + "/Segment_" + str(i)] = true
+	return out
+
+
 func apply_visibility() -> void:
+	var cutaway := _cutaway_hidden()
 	for node in candidates.get_children():
 		var category = str(node.get_meta("view_category",""))
 		var id = str(node.get_meta("view_id",""))
@@ -614,7 +674,7 @@ func apply_visibility() -> void:
 		var count = wall.points.size()-1
 		for child in node.get_children():
 			if str(child.name).begins_with("Segment_"):
-				child.visible = not hidden_parts.has(id+"/"+str(child.name))
+				child.visible = not hidden_parts.has(id+"/"+str(child.name)) and not cutaway.has(id+"/"+str(child.name))
 			elif child.has_meta("wall_joint"):
 				var joint = int(child.get_meta("wall_joint"))
 				var before = (joint-1+count)%count
@@ -715,7 +775,7 @@ func refresh_outline() -> void:
 			outline.set_item_metadata(outline.item_count-1,{"kind":spec[1],spec[2]:i})
 			if spec[0]=="walls":
 				for oi in range(item.openings.size()):
-					outline.add_item("  └ 门窗 · "+item.openings[oi].type)
+					outline.add_item("  └ 门窗 · "+str(OPENINGS.get(item.openings[oi].type, item.openings[oi].type)))
 					outline.set_item_metadata(outline.item_count-1,{"kind":"opening","wallIndex":i,"opIndex":oi})
 func refresh_furnish_rooms() -> void:
 	if furnish_room==null: return
@@ -902,6 +962,11 @@ func clear_dialog() -> void:
 		dialog.queue_free())
 	dialog.canceled.connect(func(): dialog.queue_free())
 	dialog.popup_centered()
+func _on_blueprint_resized() -> void:
+	if blueprint != null and blueprint.size.x > 200.0 and blueprint.size.y > 200.0:
+		reset_views()
+
+
 func reset_views() -> void:
 	var min_x = INF
 	var max_x = -INF
@@ -937,6 +1002,7 @@ func reset_views() -> void:
 func _update_camera() -> void:
 	camera.position = target+Vector3(sin(orbit.x)*cos(orbit.y),sin(orbit.y),cos(orbit.x)*cos(orbit.y))*distance
 	camera.look_at(target)
+	if auto_cutaway and candidates != null: apply_visibility()
 func _camera_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if event.button_mask&MOUSE_BUTTON_MASK_RIGHT:

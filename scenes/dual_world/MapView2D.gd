@@ -5,6 +5,7 @@ extends Control
 
 const Geo := preload("res://scenes/dual_world/RoomGeometry.gd")
 const DayNight := preload("res://scenes/dual_world/DayNight.gd")
+const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 
 signal room_selected(room_id: String)
 signal room_activated(room_id: String)
@@ -44,6 +45,18 @@ func fit() -> void:
 	var span := maxp - minp
 	zoom = minf(size.x / span.x, size.y / span.y) * 0.96
 	pan = -minp * zoom + (size - span * zoom) * 0.5
+	queue_redraw()
+
+
+## 把指定房间移到画面中央（打开地图时自动定位到当前位置，不再让玩家在 45 间房里找自己）。
+func center_on(room_id: String) -> void:
+	if data == null or not data.room_by_id.has(room_id) or size.x < 10: return
+	var r: Dictionary = data.room_by_id[room_id]
+	var m: Dictionary = r.map
+	var c := Vector2(float(m.x) + float(m.w) * 0.5, float(m.y) + float(m.h) * 0.5)
+	zoom = clampf(maxf(zoom, 14.0), 2.0, 40.0)
+	pan = size * 0.5 - c * zoom
+	selected = room_id
 	queue_redraw()
 
 
@@ -105,7 +118,7 @@ func _notification(what: int) -> void:
 
 func _draw() -> void:
 	if data == null: return
-	var font := get_theme_default_font()
+	var font: Font = SANS_FONT
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#14110e"))
 	# 区域底色
 	for g in data.map_groups:
@@ -113,7 +126,7 @@ func _draw() -> void:
 		var col := Color(str(g.color))
 		draw_rect(rc, Color(col, 0.55))
 		draw_rect(rc, Color(BRASS, 0.18), false, 1.0)
-		draw_string(font, rc.position + Vector2(6, 14), str(g.label), HORIZONTAL_ALIGNMENT_LEFT, rc.size.x - 8, 11, Color("#c9b89a"))
+		draw_string(font, rc.position + Vector2(6, 16), str(g.label), HORIZONTAL_ALIGNMENT_LEFT, rc.size.x - 8, 13, Color("#e6d7b8"))
 	# 门之间的路径：一律虚线；上锁用暗红
 	for dr in data.doors:
 		var ra: Dictionary = data.room_by_id.get(dr.a, {})
@@ -130,16 +143,17 @@ func _draw() -> void:
 		draw_rect(rc2, Color(base, 0.96))
 		var is_here: bool = r.id == here
 		var border := Color("#e9c98a") if is_here else (Color("#4f9dde") if r.id == selected else Color(BRASS, 0.5))
-		draw_rect(rc2, border, false, 2.5 if (is_here or r.id == selected) else 1.0)
+		if is_here: draw_rect(rc2, Color("#e9c98a", 0.18))
+		draw_rect(rc2, border, false, 3.5 if is_here else (2.5 if r.id == selected else 1.0))
 		var label := str(r.label)
-		draw_string(font, rc2.position + Vector2(4, 13), label, HORIZONTAL_ALIGNMENT_LEFT, rc2.size.x - 6, 10, Color("#efe6d6"))
+		draw_string(font, rc2.position + Vector2(4, 15), label, HORIZONTAL_ALIGNMENT_LEFT, rc2.size.x - 6, 12, Color("#efe6d6"))
 		# 证物进度
 		var evs: Array = data.evidence_by_room.get(r.id, [])
 		if not evs.is_empty():
 			var got := 0
 			for e in evs:
 				if engine.s.evidence.has(e.id): got += 1
-			draw_string(font, rc2.position + Vector2(4, rc2.size.y - 5), "证 %d/%d" % [got, evs.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("#d9a13a") if got < evs.size() else Color("#a8c89a"))
+			draw_string(font, rc2.position + Vector2(4, rc2.size.y - 5), "证 %d/%d" % [got, evs.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#e9c98a") if got < evs.size() else Color("#a8c89a"))
 		# 人物小圆点
 		var list: Array = occ.get(r.id, [])
 		for i in list.size():
@@ -152,4 +166,4 @@ func _draw() -> void:
 	var dark := Geo.darkness(hour)
 	if dark > 0.0:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.04, 0.05, 0.12, dark * 0.85))
-	draw_string(font, Vector2(10, size.y - 10), "点击房间 · 双击进入 · 拖拽平移 · 滚轮缩放　%s" % DayNight.label(hour), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#a8957b"))
+	draw_string(font, Vector2(10, size.y - 10), "金框=当前位置 · 点击选中 · 双击进入 · 拖拽平移 · 滚轮缩放　%s" % DayNight.label(hour), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#d8c9a8"))

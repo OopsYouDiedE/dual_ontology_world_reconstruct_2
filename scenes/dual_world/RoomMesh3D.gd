@@ -225,7 +225,7 @@ func refresh_walls(cam_azimuth: float) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "WallShell"
 	mi.mesh = _mesh_from(arr)
-	var wm := _mat("#8c735b", 0.92)
+	var wm := _mat("#9a7f63", 0.9)
 	mi.material_override = wm
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	_walls_root.add_child(mi)
@@ -398,10 +398,19 @@ func _build_prop(p: Dictionary) -> Node3D:
 			var found_it: bool = found.has(str(p.get("eid", "")))
 			var color := Color("#7fbf6a") if found_it else Color("#d9a13a")
 			# 圆盘抬高 EPS.decal；光柱是独立的竖向几何，不贴任何已有表面
-			var disc := _cyl(0.17, 0.17, 0.012, color, Vector3(0, Geo.EPS.decal + 0.006, 0), 20, _glow_mat(color))
+			var disc := _cyl(0.28, 0.28, 0.016, color, Vector3(0, Geo.EPS.decal + 0.008, 0), 24, _glow_mat(color))
 			mk.add_child(disc)
-			var beam := _cyl(0.02, 0.02, 0.5, color, Vector3(0, 0.3, 0), 6, _glow_mat(color))
+			var beam := _cyl(0.035, 0.035, 0.9, color, Vector3(0, 0.5, 0), 8, _glow_mat(color))
 			mk.add_child(beam)
+			var orb := MeshInstance3D.new()
+			var osm := SphereMesh.new()
+			osm.radius = 0.09
+			osm.height = 0.18
+			orb.mesh = osm
+			orb.material_override = _glow_mat(color)
+			orb.position = Vector3(0, 1.02, 0)
+			orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mk.add_child(orb)
 			root.add_child(mk)
 			evidence_nodes[str(p.get("eid", ""))] = root
 		_:
@@ -425,7 +434,7 @@ func pick_marker(origin: Vector3, direction: Vector3) -> String:
 		var t := oc.dot(direction)
 		if t < 0.0: continue
 		var dist := (origin + direction * t).distance_to(c)
-		if dist < 0.42 and t < best_t:
+		if dist < 0.55 and t < best_t:
 			best_t = t
 			best = str(eid)
 	return best

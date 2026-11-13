@@ -17,6 +17,9 @@ const Editor2D := preload("res://scenes/dual_world/BlueprintEditor2D.gd")
 const RoomMesh := preload("res://scenes/dual_world/RoomMesh3D.gd")
 const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
 const Score := preload("res://scenes/dual_world/ProceduralScore.gd")
+const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
+const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
+const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
 
 const DESIGN_FILE := "user://dual_world/designs.json"
 const SAVE_FILE := "user://dual_world/save_%d.json"
@@ -187,6 +190,16 @@ func _style(bg: Color, border := LINE, radius := 4, margin := 0) -> StyleBoxFlat
 
 func _theme() -> Theme:
 	var t := Theme.new()
+	# 字体：正文用无衬线（NotoSansSC）保证小字可读，标题/弹窗用衬线与书法体呼应案卷气质。
+	# 原先未设 default_font，中文回退到 Godot 内置字体，细、糊、且在无中文字体系统上缺字。
+	t.default_font = SANS_FONT
+	t.default_font_size = 16
+	t.set_font("font", "Label", SANS_FONT)
+	t.set_font("font", "Button", SANS_FONT)
+	t.set_font("font", "RichTextLabel", SANS_FONT)
+	t.set_font_size("font_size", "Button", 15)
+	t.set_font_size("font_size", "Label", 15)
+	t.set_font_size("font_size", "RichTextLabel", 15)
 	t.set_color("font_color", "Label", TEXT)
 	t.set_color("font_color", "Button", TEXT)
 	t.set_color("font_hover_color", "Button", Color("#fff4dc"))
@@ -207,7 +220,7 @@ func _theme() -> Theme:
 	t.set_stylebox("hover", "PopupMenu", _style(Color("#3a2d22"), BRASS, 3, 4))
 	t.set_color("font_color", "PopupMenu", TEXT)
 	t.set_color("font_hover_color", "PopupMenu", Color("#fff4dc"))
-	t.set_font_size("font_size", "TabContainer", 13)
+	t.set_font_size("font_size", "TabContainer", 15)
 	t.set_color("font_selected_color", "TabContainer", Color("#e9c98a"))
 	t.set_color("font_unselected_color", "TabContainer", MUTED)
 	return t
@@ -387,8 +400,9 @@ func _build_ui() -> void:
 	# ── 底部：台词字幕 + 操作提示 ──
 	room_hint = Label.new()
 	room_hint.text = "点光柱 → 侦探走过去查看  ·  右键拖动旋转  ·  滚轮缩放"
-	room_hint.add_theme_font_size_override("font_size", 12)
-	room_hint.add_theme_color_override("font_color", Color(MUTED, 0.85))
+	room_hint.add_theme_font_size_override("font_size", 14)
+	room_hint.add_theme_color_override("font_color", Color("#d8c9a8", 0.95))
+	room_hint.text = "点金色光柱或左侧「本房证物」查看  ·  WASD/方向键走动  ·  右键拖动旋转  ·  滚轮缩放"
 	room_hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	room_hint.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	room_hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -400,7 +414,7 @@ func _build_ui() -> void:
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_font_size_override("font_size", 20)
 	subtitle.add_theme_stylebox_override("normal", _style(Color(0.06, 0.05, 0.04, 0.9), BRASS, 6, 10))
 	subtitle.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	subtitle.offset_left = 60
@@ -535,14 +549,25 @@ func _build_center() -> void:
 	editor = Editor2D.new()
 	editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	editor.custom_minimum_size = Vector2(300, 240)
-	_btn(bar, "添加家具", func(): editor.add_prop(str(kind_pick.get_item_metadata(kind_pick.selected))))
-	_btn(bar, "旋转 90°", func(): editor.rotate_selected(90.0))
-	_btn(bar, "删除", func(): editor.delete_selected())
-	_btn(bar, "撤销", func(): editor.undo())
-	_btn(bar, "重做", func(): editor.redo())
-	_btn(bar, "加窗", func(): editor.add_opening("rectangular_window"))
-	_btn(bar, "加拱门", func(): editor.add_opening("portal_arch"))
-	_btn(bar, "重新自动布置", func(): editor.reset_auto())
+	# 编辑器工具栏分组：常用操作在前，次要操作收进「更多」菜单，避免 11 个按钮挤一行。
+	_btn(bar, "添加家具", func(): editor.add_prop(str(kind_pick.get_item_metadata(kind_pick.selected))), "把所选家具放到房间中央（会找不重叠的落点）")
+	_btn(bar, "旋转 90° (R)", func(): editor.rotate_selected(90.0), "旋转选中家具；也可按 R")
+	_btn(bar, "删除 (Del)", func(): editor.delete_selected(), "删除选中家具/门窗；也可按 Delete")
+	_btn(bar, "撤销", func(): editor.undo(), "Ctrl+Z")
+	_btn(bar, "重做", func(): editor.redo(), "Ctrl+Y")
+	var more := MenuButton.new()
+	more.text = "更多 ▾"
+	more.focus_mode = Control.FOCUS_NONE
+	more.tooltip_text = "加窗 / 加拱门 / 重新自动布置"
+	var mp := more.get_popup()
+	mp.add_item("加窗", 0)
+	mp.add_item("加拱门", 1)
+	mp.add_item("重新自动布置（恢复默认家具）", 2)
+	mp.id_pressed.connect(func(id: int):
+		if id == 0: editor.add_opening("rectangular_window")
+		elif id == 1: editor.add_opening("portal_arch")
+		elif id == 2: editor.reset_auto())
+	bar.add_child(more)
 	snap_check = CheckBox.new()
 	snap_check.text = "吸附网格"
 	snap_check.button_pressed = true
@@ -563,6 +588,12 @@ func _build_center() -> void:
 	editor_sel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	editor_sel.text = "未选中"
 	side.add_child(editor_sel)
+	var help := Label.new()
+	help.text = "操作：点家具选中 → 拖动移动 → R 旋转 → Delete 删除\n滚轮缩放 · 中键拖动平移 · [ ] 调门窗宽"
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	help.add_theme_color_override("font_color", MUTED)
+	help.add_theme_font_size_override("font_size", 13)
+	side.add_child(help)
 	editor_status = _rich()
 	side.add_child(editor_status)
 	editor.design_changed.connect(_update_editor_status)
@@ -591,6 +622,7 @@ func _set_view(v: String, animate := false) -> void:
 		if not (animate and _room_loaded != "" and not instant_story): _ensure_room()
 		else: _fit_camera()
 	if v == "editor": _open_editor(eng.s.room if map_view.selected == "" else map_view.selected)
+	if v == "map": map_view.center_on(eng.s.room)
 	_dirty = true
 
 
@@ -1167,6 +1199,7 @@ func _process(delta: float) -> void:
 	var frozen := not instant_story and (_transit_active() or _story_busy())
 	if not frozen: eng.tick(delta)
 	_watch_room_change()
+	_manual_move_step(delta)
 	_walk_step(delta)
 	_auto_search_step(delta)
 	if toast.visible and now > _toast_until: toast.visible = false
@@ -1246,10 +1279,62 @@ func _ensure_room_if_needed() -> void:
 		_sync_figures()
 
 
+## 玩家直接操控侦探（WASD/方向键）：按住即走，松开即停；一动就关掉自动搜证，
+## 把「看侦探自己走」还给玩家。测试模式（instant_story）下不启用，避免破坏回归脚本。
+func _manual_move_step(delta: float) -> void:
+	if view != "room" or instant_story or _transit_active() or det == null or _grid == null:
+		return
+	if modal.visible or _story_busy() or not eng.s.playing:
+		return
+	var vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if vec.length() < 0.05:
+		return
+	if auto_search:
+		auto_search = false
+		if auto_btn != null: auto_btn.button_pressed = false
+		det_path.clear()
+		det_done = Callable()
+	var step: Vector2 = vec.normalized() * WALK_SPEED * delta
+	var cand: Vector2 = det_pos + step
+	var cell := _cell_of(cand)
+	if _grid.is_in_boundsv(cell) and not _grid.is_point_solid(cell):
+		det_pos = cand
+		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
+		det.rotation.y = atan2(vec.x, vec.y)
+		det.set_pose("walk")
+	else:
+		det.set_pose("stand")
+
+
+## 当前目标（左卡顶部）：把「等待搜证」翻译成玩家能执行的下一步。
+func _objective_text() -> String:
+	var s: Dictionary = eng.s
+	if s.ending != "":
+		return "故事已结束，可重新开始或返回标题。"
+	var hold: Dictionary = s.get("hold", {})
+	var did := ""
+	if not hold.is_empty(): did = str(hold.deduction)
+	elif not s.get("postponed", {}).is_empty(): did = str(s.postponed.id)
+	elif not s.pending_deduction.is_empty(): did = str(s.pending_deduction.id)
+	if did != "" and data.deduction_by_id.has(did):
+		var g: Dictionary = eng.deduction_progress(did)
+		var dd: Dictionary = data.deduction_by_id[did]
+		var rooms: Array = []
+		for eid in g.get("missing", []):
+			var lb := str(data.room_by_id[data.evidence_by_id[eid].room].label)
+			if not rooms.has(lb): rooms.append(lb)
+		var where := ("去：" + "、".join(rooms)) if not rooms.is_empty() else "证物已齐，等待推演弹出"
+		return "目标：为「%s」搜集证物 %d/%d\n%s\n（点金色光柱，或用左侧「本房证物」）" % [str(dd.title), int(g.have), int(g.need), where]
+	if not s.pending_conflict.is_empty() or not s.pending_choice.is_empty():
+		return "目标：处理当前弹窗（争执 / 抉择）。"
+	return "目标：自由探索。时间推进到下一节拍时，新的推演会弹出。"
+
+
 func _refresh_left() -> void:
 	var rid: String = eng.s.room
 	var r: Dictionary = data.room_by_id[rid]
 	left_text.clear()
+	left_text.append_text("[color=#a8c89a][b]当前目标[/b][/color]\n%s\n\n" % _objective_text())
 	left_text.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#a8957b]%s · %s区[/color]\n[color=#a8957b]%s[/color]\n" % [r.label, r.floor, r.zone, r.note])
 	var here: Array = eng.actors_in_room(rid).filter(func(i): return str(i) != "detective")
 	left_text.append_text("[color=#b89758]在场：[/color]" + ("、".join(here.map(func(i): return _name_bb(str(i)))) if not here.is_empty() else "无人"))
@@ -1446,7 +1531,8 @@ func _modal_shell(title: String, sub: String) -> VBoxContainer:
 	pc.add_child(v)
 	var t := Label.new()
 	t.text = title
-	t.add_theme_font_size_override("font_size", 22)
+	t.add_theme_font_override("font", SERIF_FONT)
+	t.add_theme_font_size_override("font_size", 24)
 	t.add_theme_color_override("font_color", Color("#7a3a24"))
 	v.add_child(t)
 	if sub != "":
@@ -1589,7 +1675,7 @@ func _modal_intro() -> void:
 	_ink_label(v, "① 取证：在房间里点发光的标记（或让「自动搜证」替你走）。证物不够时，推演不会弹出，时间也不会往前走。", 14)
 	_ink_label(v, "② 推演：弹窗会显示「已取得 X / 至少需要 N」。证物不足时假设按钮不可点，可以先去取证；判错的推演之后能在「案卷 → 推演」里重新推演。", 14)
 	_ink_label(v, "③ 争执：正解选项只有推演成功才会出现。选错会永久折损人物之间的信任，第一天的「对质」尤其如此，务必先把证物取齐。", 14)
-	_ink_label(v, "操作：空格 / 回车推进字幕；顶栏可暂停、调速；菜单里可开「自动跳过字幕」。", 13)
+	_ink_label(v, "操作：点光柱或左侧证物查看；WASD/方向键可亲自走动（会关掉自动搜证）；空格推进字幕；顶栏可暂停、调速。", 13)
 	var row := HBoxContainer.new()
 	v.add_child(row)
 	var go := _btn(row, "开始", func(): pass)

@@ -129,9 +129,12 @@ func _build_theme() -> Theme:
 	theme.set_color("font_hover_color", "Button", GOLD)
 	theme.set_color("font_pressed_color", "Button", EMBER)
 	theme.set_color("font_disabled_color", "Button", Color(CREAM, 0.25))
-	theme.set_font_size("font_size", "Button", 30)
-	for state in ["normal", "disabled", "pressed"]:
-		theme.set_stylebox(state, "Button", _button_style(Color(0, 0, 0, 0)))
+	theme.set_font_size("font_size", "Button", 26)
+	# 菜单按钮原先 normal 完全透明，压在繁忙的 3D 书房背景上几乎看不见边界。
+	# 改为半透明深色底 + 细金边，悬停/聚焦时提亮，保证任何背景上都可读。
+	theme.set_stylebox("normal", "Button", _button_style(Color(0.05, 0.04, 0.03, 0.55)))
+	theme.set_stylebox("disabled", "Button", _button_style(Color(0.05, 0.04, 0.03, 0.25)))
+	theme.set_stylebox("pressed", "Button", _button_style(Color(GOLD, 0.22)))
 	theme.set_stylebox("hover", "Button", _button_style(Color(GOLD, 0.10)))
 	theme.set_stylebox("focus", "Button", _button_style(Color(GOLD, 0.06), true))
 	return theme
@@ -139,12 +142,13 @@ func _build_theme() -> Theme:
 static func _button_style(color: Color, outlined := false) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = color
-	box.content_margin_top = 8.0
-	box.content_margin_bottom = 8.0
-	if outlined:
-		box.border_color = Color(GOLD, 0.45)
-		box.border_width_bottom = 1
-		box.border_width_top = 1
+	box.content_margin_top = 5.0
+	box.content_margin_bottom = 5.0
+	box.content_margin_left = 16.0
+	box.content_margin_right = 16.0
+	box.set_corner_radius_all(6)
+	box.border_color = Color(GOLD, 0.55 if outlined else 0.22)
+	box.set_border_width_all(1)
 	return box
 
 ## 标题润色：暗角与细颗粒（压住书房背景、聚焦书名）、书名下方副题、菜单项悬停放大。

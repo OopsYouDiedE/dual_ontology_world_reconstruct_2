@@ -6,6 +6,7 @@ extends Control
 ## 实时校验：落地家具是否越出地板、占地是否重叠、门窗是否超出墙段；不阻止摆放，但标红提示。
 
 const Geo := preload("res://scenes/dual_world/RoomGeometry.gd")
+const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 
 signal design_changed
 signal selection_changed(text: String)
@@ -317,7 +318,7 @@ func _gui_input(event: InputEvent) -> void:
 
 # ───────────────────────── 绘制 ─────────────────────────
 func _draw() -> void:
-	var font := get_theme_default_font()
+	var font: Font = SANS_FONT
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#1a1612"))
 	if design.is_empty(): return
 	var w: float = design.w
@@ -362,7 +363,14 @@ func _draw() -> void:
 				var tip := _w2s(a.x + n.x * op.width, a.y + n.y * op.width)
 				draw_line(hinge, tip, col, 2.5)
 				var ang0 := (_w2s(b.x, b.y) - hinge).angle()
-				draw_arc(hinge, op.width * scale_px, ang0, (tip - hinge).angle(), 16, Color(col, 0.6), 1.0)
+				# 只画开门扫过的 90° 小弧：draw_arc 的起止顺序会绕 270° 画出大弧
+				# （截图里那条冲出房间的黄线），故用 lerp_angle 逐点画最短弧。
+				var arc_pts := PackedVector2Array()
+				var a_tip := (tip - hinge).angle()
+				for i in 17:
+					var aa := lerp_angle(a_tip, ang0, float(i) / 16.0)
+					arc_pts.append(hinge + Vector2(cos(aa), sin(aa)) * op.width * scale_px)
+				draw_polyline(arc_pts, Color(col, 0.6), 1.0)
 			else:
 				draw_line(_w2s(a.x, a.y), _w2s(b.x, b.y), col, 3.0)
 	# 家具：有向占地
@@ -395,9 +403,9 @@ func _draw() -> void:
 			o2.append(poly[0])
 			draw_polyline(o2, Color("#4f9dde"), 2.5)
 		if scale_px > 28.0 and str(p.kind) != "evidence_marker":
-			draw_string(font, _w2s(p.x, p.z) + Vector2(-20, 4), Geo.prop_label(str(p.kind)), HORIZONTAL_ALIGNMENT_CENTER, 40, 10, Color("#fff4dc", 0.9))
+			draw_string(font, _w2s(p.x, p.z) + Vector2(-30, 4), Geo.prop_label(str(p.kind)), HORIZONTAL_ALIGNMENT_CENTER, 60, 12, Color("#fff4dc", 0.95))
 	# 尺寸标注
-	draw_string(font, _w2s(0, 0) + Vector2(0, -8), "%s　%.1f × %.1f m　网格 %.2f m%s" % [design.name, w, d, grid, "（吸附）" if snap_on else ""], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#c9b89a"))
+	draw_string(font, _w2s(0, 0) + Vector2(0, -8), "%s　%.1f × %.1f m　网格 %.2f m%s" % [design.name, w, d, grid, "（吸附）" if snap_on else ""], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e6d7b8"))
 	# 昼夜暗幕
 	var dark := Geo.darkness(hour)
 	if dark > 0.0: draw_rect(Rect2(Vector2.ZERO, size), Color(0.04, 0.05, 0.12, dark * 0.5))

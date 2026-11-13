@@ -13,8 +13,8 @@ static func lighting(hour: float) -> Dictionary:
 	elif day > 0.15: sky = Color("#3d3540")
 	return {
 		"day": day, "sun_color": sun_color, "sky": sky,
-		"sun_energy": 0.15 + day * 1.65,
-		"ambient_energy": 0.35 + day * 0.65,
+		"sun_energy": 0.35 + day * 1.65,
+		"ambient_energy": 0.55 + day * 0.65,
 		"lamp_on": clampf(1.0 - day * 1.25, 0.0, 1.0),
 		"fog": Color("#2a2430") if day > 0.4 else Color("#100e16"),
 	}
@@ -41,7 +41,7 @@ static func apply(hour: float, sun: DirectionalLight3D, env: Environment, lamps:
 		env.background_color = L.sky if L.day > 0.35 else Color("#15121a")
 		env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 		env.ambient_light_color = L.sky.lerp(Color("#2a1d12"), 0.35)
-		env.ambient_light_energy = L.ambient_energy * 0.7
+		env.ambient_light_energy = L.ambient_energy * 0.95
 		env.fog_enabled = true
 		env.fog_light_color = L.fog
 		env.fog_density = 0.004

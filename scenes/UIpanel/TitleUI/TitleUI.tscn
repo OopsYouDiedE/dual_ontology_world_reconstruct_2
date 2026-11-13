@@ -41,7 +41,7 @@ anchor_top = 0.14
 anchor_right = 0.95
 anchor_bottom = 0.92
 grow_horizontal = 0
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="Menu"]
 layout_mode = 2
@@ -62,13 +62,13 @@ mouse_filter = 2
 expand_mode = 1
 
 [node name="Spacer" type="Control" parent="Menu"]
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 mouse_filter = 2
 
 [node name="StartButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "开始新游戏"
+text = "开始新游戏 · 双本体推演（正式）"
 
 [node name="ContinueButton" type="Button" parent="Menu"]
 layout_mode = 2
@@ -80,15 +80,15 @@ text = "生活手记"
 
 [node name="CampaignButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "打开案件案卷"
+text = "案件案卷（剧情）"
 
 [node name="BuilderButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "打开建筑设计工具"
+text = "建筑设计工具（编辑器）"
 
 [node name="LifeTestButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "测试场景 · 生活推演"
+text = "生活推演（测试场景）"
 
 [node name="SettingsButton" type="Button" parent="Menu"]
 layout_mode = 2

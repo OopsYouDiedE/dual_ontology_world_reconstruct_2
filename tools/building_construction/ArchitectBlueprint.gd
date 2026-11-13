@@ -18,11 +18,12 @@ func _process(_dt: float) -> void:
 	if is_visible_in_tree(): queue_redraw()
 
 const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
+const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const PROP_COLORS = {"floor":Color("8cbd9f"),"wall":Color("9fb4d9"),"top":Color("e0c27a"),"ceiling":Color("c8a2d8"),"flat":Color("6f8f7a")}
 var magnet_hit: Dictionary = {}
 
-func label_at(text: String, at: Vector2, color := Color("c9d1da"), size := 12) -> void:
-	var font = ThemeDB.fallback_font
+func label_at(text: String, at: Vector2, color := Color("c9d1da"), size := 14) -> void:
+	var font: Font = SANS_FONT
 	var extent = font.get_string_size(text,HORIZONTAL_ALIGNMENT_LEFT,-1,size)
 	draw_rect(Rect2(at-Vector2(extent.x*0.5+3,extent.y*0.5+1),extent+Vector2(6,2)),Color(0.06,0.07,0.09,0.78))
 	draw_string(font,at+Vector2(-extent.x*0.5,extent.y*0.5-3),text,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
@@ -32,7 +33,7 @@ func segment_label(a: Vector2, b: Vector2, thickness: float, color := Color("9aa
 	if length<0.05 or length*zoom<46: return
 	var mid = screen((a+b)*0.5)
 	var normal = (b-a).normalized().orthogonal()
-	label_at("%.2f m" % length,mid+normal*(thickness*zoom*0.5+11),color,11)
+	label_at("%.2f m" % length,mid+normal*(thickness*zoom*0.5+11),color,13)
 
 func draw_prop(prop: Dictionary, selected: bool, conflict: String) -> void:
 	var f = Footprint.info(prop)
@@ -58,7 +59,7 @@ func draw_prop(prop: Dictionary, selected: bool, conflict: String) -> void:
 	var front_b = screen(Footprint.to_world(prop,Vector2(local_x(prop,1),local_z(prop,1))))
 	draw_line(front_a,front_b,color.lightened(0.35),3)
 	if f.w*zoom>38 and f.d*zoom>16:
-		label_at(short_name(prop),screen(Vector2(prop.x,prop.z)),Color("dbe3ea"),10)
+		label_at(short_name(prop),screen(Vector2(prop.x,prop.z)),Color("dbe3ea"),13)
 
 func local_x(prop: Dictionary, sign: float) -> float:
 	var r = Footprint.local_rect(prop)

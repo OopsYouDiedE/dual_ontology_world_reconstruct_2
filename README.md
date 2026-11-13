@@ -24,7 +24,34 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 
 Linux / macOS / WSL 可执行 `tools/build/build.sh` 构建，或设置 `GODOT_MONO` 后执行 `tools/build/run.sh` 构建并运行。
 
-环境要求：本目录 `.runtime/godot/4.7.2/` 中的完整 .NET 引擎及 .NET SDK 8.0.4xx；不使用标准版 Godot。SDK 由 `global.json` 限定 .NET 8 补丁系列。
+环境要求：Godot .NET (mono) 4.7.2 及 .NET SDK 8.0.4xx；不使用标准版 Godot 运行完整游戏。SDK 由 `global.json` 限定 .NET 8 补丁系列。Windows 开发者可把引擎放在 `.runtime/godot/4.7.2/`（该目录被 `.gitignore` 忽略，干净克隆里不存在，自行下载）；其他情况用环境变量 `GODOT` / `GODOT_MONO` 指向引擎可执行文件即可。
+
+## Linux 快速开始
+
+```bash
+# 1. 工具链
+./dotnet-install.sh --channel 8.0 --install-dir ~/dotnet && export PATH=$HOME/dotnet:$PATH
+curl -LO https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_mono_linux_x86_64.zip
+unzip Godot_v4.7.2-stable_mono_linux_x86_64.zip
+export GODOT=$PWD/Godot_v4.7.2-stable_mono_linux_x86_64/Godot_v4.7.2-stable_mono_linux.x86_64
+
+# 2. 构建与导入
+git clone https://github.com/OopsYouDiedE/dual_ontology_world_reconstruct_2 proj && cd proj
+dotnet build DualOntologyWorldReconstruct2.sln
+$GODOT --headless --path . --import
+
+# 3. 项目自带验证（正式双本体部分是纯 GDScript，标准版 Godot 也能跑）
+$GODOT --headless --path . --script res://tools/dual_world/dual_verify.gd     # 规则 + 设计校验 + 回归用例
+$GODOT --headless --path . --script res://tools/dual_world/dual_smoke.gd      # 界面冒烟
+$GODOT --headless --path . --script res://tools/dual_world/dual_autoplay.gd   # 真实时间下的自动搜证
+dotnet .runtime/build/bin/DuelView.Cli/Debug/net8.0/DuelView.Cli.dll --verify-character-actions
+```
+
+`dual_verify.gd` 退出码非 0 即失败，可直接接入 CI。其中的「设计校验」会按真实门锁检查：每个推演在其节拍时刻可达的证物数 ≥ `minEvidence`。新增或挪动节拍、开门时间后必须跑一遍。
+
+## 正式游戏流程（双本体）
+
+新局默认暂停并弹出一次性引导：**取证 → 推演 → 争执**。推演弹窗显示「已取得 X / 至少需要 N」，证物不足时假设按钮不可点，可「先去取证」（时间保持暂停，证物齐了推演自动弹回）；判错的推演可在右侧案卷抽屉的「推演」页「重新推演」。字幕按游戏内计时（随时间缩放），空格 / 回车推进，菜单里有「自动跳过字幕」。
 
 迁移、融合实施与验证边界见 [实施与验收](docs/33%20实施与验收.md)。
 

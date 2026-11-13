@@ -38,7 +38,7 @@ func new_game(announce := true) -> void:
 		"version": 1, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
 		"day": 1, "room": "B-P", "author_view": false,
 		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
-		"pending_deduction": {}, "current_beat": "",
+		"pending_deduction": {}, "postponed": {}, "current_beat": "",
 		"evidence": {}, "knowledge": {}, "beliefs": {}, "misconceptions": [], "log": [],
 		"conflicts": {}, "choices": {}, "flags": {}, "relations": rel, "irreparable": false,
 		"deductions": {}, "case_notes": [], "debug_log": [], "doors": {}, "found_count": 0,
@@ -309,11 +309,39 @@ func solve_deduction(did: String, hyp_id: String, picked: Array = []) -> void:
 	changed.emit("deduction")
 
 
+## 重新推演：只允许对「判错」的推演重试；对应争执若还没拆解，推演完成后会重新弹出争执。
 func retry_deduction(did: String) -> bool:
 	if not d.deduction_by_id.has(did) or not s.pending_deduction.is_empty() or s.pending_conflict != "": return false
+	if not s.get("postponed", {}).is_empty() or not s.get("hold", {}).is_empty(): return false
+	if s.deductions.get(did, "") != "wrong": return false
+	var next := ""
+	for c in d.conflicts:
+		if c.get("deduction", null) == did and not s.conflicts.has(c.id):
+			next = str(c.id)
+			break
 	s.deductions.erase(did)
-	open_deduction(did)
+	_debug("deduction", "重新推演 %s（接续争执：%s）" % [did, next if next != "" else "无"])
+	open_deduction(did, next)
 	return true
+
+
+## 证物不够时先关掉推演弹窗去取证：时间继续冻结，直到证物够了（或再无可取）才重新弹出同一个推演。
+func postpone_deduction() -> bool:
+	if s.pending_deduction.is_empty(): return false
+	s.postponed = s.pending_deduction.duplicate()
+	s.pending_deduction = {}
+	_refresh_waiting()
+	_log("system", "【先去取证】%s 先放一放，证物齐了再回来推演。" % d.deduction_by_id[s.postponed.id].title, [])
+	_debug("deduction", "推演 %s 被推迟，等待取证" % s.postponed.id)
+	changed.emit("hold")
+	return true
+
+
+## 推演弹窗里该显示的取证进度。
+func deduction_progress(did: String) -> Dictionary:
+	var g := gate_status(did)
+	g["can_answer"] = bool(g.ok) or bool(g.stuck) or s.author_view
+	return g
 
 
 func _refresh_waiting() -> void:
@@ -362,6 +390,8 @@ func _rel(a: String, b: String) -> Dictionary:
 
 func resolve_conflict(cid: String, option_id: String, defer := false) -> void:
 	if not d.conflict_by_id.has(cid): return
+	# 幂等保护：该争执既不是当前弹窗、也不在队列里（已处理过），重复点击旧按钮不再结算
+	if cid != s.pending_conflict and not s.conflict_queue.has(cid): return
 	var c: Dictionary = d.conflict_by_id[cid]
 	var wrong: bool = defer or option_id != c.correct
 	if defer and not c.get("permanent", false):
@@ -414,6 +444,8 @@ func choose(beat_id: String, option_id: String) -> void:
 	for b in d.beats:
 		if b.id == beat_id: beat = b
 	if beat.is_empty() or not beat.has("choice"): return
+	# 幂等保护：只有当前挂起的抉择才能结算
+	if s.pending_choice.is_empty() or str(s.pending_choice.get("beat_id", "")) != beat_id: return
 	var opt: Dictionary = {}
 	for o in beat.choice.options:
 		if o.id == option_id: opt = o
@@ -448,6 +480,8 @@ func jump_day(day: int) -> void:
 		new_game(false)
 		for k in keep: s[k] = keep[k]
 	s.t = target
+	s.postponed = {}
+	s.hold = {}
 	s.beat_cursor = d.beats.size()
 	for i in d.beats.size():
 		if d.beats[i]["at"] >= s.t:
@@ -497,6 +531,13 @@ func tick(dt: float) -> void:
 	if not s.get("hold", {}).is_empty():  # 等侦探搜证：时间不走，每帧复核门槛
 		process_beats()
 		if not s.get("hold", {}).is_empty(): return
+	if not s.get("postponed", {}).is_empty():  # 玩家主动推迟了推演：证物够了再弹回来
+		var pp: Dictionary = s.postponed
+		var gp := gate_status(str(pp.id))
+		if not (gp.ok or gp.stuck): return
+		s.postponed = {}
+		open_deduction(str(pp.id), str(pp.get("next", "")))
+		return
 	if s.t >= END_T:
 		finish()
 		return
@@ -563,6 +604,7 @@ func _hold_for_evidence(b: Dictionary) -> bool:
 
 func hold_text() -> String:
 	var h: Dictionary = s.get("hold", {})
+	if h.is_empty() and not s.get("postponed", {}).is_empty(): h = {"deduction": s.postponed.id}
 	if h.is_empty(): return ""
 	var g := gate_status(str(h.deduction))
 	var rooms: Array = []
@@ -578,6 +620,7 @@ func next_search_target() -> String:
 	for e in d.evidence:
 		if e.room == s.room and not s.evidence.has(e.id): return str(e.id)
 	var h: Dictionary = s.get("hold", {})
+	if h.is_empty() and not s.get("postponed", {}).is_empty(): h = {"deduction": s.postponed.id}
 	if h.is_empty(): return ""
 	var best := ""
 	var best_len := 1 << 30

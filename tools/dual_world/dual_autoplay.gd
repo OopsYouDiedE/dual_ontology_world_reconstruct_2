@@ -15,6 +15,7 @@ var rooms_seen := {}
 
 func _initialize() -> void:
 	main = MainScene.instantiate()
+	main.show_intro = false  # 这里测的是开局之后的自动搜证；引导弹窗见 dual_verify 的暂停用例
 	root.add_child(main)
 	t0 = Time.get_ticks_msec() / 1000.0
 

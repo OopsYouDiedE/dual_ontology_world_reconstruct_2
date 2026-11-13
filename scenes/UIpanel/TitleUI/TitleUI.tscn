@@ -66,7 +66,7 @@ custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="DualWorldButton" type="Button" parent="Menu"]
+[node name="StartButton" type="Button" parent="Menu"]
 layout_mode = 2
 text = "开始新游戏"
 
@@ -86,7 +86,7 @@ text = "打开案件案卷"
 layout_mode = 2
 text = "打开建筑设计工具"
 
-[node name="NewButton" type="Button" parent="Menu"]
+[node name="LifeTestButton" type="Button" parent="Menu"]
 layout_mode = 2
 text = "测试场景 · 生活推演"
 

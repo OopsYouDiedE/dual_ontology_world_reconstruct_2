@@ -138,5 +138,57 @@ func _init() -> void:
 			for it in v.issues:
 				if not it.ok: print("    ", room.id, " ", it.text)
 	check(bad == 0, "%d 间房的自动布置通过几何校验" % data.rooms.size())
+	# 8. 设计校验：每个推演在其节拍时刻、用真实门锁，可达（含所在房间）证物数 ≥ minEvidence
+	for b in data.beats:
+		if not b.has("deduction"): continue
+		var dv := Engine_.new(data)
+		dv.s.t = float(b["at"])
+		dv.set_door_flags()
+		var from: String = str(b.room) if b.has("room") and data.room_by_id.has(b.room) else dv.s.room
+		var gs := dv.gate_status(str(b.deduction), from)
+		var reach := 0
+		for eid in data.deduction_by_id[b.deduction].evidence:
+			if str(data.evidence_by_id[eid].room) == from or not dv.path_to(str(data.evidence_by_id[eid].room), from).is_empty(): reach += 1
+		check(reach >= int(gs.need), "设计校验 %s（节拍 %s）：节拍时刻可达证物 %d ≥ 需要 %d" % [b.deduction, b.id, reach, int(gs.need)])
+	# 9. 幂等：同一帧重复触发 resolve_conflict / choose，只结算一次
+	var ie := Engine_.new(data)
+	ie.open_conflict("c_borrow")
+	var rk := Data.pair_key(data.conflict_by_id["c_borrow"].parties[0], data.conflict_by_id["c_borrow"].parties[1])
+	var wrong_id := ""
+	for o in data.conflict_by_id["c_borrow"].options:
+		if o.id != data.conflict_by_id["c_borrow"].correct: wrong_id = o.id
+	var before: int = ie.s.relations[rk].trust
+	ie.resolve_conflict("c_borrow", wrong_id)
+	ie.resolve_conflict("c_borrow", wrong_id)
+	ie.resolve_conflict("c_borrow", "", true)
+	check(ie.s.relations[rk].trust == before - 22 and ie.s.relations[rk].grievances.size() == 1,
+		"重复点击争执选项只结算一次（信任 %d → %d，申诉 %d 条）" % [before, ie.s.relations[rk].trust, ie.s.relations[rk].grievances.size()])
+	var ce := Engine_.new(data)
+	var cbeat: Dictionary = {}
+	for b in data.beats:
+		if b.has("choice"): cbeat = b; break
+	if not cbeat.is_empty():
+		ce.s.pending_choice = {"beat_id": cbeat.id, "choice": cbeat.choice}
+		ce.choose(cbeat.id, cbeat.choice.options[0].id)
+		ce.s.flags["__probe__"] = true
+		ce.choose(cbeat.id, cbeat.choice.options[cbeat.choice.options.size() - 1].id)
+		check(ce.s.choices[cbeat.choice.id] == cbeat.choice.options[0].id, "重复触发 choose 只认第一次")
+	# 10. 重新推演 / 推迟取证
+	var re := Engine_.new(data)
+	re.s.room = "A-P"  # 节拍会把侦探带到现场，证物就在本房
+	re.open_deduction("ded_cuffs", "c_handcuff")
+	check(re.postpone_deduction() and re.s.pending_deduction.is_empty() and not re.s.waiting, "证物不足可先关掉推演去取证")
+	for _i in 50: re.tick(1.0)
+	check(re.s.t == float(re.T(1, 7, 0)) and re.s.pending_deduction.is_empty(), "推迟期间时间保持冻结")
+	for eid in ["e_a_cuffs", "e_a_grate"]: re.inspect_evidence(eid)
+	re.tick(1.0)
+	check(not re.s.pending_deduction.is_empty() and re.s.pending_deduction.id == "ded_cuffs", "证物齐了推演自动弹回")
+	re.solve_deduction("ded_cuffs", "__none__")
+	check(re.s.deductions["ded_cuffs"] == "wrong" and re.s.pending_conflict == "c_handcuff", "判错 → 争执弹出且正解被隐藏")
+	re.resolve_conflict("c_handcuff", "", true)
+	check(re.retry_deduction("ded_cuffs") and not re.s.pending_deduction.is_empty(), "判错的推演可重新推演")
+	re.solve_deduction("ded_cuffs", data.deduction_by_id["ded_cuffs"].correct)
+	check(re.s.deductions["ded_cuffs"] == "solved" and re.s.pending_conflict == "c_handcuff", "重新推演成功 → 争执重新弹出，正解出现")
+	check(not re.retry_deduction("ded_cuffs"), "已解开的推演不能重试")
 	print("失败 %d" % fails)
 	quit(1 if fails > 0 else 0)

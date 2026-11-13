@@ -90,6 +90,15 @@ var pitch := 0.82
 var dist := 9.5
 var _orbit := false
 var _sub_until := 0.0
+## 字幕计时：累加 delta（随 Engine.time_scale 变化，测试可加速），不再用真实时钟
+var _sub_clock := 0.0
+## 菜单「自动跳过字幕」：台词一闪而过，适合重玩 / 测试
+var skip_subtitles := false
+## 新局先暂停并弹一次性引导；测试脚本可设为 false
+var show_intro := true
+var _intro_pending := false
+var _case_sig := ""
+var tab_case: VBoxContainer
 var _speaker := ""
 var _toast_until := 0.0
 
@@ -145,6 +154,7 @@ func _ready() -> void:
 		_toast("存档无法读取，已从头开始")
 	# 正式游戏默认进 3D 房间：侦探在房间里走动；2D 地图是辅助视图
 	_set_view("room")
+	if resume_path == "" and show_intro and not instant_story: _begin_intro()
 	_dirty = true
 
 
@@ -152,6 +162,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	# 浏览器与桌面端都要求用户手势后才能出声：首次点击或按键时启动合成器
 	if event is InputEventMouseButton or event is InputEventKey:
 		if score != null and not score._started and score.enabled: score.start()
+	# 键盘 / 手柄：空格、回车（ui_accept）推进字幕
+	if event.is_action_pressed("ui_accept") and subtitle != null and subtitle.visible and not modal.visible:
+		_sub_until = 0.0
+		get_viewport().set_input_as_handled()
 
 
 func _close() -> void:
@@ -264,7 +278,7 @@ func _build_ui() -> void:
 		view_btns[v[0]] = vb
 	drawer_btn = _btn(tb, "案卷", func(): _toggle_drawer())
 	drawer_btn.toggle_mode = true
-	drawer_btn.tooltip_text = "日志 / 证物 / 知识 / 词义 / 关系"
+	drawer_btn.tooltip_text = "日志 / 证物 / 推演 / 知识 / 词义 / 关系"
 	menu_btn = MenuButton.new()
 	menu_btn.text = "菜单"
 	menu_btn.focus_mode = Control.FOCUS_NONE
@@ -274,6 +288,7 @@ func _build_ui() -> void:
 	pm.add_check_item("背景音乐", 2)
 	pm.set_item_checked(pm.get_item_index(2), true)
 	pm.add_check_item("作者视角（显示词义分歧）", 3)
+	pm.add_check_item("自动跳过字幕", 4)
 	pm.add_separator()
 	pm.add_item("2D 场景编辑器", 5)
 	pm.add_separator()
@@ -345,6 +360,14 @@ func _build_ui() -> void:
 	drawer.add_child(right_tabs)
 	tab_log = _add_tab("日志")
 	tab_ev = _add_tab("证物")
+	var case_scroll := ScrollContainer.new()
+	case_scroll.name = "推演"
+	case_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right_tabs.add_child(case_scroll)
+	tab_case = VBoxContainer.new()
+	tab_case.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tab_case.add_theme_constant_override("separation", 6)
+	case_scroll.add_child(tab_case)
 	tab_know = _add_tab("知识")
 	var lex_box := VBoxContainer.new()
 	lex_box.name = "词义"
@@ -440,6 +463,10 @@ func _on_menu(id: int) -> void:
 			eng.set_door_flags()
 			_apply_author_tabs()
 			_dirty = true
+		4:
+			var k := pm.get_item_index(4)
+			pm.set_item_checked(k, not pm.is_item_checked(k))
+			skip_subtitles = pm.is_item_checked(k)
 		5: _set_view("editor")
 		7: _save_game(1)
 		8: _load_game(1)
@@ -610,7 +637,7 @@ func _pump_subtitles(now: float) -> void:
 	if who != "narrator" and data.actor_by_id.has(who): nm = str(data.actor_name(who)) + "："
 	subtitle.text = nm + text
 	subtitle.visible = true
-	_sub_until = now + maxf(2.4, 1.2 + text.length() * 0.075)
+	_sub_until = now + (0.05 if skip_subtitles else maxf(2.4, 1.2 + text.length() * 0.075))
 	var pose := "talk"
 	match str(ln.kind):
 		"confront": pose = "argue"
@@ -1134,7 +1161,8 @@ func _on_3d_input(event: InputEvent) -> void:
 # ───────────────────────── 主循环 ─────────────────────────
 func _process(delta: float) -> void:
 	var now := Time.get_ticks_msec() / 1000.0
-	_pump_subtitles(now)
+	_sub_clock += delta
+	_pump_subtitles(_sub_clock)
 	# 台词在播、侦探在走路时，故事时间冻结：玩家始终看得见「发生了什么」
 	var frozen := not instant_story and (_transit_active() or _story_busy())
 	if not frozen: eng.tick(delta)
@@ -1264,6 +1292,50 @@ func _refresh_left() -> void:
 			left_actions.add_child(b2)
 
 
+## 「推演」页：列出各推演的状态；判错的推演提供「重新推演」按钮。
+## 只在状态签名变化时重建，避免鼠标按下到松开之间按钮被换掉。
+func _refresh_case_tab() -> void:
+	var s: Dictionary = eng.s
+	var busy: bool = not s.pending_deduction.is_empty() or s.pending_conflict != "" or not s.pending_choice.is_empty() \
+		or not s.get("hold", {}).is_empty() or not s.get("postponed", {}).is_empty()
+	var sig := str(busy) + "|" + str(s.deductions) + "|" + str(s.conflicts) + "|" + str(s.evidence.size())
+	if sig == _case_sig: return
+	_case_sig = sig
+	for c in tab_case.get_children():
+		tab_case.remove_child(c)
+		c.queue_free()
+	var any := false
+	for dd in data.deductions:
+		var st: String = str(s.deductions.get(dd.id, ""))
+		if st == "" and not (s.pending_deduction.get("id", "") == dd.id): continue
+		any = true
+		var have := 0
+		for eid in dd.evidence:
+			if s.evidence.has(eid): have += 1
+		var l := Label.new()
+		var tag := "待推演" if st == "" else ("已解开" if st == "solved" else "判错 · 这一页留白")
+		l.text = "%s —— %s（证物 %d/%d）" % [dd.title, tag, have, int(dd.get("minEvidence", 2))]
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.add_theme_color_override("font_color", Color("#a8c89a") if st == "solved" else (Color("#ea9c8c") if st == "wrong" else TEXT))
+		tab_case.add_child(l)
+		if st == "wrong":
+			var b := Button.new()
+			b.text = "重新推演"
+			b.disabled = busy
+			b.tooltip_text = "取齐证物后再来一次；若对应争执还没拆解，推演完成后会接着弹出"
+			var did: String = str(dd.id)
+			b.pressed.connect(func():
+				b.disabled = true
+				eng.retry_deduction(did))
+			tab_case.add_child(b)
+	if not any:
+		var e := Label.new()
+		e.text = "还没有推演记录。取到足够的证物后，推演会自动弹出。"
+		e.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		e.add_theme_color_override("font_color", MUTED)
+		tab_case.add_child(e)
+
+
 func _refresh_right() -> void:
 	var s: Dictionary = eng.s
 	var author: bool = s.author_view
@@ -1281,6 +1353,7 @@ func _refresh_right() -> void:
 			"evidence": col = "#a8c89a"
 		tab_log.append_text("[color=#a8957b]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, l.text])
 	tab_log.scroll_to_line(maxi(0, tab_log.get_line_count() - 1))
+	_refresh_case_tab()
 	# 证物
 	tab_ev.clear()
 	if s.evidence.is_empty(): tab_ev.append_text("[color=#a8957b]尚未取得证物。到各房间里找发光的标记。[/color]")
@@ -1342,7 +1415,17 @@ func _refresh_right() -> void:
 
 # ───────────────────────── 模态：推演 / 争执 / 抉择 / 结局 ─────────────────────────
 func _clear_modal() -> void:
-	for c in modal.get_children(): c.queue_free()
+	for c in modal.get_children():
+		modal.remove_child(c)  # 立即摘掉，旧按钮同一帧内就不能再点
+		c.queue_free()
+
+
+## 按钮按下后立刻收起弹窗（不等 _refresh）；下一次 _sync_modal 会按引擎状态重建。
+func _dismiss_modal() -> void:
+	_clear_modal()
+	modal.visible = false
+	_modal_key = ""
+	_dirty = true
 
 
 func _modal_shell(title: String, sub: String) -> VBoxContainer:
@@ -1391,7 +1474,8 @@ func _sync_modal() -> void:
 	if not instant_story and (_transit_active() or _story_busy()): return
 	var s: Dictionary = eng.s
 	var key := ""
-	if s.ending != "": key = "end:" + s.ending
+	if _intro_pending: key = "intro"
+	elif s.ending != "": key = "end:" + s.ending
 	elif not s.pending_deduction.is_empty(): key = "ded:" + str(s.pending_deduction.id)
 	elif s.pending_conflict != "": key = "con:" + str(s.pending_conflict)
 	elif not s.pending_choice.is_empty(): key = "cho:" + str(s.pending_choice.beat_id)
@@ -1401,7 +1485,8 @@ func _sync_modal() -> void:
 		modal.visible = false
 		_clear_modal()
 		return
-	if key.begins_with("ded:"): _modal_deduction(str(s.pending_deduction.id))
+	if key == "intro": _modal_intro()
+	elif key.begins_with("ded:"): _modal_deduction(str(s.pending_deduction.id))
 	elif key.begins_with("con:"): _modal_conflict(str(s.pending_conflict))
 	elif key.begins_with("cho:"): _modal_choice()
 	else: _modal_ending()
@@ -1410,7 +1495,10 @@ func _sync_modal() -> void:
 func _modal_deduction(did: String) -> void:
 	var dd: Dictionary = data.deduction_by_id[did]
 	var v := _modal_shell("案卷推演 · " + str(dd.title), str(dd.prompt))
+	var prog: Dictionary = eng.deduction_progress(did)
 	var checks: Dictionary = {}
+	var pl := _ink_label(v, "已取得 %d / 至少需要 %d 件相关证物" % [prog.have, prog.need], 14)
+	pl.add_theme_color_override("font_color", Color("#2f6b3a") if prog.have >= prog.need else Color("#a03a24"))
 	_ink_label(v, "手头的证物（勾选用作依据）：", 13)
 	for eid in dd.evidence:
 		var cb := CheckBox.new()
@@ -1422,18 +1510,36 @@ func _modal_deduction(did: String) -> void:
 		cb.add_theme_color_override("font_disabled_color", Color("#8a7a68"))
 		v.add_child(cb)
 		checks[eid] = cb
+	var can_answer: bool = prog.can_answer
+	if not can_answer:
+		var warn := _ink_label(v, "证物不足，现在下结论只会判错。先去现场取证，证物齐了推演会自动回来。", 13)
+		warn.add_theme_color_override("font_color", Color("#a03a24"))
+	elif prog.have < prog.need:
+		var warn2 := _ink_label(v, "能取到的证物都查过了，只能凭现有线索推演（证物不足会判错，之后可在「案卷 → 推演」里重新推演）。", 13)
+		warn2.add_theme_color_override("font_color", Color("#a03a24"))
 	_ink_label(v, "哪一种先后更说得通？", 13)
 	for h in dd.hypotheses:
 		var b := Button.new()
 		b.text = str(h.label)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.disabled = not can_answer
 		b.pressed.connect(func():
+			b.disabled = true
 			var picked: Array = []
 			for k in checks:
 				if checks[k].button_pressed and not checks[k].disabled: picked.append(k)
+			_dismiss_modal()
 			eng.solve_deduction(did, str(h.id), picked))
 		v.add_child(b)
+	if not can_answer:
+		var go := Button.new()
+		go.text = "先去取证（时间保持暂停）"
+		go.pressed.connect(func():
+			go.disabled = true
+			_dismiss_modal()
+			eng.postpone_deduction())
+		v.add_child(go)
 
 
 func _modal_conflict(cid: String) -> void:
@@ -1455,13 +1561,43 @@ func _modal_conflict(cid: String) -> void:
 		b.text = str(o.label)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.pressed.connect(func(): eng.resolve_conflict(cid, str(o.id)))
+		b.pressed.connect(func():
+			b.disabled = true
+			_dismiss_modal()
+			eng.resolve_conflict(cid, str(o.id)))
 		v.add_child(b)
 	if not c.get("permanent", false):
 		var d := Button.new()
 		d.text = "先搁下（义项分歧照旧落空）"
-		d.pressed.connect(func(): eng.resolve_conflict(cid, "", true))
+		d.pressed.connect(func():
+			d.disabled = true
+			_dismiss_modal()
+			eng.resolve_conflict(cid, "", true))
 		v.add_child(d)
+
+
+func _begin_intro() -> void:
+	_intro_pending = true
+	eng.s.playing = false
+	_modal_key = ""
+	_dirty = true
+
+
+func _modal_intro() -> void:
+	var v := _modal_shell("第一天 · 清晨", "游戏开始时时间是暂停的。准备好了再按「开始」。")
+	_ink_label(v, "每一天都按同一个节奏：", 14)
+	_ink_label(v, "① 取证：在房间里点发光的标记（或让「自动搜证」替你走）。证物不够时，推演不会弹出，时间也不会往前走。", 14)
+	_ink_label(v, "② 推演：弹窗会显示「已取得 X / 至少需要 N」。证物不足时假设按钮不可点，可以先去取证；判错的推演之后能在「案卷 → 推演」里重新推演。", 14)
+	_ink_label(v, "③ 争执：正解选项只有推演成功才会出现。选错会永久折损人物之间的信任，第一天的「对质」尤其如此，务必先把证物取齐。", 14)
+	_ink_label(v, "操作：空格 / 回车推进字幕；顶栏可暂停、调速；菜单里可开「自动跳过字幕」。", 13)
+	var row := HBoxContainer.new()
+	v.add_child(row)
+	var go := _btn(row, "开始", func(): pass)
+	go.pressed.connect(func():
+		go.disabled = true
+		_intro_pending = false
+		eng.s.playing = true
+		_dismiss_modal())
 
 
 func _modal_choice() -> void:
@@ -1472,7 +1608,10 @@ func _modal_choice() -> void:
 		b.text = str(o.label)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.pressed.connect(func(): eng.choose(str(pc.beat_id), str(o.id)))
+		b.pressed.connect(func():
+			b.disabled = true
+			_dismiss_modal()
+			eng.choose(str(pc.beat_id), str(o.id)))
 		v.add_child(b)
 
 
@@ -1486,6 +1625,7 @@ func _modal_ending() -> void:
 	_btn(row, "重新开始", func():
 		eng.new_game()
 		_modal_key = ""
+		if show_intro and not instant_story: _begin_intro()
 		_sub_queue.clear()
 		_finish_transit_now()
 		_room_loaded = ""

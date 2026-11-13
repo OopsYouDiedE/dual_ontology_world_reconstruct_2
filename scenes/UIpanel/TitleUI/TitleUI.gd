@@ -21,7 +21,7 @@ const EMBER := Color("e0794a")
 @onready var shade: TextureRect = $Shade
 @onready var menu: VBoxContainer = $Menu
 @onready var rule: TextureRect = $Menu/Rule
-@onready var new_button: Button = $Menu/NewButton
+@onready var life_test_button: Button = $Menu/LifeTestButton
 @onready var continue_button: Button = $Menu/ContinueButton
 @onready var records_button: Button = $Menu/RecordsButton
 @onready var settings_button: Button = $Menu/SettingsButton
@@ -44,15 +44,15 @@ func _ready() -> void:
 	line.width = 256
 	line.height = 2
 	rule.texture = line
-	new_button.pressed.connect(_emit.bind(new_game_requested))
+	life_test_button.pressed.connect(_emit.bind(new_game_requested))
 	continue_button.pressed.connect(_emit.bind(continue_requested))
 	records_button.pressed.connect(func(): _emit_book("journal"))
 	settings_button.pressed.connect(func(): _emit_book("settings"))
 	quit_button.pressed.connect(_emit.bind(quit_requested))
 	$Menu/BuilderButton.pressed.connect(_emit.bind(builder_requested))
 	$Menu/CampaignButton.pressed.connect(_emit.bind(campaign_requested))
-	$Menu/DualWorldButton.pressed.connect(_emit.bind(dual_world_requested))
-	for button: Button in [new_button, continue_button, records_button, $Menu/CampaignButton, $Menu/DualWorldButton, $Menu/BuilderButton, settings_button, quit_button]:
+	$Menu/StartButton.pressed.connect(_emit.bind(dual_world_requested))
+	for button: Button in [life_test_button, continue_button, records_button, $Menu/CampaignButton, $Menu/StartButton, $Menu/BuilderButton, settings_button, quit_button]:
 		button.mouse_entered.connect(func(): Sound.sfx("ui_click", -18.0, 1.4))
 	modulate.a = 0.0
 	hide()
@@ -80,7 +80,7 @@ func show_title(can_continue: bool, first := false) -> void:
 		menu.modulate.a = 1.0
 		hint.modulate.a = 1.0
 		_tween.tween_property(self, "modulate:a", 1.0, 0.45)
-	(continue_button if can_continue else $Menu/DualWorldButton as Button).grab_focus.call_deferred()
+	(continue_button if can_continue else $Menu/StartButton as Button).grab_focus.call_deferred()
 
 func hide_title(duration := 0.4) -> void:
 	interactive = false
@@ -164,7 +164,7 @@ func _install_title_polish() -> void:
 	if title != null and title.get_parent() is BoxContainer:
 		var tagline := Label.new()
 		tagline.name = "Tagline"
-		tagline.text = "五人生活推演 · 建筑与主观认知"
+		tagline.text = "双本体 · 案卷推演与主观认知"
 		tagline.horizontal_alignment = title.horizontal_alignment
 		tagline.add_theme_font_size_override("font_size", 20)
 		tagline.add_theme_color_override("font_color", Color(0.88, 0.8, 0.64, 0.8))

@@ -55,6 +55,8 @@ var campaign_panel: Control
 var dual_world: Control
 var shutting_down := false
 
+var _events_key := ""
+
 func _ready() -> void:
 	add_to_group("lifecycle_hosts")
 	bridge = load("res://scenes/main/LifeBridge.cs").new()
@@ -252,6 +254,7 @@ func _present_life(restored: bool) -> void:
 	walls.clear()
 	_make_life_ui()
 	_build_view()
+	_events_key = ""
 	snapshot = JSON.parse_string(bridge.Observe())
 	var roster: Array = load("res://scenes/components/characters/ModelCatalog.cs").new().ReadRoster()
 	for profile in rules.agents:
@@ -467,7 +470,7 @@ func _process(delta: float) -> void:
 			snapshot = result.snapshot
 			_move(float(result.elapsed_seconds))
 			for action in result.dispatch: _dispatch(action)
-			snapshot = JSON.parse_string(bridge.Observe())
+			# F4：Step 返回值里已带 snapshot，不再额外 Observe()（每次多序列化 + 解析一整份历史快照）
 			remaining -= seconds
 	for actor in snapshot.get("actors", []):
 		if not figures.has(actor.id): continue
@@ -520,15 +523,21 @@ func _refresh() -> void:
 	for relation in audit.get("relations", []):
 		if relation.from == selected: text += "%s: %.1f / %.1f / %.1f %s\n" % [relation.to, relation.affinity, relation.trust, relation.tension, relation.stage]
 	detail.text = text
-	var log_text := "事件与实际兑现\n"
-	for event in snapshot.get("mechanics", []):
-		if event.Kind == "life_response":
-			var response: Dictionary = event.Details
-			log_text += "%s → %s · %s\n%s · %s\n\n" % [response.requester, response.responder, rules.social.categories[response.category].label, rules.social.mode_labels[response.mode], "已兑现" if response.delivered else "尚未兑现"]
-		elif event.Kind == "life_seating":
-			log_text += "%s · 座位约定%s\n\n" % [event.Details.requester, "已实际履行" if event.Success else "已到期"]
-	for receipt in snapshot.get("receipts", []).slice(-8): log_text += "%s · %s\n" % [receipt.Actor, receipt.Reason]
-	events.text = log_text
+	# F4：事件文本只在 mechanics / receipts 数量变化时重建，不再每 0.3 秒遍历全部历史
+	var mech: Array = snapshot.get("mechanics", [])
+	var rcpt: Array = snapshot.get("receipts", [])
+	var events_key := "%d|%d" % [mech.size(), rcpt.size()]
+	if events_key != _events_key:
+		_events_key = events_key
+		var log_text := "事件与实际兑现\n"
+		for event in mech:
+			if event.Kind == "life_response":
+				var response: Dictionary = event.Details
+				log_text += "%s → %s · %s\n%s · %s\n\n" % [response.requester, response.responder, rules.social.categories[response.category].label, rules.social.mode_labels[response.mode], "已兑现" if response.delivered else "尚未兑现"]
+			elif event.Kind == "life_seating":
+				log_text += "%s · 座位约定%s\n\n" % [event.Details.requester, "已实际履行" if event.Success else "已到期"]
+		for receipt in rcpt.slice(-8): log_text += "%s · %s\n" % [receipt.Actor, receipt.Reason]
+		events.text = log_text
 	if not status_text.is_empty(): status_label.text = status_text
 	elif not audit.is_empty(): status_label.text = "库存 %.0f · 携带 %.0f · 已消耗 %.0f · 总供给 %.0f　|　原模型姿态显示，坐卧骨骼动作未接入" % [audit.stock, audit.carried, audit.consumed, audit.supplied]
 

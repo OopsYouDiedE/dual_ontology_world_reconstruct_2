@@ -5,6 +5,11 @@ extends Node
 
 const LIFECYCLE := preload("res://scenes/components/shared/HostLifecycle.gd")
 const MusicContext := preload("res://scenes/components/shared/MusicContext.gd")
+const ProceduralScore := preload("res://scenes/dual_world/ProceduralScore.gd")
+## 双本体迁移使用代码实时合成；设为 false 可恢复原有 OGG 曲目。
+const PROCEDURAL := true
+const CUE_MOOD := {"main_theme": "menu", "night": "night", "day": "daily", "day_noon": "daily",
+	"day_afternoon": "daily", "day_evening": "dumpling", "door_side": "investigation", "confrontation": "confrontation"}
 const MUSIC_PATH := "res://assets/environment/Audio/Music/%s.ogg"
 const SFX_PATH := "res://assets/environment/Audio/Sfx/%s.ogg"
 const MUSIC_DB := -9.0
@@ -25,6 +30,7 @@ var _cache := {}
 var _scene_music := ""
 var _music_token_serial := 0
 var _presentation_music_token := 0
+var _procedural: Node
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -79,6 +85,9 @@ func play_music(id: String, fade := 1.6) -> void:
 	if id == "confrontation" and _presentation_music_token == 0:
 		id = _scene_music
 		if id == "": return
+	if PROCEDURAL:
+		_play_procedural_music(id)
+		return
 	if id == _current and _music[_active].playing:
 		return
 	var stream := _load(MUSIC_PATH % id)
@@ -96,9 +105,24 @@ func play_music(id: String, fade := 1.6) -> void:
 	new.play()
 	_fade_to(new, old, fade)
 
+func _ensure_procedural() -> Node:
+	if _procedural == null:
+		_procedural = ProceduralScore.new()
+		_procedural.name = "ProceduralScore"
+		add_child(_procedural)
+	return _procedural
+
+func _play_procedural_music(id: String) -> void:
+	var score := _ensure_procedural()
+	_current = id
+	score.set_mood(CUE_MOOD.get(id, "investigation"))
+	score.set_enabled(true)
+
 func stop_music(fade := 1.6) -> void:
 	_clear_music_context()
 	_current = ""
+	if _procedural != null: _procedural.set_enabled(false)
+	if PROCEDURAL: return
 	_fade_to(null, _music[_active], fade)
 
 ## 重演回放时压低配乐，结束后恢复。
@@ -114,6 +138,9 @@ func duck(on: bool) -> void:
 		_fade.tween_property(player, "volume_db", _target_db(), 0.6)
 
 func play_sfx(id: String, volume_db := 0.0, pitch := 1.0) -> void:
+	if PROCEDURAL:
+		_ensure_procedural().sfx("page" if id == "page" else "click")
+		return
 	var stream := _load(SFX_PATH % id)
 	if stream == null:
 		return
@@ -147,6 +174,7 @@ func _load(path: String) -> AudioStream:
 ## Release playback before the audio server and scene tree are destroyed.
 func release_audio() -> void:
 	_clear_music_context()
+	if _procedural != null: _procedural.set_enabled(false)
 	if _fade:
 		_fade.kill()
 		_fade = null

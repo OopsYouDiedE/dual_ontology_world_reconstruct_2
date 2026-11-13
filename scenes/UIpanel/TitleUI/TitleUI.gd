@@ -8,6 +8,7 @@ signal book_requested(page_id: String)
 signal quit_requested
 signal builder_requested
 signal campaign_requested
+signal dual_world_requested
 
 const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
 const BODY_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
@@ -50,7 +51,8 @@ func _ready() -> void:
 	quit_button.pressed.connect(_emit.bind(quit_requested))
 	$Menu/BuilderButton.pressed.connect(_emit.bind(builder_requested))
 	$Menu/CampaignButton.pressed.connect(_emit.bind(campaign_requested))
-	for button: Button in [new_button, continue_button, records_button, $Menu/CampaignButton, settings_button, quit_button]:
+	$Menu/DualWorldButton.pressed.connect(_emit.bind(dual_world_requested))
+	for button: Button in [new_button, continue_button, records_button, $Menu/CampaignButton, $Menu/DualWorldButton, $Menu/BuilderButton, settings_button, quit_button]:
 		button.mouse_entered.connect(func(): Sound.sfx("ui_click", -18.0, 1.4))
 	modulate.a = 0.0
 	hide()

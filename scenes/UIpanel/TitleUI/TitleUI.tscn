@@ -78,6 +78,10 @@ text = "继续生活"
 layout_mode = 2
 text = "生活手记"
 
+[node name="DualWorldButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "门的这一侧 · 双本体新局"
+
 [node name="CampaignButton" type="Button" parent="Menu"]
 layout_mode = 2
 text = "打开案件案卷"

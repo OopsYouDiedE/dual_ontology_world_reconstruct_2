@@ -1,0 +1,161 @@
+diff --git a/scenes/UIpanel/TitleUI/TitleUI.gd b/scenes/UIpanel/TitleUI/TitleUI.gd
+index 3f4cd5f..41c3d54 100644
+--- a/scenes/UIpanel/TitleUI/TitleUI.gd
++++ b/scenes/UIpanel/TitleUI/TitleUI.gd
+@@ -8,6 +8,7 @@ signal book_requested(page_id: String)
+ signal quit_requested
+ signal builder_requested
+ signal campaign_requested
++signal dual_world_requested
+ 
+ const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
+ const BODY_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
+@@ -50,7 +51,8 @@ func _ready() -> void:
+ 	quit_button.pressed.connect(_emit.bind(quit_requested))
+ 	$Menu/BuilderButton.pressed.connect(_emit.bind(builder_requested))
+ 	$Menu/CampaignButton.pressed.connect(_emit.bind(campaign_requested))
+-	for button: Button in [new_button, continue_button, records_button, $Menu/CampaignButton, settings_button, quit_button]:
++	$Menu/DualWorldButton.pressed.connect(_emit.bind(dual_world_requested))
++	for button: Button in [new_button, continue_button, records_button, $Menu/CampaignButton, $Menu/DualWorldButton, settings_button, quit_button]:
+ 		button.mouse_entered.connect(func(): Sound.sfx("ui_click", -18.0, 1.4))
+ 	modulate.a = 0.0
+ 	hide()
+diff --git a/scenes/UIpanel/TitleUI/TitleUI.tscn b/scenes/UIpanel/TitleUI/TitleUI.tscn
+index 88dae84..1f2e8b8 100644
+--- a/scenes/UIpanel/TitleUI/TitleUI.tscn
++++ b/scenes/UIpanel/TitleUI/TitleUI.tscn
+@@ -78,6 +78,10 @@ text = "继续生活"
+ layout_mode = 2
+ text = "生活手记"
+ 
++[node name="DualWorldButton" type="Button" parent="Menu"]
++layout_mode = 2
++text = "门的这一侧 · 双本体新局"
++
+ [node name="CampaignButton" type="Button" parent="Menu"]
+ layout_mode = 2
+ text = "打开案件案卷"
+diff --git a/scenes/components/shared/GameAudio.gd b/scenes/components/shared/GameAudio.gd
+index 4c770f9..360b8c6 100644
+--- a/scenes/components/shared/GameAudio.gd
++++ b/scenes/components/shared/GameAudio.gd
+@@ -5,6 +5,11 @@ extends Node
+ 
+ const LIFECYCLE := preload("res://scenes/components/shared/HostLifecycle.gd")
+ const MusicContext := preload("res://scenes/components/shared/MusicContext.gd")
++const ProceduralScore := preload("res://scenes/dual_world/ProceduralScore.gd")
++## 配乐与音效改由代码实时合成（不再读取 .ogg）；设为 false 可回到原曲目。
++const PROCEDURAL := true
++const CUE_MOOD := {"main_theme": "menu", "night": "night", "day": "daily", "day_noon": "daily", "day_afternoon": "daily",
++	"day_evening": "dumpling", "door_side": "investigation", "confrontation": "confrontation"}
+ const MUSIC_PATH := "res://assets/environment/Audio/Music/%s.ogg"
+ const SFX_PATH := "res://assets/environment/Audio/Sfx/%s.ogg"
+ const MUSIC_DB := -9.0
+@@ -25,6 +30,7 @@ var _cache := {}
+ var _scene_music := ""
+ var _music_token_serial := 0
+ var _presentation_music_token := 0
++var _procedural: Node
+ 
+ func _ready() -> void:
+ 	process_mode = Node.PROCESS_MODE_ALWAYS
+@@ -79,6 +85,9 @@ func play_music(id: String, fade := 1.6) -> void:
+ 	if id == "confrontation" and _presentation_music_token == 0:
+ 		id = _scene_music
+ 		if id == "": return
++	if PROCEDURAL:
++		_play_procedural_music(id)
++		return
+ 	if id == _current and _music[_active].playing:
+ 		return
+ 	var stream := _load(MUSIC_PATH % id)
+@@ -96,9 +105,23 @@ func play_music(id: String, fade := 1.6) -> void:
+ 	new.play()
+ 	_fade_to(new, old, fade)
+ 
++func _ensure_procedural() -> Node:
++	if _procedural == null:
++		_procedural = ProceduralScore.new()
++		_procedural.name = "ProceduralScore"
++		add_child(_procedural)
++	return _procedural
++
++func _play_procedural_music(id: String) -> void:
++	var score := _ensure_procedural()
++	_current = id
++	score.set_mood(CUE_MOOD.get(id, "investigation"))
++	score.set_enabled(true)
++
+ func stop_music(fade := 1.6) -> void:
+ 	_clear_music_context()
+ 	_current = ""
++	if _procedural != null: _procedural.set_enabled(false)
+ 	_fade_to(null, _music[_active], fade)
+ 
+ ## 重演回放时压低配乐，结束后恢复。
+@@ -114,6 +137,9 @@ func duck(on: bool) -> void:
+ 		_fade.tween_property(player, "volume_db", _target_db(), 0.6)
+ 
+ func play_sfx(id: String, volume_db := 0.0, pitch := 1.0) -> void:
++	if PROCEDURAL:
++		_ensure_procedural().sfx("page" if id == "page" else "click")
++		return
+ 	var stream := _load(SFX_PATH % id)
+ 	if stream == null:
+ 		return
+diff --git a/scenes/main/Main.gd b/scenes/main/Main.gd
+index 7ebe358..3e8e623 100644
+--- a/scenes/main/Main.gd
++++ b/scenes/main/Main.gd
+@@ -12,6 +12,7 @@ const Floor = preload("res://tools/building_construction/BuildingConstruction/Fl
+ const Props = preload("res://tools/building_construction/BuildingConstruction/Props/ArchitectProps.gd")
+ const DEFAULT_CONTENT := "res://assets/data/scenarios/life_simulation.dv"
+ const CAMPAIGN_PANEL := preload("res://scenes/main/CampaignPanel.gd")
++const DUAL_WORLD_SCENE := preload("res://scenes/dual_world/DualWorldMain.tscn")
+ 
+ var bridge: Node
+ var builder: Control
+@@ -50,6 +51,7 @@ var book_ui: Control
+ var stage: Node3D
+ var book_paused := false
+ var campaign_panel: Control
++var dual_world: Control
+ var shutting_down := false
+ 
+ func _ready() -> void:
+@@ -77,6 +79,7 @@ func _title_setup() -> void:
+ 	title_ui.quit_requested.connect(_quit)
+ 	title_ui.builder_requested.connect(open_building)
+ 	title_ui.campaign_requested.connect(open_campaign)
++	title_ui.dual_world_requested.connect(open_dual_world)
+ 	title_ui.show_title(has_progress(), true)
+ 	GameSettings.settings_requested.connect(_settings_requested)
+ 	campaign_panel = CAMPAIGN_PANEL.new()
+@@ -181,6 +184,27 @@ func open_campaign() -> void:
+ 	if is_instance_valid(campaign_panel):
+ 		campaign_panel.open_campaign()
+ 
++## 双本体整合入口：2D 完整地图 / 3D 单房间 / 2D 蓝图编辑器，规则核心为纯 GDScript 的 DualEngine。
++func open_dual_world() -> void:
++	if active or is_instance_valid(builder) and builder.visible or is_instance_valid(dual_world): return
++	book_ui.close_immediately()
++	title_ui.hide_title(0.0)
++	stage.set_active(false)
++	var audio := get_node_or_null("/root/GameAudio")
++	if audio != null: audio.stop_music(0.4)
++	dual_world = DUAL_WORLD_SCENE.instantiate()
++	add_child(dual_world)
++	dual_world.closed.connect(close_dual_world)
++
++func close_dual_world() -> void:
++	if is_instance_valid(dual_world):
++		remove_child(dual_world)
++		dual_world.queue_free()
++	dual_world = null
++	stage.set_active(true)
++	title_ui.show_title(has_progress())
++	Sound.music("main_theme", 1.5)
++
+ func open_life(building: Dictionary = {}) -> void:
+ 	if active: return
+ 	initial_building = building.duplicate(true)

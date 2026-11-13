@@ -1,6 +1,6 @@
 # Dual Ontology World Reconstruct 2
 
-Godot .NET 4.7.2 / .NET 8。正式入口为 `scenes/main/Main.tscn`，提供五人生活新局与建筑设计工具；C# DV、Reasoning、Runtime 共用于 Godot 和 CLI。
+Godot .NET 4.7.2 / .NET 8。正式入口为 `scenes/main/Boot.tscn`，启动自检通过后进入 `scenes/main/Main.tscn`，提供五人生活新局、双本体新局与建筑设计工具；C# DV、Reasoning、Runtime 共用于 Godot 和 CLI。
 
 ## VSCode 构建
 
@@ -20,7 +20,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 
 此启动器使用引擎目录下的自包含设置，将 C# 外部编辑器设为 VSCode。C# 文件在 VSCode 编辑，编译由任务调用 .NET SDK 完成；Godot 自身的构建也继承共享编译设置。
 
-构建保留增量依赖检查和正常 NuGet 还原，启用并行 MSBuild、节点复用和 Roslyn 编译服务器。优先使用引擎自带 NuGet 包。Core 产物在 `.runtime/build/`，Godot 托管产物由 SDK 放在 `.godot/mono/`，构建日志及二进制日志在 `.runtime/build-logs/`。
+构建保留增量依赖检查和正常 NuGet 还原，启用并行 MSBuild、节点复用和 Roslyn 编译服务器。NuGet 源使用 nuget.org，不依赖项目内的引擎包目录。Core 产物在 `.runtime/build/`，Godot 托管产物由 SDK 放在 `.godot/mono/`，构建日志及二进制日志在 `.runtime/build-logs/`。
+
+Linux / macOS / WSL 可执行 `tools/build/build.sh` 构建，或设置 `GODOT_MONO` 后执行 `tools/build/run.sh` 构建并运行。
 
 环境要求：本目录 `.runtime/godot/4.7.2/` 中的完整 .NET 引擎及 .NET SDK 8.0.4xx；不使用标准版 Godot。SDK 由 `global.json` 限定 .NET 8 补丁系列。
 

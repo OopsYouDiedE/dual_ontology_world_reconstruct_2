@@ -12,6 +12,7 @@ const Floor = preload("res://tools/building_construction/BuildingConstruction/Fl
 const Props = preload("res://tools/building_construction/BuildingConstruction/Props/ArchitectProps.gd")
 const DEFAULT_CONTENT := "res://assets/data/scenarios/life_simulation.dv"
 const CAMPAIGN_PANEL := preload("res://scenes/main/CampaignPanel.gd")
+const DUAL_WORLD_SCENE := preload("res://scenes/dual_world/DualWorldMain.tscn")
 
 var bridge: Node
 var builder: Control
@@ -50,6 +51,7 @@ var book_ui: Control
 var stage: Node3D
 var book_paused := false
 var campaign_panel: Control
+var dual_world: Control
 var shutting_down := false
 
 func _ready() -> void:
@@ -77,6 +79,7 @@ func _title_setup() -> void:
 	title_ui.quit_requested.connect(_quit)
 	title_ui.builder_requested.connect(open_building)
 	title_ui.campaign_requested.connect(open_campaign)
+	title_ui.dual_world_requested.connect(open_dual_world)
 	title_ui.show_title(has_progress(), true)
 	GameSettings.settings_requested.connect(_settings_requested)
 	campaign_panel = CAMPAIGN_PANEL.new()
@@ -180,6 +183,27 @@ func open_campaign() -> void:
 	title_ui.hide_title(0.0)
 	if is_instance_valid(campaign_panel):
 		campaign_panel.open_campaign()
+
+## 双本体整合入口：2D 完整地图 / 3D 单房间 / 2D 蓝图编辑器，规则核心为纯 GDScript 的 DualEngine。
+func open_dual_world() -> void:
+	if active or is_instance_valid(builder) and builder.visible or is_instance_valid(dual_world): return
+	book_ui.close_immediately()
+	title_ui.hide_title(0.0)
+	stage.set_active(false)
+	var audio := get_node_or_null("/root/GameAudio")
+	if audio != null: audio.stop_music(0.4)
+	dual_world = DUAL_WORLD_SCENE.instantiate()
+	add_child(dual_world)
+	dual_world.closed.connect(close_dual_world)
+
+func close_dual_world() -> void:
+	if is_instance_valid(dual_world):
+		remove_child(dual_world)
+		dual_world.queue_free()
+	dual_world = null
+	stage.set_active(true)
+	title_ui.show_title(has_progress())
+	Sound.music("main_theme", 1.5)
 
 func open_life(building: Dictionary = {}) -> void:
 	if active: return

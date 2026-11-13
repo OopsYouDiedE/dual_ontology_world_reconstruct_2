@@ -1,0 +1,583 @@
+extends RefCounted
+## 「双本体」规则引擎（自 web 整合版迁入）：时间 / 节拍 / 证物 / 主观词义 / 认知冲突 / 关系账本 / 结局。
+##
+## 规则只有一条：世界事实只有一份；每个人只保存自己听到、看到、推断到的那一份。
+## 期待落空时只有一方得到申诉证据，另一方永远不知道自己「违约」了。
+## 纯 GDScript，不依赖 C# Core；状态是一份可 JSON 序列化的 Dictionary（见 save_dict / load_dict）。
+
+const Data := preload("res://scenes/dual_world/DualData.gd")
+
+signal changed(why: String)
+signal said(who: String, text: String, kind: String)
+signal sfx(kind: String)
+
+const END_T := 4 * 1440 + 23 * 60 + 59
+const LOCKS := ["zone.0", "zone.1", "zone.2", "zone.3", "service_map", "demon", "wind", "granary", "archive"]
+
+var d: RefCounted
+var s: Dictionary = {}
+
+
+func _init(data: RefCounted = null) -> void:
+	d = data if data != null else Data.get_data()
+	new_game(false)
+
+
+func T(day: int, hour: int, minute: int = 0) -> int:
+	return Data.t_minutes(day, hour, minute)
+
+
+# ───────────────────────── 新局 / 存读档 ─────────────────────────
+func new_game(announce := true) -> void:
+	var rel := {}
+	for p in d.relation_pairs:
+		rel[Data.pair_key(p[0], p[1])] = {"trust": 62, "damage": 0, "permanent": false, "grievances": []}
+	s = {
+		"version": 1, "t": T(1, 7, 0), "playing": true, "speed": 20.0, "waiting": false,
+		"day": 1, "room": "B-P", "author_view": false,
+		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
+		"pending_deduction": {}, "current_beat": "",
+		"evidence": {}, "knowledge": {}, "beliefs": {}, "misconceptions": [], "log": [],
+		"conflicts": {}, "choices": {}, "flags": {}, "relations": rel, "irreparable": false,
+		"deductions": {}, "case_notes": [], "debug_log": [], "doors": {}, "found_count": 0,
+		"inspected": {}, "ending": "", "final_choice": "", "selected_actor": "detective",
+		"selected_evidence": "",
+	}
+	set_door_flags()
+	_log("system", "《安眠者有福 · 门的这一侧》—— 第一天清晨。四区刚刚醒来。", [])
+	if announce:
+		_debug("new", "新局：源质知识为空；第一章的错误动机由缺知识驱动。")
+		changed.emit("new")
+
+
+func save_dict() -> Dictionary:
+	return s.duplicate(true)
+
+
+func load_dict(st: Dictionary) -> bool:
+	if st.is_empty() or not st.has("t"):
+		return false
+	new_game(false)
+	for k in st: s[k] = st[k]
+	s.waiting = not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty()
+	set_door_flags()
+	changed.emit("load")
+	return true
+
+
+# ───────────────────────── 日志 ─────────────────────────
+func _debug(kind: String, text: String) -> void:
+	s.debug_log.append({"t": s.t, "kind": kind, "text": text})
+	if s.debug_log.size() > 300: s.debug_log.pop_front()
+
+
+func _log(kind: String, text: String, who: Array) -> void:
+	s.log.append({"t": s.t, "kind": kind, "text": text, "who": who})
+	if s.log.size() > 420: s.log.pop_front()
+
+
+func say(who: String, text: String, kind := "") -> void:
+	s.last_line = {"who": who, "text": text, "kind": kind}
+	said.emit(who, text, kind)
+
+
+# ───────────────────────── 时间 ─────────────────────────
+func clock() -> Dictionary:
+	var t: float = s.t
+	var day := int(floor(t / 1440.0)) + 1
+	var within := fposmod(t, 1440.0)
+	var h := int(floor(within / 60.0))
+	var m := int(floor(fmod(within, 60.0)))
+	return {"day": mini(5, day), "hour": h + m / 60.0, "h": h, "m": m, "text": "%02d:%02d" % [h, m]}
+
+
+func phase() -> Dictionary:
+	for p in d.phases:
+		if s.t >= p["from"] and s.t < p["to"]:
+			return p
+	return d.phases[d.phases.size() - 1]
+
+
+func set_speed(v: float) -> void:
+	s.speed = v
+	changed.emit("speed")
+
+
+func toggle_play() -> void:
+	s.playing = not s.playing
+	changed.emit("play")
+
+
+# ───────────────────────── 门锁 / 路径 ─────────────────────────
+func set_door_flags() -> void:
+	var t: float = s.t
+	var c := clock()
+	var f: Dictionary = s.flags
+	s.doors = {
+		"zone.0": t >= T(1, 10, 30) or f.has("service_map"),
+		"zone.1": t >= T(1, 11, 10) or f.has("service_map"),
+		"zone.2": t >= T(1, 11, 10),
+		"zone.3": t >= T(1, 11, 10),
+		"service_map": f.has("service_map"),
+		"demon": true,
+		"wind": c.day >= 2 and c.hour >= 9.0 and c.hour < 17.0,
+		"granary": f.has("granary"),
+		"archive": t >= T(5, 9, 0) or s.author_view,
+	}
+
+
+func unlocked(door: Dictionary) -> bool:
+	set_door_flags()
+	var lock: Variant = door.get("lock", null)
+	return lock == null or s.doors.get(str(lock), false) or s.author_view
+
+
+## 广度优先寻路；返回房间 id 序列，不可达返回空数组。
+func path_to(target: String, start := "") -> Array:
+	if start == "": start = s.room
+	if start == target: return [target]
+	var adj := {}
+	for dr in d.doors:
+		if not adj.has(dr.a): adj[dr.a] = []
+		if not adj.has(dr.b): adj[dr.b] = []
+		adj[dr.a].append([dr.b, dr])
+		adj[dr.b].append([dr.a, dr])
+	var queue: Array = [[start]]
+	var seen := {start: true}
+	while not queue.is_empty():
+		var path: Array = queue.pop_front()
+		var last: String = path[path.size() - 1]
+		for pair in adj.get(last, []):
+			var nb: String = pair[0]
+			if seen.has(nb) or not unlocked(pair[1]): continue
+			var np := path.duplicate()
+			np.append(nb)
+			if nb == target: return np
+			seen[nb] = true
+			queue.append(np)
+	return []
+
+
+func enter_room(id: String, silent := false) -> bool:
+	if not d.room_by_id.has(id): return false
+	var path := path_to(id)
+	if path.is_empty() and not s.author_view:
+		notice("门从里面闩着，现在过不去。")
+		sfx.emit("error")
+		return false
+	s.room = id
+	s.inspected[id] = true
+	if not silent:
+		var extra := "（经 %d 段接驳）" % (path.size() - 2) if path.size() > 2 else ""
+		_log("move", "进入 %s%s" % [d.room_by_id[id].label, extra], [s.selected_actor])
+		sfx.emit("door")
+	changed.emit("room")
+	return true
+
+
+var notices: Array = []
+
+func notice(text: String) -> void:
+	notices.append({"text": text, "at": Time.get_ticks_msec()})
+	if notices.size() > 4: notices.pop_front()
+	changed.emit("notice")
+
+
+# ───────────────────────── 证物与知识 ─────────────────────────
+func knowledge_count() -> int:
+	return s.knowledge.size()
+
+
+func grant_knowledge(id: String, why := "") -> bool:
+	if not d.know_by_id.has(id) or s.knowledge.has(id): return false
+	s.knowledge[id] = {"at": s.t, "why": why}
+	_log("knowledge", "在案卷边角添了一行小字。", [])
+	_debug("knowledge", "【%s】%s" % [d.know_by_id[id].title, d.know_by_id[id].text])
+	sfx.emit("page")
+	changed.emit("knowledge")
+	return true
+
+
+## 读证物：缺少前置源质知识时只能得到「当前读法」；作者视角只改变显示，不替人物补知识。
+func read_evidence(eid: String) -> Dictionary:
+	if not d.evidence_by_id.has(eid): return {}
+	var e: Dictionary = d.evidence_by_id[eid]
+	var need: Array = []
+	for k in e.get("need", []):
+		if not s.knowledge.has(k): need.append(k)
+	var correct := need.is_empty()
+	return {
+		"correct": correct, "need": need,
+		"text": e.truth if (correct or s.author_view) else e.naive,
+		"author_only": (not correct) and s.author_view,
+	}
+
+
+func inspect_evidence(eid: String) -> bool:
+	if not d.evidence_by_id.has(eid): return false
+	var e: Dictionary = d.evidence_by_id[eid]
+	if s.room != e.room and not s.author_view:
+		notice("得先到那间房去。")
+		sfx.emit("error")
+		return false
+	var first: bool = not s.evidence.has(eid)
+	s.evidence[eid] = {"at": s.t, "room": e.room}
+	s.selected_evidence = eid
+	var r := read_evidence(eid)
+	s.evidence[eid]["correct"] = r.correct
+	_log("evidence", "【%s】%s" % [e.label, r.text], e.get("actors", []))
+	say("detective", r.text, "truth" if r.correct else "think")
+	sfx.emit("pen")
+	# 主观认知：各人保存自己那一份（知识补齐才会改）
+	var who: Array = e.actors if not e.get("actors", []).is_empty() else ["detective"]
+	for a in who:
+		if not s.beliefs.has(a): s.beliefs[a] = {}
+		s.beliefs[a][eid] = "truth" if r.correct else "naive"
+	var mis: Array = s.misconceptions
+	if not r.correct:
+		var have := false
+		for m in mis:
+			if m.eid == eid: have = true
+		if not have:
+			mis.append({"eid": eid, "at": s.t, "text": e.naive, "need": r.need, "lex": e.get("lex", [])})
+	else:
+		s.misconceptions = mis.filter(func(m): return m.eid != eid)
+		for k in e.get("grants", []): grant_knowledge(k, e.label)
+	if first:
+		s.found_count += 1
+		s.case_notes.append({"eid": eid, "at": s.t, "text": r.text})
+	_debug("evidence", "%s → %s：%s" % [e.label, "客观读法" if r.correct else "当前读法", r.text])
+	changed.emit("evidence")
+	return true
+
+
+# ───────────────────────── 主观词义 ─────────────────────────
+## 各当事人对冲突关键词取的义项。
+func conflict_senses(cid: String) -> Array:
+	var out: Array = []
+	if not d.conflict_by_id.has(cid): return out
+	var c: Dictionary = d.conflict_by_id[cid]
+	for id in c.parties:
+		out.append({"id": id, "name": d.actor_name(id), "sense": d.sense_label(id, c.word),
+			"sense_id": d.sense_of(id, c.word), "color": d.actor_by_id[id].color})
+	return out
+
+
+## 说话者说出一个词、听者怎么理解。字面为真；是否「期待落空」取决于两人义项是否相同。
+func utter(speaker: String, term: String, listener: String) -> Dictionary:
+	var a: String = d.sense_of(speaker, term)
+	var b: String = d.sense_of(listener, term)
+	return {
+		"term": term, "word": d.terms.get(term, {}).get("word", term),
+		"meant": d.sense_label(speaker, term), "heard": d.sense_label(listener, term),
+		"mismatch": a != b,
+		"literal_true": true,  # 契约第八条：字面语义在客观现实中不得为假
+	}
+
+
+# ───────────────────────── 推演 / 争执 ─────────────────────────
+func open_deduction(did: String, next := "") -> void:
+	if not d.deduction_by_id.has(did) or s.deductions.has(did):
+		if next != "": open_conflict(next)
+		return
+	s.pending_deduction = {"id": did, "next": next}
+	s.waiting = true
+	_log("beat", "摊开案卷 · %s" % d.deduction_by_id[did].title, [s.selected_actor])
+	_debug("deduction", "推演开启 %s（争执前必经的一步）" % did)
+	sfx.emit("page")
+	changed.emit("deduction")
+
+
+func solve_deduction(did: String, hyp_id: String, picked: Array = []) -> void:
+	if s.pending_deduction.is_empty() or s.pending_deduction.id != did: return
+	var dd: Dictionary = d.deduction_by_id[did]
+	var pool: Array = picked if not picked.is_empty() else dd.evidence.filter(func(e): return s.evidence.has(e))
+	var relevant: Array = pool.filter(func(e): return dd.evidence.has(e))
+	var need_min := int(dd.get("minEvidence", 2))
+	var solved: bool = hyp_id == dd.correct and relevant.size() >= need_min
+	s.deductions[did] = "solved" if solved else "wrong"
+	s.case_notes.append({"did": did, "at": s.t, "text": dd.note if solved else "这一页先空着，回头再核。"})
+	var nxt: String = s.pending_deduction.next
+	s.pending_deduction = {}
+	_refresh_waiting()
+	_log("deduce", "案卷推演 · %s" % dd.title, [s.selected_actor])
+	_debug("deduction", "%s → %s（假设 %s，证物 %d/%d 件）" % [did, s.deductions[did], hyp_id, relevant.size(), need_min])
+	sfx.emit("pen")
+	if nxt != "": open_conflict(nxt)
+	changed.emit("deduction")
+
+
+func retry_deduction(did: String) -> bool:
+	if not d.deduction_by_id.has(did) or not s.pending_deduction.is_empty() or s.pending_conflict != "": return false
+	s.deductions.erase(did)
+	open_deduction(did)
+	return true
+
+
+func _refresh_waiting() -> void:
+	s.waiting = not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty()
+
+
+## 争执里的正解，只有先完成对应推演才出现在侦探眼前。
+func conflict_options(cid: String) -> Array:
+	if not d.conflict_by_id.has(cid): return []
+	var c: Dictionary = d.conflict_by_id[cid]
+	var out: Array = []
+	for o in c.options:
+		var hidden: bool = c.get("deduction", null) != null and o.id == c.correct and s.deductions.get(c.deduction, "") != "solved"
+		if not hidden: out.append(o)
+	return out
+
+
+func open_conflict(cid: String) -> void:
+	if not d.conflict_by_id.has(cid) or s.conflicts.has(cid): return
+	var c: Dictionary = d.conflict_by_id[cid]
+	var ded: Variant = c.get("deduction", null)
+	if ded != null and not s.deductions.has(ded):
+		open_deduction(str(ded), cid)
+		return
+	if not s.conflict_queue.has(cid): s.conflict_queue.append(cid)
+	s.pending_conflict = s.conflict_queue[0]
+	s.waiting = true
+	_log("confront", "争执 · %s" % c.title, c.parties)
+	_debug("conflict", "%s（%s）：%s %s" % [c.title, cid, c.get("wrong", ""), c.get("note", "")])
+	sfx.emit("error")
+	changed.emit("conflict")
+
+
+func _pop_conflict(cid: String) -> void:
+	s.conflict_queue = s.conflict_queue.filter(func(x): return x != cid)
+	s.pending_conflict = s.conflict_queue[0] if not s.conflict_queue.is_empty() else ""
+	_refresh_waiting()
+
+
+func _rel(a: String, b: String) -> Dictionary:
+	var k := Data.pair_key(a, b)
+	if not s.relations.has(k):
+		s.relations[k] = {"trust": 62, "damage": 0, "permanent": false, "grievances": []}
+	return s.relations[k]
+
+
+func resolve_conflict(cid: String, option_id: String, defer := false) -> void:
+	if not d.conflict_by_id.has(cid): return
+	var c: Dictionary = d.conflict_by_id[cid]
+	var wrong: bool = defer or option_id != c.correct
+	if defer and not c.get("permanent", false):
+		_pop_conflict(cid)
+		_log("say", "【%s】先搁下，这一页留白。" % c.title, c.parties)
+		_debug("conflict", "%s：被搁置，未拆解" % c.title)
+		changed.emit("conflict")
+		return
+	s.conflicts[cid] = "failed" if wrong else "resolved"
+	_pop_conflict(cid)
+	var label := "先搁下"
+	for o in c.options:
+		if o.id == option_id: label = o.label
+	_log("say", "%s · %s" % [c.title, label], c.parties)
+	_debug("conflict", "%s → %s（%s）；词义 %s，判定 %s" % [c.title, "误判" if wrong else "正确", option_id if option_id != "" else "defer", c.word, c.correct])
+	var a: String = c.parties[0]
+	var b: String = c.parties[1]
+	if wrong:
+		sfx.emit("error")
+		var rel := _rel(a, b)
+		rel.trust = maxi(0, int(rel.trust) - 22)
+		rel.damage = int(rel.damage) + 22
+		rel.grievances.append({
+			"who": a, "other": b, "one_sided": true, "at": s.t,
+			"text": "%s把「%s」记成「%s」，%s记成「%s」。期待落空，只有前者提出申诉；后者并不知道自己「违约」了。" % [
+				d.actor_name(a), d.terms[c.word].word, d.sense_label(a, c.word),
+				d.actor_name(b), d.sense_label(b, c.word)]})
+		if c.get("permanent", false):
+			s.irreparable = true
+			for pr in [["ward", "quer"], ["moran", "selma"], ["su", "detective"]]:
+				var r2 := _rel(pr[0], pr[1])
+				r2.trust = maxi(4, int(r2.trust) - 46)
+				r2.damage = int(r2.damage) + 46
+				r2.permanent = true
+				r2.grievances.append({"who": pr[0], "other": pr[1], "one_sided": true, "at": s.t,
+					"text": "第一天的真话被各自听成不同事实。事后查明真相也不会复原这一条。"})
+			_debug("relation", "不可弥合：沃德／雀儿、莫兰／赛尔玛、苏泠／侦探三组信任永久受损；事后查明真相也不会复原。")
+	else:
+		sfx.emit("success")
+		var r3 := _rel(a, b)
+		r3.trust = mini(100, int(r3.trust) + 16)
+		for k in c.get("need", []):
+			if s.knowledge.has(k): grant_knowledge(k, c.title)
+		if cid == "c_demon": grant_knowledge("k_contract", "第一天的对照")
+	changed.emit("conflict")
+
+
+func choose(beat_id: String, option_id: String) -> void:
+	var beat: Dictionary = {}
+	for b in d.beats:
+		if b.id == beat_id: beat = b
+	if beat.is_empty() or not beat.has("choice"): return
+	var opt: Dictionary = {}
+	for o in beat.choice.options:
+		if o.id == option_id: opt = o
+	if opt.is_empty(): return
+	s.choices[beat.choice.id] = option_id
+	for k in opt.get("set", {}): s.flags[k] = opt.set[k]
+	if beat.choice.id == "final": s.final_choice = option_id
+	s.pending_choice = {}
+	_refresh_waiting()
+	_log("choice", "%s → %s" % [beat.title, opt.label], [s.selected_actor])
+	_debug("choice", "%s / %s %s" % [beat.title, option_id, "（设计中为正解）" if opt.get("correct", false) else ""])
+	say("detective", opt.label, "")
+	sfx.emit("error" if opt.get("correct", true) == false else "click")
+	changed.emit("choice")
+
+
+# ───────────────────────── 节拍 ─────────────────────────
+func next_beat() -> void:
+	for b in d.beats:
+		if b["at"] > s.t + 0.01:
+			s.t = float(b["at"])
+			process_beats()
+			changed.emit("jump")
+			return
+	finish()
+
+
+func jump_day(day: int) -> void:
+	var target := float(T(day, 7, 0))
+	if target < s.t:
+		var keep := {"author_view": s.author_view}
+		new_game(false)
+		for k in keep: s[k] = keep[k]
+	s.t = target
+	s.beat_cursor = d.beats.size()
+	for i in d.beats.size():
+		if d.beats[i]["at"] >= s.t:
+			s.beat_cursor = i
+			break
+	process_beats()
+	changed.emit("jump")
+
+
+func process_beats() -> void:
+	var fired := 0
+	while s.beat_cursor < d.beats.size() and d.beats[s.beat_cursor]["at"] <= s.t:
+		var b: Dictionary = d.beats[s.beat_cursor]
+		s.beat_cursor += 1
+		s.current_beat = b.id
+		if b.has("room") and d.room_by_id.has(b.room) and s.room != b.room and not s.author_view:
+			s.room = b.room  # 剧情推进时主角自动跟随到场
+		var where: String = " · " + d.room_by_id[b.room].label if b.has("room") and d.room_by_id.has(b.room) else ""
+		_log("beat", "【%s】%s" % [b.title, where], b.get("present", []))
+		for ln in b.lines:
+			var who: String = ln[0]
+			var nm: String = "" if who == "narrator" else d.actor_name(who) + "："
+			_log("say", nm + str(ln[1]), [who])
+			say(who, ln[1], str(ln[2]) if ln.size() > 2 else "")
+		if b.has("grant"): grant_knowledge(b.grant, b.title)
+		if b.has("flag"): s.flags[b.flag] = true
+		if b.has("deduction") and not s.deductions.has(b.deduction): open_deduction(b.deduction)
+		if b.has("openConflict") and not s.conflicts.has(b.openConflict): open_conflict(b.openConflict)
+		if b.has("choice"):
+			s.pending_choice = {"beat_id": b.id, "choice": b.choice}
+			s.waiting = true
+		if b.get("mustChoose", false) and not s.conflicts.has("c_demon") and not s.conflict_queue.has("c_demon"):
+			open_conflict("c_demon")
+		fired += 1
+		if not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty(): break
+		if fired > 12: break
+	s.day = clock().day
+	set_door_flags()
+	if fired > 0: changed.emit("beat")
+
+
+## 以「游戏分钟」推进（真实秒 × 倍率）。有待决事项时时间冻结，直到玩家处理。
+func tick(dt: float) -> void:
+	if not s.playing or s.waiting or s.ending != "": return
+	if s.t >= END_T:
+		finish()
+		return
+	s.t = minf(float(END_T), s.t + dt * s.speed)
+	set_door_flags()
+	process_beats()
+	if s.t >= END_T: finish()
+
+
+# ───────────────────────── 人物位置 ─────────────────────────
+func room_occupants() -> Dictionary:
+	var occ := {}
+	var put := func(id: String, room: String) -> void:
+		if not d.actor_by_id.has(id) or not d.room_by_id.has(room): return
+		if not occ.has(room): occ[room] = []
+		occ[room].append(id)
+	var last: Dictionary = {}
+	for b in d.beats:
+		if b["at"] <= s.t and b.has("present"): last = b
+	var busy := {}
+	if not last.is_empty() and s.t - last["at"] < 190:
+		for id in last.present:
+			busy[id] = true
+			put.call(id, last.room)
+		if last.get("demon", false): busy["demon"] = true
+	var h: float = clock().hour
+	for a in d.actors:
+		if busy.has(a.id): continue
+		if a.id == "demon":
+			put.call(a.id, "D-gate")
+			continue
+		var r: String = a.home
+		if h >= 12.0 and h < 17.0 and s.t >= T(1, 11, 10):
+			r = "T01" if s.day == 1 else "2F-cross-M"
+		elif h >= 17.5 and h < 21.0:
+			r = "F03"
+		elif h >= 7.2 and h < 11.5 and s.t >= T(1, 11, 10):
+			r = "2F-cross-M"
+		put.call(a.id, r)
+	return occ
+
+
+func actors_in_room(room: String) -> Array:
+	var list: Array = room_occupants().get(room, [])
+	return list.slice(0, 12)
+
+
+func current_demon() -> bool:
+	var last: Dictionary = {}
+	for b in d.beats:
+		if b["at"] <= s.t and b.get("demon", false): last = b
+	return not last.is_empty() and s.t - last["at"] < 95
+
+
+## 音乐状态：程序化配乐据此改变调性、速度与织体。
+func music_state() -> Dictionary:
+	var c := clock()
+	var mood := "investigation"
+	if s.ending != "": mood = "truth"
+	elif current_demon(): mood = "demon"
+	elif s.pending_conflict != "" or not s.pending_choice.is_empty(): mood = "confrontation"
+	elif s.t >= T(1, 17, 30) and s.t < T(1, 21) and s.day == 1: mood = "dumpling"
+	elif c.hour >= 20.0 or c.hour < 6.0: mood = "night"
+	elif s.day >= 2 and c.hour >= 9.0 and c.hour < 17.0: mood = "daily"
+	var tension := (0.5 if s.irreparable else 0.0) + (0.3 if s.pending_conflict != "" else 0.0)
+	return {"mood": mood, "hour": c.hour, "demon": current_demon(), "tension": tension}
+
+
+# ───────────────────────── 结局 ─────────────────────────
+func compute_ending() -> String:
+	var k := knowledge_count()
+	if k < 4 or s.final_choice == "fate": return "lost"
+	if s.final_choice == "demon": return "trapped"
+	if s.final_choice == "lexeme" and not s.irreparable and k >= 6: return "best"
+	if s.irreparable: return "bitter"
+	return "best" if k >= 6 else "bitter"
+
+
+func finish() -> void:
+	if s.ending != "": return
+	s.ending = compute_ending()
+	s.playing = false
+	_debug("ending", "结局 %s · %s" % [s.ending, d.endings[s.ending].title])
+	sfx.emit("chime")
+	changed.emit("ending")
+
+
+func force_ending() -> void:
+	if s.final_choice == "": s.final_choice = "lexeme"
+	s.t = maxf(s.t, float(T(5, 21, 0)))
+	finish()

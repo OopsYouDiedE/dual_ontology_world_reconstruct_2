@@ -15,6 +15,7 @@ var fails := 0
 func _initialize() -> void:
 	main = MainScene.instantiate()
 	main.instant_story = true
+	main.auto_search = true # 回归测试显式启用自动搜证；正式开局默认由玩家控制
 	root.add_child(main)
 
 

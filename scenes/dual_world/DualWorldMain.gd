@@ -52,8 +52,8 @@ var top_clock: Label
 var top_phase: Label
 var speed_pick: OptionButton
 var auto_btn: Button
-## 侦探自动搜证：空闲时搜完所在房间，推演缺证物时自己走去取
-var auto_search := true
+## 可选自动搜证：开局默认关闭；开启后才会自行走去调查。
+var auto_search := false
 var _auto_cd := 1.0
 var play_btn: Button
 var view_btns: Dictionary = {}
@@ -1437,11 +1437,16 @@ func _objective_text() -> String:
 	var s: Dictionary = eng.s
 	if s.ending != "":
 		return "故事已结束，可重新开始或返回标题。"
-	# 开场：侦探在 R05 床上醒来（四人里最晚），先出门去乙区小厨房。
-	if s.t < 480.0 and str(s.room) == "R05" and s.beat_cursor == 0:
-		return "目标：你刚在 R05 居室的床上醒来——四人里醒得最晚。\n出门（寝室门 → B-P 乙区小厨房），去看看霍铎、沈师傅和苏泠在查什么。"
-	if s.t < 480.0 and str(s.room) == "B-P" and s.beat_cursor == 0:
-		return "目标：乙区小厨房。时间推进到 08:00 时，推演「门厅的先后」会弹出；\n先点金色光柱搜集本房证物（拖痕、水渍、棘轮……）。"
+	# 现场门：不替玩家传送，明确告知当前目标与可走路径。
+	var story_gate: Dictionary = s.get("story_gate", {})
+	if not story_gate.is_empty() and data.room_by_id.has(str(story_gate.get("room", ""))):
+		var target := str(story_gate.room)
+		return "目标：前往「%s」。剧情在此等待，不会替你瞬移。\n从门口/地图手动移动；抵达后再调查现场证物。" % data.room_by_id[target].label
+	# 开场：侦探在 R05 床上醒来（四人里最晚）。
+	if s.t < 480.0 and str(s.room) == "R05" and s.beat_cursor <= 1:
+		return "目标：你在 R05 床上醒来，是四人里最后醒的。按 WASD 起床并检查卧室；到 08:00 后亲自从寝室门走去 B-P 乙区小厨房。"
+	if s.t < 480.0 and str(s.room) == "B-P" and s.beat_cursor <= 1:
+		return "目标：乙区小厨房。先亲自走近并检查拖痕、湿布、反扣棘轮等现场证物，再开始推演。"
 	var hold: Dictionary = s.get("hold", {})
 	var did := ""
 	if not hold.is_empty(): did = str(hold.deduction)
@@ -1809,10 +1814,10 @@ func _modal_intro() -> void:
 	var v := _modal_shell("第一天 · 清晨", "游戏开始时时间是暂停的。准备好了再按「开始」。")
 	_ink_label(v, "你扮演侦探。第一天清晨，你在 R05 居室的床上醒来——四人里醒得最晚。\n霍铎、沈师傅和苏泠已经在乙区小厨房（B-P）等着了。", 14)
 	_ink_label(v, "每一天都按同一个节奏：", 14)
-	_ink_label(v, "① 取证：在房间里点发光的标记（或让「自动搜证」替你走）。证物不够时，推演不会弹出，时间也不会往前走。", 14)
-	_ink_label(v, "② 推演：弹窗会显示「已取得 X / 至少需要 N」。证物不足时假设按钮不可点，可以先去取证；判错的推演之后能在「案卷 → 推演」里重新推演。", 14)
+	_ink_label(v, "① 取证：点房间里的金色标记查看证物。证物不足时推演不会弹出，时间也会停住；自动搜证是可选辅助，开局默认关闭。", 14)
+	_ink_label(v, "② 推演：弹窗会显示「已取得 X / 至少需要 N」。证物不足时先去调查；判错的推演之后能在「案卷 → 推演」里重新推演。", 14)
 	_ink_label(v, "③ 争执：正解选项只有推演成功才会出现。选错会永久折损人物之间的信任，第一天的「对质」尤其如此，务必先把证物取齐。", 14)
-	_ink_label(v, "操作：点光柱或左侧证物查看；WASD/方向键可亲自走动（会关掉自动搜证）；空格推进字幕；顶栏可暂停、调速。", 13)
+	_ink_label(v, "剧情按场景逐幕播放：一幕只显示该房间真正开口的人。08:00 的厨房现场需要你从 R05 亲自走过去；时间会停在门口等你，不会把人瞬移到别的地图。\n操作：WASD/方向键亲自走动；点光柱或左侧证物查看；空格推进字幕；顶栏可暂停、调速或开启自动搜证。", 13)
 	var row := HBoxContainer.new()
 	v.add_child(row)
 	var go := _btn(row, "开始", func(): pass)

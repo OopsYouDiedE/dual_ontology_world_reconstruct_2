@@ -51,6 +51,14 @@ func _init() -> void:
 			e.resolve_conflict(e.s.pending_conflict, "__wrong__")
 		elif not e.s.pending_choice.is_empty():
 			e.choose(e.s.pending_choice.beat_id, e.s.pending_choice.choice.options[0].id)
+		elif not e.s.get("story_gate", {}).is_empty():
+			e.s.room = str(e.s.story_gate.room)
+			e.s.story_gate = {}
+			e.process_beats()
+		elif not e.s.get("story_gate", {}).is_empty():
+			e.s.room = str(e.s.story_gate.room) # 自动化仅模拟玩家到达指定房间
+			e.s.story_gate = {}
+			e.process_beats()
 		elif not e.s.hold.is_empty():
 			if not e.search_step(): e.tick(1.0)  # 侦探先搜证，门槛才会放行
 		else:
@@ -81,14 +89,37 @@ func _init() -> void:
 			for ev in data.deduction_by_id[e.s.hold.deduction].evidence:
 				e.s.evidence[ev] = {"at": 0}
 			e.tick(1.0)
+		elif not e.s.get("story_gate", {}).is_empty():
+			e.s.room = str(e.s.story_gate.room)
+			e.s.story_gate = {}
+			e.process_beats()
 		else:
 			e.tick(1.0)
 	check(e.s.ending == "best", "全部正解 + 九条知识 → 结局 best（实际 %s）" % e.s.ending)
 	# 5b. 搜证门槛：不搜证就停在推演节拍；默认倍速不再是 ×20；搜够证物才放行
 	var g := Engine_.new(data)
 	check(g.s.speed == 5.0, "默认倍速 ×5（实际 ×%s）" % g.s.speed)
+	# 剧情回归：开场只播侦探本地台词；到厨房事件时不瞬移；抵达后才进入搜证。
+	var story := Engine_.new(data)
+	story.process_beats()
+	var wake_lines: Array = story.s.log.filter(func(it): return str(it.get("kind", "")) == "say")
+	var wake_local: bool = wake_lines.size() == 2
+	for it in wake_lines: wake_local = wake_local and it.who.size() == 1 and str(it.who[0]) == "detective"
+	check(story.s.current_beat == "d1_wake" and wake_local, "开场只播放 R05 侦探本人台词（不泄露其他房间对白）")
+	check(story.actors_in_room("R05").has("detective") and story.actors_in_room("R05").size() == 1 and story.actors_in_room("B-P").has("huo") and story.actors_in_room("B-P").has("shen") and story.actors_in_room("B-P").has("su"), "开场人物按房间分布：侦探独自在卧室，三人实体留在厨房")
+	story.s.t = float(story.T(1, 8, 0))
+	story.process_beats()
+	check(story.s.room == "R05" and str(story.s.story_gate.get("room", "")) == "B-P" and story.s.current_beat == "d1_wake", "08:00 厨房剧情在 R05 等待玩家前往，不自动切图")
+	story.enter_room("B-P")
+	story.tick(0.01)
+	check(story.s.room == "B-P" and not story.s.hold.is_empty(), "玩家抵达厨房后才触发现场搜证门槛")
 	g.s.speed = 600.0
 	for _i in 2000: g.tick(1.0)
+	if not g.s.get("story_gate", {}).is_empty():
+		g.s.room = str(g.s.story_gate.room)
+		g.s.story_gate = {}
+		g.process_beats()
+	g.tick(0.01)
 	check(not g.s.hold.is_empty() and g.s.pending_deduction.is_empty() and g.s.deductions.is_empty(),
 		"没有证物时推演不会弹出，时间停在节拍上（%s）" % g.hold_text())
 	var steps := 0
@@ -118,6 +149,10 @@ func _init() -> void:
 			hb.resolve_conflict(hb.s.pending_conflict, data.conflict_by_id[hb.s.pending_conflict].correct)
 		elif not hb.s.pending_choice.is_empty():
 			hb.choose(hb.s.pending_choice.beat_id, hb.s.pending_choice.choice.options[0].id)
+		elif not hb.s.get("story_gate", {}).is_empty():
+			hb.s.room = str(hb.s.story_gate.room)
+			hb.s.story_gate = {}
+			hb.process_beats()
 		elif not hb.s.hold.is_empty():
 			if not hb.search_step(): hb.tick(1.0)
 		else:
@@ -190,5 +225,17 @@ func _init() -> void:
 	re.solve_deduction("ded_cuffs", data.deduction_by_id["ded_cuffs"].correct)
 	check(re.s.deductions["ded_cuffs"] == "solved" and re.s.pending_conflict == "c_handcuff", "重新推演成功 → 争执重新弹出，正解出现")
 	check(not re.retry_deduction("ded_cuffs"), "已解开的推演不能重试")
+	var narrative_ok: bool = data.beats.size() >= 35
+	var seen_days := {}
+	for b in data.beats:
+		seen_days[int(b.get("day", 0))] = true
+		var prior := -1
+		for ln in b.get("lines", []):
+			if ln.size() < 2: narrative_ok = false; continue
+			var who := str(ln[0])
+			if who != "narrator" and not data.actor_by_id.has(who): narrative_ok = false
+			if who != "narrator" and not b.get("present", []).has(who): narrative_ok = false
+		if b.has("room") and not data.room_by_id.has(str(b.room)): narrative_ok = false
+	check(narrative_ok and seen_days.size() == 5, "五日全部剧情节拍有有效地点与本场出场角色（%d 节拍）" % data.beats.size())
 	print("失败 %d" % fails)
 	quit(1 if fails > 0 else 0)

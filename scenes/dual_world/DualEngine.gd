@@ -38,7 +38,7 @@ func new_game(announce := true) -> void:
 		"version": 1, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
 		"day": 1, "room": "R05", "author_view": false,
 		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
-		"pending_deduction": {}, "postponed": {}, "current_beat": "",
+		"pending_deduction": {}, "postponed": {}, "current_beat": "", "story_gate": {},
 		"evidence": {}, "knowledge": {}, "beliefs": {}, "misconceptions": [], "log": [],
 		"conflicts": {}, "choices": {}, "flags": {}, "relations": rel, "irreparable": false,
 		"deductions": {}, "case_notes": [], "debug_log": [], "doors": {}, "found_count": 0,
@@ -495,14 +495,25 @@ func process_beats() -> void:
 	var fired := 0
 	while s.beat_cursor < d.beats.size() and d.beats[s.beat_cursor]["at"] <= s.t:
 		var b: Dictionary = d.beats[s.beat_cursor]
-		# 搜证门槛：推演节拍触发前，侦探必须在现场拿到足够的相关证物，否则时间停在这一刻
+		# 场景门：标记为现场到达型的节拍不会把玩家瞬移到房间；时间停住，等玩家亲自走到场景。
+		if b.get("requires_room", false) and not s.author_view and str(b.get("room", "")) != str(s.room):
+			var target_room := str(b.get("room", ""))
+			if str(s.get("story_gate", {}).get("beat", "")) != str(b.id):
+				s.story_gate = {"beat": b.id, "room": target_room}
+				s.t = float(b.at)
+				notice("剧情停在现场门口：请亲自前往「%s」，不会自动切图。" % d.room_by_id[target_room].label if d.room_by_id.has(target_room) else "请前往剧情现场。")
+			break
+		if not s.get("story_gate", {}).is_empty() and str(s.story_gate.get("beat", "")) == str(b.id):
+			s.story_gate = {}
+		# 搜证门槛：推演节拍触发前，侦探必须亲自在现场拿到足够的相关证物。
 		if _hold_for_evidence(b): break
 		s.beat_cursor += 1
 		s.current_beat = b.id
 		if b.has("room") and d.room_by_id.has(b.room) and s.room != b.room and not s.author_view:
 			s.room = b.room  # 剧情推进时主角自动跟随到场
 		var where: String = " · " + d.room_by_id[b.room].label if b.has("room") and d.room_by_id.has(b.room) else ""
-		_log("beat", "【%s】%s" % [b.title, where], b.get("present", []))
+		var cast := _beat_speakers(b)
+		_log("beat", "【%s】%s" % [b.title, where], cast)
 		for ln in b.lines:
 			var who: String = ln[0]
 			var nm: String = "" if who == "narrator" else d.actor_name(who) + "："
@@ -518,8 +529,8 @@ func process_beats() -> void:
 		if b.get("mustChoose", false) and not s.conflicts.has("c_demon") and not s.conflict_queue.has("c_demon"):
 			open_conflict("c_demon")
 		fired += 1
-		if not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty(): break
-		if fired > 12: break
+		# 一次只交付一个场景：字幕读完后再继续时间线，禁止同一帧跨房间连播多幕。
+		break
 	s.day = clock().day
 	set_door_flags()
 	if fired > 0: changed.emit("beat")
@@ -528,6 +539,11 @@ func process_beats() -> void:
 ## 以「游戏分钟」推进（真实秒 × 倍率）。有待决事项时时间冻结，直到玩家处理。
 func tick(dt: float) -> void:
 	if not s.playing or s.waiting or s.ending != "": return
+	if not s.get("story_gate", {}).is_empty():
+		if str(s.room) != str(s.story_gate.get("room", "")): return
+		s.story_gate = {}
+		process_beats()
+		if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty(): return
 	if not s.get("hold", {}).is_empty():  # 等侦探搜证：时间不走，每帧复核门槛
 		process_beats()
 		if not s.get("hold", {}).is_empty(): return
@@ -641,6 +657,16 @@ func search_step() -> bool:
 
 
 # ───────────────────────── 人物位置 ─────────────────────────
+## 五天所有场景统一按台词实际说话者确定镜头内角色，而非旧剧本的宽泛出场名单。
+func _beat_speakers(b: Dictionary) -> Array:
+	var out: Array = []
+	for ln in b.get("lines", []):
+		if ln.size() < 2: continue
+		var who := str(ln[0])
+		if who != "narrator" and d.actor_by_id.has(who) and not out.has(who): out.append(who)
+	return out
+
+
 func room_occupants() -> Dictionary:
 	var occ := {}
 	var put := func(id: String, room: String) -> void:
@@ -649,12 +675,14 @@ func room_occupants() -> Dictionary:
 		occ[room].append(id)
 	var last: Dictionary = {}
 	for b in d.beats:
-		if b["at"] <= s.t and b.has("present"): last = b
+		if b["at"] <= s.t and b.has("lines"): last = b
 	var busy := {}
-	if not last.is_empty() and s.t - last["at"] < 190:
-		for id in last.present:
+	# 只显示当前场景真正开口的角色；名单不再把整张地图/全体角色瞬间搬来。
+	# 场景人物在短暂交谈后回到自己的日常位置，不会在错误房间滞留数小时。
+	if not last.is_empty() and s.t - float(last["at"]) < float(last.get("duration", 25)):
+		for id in _beat_speakers(last):
 			busy[id] = true
-			put.call(id, last.room)
+			put.call(id, str(last.get("room", "")))
 		if last.get("demon", false): busy["demon"] = true
 	var h: float = clock().hour
 	for a in d.actors:
@@ -664,7 +692,7 @@ func room_occupants() -> Dictionary:
 			continue
 		var r: String = a.home
 		# 开场：侦探在 R05 床上醒来（四人里最晚）；其余三人已在乙区小厨房。
-		if s.t < T(1, 8, 0):
+		if s.t < T(1, 8, 30):
 			r = "R05" if a.id == "detective" else ("B-P" if a.home in ["R06", "R07", "R08"] else a.home)
 		elif h >= 12.0 and h < 17.0 and s.t >= T(1, 11, 10):
 			r = "T01" if s.day == 1 else "2F-cross-M"

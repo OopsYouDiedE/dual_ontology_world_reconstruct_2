@@ -1,5 +1,5 @@
 extends SceneTree
-## 真实时间下的「侦探自己动起来」回归：不开 instant_story，默认设置运行，
+## 真实时间下的「侦探自己动起来」回归：不开 instant_story，测试显式启用自动搜证，
 ## 检查：默认倍速 ×5、侦探自己走动搜证、没有证物时不会弹出推演。
 ##   godot --headless --path . --script res://tools/dual_world/dual_autoplay.gd
 const MainScene := preload("res://scenes/dual_world/DualWorldMain.tscn")
@@ -16,6 +16,7 @@ var rooms_seen := {}
 func _initialize() -> void:
 	main = MainScene.instantiate()
 	main.show_intro = false  # 这里测的是开局之后的自动搜证；引导弹窗见 dual_verify 的暂停用例
+	main.auto_search = true
 	root.add_child(main)
 	t0 = Time.get_ticks_msec() / 1000.0
 

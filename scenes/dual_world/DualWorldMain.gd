@@ -20,6 +20,7 @@ const Score := preload("res://scenes/dual_world/ProceduralScore.gd")
 
 const DESIGN_FILE := "user://dual_world/designs.json"
 const SAVE_FILE := "user://dual_world/save_%d.json"
+const AUTO_FILE := "user://dual_world/auto.json"
 const INK := Color("#221c15")
 const PAPER := Color("#eae0c4")
 const BRASS := Color("#b89758")
@@ -88,6 +89,40 @@ var _sub_until := 0.0
 var _speaker := ""
 var _toast_until := 0.0
 
+## 由 Main 在「继续游戏」时设置：进入后直接读取这份存档。
+var resume_path := ""
+## 测试 / 脚本用：true 时台词不排队、不冻结时间，换房间不走路（沿用旧的瞬时行为）。
+var instant_story := false
+
+# 界面（浮层式布局：3D 占满整个画面，信息收进左上角位置卡与右侧案卷抽屉）
+var left_card: PanelContainer
+var left_body: Control
+var drawer: PanelContainer
+var drawer_btn: Button
+var menu_btn: MenuButton
+var room_hint: Label
+var fade_rect: ColorRect
+
+# 侦探在 3D 里的行走
+const CELL := 0.3
+const WALK_SPEED := 3.0
+var det_root: Node3D
+var det: Node3D
+var det_pos := Vector2.ZERO
+var det_path: Array = []
+var det_done := Callable()
+var _det_talk := ""
+var _grid: AStarGrid2D
+var _transit: Dictionary = {}
+var _fade_tween: Tween
+
+# 台词队列：一句一句播，播放期间时间冻结，抉择窗口在台词播完后才弹出
+var _sub_queue: Array = []
+var _autosave_due := false
+var _autosave_cd := 0.0
+var _fit_dist := 9.0
+const AUTOSAVE_EVENTS := ["beat", "choice", "conflict", "deduction", "evidence", "knowledge", "jump", "room"]
+
 
 func _ready() -> void:
 	data = Data.get_data()
@@ -96,11 +131,16 @@ func _ready() -> void:
 	_build_ui()
 	score = Score.new()
 	add_child(score)
-	eng.changed.connect(func(_w: String): _dirty = true)
+	eng.changed.connect(func(why: String):
+		_dirty = true
+		if why in AUTOSAVE_EVENTS: _autosave_due = true)
 	eng.said.connect(_on_said)
 	eng.sfx.connect(func(k: String): score.sfx(k))
 	set_process(true)
-	_set_view("map")
+	if resume_path != "" and not _read_save(resume_path):
+		_toast("存档无法读取，已从头开始")
+	# 正式游戏默认进 3D 房间：侦探在房间里走动；2D 地图是辅助视图
+	_set_view("room")
 	_dirty = true
 
 
@@ -108,6 +148,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	# 浏览器与桌面端都要求用户手势后才能出声：首次点击或按键时启动合成器
 	if event is InputEventMouseButton or event is InputEventKey:
 		if score != null and not score._started and score.enabled: score.start()
+
+
+func _close() -> void:
+	_finish_transit_now()
+	_write_auto()
+	closed.emit()
 
 
 # ───────────────────────── 构建界面 ─────────────────────────
@@ -133,6 +179,19 @@ func _theme() -> Theme:
 	t.set_stylebox("pressed", "Button", _style(Color("#8a6a2f"), Color("#d9a13a"), 5, 6))
 	t.set_stylebox("disabled", "Button", _style(Color("#201a14"), LINE, 5, 6))
 	t.set_stylebox("panel", "PanelContainer", _style(WOOD2, LINE, 4, 8))
+	for kind in ["MenuButton", "OptionButton"]:
+		t.set_color("font_color", kind, TEXT)
+		t.set_color("font_hover_color", kind, Color("#fff4dc"))
+		t.set_stylebox("normal", kind, _style(Color("#2c2219"), LINE, 5, 6))
+		t.set_stylebox("hover", kind, _style(Color("#3a2d22"), BRASS, 5, 6))
+		t.set_stylebox("pressed", kind, _style(Color("#8a6a2f"), Color("#d9a13a"), 5, 6))
+	t.set_stylebox("panel", "PopupMenu", _style(Color("#1d1712"), BRASS, 4, 6))
+	t.set_stylebox("hover", "PopupMenu", _style(Color("#3a2d22"), BRASS, 3, 4))
+	t.set_color("font_color", "PopupMenu", TEXT)
+	t.set_color("font_hover_color", "PopupMenu", Color("#fff4dc"))
+	t.set_font_size("font_size", "TabContainer", 13)
+	t.set_color("font_selected_color", "TabContainer", Color("#e9c98a"))
+	t.set_color("font_unselected_color", "TabContainer", MUTED)
 	return t
 
 
@@ -166,19 +225,17 @@ func _build_ui() -> void:
 	add_child(bg)
 	var root := VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.add_theme_constant_override("separation", 4)
+	root.add_theme_constant_override("separation", 0)
 	add_child(root)
-	# 顶栏
+	# ── 顶栏：只留时间、播放控制、视图切换、案卷与菜单 ──
 	var top := PanelContainer.new()
+	top.add_theme_stylebox_override("panel", _style(Color("#17120e"), LINE, 0, 6))
 	root.add_child(top)
 	var tb := HBoxContainer.new()
-	tb.add_theme_constant_override("separation", 6)
+	tb.add_theme_constant_override("separation", 8)
 	top.add_child(tb)
-	var title := Label.new()
-	title.text = "安眠者有福 · 门的这一侧"
-	title.add_theme_color_override("font_color", Color("#e9c98a"))
-	tb.add_child(title)
 	top_clock = Label.new()
+	top_clock.add_theme_color_override("font_color", Color("#e9c98a"))
 	tb.add_child(top_clock)
 	top_phase = Label.new()
 	top_phase.add_theme_color_override("font_color", MUTED)
@@ -193,65 +250,91 @@ func _build_ui() -> void:
 	speed_pick.select(1)
 	speed_pick.item_selected.connect(func(i: int): eng.set_speed(float(speed_pick.get_item_metadata(i))))
 	tb.add_child(speed_pick)
-	_btn(tb, "下一节拍", func(): eng.next_beat())
-	for v in [["map", "2D 地图"], ["room", "3D 实机"], ["editor", "2D 编辑器"]]:
-		var vb := _btn(tb, v[1], func(): _set_view(v[0]))
+	for v in [["room", "房间"], ["map", "地图"]]:
+		var vb := _btn(tb, v[1], func(): _set_view(v[0], v[0] == "room"))
 		vb.toggle_mode = true
 		view_btns[v[0]] = vb
-	var music := CheckButton.new()
-	music.text = "音乐"
-	music.button_pressed = true
-	music.focus_mode = Control.FOCUS_NONE
-	music.toggled.connect(func(on: bool): score.set_enabled(on))
-	tb.add_child(music)
-	var author := CheckButton.new()
-	author.text = "作者视角"
-	author.focus_mode = Control.FOCUS_NONE
-	author.tooltip_text = "显示词义分歧与客观读法；不会替人物补知识"
-	author.toggled.connect(func(on: bool):
-		eng.s.author_view = on
-		eng.set_door_flags()
-		_dirty = true)
-	tb.add_child(author)
-	_btn(tb, "存档", func(): _save_game(1))
-	_btn(tb, "读档", func(): _load_game(1))
-	_btn(tb, "返回", func(): closed.emit())
-	# 主体
-	var body := HSplitContainer.new()
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(body)
-	var left := PanelContainer.new()
-	left.custom_minimum_size = Vector2(250, 0)
-	body.add_child(left)
+	drawer_btn = _btn(tb, "案卷", func(): _toggle_drawer())
+	drawer_btn.toggle_mode = true
+	drawer_btn.tooltip_text = "日志 / 证物 / 知识 / 词义 / 关系"
+	menu_btn = MenuButton.new()
+	menu_btn.text = "菜单"
+	menu_btn.focus_mode = Control.FOCUS_NONE
+	var pm := menu_btn.get_popup()
+	pm.add_item("下一节拍", 0)
+	pm.add_separator()
+	pm.add_check_item("背景音乐", 2)
+	pm.set_item_checked(pm.get_item_index(2), true)
+	pm.add_check_item("作者视角（显示词义分歧）", 3)
+	pm.add_separator()
+	pm.add_item("2D 场景编辑器", 5)
+	pm.add_separator()
+	pm.add_item("存档（槽位 1）", 7)
+	pm.add_item("读档（槽位 1）", 8)
+	pm.add_separator()
+	pm.add_item("返回标题", 9)
+	pm.id_pressed.connect(_on_menu)
+	tb.add_child(menu_btn)
+	# ── 中央：整块画面都给地图 / 3D 房间 / 编辑器 ──
+	center = Control.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.custom_minimum_size = Vector2(480, 300)
+	center.clip_contents = true
+	root.add_child(center)
+	_build_center()
+	# ── 左上：位置卡（房间、在场者、出口、本房证物），可折叠 ──
+	left_card = PanelContainer.new()
+	left_card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.07, 0.05, 0.84), LINE, 6, 10))
+	left_card.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	left_card.offset_left = 12
+	left_card.offset_top = 12
+	left_card.custom_minimum_size = Vector2(250, 0)
+	center.add_child(left_card)
 	var lv := VBoxContainer.new()
-	left.add_child(lv)
-	var lh := Label.new()
-	lh.text = "当 前 位 置"
-	lh.add_theme_color_override("font_color", BRASS)
+	lv.add_theme_constant_override("separation", 4)
+	left_card.add_child(lv)
+	var lh := HBoxContainer.new()
 	lv.add_child(lh)
+	var lt := Label.new()
+	lt.text = "当前位置"
+	lt.add_theme_color_override("font_color", BRASS)
+	lt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lh.add_child(lt)
+	var fold := _btn(lh, "–", func(): pass)
+	fold.custom_minimum_size = Vector2(28, 0)
+	fold.pressed.connect(func():
+		left_body.visible = not left_body.visible
+		fold.text = "–" if left_body.visible else "+")
+	left_body = VBoxContainer.new()
+	left_body.add_theme_constant_override("separation", 4)
+	lv.add_child(left_body)
 	left_text = _rich()
-	left_text.custom_minimum_size = Vector2(0, 150)
-	lv.add_child(left_text)
+	left_text.fit_content = true
+	left_text.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	left_body.add_child(left_text)
 	var sc := ScrollContainer.new()
-	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	lv.add_child(sc)
+	sc.custom_minimum_size = Vector2(0, 150)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	left_body.add_child(sc)
 	left_actions = VBoxContainer.new()
 	left_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sc.add_child(left_actions)
-	var mid_right := HSplitContainer.new()
-	mid_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(mid_right)
-	center = Control.new()
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center.custom_minimum_size = Vector2(480, 300)
-	center.clip_contents = true
-	mid_right.add_child(center)
-	_build_center()
-	var right := PanelContainer.new()
-	right.custom_minimum_size = Vector2(340, 0)
-	mid_right.add_child(right)
+	# ── 右侧：案卷抽屉（默认收起） ──
+	drawer = PanelContainer.new()
+	drawer.add_theme_stylebox_override("panel", _style(Color(0.09, 0.07, 0.05, 0.95), LINE, 6, 8))
+	drawer.anchor_left = 1.0
+	drawer.anchor_right = 1.0
+	drawer.anchor_top = 0.0
+	drawer.anchor_bottom = 1.0
+	drawer.offset_left = -400
+	drawer.offset_right = -12
+	drawer.offset_top = 12
+	drawer.offset_bottom = -104
+	drawer.visible = false
+	center.add_child(drawer)
 	right_tabs = TabContainer.new()
-	right.add_child(right_tabs)
+	drawer.add_child(right_tabs)
 	tab_log = _add_tab("日志")
 	tab_ev = _add_tab("证物")
 	tab_know = _add_tab("知识")
@@ -269,20 +352,36 @@ func _build_ui() -> void:
 	tab_rel = _add_tab("关系")
 	tab_contract = _add_tab("契约")
 	tab_author = _add_tab("调试")
-	# 字幕 / 提示
+	_apply_author_tabs()
+	# ── 底部：台词字幕 + 操作提示 ──
+	room_hint = Label.new()
+	room_hint.text = "点光柱 → 侦探走过去查看  ·  右键拖动旋转  ·  滚轮缩放"
+	room_hint.add_theme_font_size_override("font_size", 12)
+	room_hint.add_theme_color_override("font_color", Color(MUTED, 0.85))
+	room_hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	room_hint.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	room_hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	room_hint.offset_right = -16
+	room_hint.offset_bottom = -102
+	room_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	center.add_child(room_hint)
 	subtitle = Label.new()
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 18)
-	subtitle.add_theme_stylebox_override("normal", _style(Color(0.06, 0.05, 0.04, 0.88), BRASS, 6, 10))
+	subtitle.add_theme_stylebox_override("normal", _style(Color(0.06, 0.05, 0.04, 0.9), BRASS, 6, 10))
 	subtitle.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	subtitle.offset_left = 60
+	subtitle.offset_right = -60
 	subtitle.offset_top = -92
 	subtitle.offset_bottom = -14
-	subtitle.offset_left = 280
-	subtitle.offset_right = -370
 	subtitle.visible = false
-	subtitle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(subtitle)
+	subtitle.mouse_filter = Control.MOUSE_FILTER_STOP
+	subtitle.tooltip_text = "点击跳过这一句"
+	subtitle.gui_input.connect(func(ev: InputEvent):
+		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT: _sub_until = 0.0)
+	center.add_child(subtitle)
 	toast = Label.new()
 	toast.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	toast.offset_top = 60
@@ -303,6 +402,40 @@ func _add_tab(name_: String) -> RichTextLabel:
 	r.name = name_
 	right_tabs.add_child(r)
 	return r
+
+
+func _toggle_drawer() -> void:
+	drawer.visible = not drawer.visible
+	drawer_btn.button_pressed = drawer.visible
+	_dirty = true
+
+
+## 「调试」页只在作者视角下出现。
+func _apply_author_tabs() -> void:
+	var idx := right_tabs.get_tab_idx_from_control(tab_author)
+	if idx >= 0: right_tabs.set_tab_hidden(idx, not eng.s.author_view)
+	if not eng.s.author_view and right_tabs.current_tab == idx: right_tabs.current_tab = 0
+
+
+func _on_menu(id: int) -> void:
+	var pm := menu_btn.get_popup()
+	match id:
+		0: eng.next_beat()
+		2:
+			var i := pm.get_item_index(2)
+			pm.set_item_checked(i, not pm.is_item_checked(i))
+			score.set_enabled(pm.is_item_checked(i))
+		3:
+			var j := pm.get_item_index(3)
+			pm.set_item_checked(j, not pm.is_item_checked(j))
+			eng.s.author_view = pm.is_item_checked(j)
+			eng.set_door_flags()
+			_apply_author_tabs()
+			_dirty = true
+		5: _set_view("editor")
+		7: _save_game(1)
+		8: _load_game(1)
+		9: _close()
 
 
 func _build_center() -> void:
@@ -343,6 +476,10 @@ func _build_center() -> void:
 	world.add_child(room_mesh)
 	figures_root = Node3D.new()
 	world.add_child(figures_root)
+	det_root = Node3D.new()
+	world.add_child(det_root)
+	_spawn_detective()
+	room_container.resized.connect(_fit_camera)
 	# 编辑器
 	editor_box = HBoxContainer.new()
 	editor_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -395,38 +532,83 @@ func _build_center() -> void:
 	side.add_child(editor_status)
 	editor.design_changed.connect(_update_editor_status)
 	editor.selection_changed.connect(func(t: String): editor_sel.text = t if t != "" else "未选中")
+	# 换房间时的黑场（盖在 3D 上，不挡 UI）
+	fade_rect = ColorRect.new()
+	fade_rect.color = Color(0.03, 0.02, 0.02, 1.0)
+	fade_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fade_rect.modulate.a = 0.0
+	center.add_child(fade_rect)
 
 
 # ───────────────────────── 视图切换 ─────────────────────────
-func _set_view(v: String) -> void:
+func _set_view(v: String, animate := false) -> void:
+	if view == "room" and v != "room": _finish_transit_now()
 	view = v
 	map_view.visible = v == "map"
 	room_container.visible = v == "room"
 	editor_box.visible = v == "editor"
+	left_card.visible = v != "editor"
+	room_hint.visible = v == "room"
 	for k in view_btns: view_btns[k].button_pressed = k == v
-	if v == "room": _ensure_room()
+	if v == "room":
+		# 从地图双击进入：保留旧房间，让侦探走出去再走进来；其余情况直接建好房间
+		if not (animate and _room_loaded != "" and not instant_story): _ensure_room()
+		else: _fit_camera()
 	if v == "editor": _open_editor(eng.s.room if map_view.selected == "" else map_view.selected)
 	_dirty = true
 
 
 func _on_room_activated(id: String) -> void:
 	if id == eng.s.room or eng.enter_room(id):
-		_set_view("room")
+		_set_view("room", true)
 
 
+# ───────────────────────── 台词队列 ─────────────────────────
 func _on_said(who: String, text: String, kind: String) -> void:
+	if instant_story: _sub_queue.clear()
+	_sub_queue.append({"who": who, "text": text, "kind": kind})
+
+
+func _story_busy() -> bool:
+	return subtitle.visible or not _sub_queue.is_empty() or not det_path.is_empty()
+
+
+func _figure_of(who: String) -> Node3D:
+	if who == "detective": return det
+	return figures.get(who, null)
+
+
+func _set_talk_pose(who: String, pose: String) -> void:
+	if who == "detective": _det_talk = "" if pose == "stand" else pose
+	else:
+		var f: Node3D = figures.get(who, null)
+		if f != null and is_instance_valid(f): f.set_pose(pose)
+
+
+## 播完当前一句、取下一句。队列非空或字幕在场时，时间冻结（见 _process）。
+func _pump_subtitles(now: float) -> void:
+	if subtitle.visible and now < _sub_until: return
+	if subtitle.visible:
+		subtitle.visible = false
+		_set_talk_pose(_speaker, "stand")
+		if _sub_queue.is_empty(): _dirty = true  # 台词播完，抉择窗口可以弹了
+	if _sub_queue.is_empty(): return
+	var ln: Dictionary = _sub_queue.pop_front()
+	var who: String = ln.who
+	var text: String = ln.text
 	_speaker = who
-	var nm: String = ""
+	var nm := ""
 	if who != "narrator" and data.actor_by_id.has(who): nm = str(data.actor_name(who)) + "："
 	subtitle.text = nm + text
 	subtitle.visible = true
-	_sub_until = Time.get_ticks_msec() / 1000.0 + maxf(3.2, 1.5 + text.length() * 0.07)
+	_sub_until = now + maxf(2.4, 1.2 + text.length() * 0.075)
 	var pose := "talk"
-	match kind:
+	match str(ln.kind):
 		"confront": pose = "argue"
 		"truth": pose = "point"
 		"think": pose = "think"
-	if figures.has(who): figures[who].set_pose(pose)
+	_set_talk_pose(who, pose)
 
 
 func _toast(text: String) -> void:
@@ -473,47 +655,123 @@ func _update_editor_status() -> void:
 
 
 # ───────────────────────── 存读档 ─────────────────────────
-func _save_game(slot: int) -> void:
+func _write_save(path: String) -> void:
 	DirAccess.make_dir_recursive_absolute("user://dual_world")
-	var f := FileAccess.open(SAVE_FILE % slot, FileAccess.WRITE)
-	f.store_string(JSON.stringify(eng.save_dict()))
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f != null: f.store_string(JSON.stringify(eng.save_dict()))
+
+
+## 自动存档：「继续游戏」读这一份。通关后删除，避免下次继续时直接停在结局上。
+func _write_auto() -> void:
+	if eng.s.ending != "":
+		if FileAccess.file_exists(AUTO_FILE): DirAccess.remove_absolute(AUTO_FILE)
+		return
+	_write_save(AUTO_FILE)
+
+
+func _save_game(slot: int) -> void:
+	_write_save(SAVE_FILE % slot)
 	_toast("已存档至槽位 %d" % slot)
 	score.sfx("success")
+
+
+func _read_save(path: String) -> bool:
+	if not FileAccess.file_exists(path): return false
+	var f := FileAccess.open(path, FileAccess.READ)
+	var p: Variant = JSON.parse_string(f.get_as_text())
+	if not (p is Dictionary and eng.load_dict(p)): return false
+	_modal_key = ""
+	_sub_queue.clear()
+	subtitle.visible = false
+	_finish_transit_now()
+	_room_loaded = ""
+	var pm := menu_btn.get_popup()
+	pm.set_item_checked(pm.get_item_index(3), bool(eng.s.author_view))
+	_apply_author_tabs()
+	if view == "room": _ensure_room()
+	return true
 
 
 func _load_game(slot: int) -> void:
 	if not FileAccess.file_exists(SAVE_FILE % slot):
 		_toast("槽位为空")
 		return
-	var f := FileAccess.open(SAVE_FILE % slot, FileAccess.READ)
-	var p: Variant = JSON.parse_string(f.get_as_text())
-	if p is Dictionary and eng.load_dict(p):
-		_modal_key = ""
-		_room_loaded = ""
-		_toast("已读取槽位 %d" % slot)
+	if _read_save(SAVE_FILE % slot): _toast("已读取槽位 %d" % slot)
 
 
 # ───────────────────────── 3D：单房间 ─────────────────────────
+func _transit_active() -> bool:
+	return bool(_transit.get("active", false))
+
+
 func _ensure_room() -> void:
+	if _transit_active(): return
 	var id: String = eng.s.room
 	if id == _room_loaded: return
+	_build_room(id)
+	_det_to_home()
+
+
+func _build_room(id: String) -> void:
 	_room_loaded = id
 	room_mesh.build(_design_for(id), eng.s.evidence)
-	var c: Vector3 = room_mesh.center()
-	dist = clampf(maxf(room_mesh.design.w, room_mesh.design.d) * 1.15, 6.0, 26.0)
+	_build_grid()
 	_occ_key = ""
-	_update_camera()
+	_fit_camera()
 	room_mesh.refresh_walls(az)
 	DayNight.apply(eng.clock().hour, sun, env, room_mesh.lamps, room_mesh.glow_materials)
-	_sync_figures()
+	_sync_figures(true)
+
+
+func _aim(distance: float) -> void:
+	var c: Vector3 = room_mesh.center()
+	var dir := Vector3(sin(az) * cos(pitch), sin(pitch), cos(az) * cos(pitch))
+	cam.position = c + dir * distance
+	cam.look_at(c, Vector3.UP)
 
 
 func _update_camera() -> void:
 	if room_mesh.design.is_empty(): return
-	var c: Vector3 = room_mesh.center()
-	var dir := Vector3(sin(az) * cos(pitch), sin(pitch), cos(az) * cos(pitch))
-	cam.position = c + dir * dist
-	cam.look_at(c, Vector3.UP)
+	_aim(dist)
+	room_mesh.refresh_walls(az)
+
+
+## 取景：二分求出能把整间房（含墙高）放进画面的最近距离。一次只看一个房间，所以尽量放大。
+func _fit_camera() -> void:
+	if room_mesh == null or room_mesh.design.is_empty() or room_container == null: return
+	var vs: Vector2 = room_container.size
+	if vs.x < 120.0 or vs.y < 120.0: return
+	var w: float = room_mesh.design.w
+	var d: float = room_mesh.design.d
+	var corners: Array = []
+	for x in [0.0, w]:
+		for z in [0.0, d]:
+			for y in [0.0, 1.9]:
+				corners.append(Vector3(x, y, z))
+	var th := tan(deg_to_rad(cam.fov) * 0.5)
+	var aspect := vs.x / vs.y
+	var lo := 2.5
+	var hi := 60.0
+	for i in 22:
+		var mid := (lo + hi) * 0.5
+		_aim(mid)
+		var inv := cam.global_transform.affine_inverse()
+		var ok := true
+		for p in corners:
+			var v: Vector3 = inv * p
+			if v.z > -0.1:
+				ok = false
+				break
+			var nx: float = absf(v.x / -v.z) / (th * aspect)
+			var ny: float = absf(v.y / -v.z) / th
+			if nx > 0.92 or ny > 0.86:
+				ok = false
+				break
+		if ok: hi = mid
+		else: lo = mid
+	_fit_dist = hi
+	dist = hi
+	_aim(dist)
 	room_mesh.refresh_walls(az)
 
 
@@ -547,21 +805,22 @@ func _free_slots(n: int) -> Array:
 	return out
 
 
-func _sync_figures() -> void:
+func _sync_figures(force := false) -> void:
 	if room_mesh.design.is_empty(): return
-	var list: Array = eng.actors_in_room(eng.s.room)
-	var key := ",".join(list.map(func(i): return str(i))) + "@" + str(eng.s.room)
+	if _transit_active() and not force: return
+	var list: Array = eng.actors_in_room(_room_loaded).filter(func(i): return str(i) != "detective")
+	var key := ",".join(list.map(func(i): return str(i))) + "@" + _room_loaded
 	if key == _occ_key: return
 	_occ_key = key
 	for c in figures_root.get_children(): c.queue_free()
 	figures.clear()
-	var slots := _free_slots(list.size())
+	var slots := _free_slots(list.size() + 1)  # 第 0 个空位留给侦探
 	var mid := Vector2(room_mesh.design.w * 0.5, room_mesh.design.d * 0.5)
-	for i in mini(list.size(), slots.size()):
+	for i in mini(list.size(), slots.size() - 1):
 		var a: Dictionary = data.actor_by_id[list[i]]
 		var f: Node3D = Figure.new()
 		f.setup(a, data.rig_spec.get("poses", {}))
-		var sp: Vector2 = slots[i]
+		var sp: Vector2 = slots[i + 1]
 		f.position = Vector3(sp.x, 0.0, sp.y)
 		var to := mid - sp
 		f.rotation.y = atan2(to.x, to.y)
@@ -579,22 +838,284 @@ func _sync_figures() -> void:
 		f.add_child(tag)
 
 
+# ───────────────────────── 3D：侦探走路 ─────────────────────────
+func _spawn_detective() -> void:
+	det = Figure.new()
+	det.setup(data.actor_by_id["detective"], data.rig_spec.get("poses", {}))
+	det_root.add_child(det)
+	# 脚下金色光环 + 名牌：一眼能找到「我」在哪
+	var ring := MeshInstance3D.new()
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.34
+	tm.outer_radius = 0.42
+	ring.mesh = tm
+	ring.scale = Vector3(1.0, 0.25, 1.0)
+	ring.position = Vector3(0, 0.035, 0)
+	var rm := StandardMaterial3D.new()
+	rm.albedo_color = Color("#d9a13a")
+	rm.emission_enabled = true
+	rm.emission = Color("#d9a13a")
+	rm.emission_energy_multiplier = 1.4
+	rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ring.material_override = rm
+	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	det.add_child(ring)
+	var tag := Label3D.new()
+	tag.text = "侦探"
+	tag.font_size = 46
+	tag.pixel_size = 0.006
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.position = Vector3(0, float(data.actor_by_id["detective"].look.height) + 0.3, 0)
+	tag.modulate = Color("#ffd98a")
+	tag.outline_size = 10
+	tag.no_depth_test = true
+	det.add_child(tag)
+
+
+func _home_spot() -> Vector2:
+	var slots := _free_slots(1)
+	if not slots.is_empty(): return slots[0]
+	return Vector2(room_mesh.design.w * 0.5, room_mesh.design.d * 0.5)
+
+
+func _det_to_home() -> void:
+	det_path.clear()
+	det_done = Callable()
+	det_pos = _home_spot()
+	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
+	det.rotation.y = az  # 正面朝向镜头
+
+
+func _build_grid() -> void:
+	var ds: Dictionary = room_mesh.design
+	var cx := int(ceil(float(ds.w) / CELL))
+	var cz := int(ceil(float(ds.d) / CELL))
+	_grid = AStarGrid2D.new()
+	_grid.region = Rect2i(0, 0, cx, cz)
+	_grid.cell_size = Vector2(CELL, CELL)
+	_grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	_grid.default_compute_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	_grid.default_estimate_heuristic = AStarGrid2D.HEURISTIC_OCTILE
+	_grid.update()
+	var margin: float = float(ds.walls[0].thickness) / 2.0 + 0.2
+	for ix in cx:
+		for iz in cz:
+			var px := (ix + 0.5) * CELL
+			var pz := (iz + 0.5) * CELL
+			var blocked := px < margin or px > float(ds.w) - margin or pz < margin or pz > float(ds.d) - margin
+			if not blocked:
+				for pr in ds.props:
+					if Geo.prop_dims(pr).blocking and Geo.point_in_prop(pr, px, pz, 0.2):
+						blocked = true
+						break
+			if blocked: _grid.set_point_solid(Vector2i(ix, iz), true)
+
+
+func _cell_of(p: Vector2) -> Vector2i:
+	var r: Rect2i = _grid.region
+	return Vector2i(clampi(int(floor(p.x / CELL)), 0, r.size.x - 1), clampi(int(floor(p.y / CELL)), 0, r.size.y - 1))
+
+
+func _nearest_free(c: Vector2i) -> Vector2i:
+	if not _grid.is_point_solid(c): return c
+	for r in range(1, 9):
+		for dx in range(-r, r + 1):
+			for dz in range(-r, r + 1):
+				if maxi(absi(dx), absi(dz)) != r: continue
+				var q := Vector2i(c.x + dx, c.y + dz)
+				if _grid.is_in_boundsv(q) and not _grid.is_point_solid(q): return q
+	return c
+
+
+## 房间内绕开家具的路线（网格 A*）；终点本身不在障碍里时才精确走到终点。
+func _route(from: Vector2, to: Vector2) -> Array:
+	if _grid == null: return [to]
+	var a := _nearest_free(_cell_of(from))
+	var b := _nearest_free(_cell_of(to))
+	var ids: Array[Vector2i] = _grid.get_id_path(a, b)
+	var out: Array = []
+	for id in ids: out.append(Vector2((id.x + 0.5) * CELL, (id.y + 0.5) * CELL))
+	if out.size() > 1: out.pop_front()
+	if not _grid.is_point_solid(_cell_of(to)): out.append(to)
+	return out
+
+
+func _go(points: Array, done := Callable()) -> void:
+	det_path = points
+	det_done = done
+
+
+func _walk_step(delta: float) -> void:
+	if det == null: return
+	var moving := not det_path.is_empty()
+	if moving:
+		var step := WALK_SPEED * delta
+		while step > 0.0 and not det_path.is_empty():
+			var tgt: Vector2 = det_path[0]
+			var dv: Vector2 = tgt - det_pos
+			var l := dv.length()
+			if l > 0.001:
+				det.rotation.y = lerp_angle(det.rotation.y, atan2(dv.x, dv.y), minf(1.0, delta * 14.0))
+			if l <= step:
+				det_pos = tgt
+				step -= l
+				det_path.pop_front()
+			else:
+				det_pos += dv / l * step
+				step = 0.0
+		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
+	det.set_pose("walk" if not det_path.is_empty() else (_det_talk if _det_talk != "" else "stand"))
+	if det_path.is_empty() and det_done.is_valid():
+		var cb := det_done
+		det_done = Callable()
+		cb.call()
+
+
+## 3D 里点证物光柱 / 左侧点证物：侦探先走到跟前，再查看。
+func _inspect_walk(eid: String) -> void:
+	if view != "room" or instant_story or _transit_active() or not room_mesh.evidence_nodes.has(eid) or _room_loaded != eng.s.room:
+		eng.inspect_evidence(eid)
+		return
+	var n: Node3D = room_mesh.evidence_nodes[eid]
+	var target := Vector2(n.global_position.x, n.global_position.z)
+	var away := det_pos - target
+	if away.length() < 0.05: away = Vector2(0, 1)
+	var stand := target + away.normalized() * 0.6
+	_go(_route(det_pos, stand), func():
+		if _room_loaded != eng.s.room or _transit_active(): return
+		det.rotation.y = atan2(target.x - det_pos.x, target.y - det_pos.y)
+		eng.inspect_evidence(eid)
+		_rebuild_markers())
+
+
+func _rebuild_markers() -> void:
+	room_mesh.build(room_mesh.design, eng.s.evidence)
+	_occ_key = ""
+	_sync_figures()
+
+
+func _room_dir(a: String, b: String) -> Vector2:
+	var ra: Dictionary = data.room_by_id[a].map
+	var rb: Dictionary = data.room_by_id[b].map
+	var v := Vector2(float(rb.x) + float(rb.w) * 0.5 - float(ra.x) - float(ra.w) * 0.5, float(rb.y) + float(rb.h) * 0.5 - float(ra.y) - float(ra.h) * 0.5)
+	return v.normalized() if v.length() > 0.01 else Vector2(0, 1)
+
+
+## 选一扇最朝向 dirv 的门：返回 {pos 墙上, inward 朝室内, inner 室内站位, outer 室外站位}。
+func _door_for(ds: Dictionary, dirv: Vector2) -> Dictionary:
+	var wall: Dictionary = ds.walls[0]
+	var segs: Array = Geo.wall_segments(wall)
+	var mid := Vector2(float(ds.w) * 0.5, float(ds.d) * 0.5)
+	var best: Dictionary = {}
+	var best_dot := -INF
+	for op in wall.openings:
+		if not Geo.is_passable(str(op.type)): continue
+		var seg: Dictionary = {}
+		for sg in segs:
+			if int(sg.index) == int(op.segment): seg = sg
+		if seg.is_empty(): continue
+		var sa: Vector2 = seg.a
+		var sb: Vector2 = seg.b
+		var u: Vector2 = (sb - sa) / float(seg.len)
+		var pos: Vector2 = sa + u * float(op.center)
+		var inward := Vector2(-u.y, u.x)
+		if inward.dot(mid - pos) < 0.0: inward = -inward
+		var dv: float = (-inward).dot(dirv)
+		if dv > best_dot:
+			best_dot = dv
+			best = {"pos": pos, "inward": inward, "inner": pos + inward * 0.65, "outer": pos - inward * 0.9}
+	return best
+
+
+func _watch_room_change() -> void:
+	if view != "room" or _room_loaded == "" or instant_story: return
+	if _transit_active():
+		if _transit.phase == "exit":
+			if eng.s.room == _room_loaded:
+				_transit = {}  # 又折回原房间：不走了
+				det_path.clear()
+				det_done = Callable()
+			else: _transit.to = eng.s.room
+		return
+	if eng.s.room != _room_loaded: _begin_transit(str(eng.s.room))
+
+
+## 换房间：先在旧房间里走向通往目的地的门，出门后黑场，再从新房间对应的门走进来。
+func _begin_transit(to: String) -> void:
+	var from := _room_loaded
+	var op := _door_for(room_mesh.design, _room_dir(from, to))
+	_transit = {"active": true, "from": from, "to": to, "phase": "exit"}
+	var hops: Array = eng.path_to(to, from)
+	if hops.size() > 2:
+		var names: Array = []
+		for i in range(1, hops.size() - 1): names.append(str(data.room_by_id[hops[i]].label))
+		_toast("途经：" + "、".join(names))
+	det_done = Callable()
+	if op.is_empty():
+		_transit_swap()
+		return
+	_go(_route(det_pos, op.inner) + [op.pos, op.outer], _transit_exit_done)
+
+
+func _transit_exit_done() -> void:
+	if not _transit_active(): return
+	_transit.phase = "fade"
+	_fade(1.0, 0.22, _transit_swap)
+
+
+func _fade(to_alpha: float, duration: float, cb := Callable()) -> void:
+	if _fade_tween != null: _fade_tween.kill()
+	_fade_tween = create_tween()
+	_fade_tween.tween_property(fade_rect, "modulate:a", to_alpha, duration)
+	if cb.is_valid(): _fade_tween.tween_callback(cb)
+
+
+func _transit_swap() -> void:
+	if not _transit_active(): return
+	var from: String = _transit.from
+	var to: String = _transit.to
+	_build_room(to)
+	_transit.phase = "enter"
+	_fade(0.0, 0.3)
+	var op := _door_for(room_mesh.design, _room_dir(to, from))
+	if op.is_empty():
+		_det_to_home()
+		_transit_done()
+		return
+	det_pos = op.outer
+	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
+	det.rotation.y = atan2(op.inward.x, op.inward.y)
+	_go([op.pos, op.inner] + _route(op.inner, _home_spot()), _transit_done)
+
+
+func _transit_done() -> void:
+	_transit = {}
+	_dirty = true
+
+
+## 离开房间视图 / 读档 / 关闭时：直接落位，不再演走路。
+func _finish_transit_now() -> void:
+	if not _transit_active(): return
+	if _fade_tween != null: _fade_tween.kill()
+	fade_rect.modulate.a = 0.0
+	_transit = {}
+	if _room_loaded != str(eng.s.room): _build_room(str(eng.s.room))
+	_det_to_home()
+	_dirty = true
+
+
 func _on_3d_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
 		if mb.button_index == MOUSE_BUTTON_RIGHT or mb.button_index == MOUSE_BUTTON_MIDDLE:
 			_orbit = mb.pressed
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP: dist = maxf(3.5, dist * 0.92); _update_camera()
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN: dist = minf(40.0, dist * 1.08); _update_camera()
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP: dist = maxf(3.0, dist * 0.92); _update_camera()
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN: dist = minf(_fit_dist * 1.8, dist * 1.08); _update_camera()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
 			var o := cam.project_ray_origin(mb.position)
 			var dr := cam.project_ray_normal(mb.position)
 			var eid: String = room_mesh.pick_marker(o, dr)
-			if eid != "":
-				eng.inspect_evidence(eid)
-				room_mesh.build(room_mesh.design, eng.s.evidence)
-				_occ_key = ""
-				_sync_figures()
+			if eid != "": _inspect_walk(eid)
 	elif event is InputEventMouseMotion and _orbit:
 		var mm: InputEventMouseMotion = event
 		az -= mm.relative.x * 0.008
@@ -604,11 +1125,13 @@ func _on_3d_input(event: InputEvent) -> void:
 
 # ───────────────────────── 主循环 ─────────────────────────
 func _process(delta: float) -> void:
-	eng.tick(delta)
 	var now := Time.get_ticks_msec() / 1000.0
-	if subtitle.visible and now > _sub_until:
-		subtitle.visible = false
-		if figures.has(_speaker): figures[_speaker].set_pose("stand")
+	_pump_subtitles(now)
+	# 台词在播、侦探在走路时，故事时间冻结：玩家始终看得见「发生了什么」
+	var frozen := not instant_story and (_transit_active() or _story_busy())
+	if not frozen: eng.tick(delta)
+	_watch_room_change()
+	_walk_step(delta)
 	if toast.visible and now > _toast_until: toast.visible = false
 	for n in eng.notices:
 		if now - n.at / 1000.0 < 0.2: _toast(n.text)
@@ -627,6 +1150,11 @@ func _process(delta: float) -> void:
 	if _music_cd <= 0.0:
 		_music_cd = 1.0
 		score.set_state(eng.music_state())
+	_autosave_cd -= delta
+	if _autosave_due and _autosave_cd <= 0.0:
+		_autosave_due = false
+		_autosave_cd = 2.0
+		_write_auto()
 	_panel_cd -= delta
 	if _dirty and _panel_cd <= 0.0:
 		_dirty = false
@@ -653,7 +1181,7 @@ func _refresh() -> void:
 
 
 func _ensure_room_if_needed() -> void:
-	if view == "room":
+	if view == "room" and not _transit_active():
 		_ensure_room()
 		_sync_figures()
 
@@ -662,12 +1190,12 @@ func _refresh_left() -> void:
 	var rid: String = eng.s.room
 	var r: Dictionary = data.room_by_id[rid]
 	left_text.clear()
-	left_text.append_text("[color=#e9c98a][b]%s[/b][/color]\n[color=#a8957b]%s · %s区[/color]\n%s\n\n" % [r.label, r.floor, r.zone, r.note])
-	var here: Array = eng.actors_in_room(rid)
-	left_text.append_text("[color=#b89758]在场：[/color]" + ("、".join(here.map(func(i): return _name_bb(str(i)))) if not here.is_empty() else "无人") + "\n")
-	if view != "room" and view != "editor" and map_view.selected != "" and map_view.selected != rid:
+	left_text.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#a8957b]%s · %s区[/color]\n[color=#a8957b]%s[/color]\n" % [r.label, r.floor, r.zone, r.note])
+	var here: Array = eng.actors_in_room(rid).filter(func(i): return str(i) != "detective")
+	left_text.append_text("[color=#b89758]在场：[/color]" + ("、".join(here.map(func(i): return _name_bb(str(i)))) if not here.is_empty() else "无人"))
+	if view == "map" and map_view.selected != "" and map_view.selected != rid:
 		var sr: Dictionary = data.room_by_id[map_view.selected]
-		left_text.append_text("\n[color=#4f9dde]选中：%s[/color]\n[color=#a8957b]双击进入[/color]" % sr.label)
+		left_text.append_text("\n[color=#4f9dde]选中：%s（双击进入）[/color]" % sr.label)
 	for c in left_actions.get_children(): c.queue_free()
 	var h := Label.new()
 	h.text = "出口"
@@ -685,15 +1213,13 @@ func _refresh_left() -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.clip_text = true
 		b.focus_mode = Control.FOCUS_NONE
-		b.pressed.connect(func():
-			if eng.enter_room(other) and view == "room": _room_loaded = "")
+		b.pressed.connect(func(): eng.enter_room(other))
 		left_actions.add_child(b)
 	var evs: Array = data.evidence_by_room.get(rid, [])
 	if not evs.is_empty():
 		var h2 := Label.new()
-		h2.text = "本房证物（点选查看；也可在 3D 里点光柱）"
+		h2.text = "本房证物"
 		h2.add_theme_color_override("font_color", BRASS)
-		h2.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		left_actions.add_child(h2)
 		for e in evs:
 			var got: bool = eng.s.evidence.has(e.id)
@@ -702,7 +1228,7 @@ func _refresh_left() -> void:
 			b2.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			b2.clip_text = true
 			b2.focus_mode = Control.FOCUS_NONE
-			b2.pressed.connect(func(): eng.inspect_evidence(e.id))
+			b2.pressed.connect(func(): _inspect_walk(str(e.id)))
 			left_actions.add_child(b2)
 
 
@@ -829,6 +1355,8 @@ func _ink_label(parent: Node, text: String, size := 15) -> Label:
 
 
 func _sync_modal() -> void:
+	# 台词没播完、侦探还在走路时先不弹窗；播完后会重新触发刷新
+	if not instant_story and (_transit_active() or _story_busy()): return
 	var s: Dictionary = eng.s
 	var key := ""
 	if s.ending != "": key = "end:" + s.ending
@@ -926,5 +1454,8 @@ func _modal_ending() -> void:
 	_btn(row, "重新开始", func():
 		eng.new_game()
 		_modal_key = ""
-		_room_loaded = "")
-	_btn(row, "返回", func(): closed.emit())
+		_sub_queue.clear()
+		_finish_transit_now()
+		_room_loaded = ""
+		_ensure_room())
+	_btn(row, "返回", func(): _close())

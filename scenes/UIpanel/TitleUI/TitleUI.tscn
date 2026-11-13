@@ -66,21 +66,17 @@ custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="NewButton" type="Button" parent="Menu"]
+[node name="DualWorldButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "开始生活新局"
+text = "开始新游戏"
 
 [node name="ContinueButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "继续生活"
+text = "继续游戏"
 
 [node name="RecordsButton" type="Button" parent="Menu"]
 layout_mode = 2
 text = "生活手记"
-
-[node name="DualWorldButton" type="Button" parent="Menu"]
-layout_mode = 2
-text = "门的这一侧 · 双本体新局"
 
 [node name="CampaignButton" type="Button" parent="Menu"]
 layout_mode = 2
@@ -89,6 +85,10 @@ text = "打开案件案卷"
 [node name="BuilderButton" type="Button" parent="Menu"]
 layout_mode = 2
 text = "打开建筑设计工具"
+
+[node name="NewButton" type="Button" parent="Menu"]
+layout_mode = 2
+text = "测试场景 · 生活推演"
 
 [node name="SettingsButton" type="Button" parent="Menu"]
 layout_mode = 2

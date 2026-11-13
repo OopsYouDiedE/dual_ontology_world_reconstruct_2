@@ -13,6 +13,7 @@ const Props = preload("res://tools/building_construction/BuildingConstruction/Pr
 const DEFAULT_CONTENT := "res://assets/data/scenarios/life_simulation.dv"
 const CAMPAIGN_PANEL := preload("res://scenes/main/CampaignPanel.gd")
 const DUAL_WORLD_SCENE := preload("res://scenes/dual_world/DualWorldMain.tscn")
+const DUAL_WORLD_SAVES := ["user://dual_world/auto.json", "user://dual_world/save_1.json"]
 
 var bridge: Node
 var builder: Control
@@ -79,7 +80,7 @@ func _title_setup() -> void:
 	title_ui.quit_requested.connect(_quit)
 	title_ui.builder_requested.connect(open_building)
 	title_ui.campaign_requested.connect(open_campaign)
-	title_ui.dual_world_requested.connect(open_dual_world)
+	title_ui.dual_world_requested.connect(func(): open_dual_world())
 	title_ui.show_title(has_progress(), true)
 	GameSettings.settings_requested.connect(_settings_requested)
 	campaign_panel = CAMPAIGN_PANEL.new()
@@ -157,6 +158,18 @@ func _continue_game() -> void:
 			if modified > latest:
 				latest = modified
 				selected_path = path
+	# 正式游戏（双本体）存档：自动存档与手动槽位，取最新的一份。
+	var dual_path := ""
+	var dual_latest := -1
+	for path in DUAL_WORLD_SAVES:
+		if FileAccess.file_exists(path):
+			var modified := FileAccess.get_modified_time(path)
+			if modified > dual_latest:
+				dual_latest = modified
+				dual_path = path
+	if not dual_path.is_empty() and dual_latest >= latest:
+		open_dual_world(dual_path)
+		return
 	if selected_path.is_empty(): return
 	_load_save(selected_path)
 
@@ -185,7 +198,7 @@ func open_campaign() -> void:
 		campaign_panel.open_campaign()
 
 ## 双本体整合入口：2D 完整地图 / 3D 单房间 / 2D 蓝图编辑器，规则核心为纯 GDScript 的 DualEngine。
-func open_dual_world() -> void:
+func open_dual_world(resume_path := "") -> void:
 	if active or is_instance_valid(builder) and builder.visible or is_instance_valid(dual_world): return
 	book_ui.close_immediately()
 	title_ui.hide_title(0.0)
@@ -193,6 +206,7 @@ func open_dual_world() -> void:
 	var audio := get_node_or_null("/root/GameAudio")
 	if audio != null: audio.stop_music(0.4)
 	dual_world = DUAL_WORLD_SCENE.instantiate()
+	dual_world.resume_path = resume_path
 	add_child(dual_world)
 	dual_world.closed.connect(close_dual_world)
 
@@ -543,6 +557,8 @@ func close_life() -> void:
 		Sound.music("main_theme")
 
 func has_progress() -> bool:
+	for path in DUAL_WORLD_SAVES:
+		if FileAccess.file_exists(path): return true
 	if FileAccess.file_exists(_auto_path()): return true
 	for index in range(1, 7):
 		if FileAccess.file_exists(_slot_path(str(index))): return true

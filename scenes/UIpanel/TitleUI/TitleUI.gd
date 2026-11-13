@@ -80,7 +80,7 @@ func show_title(can_continue: bool, first := false) -> void:
 		menu.modulate.a = 1.0
 		hint.modulate.a = 1.0
 		_tween.tween_property(self, "modulate:a", 1.0, 0.45)
-	(continue_button if can_continue else new_button).grab_focus.call_deferred()
+	(continue_button if can_continue else $Menu/DualWorldButton as Button).grab_focus.call_deferred()
 
 func hide_title(duration := 0.4) -> void:
 	interactive = false

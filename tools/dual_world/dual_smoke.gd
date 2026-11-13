@@ -14,6 +14,7 @@ var fails := 0
 
 func _initialize() -> void:
 	main = MainScene.instantiate()
+	main.instant_story = true
 	root.add_child(main)
 
 

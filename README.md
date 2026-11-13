@@ -1,6 +1,6 @@
 # Dual Ontology World Reconstruct 2
 
-Godot .NET 4.7.2 / .NET 8。正式入口为 `scenes/main/Boot.tscn`，启动自检通过后进入 `scenes/main/Main.tscn`，提供五人生活新局、双本体新局与建筑设计工具；C# DV、Reasoning、Runtime 共用于 Godot 和 CLI。
+Godot .NET 4.7.2 / .NET 8。正式入口为 `scenes/main/Boot.tscn`，启动自检通过后进入 `scenes/main/Main.tscn`，提供正式游戏（双本体新局，标题菜单第一项「开始新游戏」）、测试场景（五人生活推演）与建筑设计工具；C# DV、Reasoning、Runtime 共用于 Godot 和 CLI。
 
 ## VSCode 构建
 
@@ -32,7 +32,9 @@ Linux / macOS / WSL 可执行 `tools/build/build.sh` 构建，或设置 `GODOT_M
 
 后续日程见[第一至四天剧情与分支（Gemini 设定）](docs/第一至四天剧情与分支（Gemini设定）.md)：第一天下午黑板诗与傍晚包饺子、第二天打谱布局、第三天三套候选案、第四夜救援及策略。
 
-## 五人生活新局
+## 五人生活新局（测试场景）
+
+> 标题菜单里的「测试场景 · 生活推演」是开发用的测试场景，不是正式开局。正式游戏是「开始新游戏」（双本体 · 门的这一侧）；「继续游戏」读取最近一份存档（正式游戏自动存档优先于测试场景）。
 
 运行 VSCode 任务 `run: five-person life (Godot)`，在主菜单选择“开始生活新局”。侦探、雀儿、卢西安、阮清月、沈鼐通过 Core 自主选择日常行动和互动，Godot 负责实际路径移动。左侧是作者检查器，可以查看本人目的、需要与有向关系，并提交 Core 当前允许的行动。顶部提供暂停、倍率、存读档、兼容内容重载和墙体显示。
 

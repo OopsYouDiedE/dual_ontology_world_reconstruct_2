@@ -12,6 +12,8 @@ signal said(who: String, text: String, kind: String)
 signal sfx(kind: String)
 
 const END_T := 4 * 1440 + 23 * 60 + 59
+## 默认倍速：×5（旧版是 ×20，台词、搜证都来不及看）。
+const DEFAULT_SPEED := 5.0
 const LOCKS := ["zone.0", "zone.1", "zone.2", "zone.3", "service_map", "demon", "wind", "granary", "archive"]
 
 var d: RefCounted
@@ -33,7 +35,7 @@ func new_game(announce := true) -> void:
 	for p in d.relation_pairs:
 		rel[Data.pair_key(p[0], p[1])] = {"trust": 62, "damage": 0, "permanent": false, "grievances": []}
 	s = {
-		"version": 1, "t": T(1, 7, 0), "playing": true, "speed": 20.0, "waiting": false,
+		"version": 1, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
 		"day": 1, "room": "B-P", "author_view": false,
 		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
 		"pending_deduction": {}, "current_beat": "",
@@ -459,6 +461,8 @@ func process_beats() -> void:
 	var fired := 0
 	while s.beat_cursor < d.beats.size() and d.beats[s.beat_cursor]["at"] <= s.t:
 		var b: Dictionary = d.beats[s.beat_cursor]
+		# 搜证门槛：推演节拍触发前，侦探必须在现场拿到足够的相关证物，否则时间停在这一刻
+		if _hold_for_evidence(b): break
 		s.beat_cursor += 1
 		s.current_beat = b.id
 		if b.has("room") and d.room_by_id.has(b.room) and s.room != b.room and not s.author_view:
@@ -490,6 +494,9 @@ func process_beats() -> void:
 ## 以「游戏分钟」推进（真实秒 × 倍率）。有待决事项时时间冻结，直到玩家处理。
 func tick(dt: float) -> void:
 	if not s.playing or s.waiting or s.ending != "": return
+	if not s.get("hold", {}).is_empty():  # 等侦探搜证：时间不走，每帧复核门槛
+		process_beats()
+		if not s.get("hold", {}).is_empty(): return
 	if s.t >= END_T:
 		finish()
 		return
@@ -497,6 +504,97 @@ func tick(dt: float) -> void:
 	set_door_flags()
 	process_beats()
 	if s.t >= END_T: finish()
+
+
+# ───────────────────────── 搜证门槛 / 自动搜证 ─────────────────────────
+func _reachable(room: String, from: String) -> bool:
+	return room == from or not path_to(room, from).is_empty()
+
+
+## 某个推演当前的取证情况：have 已取得的相关证物数，need 需要数，
+## missing 还能取到的相关证物（从 from 房间出发走得到），stuck = 不够且再没有能取的了。
+func gate_status(did: String, from := "") -> Dictionary:
+	if from == "": from = s.room
+	var dd: Dictionary = d.deduction_by_id[did]
+	var need := int(dd.get("minEvidence", 2))
+	var have := 0
+	var missing: Array = []
+	for eid in dd.evidence:
+		if s.evidence.has(eid): have += 1
+		elif _reachable(str(d.evidence_by_id[eid].room), from): missing.append(eid)
+	var ok := have >= need
+	return {"ok": ok, "have": have, "need": need, "missing": missing, "stuck": not ok and missing.is_empty()}
+
+
+## 节拍带推演、而侦探手里证物不够 → 先把侦探带到现场并挂起，返回 true 表示这一拍先不触发。
+func _hold_for_evidence(b: Dictionary) -> bool:
+	if s.author_view or not b.has("deduction") or s.deductions.has(b.deduction):
+		if not s.get("hold", {}).is_empty() and s.hold.get("beat", "") == b.get("id", ""): s.hold = {}
+		return false
+	var room: String = str(b.room) if b.has("room") and d.room_by_id.has(b.room) else s.room
+	var hold: Dictionary = s.get("hold", {})
+	if hold.get("beat", "") != b.id:
+		# 刚到这一拍：侦探先到现场（剧情位置），推演之前不弹窗
+		s.t = minf(float(s.t), float(b["at"]))
+		if s.room != room:
+			s.room = room
+			s.inspected[room] = true
+			_log("move", "赶到 %s" % d.room_by_id[room].label, [s.selected_actor])
+			sfx.emit("door")
+			changed.emit("room")
+	var g := gate_status(b.deduction, s.room)
+	if g.ok:
+		s.hold = {}
+		return false
+	if g.stuck:
+		# 再没有能取到的证物了：不让游戏卡死，凭现有线索推演（推演本身会因证物不足判错）
+		s.hold = {}
+		_log("system", "【线索有限】能取到的相关证物都已查过，只能凭现有线索推演。", [])
+		return false
+	s.t = minf(float(s.t), float(b["at"]))
+	if hold.get("beat", "") != b.id:
+		s.hold = {"beat": b.id, "deduction": b.deduction}
+		_log("system", "【先搜证】%s：手头相关证物 %d/%d 件，推演前先到现场查看。" % [d.deduction_by_id[b.deduction].title, g.have, g.need], [])
+		_debug("gate", "推演 %s 被挂起：证物 %d/%d" % [b.deduction, g.have, g.need])
+		notice("先搜证：「%s」还差 %d 件相关证物。" % [d.deduction_by_id[b.deduction].title, g.need - g.have])
+		changed.emit("hold")
+	return true
+
+
+func hold_text() -> String:
+	var h: Dictionary = s.get("hold", {})
+	if h.is_empty(): return ""
+	var g := gate_status(str(h.deduction))
+	var rooms: Array = []
+	for eid in g.missing:
+		var lb := str(d.room_by_id[d.evidence_by_id[eid].room].label)
+		if not rooms.has(lb): rooms.append(lb)
+	return "等待搜证 · %s：证物 %d/%d%s" % [d.deduction_by_id[h.deduction].title, g.have, g.need,
+		("  可查：" + "、".join(rooms)) if not rooms.is_empty() else ""]
+
+
+## 侦探下一件该查的证物（自动搜证用）：先搜完本房，再去查被挂起的推演还缺的证物（取最近的）。
+func next_search_target() -> String:
+	for e in d.evidence:
+		if e.room == s.room and not s.evidence.has(e.id): return str(e.id)
+	var h: Dictionary = s.get("hold", {})
+	if h.is_empty(): return ""
+	var best := ""
+	var best_len := 1 << 30
+	for eid in gate_status(str(h.deduction)).missing:
+		var pth: Array = path_to(str(d.evidence_by_id[eid].room))
+		if not pth.is_empty() and pth.size() < best_len:
+			best = str(eid)
+			best_len = pth.size()
+	return best
+
+
+## 无界面的一步搜证（脚本 / 测试用）：同房直接查，不同房先进房。返回是否做了事。
+func search_step() -> bool:
+	var eid := next_search_target()
+	if eid == "": return false
+	if d.evidence_by_id[eid].room == s.room: return inspect_evidence(eid)
+	return enter_room(str(d.evidence_by_id[eid].room))
 
 
 # ───────────────────────── 人物位置 ─────────────────────────

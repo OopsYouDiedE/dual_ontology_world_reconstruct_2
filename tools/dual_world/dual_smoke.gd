@@ -55,6 +55,7 @@ func _process(_delta: float) -> bool:
 		main.eng.process_beats()
 	if frames > 12 and frames < 400:
 		main.eng.s.speed = 600.0
+		if not main.eng.s.hold.is_empty(): main.eng.search_step()  # 推演前必须先搜证
 		if main.eng.s.waiting:
 			# 模拟玩家处理待决事项，借此覆盖三类模态的构建
 			main._sync_modal()

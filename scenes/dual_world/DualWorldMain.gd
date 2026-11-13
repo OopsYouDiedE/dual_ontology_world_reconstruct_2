@@ -47,6 +47,10 @@ var _music_cd := 0.0
 var top_clock: Label
 var top_phase: Label
 var speed_pick: OptionButton
+var auto_btn: Button
+## 侦探自动搜证：空闲时搜完所在房间，推演缺证物时自己走去取
+var auto_search := true
+var _auto_cd := 1.0
 var play_btn: Button
 var view_btns: Dictionary = {}
 var center: Control
@@ -244,12 +248,16 @@ func _build_ui() -> void:
 	tb.add_child(top_phase)
 	play_btn = _btn(tb, "暂停", func(): eng.toggle_play())
 	speed_pick = OptionButton.new()
-	for sp in [[5.0, "×5"], [20.0, "×20"], [60.0, "×60"], [240.0, "×240"]]:
+	for sp in [[1.0, "×1"], [2.0, "×2"], [5.0, "×5"], [20.0, "×20"], [60.0, "×60"], [240.0, "×240"]]:
 		speed_pick.add_item(sp[1])
 		speed_pick.set_item_metadata(speed_pick.item_count - 1, sp[0])
-	speed_pick.select(1)
+	_sync_speed_pick()
 	speed_pick.item_selected.connect(func(i: int): eng.set_speed(float(speed_pick.get_item_metadata(i))))
 	tb.add_child(speed_pick)
+	auto_btn = _btn(tb, "自动搜证", func(): auto_search = auto_btn.button_pressed,
+		"开：侦探会自己走动、搜查所在房间，并去查推演还缺的证物；关：只由你点击证物")
+	auto_btn.toggle_mode = true
+	auto_btn.button_pressed = auto_search
 	for v in [["room", "房间"], ["map", "地图"]]:
 		var vb := _btn(tb, v[1], func(): _set_view(v[0], v[0] == "room"))
 		vb.toggle_mode = true
@@ -1132,12 +1140,14 @@ func _process(delta: float) -> void:
 	if not frozen: eng.tick(delta)
 	_watch_room_change()
 	_walk_step(delta)
+	_auto_search_step(delta)
 	if toast.visible and now > _toast_until: toast.visible = false
 	for n in eng.notices:
 		if now - n.at / 1000.0 < 0.2: _toast(n.text)
 	var c: Dictionary = eng.clock()
 	top_clock.text = "第 %d 天  %s  %s" % [c.day, c.text, DayNight.label(c.hour)]
-	top_phase.text = "%s · %s" % [eng.phase().title, eng.phase().sub]
+	var hold_msg: String = eng.hold_text()
+	top_phase.text = hold_msg if hold_msg != "" else "%s · %s" % [eng.phase().title, eng.phase().sub]
 	play_btn.text = "继续" if not eng.s.playing else "暂停"
 	map_view.hour = c.hour
 	_light_cd -= delta
@@ -1171,7 +1181,29 @@ func _name_bb(id: String) -> String:
 	return "[color=%s]%s[/color]" % [Color(str(a.color)).lightened(0.55).to_html(false), a.name]
 
 
+func _sync_speed_pick() -> void:
+	var idx := 2
+	for i in speed_pick.item_count:
+		if is_equal_approx(float(speed_pick.get_item_metadata(i)), float(eng.s.speed)): idx = i
+	speed_pick.select(idx)
+
+
+## 侦探空闲时自己搜证：先搜完所在房间，再去查被挂起的推演还缺的证物。
+func _auto_search_step(delta: float) -> void:
+	_auto_cd -= delta
+	if _auto_cd > 0.0 or not auto_search or instant_story: return
+	var s: Dictionary = eng.s
+	if s.ending != "" or s.waiting or not s.playing or modal.visible or _transit_active() or _story_busy(): return
+	if view == "room" and (s.room != _room_loaded or det == null): return
+	_auto_cd = 0.7
+	var eid: String = eng.next_search_target()
+	if eid == "": return
+	if str(data.evidence_by_id[eid].room) == s.room: _inspect_walk(eid)
+	else: eng.enter_room(str(data.evidence_by_id[eid].room))
+
+
 func _refresh() -> void:
+	_sync_speed_pick()
 	_ensure_room_if_needed()
 	_refresh_left()
 	_refresh_right()

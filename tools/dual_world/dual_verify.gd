@@ -51,6 +51,8 @@ func _init() -> void:
 			e.resolve_conflict(e.s.pending_conflict, "__wrong__")
 		elif not e.s.pending_choice.is_empty():
 			e.choose(e.s.pending_choice.beat_id, e.s.pending_choice.choice.options[0].id)
+		elif not e.s.hold.is_empty():
+			if not e.search_step(): e.tick(1.0)  # 侦探先搜证，门槛才会放行
 		else:
 			e.tick(1.0)
 	check(e.s.ending != "", "五日走完并得到结局：%s" % e.s.ending)
@@ -75,9 +77,53 @@ func _init() -> void:
 			for o in e.s.pending_choice.choice.options:
 				if o.get("correct", false): pick = o.id
 			e.choose(e.s.pending_choice.beat_id, pick)
+		elif not e.s.hold.is_empty():
+			for ev in data.deduction_by_id[e.s.hold.deduction].evidence:
+				e.s.evidence[ev] = {"at": 0}
+			e.tick(1.0)
 		else:
 			e.tick(1.0)
 	check(e.s.ending == "best", "全部正解 + 九条知识 → 结局 best（实际 %s）" % e.s.ending)
+	# 5b. 搜证门槛：不搜证就停在推演节拍；默认倍速不再是 ×20；搜够证物才放行
+	var g := Engine_.new(data)
+	check(g.s.speed == 5.0, "默认倍速 ×5（实际 ×%s）" % g.s.speed)
+	g.s.speed = 600.0
+	for _i in 2000: g.tick(1.0)
+	check(not g.s.hold.is_empty() and g.s.pending_deduction.is_empty() and g.s.deductions.is_empty(),
+		"没有证物时推演不会弹出，时间停在节拍上（%s）" % g.hold_text())
+	var steps := 0
+	while g.s.deductions.is_empty() and g.s.pending_deduction.is_empty() and steps < 200:
+		steps += 1
+		if not g.search_step(): g.tick(1.0)
+	var got: int = 0
+	for ev in data.deduction_by_id["ded_drag"].evidence:
+		if g.s.evidence.has(ev): got += 1
+	check(not g.s.pending_deduction.is_empty() and got >= 2, "搜到 %d 件相关证物后才弹出推演" % got)
+	# 诚实搜证机器人走完五日：每个推演弹出时的证物数
+	var hb := Engine_.new(data)
+	hb.s.speed = 600.0
+	var short := 0
+	var guard2 := 0
+	while hb.s.ending == "" and guard2 < 200000:
+		guard2 += 1
+		if not hb.s.pending_deduction.is_empty():
+			var dq: Dictionary = data.deduction_by_id[hb.s.pending_deduction.id]
+			var cnt := 0
+			for ev in dq.evidence:
+				if hb.s.evidence.has(ev): cnt += 1
+			print("    推演 %s：证物 %d/%d" % [dq.id, cnt, int(dq.get("minEvidence", 2))])
+			if cnt < int(dq.get("minEvidence", 2)): short += 1
+			hb.solve_deduction(dq.id, dq.correct)
+		elif hb.s.pending_conflict != "":
+			hb.resolve_conflict(hb.s.pending_conflict, data.conflict_by_id[hb.s.pending_conflict].correct)
+		elif not hb.s.pending_choice.is_empty():
+			hb.choose(hb.s.pending_choice.beat_id, hb.s.pending_choice.choice.options[0].id)
+		elif not hb.s.hold.is_empty():
+			if not hb.search_step(): hb.tick(1.0)
+		else:
+			hb.search_step()
+			hb.tick(1.0)
+	check(hb.s.ending != "" and short == 0, "诚实搜证走完五日：每个推演都有足够证物（不足 %d 个）" % short)
 	# 6. 存读档
 	var snap := e.save_dict()
 	var e2 := Engine_.new(data)

@@ -45,6 +45,13 @@ static func apply(hour: float, sun: DirectionalLight3D, env: Environment, lamps:
 		env.fog_enabled = true
 		env.fog_light_color = L.fog
 		env.fog_density = 0.004
+		# 色调映射与辉光：让 Lowpoly 房间的暖色更柔和（美术：案卷暖调）
+		env.tonemap_mode = Environment.TONE_MAPPER_ACES
+		env.tonemap_exposure = 1.05
+		env.glow_enabled = true
+		env.glow_intensity = 0.35
+		env.glow_strength = 0.8
+		env.glow_bloom = 0.08
 	for lamp in lamps:
 		if is_instance_valid(lamp):
 			lamp.light_energy = 0.35 + float(L.lamp_on) * 1.9

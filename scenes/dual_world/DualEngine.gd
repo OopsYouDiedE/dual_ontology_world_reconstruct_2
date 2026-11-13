@@ -36,7 +36,7 @@ func new_game(announce := true) -> void:
 		rel[Data.pair_key(p[0], p[1])] = {"trust": 62, "damage": 0, "permanent": false, "grievances": []}
 	s = {
 		"version": 1, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
-		"day": 1, "room": "B-P", "author_view": false,
+		"day": 1, "room": "R05", "author_view": false,
 		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
 		"pending_deduction": {}, "postponed": {}, "current_beat": "",
 		"evidence": {}, "knowledge": {}, "beliefs": {}, "misconceptions": [], "log": [],
@@ -46,7 +46,7 @@ func new_game(announce := true) -> void:
 		"selected_evidence": "",
 	}
 	set_door_flags()
-	_log("system", "《安眠者有福 · 门的这一侧》—— 第一天清晨。四区刚刚醒来。", [])
+	_log("system", "《安眠者有福 · 门的这一侧》—— 第一天清晨。侦探在 R05 居室的床上醒来——四人里醒得最晚。", [])
 	if announce:
 		_debug("new", "新局：源质知识为空；第一章的错误动机由缺知识驱动。")
 		changed.emit("new")
@@ -663,7 +663,10 @@ func room_occupants() -> Dictionary:
 			put.call(a.id, "D-gate")
 			continue
 		var r: String = a.home
-		if h >= 12.0 and h < 17.0 and s.t >= T(1, 11, 10):
+		# 开场：侦探在 R05 床上醒来（四人里最晚）；其余三人已在乙区小厨房。
+		if s.t < T(1, 8, 0):
+			r = "R05" if a.id == "detective" else ("B-P" if a.home in ["R06", "R07", "R08"] else a.home)
+		elif h >= 12.0 and h < 17.0 and s.t >= T(1, 11, 10):
 			r = "T01" if s.day == 1 else "2F-cross-M"
 		elif h >= 17.5 and h < 21.0:
 			r = "F03"

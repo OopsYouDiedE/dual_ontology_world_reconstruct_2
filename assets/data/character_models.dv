@@ -6,6 +6,18 @@ layout migrated_character_models {
     { character_id = "quer"; label = "雀儿"; path = "res://assets/characters/UserModels/model_01.glb"; height = 1.32; yaw_degrees = -90; },
     { character_id = "lucian"; label = "卢西安"; path = "res://assets/characters/UserModels/model_10.glb"; height = 1.32; yaw_degrees = -90; },
     { character_id = "ruan"; label = "阮清月"; path = "res://assets/characters/UserModels/model_17.glb"; height = 1.32; yaw_degrees = -90; },
-    { character_id = "shen"; label = "沈鼐"; path = "res://assets/characters/UserModels/model_07.glb"; height = 1.32; yaw_degrees = -90; }
+    { character_id = "shen"; label = "沈鼐"; path = "res://assets/characters/UserModels/model_07.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "huo"; label = "霍铎"; path = "res://assets/characters/UserModels/model_04.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "gu"; label = "顾平章"; path = "res://assets/characters/UserModels/model_08.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "ward"; label = "沃德"; path = "res://assets/characters/UserModels/model_14.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "su"; label = "苏泠"; path = "res://assets/characters/UserModels/model_16.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "selma"; label = "赛尔玛"; path = "res://assets/characters/UserModels/model_05.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "elena"; label = "伊莲娜"; path = "res://assets/characters/UserModels/model_11.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "moran"; label = "莫兰"; path = "res://assets/characters/UserModels/model_12.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "veronica"; label = "维罗妮卡"; path = "res://assets/characters/UserModels/model_02.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "bertrand"; label = "贝尔特朗"; path = "res://assets/characters/UserModels/model_03.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "margaret"; label = "玛格丽特"; path = "res://assets/characters/UserModels/model_13.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "mora"; label = "茉拉"; path = "res://assets/characters/UserModels/model_15.glb"; height = 1.32; yaw_degrees = -90; },
+    { character_id = "demon"; label = "代管者"; path = "res://assets/characters/UserModels/model_09.glb"; height = 1.32; yaw_degrees = -90; }
   ];
 }

@@ -15,7 +15,7 @@ const CAMPAIGN_PANEL := preload("res://scenes/main/CampaignPanel.gd")
 const DUAL_WORLD_SCENE := preload("res://scenes/dual_world/DualWorldMain.tscn")
 const DUAL_WORLD_SAVES := ["user://dual_world/auto.json", "user://dual_world/save_1.json"]
 
-var bridge: Node
+var bridge: Variant
 var builder: Control
 var life_ui: Control
 var space: RefCounted
@@ -84,7 +84,9 @@ func _title_setup() -> void:
 	title_ui.campaign_requested.connect(open_campaign)
 	title_ui.dual_world_requested.connect(func(): open_dual_world())
 	title_ui.show_title(has_progress(), true)
-	GameSettings.settings_requested.connect(_settings_requested)
+	var settings := get_node_or_null("/root/GameSettings")
+	if settings != null and settings.has_signal("settings_requested"):
+		settings.connect("settings_requested", _settings_requested)
 	campaign_panel = CAMPAIGN_PANEL.new()
 	add_child(campaign_panel)
 	campaign_panel.closed.connect(func(): title_ui.show_title(has_progress()))
@@ -144,7 +146,9 @@ func begin_shutdown() -> void:
 	if active: status_text = bridge.Save(_slot_path("auto"))
 	if is_instance_valid(campaign_panel) and campaign_panel.visible: campaign_panel.begin_shutdown()
 	bridge.Close()
-	GameSettings.flush()
+	var settings := get_node_or_null("/root/GameSettings")
+	if settings != null and settings.has_method("flush"):
+		settings.call("flush")
 
 func wait_for_shutdown() -> void:
 	await get_tree().process_frame

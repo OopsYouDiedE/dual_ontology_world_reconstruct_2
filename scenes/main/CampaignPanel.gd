@@ -4,7 +4,7 @@ signal closed
 
 const Bridge := preload("res://scenes/main/CampaignBridge.cs")
 const RoomLibrary := preload("res://scenes/components/world/RoomLibrary.gd")
-var bridge: Node
+var bridge: Variant
 var paused := false
 var speed := 1.0
 var elapsed := 0.0

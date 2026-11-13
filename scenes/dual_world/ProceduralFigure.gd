@@ -1,7 +1,8 @@
 extends Node3D
 ## 程序化低多边形人物（自 web 版 buildCharacter 迁入）：关节层级 + 姿态库，原点在脚底、正面朝 +z。
 ## 姿态与限位来自 dual_world.json 的 RIG_SPEC；高度与体型取自人物 look 参数。
-## 若项目内存在 res://assets/characters/UserModels/model_XX.glb 且 use_glb=true，则改用 GLB 外观（不做骨骼动画）。
+## 若传入 glb_path 且文件存在，则改用 GLB 真实小人外观（UserModels/model_XX.glb，Mixamo 骨骼）；
+## GLB 模式下 set_pose 会驱动骨骼动画（idle/walk/talk/argue/point/think/sit），失败时回退到程序化色块。
 
 var actor: Dictionary = {}
 var pose := "stand"
@@ -10,26 +11,41 @@ var _t := 0.0
 var _joints := {}
 var _body: Node3D
 var _base_y := 0.0
-var use_glb := false
+var use_glb := true
+const ImportedCharacter := preload("res://scenes/components/characters/ImportedCharacter.gd")
+var _glb_player: AnimationPlayer = null
+var _glb_pose := "stand"
+
+
+## 人物 id → UserModels GLB（与 character_art.dv 的职业映射对齐）
+const GLB_BY_ACTOR := {
+	"detective": "model_06", "quer": "model_01", "lucian": "model_10", "ruan": "model_17",
+	"shen": "model_07", "huo": "model_04", "gu": "model_08", "ward": "model_14",
+	"su": "model_16", "selma": "model_05", "elena": "model_11", "moran": "model_12",
+	"veronica": "model_02", "bertrand": "model_03", "margaret": "model_13", "mora": "model_15",
+	"demon": "model_09",
+}
+
+
+static func glb_path_for(actor_id: String) -> String:
+	if not GLB_BY_ACTOR.has(actor_id): return ""
+	return "res://assets/characters/UserModels/%s.glb" % str(GLB_BY_ACTOR[actor_id])
 
 
 func setup(a: Dictionary, rig_poses: Dictionary, glb_path := "") -> void:
 	actor = a
 	poses = rig_poses
+	if glb_path == "":
+		glb_path = glb_path_for(str(a.get("id", "")))
 	var look: Dictionary = a.look
 	var height: float = look.height
 	var build: float = look.build
 	_body = Node3D.new()
 	add_child(_body)
 	if use_glb and glb_path != "" and ResourceLoader.exists(glb_path):
-		var res: Resource = load(glb_path)
-		if res is PackedScene:
-			var inst: Node = res.instantiate()
-			_body.add_child(inst)
-			if inst is Node3D:
-				var box := _aabb(inst)
-				if box.size.y > 0.01: inst.scale = Vector3.ONE * (height / box.size.y)
+		if _attach_glb(glb_path, height):
 			return
+		# GLB 加载失败：回退到程序化色块（下方继续构建）
 	var s := height / 1.38  # 原始骨架约 1.38m
 	_body.scale = Vector3(s, s, s)
 	var skin := Color(look.skin)
@@ -81,6 +97,16 @@ func setup(a: Dictionary, rig_poses: Dictionary, glb_path := "") -> void:
 		shin.add_child(_part(Vector3(0.09, 0.34, 0.09), coat.darkened(0.45), Vector3(0, -0.17, 0)))
 		shin.add_child(_part(Vector3(0.11, 0.06, 0.2), Color("#2a2018"), Vector3(0, -0.36, 0.04)))
 	_base_y = 0.0
+
+
+## 真实小人：复用项目内 ImportedCharacter 管线（Mixamo retarget / chibi材质 / 身高归一），
+## 避免另写一套骨骼轨道造成姿态不一致。返回 true 表示 GLB 已接管外观。
+func _attach_glb(glb_path: String, height: float) -> bool:
+	if not ImportedCharacter.attach(_body, glb_path, height, -90.0, str(actor.get("id", ""))):
+		return false
+	_glb_player = _body.get_meta("animation_player", null) as AnimationPlayer
+	# 即使某个角色的骨骼动画缺失，也保留真实 GLB 外观，不叠加程序化色块。
+	return true
 
 
 func _aabb(n: Node) -> AABB:
@@ -155,11 +181,23 @@ func _hat(head: Node3D, hat: String, accent: Color) -> void:
 
 
 func set_pose(p: String) -> void:
-	pose = p if poses.has(p) else "stand"
+	pose = p if poses.has(p) or p in ["lie", "run", "lie_stand_up"] else "stand"
+	if _glb_player != null:
+		_glb_pose = pose
+		var clips := {
+			"stand": "idle", "walk": "walk", "run": "run", "sit": "sit_idle", "lie": "lie_idle",
+			"lie_stand_up": "lie_stand_up", "talk": "interact", "argue": "interact", "point": "interact", "think": "idle",
+			"work": "operate", "tend": "interact"
+		}
+		var clip: String = str(clips.get(pose, "idle"))
+		if not _glb_player.has_animation(clip): clip = "idle"
+		if _glb_player.current_animation != clip: _glb_player.play(clip)
 
 
 func _process(delta: float) -> void:
 	_t += delta
+	if _glb_player != null:
+		return  # ImportedCharacter 的真实骨骼动画由 AnimationPlayer 驱动
 	if _joints.is_empty(): return
 	var spec: Dictionary = poses.get(pose, poses.get("stand", {}))
 	var swing := sin(_t * 6.0) * 0.5 if pose == "walk" else 0.0

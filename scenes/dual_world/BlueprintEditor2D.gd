@@ -247,7 +247,7 @@ func _gui_input(event: InputEvent) -> void:
 			scale_px = clampf(scale_px * f, 12.0, 240.0)
 			origin = mb.position - w * scale_px
 			queue_redraw()
-		elif mb.button_index == MOUSE_BUTTON_MIDDLE:
+		elif mb.button_index == MOUSE_BUTTON_MIDDLE or mb.button_index == MOUSE_BUTTON_RIGHT:
 			_pan = mb.pressed
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
@@ -320,7 +320,11 @@ func _gui_input(event: InputEvent) -> void:
 func _draw() -> void:
 	var font: Font = SANS_FONT
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#1a1612"))
-	if design.is_empty(): return
+	if design.is_empty():
+		draw_string(font, size * 0.5 + Vector2(-120, 0), "未载入设计", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#a8957b"))
+		return
+	# 顶部操作提示（编辑器易用性：不用记快捷键）
+	draw_string(font, Vector2(10, 18), "点家具选中 → 拖动移动 · R 旋转 · Delete 删除 · 滚轮缩放 · 中键/右键平移 · [ ] 调门窗宽", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#d8c9a8", 0.9))
 	var w: float = design.w
 	var d: float = design.d
 	# 网格
@@ -404,8 +408,8 @@ func _draw() -> void:
 			draw_polyline(o2, Color("#4f9dde"), 2.5)
 		if scale_px > 28.0 and str(p.kind) != "evidence_marker":
 			draw_string(font, _w2s(p.x, p.z) + Vector2(-30, 4), Geo.prop_label(str(p.kind)), HORIZONTAL_ALIGNMENT_CENTER, 60, 12, Color("#fff4dc", 0.95))
-	# 尺寸标注
-	draw_string(font, _w2s(0, 0) + Vector2(0, -8), "%s　%.1f × %.1f m　网格 %.2f m%s" % [design.name, w, d, grid, "（吸附）" if snap_on else ""], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e6d7b8"))
+	# 尺寸标注（移到顶部提示下方，避免与提示重叠）
+	draw_string(font, Vector2(10, 36), "%s　%.1f × %.1f m　网格 %.2f m%s" % [design.name, w, d, grid, "（吸附）" if snap_on else ""], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e6d7b8"))
 	# 昼夜暗幕
 	var dark := Geo.darkness(hour)
 	if dark > 0.0: draw_rect(Rect2(Vector2.ZERO, size), Color(0.04, 0.05, 0.12, dark * 0.5))

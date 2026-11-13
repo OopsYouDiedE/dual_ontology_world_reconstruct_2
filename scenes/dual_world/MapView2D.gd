@@ -116,6 +116,16 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and data != null: fit()
 
 
+func _day_label(value: float) -> String:
+	if value < 5.0 or value >= 20.0: return "夜"
+	if value < 7.0: return "拂晓"
+	if value < 11.0: return "上午"
+	if value < 13.5: return "正午"
+	if value < 17.0: return "午后"
+	if value < 20.0: return "黄昏"
+	return "夜"
+
+
 func _draw() -> void:
 	if data == null: return
 	var font: Font = SANS_FONT
@@ -154,16 +164,20 @@ func _draw() -> void:
 			for e in evs:
 				if engine.s.evidence.has(e.id): got += 1
 			draw_string(font, rc2.position + Vector2(4, rc2.size.y - 5), "证 %d/%d" % [got, evs.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#e9c98a") if got < evs.size() else Color("#a8c89a"))
-		# 人物小圆点
+		# 人物小圆点：侦探画得更大并带金圈（玩家一眼找到「我」在哪）
 		var list: Array = occ.get(r.id, [])
 		for i in list.size():
 			var a: Dictionary = data.actor_by_id[list[i]]
+			var is_det: bool = str(list[i]) == "detective"
 			var pos := rc2.position + Vector2(rc2.size.x - 8 - i * 10.0, 20.0)
 			if pos.x < rc2.position.x + 4: break
-			draw_circle(pos, 4.0, Color(str(a.color)).lightened(0.25))
-			draw_arc(pos, 4.0, 0, TAU, 12, Color(0, 0, 0, 0.6), 1.0)
+			var rad := 6.0 if is_det else 4.0
+			draw_circle(pos, rad, Color(str(a.color)).lightened(0.25))
+			draw_arc(pos, rad, 0, TAU, 12, Color(0, 0, 0, 0.6), 1.0)
+			if is_det:
+				draw_arc(pos, rad + 2.5, 0, TAU, 16, Color("#e9c98a"), 2.0)
 	# 夜色暗幕：与时间同步（2D 也体现光线变化）
 	var dark := Geo.darkness(hour)
 	if dark > 0.0:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.04, 0.05, 0.12, dark * 0.85))
-	draw_string(font, Vector2(10, size.y - 10), "金框=当前位置 · 点击选中 · 双击进入 · 拖拽平移 · 滚轮缩放　%s" % DayNight.label(hour), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#d8c9a8"))
+	draw_string(font, Vector2(10, size.y - 10), "金框=当前位置 · 点击选中 · 双击进入 · 拖拽平移 · 滚轮缩放　%s" % _day_label(hour), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#d8c9a8"))

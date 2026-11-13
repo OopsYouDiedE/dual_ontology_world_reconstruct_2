@@ -15,6 +15,7 @@ const DayNight := preload("res://scenes/dual_world/DayNight.gd")
 const MapView := preload("res://scenes/dual_world/MapView2D.gd")
 const Editor2D := preload("res://scenes/dual_world/BlueprintEditor2D.gd")
 const RoomMesh := preload("res://scenes/dual_world/RoomMesh3D.gd")
+const LowpolyRoom := preload("res://scenes/dual_world/LowpolyRoom.gd")
 const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
 const Score := preload("res://scenes/dual_world/ProceduralScore.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
@@ -86,10 +87,13 @@ var sun: DirectionalLight3D
 var env: Environment
 var cam: Camera3D
 var room_mesh: Node3D
+## Lowpoly 房间适配器（room_art.zip）：有 Lowpoly 房间时用它做视觉，程序化房间只留证物标记与走路网格
+var lowpoly: Node3D = null
+var _lowpoly_ok := false
 var figures_root: Node3D
 var figures: Dictionary = {}
 var az := 0.65
-var pitch := 0.82
+var pitch := 1.25  # 正式游戏默认俯视角（接近垂直俯视）；右键拖动可改角度
 var dist := 9.5
 var _orbit := false
 var _sub_until := 0.0
@@ -131,6 +135,8 @@ var _det_talk := ""
 var _grid: AStarGrid2D
 var _transit: Dictionary = {}
 var _fade_tween: Tween
+var _wake_timer := 0.0
+var _wake_bed := Vector2.ZERO
 
 # 台词队列：一句一句播，播放期间时间冻结，抉择窗口在台词播完后才弹出
 var _sub_queue: Array = []
@@ -143,6 +149,8 @@ const AUTOSAVE_EVENTS := ["beat", "choice", "conflict", "deduction", "evidence",
 func _ready() -> void:
 	data = Data.get_data()
 	eng = Engine_.new(data)
+	# 正式游戏默认俯视角：pitch 接近垂直俯视（右键拖动可改角度）
+	pitch = 1.25
 	_load_designs()
 	_build_ui()
 	score = Score.new()
@@ -155,7 +163,7 @@ func _ready() -> void:
 	set_process(true)
 	if resume_path != "" and not _read_save(resume_path):
 		_toast("存档无法读取，已从头开始")
-	# 正式游戏默认进 3D 房间：侦探在房间里走动；2D 地图是辅助视图
+	# 正式游戏默认进 3D 房间（单房间俯视角）：侦探在房间里走动；2D 地图是辅助视图
 	_set_view("room")
 	if resume_path == "" and show_intro and not instant_story: _begin_intro()
 	_dirty = true
@@ -223,6 +231,10 @@ func _theme() -> Theme:
 	t.set_font_size("font_size", "TabContainer", 15)
 	t.set_color("font_selected_color", "TabContainer", Color("#e9c98a"))
 	t.set_color("font_unselected_color", "TabContainer", MUTED)
+	# 弹窗标题用衬线（NotoSerifSC）呼应案卷气质；正文保持无衬线保证可读
+	t.set_font("font", "ModalTitle", SERIF_FONT)
+	t.set_font_size("font_size", "ModalTitle", 24)
+	t.set_color("font_color", "ModalTitle", Color("#7a3a24"))
 	return t
 
 
@@ -523,6 +535,8 @@ func _build_center() -> void:
 	world.add_child(cam)
 	room_mesh = RoomMesh.new()
 	world.add_child(room_mesh)
+	lowpoly = LowpolyRoom.new()
+	world.add_child(lowpoly)
 	figures_root = Node3D.new()
 	world.add_child(figures_root)
 	det_root = Node3D.new()
@@ -781,17 +795,22 @@ func _ensure_room() -> void:
 
 func _build_room(id: String) -> void:
 	_room_loaded = id
-	room_mesh.build(_design_for(id), eng.s.evidence)
+	var ds := _design_for(id)
+	# Lowpoly 房间优先：先试挂 Lowpoly，再决定程序化房间是否只留证物标记
+	_lowpoly_ok = lowpoly.attach(room_mesh, id, ds)
+	room_mesh.lowpoly_mode = _lowpoly_ok
+	room_mesh.build(ds, eng.s.evidence)
 	_build_grid()
 	_occ_key = ""
 	_fit_camera()
-	room_mesh.refresh_walls(az)
+	if not _lowpoly_ok:
+		room_mesh.refresh_walls(az)
 	DayNight.apply(eng.clock().hour, sun, env, room_mesh.lamps, room_mesh.glow_materials)
 	_sync_figures(true)
 
 
 func _aim(distance: float) -> void:
-	var c: Vector3 = room_mesh.center()
+	var c: Vector3 = lowpoly.center() if (_lowpoly_ok and lowpoly != null) else room_mesh.center()
 	var dir := Vector3(sin(az) * cos(pitch), sin(pitch), cos(az) * cos(pitch))
 	cam.position = c + dir * distance
 	cam.look_at(c, Vector3.UP)
@@ -800,7 +819,8 @@ func _aim(distance: float) -> void:
 func _update_camera() -> void:
 	if room_mesh.design.is_empty(): return
 	_aim(dist)
-	room_mesh.refresh_walls(az)
+	if not _lowpoly_ok:
+		room_mesh.refresh_walls(az)  # Lowpoly 房间：墙由 Lowpoly 提供，不做剖面隐藏
 
 
 ## 取景：二分求出能把整间房（含墙高）放进画面的最近距离。一次只看一个房间，所以尽量放大。
@@ -810,10 +830,26 @@ func _fit_camera() -> void:
 	if vs.x < 120.0 or vs.y < 120.0: return
 	var w: float = room_mesh.design.w
 	var d: float = room_mesh.design.d
+	var x0 := 0.0
+	var z0 := 0.0
+	var x1 := w
+	var z1 := d
+	var top := 1.9
+	# Lowpoly 房间以中心为原点、部分美术墙面高于程序化 1.9m 包围盒，
+	# 按真实场景中心对称取样，避免过于俯视时边墙被裁出画面。
+	if _lowpoly_ok and lowpoly != null:
+		var fs: Vector2 = lowpoly.floor_size()
+		var lp_root: Node3D = lowpoly.get("_root")
+		if fs.x > 0.1 and fs.y > 0.1 and lp_root != null:
+			x0 = lp_root.position.x - maxf(w * 0.5, fs.x * 0.5 + 0.35)
+			x1 = lp_root.position.x + maxf(w * 0.5, fs.x * 0.5 + 0.35)
+			z0 = lp_root.position.z - maxf(d * 0.5, fs.y * 0.5 + 0.35)
+			z1 = lp_root.position.z + maxf(d * 0.5, fs.y * 0.5 + 0.35)
+			top = 3.2
 	var corners: Array = []
-	for x in [0.0, w]:
-		for z in [0.0, d]:
-			for y in [0.0, 1.9]:
+	for x in [x0, x1]:
+		for z in [z0, z1]:
+			for y in [0.0, top]:
 				corners.append(Vector3(x, y, z))
 	var th := tan(deg_to_rad(cam.fov) * 0.5)
 	var aspect := vs.x / vs.y
@@ -839,7 +875,8 @@ func _fit_camera() -> void:
 	_fit_dist = hi
 	dist = hi
 	_aim(dist)
-	room_mesh.refresh_walls(az)
+	if not _lowpoly_ok:
+		room_mesh.refresh_walls(az)
 
 
 func _free_slots(n: int) -> Array:
@@ -891,6 +928,7 @@ func _sync_figures(force := false) -> void:
 		f.position = Vector3(sp.x, 0.0, sp.y)
 		var to := mid - sp
 		f.rotation.y = atan2(to.x, to.y)
+		# Lowpoly 房间：人物站在 Lowpoly 家具的空地上（设计坐标系与 Lowpoly 坐标系已对齐）
 		figures_root.add_child(f)
 		figures[a.id] = f
 		var tag := Label3D.new()
@@ -951,12 +989,65 @@ func _det_to_home() -> void:
 	det_pos = _home_spot()
 	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	det.rotation.y = az  # 正面朝向镜头
+	# 开场：侦探在 R05 床上醒来（四人里最晚）——新局且在 R05 时，侦探躺在床上
+	# （仅在新局 beat_cursor==0 时；读档/重进房间不躺床）
+	if str(eng.s.room) == "R05" and eng.s.beat_cursor == 0 and not instant_story:
+		var bed := _bed_spot()
+		if bed != Vector2.ZERO:
+			det_pos = bed
+			det.position = Vector3(det_pos.x, 0.55, det_pos.y)
+			det.rotation.y = 0.0
+			det.set_pose("lie")
+
+
+## 找 R05 的床：Lowpoly 房间里找 DormBed 实例，找不到就用设计里的 bed 家具。
+func _bed_spot() -> Vector2:
+	if _lowpoly_ok and lowpoly != null:
+		var root: Node3D = lowpoly.get("_root")
+		if root != null:
+			for n in root.find_children("*", "Node3D", true, false):
+				if "bed" in n.name.to_lower():
+					var gp: Vector3 = n.global_position
+					return Vector2(gp.x, gp.z)
+	for pr in room_mesh.design.get("props", []):
+		if str(pr.get("kind", "")) == "bed":
+			return Vector2(float(pr.x), float(pr.z))
+	return Vector2.ZERO
+
+
+func _begin_wake_up() -> void:
+	if _wake_timer > 0.0 or det == null or det.position.y <= 0.05: return
+	_wake_bed = _bed_spot()
+	det.set_pose("lie_stand_up")
+	_wake_timer = 1.15
+
+
+func _step_wake_up(delta: float) -> void:
+	if _wake_timer <= 0.0: return
+	_wake_timer = maxf(0.0, _wake_timer - delta)
+	if _wake_timer > 0.0: return
+	det.position.y = 0.0
+	if _wake_bed != Vector2.ZERO:
+		var away := det_pos - _wake_bed
+		if away.length() < 0.05: away = Vector2(0.0, 1.0)
+		det_pos = _wake_bed + away.normalized() * 0.7
+		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
+	det.set_pose("stand")
+
 
 
 func _build_grid() -> void:
 	var ds: Dictionary = room_mesh.design
-	var cx := int(ceil(float(ds.w) / CELL))
-	var cz := int(ceil(float(ds.d) / CELL))
+	# Lowpoly 房间：走路网格按 Lowpoly 实际尺寸建（家具碰撞来自设计 blocking 家具的近似）
+	var gw: float = float(ds.w)
+	var gd: float = float(ds.d)
+	if _lowpoly_ok and lowpoly != null:
+		var fs: Vector2 = lowpoly.floor_size()
+		if fs.x > 0.1 and fs.y > 0.1:
+			gw = maxf(gw, fs.x + 0.4)
+			gd = maxf(gd, fs.y + 0.4)
+	var cx := int(ceil(gw / CELL))
+	var cz := int(ceil(gd / CELL))
 	_grid = AStarGrid2D.new()
 	_grid.region = Rect2i(0, 0, cx, cz)
 	_grid.cell_size = Vector2(CELL, CELL)
@@ -969,7 +1060,7 @@ func _build_grid() -> void:
 		for iz in cz:
 			var px := (ix + 0.5) * CELL
 			var pz := (iz + 0.5) * CELL
-			var blocked := px < margin or px > float(ds.w) - margin or pz < margin or pz > float(ds.d) - margin
+			var blocked := px < margin or px > gw - margin or pz < margin or pz > gd - margin
 			if not blocked:
 				for pr in ds.props:
 					if Geo.prop_dims(pr).blocking and Geo.point_in_prop(pr, px, pz, 0.2):
@@ -1013,7 +1104,7 @@ func _go(points: Array, done := Callable()) -> void:
 
 
 func _walk_step(delta: float) -> void:
-	if det == null: return
+	if det == null or _wake_timer > 0.0: return
 	var moving := not det_path.is_empty()
 	if moving:
 		var step := WALK_SPEED * delta
@@ -1031,7 +1122,12 @@ func _walk_step(delta: float) -> void:
 				det_pos += dv / l * step
 				step = 0.0
 		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
-	det.set_pose("walk" if not det_path.is_empty() else (_det_talk if _det_talk != "" else "stand"))
+	if not det_path.is_empty():
+		det.set_pose("walk")
+	elif det.position.y > 0.05:
+		det.set_pose("sit")  # 还躺在床上：保持坐姿
+	else:
+		det.set_pose(_det_talk if _det_talk != "" else "stand")
 	if det_path.is_empty() and det_done.is_valid():
 		var cb := det_done
 		det_done = Callable()
@@ -1056,6 +1152,7 @@ func _inspect_walk(eid: String) -> void:
 
 
 func _rebuild_markers() -> void:
+	room_mesh.lowpoly_mode = _lowpoly_ok
 	room_mesh.build(room_mesh.design, eng.s.evidence)
 	_occ_key = ""
 	_sync_figures()
@@ -1141,6 +1238,9 @@ func _transit_swap() -> void:
 	if not _transit_active(): return
 	var from: String = _transit.from
 	var to: String = _transit.to
+	# 换房间时侦探已起床（不在床上）
+	if det != null:
+		det.position.y = 0.0
 	_build_room(to)
 	_transit.phase = "enter"
 	_fade(0.0, 0.3)
@@ -1195,6 +1295,7 @@ func _process(delta: float) -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	_sub_clock += delta
 	_pump_subtitles(_sub_clock)
+	_step_wake_up(delta)
 	# 台词在播、侦探在走路时，故事时间冻结：玩家始终看得见「发生了什么」
 	var frozen := not instant_story and (_transit_active() or _story_busy())
 	if not frozen: eng.tick(delta)
@@ -1206,7 +1307,7 @@ func _process(delta: float) -> void:
 	for n in eng.notices:
 		if now - n.at / 1000.0 < 0.2: _toast(n.text)
 	var c: Dictionary = eng.clock()
-	top_clock.text = "第 %d 天  %s  %s" % [c.day, c.text, DayNight.label(c.hour)]
+	top_clock.text = "第 %d 天  %s  %s" % [c.day, c.text, _day_label(c.hour)]
 	var hold_msg: String = eng.hold_text()
 	top_phase.text = hold_msg if hold_msg != "" else "%s · %s" % [eng.phase().title, eng.phase().sub]
 	play_btn.text = "继续" if not eng.s.playing else "暂停"
@@ -1242,6 +1343,17 @@ func _name_bb(id: String) -> String:
 	return "[color=%s]%s[/color]" % [Color(str(a.color)).lightened(0.55).to_html(false), a.name]
 
 
+func _day_label(hour: float) -> String:
+	# 独立于昼夜光照脚本的 UI 时间标签，避免脚本资源热重载时静态方法缺失。
+	if hour < 5.0 or hour >= 20.0: return "夜"
+	if hour < 7.0: return "拂晓"
+	if hour < 11.0: return "上午"
+	if hour < 13.5: return "正午"
+	if hour < 17.0: return "午后"
+	if hour < 20.0: return "黄昏"
+	return "夜"
+
+
 func _sync_speed_pick() -> void:
 	var idx := 2
 	for i in speed_pick.item_count:
@@ -1257,8 +1369,17 @@ func _auto_search_step(delta: float) -> void:
 	if s.ending != "" or s.waiting or not s.playing or modal.visible or _transit_active() or _story_busy(): return
 	if view == "room" and (s.room != _room_loaded or det == null): return
 	_auto_cd = 0.7
+	# 开场：侦探还在床上时，自动搜证先把他叫起来（走到床边），再出门
+	if _wake_timer > 0.0: return
+	if det != null and det.position.y > 0.05:
+		_begin_wake_up()
+		return
 	var eid: String = eng.next_search_target()
-	if eid == "": return
+	if eid == "":
+		# 本房无证物且无挂起推演：开场时先去 B-P（第一个推演现场）
+		if s.t < 480.0 and str(s.room) == "R05":
+			eng.enter_room("B-P")
+		return
 	if str(data.evidence_by_id[eid].room) == s.room: _inspect_walk(eid)
 	else: eng.enter_room(str(data.evidence_by_id[eid].room))
 
@@ -1289,11 +1410,16 @@ func _manual_move_step(delta: float) -> void:
 	var vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if vec.length() < 0.05:
 		return
+	# 还躺在床上：第一次移动先播放起床动作，再继续行走
+	if _wake_timer > 0.0: return
 	if auto_search:
 		auto_search = false
 		if auto_btn != null: auto_btn.button_pressed = false
 		det_path.clear()
 		det_done = Callable()
+	if det.position.y > 0.05:
+		_begin_wake_up()
+		return
 	var step: Vector2 = vec.normalized() * WALK_SPEED * delta
 	var cand: Vector2 = det_pos + step
 	var cell := _cell_of(cand)
@@ -1311,6 +1437,11 @@ func _objective_text() -> String:
 	var s: Dictionary = eng.s
 	if s.ending != "":
 		return "故事已结束，可重新开始或返回标题。"
+	# 开场：侦探在 R05 床上醒来（四人里最晚），先出门去乙区小厨房。
+	if s.t < 480.0 and str(s.room) == "R05" and s.beat_cursor == 0:
+		return "目标：你刚在 R05 居室的床上醒来——四人里醒得最晚。\n出门（寝室门 → B-P 乙区小厨房），去看看霍铎、沈师傅和苏泠在查什么。"
+	if s.t < 480.0 and str(s.room) == "B-P" and s.beat_cursor == 0:
+		return "目标：乙区小厨房。时间推进到 08:00 时，推演「门厅的先后」会弹出；\n先点金色光柱搜集本房证物（拖痕、水渍、棘轮……）。"
 	var hold: Dictionary = s.get("hold", {})
 	var did := ""
 	if not hold.is_empty(): did = str(hold.deduction)
@@ -1519,6 +1650,7 @@ func _modal_shell(title: String, sub: String) -> VBoxContainer:
 	dim.color = Color(0, 0, 0, 0.62)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	modal.add_child(dim)
+	# 弹窗面板：案卷纸面 + 黄铜边框 + 朱砂标题（美术设定色）
 	var pc := PanelContainer.new()
 	pc.add_theme_stylebox_override("panel", _style(Color("#eae0c4"), BRASS, 6, 18))
 	pc.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -1533,7 +1665,7 @@ func _modal_shell(title: String, sub: String) -> VBoxContainer:
 	t.text = title
 	t.add_theme_font_override("font", SERIF_FONT)
 	t.add_theme_font_size_override("font_size", 24)
-	t.add_theme_color_override("font_color", Color("#7a3a24"))
+	t.add_theme_color_override("font_color", Color("#7a3a24"))  # 朱砂红
 	v.add_child(t)
 	if sub != "":
 		var s := Label.new()
@@ -1581,6 +1713,8 @@ func _sync_modal() -> void:
 func _modal_deduction(did: String) -> void:
 	var dd: Dictionary = data.deduction_by_id[did]
 	var v := _modal_shell("案卷推演 · " + str(dd.title), str(dd.prompt))
+	# 推演说明：让玩家明白「为什么现在弹推演」以及「证物不够会怎样」
+	_ink_label(v, "推演在节拍时刻弹出：侦探已到现场。证物不足时假设按钮不可点——先去取证，齐了会自动回来；判错后可在「案卷 → 推演」里重新推演。", 12)
 	var prog: Dictionary = eng.deduction_progress(did)
 	var checks: Dictionary = {}
 	var pl := _ink_label(v, "已取得 %d / 至少需要 %d 件相关证物" % [prog.have, prog.need], 14)
@@ -1631,6 +1765,8 @@ func _modal_deduction(did: String) -> void:
 func _modal_conflict(cid: String) -> void:
 	var c: Dictionary = data.conflict_by_id[cid]
 	var v := _modal_shell("争执 · " + str(c.title), "第 %d 天 · 在场：%s" % [int(c.day), "、".join(c.parties.map(func(i): return data.actor_name(str(i))))])
+	# 争执说明：正解只在推演成功后出现；选错会永久折损信任
+	_ink_label(v, "争执里只有一方能得到申诉证据，另一方永远不知道自己「违约」了。\n正解选项只有在对应推演成功后才会出现——选错会永久折损人物之间的信任。", 12)
 	for ln in c.lines:
 		var who: String = ln[0]
 		var l := _ink_label(v, "%s：%s" % [data.actor_name(who), ln[1]])
@@ -1671,6 +1807,7 @@ func _begin_intro() -> void:
 
 func _modal_intro() -> void:
 	var v := _modal_shell("第一天 · 清晨", "游戏开始时时间是暂停的。准备好了再按「开始」。")
+	_ink_label(v, "你扮演侦探。第一天清晨，你在 R05 居室的床上醒来——四人里醒得最晚。\n霍铎、沈师傅和苏泠已经在乙区小厨房（B-P）等着了。", 14)
 	_ink_label(v, "每一天都按同一个节奏：", 14)
 	_ink_label(v, "① 取证：在房间里点发光的标记（或让「自动搜证」替你走）。证物不够时，推演不会弹出，时间也不会往前走。", 14)
 	_ink_label(v, "② 推演：弹窗会显示「已取得 X / 至少需要 N」。证物不足时假设按钮不可点，可以先去取证；判错的推演之后能在「案卷 → 推演」里重新推演。", 14)
@@ -1689,6 +1826,8 @@ func _modal_intro() -> void:
 func _modal_choice() -> void:
 	var pc: Dictionary = eng.s.pending_choice
 	var v := _modal_shell(str(pc.choice.prompt), "")
+	# 抉择说明：不同选择会改变后续剧情与人物关系
+	_ink_label(v, "这是一个抉择：不同选择会改变后续剧情与人物关系。选定后不能撤销（推演判错可重推，抉择不行）。", 12)
 	for o in pc.choice.options:
 		var b := Button.new()
 		b.text = str(o.label)
@@ -1704,6 +1843,8 @@ func _modal_choice() -> void:
 func _modal_ending() -> void:
 	var e: Dictionary = data.endings[eng.s.ending]
 	var v := _modal_shell(str(e.title), "")
+	# 结局说明：结局由推演、争执与抉择共同决定
+	_ink_label(v, "结局由你的推演、争执与抉择共同决定。重新开始可以换一条路走。", 12)
 	_ink_label(v, str(e.text), 16)
 	_ink_label(v, "知识 %d/%d · 证物 %d/%d · %s" % [eng.knowledge_count(), data.knowledge.size(), eng.s.found_count, data.evidence.size(), "有不可弥合的裂痕" if eng.s.irreparable else "没有无法回头的关系"], 13)
 	var row := HBoxContainer.new()

@@ -20,25 +20,46 @@ var _wood_tex: ImageTexture
 var found: Dictionary = {}
 
 
+## Lowpoly 房间模式：只保留证物标记（地板/墙/家具由 Lowpoly 房间提供）
+var lowpoly_mode := false
+
+
 func build(ds: Dictionary, found_evidence: Dictionary = {}) -> void:
 	design = ds
 	found = found_evidence
+	# Lowpoly 房间挂在 room_mesh 之下：build() 清子节点会连它一起清掉，
+	# 因此先把 Lowpoly 房间摘出来，建完再挂回去。
+	var lp: Node = null
+	for c in get_children():
+		if c.has_meta("lowpoly_room") and bool(c.get_meta("lowpoly_room")):
+			lp = c
+			remove_child(c)
 	for c in get_children(): c.queue_free()
+	if lp != null:
+		add_child(lp)
 	lamps.clear()
 	glow_materials.clear()
 	evidence_nodes.clear()
 	_static_root = Node3D.new()
 	_static_root.name = "Static"
 	add_child(_static_root)
-	_static_root.add_child(_build_floor())
-	for p in design.props:
-		var n := _build_prop(p)
-		if n != null: _static_root.add_child(n)
+	if lowpoly_mode:
+		# Lowpoly 房间提供地板/墙/家具：程序化房间只留证物标记
+		for p in design.props:
+			if str(p.kind) == "evidence_marker":
+				var n := _build_prop(p)
+				if n != null: _static_root.add_child(n)
+	else:
+		_static_root.add_child(_build_floor())
+		for p in design.props:
+			var n := _build_prop(p)
+			if n != null: _static_root.add_child(n)
 	_walls_root = Node3D.new()
 	_walls_root.name = "Walls"
 	add_child(_walls_root)
 	_hidden_key = "?"
-	refresh_walls(0.0)
+	if not lowpoly_mode:
+		refresh_walls(0.0)
 
 
 func center() -> Vector3:
@@ -225,7 +246,7 @@ func refresh_walls(cam_azimuth: float) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "WallShell"
 	mi.mesh = _mesh_from(arr)
-	var wm := _mat("#9a7f63", 0.9)
+	var wm := _mat("#9a7f63", 0.9)  # 暖灰墙面（美术设定：案卷纸面暖调）
 	mi.material_override = wm
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	_walls_root.add_child(mi)

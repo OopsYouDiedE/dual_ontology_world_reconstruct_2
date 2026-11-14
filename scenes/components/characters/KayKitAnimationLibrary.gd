@@ -1,6 +1,6 @@
 extends RefCounted
 
-const TRES_PATH := "res://.runtime/generated/animations/KayKitAnimationLibrary-v2.tres"
+const TRES_PATH := "res://.runtime/generated/animations/KayKitAnimationLibrary-v3.tres"
 
 const CLIPS_CONFIG := {
 	"res://assets/imported/kaykit/animations/Rig_Medium_General.glb": {
@@ -8,6 +8,7 @@ const CLIPS_CONFIG := {
 		"Idle_B": [{"name": "idle_b", "loop": Animation.LOOP_NONE}],
 		"Interact": [
 			{"name": "interact", "loop": Animation.LOOP_NONE},
+			{"name": "talk", "loop": Animation.LOOP_LINEAR},
 			{"name": "read_gauge", "loop": Animation.LOOP_NONE},
 			{"name": "read_scroll", "loop": Animation.LOOP_NONE}
 		],
@@ -19,6 +20,7 @@ const CLIPS_CONFIG := {
 		"Running_A": [{"name": "run", "loop": Animation.LOOP_LINEAR}]
 	},
 	"res://assets/imported/kaykit/animations/Rig_Medium_Simulation.glb": {
+		"Waving": [{"name": "wave", "loop": Animation.LOOP_LINEAR}],
 		"Sit_Chair_Down": [{"name": "sit_down", "loop": Animation.LOOP_NONE}],
 		"Sit_Chair_Idle": [{"name": "sit_idle", "loop": Animation.LOOP_LINEAR}],
 		"Sit_Chair_StandUp": [{"name": "stand_up", "loop": Animation.LOOP_NONE}],
@@ -32,10 +34,15 @@ const CLIPS_CONFIG := {
 			{"name": "operate", "loop": Animation.LOOP_NONE},
 			{"name": "turn_wheel", "loop": Animation.LOOP_NONE}
 		],
+		"Working_A": [
+			{"name": "work", "loop": Animation.LOOP_LINEAR},
+			{"name": "work_loop", "loop": Animation.LOOP_LINEAR}
+		],
 		"Lockpick": [
 			{"name": "lockpick", "loop": Animation.LOOP_NONE},
 			{"name": "open_latch", "loop": Animation.LOOP_NONE}
-		]
+		],
+		"Lockpicking": [{"name": "lockpick_loop", "loop": Animation.LOOP_LINEAR}]
 	}
 }
 
@@ -44,16 +51,25 @@ static var _cached_library_ref: WeakRef = null
 static func get_library() -> AnimationLibrary:
 	if _cached_library_ref != null:
 		var cached := _cached_library_ref.get_ref() as AnimationLibrary
-		if cached != null and cached.has_animation("eat"):
+		if _is_complete(cached):
 			return cached
 	if ResourceLoader.exists(TRES_PATH):
 		var disk_lib := load(TRES_PATH) as AnimationLibrary
-		if disk_lib != null and disk_lib.has_animation("eat"):
+		if _is_complete(disk_lib):
 			_cached_library_ref = weakref(disk_lib)
 			return disk_lib
 	var built := build_and_save_library()
 	_cached_library_ref = weakref(built)
 	return built
+
+static func _is_complete(library: AnimationLibrary) -> bool:
+	if library == null: return false
+	for sources in CLIPS_CONFIG.values():
+		for targets in sources.values():
+			for target in targets:
+				if not library.has_animation(str(target.name)): return false
+				if library.get_animation(str(target.name)).loop_mode != int(target.loop): return false
+	return true
 
 static func build_and_save_library() -> AnimationLibrary:
 	var lib := AnimationLibrary.new()

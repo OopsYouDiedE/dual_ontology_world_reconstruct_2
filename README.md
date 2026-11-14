@@ -44,6 +44,8 @@ $GODOT --headless --path . --import
 $GODOT --headless --path . --script res://tools/dual_world/dual_verify.gd     # 规则 + 设计校验 + 回归用例
 $GODOT --headless --path . --script res://tools/dual_world/dual_smoke.gd      # 界面冒烟
 $GODOT --headless --path . --script res://tools/dual_world/dual_autoplay.gd   # 真实时间下的自动搜证
+$GODOT --headless --path . --script res://tools/dual_world/dual_actions_verify.gd -- --dv-save-slot=actions-verify # 动作循环、起床、床面落位
+$GODOT --headless --path . --script res://tools/characters/character_motion_verify.gd -- --dv-save-slot=motion-verify # .NET 角色动作回归
 dotnet .runtime/build/bin/DuelView.Cli/Debug/net8.0/DuelView.Cli.dll --verify-character-actions
 ```
 
@@ -52,6 +54,10 @@ dotnet .runtime/build/bin/DuelView.Cli/Debug/net8.0/DuelView.Cli.dll --verify-ch
 ## 正式游戏流程（双本体）
 
 新局默认暂停并弹出一次性引导：**取证 → 推演 → 争执**。推演弹窗显示「已取得 X / 至少需要 N」，证物不足时假设按钮不可点，可「先去取证」（时间保持暂停，证物齐了推演自动弹回）；判错的推演可在右侧案卷抽屉的「推演」页「重新推演」。字幕按游戏内计时（随时间缩放），空格 / 回车推进，菜单里有「自动跳过字幕」。
+
+角色开场保持躺卧，首次移动或点击调查时播放完整起床动画，再接行走；对话、争执、指认、思考、挥手与工作分别驱动骨骼姿态。五人生活场景按 Runtime 当前行动显示行走、用餐、取书、阅读、交谈、工作和坐卧动画。动作回归同时检查主循环覆盖、动画持续播放与实际生活场景；家具支撑碰撞验收仍由姿态驱动流程负责。
+
+躺姿按骨骼与床垫实测落位，起床按片段时长平滑移向床外可走位置；持续对话、工作和挥手使用循环片段。合并内容与验证范围见 [人物动作修复说明](docs/人物动作修复说明.md)。
 
 迁移、融合实施与验证边界见 [实施与验收](docs/33%20实施与验收.md)。
 
@@ -65,7 +71,7 @@ dotnet .runtime/build/bin/DuelView.Cli/Debug/net8.0/DuelView.Cli.dll --verify-ch
 
 运行 VSCode 任务 `run: five-person life (Godot)`，在主菜单选择“开始生活新局”。侦探、雀儿、卢西安、阮清月、沈鼐通过 Core 自主选择日常行动和互动，Godot 负责实际路径移动。左侧是作者检查器，可以查看本人目的、需要与有向关系，并提交 Core 当前允许的行动。顶部提供暂停、倍率、存读档、兼容内容重载和墙体显示。
 
-建筑器顶部“生活模拟”使用当前未保存建筑开启独立新局；退出后恢复原建筑器实例。建筑先导出到工具候选区，经 C# DV 解析器加载，不覆盖正式资源。当前支持首个包含封闭房间的单层；GLB 保留原姿态，坐卧骨骼动画尚未接入。
+建筑器顶部“生活模拟”使用当前未保存建筑开启独立新局；退出后恢复原建筑器实例。建筑先导出到工具候选区，经 C# DV 解析器加载，不覆盖正式资源。当前支持首个包含封闭房间的单层；角色已按行动播放骨骼动画，家具支撑与坐卧接触仍需物理验收。
 
 生活入口为 `assets/data/scenarios/life_simulation.dv`，规则与宅邸位于 `assets/data/life_simulation/`。五人的个人目的、职业记忆和动机初值引用正式 `daily-life.dv`；新增生活偏好明确写在 DV 中。有限口粮、库存补给、六种回应（接受、勉强答应、延后答应、婉拒或拒绝、冷处理、对抗斥责）、延期与条件承诺、实际座位履行及关系账本均由 C# Core 执行。
 

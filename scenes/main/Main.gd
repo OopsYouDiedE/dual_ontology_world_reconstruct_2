@@ -370,7 +370,7 @@ func _make_life_ui() -> void:
 	events.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(events)
 	status_label = Label.new()
-	status_label.text = "原模型姿态显示；坐卧骨骼动作尚未接入。右键旋转，滚轮缩放。"
+	status_label.text = "右键旋转，滚轮缩放。"
 	column.add_child(status_label)
 
 func _build_view() -> void:
@@ -460,6 +460,24 @@ func _move(seconds: float) -> void:
 			if not bridge.Arrive(movement.execution, position.x, space.layer_y, position.y): bridge.Fail(movement.execution, "arrival_rejected")
 			paths.erase(actor)
 
+func _sync_life_animations() -> void:
+	for profile in snapshot.get("actors", []):
+		var model: Node3D = figures.get(str(profile.id), null)
+		if model == null or not is_instance_valid(model): continue
+		var activity = profile.activity
+		if activity == null or str(activity.Phase) == "cancelling":
+			model.clear_life_action()
+			model.set_motion(false)
+		elif str(activity.Phase) in ["approaching", "moving"]:
+			model.clear_life_action()
+			model.set_motion(true)
+		elif str(activity.Phase) == "working":
+			var motor: Dictionary = profile.get("motor", {}) if profile.get("motor") is Dictionary else {}
+			model.play_life_action(str(motor.get("posture", "stand")), str(motor.get("animation", "")))
+		else:
+			model.clear_life_action()
+			model.set_motion(false)
+
 func _process(delta: float) -> void:
 	if shutting_down: return
 	if is_instance_valid(campaign_panel) and campaign_panel.visible: return
@@ -479,6 +497,7 @@ func _process(delta: float) -> void:
 			for action in result.dispatch: _dispatch(action)
 			# F4：Step 返回值里已带 snapshot，不再额外 Observe()（每次多序列化 + 解析一整份历史快照）
 			remaining -= seconds
+	_sync_life_animations()
 	for actor in snapshot.get("actors", []):
 		if not figures.has(actor.id): continue
 		figures[actor.id].pause_animation(paused)

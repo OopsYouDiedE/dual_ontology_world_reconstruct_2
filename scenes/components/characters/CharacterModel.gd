@@ -13,6 +13,7 @@ var posture_failure := ""
 var posture := "standing"
 var animation_paused := false
 var posture_animation_mode := AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_IDLE
+var life_action_clip := ""
 
 func configure(declaration: Dictionary) -> void:
 	name = declaration.character_id
@@ -43,11 +44,30 @@ func configure(declaration: Dictionary) -> void:
 
 func set_motion(moving: bool, running := false) -> void:
 	if posture_busy() or posture != "standing": return
+	if life_action_clip != "": return
 	play_pose("run" if moving and running else "walk" if moving else "idle")
+
+func play_life_action(pose_name: String, action_name: String) -> void:
+	if posture_busy() or animation_player == null: return
+	var clip := ""
+	if action_name in ["eat_meal", "eat_standing", "eat", "drink"]: clip = "eat"
+	elif action_name in ["prepare_meal", "wash", "study", "play_piano", "paint", "tend_plant", "work", "write", "play"]: clip = "work"
+	elif action_name in ["read", "return_book"]: clip = "pickup"
+	elif action_name in ["talk", "request", "fulfil", "hangout", "inspect_pantry", "light_lamp", "douse_lamp"]: clip = "interact"
+	elif action_name == "read_seated": clip = "read_scroll"
+	elif pose_name == "lie": clip = "lie_idle"
+	elif pose_name == "sit": clip = "sit_idle"
+	else: clip = "idle"
+	if not animation_player.has_animation(clip): clip = "idle"
+	life_action_clip = clip
+	play_pose(clip)
+
+func clear_life_action() -> void:
+	life_action_clip = ""
 
 func play_pose(clip: String) -> void:
 	if animation_player == null or not animation_player.has_animation(clip): return
-	if animation_player.current_animation != clip: animation_player.play(clip)
+	if animation_player.current_animation != clip or not animation_player.is_playing(): animation_player.play(clip)
 
 func pause_animation(value: bool) -> void:
 	animation_paused = value
@@ -114,3 +134,4 @@ func move_physical(displacement: Vector3) -> Dictionary:
 
 func _animation_finished(clip: StringName) -> void:
 	if posture_driver != null: posture_driver.notify_animation_finished(str(clip))
+	if life_action_clip == str(clip): play_pose(life_action_clip)

@@ -105,8 +105,48 @@ func _attach_glb(glb_path: String, height: float) -> bool:
 	if not ImportedCharacter.attach(_body, glb_path, height, -90.0, str(actor.get("id", ""))):
 		return false
 	_glb_player = _body.get_meta("animation_player", null) as AnimationPlayer
+	_build_gestures()
 	# 即使某个角色的骨骼动画缺失，也保留真实 GLB 外观，不叠加程序化色块。
 	return true
+
+
+func _build_gestures() -> void:
+	if _glb_player == null or not _glb_player.has_animation("idle"): return
+	var skeleton: Skeleton3D = _body.get_meta("skeleton", null)
+	if skeleton == null: return
+	var model_basis := Basis.IDENTITY
+	var ancestor: Node3D = skeleton
+	while ancestor != _body and ancestor != null:
+		model_basis = ancestor.basis * model_basis
+		ancestor = ancestor.get_parent() as Node3D
+	model_basis = model_basis.orthonormalized()
+	var bone_map := {"armL": "LeftArm", "armR": "RightArm", "head": "Head"}
+	var library := AnimationLibrary.new()
+	var standing: Dictionary = poses.get("stand", {})
+	for gesture in ["talk", "argue", "point", "think"]:
+		var spec: Dictionary = poses.get(gesture, {})
+		if spec.is_empty(): continue
+		var base_clip := "talk" if gesture != "think" and _glb_player.has_animation("talk") else "idle"
+		var animation := _glb_player.get_animation(base_clip).duplicate(true) as Animation
+		for joint in bone_map:
+			var bone := ImportedCharacter._find_mixamo_bone(skeleton, str(bone_map[joint]))
+			if bone < 0: continue
+			var angles: Array = spec.get(joint, [0, 0, 0])
+			var neutral: Array = standing.get(joint, [0, 0, 0])
+			var delta := Vector3(deg_to_rad(angles[0] - neutral[0]), deg_to_rad(angles[1] - neutral[1]), deg_to_rad(angles[2] - neutral[2]))
+			var parent := skeleton.get_bone_parent(bone)
+			var parent_basis := skeleton.get_bone_global_rest(parent).basis if parent >= 0 else Basis.IDENTITY
+			var frame := (model_basis * parent_basis).orthonormalized()
+			var correction := frame.inverse() * Basis.from_euler(delta) * frame
+			for track in animation.get_track_count():
+				var path := animation.track_get_path(track)
+				if animation.track_get_type(track) != Animation.TYPE_ROTATION_3D or path.get_subname_count() == 0: continue
+				if str(path.get_subname(0)) != skeleton.get_bone_name(bone): continue
+				for key in animation.track_get_key_count(track):
+					var rotation: Quaternion = animation.track_get_key_value(track, key)
+					animation.track_set_key_value(track, key, (correction * Basis(rotation)).get_rotation_quaternion())
+		library.add_animation(gesture, animation)
+	_glb_player.add_animation_library("gestures", library)
 
 
 func _aabb(n: Node) -> AABB:
@@ -180,18 +220,87 @@ func _hat(head: Node3D, hat: String, accent: Color) -> void:
 		"chef": head.add_child(_part(Vector3(0.2, 0.2, 0.2), Color("#f2efe6"), Vector3(0, 0.3, 0)))
 
 
+const POSE_CLIPS := {
+	"stand": [["idle"], 1.0],
+	"think": [["gestures/think", "idle"], 1.0],
+	"walk": [["walk"], 1.0],
+	"run": [["run"], 1.0],
+	"sit": [["sit_idle"], 1.0],
+	"lie": [["lie_idle"], 1.0],
+	"lie_stand_up": [["lie_stand_up"], 1.0],
+	"talk": [["gestures/talk", "talk", "interact"], 0.85],
+	"argue": [["gestures/argue", "talk", "interact"], 1.35],
+	"point": [["gestures/point", "talk", "interact"], 0.7],
+	"tend": [["talk", "interact"], 0.6],
+	"work": [["work_loop", "work", "operate"], 1.0],
+	"wave": [["wave"], 1.0],
+}
+
+
+func clip_for_pose(p: String) -> String:
+	if _glb_player == null: return ""
+	var entry: Array = POSE_CLIPS.get(p, POSE_CLIPS["stand"])
+	for candidate in entry[0]:
+		if _glb_player.has_animation(candidate): return str(candidate)
+	return "idle" if _glb_player.has_animation("idle") else ""
+
+
+func pose_length(p: String) -> float:
+	var clip := clip_for_pose(p)
+	if clip == "": return 0.0
+	var entry: Array = POSE_CLIPS.get(p, POSE_CLIPS["stand"])
+	return _glb_player.get_animation(clip).length / maxf(float(entry[1]), 0.05)
+
+
+func measure_pose(p: String, ratio := 1.0) -> Dictionary:
+	if _glb_player == null or not is_inside_tree(): return {}
+	var skeleton := _body.get_meta("skeleton", null) as Skeleton3D
+	var clip := clip_for_pose(p)
+	if skeleton == null or clip == "": return {}
+	var previous_clip := _glb_player.assigned_animation
+	var previous_time := _glb_player.current_animation_position
+	var was_playing := _glb_player.is_playing()
+	_glb_player.play(clip, 0.0)
+	_glb_player.seek(_glb_player.get_animation(clip).length * clampf(ratio, 0.0, 1.0), true)
+	skeleton.force_update_all_bone_transforms()
+	var minimum := Vector3(INF, INF, INF)
+	var maximum := Vector3(-INF, -INF, -INF)
+	var hips := Vector3.ZERO
+	var head := Vector3.ZERO
+	for bone_index in skeleton.get_bone_count():
+		var origin := to_local(skeleton.global_transform * skeleton.get_bone_global_pose(bone_index).origin)
+		minimum = minimum.min(origin)
+		maximum = maximum.max(origin)
+		var bone_name := skeleton.get_bone_name(bone_index)
+		if bone_name.ends_with("Hips") or bone_name == "hips": hips = origin
+		elif bone_name.ends_with("Head") or bone_name == "head": head = origin
+	if previous_clip != "":
+		_glb_player.play(previous_clip, 0.0)
+		_glb_player.seek(previous_time, true)
+		if not was_playing: _glb_player.pause()
+	skeleton.force_update_all_bone_transforms()
+	return {
+		"hips_y": hips.y, "min_y": minimum.y, "max_y": maximum.y,
+		"hips": Vector2(hips.x, hips.z), "head": Vector2(head.x, head.z),
+		"center": Vector2((minimum.x + maximum.x) * 0.5, (minimum.z + maximum.z) * 0.5),
+	}
+
+
 func set_pose(p: String) -> void:
-	pose = p if poses.has(p) or p in ["lie", "run", "lie_stand_up"] else "stand"
-	if _glb_player != null:
-		_glb_pose = pose
-		var clips := {
-			"stand": "idle", "walk": "walk", "run": "run", "sit": "sit_idle", "lie": "lie_idle",
-			"lie_stand_up": "lie_stand_up", "talk": "interact", "argue": "interact", "point": "interact", "think": "idle",
-			"work": "operate", "tend": "interact"
-		}
-		var clip: String = str(clips.get(pose, "idle"))
-		if not _glb_player.has_animation(clip): clip = "idle"
-		if _glb_player.current_animation != clip: _glb_player.play(clip)
+	var previous := pose
+	pose = p if poses.has(p) or POSE_CLIPS.has(p) else "stand"
+	if _glb_player == null: return
+	_glb_pose = pose
+	var clip := clip_for_pose(pose)
+	if clip == "": return
+	var one_shot := _glb_player.get_animation(clip).loop_mode == Animation.LOOP_NONE
+	if _glb_player.current_animation != clip and not (one_shot and previous == pose):
+		_glb_player.play(clip)
+	_glb_player.speed_scale = float((POSE_CLIPS.get(pose, POSE_CLIPS["stand"]) as Array)[1])
+
+
+func pose_duration(p: String) -> float:
+	return pose_length(p)
 
 
 func _process(delta: float) -> void:

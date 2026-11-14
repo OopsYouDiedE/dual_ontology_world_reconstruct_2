@@ -136,7 +136,12 @@ var _grid: AStarGrid2D
 var _transit: Dictionary = {}
 var _fade_tween: Tween
 var _wake_timer := 0.0
+var _wake_total := 0.0
+var _wake_y0 := 0.0
+var _wake_from := Vector2.ZERO
+var _wake_to := Vector2.ZERO
 var _wake_bed := Vector2.ZERO
+var _manual_moving := false
 
 # 台词队列：一句一句播，播放期间时间冻结，抉择窗口在台词播完后才弹出
 var _sub_queue: Array = []
@@ -1010,52 +1015,108 @@ func _home_spot() -> Vector2:
 func _det_to_home() -> void:
 	det_path.clear()
 	det_done = Callable()
+	_wake_timer = 0.0
+	_manual_moving = false
 	det_pos = _home_spot()
 	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	det.rotation.y = az  # 正面朝向镜头
+	det.set_pose("stand")
 	# 开场：侦探在 R05 床上醒来（四人里最晚）——新局且在 R05 时，侦探躺在床上
 	# （仅在新局 beat_cursor==0 时；读档/重进房间不躺床）
 	if str(eng.s.room) == "R05" and eng.s.beat_cursor == 0 and not instant_story:
-		var bed := _bed_spot()
-		if bed != Vector2.ZERO:
-			det_pos = bed
-			det.position = Vector3(det_pos.x, 0.55, det_pos.y)
-			det.rotation.y = 0.0
+		var bed := _bed_info()
+		if not bed.is_empty():
+			det_pos = bed.pos
+			det.rotation.y = bed.yaw
 			det.set_pose("lie")
+			det.position = _lie_root_position(bed)
+
+
+const LIE_BACK_HALF_THICKNESS := 0.14
+
+
+func _lie_root_position(bed: Dictionary) -> Vector3:
+	var measurement: Dictionary = det.measure_pose("lie", 0.0)
+	if measurement.is_empty():
+		return Vector3(bed.pos.x, float(bed.top), bed.pos.y)
+	var root_y := float(bed.top) - (float(measurement.hips_y) - LIE_BACK_HALF_THICKNESS)
+	var shift: Vector2 = (measurement.center as Vector2).rotated(-float(bed.yaw))
+	return Vector3(bed.pos.x - shift.x, root_y, bed.pos.y - shift.y)
+
+
+func _bed_info() -> Dictionary:
+	if _lowpoly_ok and lowpoly != null:
+		var lowpoly_root: Node3D = lowpoly.get("_root")
+		if lowpoly_root != null:
+			for bed in lowpoly_root.find_children("*", "Node3D", true, false):
+				if "bed" not in bed.name.to_lower(): continue
+				var meshes := bed.find_children("*", "MeshInstance3D", true, false)
+				if meshes.is_empty(): continue
+				var top := 0.0
+				var half := Vector2(0.6, 1.1)
+				for mesh in meshes:
+					if not String(mesh.name).begins_with("Mattress"): continue
+					var bounds: AABB = (mesh as MeshInstance3D).global_transform * (mesh as MeshInstance3D).get_aabb()
+					top = maxf(top, bounds.end.y)
+					half = Vector2(bounds.size.x, bounds.size.z) * 0.5
+					if absf(sin(bed.global_rotation.y)) > 0.7: half = Vector2(half.y, half.x)
+				return {"pos": Vector2(bed.global_position.x, bed.global_position.z), "yaw": bed.global_rotation.y, "top": top if top > 0.0 else 0.55, "half": half}
+	for prop in room_mesh.design.get("props", []):
+		if str(prop.get("kind", "")) == "bed":
+			return {"pos": Vector2(float(prop.x), float(prop.z)), "yaw": 0.0, "top": 0.55, "half": Vector2(0.6, 1.1)}
+	return {}
 
 
 ## 找 R05 的床：Lowpoly 房间里找 DormBed 实例，找不到就用设计里的 bed 家具。
 func _bed_spot() -> Vector2:
-	if _lowpoly_ok and lowpoly != null:
-		var root: Node3D = lowpoly.get("_root")
-		if root != null:
-			for n in root.find_children("*", "Node3D", true, false):
-				if "bed" in n.name.to_lower():
-					var gp: Vector3 = n.global_position
-					return Vector2(gp.x, gp.z)
-	for pr in room_mesh.design.get("props", []):
-		if str(pr.get("kind", "")) == "bed":
-			return Vector2(float(pr.x), float(pr.z))
-	return Vector2.ZERO
+	var bed := _bed_info()
+	return bed.pos if not bed.is_empty() else Vector2.ZERO
 
 
 func _begin_wake_up() -> void:
-	if _wake_timer > 0.0 or det == null or det.position.y <= 0.05: return
+	if _wake_timer > 0.0 or det == null or det.pose != "lie": return
 	_wake_bed = _bed_spot()
 	det.set_pose("lie_stand_up")
-	_wake_timer = 1.15
+	_wake_total = maxf(1.15, float(det.pose_length("lie_stand_up")))
+	_wake_timer = _wake_total
+	_wake_y0 = det.position.y
+	_wake_from = Vector2(det.position.x, det.position.z)
+	var bed := _bed_info()
+	if not bed.is_empty():
+		_wake_to = _wake_exit(bed)
+	else:
+		_wake_to = det_pos + Vector2(0.0, 0.7)
+
+
+func _wake_exit(bed: Dictionary) -> Vector2:
+	var half: Vector2 = bed.half
+	var yaw: float = bed.yaw
+	var offsets: Array[Vector2] = [
+		Vector2(half.x + 0.45, 0.0), Vector2(-(half.x + 0.45), 0.0),
+		Vector2(0.0, half.y + 0.45), Vector2(0.0, -(half.y + 0.45)),
+	]
+	for offset in offsets:
+		var candidate: Vector2 = (bed.pos as Vector2) + offset.rotated(-yaw)
+		if _grid == null: return candidate
+		var cell := _nearest_free(_cell_of(candidate))
+		if _grid.is_point_solid(cell): continue
+		candidate = Vector2((cell.x + 0.5) * CELL, (cell.y + 0.5) * CELL)
+		var bed_local: Vector2 = (candidate - (bed.pos as Vector2)).rotated(yaw)
+		if absf(bed_local.x) > half.x + 0.2 or absf(bed_local.y) > half.y + 0.2: return candidate
+	return (bed.pos as Vector2) + offsets[0].rotated(-yaw)
 
 
 func _step_wake_up(delta: float) -> void:
 	if _wake_timer <= 0.0: return
 	_wake_timer = maxf(0.0, _wake_timer - delta)
+	var progress := 1.0 - _wake_timer / maxf(_wake_total, 0.001)
+	var drop := smoothstep(0.45, 1.0, progress)
+	var slide := smoothstep(0.55, 1.0, progress)
+	var at := _wake_from.lerp(_wake_to, slide)
+	det.position = Vector3(at.x, _wake_y0 * (1.0 - drop), at.y)
 	if _wake_timer > 0.0: return
-	det.position.y = 0.0
-	if _wake_bed != Vector2.ZERO:
-		var away := det_pos - _wake_bed
-		if away.length() < 0.05: away = Vector2(0.0, 1.0)
-		det_pos = _wake_bed + away.normalized() * 0.7
-		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
+	det_pos = _wake_to
+	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	det.set_pose("stand")
 
 
@@ -1125,10 +1186,12 @@ func _route(from: Vector2, to: Vector2) -> Array:
 func _go(points: Array, done := Callable()) -> void:
 	det_path = points
 	det_done = done
+	if not points.is_empty(): _begin_wake_up()
 
 
 func _walk_step(delta: float) -> void:
 	if det == null or _wake_timer > 0.0: return
+	if _manual_moving: return
 	var moving := not det_path.is_empty()
 	if moving:
 		var step := WALK_SPEED * delta
@@ -1148,8 +1211,8 @@ func _walk_step(delta: float) -> void:
 		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	if not det_path.is_empty():
 		det.set_pose("walk")
-	elif det.position.y > 0.05:
-		det.set_pose("sit")  # 还躺在床上：保持坐姿
+	elif det.pose == "lie":
+		det.set_pose("lie")
 	else:
 		det.set_pose(_det_talk if _det_talk != "" else "stand")
 	if det_path.is_empty() and det_done.is_valid():
@@ -1395,7 +1458,7 @@ func _auto_search_step(delta: float) -> void:
 	_auto_cd = 0.7
 	# 开场：侦探还在床上时，自动搜证先把他叫起来（走到床边），再出门
 	if _wake_timer > 0.0: return
-	if det != null and det.position.y > 0.05:
+	if det != null and det.pose == "lie":
 		_begin_wake_up()
 		return
 	var eid: String = eng.next_search_target()
@@ -1427,6 +1490,7 @@ func _ensure_room_if_needed() -> void:
 ## 玩家直接操控侦探（WASD/方向键）：按住即走，松开即停；一动就关掉自动搜证，
 ## 把「看侦探自己走」还给玩家。测试模式（instant_story）下不启用，避免破坏回归脚本。
 func _manual_move_step(delta: float) -> void:
+	_manual_moving = false
 	if view != "room" or instant_story or _transit_active() or det == null or _grid == null:
 		return
 	if modal.visible or _story_busy() or not eng.s.playing:
@@ -1441,7 +1505,7 @@ func _manual_move_step(delta: float) -> void:
 		if auto_btn != null: auto_btn.button_pressed = false
 		det_path.clear()
 		det_done = Callable()
-	if det.position.y > 0.05:
+	if det.pose == "lie":
 		_begin_wake_up()
 		return
 	var step: Vector2 = vec.normalized() * WALK_SPEED * delta
@@ -1452,6 +1516,7 @@ func _manual_move_step(delta: float) -> void:
 		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 		det.rotation.y = atan2(vec.x, vec.y)
 		det.set_pose("walk")
+		_manual_moving = true
 	else:
 		det.set_pose("stand")
 

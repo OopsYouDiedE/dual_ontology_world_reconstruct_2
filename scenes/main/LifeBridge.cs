@@ -127,7 +127,8 @@ public partial class LifeBridge : Node
             actors=life.GetProperty("agents").EnumerateArray().Select(profile=>
             {
                 var id=profile.GetProperty("id").GetString()!;var activity=session.Activity(id);
-                return new {id,name=profile.GetProperty("name").GetString(),needs=session.Needs(id),placement=session.Placement(id),activity,
+                JsonElement? motor=activity is not null&&session.Candidate(id,activity.Action).Declaration.TryGetProperty("motor",out var presentation)?presentation:null;
+                return new {id,name=profile.GetProperty("name").GetString(),needs=session.Needs(id),placement=session.Placement(id),activity,motor,
                     food=session.World.Read(new(id,"state","food"))?.Value,book=session.World.Read(new(id,"state","book"))?.Value,
                     purpose=session.View(id).Knowledge.GetValueOrDefault(new(id,"doc","personal_purpose"))?.Value,
                     evidence_count=session.EvidenceCount(id),cognition=session.CognitionAudit(id),choices=definition.Declaration.GetProperty("actors").EnumerateArray().First(actor=>actor.GetProperty("id").GetString()==id).GetProperty("actions").EnumerateArray()

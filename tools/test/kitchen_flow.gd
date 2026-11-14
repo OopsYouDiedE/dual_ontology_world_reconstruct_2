@@ -203,4 +203,3 @@ func _initialize() -> void:
 
 	print("RESULT fails=", fails)
 	quit(1 if fails > 0 else 0)
-

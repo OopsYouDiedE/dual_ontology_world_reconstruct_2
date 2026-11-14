@@ -225,6 +225,33 @@ func _init() -> void:
 	re.solve_deduction("ded_cuffs", data.deduction_by_id["ded_cuffs"].correct)
 	check(re.s.deductions["ded_cuffs"] == "solved" and re.s.pending_conflict == "c_handcuff", "重新推演成功 → 争执重新弹出，正解出现")
 	check(not re.retry_deduction("ded_cuffs"), "已解开的推演不能重试")
+	var recovery := Engine_.new(data)
+	for evidence_id in data.deduction_by_id["ded_truth"].evidence:
+		recovery.s.evidence[evidence_id] = {"at": recovery.s.t, "room": data.evidence_by_id[evidence_id].room}
+	recovery.open_deduction("ded_truth", "c_demon")
+	recovery.solve_deduction("ded_truth", "__wrong__")
+	var recovery_relations: Dictionary = recovery.s.relations.duplicate(true)
+	recovery.s.deductions["ded_cuffs"] = "wrong"
+	check(not recovery.retry_deduction("ded_cuffs") and recovery.s.pending_conflict == "c_demon",
+		"当前争执不允许重推无关推演，待决争执保持不变")
+	recovery.s.pending_choice = {"beat_id": "__retry_guard__"}
+	check(not recovery.retry_deduction("ded_truth") and recovery.s.pending_conflict == "c_demon",
+		"存在待决抉择时不能重推，避免弹窗重叠")
+	recovery.s.pending_choice = {}
+	check(recovery.retry_deduction("ded_truth") and recovery.s.pending_deduction.get("next", "") == "c_demon"
+		and recovery.s.pending_conflict == "" and recovery.s.waiting,
+		"永久争执中可退回对应推演，并保留原争执接续与暂停状态")
+	check(not recovery.retry_deduction("ded_truth") and recovery.s.relations == recovery_relations
+		and not recovery.s.irreparable and not recovery.s.conflicts.has("c_demon"),
+		"重复重推不产生永久裂痕、信任损失或提前结算争执")
+	recovery.solve_deduction("ded_truth", data.deduction_by_id["ded_truth"].correct)
+	check(recovery.s.pending_conflict == "c_demon" and recovery.s.conflict_queue.count("c_demon") == 1
+		and recovery.conflict_options("c_demon").any(func(option): return option.id == data.conflict_by_id["c_demon"].correct),
+		"重推成功后返回同一争执，队列无重复且恢复正解选项")
+	recovery.resolve_conflict("c_demon", data.conflict_by_id["c_demon"].correct)
+	check(recovery.s.conflicts.get("c_demon", "") == "resolved" and not recovery.s.irreparable
+		and recovery.s.pending_conflict == "" and not recovery.s.waiting,
+		"补救后的永久争执可正确结算，时间等待正常解除")
 	var narrative_ok: bool = data.beats.size() >= 35
 	var seen_days := {}
 	for b in data.beats:
@@ -237,5 +264,120 @@ func _init() -> void:
 			if who != "narrator" and not b.get("present", []).has(who): narrative_ok = false
 		if b.has("room") and not data.room_by_id.has(str(b.room)): narrative_ok = false
 	check(narrative_ok and seen_days.size() == 5, "五日全部剧情节拍有有效地点与本场出场角色（%d 节拍）" % data.beats.size())
+	# 11. 评审包 Terra_20261114 剧情与游玩专项回归
+	# 11a. 全部争执当事方词义必须真实分歧（修复 c_quiet 与 c_handcuff 零分歧）
+	var lex_div_ok := true
+	for cf in data.conflicts:
+		var p0: String = str(cf.parties[0])
+		var p1: String = str(cf.parties[1])
+		if data.sense_of(p0, str(cf.word)) == data.sense_of(p1, str(cf.word)):
+			lex_div_ok = false
+			print("    词义未分歧：", cf.id, " ", p0, "/", p1, " word=", cf.word)
+	check(lex_div_ok, "全部 %d 场争执的当事双方均存在真实词义分歧" % data.conflicts.size())
+	# 11b. 第一天「三句答复」推演必须在三问之后、午前争执之前
+	var beat_at_map := {}
+	for b in data.beats: beat_at_map[str(b.id)] = int(b["at"])
+	check(beat_at_map["d1_deduce_truth"] > beat_at_map["d1_q3"] and beat_at_map["d1_deduce_truth"] < beat_at_map["d1_trap"],
+		"「三句答复」推演位于三问之后、争执之前（%d > %d 且 < %d）" % [beat_at_map["d1_deduce_truth"], beat_at_map["d1_q3"], beat_at_map["d1_trap"]])
+	# 11c. 不作弊诚实通关：靠搜证与探索自然集齐 10/10 知识与全部 33 件证物，达成 best 结局
+	var honest := Engine_.new(data)
+	honest.s.speed = 60.0
+	var guard3 := 0
+	while honest.s.ending == "" and guard3 < 200000:
+		guard3 += 1
+		if not honest.s.pending_deduction.is_empty():
+			var dh: Dictionary = data.deduction_by_id[honest.s.pending_deduction.id]
+			honest.solve_deduction(dh.id, dh.correct)
+		elif honest.s.pending_conflict != "":
+			honest.resolve_conflict(honest.s.pending_conflict, data.conflict_by_id[honest.s.pending_conflict].correct)
+		elif not honest.s.pending_choice.is_empty():
+			var pick3: String = honest.s.pending_choice.choice.options[0].id
+			for o in honest.s.pending_choice.choice.options:
+				if o.get("correct", false): pick3 = o.id
+			honest.choose(honest.s.pending_choice.beat_id, pick3)
+		elif not honest.s.get("story_gate", {}).is_empty():
+			honest.s.room = str(honest.s.story_gate.room)
+			honest.s.story_gate = {}
+			honest.process_beats()
+		elif honest.search_step():
+			pass
+		else:
+			honest.tick(0.5)
+	check(honest.knowledge_count() == data.knowledge.size(), "无作弊诚实通关集齐全部源质知识：%d/%d" % [honest.knowledge_count(), data.knowledge.size()])
+	check(honest.s.found_count == data.evidence.size(), "无作弊诚实通关集齐全部证物：%d/%d" % [honest.s.found_count, data.evidence.size()])
+	check(honest.s.ending == "best" and not honest.s.irreparable, "无作弊诚实通关达成破晓结局（实际 %s）" % honest.s.ending)
+	# 11d. ×240 高倍速解除搜证门槛时不穿透到下一节拍，也不重复摊开案卷
+	var ft := Engine_.new(data)
+	ft.s.t = float(ft.T(4, 17, 35))
+	ft.s.speed = 240.0
+	ft.s.room = "B2-valve"
+	ft.s.evidence["e_m_timeshare"] = {"at": 0, "room": "1F-Shaft-Monitor", "correct": true}
+	ft.s.beat_cursor = 0
+	for bi in data.beats.size():
+		if str(data.beats[bi].id) == "d4_deduce_valve":
+			ft.s.beat_cursor = bi
+			break
+	ft.process_beats()
+	check(not ft.s.hold.is_empty(), "第四天阀路缺证物时正确挂起")
+	ft.inspect_evidence("e_v_valve")
+	ft.tick(0.1)
+	check(ft.s.pending_deduction.get("id", "") == "ded_valve" and ft.s.pending_choice.is_empty() and str(ft.s.current_beat) == "d4_deduce_valve",
+		"×240 解除 hold 后立即停在 ded_valve，不穿透进入 d4_strategy")
+	# 11e. 第四夜分支：选 watch 不出现摘耳罩；选 trap 才触发摘耳罩反噬
+	var d4w := Engine_.new(data)
+	d4w.s.choices["d4"] = "watch"
+	var b_d4_watch := {}
+	for b in data.beats:
+		if str(b.id) == "d4_night": b_d4_watch = d4w._resolve_beat(b)
+	var watch_has_earmuff := false
+	for ln in b_d4_watch.get("lines", []):
+		if str(ln[1]).contains("摘下耳罩"): watch_has_earmuff = true
+	var d4t := Engine_.new(data)
+	d4t.s.choices["d4"] = "trap"
+	var b_d4_trap := {}
+	for b in data.beats:
+		if str(b.id) == "d4_night": b_d4_trap = d4t._resolve_beat(b)
+	var trap_has_earmuff := false
+	for ln in b_d4_trap.get("lines", []):
+		if str(ln[1]).contains("摘下耳罩"): trap_has_earmuff = true
+	check((not watch_has_earmuff) and trap_has_earmuff, "第四夜分支真实生效：排轮值无耳罩穿帮，仅耳罩策略触发反噬")
+	# 11f. 第三天候选案分支：选 ration 时展示空箱回收原账分支
+	var d3r := Engine_.new(data)
+	d3r.s.choices["ruanCase"] = "ration"
+	var b_d3_ration := {}
+	for b in data.beats:
+		if str(b.id) == "d3_case": b_d3_ration = d3r._resolve_beat(b)
+	check(str(b_d3_ration.get("title", "")).contains("空箱回收原账"), "第三天候选案响应第二天打谱选择（%s）" % str(b_d3_ration.get("title", "")))
+	# 11g. 门锁越权与 17:00 外院返程保护
+	var lk := Engine_.new(data)
+	lk.s.t = float(lk.T(1, 9, 0))
+	lk.s.room = "2F-cross-M"
+	lk.set_door_flags()
+	check(lk.path_to("D-P", "2F-cross-M").is_empty(), "第一天上午丁区大门未开时，侦探不可借代管者边界门潜入丁区")
+	lk.s.t = float(lk.T(2, 17, 30))
+	lk.s.room = "W-102"
+	lk.set_door_flags()
+	check(not lk.path_to("2F-cross-M", "W-102").is_empty(), "17:00 风窗关闭后身处外院仍可安全撤回主楼")
+	lk.enter_room("2F-cross-M", true)
+	check(lk.path_to("W-102", "2F-cross-M").is_empty(), "撤回主楼后风窗仍保持关闭，不可再次外出")
+	# 11h. 结局文案诚实性 + 无裂痕不落入 bitter
+	var ep := Engine_.new(data)
+	for kid in ["k_contract", "k_pressure", "k_gauge", "k_refraction", "k_meme"]:
+		ep.grant_knowledge(kid)
+	ep.s.final_choice = "lexeme"
+	ep.s.irreparable = false
+	check(ep.compute_ending() == "partial", "无不可弥合裂痕且知识 5/10 → partial 留白结局（实际 %s）" % ep.compute_ending())
+	ep.s.irreparable = true
+	ep.s.deductions["ded_truth"] = "wrong"
+	ep.s.ending = ep.compute_ending()
+	check(ep.s.ending == "bitter" and not ep.ending_text().contains("也拆穿了那三句真话"),
+		"ded_truth 判错时 bitter 结局文案不谎称「也拆穿了那三句真话」")
+	# 11i. 重复调查无变化证物不刷屏日志
+	var dup := Engine_.new(data)
+	dup.s.room = "B-P"
+	var before_log: int = dup.s.log.size()
+	dup.inspect_evidence("e_b_drag")
+	dup.inspect_evidence("e_b_drag")
+	check(dup.s.log.size() == before_log + 1, "重复调查读法未变的证物不刷屏日志")
 	print("失败 %d" % fails)
 	quit(1 if fails > 0 else 0)

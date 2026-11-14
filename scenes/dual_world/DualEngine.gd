@@ -15,6 +15,7 @@ const END_T := 4 * 1440 + 23 * 60 + 59
 ## 默认倍速：×5（旧版是 ×20，台词、搜证都来不及看）。
 const DEFAULT_SPEED := 5.0
 const LOCKS := ["zone.0", "zone.1", "zone.2", "zone.3", "service_map", "demon", "wind", "granary", "archive"]
+const OUTER_ROOMS := ["Wind-Corridor", "W-102", "S-102", "B-102", "F-104"]
 
 var d: RefCounted
 var s: Dictionary = {}
@@ -130,8 +131,19 @@ func set_door_flags() -> void:
 
 func unlocked(door: Dictionary) -> bool:
 	set_door_flags()
+	if s.author_view: return true
+	var only: Variant = door.get("only", null)
+	if only is Array and not only.is_empty():
+		if only.has("demon") and not only.has("detective"):
+			return false
 	var lock: Variant = door.get("lock", null)
-	return lock == null or s.doors.get(str(lock), false) or s.author_view
+	if lock == null: return true
+	if str(lock) == "wind" and not s.doors.get("wind", false):
+		# 风窗 17:00 关闭后，若侦探仍身处外院，允许单向撤回主楼，不把玩家锁死在院外
+		if str(s.room) in OUTER_ROOMS and (str(door.a) in OUTER_ROOMS or str(door.b) in OUTER_ROOMS):
+			if str(door.a) == "2F-cross-M" or str(door.b) == "2F-cross-M" or str(door.a) == str(s.room) or str(door.b) == str(s.room):
+				return true
+	return s.doors.get(str(lock), false)
 
 
 ## 广度优先寻路；返回房间 id 序列，不可达返回空数组。
@@ -193,11 +205,34 @@ func knowledge_count() -> int:
 func grant_knowledge(id: String, why := "") -> bool:
 	if not d.know_by_id.has(id) or s.knowledge.has(id): return false
 	s.knowledge[id] = {"at": s.t, "why": why}
-	_log("knowledge", "在案卷边角添了一行小字。", [])
-	_debug("knowledge", "【%s】%s" % [d.know_by_id[id].title, d.know_by_id[id].text])
+	var title := str(d.know_by_id[id].title)
+	_log("knowledge", "获得源质知识【%s】——相关旧证物的读法已更新。" % title, [])
+	_debug("knowledge", "【%s】%s" % [title, d.know_by_id[id].text])
+	notice("获得源质知识：【%s】" % title)
 	sfx.emit("page")
+	_recheck_evidence_knowledge()
 	changed.emit("knowledge")
 	return true
+
+
+## 补齐源质知识后，自动复核已取得的旧证物并触发级联知识解锁。
+func _recheck_evidence_knowledge() -> void:
+	var newly_granted: Array = []
+	for eid in s.evidence.keys():
+		if not d.evidence_by_id.has(eid): continue
+		var e: Dictionary = d.evidence_by_id[eid]
+		var r := read_evidence(str(eid))
+		s.evidence[eid]["correct"] = r.correct
+		if r.correct:
+			s.misconceptions = s.misconceptions.filter(func(m): return m.eid != eid)
+			var who: Array = e.actors if not e.get("actors", []).is_empty() else ["detective"]
+			for a in who:
+				if not s.beliefs.has(a): s.beliefs[a] = {}
+				s.beliefs[a][eid] = "truth"
+			for k in e.get("grants", []):
+				if not s.knowledge.has(k): newly_granted.append([str(k), str(e.label)])
+	for pair in newly_granted:
+		grant_knowledge(pair[0], pair[1])
 
 
 ## 读证物：缺少前置源质知识时只能得到「当前读法」；作者视角只改变显示，不替人物补知识。
@@ -223,11 +258,18 @@ func inspect_evidence(eid: String) -> bool:
 		sfx.emit("error")
 		return false
 	var first: bool = not s.evidence.has(eid)
+	var prev_correct: bool = bool(s.evidence.get(eid, {}).get("correct", false))
 	s.evidence[eid] = {"at": s.t, "room": e.room}
 	s.selected_evidence = eid
+	# 配对互证解锁（例如对照「四锚分时日志」与「清场录音：23:31」解锁「两个时间节点」）
+	var pair_id := str(e.get("unlock_pair", ""))
+	if pair_id != "" and s.evidence.has(pair_id):
+		for k in e.get("grants", []): grant_knowledge(str(k), e.label)
 	var r := read_evidence(eid)
 	s.evidence[eid]["correct"] = r.correct
-	_log("evidence", "【%s】%s" % [e.label, r.text], e.get("actors", []))
+	# 仅在首次调查或知识补齐改读时写入玩家日志，避免复查同一证物刷屏重复记录
+	if first or (r.correct and not prev_correct):
+		_log("evidence", "【%s】%s" % [e.label, r.text], e.get("actors", []))
 	say("detective", r.text, "truth" if r.correct else "think")
 	sfx.emit("pen")
 	# 主观认知：各人保存自己那一份（知识补齐才会改）
@@ -244,9 +286,11 @@ func inspect_evidence(eid: String) -> bool:
 			mis.append({"eid": eid, "at": s.t, "text": e.naive, "need": r.need, "lex": e.get("lex", [])})
 	else:
 		s.misconceptions = mis.filter(func(m): return m.eid != eid)
-		for k in e.get("grants", []): grant_knowledge(k, e.label)
+		for k in e.get("grants", []): grant_knowledge(str(k), e.label)
 	if first:
 		s.found_count += 1
+		s.case_notes.append({"eid": eid, "at": s.t, "text": r.text})
+	elif r.correct and not prev_correct:
 		s.case_notes.append({"eid": eid, "at": s.t, "text": r.text})
 	_debug("evidence", "%s → %s：%s" % [e.label, "客观读法" if r.correct else "当前读法", r.text])
 	changed.emit("evidence")
@@ -302,23 +346,36 @@ func solve_deduction(did: String, hyp_id: String, picked: Array = []) -> void:
 	var nxt: String = s.pending_deduction.next
 	s.pending_deduction = {}
 	_refresh_waiting()
-	_log("deduce", "案卷推演 · %s" % dd.title, [s.selected_actor])
+	if solved:
+		_log("deduce", "案卷推演 · %s（已解开）" % dd.title, [s.selected_actor])
+		notice("推演成立：%s" % dd.title)
+		sfx.emit("success")
+	else:
+		var reason := "勾选证物不足（%d/%d）" % [relevant.size(), need_min] if relevant.size() < need_min else "假设与现场证据不符"
+		_log("deduce", "案卷推演 · %s（判错：%s；可在「案卷 → 推演」重新推演）" % [dd.title, reason], [s.selected_actor])
+		notice("推演判错（%s）——可在右上角「案卷 → 推演」重新推演。" % reason)
+		sfx.emit("error")
 	_debug("deduction", "%s → %s（假设 %s，证物 %d/%d 件）" % [did, s.deductions[did], hyp_id, relevant.size(), need_min])
-	sfx.emit("pen")
 	if nxt != "": open_conflict(nxt)
 	changed.emit("deduction")
 
 
 ## 重新推演：只允许对「判错」的推演重试；对应争执若还没拆解，推演完成后会重新弹出争执。
 func retry_deduction(did: String) -> bool:
-	if not d.deduction_by_id.has(did) or not s.pending_deduction.is_empty() or s.pending_conflict != "": return false
+	if not d.deduction_by_id.has(did) or not s.pending_deduction.is_empty() or not s.pending_choice.is_empty(): return false
 	if not s.get("postponed", {}).is_empty() or not s.get("hold", {}).is_empty(): return false
 	if s.deductions.get(did, "") != "wrong": return false
 	var next := ""
-	for c in d.conflicts:
-		if c.get("deduction", null) == did and not s.conflicts.has(c.id):
-			next = str(c.id)
-			break
+	if s.pending_conflict != "":
+		var conflict: Dictionary = d.conflict_by_id.get(s.pending_conflict, {})
+		if conflict.get("deduction", null) != did: return false
+		next = str(s.pending_conflict)
+		_pop_conflict(next)
+	if next == "":
+		for conflict in d.conflicts:
+			if conflict.get("deduction", null) == did and not s.conflicts.has(conflict.id):
+				next = str(conflict.id)
+				break
 	s.deductions.erase(did)
 	_debug("deduction", "重新推演 %s（接续争执：%s）" % [did, next if next != "" else "无"])
 	open_deduction(did, next)
@@ -433,8 +490,8 @@ func resolve_conflict(cid: String, option_id: String, defer := false) -> void:
 		sfx.emit("success")
 		var r3 := _rel(a, b)
 		r3.trust = mini(100, int(r3.trust) + 16)
-		for k in c.get("need", []):
-			if s.knowledge.has(k): grant_knowledge(k, c.title)
+		for k in c.get("grants", []):
+			grant_knowledge(str(k), c.title)
 		if cid == "c_demon": grant_knowledge("k_contract", "第一天的对照")
 	changed.emit("conflict")
 
@@ -453,11 +510,26 @@ func choose(beat_id: String, option_id: String) -> void:
 	s.choices[beat.choice.id] = option_id
 	for k in opt.get("set", {}): s.flags[k] = opt.set[k]
 	if beat.choice.id == "final": s.final_choice = option_id
+	for tr in opt.get("trust", []):
+		if tr is Array and tr.size() >= 3:
+			var rel := _rel(str(tr[0]), str(tr[1]))
+			var delta := int(tr[2])
+			rel.trust = clampi(int(rel.trust) + delta, 4, 100)
+			if delta < 0: rel.damage = int(rel.damage) + (-delta)
 	s.pending_choice = {}
 	_refresh_waiting()
-	_log("choice", "%s → %s" % [beat.title, opt.label], [s.selected_actor])
-	_debug("choice", "%s / %s %s" % [beat.title, option_id, "（设计中为正解）" if opt.get("correct", false) else ""])
-	say("detective", opt.label, "")
+	var resolved_beat := _resolve_beat(beat)
+	_log("choice", "%s → %s" % [resolved_beat.title, opt.label], [s.selected_actor])
+	_debug("choice", "%s / %s %s" % [resolved_beat.title, option_id, "（设计中为正解）" if opt.get("correct", false) else ""])
+	var after_lines: Array = opt.get("after_lines", [])
+	if after_lines.is_empty():
+		say("detective", opt.label, "")
+	else:
+		for ln in after_lines:
+			var who: String = str(ln[0])
+			var nm: String = "" if who == "narrator" else d.actor_name(who) + "："
+			_log("say", nm + str(ln[1]), [who])
+			say(who, str(ln[1]), str(ln[2]) if ln.size() > 2 else "")
 	sfx.emit("error" if opt.get("correct", true) == false else "click")
 	changed.emit("choice")
 
@@ -491,10 +563,25 @@ func jump_day(day: int) -> void:
 	changed.emit("jump")
 
 
+## 根据已作出的抉择 / 标记解析条件分支节拍（保持原数据不可变）。
+func _resolve_beat(b: Dictionary) -> Dictionary:
+	var variants: Dictionary = b.get("variants", {})
+	if variants.is_empty(): return b
+	var out := b.duplicate(false)
+	for key in variants:
+		var val := str(s.choices.get(key, s.flags.get(key, "")))
+		var table: Dictionary = variants[key]
+		if val != "" and table.has(val):
+			var patch: Dictionary = table[val]
+			for pk in patch: out[pk] = patch[pk]
+	return out
+
+
 func process_beats() -> void:
+	if s.waiting: return
 	var fired := 0
 	while s.beat_cursor < d.beats.size() and d.beats[s.beat_cursor]["at"] <= s.t:
-		var b: Dictionary = d.beats[s.beat_cursor]
+		var b: Dictionary = _resolve_beat(d.beats[s.beat_cursor])
 		# 场景门：标记为现场到达型的节拍不会把玩家瞬移到房间；时间停住，等玩家亲自走到场景。
 		if b.get("requires_room", false) and not s.author_view and str(b.get("room", "")) != str(s.room):
 			var target_room := str(b.get("room", ""))
@@ -546,7 +633,8 @@ func tick(dt: float) -> void:
 		if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty(): return
 	if not s.get("hold", {}).is_empty():  # 等侦探搜证：时间不走，每帧复核门槛
 		process_beats()
-		if not s.get("hold", {}).is_empty(): return
+		# 门槛解除后若已弹出推演/争执/抉择或进入新门禁，必须立刻返回，禁止同帧推进时间穿透到下一节拍
+		if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty(): return
 	if not s.get("postponed", {}).is_empty():  # 玩家主动推迟了推演：证物够了再弹回来
 		var pp: Dictionary = s.postponed
 		var gp := gate_status(str(pp.id))
@@ -557,10 +645,16 @@ func tick(dt: float) -> void:
 	if s.t >= END_T:
 		finish()
 		return
-	s.t = minf(float(END_T), s.t + dt * s.speed)
+	var next_t := minf(float(END_T), s.t + dt * s.speed)
+	# 高倍速（如 ×60/×240）下精确停靠在下一未触发节拍时刻，避免跳过风窗或连撞多拍
+	if s.beat_cursor < d.beats.size():
+		var beat_at := float(d.beats[s.beat_cursor]["at"])
+		if s.t < beat_at and next_t > beat_at:
+			next_t = beat_at
+	s.t = next_t
 	set_door_flags()
 	process_beats()
-	if s.t >= END_T: finish()
+	if s.t >= END_T and not s.waiting: finish()
 
 
 # ───────────────────────── 搜证门槛 / 自动搜证 ─────────────────────────
@@ -631,21 +725,38 @@ func hold_text() -> String:
 		("  可查：" + "、".join(rooms)) if not rooms.is_empty() else ""]
 
 
-## 侦探下一件该查的证物（自动搜证用）：先搜完本房，再去查被挂起的推演还缺的证物（取最近的）。
+## 侦探下一件该查的证物（自动搜证用）：
+## 1) 先搜完本房；2) 若有被挂起/推迟的推演，优先去查该推演还缺的最近证物；
+## 3) 空闲探索时段，优先趁白天风窗去查外院四室，再查其它可达房间遗漏的证物。
 func next_search_target() -> String:
 	for e in d.evidence:
 		if e.room == s.room and not s.evidence.has(e.id): return str(e.id)
 	var h: Dictionary = s.get("hold", {})
 	if h.is_empty() and not s.get("postponed", {}).is_empty(): h = {"deduction": s.postponed.id}
-	if h.is_empty(): return ""
-	var best := ""
-	var best_len := 1 << 30
-	for eid in gate_status(str(h.deduction)).missing:
-		var pth: Array = path_to(str(d.evidence_by_id[eid].room))
-		if not pth.is_empty() and pth.size() < best_len:
-			best = str(eid)
-			best_len = pth.size()
-	return best
+	if not h.is_empty():
+		var best := ""
+		var best_len := 1 << 30
+		for eid in gate_status(str(h.deduction)).missing:
+			var pth: Array = path_to(str(d.evidence_by_id[eid].room))
+			if not pth.is_empty() and pth.size() < best_len:
+				best = str(eid)
+				best_len = pth.size()
+		return best
+	if not s.get("story_gate", {}).is_empty(): return ""
+	# 空闲探索：优先白天开放的外院四室（避免 17:00 关窗错过），其次最近可达未查证物
+	var best_any := ""
+	var best_score := 1 << 30
+	for e in d.evidence:
+		if s.evidence.has(e.id): continue
+		var rm := str(e.room)
+		var pth: Array = path_to(rm)
+		if pth.is_empty(): continue
+		var score := pth.size()
+		if rm in OUTER_ROOMS: score -= 100  # 白天风窗限时开放，优先搜完四院
+		if score < best_score:
+			best_score = score
+			best_any = str(e.id)
+	return best_any
 
 
 ## 无界面的一步搜证（脚本 / 测试用）：同房直接查，不同房先进房。返回是否做了事。
@@ -675,7 +786,7 @@ func room_occupants() -> Dictionary:
 		occ[room].append(id)
 	var last: Dictionary = {}
 	for b in d.beats:
-		if b["at"] <= s.t and b.has("lines"): last = b
+		if b["at"] <= s.t and b.has("lines"): last = _resolve_beat(b)
 	var busy := {}
 	# 只显示当前场景真正开口的角色；名单不再把整张地图/全体角色瞬间搬来。
 	# 场景人物在短暂交谈后回到自己的日常位置，不会在错误房间滞留数小时。
@@ -735,9 +846,33 @@ func compute_ending() -> String:
 	var k := knowledge_count()
 	if k < 4 or s.final_choice == "fate": return "lost"
 	if s.final_choice == "demon": return "trapped"
-	if s.final_choice == "lexeme" and not s.irreparable and k >= 6: return "best"
 	if s.irreparable: return "bitter"
-	return "best" if k >= 6 else "bitter"
+	if k >= 6: return "best"
+	return "partial" if d.endings.has("partial") else "bitter"
+
+
+## 依实际查清的知识项与推演状态生成结局正文，避免结局文本宣称「已查清／已拆穿」未完成的线索。
+func ending_text(ending_id := "") -> String:
+	var eid := ending_id if ending_id != "" else str(s.ending)
+	if not d.endings.has(eid): return ""
+	if eid != "bitter":
+		return str(d.endings[eid].text)
+	var parts: Array = []
+	if s.knowledge.has("k_pressure"): parts.append("23:31 与 23:55 的分别")
+	if s.knowledge.has("k_acoustic"): parts.append("管里的余音")
+	if s.knowledge.has("k_imprint"): parts.append("窗上的影子")
+	if s.knowledge.has("k_gauge"): parts.append("反着的读数")
+	var truth_solved := str(s.deductions.get("ded_truth", "")) == "solved"
+	var head := ""
+	if not parts.is_empty():
+		head = "你最终查清了" + "、".join(parts)
+	else:
+		head = "你最终拼出了部分灾变当夜的轮廓"
+	if truth_solved:
+		head += "，也拆穿了那三句真话。"
+	else:
+		head += "，但第一天那三句真话的机关仍未彻底拆开。"
+	return head + "可是第一天上午的话已经落地：沃德与雀儿、莫兰与赛尔玛、苏泠与你之间，有些东西事后也补不回来。"
 
 
 func finish() -> void:

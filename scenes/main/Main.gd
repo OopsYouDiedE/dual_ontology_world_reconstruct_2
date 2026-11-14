@@ -143,6 +143,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func begin_shutdown() -> void:
 	shutting_down = true
 	paused = true
+	if is_instance_valid(dual_world):
+		dual_world._finish_transit_now()
+		dual_world._write_auto()
 	if active: status_text = bridge.Save(_slot_path("auto"))
 	if is_instance_valid(campaign_panel) and campaign_panel.visible: campaign_panel.begin_shutdown()
 	bridge.Close()
@@ -167,7 +170,7 @@ func _continue_game() -> void:
 	# 正式游戏（双本体）存档：自动存档与手动槽位，取最新的一份。
 	var dual_path := ""
 	var dual_latest := -1
-	for path in DUAL_WORLD_SAVES:
+	for path in _dual_world_saves():
 		if FileAccess.file_exists(path):
 			var modified := FileAccess.get_modified_time(path)
 			if modified > dual_latest:
@@ -569,8 +572,16 @@ func close_life() -> void:
 		title_ui.show_title(has_progress())
 		Sound.music("main_theme")
 
+func _dual_world_saves() -> Array:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--dv-save-slot="):
+			var slot := argument.trim_prefix("--dv-save-slot=").strip_edges()
+			if slot != "":
+				return ["user://sessions/%s/dual_world/auto.json" % slot, "user://sessions/%s/dual_world/save_1.json" % slot]
+	return DUAL_WORLD_SAVES
+
 func has_progress() -> bool:
-	for path in DUAL_WORLD_SAVES:
+	for path in _dual_world_saves():
 		if FileAccess.file_exists(path): return true
 	if FileAccess.file_exists(_auto_path()): return true
 	for index in range(1, 7):

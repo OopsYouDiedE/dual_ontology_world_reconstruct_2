@@ -161,8 +161,11 @@ func _ready() -> void:
 	eng.said.connect(_on_said)
 	eng.sfx.connect(func(k: String): score.sfx(k))
 	set_process(true)
-	if resume_path != "" and not _read_save(resume_path):
-		_toast("存档无法读取，已从头开始")
+	if resume_path != "":
+		if _read_save(resume_path):
+			_toast("已读取存档（时间已暂停，准备好后点「继续」）")
+		else:
+			_toast("存档无法读取，已从头开始")
 	# 正式游戏默认进 3D 房间（单房间俯视角）：侦探在房间里走动；2D 地图是辅助视图
 	_set_view("room")
 	if resume_path == "" and show_intro and not instant_story: _begin_intro()
@@ -736,22 +739,39 @@ func _update_editor_status() -> void:
 
 
 # ───────────────────────── 存读档 ─────────────────────────
+static func save_dir() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--dv-save-slot="):
+			var slot := argument.trim_prefix("--dv-save-slot=").strip_edges()
+			if slot != "": return "user://sessions/%s/dual_world" % slot
+	return "user://dual_world"
+
+
+static func auto_save_path() -> String:
+	return save_dir().path_join("auto.json")
+
+
+static func slot_save_path(slot: int) -> String:
+	return save_dir().path_join("save_%d.json" % slot)
+
+
 func _write_save(path: String) -> void:
-	DirAccess.make_dir_recursive_absolute("user://dual_world")
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f != null: f.store_string(JSON.stringify(eng.save_dict()))
 
 
 ## 自动存档：「继续游戏」读这一份。通关后删除，避免下次继续时直接停在结局上。
 func _write_auto() -> void:
+	var ap := auto_save_path()
 	if eng.s.ending != "":
-		if FileAccess.file_exists(AUTO_FILE): DirAccess.remove_absolute(AUTO_FILE)
+		if FileAccess.file_exists(ap): DirAccess.remove_absolute(ap)
 		return
-	_write_save(AUTO_FILE)
+	_write_save(ap)
 
 
 func _save_game(slot: int) -> void:
-	_write_save(SAVE_FILE % slot)
+	_write_save(slot_save_path(slot))
 	_toast("已存档至槽位 %d" % slot)
 	score.sfx("success")
 
@@ -761,6 +781,8 @@ func _read_save(path: String) -> bool:
 	var f := FileAccess.open(path, FileAccess.READ)
 	var p: Variant = JSON.parse_string(f.get_as_text())
 	if not (p is Dictionary and eng.load_dict(p)): return false
+	# 读档后保持时间暂停，避免高倍速存档（如 ×240）在玩家反应前瞬间冲进结局
+	eng.s.playing = false
 	_modal_key = ""
 	_sub_queue.clear()
 	subtitle.visible = false
@@ -770,14 +792,16 @@ func _read_save(path: String) -> bool:
 	pm.set_item_checked(pm.get_item_index(3), bool(eng.s.author_view))
 	_apply_author_tabs()
 	if view == "room": _ensure_room()
+	_dirty = true
 	return true
 
 
 func _load_game(slot: int) -> void:
-	if not FileAccess.file_exists(SAVE_FILE % slot):
+	var sp := slot_save_path(slot)
+	if not FileAccess.file_exists(sp):
 		_toast("槽位为空")
 		return
-	if _read_save(SAVE_FILE % slot): _toast("已读取槽位 %d" % slot)
+	if _read_save(sp): _toast("已读取槽位 %d（时间已暂停，准备好后点「继续」）" % slot)
 
 
 # ───────────────────────── 3D：单房间 ─────────────────────────
@@ -1463,6 +1487,15 @@ func _objective_text() -> String:
 		return "目标：为「%s」搜集证物 %d/%d\n%s\n（点金色光柱，或用左侧「本房证物」）" % [str(dd.title), int(g.have), int(g.need), where]
 	if not s.pending_conflict.is_empty() or not s.pending_choice.is_empty():
 		return "目标：处理当前弹窗（争执 / 抉择）。"
+	if s.doors.get("wind", false):
+		var outer_missing: Array = []
+		for rm in ["W-102", "S-102", "B-102", "F-104"]:
+			for e in data.evidence_by_room.get(rm, []):
+				if not s.evidence.has(e.id):
+					outer_missing.append(str(data.room_by_id[rm].label))
+					break
+		if not outer_missing.is_empty():
+			return "目标：白天风窗已开（09:00—17:00）。可前往外院补齐源质知识：%s。" % "、".join(outer_missing)
 	return "目标：自由探索。时间推进到下一节拍时，新的推演会弹出。"
 
 
@@ -1607,7 +1640,18 @@ func _refresh_right() -> void:
 		if not known:
 			for cid in s.conflicts:
 				var c: Dictionary = data.conflict_by_id[cid]
-				if c.word == term and c.parties.has(a.id): known = true
+				var match_word: bool = str(c.word) == term or c.get("extra_words", []).has(term)
+				if match_word:
+					if c.parties.has(a.id): known = true
+					else:
+						for ln in c.get("lines", []):
+							if str(ln[0]) == str(a.id): known = true
+		if not known:
+			for eid in s.evidence:
+				var ev: Dictionary = data.evidence_by_id.get(eid, {})
+				if ev.get("lex", []).has(term) and ev.get("actors", []).has(a.id):
+					known = true
+					break
 		if known:
 			shown += 1
 			tab_lex.append_text("%s：%s\n" % [_name_bb(str(a.id)), data.sense_label(str(a.id), term)])
@@ -1724,30 +1768,37 @@ func _modal_deduction(did: String) -> void:
 	var checks: Dictionary = {}
 	var pl := _ink_label(v, "已取得 %d / 至少需要 %d 件相关证物" % [prog.have, prog.need], 14)
 	pl.add_theme_color_override("font_color", Color("#2f6b3a") if prog.have >= prog.need else Color("#a03a24"))
-	_ink_label(v, "手头的证物（勾选用作依据）：", 13)
+	var pick_label := _ink_label(v, "手头的证物（已默认勾选，至少勾选 %d 件作为依据）：" % int(prog.need), 13)
 	for eid in dd.evidence:
 		var cb := CheckBox.new()
 		var have: bool = eng.s.evidence.has(eid)
 		cb.text = str(data.evidence_by_id[eid].label) if have else "（尚未取得）"
 		cb.disabled = not have
 		cb.button_pressed = have
-		cb.add_theme_color_override("font_color", INK)
+		cb.focus_mode = Control.FOCUS_NONE
+		for color_name in ["font_color", "font_pressed_color", "font_hover_color", "font_hover_pressed_color", "font_focus_color"]:
+			cb.add_theme_color_override(color_name, TEXT)
 		cb.add_theme_color_override("font_disabled_color", Color("#8a7a68"))
 		v.add_child(cb)
 		checks[eid] = cb
 	var can_answer: bool = prog.can_answer
+	var warn_lbl := _ink_label(v, "", 13)
+	warn_lbl.add_theme_color_override("font_color", Color("#a03a24"))
+	warn_lbl.visible = false
 	if not can_answer:
-		var warn := _ink_label(v, "证物不足，现在下结论只会判错。先去现场取证，证物齐了推演会自动回来。", 13)
-		warn.add_theme_color_override("font_color", Color("#a03a24"))
+		warn_lbl.text = "证物不足，现在下结论只会判错。先去现场取证，证物齐了推演会自动回来。"
+		warn_lbl.visible = true
 	elif prog.have < prog.need:
-		var warn2 := _ink_label(v, "能取到的证物都查过了，只能凭现有线索推演（证物不足会判错，之后可在「案卷 → 推演」里重新推演）。", 13)
-		warn2.add_theme_color_override("font_color", Color("#a03a24"))
-	_ink_label(v, "哪一种先后更说得通？", 13)
+		warn_lbl.text = "能取到的证物都查过了，只能凭现有线索推演（证物不足会判错，之后可在「案卷 → 推演」里重新推演）。"
+		warn_lbl.visible = true
+	_ink_label(v, str(dd.get("question", "哪一种解释更说得通？")), 13)
+	var hyp_buttons: Array = []
 	for h in dd.hypotheses:
 		var b := Button.new()
 		b.text = str(h.label)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.focus_mode = Control.FOCUS_NONE
 		b.disabled = not can_answer
 		b.pressed.connect(func():
 			b.disabled = true
@@ -1757,6 +1808,21 @@ func _modal_deduction(did: String) -> void:
 			_dismiss_modal()
 			eng.solve_deduction(did, str(h.id), picked))
 		v.add_child(b)
+		hyp_buttons.append(b)
+	var sync_checked := func() -> void:
+		var cnt := 0
+		for k in checks:
+			if checks[k].button_pressed and not checks[k].disabled: cnt += 1
+		pick_label.text = "手头的证物（已勾选 %d / 至少需要 %d 件作为依据，默认已全选）：" % [cnt, int(prog.need)]
+		if can_answer and prog.have >= prog.need:
+			var enough := cnt >= int(prog.need)
+			for hb in hyp_buttons: hb.disabled = not enough
+			warn_lbl.visible = not enough
+			if not enough:
+				warn_lbl.text = "当前仅勾选 %d/%d 件证物，请至少勾选 %d 件后再点击结论。" % [cnt, int(prog.need), int(prog.need)]
+	for k in checks:
+		checks[k].toggled.connect(func(_on: bool): sync_checked.call())
+	sync_checked.call()
 	if not can_answer:
 		var go := Button.new()
 		go.text = "先去取证（时间保持暂停）"
@@ -1769,7 +1835,13 @@ func _modal_deduction(did: String) -> void:
 
 func _modal_conflict(cid: String) -> void:
 	var c: Dictionary = data.conflict_by_id[cid]
-	var v := _modal_shell("争执 · " + str(c.title), "第 %d 天 · 在场：%s" % [int(c.day), "、".join(c.parties.map(func(i): return data.actor_name(str(i))))])
+	var present_ids: Array = []
+	for p in c.parties:
+		if not present_ids.has(str(p)): present_ids.append(str(p))
+	for ln in c.lines:
+		var sp := str(ln[0])
+		if sp != "narrator" and sp != "demon" and not present_ids.has(sp): present_ids.append(sp)
+	var v := _modal_shell("争执 · " + str(c.title), "第 %d 天 · 在场：%s" % [int(c.day), "、".join(present_ids.map(func(i): return data.actor_name(str(i))))])
 	# 争执说明：正解只在推演成功后出现；选错会永久折损信任
 	_ink_label(v, "争执里只有一方能得到申诉证据，另一方永远不知道自己「违约」了。\n正解选项只有在对应推演成功后才会出现——选错会永久折损人物之间的信任。", 12)
 	for ln in c.lines:
@@ -1782,12 +1854,28 @@ func _modal_conflict(cid: String) -> void:
 		for sn in eng.conflict_senses(cid): txt += "%s=%s；" % [sn.name, sn.sense]
 		var al := _ink_label(v, txt, 12)
 		al.add_theme_color_override("font_color", Color("#6b3fa0"))
+	var deduction_id := str(c.get("deduction", "")) if c.get("deduction", null) != null else ""
+	if deduction_id != "" and eng.s.deductions.get(deduction_id, "") == "wrong":
+		var deduction_title := str(data.deduction_by_id[deduction_id].title)
+		var warning := _ink_label(v, "「%s」上一次推演判错，这场争执里看不到正解。可以先回案卷重推，完成后会返回这场争执。" % deduction_title, 13)
+		warning.add_theme_color_override("font_color", Color("#a03a24"))
+		var retry_button := Button.new()
+		retry_button.text = "先回案卷重推「%s」（争执等着）" % deduction_title
+		retry_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		retry_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		retry_button.focus_mode = Control.FOCUS_NONE
+		retry_button.pressed.connect(func():
+			retry_button.disabled = true
+			if eng.retry_deduction(deduction_id): _dismiss_modal()
+			else: retry_button.disabled = false)
+		v.add_child(retry_button)
 	_ink_label(v, "你要怎么回应？", 13)
 	for o in eng.conflict_options(cid):
 		var b := Button.new()
 		b.text = str(o.label)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(func():
 			b.disabled = true
 			_dismiss_modal()
@@ -1838,6 +1926,7 @@ func _modal_choice() -> void:
 		b.text = str(o.label)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(func():
 			b.disabled = true
 			_dismiss_modal()
@@ -1850,7 +1939,7 @@ func _modal_ending() -> void:
 	var v := _modal_shell(str(e.title), "")
 	# 结局说明：结局由推演、争执与抉择共同决定
 	_ink_label(v, "结局由你的推演、争执与抉择共同决定。重新开始可以换一条路走。", 12)
-	_ink_label(v, str(e.text), 16)
+	_ink_label(v, eng.ending_text(), 16)
 	_ink_label(v, "知识 %d/%d · 证物 %d/%d · %s" % [eng.knowledge_count(), data.knowledge.size(), eng.s.found_count, data.evidence.size(), "有不可弥合的裂痕" if eng.s.irreparable else "没有无法回头的关系"], 13)
 	var row := HBoxContainer.new()
 	v.add_child(row)

@@ -490,11 +490,17 @@ func _swap_to_room() -> void:
 	host.eng.enter_room(_to_room)
 	host._build_room(_to_room)   # 同步建好 B-P，避免 _watch_room_change 再演一遍 R05 的走出动画
 	host._det_to_home()
-	host.pitch = 1.25
-	host._fit_camera()
 	host._cine = false
 	host.eng.s.playing = true
 	host.gathering = null
+	# 第四幕：厨房沿用卧室 / 走廊的探索交互（无顶栏、宝石证物、E 键、跟随镜头、按镜头方向移动）。
+	# 测试模式（instant_story）或房间不是 B-P 时回退到原来的完整界面。
+	var explore := false
+	if _to_room == "B-P" and host.has_method("start_kitchen_exploration") and not host.instant_story:
+		explore = host.start_kitchen_exploration()
+	if not explore:
+		host.pitch = 1.25
+		host._fit_camera()
 	active = false
 	host._fade(0.0, 0.4)
 	queue_free()

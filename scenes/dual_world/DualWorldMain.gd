@@ -20,6 +20,7 @@ const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
 const Score := preload("res://scenes/dual_world/ProceduralScore.gd")
 const WakeOpening := preload("res://scenes/dual_world/WakeOpening.gd")
 const CorridorGathering := preload("res://scenes/dual_world/CorridorGathering.gd")
+const KitchenExploration := preload("res://scenes/dual_world/KitchenExploration.gd")
 const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLibrary.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
@@ -184,6 +185,7 @@ var _wake_edge := Vector2.ZERO     # 坐到床沿时的髋部位置
 var _manual_moving := false
 var opening: Node = null
 var gathering: Node = null   # 第二幕：乙区走廊对话圈
+var kitchen: Node = null     # 第四幕：B-P 小厨房自由探索
 var _cine := false
 var top_bar: PanelContainer
 
@@ -240,6 +242,20 @@ func start_gathering(to_room: String) -> void:
 	gathering.begin(self, to_room)
 
 
+## 第四幕入口：走廊里主动走进厨房拱门后调用（CorridorGathering._swap_to_room）。
+## 返回 true 表示厨房探索接管了界面与镜头。
+func start_kitchen_exploration() -> bool:
+	if kitchen != null:
+		if kitchen.active: kitchen.end()
+		kitchen.queue_free()
+	kitchen = KitchenExploration.new()
+	add_child(kitchen)
+	if kitchen.begin(self): return true
+	kitchen.queue_free()
+	kitchen = null
+	return false
+
+
 func _stop_opening() -> void:
 	if opening == null: return
 	if opening.active: opening._end()
@@ -263,6 +279,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if gathering != null and gathering.active and gathering.phase == "free":
 		if event.is_action_pressed("interact") and not event.is_echo() and not modal.visible:
 			gathering.interact_nearest()
+			get_viewport().set_input_as_handled()
+			return
+	# 第四幕：小厨房自由探索，E 键查看最近的证物，Esc 切换完整界面
+	if kitchen != null and kitchen.active:
+		if event.is_action_pressed("interact") and not event.is_echo() and not modal.visible:
+			kitchen.interact_nearest()
+			get_viewport().set_input_as_handled()
+			return
+		elif event.is_action_pressed("ui_cancel") and not modal.visible:
+			kitchen.toggle_chrome()
 			get_viewport().set_input_as_handled()
 			return
 	if opening != null and opening.active:
@@ -1042,6 +1068,7 @@ func _build_room(id: String) -> void:
 func _aim(distance: float) -> void:
 	var c: Vector3 = lowpoly.center() if (_lowpoly_ok and lowpoly != null) else room_mesh.center()
 	if opening != null and opening.active: c = opening.focus
+	if kitchen != null and kitchen.active: c = kitchen.focus
 	var dir := Vector3(sin(az) * cos(pitch), sin(pitch), cos(az) * cos(pitch))
 	cam.position = c + dir * distance
 	cam.look_at(c, Vector3.UP)
@@ -1640,6 +1667,8 @@ func _on_3d_input(event: InputEvent) -> void:
 			if gathering != null and gathering.active:
 				gathering.handle_click(mb.position)
 				return
+			if kitchen != null and kitchen.active:
+				if kitchen.handle_click(mb.position): return
 			var o := cam.project_ray_origin(mb.position)
 			var dr := cam.project_ray_normal(mb.position)
 			var eid: String = room_mesh.pick_marker(o, dr)
@@ -1648,6 +1677,8 @@ func _on_3d_input(event: InputEvent) -> void:
 		opening.handle_motion((event as InputEventMouseMotion).position)
 	elif event is InputEventMouseMotion and gathering != null and gathering.active and not _orbit:
 		gathering.handle_motion((event as InputEventMouseMotion).position)
+	elif event is InputEventMouseMotion and kitchen != null and kitchen.active and not _orbit:
+		kitchen.handle_motion((event as InputEventMouseMotion).position)
 	elif event is InputEventMouseMotion and _orbit:
 		var mm: InputEventMouseMotion = event
 		az -= mm.relative.x * 0.008
@@ -1663,6 +1694,7 @@ func _process(delta: float) -> void:
 	_step_wake_up(delta)
 	if opening != null and opening.active: opening.process(delta)
 	if gathering != null and gathering.active: gathering.process(delta)
+	if kitchen != null and kitchen.active: kitchen.process(delta)
 	# 台词在播、侦探在走路时，故事时间冻结：玩家始终看得见「发生了什么」
 	var frozen := not instant_story and (_transit_active() or _story_busy())
 	if not frozen: eng.tick(delta)
@@ -1798,7 +1830,8 @@ func _manual_move_step(delta: float) -> void:
 	if view != "room" or instant_story or _transit_active() or det == null or _grid == null:
 		return
 	if _cine: return
-	var free_roam: bool = opening != null and opening.active and opening.phase == "free"
+	var kitchen_free: bool = kitchen != null and kitchen.active and kitchen.phase == "free"
+	var free_roam: bool = (opening != null and opening.active and opening.phase == "free") or kitchen_free
 	if modal.visible or (_story_busy() and not free_roam) or not eng.s.playing:
 		return
 	var vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -1807,7 +1840,8 @@ func _manual_move_step(delta: float) -> void:
 	if free_roam and not det_path.is_empty():
 		det_path.clear()
 		det_done = Callable()
-		opening.cancel_walk()
+		if opening != null and opening.active: opening.cancel_walk()
+		if kitchen_free: kitchen.cancel_walk()
 	# 还躺在床上：第一次移动先播放起床动作，再继续行走
 	if _wake_timer > 0.0: return
 	if auto_search:
@@ -1818,17 +1852,33 @@ func _manual_move_step(delta: float) -> void:
 	if det.pose == "lie":
 		_begin_wake_up()
 		return
-	var step: Vector2 = vec.normalized() * WALK_SPEED * delta
-	var cand: Vector2 = det_pos + step
-	var cell := _cell_of(cand)
-	if _grid.is_in_boundsv(cell) and not _grid.is_point_solid(cell):
-		det_pos = cand
+	# 按镜头方向移动：W = 屏幕向上，D = 屏幕向右（与方位角 az 无关；右键拖动转视角后依旧成立）。
+	var dir := _screen_to_world(vec)
+	var step: Vector2 = dir * WALK_SPEED * delta
+	# 先试合成方向，被挡住再分别试 x / z 分量：贴着墙和家具滑行，而不是粘住不动。
+	var moved := false
+	for cand in [det_pos + step, det_pos + Vector2(step.x, 0.0), det_pos + Vector2(0.0, step.y)]:
+		if cand == det_pos: continue
+		var cell := _cell_of(cand)
+		if _grid.is_in_boundsv(cell) and not _grid.is_point_solid(cell):
+			det_pos = cand
+			moved = true
+			break
+	det.rotation.y = lerp_angle(det.rotation.y, atan2(dir.x, dir.y), minf(1.0, delta * 14.0))
+	if moved:
 		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
-		det.rotation.y = atan2(vec.x, vec.y)
 		det.set_pose("walk")
 		_manual_moving = true
 	else:
 		det.set_pose("stand")
+
+
+## 屏幕方向（x 右、y 下，Input.get_vector 的约定）→ 地面方向（x, z）。
+## 相机在 (sin az, ·, cos az) 一侧看向房间，因此屏幕「上」是 -(sin az, cos az)，屏幕「右」是 (cos az, -sin az)。
+func _screen_to_world(v: Vector2) -> Vector2:
+	var fwd := Vector2(-sin(az), -cos(az))
+	var right := Vector2(cos(az), -sin(az))
+	return (right * v.x + fwd * -v.y).normalized()
 
 
 ## 当前目标（左卡顶部）：把「等待搜证」翻译成玩家能执行的下一步。

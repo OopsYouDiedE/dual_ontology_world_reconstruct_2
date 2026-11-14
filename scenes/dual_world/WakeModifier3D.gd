@@ -7,7 +7,7 @@ const ImportedCharacter := preload("res://scenes/components/characters/ImportedC
 
 ## 0 = 平躺，1 = 上身撑到 sit_elevation 的仰角
 var sit := 0.0
-var sit_elevation := deg_to_rad(66.0)
+var sit_elevation := deg_to_rad(80.0)  # 原 66°：撑坐时上身只半靠着，看不出「坐起来」
 var head_yaw := 0.0
 var head_pitch := 0.0
 var head_roll := 0.0

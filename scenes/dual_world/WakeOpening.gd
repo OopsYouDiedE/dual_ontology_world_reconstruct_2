@@ -14,10 +14,10 @@ const PROPS := [
 		"灯罩上落了一点灰……至少它比我清醒。"]},
 	{"id": "desk", "node": "R05_table_01", "label": "书桌", "y": 1.35, "lines": [
 		"笔记本合着，上面压着一支笔。",
-		"最后一页只写了半行，字迹发抖，我认得那是我的字。可它想说什么，我一点也想不起来。"]},
+		"最后一页只写了半行，字迹发抖。看着像我的字——大概是。可它想说什么，我一点也想不起来。"]},
 	{"id": "window", "node": "R05_window_01", "label": "窗", "y": 1.75, "lines": [
 		"天刚亮，窗外一片灰白。",
-		"乙区的方向很安静。太安静了。"]},
+		"窗外是一座陌生的庭院。我连这是哪儿、来了多久都说不上来。"]},
 	{"id": "wardrobe", "node": "R05_wardrobe_01", "label": "衣柜", "y": 2.25, "lines": [
 		"大衣整整齐齐地挂着。",
 		"整齐得不像一个半夜出过门的人——可我手背上这几道抓痕，又是谁留下的？"]},
@@ -26,7 +26,7 @@ const PROPS := [
 		"手背上的抓痕被水一激，又红了。我得弄清楚，它是怎么来的。"]},
 	{"id": "door", "node": "R05_Door_00", "label": "寝室门", "y": 2.3, "lines": [
 		"门没有被撬过的痕迹。",
-		"……走吧。乙区小厨房，八点，他们在等我。"]},
+		"走廊里隐约有人说话，声音压得很低。……去看看。"]},
 ]
 
 const SIT_KEYS := [[0.0, 0.0, 0.10, 0.0], [1.0, 0.45, 0.25, 0.05], [1.7, 0.45, 0.30, -0.05], [3.0, 1.0, 0.28, 0.04]]
@@ -35,6 +35,8 @@ const LOOK_KEYS := [
 	[2.7, 0.95, -0.05, 0.12], [3.4, 0.95, -0.05, 0.12], [4.2, -0.30, 0.25, -0.18],
 	[5.0, 0.0, 0.35, 0.0],
 ]
+## 自由阶段时间照常缓慢流逝（游戏分钟 / 真实秒）；玩家不动也会走，约 5 秒 1 分钟
+const AMBIENT_SPEED := 0.2
 const T_BLACK := 0.7
 const T_FADE := 2.3
 const T_LIE := 1.7
@@ -99,6 +101,7 @@ func _enter(p: String) -> void:
 		"free":
 			host._cine = false
 			host.eng.s.playing = true
+			host.eng.set_speed(AMBIENT_SPEED)
 			_free_t = 0.0
 			if _hint != null: _hint.visible = true
 			if _name_tag != null:
@@ -187,7 +190,7 @@ func _step_free(delta: float) -> void:
 			if str(it.id) != "door" and not bool(it.seen): left += 1
 		if left == 0:
 			_all_seen_said = true
-			host.eng.say("detective", "能看的都看了。该去乙区了。", "think")
+			host.eng.say("detective", "能看的都看了。出门去看看吧——走廊里好像有人。", "think")
 
 
 func _set_head(v: Vector3, sit: float, delta: float) -> void:

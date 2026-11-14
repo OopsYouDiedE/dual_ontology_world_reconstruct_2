@@ -87,6 +87,12 @@ static func _rebuild(model: Node3D, skel: Skeleton3D, mi: MeshInstance3D, path: 
 	var n_swap := 0
 	var n_thigh := 0
 	var n_head := 0
+
+	# 0) 游离骨骼（如 neutral_bone）：权重落在不跟随身体的辅助骨上的顶点，
+	#    坐下 / 走路时被留在原地，把相连衣料拉成 3~6 倍（霍铎腰包实测 6.47x）。
+	#    这些顶点改用「最近的正常顶点」的权重（反距离加权，取最近 3 个）。
+	var n_stray := _transfer_stray_weights(skel, verts, bones, weights, hips_i)
+
 	for i in verts.size():
 		var p := to_skel * verts[i]
 		var side := p.dot(lat) - mid       # >0 左侧
@@ -153,5 +159,67 @@ static func _rebuild(model: Node3D, skel: Skeleton3D, mi: MeshInstance3D, path: 
 	out.surface_set_material(0, am.surface_get_material(0))
 	out.resource_name = am.resource_name
 	out.custom_aabb = am.get_aabb().grow(0.15)
-	report[path] = {"leg_swapped": n_swap, "thigh_blended": n_thigh, "head_moved": n_head, "verts": verts.size()}
+	report[path] = {"leg_swapped": n_swap, "thigh_blended": n_thigh, "head_moved": n_head, "stray_fixed": n_stray, "verts": verts.size()}
 	return out
+
+
+## 游离骨骼 = 骨名不带 Mixamo 前缀（而整副骨架其余骨骼带前缀）的辅助骨，例如 neutral_bone。
+static func _stray_bones(skel: Skeleton3D, hips_i: int) -> Dictionary:
+	var stray := {}
+	var prefixed := skel.get_bone_name(hips_i).begins_with("mixamorig")
+	for b in skel.get_bone_count():
+		var nm := skel.get_bone_name(b)
+		if "neutral" in nm.to_lower() or (prefixed and not nm.begins_with("mixamorig")):
+			stray[b] = true
+	return stray
+
+
+## 就地修改 bones / weights。返回被修正的顶点数。
+static func _transfer_stray_weights(skel: Skeleton3D, verts: PackedVector3Array, bones: PackedInt32Array, weights: PackedFloat32Array, hips_i: int) -> int:
+	var stray := _stray_bones(skel, hips_i)
+	if stray.is_empty(): return 0
+	var needy: Array[int] = []
+	var donors: Array[int] = []
+	for i in verts.size():
+		var sw := 0.0
+		for k in 4:
+			if stray.has(bones[i * 4 + k]): sw += weights[i * 4 + k]
+		if sw >= 0.5: needy.append(i)
+		elif sw < 0.02: donors.append(i)
+		else:
+			# 少量游离权重：直接剔除并归一
+			var sum := 0.0
+			for k in 4:
+				if stray.has(bones[i * 4 + k]): weights[i * 4 + k] = 0.0
+				sum += weights[i * 4 + k]
+			if sum > 0.0:
+				for k in 4: weights[i * 4 + k] /= sum
+	if needy.is_empty() or donors.is_empty(): return 0
+	for i in needy:
+		# 最近的 3 个正常顶点
+		var best: Array = []
+		for d in donors:
+			var dist := verts[i].distance_squared_to(verts[d])
+			if best.size() < 3 or dist < float(best[best.size() - 1][0]):
+				best.append([dist, d])
+				best.sort_custom(func(a, b): return a[0] < b[0])
+				if best.size() > 3: best.pop_back()
+		var acc := {}
+		for entry in best:
+			var wgt := 1.0 / (sqrt(float(entry[0])) + 0.002)
+			var d: int = entry[1]
+			for k in 4:
+				var wv := weights[d * 4 + k]
+				if wv > 0.0: acc[bones[d * 4 + k]] = float(acc.get(bones[d * 4 + k], 0.0)) + wv * wgt
+		var keys := acc.keys()
+		keys.sort_custom(func(a, b): return acc[a] > acc[b])
+		var total := 0.0
+		for k in mini(4, keys.size()): total += float(acc[keys[k]])
+		for k in 4:
+			if k < keys.size() and total > 0.0:
+				bones[i * 4 + k] = int(keys[k])
+				weights[i * 4 + k] = float(acc[keys[k]]) / total
+			else:
+				bones[i * 4 + k] = 0
+				weights[i * 4 + k] = 0.0
+	return needy.size()

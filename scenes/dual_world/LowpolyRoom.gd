@@ -7,6 +7,7 @@ extends Node3D
 ## (w/2, d/2)，并导出可行走地板矩形、家具碰撞矩形、床位中心与室内暖色顶灯。
 
 const RoomLibrary := preload("res://scenes/components/world/RoomLibrary.gd")
+const RoomVariants := preload("res://scenes/dual_world/RoomVariants.gd")
 
 const ID_MAP := {
 	"R01": "R01", "R02": "R02", "R03": "R03", "R04": "R04",
@@ -46,6 +47,8 @@ func attach(parent: Node3D, rid: String, design: Dictionary) -> bool:
 		return false
 	_root = inst
 	_attached = true
+	# 同户型复用的房间（B-P / C-P）在量取包围盒前先做差异化改造
+	RoomVariants.apply(rid, inst)
 	inst.set_meta("lowpoly_room", true)
 	var mesh_items: Array = []
 	_collect_meshes(inst, Transform3D.IDENTITY, "", mesh_items)

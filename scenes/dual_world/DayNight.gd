@@ -13,8 +13,8 @@ static func lighting(hour: float) -> Dictionary:
 	elif day > 0.15: sky = Color("#3d3540")
 	return {
 		"day": day, "sun_color": sun_color, "sky": sky,
-		"sun_energy": 0.45 + day * 1.55,
-		"ambient_energy": 0.78 + day * 0.48,
+		"sun_energy": 0.40 + day * 0.80,   # 原 0.45+1.55·day：白地砖 / 白墙大面积过曝，光柱被吞没
+		"ambient_energy": 0.62 + day * 0.22,
 		"lamp_on": clampf(1.0 - day * 1.15, 0.15, 1.0),
 		"fog": Color("#2a2430") if day > 0.4 else Color("#15121d"),
 	}
@@ -49,7 +49,7 @@ static func apply(hour: float, sun: DirectionalLight3D, env: Environment, lamps:
 		env.fog_density = 0.003
 		# 色调映射与辉光：让 Lowpoly 房间的暖色更柔和（美术：案卷暖调）
 		env.tonemap_mode = Environment.TONE_MAPPER_ACES
-		env.tonemap_exposure = 1.08
+		env.tonemap_exposure = 0.92
 		env.glow_enabled = true
 		env.glow_intensity = 0.35
 		env.glow_strength = 0.8

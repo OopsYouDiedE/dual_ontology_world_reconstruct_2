@@ -117,7 +117,9 @@ func _setup_stage() -> void:
 		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		tag.position = Vector3(0, float(host.data.actor_by_id[id].look.height) + 0.28, 0)
 		tag.modulate = Color(str(host.data.actor_by_id[id].color)).lightened(0.55)
-		tag.outline_size = 8
+		tag.outline_size = 14
+		tag.outline_modulate = Color(0.04, 0.03, 0.02, 0.95)
+		if id == "shen": tag.position.y += 0.24   # 三人站得近：错开名牌高度，避免互相压住
 		tag.no_depth_test = true
 		f.add_child(tag)
 	_place_npcs(true)
@@ -173,6 +175,58 @@ func _label(text: String, pos: Vector3, size := 0.0045, c := Color("#ffe3a3")) -
 	_root.add_child(t)
 
 
+## 盆栽：陶盆（上宽下窄）+ 土面 + 一圈斜插的叶片，替代原先的「绿方块 + 棕方柱」。
+func _plant(at: Vector3) -> void:
+	var holder := Node3D.new()
+	holder.position = at
+	_root.add_child(holder)
+	var pot := MeshInstance3D.new()
+	var pm := CylinderMesh.new()
+	pm.top_radius = 0.25
+	pm.bottom_radius = 0.17
+	pm.height = 0.5
+	pm.radial_segments = 14
+	pot.mesh = pm
+	pot.material_override = _mat(Color("#9a5b3a"))
+	pot.position = Vector3(0, 0.25, 0)
+	holder.add_child(pot)
+	var rim := MeshInstance3D.new()
+	var rm := CylinderMesh.new()
+	rm.top_radius = 0.28
+	rm.bottom_radius = 0.26
+	rm.height = 0.07
+	rm.radial_segments = 14
+	rim.mesh = rm
+	rim.material_override = _mat(Color("#7d4529"))
+	rim.position = Vector3(0, 0.5, 0)
+	holder.add_child(rim)
+	var soil := MeshInstance3D.new()
+	var sm := CylinderMesh.new()
+	sm.top_radius = 0.23
+	sm.bottom_radius = 0.23
+	sm.height = 0.03
+	sm.radial_segments = 14
+	soil.mesh = sm
+	soil.material_override = _mat(Color("#3a2a1c"))
+	soil.position = Vector3(0, 0.5, 0)
+	holder.add_child(soil)
+	var greens := [Color("#3f7a45"), Color("#4f8f52"), Color("#2f6a3c")]
+	for i in 9:
+		var ang := float(i) / 9.0 * TAU
+		var leaf := MeshInstance3D.new()
+		var cm := CapsuleMesh.new()
+		cm.radius = 0.055
+		cm.height = 0.62 + 0.1 * float(i % 3)
+		cm.radial_segments = 6
+		cm.rings = 2
+		leaf.mesh = cm
+		leaf.material_override = _mat(greens[i % 3])
+		var lean := 0.42 + 0.12 * float(i % 3)
+		leaf.position = Vector3(cos(ang) * 0.1, 0.84 + 0.06 * float(i % 3), sin(ang) * 0.1)
+		leaf.rotation = Vector3(sin(ang) * lean, 0.0, -cos(ang) * lean)
+		holder.add_child(leaf)
+
+
 func _build_corridor() -> void:
 	# 地板：木拼 + 长条地毯
 	_box(Vector3(LEN * 0.5, -0.06, DEPTH * 0.5), Vector3(LEN + 1.2, 0.12, DEPTH + 0.4), Color("#5d4430"))
@@ -187,8 +241,7 @@ func _build_corridor() -> void:
 	_box(Vector3(LEN + 0.12, 2.65, DEPTH * 0.5), Vector3(0.24, 0.7, DEPTH), Color("#85704f"))
 	_box(Vector3(LEN + 0.55, 1.1, DEPTH * 0.5), Vector3(0.1, 2.2, DEPTH - 0.9), Color("#ffb347"), 1.5)  # 厨房暖光
 	_box(Vector3(LEN * 0.5, 0.22, DEPTH + 0.14), Vector3(LEN + 0.4, 0.44, 0.2), Color("#6b5238"))
-	_label("乙区小厨房  →", Vector3(LEN - 0.4, 2.35, DEPTH * 0.5), 0.005, Color("#ffd98a"))
-	_label("乙区大门（上锁）", Vector3(0.7, 2.35, 0.2), 0.0038, Color("#c9b99a"))
+	# 区域路标不再用 3D 悬浮大字（贴在画面边缘会被斜着截断），改写进左下角 HUD 提示
 	# 寝室门：深色门框 + 门扇。每个房间的门都带锁：只有侦探自己的 R05 能打开（刚被他推开），
 	# 其余三扇门关紧，门扇平贴门框，装黄铜把手和红色锁牌。
 	for d in DOORS:
@@ -212,8 +265,7 @@ func _build_corridor() -> void:
 	_box(Vector3(9.0, 0.28, 0.45), Vector3(1.5, 0.12, 0.42), Color("#5a3d26"))
 	_box(Vector3(8.4, 0.12, 0.45), Vector3(0.1, 0.24, 0.36), Color("#3b2819"))
 	_box(Vector3(9.6, 0.12, 0.45), Vector3(0.1, 0.24, 0.36), Color("#3b2819"))
-	_box(Vector3(13.0, 0.3, 0.4), Vector3(0.42, 0.6, 0.42), Color("#7b5a3a"))
-	_box(Vector3(13.0, 0.78, 0.4), Vector3(0.5, 0.36, 0.5), Color("#4f7a45"))
+	_plant(Vector3(13.0, 0.0, 0.4))
 	# 灯：三盏暖色顶灯 + 厨房方向的暖光 + 窗口晨光
 	for lx in [4.0, 10.0, 16.0]:
 		var l := OmniLight3D.new()
@@ -520,7 +572,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
-	_hint.text = "WASD / 方向键 移动　·　点击发光的物件，或靠近后按 E 查看"
+	_hint.text = "WASD / 方向键 移动　·　点击发光的物件，或靠近后按 E 查看　·　◀ 西：乙区大门（锁）　▶ 东：乙区小厨房"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))

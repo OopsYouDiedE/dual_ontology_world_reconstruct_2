@@ -35,7 +35,7 @@ const WOOD := Color("#1d1712")
 const WOOD2 := Color("#2a2119")
 const LINE := Color("#4a3b2d")
 const TEXT := Color("#efe6d6")
-const MUTED := Color("#a8957b")
+const MUTED := Color("#d6c6a6")
 
 
 static func save_dir_path() -> String:
@@ -96,6 +96,11 @@ var editor_box: Control
 var editor: Control
 var left_text: RichTextLabel
 var left_actions: VBoxContainer
+var left_evidence: VBoxContainer   # 「本房证物」：独立于出口滚动区，永远在第一屏
+var left_note: Label               # 房间描述（默认折叠）
+var left_note_btn: Button
+var det_ring: MeshInstance3D       # 侦探脚下金圈：过场 / 躺卧时隐藏
+var next_btn: Button
 var right_tabs: TabContainer
 var tab_log: RichTextLabel
 var tab_ev: RichTextLabel
@@ -106,6 +111,8 @@ var tab_contract: RichTextLabel
 var tab_author: RichTextLabel
 var term_pick: OptionButton
 var subtitle: Label
+var sub_name: Label
+var sub_next: Label
 var toast: Label
 var modal: Control
 var editor_status: RichTextLabel
@@ -300,7 +307,7 @@ func _theme() -> Theme:
 	t.set_color("font_color", "Button", TEXT)
 	t.set_color("font_hover_color", "Button", Color("#fff4dc"))
 	t.set_color("font_pressed_color", "Button", Color("#fff8e8"))
-	t.set_color("font_disabled_color", "Button", Color("#7c6e5c"))
+	t.set_color("font_disabled_color", "Button", Color("#a09078"))
 	t.set_color("font_color", "CheckBox", INK)
 	t.set_color("font_pressed_color", "CheckBox", Color("#1b4325"))
 	t.set_color("font_hover_color", "CheckBox", INK)
@@ -394,12 +401,14 @@ func _build_ui() -> void:
 		else:
 			eng.toggle_play())
 	speed_pick = OptionButton.new()
-	for sp in [[1.0, "×1"], [2.0, "×2"], [5.0, "×5"], [20.0, "×20"], [60.0, "×60"], [240.0, "×240"]]:
+	for sp in [[1.0, "×1"], [2.0, "×2"], [5.0, "×5"], [20.0, "×20"]]:  # 不提供 ×60 / ×240：误触会跳过关键节点；想快进请用「下一节拍」
 		speed_pick.add_item(sp[1])
 		speed_pick.set_item_metadata(speed_pick.item_count - 1, sp[0])
 	_sync_speed_pick()
 	speed_pick.item_selected.connect(func(i: int): eng.set_speed(float(speed_pick.get_item_metadata(i))))
 	tb.add_child(speed_pick)
+	next_btn = _btn(tb, "跳到下一节拍", func(): eng.next_beat(),
+		"无事可做时用它推进剧情；比拉高倍速更不容易漏掉关键节点")
 	auto_btn = _btn(tb, "自动搜证", func(): auto_search = auto_btn.button_pressed,
 		"开：侦探会自己走动、搜查所在房间，并去查推演还缺的证物；关：只由你点击证物")
 	auto_btn.toggle_mode = true
@@ -440,11 +449,11 @@ func _build_ui() -> void:
 	_build_center()
 	# ── 左上：位置卡（房间、在场者、出口、本房证物），可折叠 ──
 	left_card = PanelContainer.new()
-	left_card.add_theme_stylebox_override("panel", _style(Color(0.09, 0.07, 0.05, 0.84), LINE, 6, 10))
+	left_card.add_theme_stylebox_override("panel", _style(Color(0.07, 0.055, 0.04, 0.94), Color("#7a6240"), 6, 10))
 	left_card.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	left_card.offset_left = 12
 	left_card.offset_top = 12
-	left_card.custom_minimum_size = Vector2(250, 0)
+	left_card.custom_minimum_size = Vector2(270, 0)
 	center.add_child(left_card)
 	var lv := VBoxContainer.new()
 	lv.add_theme_constant_override("separation", 4)
@@ -468,8 +477,24 @@ func _build_ui() -> void:
 	left_text.fit_content = true
 	left_text.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	left_body.add_child(left_text)
+	# 房间说明默认折叠，把首屏留给目标与证物
+	left_note_btn = _btn(left_body, "▸ 房间说明", func(): pass)
+	left_note_btn.flat = true
+	left_note_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	left_note = Label.new()
+	left_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	left_note.add_theme_color_override("font_color", MUTED)
+	left_note.add_theme_font_size_override("font_size", 14)
+	left_note.visible = false
+	left_body.add_child(left_note)
+	left_note_btn.pressed.connect(func():
+		left_note.visible = not left_note.visible
+		left_note_btn.text = ("▾ " if left_note.visible else "▸ ") + "房间说明")
+	left_evidence = VBoxContainer.new()
+	left_evidence.add_theme_constant_override("separation", 3)
+	left_body.add_child(left_evidence)
 	var sc := ScrollContainer.new()
-	sc.custom_minimum_size = Vector2(0, 150)
+	sc.custom_minimum_size = Vector2(0, 112)
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	left_body.add_child(sc)
 	left_actions = VBoxContainer.new()
@@ -531,20 +556,50 @@ func _build_ui() -> void:
 	center.add_child(room_hint)
 	subtitle = Label.new()
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 20)
-	subtitle.add_theme_stylebox_override("normal", _style(Color(0.06, 0.05, 0.04, 0.9), BRASS, 6, 10))
-	subtitle.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	subtitle.offset_left = 60
-	subtitle.offset_right = -60
-	subtitle.offset_top = -92
-	subtitle.offset_bottom = -14
+	subtitle.add_theme_font_size_override("font_size", 21)
+	subtitle.add_theme_color_override("font_color", Color("#fff4dc"))
+	var sub_sb := _style(Color(0.06, 0.05, 0.04, 0.93), BRASS, 8, 0)
+	sub_sb.content_margin_left = 30
+	sub_sb.content_margin_right = 56
+	sub_sb.content_margin_top = 22
+	sub_sb.content_margin_bottom = 14
+	subtitle.add_theme_stylebox_override("normal", sub_sb)
+	# 收窄为居中对话框，而不是通栏黑条
+	subtitle.anchor_left = 0.5
+	subtitle.anchor_right = 0.5
+	subtitle.anchor_top = 1.0
+	subtitle.anchor_bottom = 1.0
+	subtitle.offset_left = -430
+	subtitle.offset_right = 430
+	subtitle.offset_top = -112
+	subtitle.offset_bottom = -16
 	subtitle.visible = false
 	subtitle.mouse_filter = Control.MOUSE_FILTER_STOP
-	subtitle.tooltip_text = "点击跳过这一句"
+	subtitle.tooltip_text = "点击或按空格 / 回车继续"
 	subtitle.gui_input.connect(func(ev: InputEvent):
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT: _sub_until = 0.0)
+	# 说话人铭牌（压在对话框左上沿）与「继续」小三角
+	sub_name = Label.new()
+	sub_name.add_theme_font_override("font", SERIF_FONT)
+	sub_name.add_theme_font_size_override("font_size", 18)
+	sub_name.add_theme_stylebox_override("normal", _style(Color(0.16, 0.11, 0.06, 0.98), BRASS, 5, 6))
+	sub_name.position = Vector2(18, -18)
+	sub_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sub_name.visible = false
+	subtitle.add_child(sub_name)
+	sub_next = Label.new()
+	sub_next.text = "▼"
+	sub_next.add_theme_font_size_override("font_size", 16)
+	sub_next.add_theme_color_override("font_color", Color("#e9c98a"))
+	sub_next.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	sub_next.offset_left = -40
+	sub_next.offset_top = -34
+	sub_next.offset_right = -14
+	sub_next.offset_bottom = -8
+	sub_next.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	subtitle.add_child(sub_next)
 	center.add_child(subtitle)
 	toast = Label.new()
 	toast.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
@@ -798,9 +853,13 @@ func _pump_subtitles(now: float) -> void:
 	var who: String = ln.who
 	var text: String = ln.text
 	_speaker = who
-	var nm := ""
-	if who != "narrator" and data.actor_by_id.has(who): nm = str(data.actor_name(who)) + "："
-	subtitle.text = nm + text
+	if who != "narrator" and data.actor_by_id.has(who):
+		sub_name.text = str(data.actor_name(who))
+		sub_name.add_theme_color_override("font_color", Color(str(data.actor_by_id[who].color)).lightened(0.6))
+		sub_name.visible = true
+	else:
+		sub_name.visible = false
+	subtitle.text = text
 	subtitle.visible = true
 	_sub_until = now + (0.05 if skip_subtitles else maxf(2.4, 1.2 + text.length() * 0.075))
 	var pose := "talk"
@@ -1098,7 +1157,7 @@ func _free_slots(n: int) -> Array:
 					break
 		if ok:
 			for o in out:
-				if o.distance_to(c) < 0.85: ok = false
+				if o.distance_to(c) < 1.35: ok = false
 		if ok: out.append(c)
 		if out.size() >= n: break
 	while out.size() < n:
@@ -1133,9 +1192,10 @@ func _sync_figures(force := false) -> void:
 		tag.font_size = 40
 		tag.pixel_size = 0.006
 		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		tag.position = Vector3(0, float(a.look.height) + 0.28, 0)
+		tag.position = Vector3(0, float(a.look.height) + 0.28 + 0.2 * float(i % 2), 0)
 		tag.modulate = Color(str(a.color)).lightened(0.55)
-		tag.outline_size = 8
+		tag.outline_size = 14
+		tag.outline_modulate = Color(0.04, 0.03, 0.02, 0.95)
 		tag.no_depth_test = true
 		f.add_child(tag)
 
@@ -1162,6 +1222,7 @@ func _spawn_detective() -> void:
 	ring.material_override = rm
 	ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	det.add_child(ring)
+	det_ring = ring
 	var tag := Label3D.new()
 	tag.text = "侦探"
 	tag.font_size = 46
@@ -1169,7 +1230,8 @@ func _spawn_detective() -> void:
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.position = Vector3(0, float(data.actor_by_id["detective"].look.height) + 0.3, 0)
 	tag.modulate = Color("#ffd98a")
-	tag.outline_size = 10
+	tag.outline_size = 16
+	tag.outline_modulate = Color(0.04, 0.03, 0.02, 0.95)
 	tag.no_depth_test = true
 	det.add_child(tag)
 
@@ -1607,6 +1669,9 @@ func _process(delta: float) -> void:
 	_watch_room_change()
 	_manual_move_step(delta)
 	_walk_step(delta)
+	_sync_hud_for_modal()
+	if sub_next != null and subtitle.visible: sub_next.modulate.a = 0.45 + 0.55 * (0.5 + 0.5 * sin(now * 5.0))
+	_sync_ring()
 	_auto_search_step(delta)
 	if toast.visible and now > _toast_until: toast.visible = false
 	while not eng.notices.is_empty():
@@ -1688,6 +1753,26 @@ func _auto_search_step(delta: float) -> void:
 		return
 	if str(data.evidence_by_id[eid].room) == s.room: _inspect_walk(eid)
 	else: eng.enter_room(str(data.evidence_by_id[eid].room))
+
+
+## 弹窗打开时：底层漫游提示与位置卡一并淡出，避免「还能走动」的错觉。
+func _sync_hud_for_modal() -> void:
+	var m: bool = modal != null and modal.visible
+	var a := 0.0 if m else 1.0
+	var talking: bool = subtitle != null and subtitle.visible
+	if room_hint != null: room_hint.modulate.a = 0.0 if (m or talking) else 1.0
+	if left_card != null: left_card.modulate.a = a
+	if top_bar != null: top_bar.modulate.a = 0.35 if m else 1.0
+
+
+## 脚底金圈：只在可自由操控时显示；起床、过场、对话时隐藏。
+func _sync_ring() -> void:
+	if det_ring == null or det == null: return
+	var lying: bool = str(det.pose).begins_with("lie")
+	var talking: bool = subtitle != null and subtitle.visible
+	var scripted: bool = _cine or (opening != null and opening.active and opening.phase != "free") \
+		or (gathering != null and gathering.active and gathering.phase != "free")
+	det_ring.visible = not (lying or talking or scripted or _wake_timer > 0.0)
 
 
 func _refresh() -> void:
@@ -1795,19 +1880,47 @@ func _refresh_left() -> void:
 	var rid: String = eng.s.room
 	var r: Dictionary = data.room_by_id[rid]
 	left_text.clear()
-	left_text.append_text("[color=#a8c89a][b]当前目标[/b][/color]\n%s\n\n" % _objective_text())
-	left_text.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#a8957b]%s · %s区[/color]\n[color=#a8957b]%s[/color]\n" % [r.label, r.floor, r.zone, r.note])
+	left_text.append_text("[color=#bfe0ae][b]当前目标[/b][/color]\n[color=#f4ead4]%s[/color]\n\n" % _objective_text())
+	left_text.append_text("[color=#f2d493][b]%s[/b][/color]  [color=#d6c6a6]%s · %s区[/color]\n" % [r.label, r.floor, r.zone])
+	left_note.text = str(r.note)
 	var here: Array = eng.actors_in_room(rid).filter(func(i): return str(i) != "detective")
-	left_text.append_text("[color=#b89758]在场：[/color]" + ("、".join(here.map(func(i): return _name_bb(str(i)))) if not here.is_empty() else "无人"))
+	left_text.append_text("[color=#e3c27a]在场：[/color]" + (("、".join(here.map(func(i): return _name_bb(str(i))))) if not here.is_empty() else "无人"))
 	if view == "map" and map_view.selected != "" and map_view.selected != rid:
 		var sr: Dictionary = data.room_by_id[map_view.selected]
-		left_text.append_text("\n[color=#4f9dde]选中：%s（双击进入）[/color]" % sr.label)
+		left_text.append_text("\n[color=#7fbcf0]选中：%s（双击进入）[/color]" % sr.label)
+	# ── 本房证物：放在出口之前，不进滚动区 ──
+	for c in left_evidence.get_children():
+		left_evidence.remove_child(c)
+		c.queue_free()
+	var evs: Array = data.evidence_by_room.get(rid, [])
+	if not evs.is_empty():
+		var got_n := 0
+		for e0 in evs:
+			if eng.s.evidence.has(e0.id): got_n += 1
+		var h2 := Label.new()
+		h2.text = "本房证物  %d/%d" % [got_n, evs.size()]
+		h2.add_theme_color_override("font_color", Color("#f2d493"))
+		left_evidence.add_child(h2)
+		for e in evs:
+			var got: bool = eng.s.evidence.has(e.id)
+			var b2 := Button.new()
+			b2.text = ("✓ " if got else "◆ ") + str(e.label)
+			b2.tooltip_text = "走过去查看" if not got else "已取得"
+			b2.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			b2.clip_text = true
+			b2.focus_mode = Control.FOCUS_NONE
+			if not got:
+				b2.add_theme_color_override("font_color", Color("#ffe3a3"))
+			else:
+				b2.add_theme_color_override("font_color", Color("#a8d09a"))
+			b2.pressed.connect(func(): _inspect_walk(str(e.id)))
+			left_evidence.add_child(b2)
 	for c in left_actions.get_children():
 		left_actions.remove_child(c)
 		c.queue_free()
 	var h := Label.new()
 	h.text = "出口"
-	h.add_theme_color_override("font_color", BRASS)
+	h.add_theme_color_override("font_color", Color("#e3c27a"))
 	left_actions.add_child(h)
 	for dr in data.doors:
 		var other := ""
@@ -1823,21 +1936,6 @@ func _refresh_left() -> void:
 		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(func(): eng.enter_room(other))
 		left_actions.add_child(b)
-	var evs: Array = data.evidence_by_room.get(rid, [])
-	if not evs.is_empty():
-		var h2 := Label.new()
-		h2.text = "本房证物"
-		h2.add_theme_color_override("font_color", BRASS)
-		left_actions.add_child(h2)
-		for e in evs:
-			var got: bool = eng.s.evidence.has(e.id)
-			var b2 := Button.new()
-			b2.text = ("✓ " if got else "· ") + str(e.label)
-			b2.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			b2.clip_text = true
-			b2.focus_mode = Control.FOCUS_NONE
-			b2.pressed.connect(func(): _inspect_walk(str(e.id)))
-			left_actions.add_child(b2)
 
 
 ## 「推演」页：列出各推演的状态；判错的推演提供「重新推演」按钮。
@@ -1899,16 +1997,16 @@ func _refresh_right() -> void:
 			"confront": col = "#ea9c8c"
 			"knowledge": col = "#d1b3ef"
 			"evidence": col = "#a8c89a"
-		tab_log.append_text("[color=#a8957b]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, l.text])
+		tab_log.append_text("[color=#d6c6a6]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, l.text])
 	tab_log.scroll_to_line(maxi(0, tab_log.get_line_count() - 1))
 	_refresh_case_tab()
 	# 证物
 	tab_ev.clear()
-	if s.evidence.is_empty(): tab_ev.append_text("[color=#a8957b]尚未取得证物。到各房间里找发光的标记。[/color]")
+	if s.evidence.is_empty(): tab_ev.append_text("[color=#d6c6a6]尚未取得证物。到各房间里找发光的标记。[/color]")
 	for eid in s.evidence:
 		var e: Dictionary = data.evidence_by_id[eid]
 		var r: Dictionary = eng.read_evidence(eid)
-		tab_ev.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#a8957b]%s[/color]\n%s\n" % [e.label, data.room_by_id[e.room].label, r.text])
+		tab_ev.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#d6c6a6]%s[/color]\n%s\n" % [e.label, data.room_by_id[e.room].label, r.text])
 		if not r.correct:
 			tab_ev.append_text("[color=#ea9c8c]· 这一读法不一定对——似乎还缺一块知识。[/color]\n")
 			if author:
@@ -1916,7 +2014,7 @@ func _refresh_right() -> void:
 		tab_ev.append_text("\n")
 	# 知识
 	tab_know.clear()
-	tab_know.append_text("[color=#a8957b]源质知识：第一章全员缺失。补齐后，旧证物会改读。[/color]\n\n")
+	tab_know.append_text("[color=#d6c6a6]源质知识：第一章全员缺失。补齐后，旧证物会改读。[/color]\n\n")
 	for k in data.knowledge:
 		if s.knowledge.has(k.id):
 			tab_know.append_text("[color=#d1b3ef][b]%s[/b][/color]\n%s\n\n" % [k.title, k.text])
@@ -1926,7 +2024,7 @@ func _refresh_right() -> void:
 	var term := str(term_pick.get_item_metadata(maxi(0, term_pick.selected)))
 	var td: Dictionary = data.terms[term]
 	tab_lex.clear()
-	tab_lex.append_text("[color=#e9c98a][b]%s[/b][/color]\n[color=#a8957b]%s[/color]\n\n" % [td.word, td.note if author else "同一个词，在不同人脑里是不同的事实。"])
+	tab_lex.append_text("[color=#e9c98a][b]%s[/b][/color]\n[color=#d6c6a6]%s[/color]\n\n" % [td.word, td.note if author else "同一个词，在不同人脑里是不同的事实。"])
 	var shown := 0
 	var term_unlocked: bool = bool(s.get("unlocked_terms", {}).get(term, false))
 	for a in data.actors:
@@ -1951,7 +2049,7 @@ func _refresh_right() -> void:
 			shown += 1
 			tab_lex.append_text("%s：%s\n" % [_name_bb(str(a.id)), data.sense_label(str(a.id), term)])
 	if shown == 0:
-		tab_lex.append_text("[color=#a8957b]（还没有人对这个词产生过分歧。期待落空之前，谁也听不出差别。）[/color]")
+		tab_lex.append_text("[color=#d6c6a6]（还没有人对这个词产生过分歧。期待落空之前，谁也听不出差别。）[/color]")
 	# 关系
 	tab_rel.clear()
 	for k in s.relations:
@@ -1962,13 +2060,13 @@ func _refresh_right() -> void:
 		var bad_rel := int(rel.trust) < 40 or bool(rel.get("permanent", false))
 		tab_rel.append_text("%s ↔ %s  [color=%s]%s %d%s[/color]\n" % [_name_bb(pr[0]), _name_bb(pr[1]), "#ea9c8c" if bad_rel else "#a8c89a", bar, int(rel.trust), "  永久受损" if rel.permanent else ""])
 		for g in rel.grievances:
-			tab_rel.append_text("[color=#a8957b]　　%s[/color]\n" % g.text)
+			tab_rel.append_text("[color=#d6c6a6]　　%s[/color]\n" % g.text)
 	if s.irreparable:
 		tab_rel.append_text("\n[color=#ea9c8c]第一天的真话被各自听成不同事实；事后查明真相也不会复原这几条。[/color]")
 	# 调试
 	tab_author.clear()
 	if not author:
-		tab_author.append_text("[color=#a8957b]打开顶栏「作者视角」后，这里显示判定依据。正常游玩不会出现这些内容。[/color]")
+		tab_author.append_text("[color=#d6c6a6]打开顶栏「作者视角」后，这里显示判定依据。正常游玩不会出现这些内容。[/color]")
 	else:
 		for i in range(maxi(0, s.debug_log.size() - 60), s.debug_log.size()):
 			var dl: Dictionary = s.debug_log[i]
@@ -1993,7 +2091,7 @@ func _dismiss_modal() -> void:
 func _modal_shell(title: String, sub: String) -> VBoxContainer:
 	_clear_modal()
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.62)
+	dim.color = Color(0.02, 0.015, 0.01, 0.86)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	modal.add_child(dim)
 	# 弹窗面板：案卷纸面 + 黄铜边框 + 朱砂标题（美术设定色）
@@ -2056,11 +2154,25 @@ func _sync_modal() -> void:
 	else: _modal_ending()
 
 
+## 弹窗里的作答按钮：纸色底 + 黄铜边 + 墨字，比深黑底更像「要选的卡片」。
+func _choice_style(b: Button) -> void:
+	b.custom_minimum_size = Vector2(0, 46)
+	b.add_theme_font_size_override("font_size", 17)
+	b.add_theme_color_override("font_color", INK)
+	b.add_theme_color_override("font_hover_color", Color("#7a3a24"))
+	b.add_theme_color_override("font_pressed_color", Color("#7a3a24"))
+	b.add_theme_color_override("font_disabled_color", Color("#6a5d48"))
+	b.add_theme_stylebox_override("normal", _style(Color("#fbf5e2"), Color("#b89758"), 6, 10))
+	b.add_theme_stylebox_override("hover", _style(Color("#fffaf0"), Color("#7a3a24"), 6, 10))
+	b.add_theme_stylebox_override("pressed", _style(Color("#ecdcb4"), Color("#7a3a24"), 6, 10))
+	b.add_theme_stylebox_override("disabled", _style(Color("#e2d8bc"), Color("#bfae88"), 6, 10))
+
+
 func _modal_deduction(did: String) -> void:
 	var dd: Dictionary = data.deduction_by_id[did]
 	var v := _modal_shell("案卷推演 · " + str(dd.title), str(dd.prompt))
 	# 推演说明：让玩家明白「为什么现在弹推演」以及「证物不够会怎样」
-	_ink_label(v, "推演在节拍时刻弹出：侦探已到现场。证物不足时假设按钮不可点——先去取证，齐了会自动回来；判错后可在「案卷 → 推演」里重新推演。", 12)
+	_ink_label(v, "证物不足时无法作答：先去现场取证，齐了会自动回来；判错后可在「案卷 → 推演」里重新推演。", 12).add_theme_color_override("font_color", Color("#6b5a44"))
 	var prog: Dictionary = eng.deduction_progress(did)
 	var checks: Dictionary = {}
 	var hyp_btns: Array = []
@@ -2068,21 +2180,28 @@ func _modal_deduction(did: String) -> void:
 	var count_hdr := HBoxContainer.new()
 	count_hdr.add_theme_constant_override("separation", 8)
 	v.add_child(count_hdr)
-	var chk_hint := _ink_label(count_hdr, "手头的证物（已自动勾选作为依据）：", 13)
+	var chk_hint := _ink_label(count_hdr, "依据的证物（点一下可取消勾选）", 12)
+	chk_hint.add_theme_color_override("font_color", Color("#6b5a44"))
 	chk_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var select_all_btn := Button.new()
 	select_all_btn.text = "全选已得证物"
 	select_all_btn.focus_mode = Control.FOCUS_NONE
 	select_all_btn.visible = false
 	count_hdr.add_child(select_all_btn)
+	# 证物压成一排小标签：把视觉重心让给下面的推理选项
+	var chip_row := HFlowContainer.new()
+	chip_row.add_theme_constant_override("h_separation", 6)
+	chip_row.add_theme_constant_override("v_separation", 6)
+	v.add_child(chip_row)
 	for eid in dd.evidence:
 		var cb := CheckBox.new()
 		var have: bool = eng.s.evidence.has(eid)
-		cb.text = str(data.evidence_by_id[eid].label) if have else "（尚未取得）"
+		cb.text = str(data.evidence_by_id[eid].label) if have else "？未取得"
 		cb.disabled = not have
 		cb.button_pressed = have
 		cb.focus_mode = Control.FOCUS_NONE
-		v.add_child(cb)
+		cb.add_theme_font_size_override("font_size", 13)
+		chip_row.add_child(cb)
 		checks[eid] = cb
 	var can_answer: bool = prog.can_answer
 	var uncheck_warn := _ink_label(v, "", 13)
@@ -2115,10 +2234,15 @@ func _modal_deduction(did: String) -> void:
 	elif prog.have < prog.need:
 		var warn2 := _ink_label(v, "能取到的证物都查过了，只能凭现有线索推演（证物不足会判错，之后可在「案卷 → 推演」里重新推演）。", 13)
 		warn2.add_theme_color_override("font_color", Color("#a03a24"))
-	_ink_label(v, str(dd.get("question", "哪一种推论更站得住脚？")), 13)
+	var q := _ink_label(v, str(dd.get("question", "哪一种推论更站得住脚？")), 17)
+	q.add_theme_font_override("font", SERIF_FONT)
+	q.add_theme_color_override("font_color", Color("#7a3a24"))
+	var hyp_i := 0
 	for h in dd.hypotheses:
 		var b := Button.new()
-		b.text = str(h.label)
+		b.text = "%s　%s" % [char(65 + hyp_i), str(h.label)]
+		hyp_i += 1
+		_choice_style(b)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
@@ -2184,6 +2308,7 @@ func _modal_conflict(cid: String) -> void:
 	for o in eng.conflict_options(cid):
 		var b := Button.new()
 		b.text = str(o.label)
+		_choice_style(b)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE

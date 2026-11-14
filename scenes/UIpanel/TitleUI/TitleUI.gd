@@ -172,8 +172,8 @@ func _install_title_polish() -> void:
 		tagline.horizontal_alignment = title.horizontal_alignment
 		tagline.add_theme_font_size_override("font_size", 20)
 		tagline.add_theme_color_override("font_color", Color(0.88, 0.8, 0.64, 0.8))
-		var font := title.get_theme_font("font")
-		if font != null: tagline.add_theme_font_override("font", font)
+		# 标题字体 YujiSyuku 是日文字库，缺「观」等简体字形（显示成方块）；副标题改用完整简体字库
+		tagline.add_theme_font_override("font", BODY_FONT)
 		title.get_parent().add_child(tagline)
 		title.get_parent().move_child(tagline, title.get_index() + 1)
 	for node in find_children("*", "Button", true, false):

@@ -108,6 +108,21 @@ func _mat(color: Variant, rough := 0.85, metal := 0.0) -> StandardMaterial3D:
 	return m
 
 
+func _unshaded(color: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = color
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	if color.a < 1.0: m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	return m
+
+
+## 描边外壳：只画背面（cull front），从外面看就是包住发光体的一圈深色轮廓。
+func _outline_mat(color: Color) -> StandardMaterial3D:
+	var m := _unshaded(color)
+	m.cull_mode = BaseMaterial3D.CULL_FRONT
+	return m
+
+
 func _glow_mat(color: Variant) -> StandardMaterial3D:
 	var m := _mat(color, 0.4)
 	m.emission_enabled = true
@@ -246,7 +261,7 @@ func refresh_walls(cam_azimuth: float) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "WallShell"
 	mi.mesh = _mesh_from(arr)
-	var wm := _mat("#9a7f63", 0.9)  # 暖灰墙面（美术设定：案卷纸面暖调）
+	var wm := _mat("#85694f", 0.9)  # 暖灰墙面（压暗，避免与强光一起过曝）（美术设定：案卷纸面暖调）
 	mi.material_override = wm
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	_walls_root.add_child(mi)
@@ -418,24 +433,48 @@ func _build_prop(p: Dictionary) -> Node3D:
 			mk.name = "Marker"
 			var found_it: bool = found.has(str(p.get("eid", "")))
 			var color := Color("#7fbf6a") if found_it else Color("#d9a13a")
-			# 圆盘抬高 EPS.decal；光柱是独立的竖向几何，不贴任何已有表面
-			var disc := _cyl(0.28, 0.28, 0.016, color, Vector3(0, Geo.EPS.decal + 0.008, 0), 24, _glow_mat(color))
+			# 圆盘抬高 EPS.decal；光柱是独立的竖向几何，不贴任何已有表面。
+			# 可见性：白地砖 / 过曝时金色会融进底色，所以给地面圆盘、光柱与光球都加一圈深色描边（深色外圈 + 反向外壳）。
+			var ink := Color(0.10, 0.06, 0.03)
+			var base := _cyl(0.42, 0.42, 0.012, ink, Vector3(0, Geo.EPS.decal + 0.004, 0), 28, _unshaded(Color(ink, 0.85)))
+			mk.add_child(base)
+			var ring := _cyl(0.34, 0.34, 0.014, color, Vector3(0, Geo.EPS.decal + 0.006, 0), 28, _unshaded(Color(ink, 0.9)))
+			mk.add_child(ring)
+			var disc := _cyl(0.28, 0.28, 0.016, color, Vector3(0, Geo.EPS.decal + 0.010, 0), 24, _glow_mat(color))
 			mk.add_child(disc)
-			var beam := _cyl(0.035, 0.035, 0.9, color, Vector3(0, 0.5, 0), 8, _glow_mat(color))
+			var beam_outline := _cyl(0.085, 0.085, 0.92, ink, Vector3(0, 0.5, 0), 10, _outline_mat(ink))
+			mk.add_child(beam_outline)
+			var beam := _cyl(0.05, 0.05, 0.9, color, Vector3(0, 0.5, 0), 8, _glow_mat(color))
 			mk.add_child(beam)
 			var orb := MeshInstance3D.new()
 			var osm := SphereMesh.new()
-			osm.radius = 0.09
-			osm.height = 0.18
+			osm.radius = 0.12
+			osm.height = 0.24
 			orb.mesh = osm
 			orb.material_override = _glow_mat(color)
 			orb.position = Vector3(0, 1.02, 0)
 			orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			mk.add_child(orb)
+			var orb_outline := MeshInstance3D.new()
+			var osm2 := SphereMesh.new()
+			osm2.radius = 0.16
+			osm2.height = 0.32
+			orb_outline.mesh = osm2
+			orb_outline.material_override = _outline_mat(ink)
+			orb_outline.position = orb.position
+			orb_outline.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mk.add_child(orb_outline)
 			root.add_child(mk)
 			evidence_nodes[str(p.get("eid", ""))] = root
 		_:
 			root.add_child(_box(Vector3(w, h, d), col, Vector3(0, h / 2.0 + (0.0 if dm.get("mounted", false) == false else 0.0), 0)))
+			# 去白模感：深色踢脚 + 顶沿 + 面板分缝，让柜体 / 仪器箱有棱线与层次
+			if not bool(dm.get("mounted", false)) and h > 0.35:
+				root.add_child(_box(Vector3(w * 1.02, 0.07, d * 1.02), "#3a2a1c", Vector3(0, 0.035, 0)))
+				root.add_child(_box(Vector3(w * 1.03, 0.045, d * 1.03), Color(col).darkened(0.38), Vector3(0, h + 0.022, 0)))
+				if h > 0.6 and w > 0.5:
+					for gx in [-1, 1]:
+						root.add_child(_box(Vector3(0.018, h * 0.78, 0.012), Color(col).darkened(0.55), Vector3(gx * w / 6.0, h * 0.5, d / 2.0 + Geo.EPS.prop * 0.5)))
 			if kind in ["cabinet", "bookshelf", "shelf", "medicine_cabinet"]:
 				# 柜面分格线：前移 EPS，不与柜体前面共面
 				for i in 3:

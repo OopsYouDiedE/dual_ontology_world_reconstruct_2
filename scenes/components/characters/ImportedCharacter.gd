@@ -1,5 +1,6 @@
 extends RefCounted
 
+const RIG_FIX := preload("res://scenes/components/characters/RigWeightFix.gd")
 const ANIM_LIB_HELPER := preload("res://scenes/components/characters/KayKitAnimationLibrary.gd")
 const CHIBI_SHADER := preload("res://scenes/components/rendering/ChibiFigurineSurface.gdshader")
 const SOURCE_RIG_PATH := "res://assets/imported/kaykit/animations/Rig_Medium_General.glb"
@@ -72,6 +73,10 @@ static func attach(parent: Node3D, path: String, height: float = NOMINAL_ACTOR_H
 	var mixamo_rig := (not kaykit_rig) and skel != null and _find_mixamo_bone(skel, "Hips") != -1 and _find_mixamo_bone(skel, "LeftArm") != -1
 	if kaykit_rig:
 		_apply_kaykit_three_head_proportion(model, skel, resolved_path)
+
+	# 蒙皮权重修正：左右腿错边、衣摆单腿拖拽、颈下头骨权重（见 RigWeightFix.gd）
+	if mixamo_rig and not OS.get_cmdline_user_args().has("nofix=1"):
+		RIG_FIX.apply(model, skel, resolved_path)
 
 	_apply_chibi_figurine_materials(model, resolved_path)
 

@@ -164,7 +164,11 @@ func _step_free(delta: float) -> void:
 	if _pending_exit != "" and not sub_up:
 		var to := _pending_exit
 		_pending_exit = ""
-		host.eng.enter_room(to)
+		# 第二幕：出门先走到乙区走廊，听见人声再加入对话圈（见 CorridorGathering.gd）
+		if to == "B-P" and host.has_method("start_gathering") and not host.instant_story:
+			host.start_gathering(to)
+		else:
+			host.eng.enter_room(to)
 		return
 	# 互动提示：离得近的物件
 	var near := _nearest_item(1.5)
@@ -441,6 +445,28 @@ func _arrive(i: int) -> void:
 			if other != "" and host.eng.unlocked(dr):
 				_pending_exit = other
 				break
+
+
+## 交棒给第二幕：停止第一幕的演出与光标，但不恢复完整界面、不动镜头（走廊场景接管）。
+func handoff() -> void:
+	active = false
+	phase = "off"
+	if _rig != null:
+		_rig.set("sit", 0.0)
+		_rig.set("head_yaw", 0.0)
+		_rig.set("head_pitch", 0.0)
+		_rig.set("head_roll", 0.0)
+	if _name_tag != null:
+		_name_tag.pixel_size = 0.006
+		_name_tag.visible = true
+	if _markers_root != null: _markers_root.queue_free()
+	if _prompt != null: _prompt.queue_free()
+	if _hint != null: _hint.queue_free()
+	_items.clear()
+	host.top_bar.visible = false
+	host.left_card.visible = false
+	host.room_hint.visible = false
+	host.drawer.visible = false
 
 
 func _end() -> void:

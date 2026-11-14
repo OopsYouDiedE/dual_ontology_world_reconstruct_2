@@ -19,6 +19,7 @@ const LowpolyRoom := preload("res://scenes/dual_world/LowpolyRoom.gd")
 const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
 const Score := preload("res://scenes/dual_world/ProceduralScore.gd")
 const WakeOpening := preload("res://scenes/dual_world/WakeOpening.gd")
+const CorridorGathering := preload("res://scenes/dual_world/CorridorGathering.gd")
 const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLibrary.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
@@ -175,6 +176,7 @@ var _wake_custom := false          # 使用侦探专用起床动作（WakePoseLi
 var _wake_edge := Vector2.ZERO     # 坐到床沿时的髋部位置
 var _manual_moving := false
 var opening: Node = null
+var gathering: Node = null   # 第二幕：乙区走廊对话圈
 var _cine := false
 var top_bar: PanelContainer
 
@@ -220,6 +222,15 @@ func _start_opening() -> void:
 	if not opening.begin(self):
 		_stop_opening()
 		_begin_intro()
+
+
+## 第二幕入口：第一幕里亲自走出寝室门后调用（WakeOpening._step_free）。
+func start_gathering(to_room: String) -> void:
+	if gathering != null: return
+	if opening != null and opening.active: opening.handoff()
+	gathering = CorridorGathering.new()
+	add_child(gathering)
+	gathering.begin(self, to_room)
 
 
 func _stop_opening() -> void:
@@ -1578,6 +1589,7 @@ func _process(delta: float) -> void:
 	_pump_subtitles(_sub_clock)
 	_step_wake_up(delta)
 	if opening != null and opening.active: opening.process(delta)
+	if gathering != null and gathering.active: gathering.process(delta)
 	# 台词在播、侦探在走路时，故事时间冻结：玩家始终看得见「发生了什么」
 	var frozen := not instant_story and (_transit_active() or _story_busy())
 	if not frozen: eng.tick(delta)

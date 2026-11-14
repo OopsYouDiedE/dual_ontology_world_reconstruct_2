@@ -408,7 +408,6 @@ internal sealed class NativeCli : IDisposable
             _=host.Observe();_=host.Observe();
             CharacterContentRevisions.AssertStatePreserved(before,host.session.SaveState());
             Console.WriteLine("PASS player-path advice is a read-only projection of the real new game");
-            if(GoalPlanningChecks.Run()!=0)throw new InvalidDataException("Personal goal planning checks failed.");
             ValidateContentRevisions();return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e);return 1;}

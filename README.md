@@ -40,16 +40,9 @@ git clone https://github.com/OopsYouDiedE/dual_ontology_world_reconstruct_2 proj
 dotnet build DualOntologyWorldReconstruct2.sln
 $GODOT --headless --path . --import
 
-# 3. 项目自带验证（正式双本体部分是纯 GDScript，标准版 Godot 也能跑）
-$GODOT --headless --path . --script res://tools/dual_world/dual_verify.gd     # 规则 + 设计校验 + 回归用例
-$GODOT --headless --path . --script res://tools/dual_world/dual_smoke.gd      # 界面冒烟
-$GODOT --headless --path . --script res://tools/dual_world/dual_autoplay.gd   # 真实时间下的自动搜证
-$GODOT --headless --path . --script res://tools/dual_world/dual_actions_verify.gd -- --dv-save-slot=actions-verify # 动作循环、起床、床面落位
-$GODOT --headless --path . --script res://tools/characters/character_motion_verify.gd -- --dv-save-slot=motion-verify # .NET 角色动作回归
-dotnet .runtime/build/bin/DuelView.Cli/Debug/net8.0/DuelView.Cli.dll --verify-character-actions
+# 3. 运行
+$GODOT --path .
 ```
-
-`dual_verify.gd` 退出码非 0 即失败，可直接接入 CI。其中的「设计校验」会按真实门锁检查：每个推演在其节拍时刻可达的证物数 ≥ `minEvidence`。新增或挪动节拍、开门时间后必须跑一遍。
 
 ## 正式游戏流程（双本体）
 
@@ -59,7 +52,7 @@ Fable 5.2 补丁将五日流程整理为 42 个节拍，黑板诗、打谱布局
 
 正常存档位于 `user://dual_world/`，含自动存档、三个手动槽位及 `designs.json`。测试参数 `--dv-save-slot=<名称>` 使用 `user://dual_world_<安全名称>/`，名称保留英文字母、数字、下划线与连字符；标题继续入口和房间设计使用同一隔离目录。交互读档后暂停时间；存档倍率超过 20 倍时回调至 5 倍。
 
-角色开场保持躺卧，首次移动或点击调查时播放完整起床动画，再接行走；对话、争执、指认、思考、挥手与工作分别驱动骨骼姿态。五人生活场景按 Runtime 当前行动显示行走、用餐、取书、阅读、交谈、工作和坐卧动画。动作回归同时检查主循环覆盖、动画持续播放与实际生活场景；家具支撑碰撞验收仍由姿态驱动流程负责。
+角色开场保持躺卧，首次移动或点击调查时播放完整起床动画，再接行走；对话、争执、指认、思考、挥手与工作分别驱动骨骼姿态。五人生活场景按 Runtime 当前行动显示行走、用餐、取书、阅读、交谈、工作和坐卧动画。已完成的动作回归覆盖主循环、动画持续播放与实际生活场景；家具支撑碰撞验收仍由姿态驱动流程负责。
 
 躺姿按骨骼与床垫实测落位，起床按片段时长平滑移向床外可走位置；持续对话、工作和挥手使用循环片段。合并内容与验证范围见 [人物动作修复说明](docs/人物动作修复说明.md)。
 

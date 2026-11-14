@@ -19,6 +19,7 @@ const LowpolyRoom := preload("res://scenes/dual_world/LowpolyRoom.gd")
 const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
 const Score := preload("res://scenes/dual_world/ProceduralScore.gd")
 const WakeOpening := preload("res://scenes/dual_world/WakeOpening.gd")
+const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLibrary.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
@@ -170,6 +171,8 @@ var _wake_y0 := 0.0
 var _wake_from := Vector2.ZERO
 var _wake_to := Vector2.ZERO
 var _wake_bed := Vector2.ZERO
+var _wake_custom := false          # 使用侦探专用起床动作（WakePoseLibrary）
+var _wake_edge := Vector2.ZERO     # 坐到床沿时的髋部位置
 var _manual_moving := false
 var opening: Node = null
 var _cine := false
@@ -1222,16 +1225,29 @@ func _bed_spot() -> Vector2:
 func _begin_wake_up() -> void:
 	if _wake_timer > 0.0 or det == null or det.pose != "lie": return
 	_wake_bed = _bed_spot()
-	det.set_pose("lie_stand_up")
-	_wake_total = maxf(1.15, float(det.pose_length("lie_stand_up")))
-	_wake_timer = _wake_total
+	var bed := _bed_info()
+	_wake_custom = false
+	var clip_pose := "lie_stand_up"
 	_wake_y0 = det.position.y
 	_wake_from = Vector2(det.position.x, det.position.z)
-	var bed := _bed_info()
 	if not bed.is_empty():
 		_wake_to = _wake_exit(bed)
 	else:
 		_wake_to = det_pos + Vector2(0.0, 0.7)
+	if det.has_wake_clips and not bed.is_empty():
+		# 腿朝出口一侧下床：出口在床局部 +x（人物左侧）用左侧动作，否则用右侧动作
+		var yaw: float = bed.yaw
+		var local: Vector2 = (_wake_to - (bed.pos as Vector2)).rotated(yaw)
+		var sign_x := 1.0 if local.x >= 0.0 else -1.0
+		clip_pose = "lie_stand_up" if sign_x > 0.0 else "lie_stand_up_r"
+		var lateral_axis := Vector2(1.0, 0.0).rotated(-yaw)
+		var hip_lateral: float = (_wake_from - (bed.pos as Vector2)).rotated(yaw).x
+		var edge_lateral: float = sign_x * maxf(0.2, float((bed.half as Vector2).x) - 0.12)
+		_wake_edge = _wake_from + lateral_axis * (edge_lateral - hip_lateral)
+		_wake_custom = true
+	det.set_pose(clip_pose)
+	_wake_total = maxf(1.15, float(det.pose_length(clip_pose)))
+	_wake_timer = _wake_total
 
 
 func _wake_exit(bed: Dictionary) -> Vector2:
@@ -1256,14 +1272,30 @@ func _step_wake_up(delta: float) -> void:
 	if _wake_timer <= 0.0: return
 	_wake_timer = maxf(0.0, _wake_timer - delta)
 	var progress := 1.0 - _wake_timer / maxf(_wake_total, 0.001)
-	var drop := smoothstep(0.45, 1.0, progress)
-	var slide := smoothstep(0.55, 1.0, progress)
-	var at := _wake_from.lerp(_wake_to, slide)
-	det.position = Vector3(at.x, _wake_y0 * (1.0 - drop), at.y)
+	if _wake_custom:
+		_step_wake_custom(_wake_total - _wake_timer)
+	else:
+		var drop := smoothstep(0.45, 1.0, progress)
+		var slide := smoothstep(0.55, 1.0, progress)
+		var at := _wake_from.lerp(_wake_to, slide)
+		det.position = Vector3(at.x, _wake_y0 * (1.0 - drop), at.y)
 	if _wake_timer > 0.0: return
 	det_pos = _wake_to
 	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	det.set_pose("stand")
+
+
+## 专用起床动作的根节点运动：撑坐（原地）→ 转身并挪到床沿 → 腿垂下、脚落地 → 起身走出床边。
+func _step_wake_custom(t: float) -> void:
+	var turn := smoothstep(WakePoseLibrary.GETUP_TURN_START, WakePoseLibrary.GETUP_EDGE, t)
+	var out := smoothstep(WakePoseLibrary.GETUP_EDGE + 0.15, WakePoseLibrary.GETUP_STAND_END, t)
+	var at := _wake_from.lerp(_wake_edge, turn).lerp(_wake_to, out)
+	# 高度：先留在床垫上；腿垂下后按双脚最低点把人落到地面，身体最多陷入床垫 0.16m
+	var planted: float = float(det.feet_rest_y) - float(det.feet_low_y())
+	var floor_y := lerpf(_wake_y0 - 0.16, 0.0, smoothstep(WakePoseLibrary.GETUP_EDGE, WakePoseLibrary.GETUP_STAND_END - 0.3, t))
+	var blend := smoothstep(WakePoseLibrary.GETUP_EDGE - 0.5, WakePoseLibrary.GETUP_EDGE, t)
+	var y := lerpf(_wake_y0, maxf(minf(_wake_y0, planted), floor_y), blend)
+	det.position = Vector3(at.x, y, at.y)
 
 
 func _build_grid() -> void:

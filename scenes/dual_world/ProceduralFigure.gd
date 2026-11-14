@@ -106,8 +106,46 @@ func _attach_glb(glb_path: String, height: float) -> bool:
 		return false
 	_glb_player = _body.get_meta("animation_player", null) as AnimationPlayer
 	_build_gestures()
+	_build_wake_poses()
 	# 即使某个角色的骨骼动画缺失，也保留真实 GLB 外观，不叠加程序化色块。
 	return true
+
+
+const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLibrary.gd")
+## 仅侦探拥有专用起床动作（仰卧 / 撑坐下床）；其他人物继续使用 KayKit 的躺姿片段。
+var has_wake_clips := false
+var feet_rest_y := 0.0
+
+
+func _build_wake_poses() -> void:
+	if _glb_player == null or str(actor.get("id", "")) != "detective": return
+	var skeleton: Skeleton3D = _body.get_meta("skeleton", null)
+	if skeleton == null: return
+	var root_node := _glb_player.get_node_or_null(_glb_player.root_node)
+	if root_node == null: return
+	var library := WakePoseLibrary.build(skeleton, String(root_node.get_path_to(skeleton)))
+	if library == null: return
+	_glb_player.add_animation_library("wake", library)
+	has_wake_clips = true
+	feet_rest_y = feet_low_y()
+
+
+## 双脚骨骼（Foot / ToeBase / Toe_End）在人物局部坐标里的最低高度；用于下床时把脚落到地面。
+func feet_low_y() -> float:
+	var skeleton: Skeleton3D = _body.get_meta("skeleton", null) if _body != null else null
+	if skeleton == null: return 0.0
+	var chain := Transform3D.IDENTITY
+	var node: Node = skeleton
+	while node != null and node != self:
+		chain = (node as Node3D).transform * chain
+		node = node.get_parent()
+	var low := INF
+	for side in ["Left", "Right"]:
+		for part in ["Foot", "ToeBase", "Toe_End"]:
+			var bone := ImportedCharacter._find_mixamo_bone(skeleton, side + part)
+			if bone < 0: continue
+			low = minf(low, (chain * skeleton.get_bone_global_pose(bone).origin).y)
+	return low if low != INF else 0.0
 
 
 func _build_gestures() -> void:
@@ -226,8 +264,9 @@ const POSE_CLIPS := {
 	"walk": [["walk"], 1.0],
 	"run": [["run"], 1.0],
 	"sit": [["sit_idle"], 1.0],
-	"lie": [["lie_idle"], 1.0],
-	"lie_stand_up": [["lie_stand_up"], 1.0],
+	"lie": [["wake/lie", "lie_idle"], 1.0],
+	"lie_stand_up": [["wake/getup", "lie_stand_up"], 1.0],
+	"lie_stand_up_r": [["wake/getup_r", "wake/getup", "lie_stand_up"], 1.0],
 	"talk": [["gestures/talk", "talk", "interact"], 0.85],
 	"argue": [["gestures/argue", "talk", "interact"], 1.35],
 	"point": [["gestures/point", "talk", "interact"], 0.7],

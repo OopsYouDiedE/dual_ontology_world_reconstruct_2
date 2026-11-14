@@ -15,6 +15,7 @@ var head_roll := 0.0
 var _hips := -1
 var _spine := -1
 var _spine1 := -1
+var _spine2 := -1
 var _neck := -1
 var _head := -1
 var ready_ok := false
@@ -24,6 +25,7 @@ func setup(skeleton: Skeleton3D) -> bool:
 	_hips = ImportedCharacter._find_mixamo_bone(skeleton, "Hips")
 	_spine = ImportedCharacter._find_mixamo_bone(skeleton, "Spine")
 	_spine1 = ImportedCharacter._find_mixamo_bone(skeleton, "Spine1")
+	_spine2 = ImportedCharacter._find_mixamo_bone(skeleton, "Spine2")
 	_neck = ImportedCharacter._find_mixamo_bone(skeleton, "Neck")
 	_head = ImportedCharacter._find_mixamo_bone(skeleton, "Head")
 	ready_ok = _hips >= 0 and _spine >= 0 and _neck >= 0 and _head >= 0
@@ -51,8 +53,12 @@ func _apply_sit(sk: Skeleton3D) -> void:
 	var target := lerpf(current, maxf(current, sit_elevation), clampf(sit, 0.0, 1.0))
 	var angle := target - current
 	if absf(angle) < 0.0005: return
-	var rot := Basis(axis, angle)
-	sk.set_bone_global_pose(_spine, Transform3D(rot * spine.basis, spine.origin))
+	# 弯折分摊到 Spine / Spine1 / Spine2：只在腰根一处折会把 Q 版小人的躯干拧成「Z」字
+	for part in [[_spine, 0.4], [_spine1, 0.35], [_spine2, 0.25]]:
+		var bone: int = part[0]
+		if bone < 0: continue
+		var pose := sk.get_bone_global_pose(bone)
+		sk.set_bone_global_pose(bone, Transform3D(Basis(axis, angle * float(part[1])) * pose.basis, pose.origin))
 
 
 func _apply_head(sk: Skeleton3D) -> void:

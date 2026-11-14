@@ -303,6 +303,24 @@ func pose_duration(p: String) -> float:
 	return pose_length(p)
 
 
+const WakeModifier := preload("res://scenes/dual_world/WakeModifier3D.gd")
+var _wake_mod: SkeletonModifier3D = null
+
+
+func wake_rig() -> SkeletonModifier3D:
+	if _wake_mod != null: return _wake_mod
+	var skeleton := _body.get_meta("skeleton", null) as Skeleton3D if _body != null else null
+	if skeleton == null: return null
+	var modifier := WakeModifier.new()
+	modifier.name = "WakeModifier3D"
+	skeleton.add_child(modifier)
+	if not modifier.setup(skeleton):
+		modifier.queue_free()
+		return null
+	_wake_mod = modifier
+	return _wake_mod
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	if _glb_player != null:

@@ -18,6 +18,7 @@ const RoomMesh := preload("res://scenes/dual_world/RoomMesh3D.gd")
 const LowpolyRoom := preload("res://scenes/dual_world/LowpolyRoom.gd")
 const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
 const Score := preload("res://scenes/dual_world/ProceduralScore.gd")
+const WakeOpening := preload("res://scenes/dual_world/WakeOpening.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
@@ -170,6 +171,9 @@ var _wake_from := Vector2.ZERO
 var _wake_to := Vector2.ZERO
 var _wake_bed := Vector2.ZERO
 var _manual_moving := false
+var opening: Node = null
+var _cine := false
+var top_bar: PanelContainer
 
 # 台词队列：一句一句播，播放期间时间冻结，抉择窗口在台词播完后才弹出
 var _sub_queue: Array = []
@@ -201,8 +205,28 @@ func _ready() -> void:
 			_toast("存档无法读取，已从头开始")
 	# 正式游戏默认进 3D 房间（单房间俯视角）：侦探在房间里走动；2D 地图是辅助视图
 	_set_view("room")
-	if resume_path == "" and show_intro and not instant_story: _begin_intro()
+	if resume_path == "": _start_opening()
 	_dirty = true
+
+
+func _start_opening() -> void:
+	_stop_opening()
+	if not show_intro or instant_story: return
+	opening = WakeOpening.new()
+	add_child(opening)
+	if not opening.begin(self):
+		_stop_opening()
+		_begin_intro()
+
+
+func _stop_opening() -> void:
+	if opening == null: return
+	if opening.active: opening._end()
+	opening.queue_free()
+	opening = null
+	_cine = false
+	if _fade_tween != null: _fade_tween.kill()
+	fade_rect.modulate.a = 0.0
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -213,6 +237,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_accept") and subtitle != null and subtitle.visible and not modal.visible:
 		_sub_until = 0.0
 		get_viewport().set_input_as_handled()
+		return
+	if opening != null and opening.active:
+		if event.is_action_pressed("interact") and not event.is_echo() and not modal.visible:
+			opening.interact_nearest()
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("ui_cancel"):
+			opening.toggle_chrome()
+			get_viewport().set_input_as_handled()
 
 
 func _close() -> void:
@@ -320,6 +352,7 @@ func _build_ui() -> void:
 	add_child(root)
 	# ── 顶栏：只留时间、播放控制、视图切换、案卷与菜单 ──
 	var top := PanelContainer.new()
+	top_bar = top
 	top.add_theme_stylebox_override("panel", _style(Color("#17120e"), LINE, 0, 6))
 	root.add_child(top)
 	var tb := HBoxContainer.new()
@@ -725,7 +758,9 @@ func _figure_of(who: String) -> Node3D:
 
 
 func _set_talk_pose(who: String, pose: String) -> void:
-	if who == "detective": _det_talk = "" if pose == "stand" else pose
+	if who == "detective":
+		if _cine: return
+		_det_talk = "" if pose == "stand" else pose
 	else:
 		var f: Node3D = figures.get(who, null)
 		if f != null and is_instance_valid(f): f.set_pose(pose)
@@ -825,6 +860,7 @@ func _read_save(path: String) -> bool:
 	if f == null: return false
 	var p: Variant = JSON.parse_string(f.get_as_text())
 	if not (p is Dictionary and eng.load_dict(p)): return false
+	_stop_opening()
 	# 交互读档后默认暂停，并将过高的快进倍率回调至安全阅读倍率，防止读档瞬间连跳数小时
 	if not instant_story:
 		eng.s.playing = false
@@ -926,6 +962,7 @@ func _build_room(id: String) -> void:
 
 func _aim(distance: float) -> void:
 	var c: Vector3 = lowpoly.center() if (_lowpoly_ok and lowpoly != null) else room_mesh.center()
+	if opening != null and opening.active: c = opening.focus
 	var dir := Vector3(sin(az) * cos(pitch), sin(pitch), cos(az) * cos(pitch))
 	cam.position = c + dir * distance
 	cam.look_at(c, Vector3.UP)
@@ -1311,7 +1348,7 @@ func _go(points: Array, done := Callable()) -> void:
 
 
 func _walk_step(delta: float) -> void:
-	if det == null or _wake_timer > 0.0: return
+	if det == null or _wake_timer > 0.0 or _cine: return
 	if _manual_moving: return
 	var moving := not det_path.is_empty()
 	if moving:
@@ -1488,10 +1525,13 @@ func _on_3d_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP: dist = maxf(3.0, dist * 0.92); _update_camera()
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN: dist = minf(_fit_dist * 1.8, dist * 1.08); _update_camera()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+			if opening != null and opening.active and opening.handle_click(mb.position): return
 			var o := cam.project_ray_origin(mb.position)
 			var dr := cam.project_ray_normal(mb.position)
 			var eid: String = room_mesh.pick_marker(o, dr)
 			if eid != "": _inspect_walk(eid)
+	elif event is InputEventMouseMotion and opening != null and opening.active and not _orbit:
+		opening.handle_motion((event as InputEventMouseMotion).position)
 	elif event is InputEventMouseMotion and _orbit:
 		var mm: InputEventMouseMotion = event
 		az -= mm.relative.x * 0.008
@@ -1505,6 +1545,7 @@ func _process(delta: float) -> void:
 	_sub_clock += delta
 	_pump_subtitles(_sub_clock)
 	_step_wake_up(delta)
+	if opening != null and opening.active: opening.process(delta)
 	# 台词在播、侦探在走路时，故事时间冻结：玩家始终看得见「发生了什么」
 	var frozen := not instant_story and (_transit_active() or _story_busy())
 	if not frozen: eng.tick(delta)
@@ -1616,11 +1657,17 @@ func _manual_move_step(delta: float) -> void:
 	_manual_moving = false
 	if view != "room" or instant_story or _transit_active() or det == null or _grid == null:
 		return
-	if modal.visible or _story_busy() or not eng.s.playing:
+	if _cine: return
+	var free_roam: bool = opening != null and opening.active and opening.phase == "free"
+	if modal.visible or (_story_busy() and not free_roam) or not eng.s.playing:
 		return
 	var vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if vec.length() < 0.05:
 		return
+	if free_roam and not det_path.is_empty():
+		det_path.clear()
+		det_done = Callable()
+		opening.cancel_walk()
 	# 还躺在床上：第一次移动先播放起床动作，再继续行走
 	if _wake_timer > 0.0: return
 	if auto_search:
@@ -2155,14 +2202,19 @@ func _modal_ending() -> void:
 	v.add_child(row)
 	var b_restart := _btn(row, "重新开始", func():
 		_ending_dismissed = false
+		_stop_opening()
 		eng.new_game()
 		_write_auto()
 		_modal_key = ""
-		if show_intro and not instant_story: _begin_intro()
 		_sub_queue.clear()
+		subtitle.visible = false
+		_det_talk = ""
+		_intro_pending = false
+		_dismiss_modal()
 		_finish_transit_now()
 		_room_loaded = ""
-		_ensure_room())
+		_set_view("room")
+		_start_opening())
 	b_restart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b_restart.custom_minimum_size = Vector2(140, 38)
 	var b_case := _btn(row, "翻看案卷", func():

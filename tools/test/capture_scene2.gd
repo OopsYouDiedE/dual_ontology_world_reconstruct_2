@@ -33,7 +33,7 @@ func _initialize() -> void:
 			continue
 		var key: String = g.phase + ":" + str(g._line)
 		if g.phase != last_phase or g._line != last_line:
-			var want: bool = (g.phase in ["exit", "hear", "approach", "join", "card"]) or (g.phase == "talk" and g._line in [1, 3, 5, 8, 12])
+			var want: bool = (g.phase in ["exit", "hear", "approach", "join", "card", "free"]) or (g.phase == "talk" and g._line in [1, 3, 5, 8, 12])
 			if want and not shot.has(key):
 				for i in 14: await process_frame
 				shot[key] = true
@@ -43,5 +43,10 @@ func _initialize() -> void:
 				print("shot ", p, " det=", m.det_pos, " subtitle=", m.subtitle.text.left(14))
 			last_phase = g.phase
 			last_line = g._line
+		if g.phase == "free":
+			for item_index in g._items.size():
+				if str(g._items[item_index].id) == "kitchen":
+					g.interact(item_index)
+					break
 	print("end loop; gathering=", m.gathering, " last=", last_phase)
 	quit()

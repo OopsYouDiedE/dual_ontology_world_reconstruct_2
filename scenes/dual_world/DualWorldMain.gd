@@ -252,6 +252,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_sub_until = 0.0
 		get_viewport().set_input_as_handled()
 		return
+	# 第三幕：走廊自由活动，E 键查看最近的物件
+	if gathering != null and gathering.active and gathering.phase == "free":
+		if event.is_action_pressed("interact") and not event.is_echo() and not modal.visible:
+			gathering.interact_nearest()
+			get_viewport().set_input_as_handled()
+			return
 	if opening != null and opening.active:
 		if event.is_action_pressed("interact") and not event.is_echo() and not modal.visible:
 			opening.interact_nearest()
@@ -1569,12 +1575,17 @@ func _on_3d_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN: dist = minf(_fit_dist * 1.8, dist * 1.08); _update_camera()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
 			if opening != null and opening.active and opening.handle_click(mb.position): return
+			if gathering != null and gathering.active:
+				gathering.handle_click(mb.position)
+				return
 			var o := cam.project_ray_origin(mb.position)
 			var dr := cam.project_ray_normal(mb.position)
 			var eid: String = room_mesh.pick_marker(o, dr)
 			if eid != "": _inspect_walk(eid)
 	elif event is InputEventMouseMotion and opening != null and opening.active and not _orbit:
 		opening.handle_motion((event as InputEventMouseMotion).position)
+	elif event is InputEventMouseMotion and gathering != null and gathering.active and not _orbit:
+		gathering.handle_motion((event as InputEventMouseMotion).position)
 	elif event is InputEventMouseMotion and _orbit:
 		var mm: InputEventMouseMotion = event
 		az -= mm.relative.x * 0.008

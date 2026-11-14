@@ -25,10 +25,15 @@ func _initialize() -> void:
 		if g != null and not log.has("g:" + g.phase):
 			log["g:" + g.phase] = true
 			print("[gathering] t=", (Time.get_ticks_msec() - t0) / 1000, "s phase=", g.phase, " room=", m.eng.s.room, " chrome_top=", m.top_bar.visible)
+		if g != null and g.phase == "free":
+			for item_index in g._items.size():
+				if str(g._items[item_index].id) == "kitchen":
+					g.interact(item_index)
+					break
 		if g == null and log.has("g:card"):
 			for i in 40: await process_frame
 			print("[done] room=", m.eng.s.room, " loaded=", m._room_loaded, " cine=", m._cine, " playing=", m.eng.s.playing, " chrome_top=", m.top_bar.visible, " sun=", m.sun.visible, " room_mesh_visible=", m.room_mesh.visible, " beat=", m.eng.s.current_beat)
 			quit()
 			return
 	print("TIMEOUT gathering=", m.gathering, " phase=", (m.gathering.phase if m.gathering else "-"), " pt=", (m.gathering._pt if m.gathering else 0.0), " line=", (m.gathering._line if m.gathering else 0), " fade_alpha=", m.fade_rect.modulate.a)
-	quit()
+	quit(1)

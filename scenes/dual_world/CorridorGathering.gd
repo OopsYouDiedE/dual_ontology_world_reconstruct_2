@@ -1,5 +1,8 @@
 extends Node
-## 第二幕：走出寝室门 → 乙区走廊 → 听见人声 → 加入对话圈 → 快速对账 → 商定下一步 → 进小厨房。
+## 第二幕：走出寝室门 → 乙区走廊 → 听见人声 → 加入对话圈 → 快速对账 → 商定下一步。
+## 第三幕：对账结束后留在走廊里自由活动（无顶栏 / 左卡 / 右侧案卷抽屉），只有侦探和几件可互动的物件。
+##   · 没有任何剧情理由逼侦探去厨房：厨房拱门只是其中一个可选物件，玩家主动按 E 才会过去。
+##   · 每个房间的门都带锁，侦探只能开自己的 R05；其余三扇门只能试一下把手。
 ##
 ## 设计取舍（走廊 vs. 直接闯进厨房）：
 ##   · B-P 的 Lowpoly 房间是 11×5.2 米的带灶小厨房，只有一扇门，不是走廊；R05 的门原先直接开进厨房，
@@ -16,6 +19,9 @@ const LEN := 20.0            # 走廊长度（x）
 const DEPTH := 3.4           # 走廊进深（z，+z 朝向镜头）
 const WALK := 2.6
 const DOORS := [["R05", "侦探", 3.0], ["R06", "霍铎", 7.0], ["R07", "沈鼎", 11.0], ["R08", "苏泠", 15.0]]
+const OWN_DOOR := "R05"      # 侦探只有自己房间的钥匙
+const FREE_BOUNDS := Rect2(0.6, 0.75, 18.6, 2.3)   # 第三幕可走区域（x, z, 宽, 深）
+const NPC_BODY := 0.5        # 第三幕：与三位同伴保持的最小距离
 const CIRCLE := Vector2(16.9, 1.95)
 const R3 := 0.95             # 三人弧半径（给侦探留开口）
 const R4 := 1.1              # 四人圈半径
@@ -32,10 +38,10 @@ const LINES := [
 	["detective", "我这边：门没被撬，笔记本最后一页只写了半行字，抖得厉害。手背上有三道抓痕。", "think"],
 	["huo", "也就是说，昨晚发生过什么，我们谁也确定不了。能确定的只有一件事：四个人都丢了同样的东西，而且各自房里都留下了点什么。"],
 	["su", "甲区那边的人……会不会也一样？没人能保证。"],
-	["detective", "先别下结论。三步：一，进小厨房，把各自找到的东西摆到桌上；二，只记录，不推断；三，乙区对完，再想办法去甲区看看他们。"],
-	["shen", "热水我来烧。大家都还没吃东西，先暖暖手再说。"],
+	["detective", "先别下结论。三步：一，各自把自己屋里看到的东西记下来；二，只记录，不推断；三，别人的门都锁着，谁也别硬闯，对得上再说。"],
+	["shen", "那我先回自己那边，把袖口和那块湿布再看一遍。你们也各看各的，别漏。"],
 	["huo", "同意。谁的话和痕迹对不上，就当场指出来，不记仇。"],
-	["detective", "好。先进厨房。", "think"],
+	["detective", "好。我先在走廊里转转，看看这一层到底是什么样子。", "think"],
 ]
 
 var host: Control
@@ -60,6 +66,14 @@ var _to_room := "B-P"
 var _joined := false
 var _saved_visible := true
 var _sun_was_on := true
+# 第三幕（自由活动）
+var _items: Array = []
+var _hover := -1
+var _busy_item := -1
+var _free_t := 0.0
+var _prompt: Label
+var _hint: Label
+var _enter_pending := false
 
 
 func begin(h: Control, to_room: String) -> void:
@@ -175,14 +189,23 @@ func _build_corridor() -> void:
 	_box(Vector3(LEN * 0.5, 0.22, DEPTH + 0.14), Vector3(LEN + 0.4, 0.44, 0.2), Color("#6b5238"))
 	_label("乙区小厨房  →", Vector3(LEN - 0.4, 2.35, DEPTH * 0.5), 0.005, Color("#ffd98a"))
 	_label("乙区大门（上锁）", Vector3(0.7, 2.35, 0.2), 0.0038, Color("#c9b99a"))
-	# 寝室门：深色门框 + 门扇，R05 刚被推开
+	# 寝室门：深色门框 + 门扇。每个房间的门都带锁：只有侦探自己的 R05 能打开（刚被他推开），
+	# 其余三扇门关紧，门扇平贴门框，装黄铜把手和红色锁牌。
 	for d in DOORS:
 		var x: float = d[2]
+		var own: bool = str(d[0]) == OWN_DOOR
 		_box(Vector3(x, 1.1, 0.03), Vector3(1.15, 2.2, 0.1), Color("#2a1d14"))
 		_box(Vector3(x, 2.28, 0.0), Vector3(1.35, 0.14, 0.2), Color("#5a4129"))
-		var leaf := _box(Vector3(x - 0.45, 1.05, 0.5), Vector3(0.08, 2.05, 0.85), Color("#6b4a2e"))
-		leaf.rotation.y = deg_to_rad(-62.0 if str(d[0]) in ["R05", "R06", "R07"] else -8.0)
-		_label("%s · %s" % [d[0], d[1]], Vector3(x, 2.6, 0.2), 0.0042)
+		if own:
+			var leaf := _box(Vector3(x - 0.45, 1.05, 0.5), Vector3(0.08, 2.05, 0.85), Color("#6b4a2e"))
+			leaf.rotation.y = deg_to_rad(-62.0)
+			_label("%s · %s（我的门）" % [d[0], d[1]], Vector3(x, 2.6, 0.2), 0.0042)
+		else:
+			_box(Vector3(x, 1.05, 0.1), Vector3(0.96, 2.05, 0.07), Color("#5f4229"))               # 关紧的门扇
+			_box(Vector3(x, 1.05, 0.145), Vector3(0.62, 1.5, 0.02), Color("#6d4c30"))              # 门板嵌线
+			_box(Vector3(x + 0.34, 1.0, 0.19), Vector3(0.07, 0.07, 0.12), Color("#c2a35b"), 0.3)   # 铜把手
+			_box(Vector3(x + 0.34, 1.2, 0.16), Vector3(0.13, 0.22, 0.04), Color("#b83a2e"), 0.9)   # 锁牌
+			_label("%s · %s（锁）" % [d[0], d[1]], Vector3(x, 2.6, 0.2), 0.0042, Color("#e0b7a8"))
 	# 门间：窗（晨光）、长凳、盆栽，让走廊不空
 	for wx in [5.0, 9.0, 13.0]:
 		_box(Vector3(wx, 1.7, 0.03), Vector3(0.9, 0.9, 0.06), Color("#b9d0e0"), 0.45)
@@ -278,7 +301,9 @@ func process(delta: float) -> void:
 					_pt = 0.0
 					_show_card()
 		"card":
-			if _pt > 5.5: _finish()
+			if _pt > 5.5: _enter_free()
+		"free":
+			_step_free(delta)
 		"out":
 			pass
 	for id in _npc:
@@ -293,6 +318,8 @@ func process(delta: float) -> void:
 func _look_target(id: String) -> Vector2:
 	# 说话者所在的人 → 其余人看他；其余时间看圈心
 	var who: String = host._speaker
+	if phase == "free" and not host.subtitle.visible:
+		return host.det_pos if host.det_pos.distance_to(CIRCLE) < 5.0 else CIRCLE
 	if host.subtitle.visible and who != id:
 		if who == "detective": return host.det_pos
 		if _npc.has(who):
@@ -344,6 +371,11 @@ func _camera_drive(delta: float) -> void:
 			g_az = 0.12
 			g_pitch = 1.0
 			g_dist = 7.4
+		"free":
+			g_focus = Vector3(clampf(host.det_pos.x + 0.8, 5.0, LEN - 4.6), 0.8, 1.7)
+			g_az = 0.12
+			g_pitch = 1.0
+			g_dist = 7.4
 		"approach":
 			g_focus = Vector3(lerpf(host.det_pos.x, CIRCLE.x, 0.55), 0.8, 1.8)
 			g_az = 0.22
@@ -373,7 +405,7 @@ func _show_card() -> void:
 	_card = PanelContainer.new()
 	_card.add_theme_stylebox_override("panel", host._style(Color(0.07, 0.055, 0.04, 0.9), host.BRASS, 10, 14))
 	var l := Label.new()
-	l.text = "对账小结\n\n已对上　门被反扣（霍铎）· 拖痕朝内 · 湿布挂在钩上（沈鼎）\n对不上　「开门」是谁喊的（苏泠）· 你手背上的抓痕\n下一步　① 小厨房按原位摆顺序　② 棘轮咬痕比拖痕　③ 乙区对完去甲区"
+	l.text = "对账小结\n\n已对上　门被反扣（霍铎）· 拖痕朝内 · 湿布挂在钩上（沈鼎）\n对不上　「开门」是谁喊的（苏泠）· 你手背上的抓痕\n下一步　① 各自复查自己的屋子　② 只记录不推断　③ 别人的门上着锁，不硬闯"
 	l.add_theme_font_size_override("font_size", 17)
 	l.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_card.add_child(l)
@@ -384,7 +416,7 @@ func _show_card() -> void:
 	host.center.add_child(_card)
 
 
-# ───────────────────────── 收尾：进厨房，接回原节拍 ─────────────────────────
+# ───────────────────────── 收尾：玩家主动走进厨房时才接回原节拍 ─────────────────────────
 func _finish() -> void:
 	if phase == "out": return
 	phase = "out"
@@ -393,6 +425,8 @@ func _finish() -> void:
 
 func _swap_to_room() -> void:
 	if _card != null: _card.queue_free()
+	if _prompt != null: _prompt.queue_free()
+	if _hint != null: _hint.queue_free()
 	for id in _npc: host.figures.erase(id)
 	if _root != null: _root.queue_free()
 	host.room_mesh.visible = true
@@ -412,3 +446,289 @@ func _swap_to_room() -> void:
 	active = false
 	host._fade(0.0, 0.4)
 	queue_free()
+
+
+# ───────────────────────── 第三幕：走廊自由活动 ─────────────────────────
+## 厨房、走廊门、窗、长凳、盆栽、大门，以及三位同伴，都是「看一眼、说一句」的物件。
+## 定义：stand 为侦探站位，pos 为判定中心，npc 非空时位置跟随该人物。
+func _item_defs() -> Array:
+	var defs: Array = []
+	defs.append({"id": "door_r05", "label": "我的房门", "pos": Vector2(3.0, 0.0), "stand": Vector2(3.0, 1.0), "y": 1.55,
+		"lines": [["detective", "这是我的门，钥匙在我口袋里，只有它打得开。门没被撬过。", "think"],
+			["detective", "屋里能查的，刚才都查过了。"]]})
+	var others := [["R06", "霍铎", 7.0, "霍铎"], ["R07", "沈鼎", 11.0, "沈师傅"], ["R08", "苏泠", 15.0, "苏泠"]]
+	for o in others:
+		defs.append({"id": "door_%s" % str(o[0]).to_lower(), "label": "%s 的房门（锁）" % o[1], "pos": Vector2(float(o[2]), 0.0),
+			"stand": Vector2(float(o[2]), 1.0), "y": 1.55,
+			"lines": [["detective", "试着拧了一下把手——纹丝不动。这是%s的屋子，门锁着，我的钥匙开不了它。" % o[3]],
+				["detective", "没有他开门，我进不去，也不该硬闯。", "think"]]})
+	defs.append({"id": "window", "label": "窗", "pos": Vector2(9.0, 0.0), "stand": Vector2(9.0, 1.1), "y": 1.95,
+		"lines": [["detective", "晨光是从这几扇窗透进来的，窗外是一片灰白，看不出是什么庭院。"],
+			["detective", "窗框是固定死的，推不开。四个人醒在这样一层楼里……", "think"]]})
+	defs.append({"id": "bench", "label": "长凳", "pos": Vector2(9.0, 0.45), "stand": Vector2(9.0, 1.15), "y": 0.85,
+		"lines": [["detective", "一条靠墙的长凳，坐面是凉的，没人坐过。"],
+			["detective", "凳脚下有一小片拖过的灰痕，不到一尺长，朝着东边。", "think"]]})
+	defs.append({"id": "plant", "label": "盆栽", "pos": Vector2(13.0, 0.4), "stand": Vector2(12.9, 1.1), "y": 1.5,
+		"lines": [["detective", "叶子还是湿的，有人今早浇过水——或者昨晚。"],
+			["detective", "土面上有一枚半个鞋印，比我的脚小。", "think"]]})
+	defs.append({"id": "gate", "label": "乙区大门（锁）", "pos": Vector2(0.3, 1.7), "stand": Vector2(1.3, 1.7), "y": 1.7,
+		"lines": [["detective", "走廊西头的大门，厚实的橡木，门上有锁孔，没有把手。"],
+			["detective", "我们四个都没有这把钥匙。是谁把乙区锁起来的？", "think"]]})
+	defs.append({"id": "kitchen", "label": "走进乙区小厨房（可选）", "pos": Vector2(LEN - 0.3, 1.7), "stand": Vector2(LEN - 1.4, 1.7), "y": 1.7,
+		"lines": [["detective", "走廊尽头是乙区小厨房，暖光从拱门里漫出来。没有谁说非去不可。"],
+			["detective", "……不过，我想进去看看。", "think"]]})
+	for id in ["huo", "shen", "su"]:
+		var a: Dictionary = host.data.actor_by_id[id]
+		defs.append({"id": "npc_" + id, "label": str(a.name), "pos": Vector2.ZERO, "stand": Vector2.ZERO, "npc": id,
+			"y": float(a.look.height) + 0.55, "lines": _npc_lines(id)})
+	return defs
+
+
+func _npc_lines(id: String) -> Array:
+	match id:
+		"huo": return [["huo", "曲柄销的事我还没想通。要是你在哪儿见到它，别自己收着，告诉我。"]]
+		"shen": return [["shen", "别盯着我的袖子看。湿归湿，我也想知道是怎么回事。"]]
+		_: return [["su", "琴弦断了，我反而很平静。真奇怪……我是不是平时也这样？"]]
+
+
+func _enter_free() -> void:
+	if phase == "free": return
+	if _card != null:
+		_card.queue_free()
+		_card = null
+	_build_items()
+	_build_overlay()
+	_joined = true
+	_free_t = 0.0
+	host.det_path.clear()
+	host.det.set_pose("stand")
+	phase = "free"
+	_pt = 0.0
+
+
+func _build_overlay() -> void:
+	_prompt = Label.new()
+	_prompt.add_theme_font_size_override("font_size", 18)
+	_prompt.add_theme_color_override("font_color", Color("#ffe3a3"))
+	_prompt.add_theme_stylebox_override("normal", host._style(Color(0.06, 0.05, 0.04, 0.82), host.BRASS, 18, 8))
+	_prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	_prompt.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_prompt.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_prompt.offset_top = -150
+	_prompt.offset_bottom = -112
+	_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_prompt.visible = false
+	host.center.add_child(_prompt)
+	_hint = Label.new()
+	_hint.text = "WASD / 方向键 移动　·　点击发光的物件，或靠近后按 E 查看"
+	_hint.add_theme_font_size_override("font_size", 14)
+	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
+	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
+	_hint.add_theme_constant_override("outline_size", 6)
+	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_hint.offset_left = 18
+	_hint.offset_top = -30
+	_hint.offset_bottom = -8
+	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.center.add_child(_hint)
+
+
+func _build_items() -> void:
+	for def in _item_defs():
+		var marker := Node3D.new()
+		_root.add_child(marker)
+		var gem := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = 0.15
+		sm.height = 0.34
+		sm.radial_segments = 4
+		sm.rings = 2
+		gem.mesh = sm
+		var locked: bool = "（锁）" in str(def.label)
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.albedo_color = Color("#d9604f") if locked else Color("#ffa51f")
+		mat.emission_enabled = true
+		mat.emission = Color("#c02a1a") if locked else Color("#ff8a00")
+		mat.emission_energy_multiplier = 1.6
+		gem.material_override = mat
+		gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		marker.add_child(gem)
+		var tag := Label3D.new()
+		tag.text = str(def.label)
+		tag.font = host.SANS_FONT
+		tag.font_size = 40
+		tag.pixel_size = 0.0055
+		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		tag.position = Vector3(0.0, 0.26, 0.0)
+		tag.modulate = Color("#ffe3a3")
+		tag.outline_size = 12
+		tag.no_depth_test = true
+		tag.visible = false
+		marker.add_child(tag)
+		var it: Dictionary = def
+		it["marker"] = marker
+		it["gem"] = gem
+		it["mat"] = mat
+		it["tag"] = tag
+		it["seen"] = false
+		it["locked"] = locked
+		_items.append(it)
+	_update_markers()
+
+
+func _item_pos(i: int) -> Vector2:
+	var it: Dictionary = _items[i]
+	if str(it.get("npc", "")) != "":
+		var n: Node3D = _npc[str(it.npc)]
+		return Vector2(n.position.x, n.position.z)
+	return it.pos
+
+
+func _item_stand(i: int) -> Vector2:
+	var it: Dictionary = _items[i]
+	if str(it.get("npc", "")) != "":
+		var p := _item_pos(i)
+		var away: Vector2 = host.det_pos - p
+		if away.length() < 0.05: away = Vector2(-1.0, 0.0)
+		return p + away.normalized() * 0.9
+	return it.stand
+
+
+func _update_markers() -> void:
+	for i in _items.size():
+		var it: Dictionary = _items[i]
+		var marker: Node3D = it.marker
+		var p := _item_pos(i)
+		var wob: float = sin(_clock * 2.0 + float(i)) * 0.04
+		# 门上的光标稍微离墙，免得被门框吞掉
+		marker.position = Vector3(p.x, float(it.y) + wob, maxf(p.y, 0.35))
+		var gem: MeshInstance3D = it.gem
+		gem.rotation.y = _clock * 1.4
+		var s := 0.62 if bool(it.seen) else (1.15 if i == _hover else 1.0)
+		gem.scale = gem.scale.lerp(Vector3.ONE * s, 0.2)
+		var mat: StandardMaterial3D = it.mat
+		mat.emission_energy_multiplier = 0.6 if bool(it.seen) else 1.6
+
+
+func _nearest_item(radius: float) -> int:
+	var best := -1
+	var best_d := radius
+	for i in _items.size():
+		var d := _item_pos(i).distance_to(host.det_pos)
+		if d < best_d:
+			best_d = d
+			best = i
+	return best
+
+
+func _pick(pos: Vector2) -> int:
+	var best := -1
+	var best_d := 48.0
+	for i in _items.size():
+		var w: Vector3 = (_items[i].marker as Node3D).global_position
+		if (host.cam as Camera3D).is_position_behind(w): continue
+		var d: float = (host.cam as Camera3D).unproject_position(w).distance_to(pos)
+		if d < best_d:
+			best_d = d
+			best = i
+	return best
+
+
+func handle_motion(pos: Vector2) -> void:
+	if phase == "free": _hover = _pick(pos)
+
+
+## 左键点击：命中物件则走过去查看，返回 true 表示事件已处理。
+func handle_click(pos: Vector2) -> bool:
+	if phase != "free": return false
+	var i := _pick(pos)
+	if i < 0: return false
+	interact(i)
+	return true
+
+
+func interact_nearest() -> void:
+	if phase != "free": return
+	var i := _nearest_item(1.6)
+	if i >= 0: interact(i)
+
+
+func interact(i: int) -> void:
+	if phase != "free" or _busy_item >= 0 or _enter_pending: return
+	if host.subtitle.visible or not host._sub_queue.is_empty(): return
+	if _item_pos(i).distance_to(host.det_pos) <= 1.6:
+		_arrive(i)
+	else:
+		_busy_item = i
+
+
+func _arrive(i: int) -> void:
+	_busy_item = -1
+	var it: Dictionary = _items[i]
+	it["seen"] = true
+	var p := _item_pos(i)
+	var dv: Vector2 = p - host.det_pos
+	if dv.length() > 0.05: host.det.rotation.y = atan2(dv.x, dv.y)
+	host.det.set_pose("stand")
+	for ln in it.lines:
+		var l: Array = ln
+		host.eng.say(str(l[0]), str(l[1]), str(l[2]) if l.size() > 2 else "")
+	if str(it.id) == "kitchen": _enter_pending = true
+
+
+func _step_free(delta: float) -> void:
+	_free_t += delta
+	var det: Node3D = host.det
+	var sub_up: bool = host.subtitle.visible or not host._sub_queue.is_empty()
+	# 玩家主动选择走进厨房：台词说完后才切场
+	if _enter_pending and not sub_up:
+		_finish()
+		return
+	var vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if vec.length() >= 0.05 and not _enter_pending:
+		_busy_item = -1
+		_move_det(vec.normalized() * float(host.WALK_SPEED) * delta, vec)
+	elif _busy_item >= 0:
+		var stand := _item_stand(_busy_item)
+		if host.det_pos.distance_to(stand) > 0.12:
+			_walk_to(stand, delta)
+			host.det_pos = _push_out(host.det_pos)
+			det.position = Vector3(host.det_pos.x, 0.0, host.det_pos.y)
+		else:
+			_arrive(_busy_item)
+	else:
+		det.set_pose("stand")
+	var near := _nearest_item(1.6)
+	var show_prompt := near >= 0 and not sub_up and _busy_item < 0 and not _enter_pending
+	_prompt.visible = show_prompt
+	if show_prompt:
+		var it: Dictionary = _items[near]
+		_prompt.text = "E  ·  %s" % ("走进乙区小厨房（可选）" if str(it.id) == "kitchen" else "查看「%s」" % str(it.label).replace("（锁）", ""))
+	for i in _items.size():
+		# 同伴头顶已有名牌，不再重复显示标记标签
+		(_items[i].tag as Label3D).visible = (i == _hover or i == near) and str(_items[i].get("npc", "")) == ""
+	if _free_t > 14.0: _hint.modulate.a = move_toward(_hint.modulate.a, 0.0, delta * 0.3)
+	_update_markers()
+
+
+## 手动移动：限制在走廊范围内，并与三位同伴保持距离（不穿人）。
+func _move_det(step: Vector2, vec: Vector2) -> void:
+	var cand: Vector2 = host.det_pos + step
+	cand.x = clampf(cand.x, FREE_BOUNDS.position.x, FREE_BOUNDS.end.x)
+	cand.y = clampf(cand.y, FREE_BOUNDS.position.y, FREE_BOUNDS.end.y)
+	cand = _push_out(cand)
+	host.det_pos = cand
+	host.det.position = Vector3(cand.x, 0.0, cand.y)
+	host.det.rotation.y = lerp_angle(host.det.rotation.y, atan2(vec.x, vec.y), 0.35)
+	host.det.set_pose("walk")
+
+
+func _push_out(p: Vector2) -> Vector2:
+	for id in _npc:
+		var n: Node3D = _npc[id]
+		var np := Vector2(n.position.x, n.position.z)
+		var d := p - np
+		if d.length() < NPC_BODY:
+			p = np + (d.normalized() if d.length() > 0.001 else Vector2(-1.0, 0.0)) * NPC_BODY
+	return p

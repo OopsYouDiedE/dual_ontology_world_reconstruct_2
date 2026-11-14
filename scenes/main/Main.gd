@@ -11,9 +11,8 @@ const Wall = preload("res://tools/building_construction/BuildingConstruction/Wal
 const Floor = preload("res://tools/building_construction/BuildingConstruction/Floors/ArchitectFloor.gd")
 const Props = preload("res://tools/building_construction/BuildingConstruction/Props/ArchitectProps.gd")
 const DEFAULT_CONTENT := "res://assets/data/scenarios/life_simulation.dv"
-const CAMPAIGN_PANEL := preload("res://scenes/main/CampaignPanel.gd")
 const DUAL_WORLD_SCENE := preload("res://scenes/dual_world/DualWorldMain.tscn")
-const DUAL_WORLD_SAVES := ["user://dual_world/auto.json", "user://dual_world/save_1.json"]
+const DUAL_WORLD_SCRIPT := preload("res://scenes/dual_world/DualWorldMain.gd")
 
 var bridge: Variant
 var builder: Control
@@ -57,10 +56,22 @@ var shutting_down := false
 
 var _events_key := ""
 
+func _dual_world_saves() -> Array:
+	var dir := DUAL_WORLD_SCRIPT.save_dir_path()
+	return [
+		dir + "/auto.json",
+		dir + "/save_1.json",
+		dir + "/save_2.json",
+		dir + "/save_3.json",
+	]
+
 func _ready() -> void:
 	add_to_group("lifecycle_hosts")
-	bridge = load("res://scenes/main/LifeBridge.cs").new()
-	add_child(bridge)
+	if ClassDB.class_exists("CSharpScript"):
+		var bridge_script: Script = load("res://scenes/main/LifeBridge.cs")
+		if bridge_script != null and bridge_script.can_instantiate():
+			bridge = bridge_script.new()
+			add_child(bridge)
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--dv-content="): content_path = argument.trim_prefix("--dv-content=")
 		elif argument.begins_with("--dv-seed="): seed_value = int(argument.trim_prefix("--dv-seed="))
@@ -83,13 +94,20 @@ func _title_setup() -> void:
 	title_ui.builder_requested.connect(open_building)
 	title_ui.campaign_requested.connect(open_campaign)
 	title_ui.dual_world_requested.connect(func(): open_dual_world())
+	if bridge == null:
+		for np in ["Menu/LifeTestButton", "Menu/CampaignButton", "Menu/RecordsButton"]:
+			var btn := title_ui.get_node_or_null(np)
+			if btn != null: btn.visible = false
 	title_ui.show_title(has_progress(), true)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null and settings.has_signal("settings_requested"):
 		settings.connect("settings_requested", _settings_requested)
-	campaign_panel = CAMPAIGN_PANEL.new()
-	add_child(campaign_panel)
-	campaign_panel.closed.connect(func(): title_ui.show_title(has_progress()))
+	if bridge != null and ClassDB.class_exists("CSharpScript"):
+		var cp_script: Script = load("res://scenes/main/CampaignPanel.gd")
+		if cp_script != null:
+			campaign_panel = cp_script.new()
+			add_child(campaign_panel)
+			campaign_panel.closed.connect(func(): title_ui.show_title(has_progress()))
 
 func _open_book_page(page_id: String) -> void:
 	if is_instance_valid(campaign_panel) and campaign_panel.visible:
@@ -146,9 +164,9 @@ func begin_shutdown() -> void:
 	if is_instance_valid(dual_world):
 		dual_world._finish_transit_now()
 		dual_world._write_auto()
-	if active: status_text = bridge.Save(_slot_path("auto"))
+	if active and bridge != null: status_text = bridge.Save(_slot_path("auto"))
 	if is_instance_valid(campaign_panel) and campaign_panel.visible: campaign_panel.begin_shutdown()
-	bridge.Close()
+	if bridge != null: bridge.Close()
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null and settings.has_method("flush"):
 		settings.call("flush")
@@ -176,10 +194,10 @@ func _continue_game() -> void:
 			if modified > dual_latest:
 				dual_latest = modified
 				dual_path = path
-	if not dual_path.is_empty() and dual_latest >= latest:
+	if not dual_path.is_empty() and (dual_latest >= latest or bridge == null):
 		open_dual_world(dual_path)
 		return
-	if selected_path.is_empty(): return
+	if selected_path.is_empty() or bridge == null: return
 	_load_save(selected_path)
 
 func _button(parent: Node, text: String, callback: Callable) -> Button:
@@ -229,7 +247,7 @@ func close_dual_world() -> void:
 	Sound.music("main_theme", 1.5)
 
 func open_life(building: Dictionary = {}) -> void:
-	if active: return
+	if active or bridge == null: return
 	initial_building = building.duplicate(true)
 	var result: Dictionary = JSON.parse_string(bridge.Open(content_path, JSON.stringify(building) if not building.is_empty() else "", seed_value))
 	if not result.get("ok", false):
@@ -591,26 +609,20 @@ func close_life() -> void:
 		title_ui.show_title(has_progress())
 		Sound.music("main_theme")
 
-func _dual_world_saves() -> Array:
-	for argument in OS.get_cmdline_user_args():
-		if argument.begins_with("--dv-save-slot="):
-			var slot := argument.trim_prefix("--dv-save-slot=").strip_edges()
-			if slot != "":
-				return ["user://sessions/%s/dual_world/auto.json" % slot, "user://sessions/%s/dual_world/save_1.json" % slot]
-	return DUAL_WORLD_SAVES
-
 func has_progress() -> bool:
 	for path in _dual_world_saves():
 		if FileAccess.file_exists(path): return true
+	if bridge == null: return false
 	if FileAccess.file_exists(_auto_path()): return true
 	for index in range(1, 7):
 		if FileAccess.file_exists(_slot_path(str(index))): return true
 	return false
 
 func can_save() -> bool:
-	return active
+	return active and bridge != null
 
 func journal() -> Dictionary:
+	if bridge == null: return {}
 	return JSON.parse_string(bridge.Journal(selected))
 
 func journal_actions() -> Array:
@@ -673,6 +685,8 @@ func _slot_directory() -> String:
 	return "user://life-slots"
 
 func mcp_observe() -> Dictionary:
+	if is_instance_valid(dual_world) and dual_world.has_method("mcp_observe"):
+		return dual_world.mcp_observe()
 	if is_instance_valid(campaign_panel) and campaign_panel.visible: return campaign_panel.observation()
 	var result := {"started": active, "state": snapshot if active else {"active": true, "campaign_completed": false}, "faulted": not str(snapshot.get("error", "")).is_empty(), "host_errors": [], "ui": {"paused": paused, "speed": speed, "status": status_text}}
 	if is_instance_valid(builder):

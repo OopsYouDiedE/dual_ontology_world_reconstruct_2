@@ -22,9 +22,9 @@ const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].tt
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
 
-const DESIGN_FILE := "user://dual_world/designs.json"
-const SAVE_FILE := "user://dual_world/save_%d.json"
-const AUTO_FILE := "user://dual_world/auto.json"
+const DESIGN_FILE := "designs.json"
+const SAVE_FILE := "save_%d.json"
+const AUTO_FILE := "auto.json"
 const INK := Color("#221c15")
 const PAPER := Color("#eae0c4")
 const BRASS := Color("#b89758")
@@ -34,6 +34,33 @@ const LINE := Color("#4a3b2d")
 const TEXT := Color("#efe6d6")
 const MUTED := Color("#a8957b")
 
+
+static func save_dir_path() -> String:
+	for raw in OS.get_cmdline_args() + OS.get_cmdline_user_args():
+		var arg := str(raw)
+		if arg.begins_with("--dv-save-slot="):
+			var slot := arg.substr("--dv-save-slot=".length()).strip_edges()
+			var safe := ""
+			for character_index in slot.length():
+				var ch := slot.unicode_at(character_index)
+				if (ch >= 48 and ch <= 57) or (ch >= 65 and ch <= 90) or (ch >= 97 and ch <= 122) or ch == 95 or ch == 45:
+					safe += char(ch)
+			if safe != "":
+				return "user://dual_world_" + safe
+	return "user://dual_world"
+
+
+static func auto_save_path() -> String:
+	return save_dir_path() + "/" + AUTO_FILE
+
+
+static func slot_save_path(slot: int) -> String:
+	return save_dir_path() + "/" + (SAVE_FILE % slot)
+
+
+static func design_save_path() -> String:
+	return save_dir_path() + "/" + DESIGN_FILE
+
 var data: RefCounted
 var eng: RefCounted
 var score: Node
@@ -42,6 +69,7 @@ var designs: Dictionary = {}
 var _room_loaded := ""
 var _occ_key := ""
 var _modal_key := ""
+var _ending_dismissed := false
 var _dirty := true
 var _panel_cd := 0.0
 var _light_cd := 0.0
@@ -148,7 +176,7 @@ var _sub_queue: Array = []
 var _autosave_due := false
 var _autosave_cd := 0.0
 var _fit_dist := 9.0
-const AUTOSAVE_EVENTS := ["beat", "choice", "conflict", "deduction", "evidence", "knowledge", "jump", "room"]
+const AUTOSAVE_EVENTS := ["beat", "choice", "conflict", "deduction", "evidence", "knowledge", "jump", "room", "ending"]
 
 
 func _ready() -> void:
@@ -219,7 +247,19 @@ func _theme() -> Theme:
 	t.set_color("font_color", "Label", TEXT)
 	t.set_color("font_color", "Button", TEXT)
 	t.set_color("font_hover_color", "Button", Color("#fff4dc"))
-	t.set_color("font_color", "CheckBox", TEXT)
+	t.set_color("font_pressed_color", "Button", Color("#fff8e8"))
+	t.set_color("font_disabled_color", "Button", Color("#7c6e5c"))
+	t.set_color("font_color", "CheckBox", INK)
+	t.set_color("font_pressed_color", "CheckBox", Color("#1b4325"))
+	t.set_color("font_hover_color", "CheckBox", INK)
+	t.set_color("font_hover_pressed_color", "CheckBox", Color("#1b4325"))
+	t.set_color("font_focus_color", "CheckBox", INK)
+	t.set_color("font_disabled_color", "CheckBox", Color("#786a58"))
+	t.set_stylebox("normal", "CheckBox", _style(Color("#dfd3b5"), Color("#9f8654"), 4, 6))
+	t.set_stylebox("hover", "CheckBox", _style(Color("#e7dcc0"), BRASS, 4, 6))
+	t.set_stylebox("pressed", "CheckBox", _style(Color("#d3e0c6"), Color("#4f7c56"), 4, 6))
+	t.set_stylebox("hover_pressed", "CheckBox", _style(Color("#dae7cd"), Color("#4f7c56"), 4, 6))
+	t.set_stylebox("disabled", "CheckBox", _style(Color("#d2c8b0"), Color("#a89b82"), 4, 6))
 	t.set_color("default_color", "RichTextLabel", TEXT)
 	t.set_stylebox("normal", "Button", _style(Color("#2c2219"), LINE, 5, 6))
 	t.set_stylebox("hover", "Button", _style(Color("#3a2d22"), BRASS, 5, 6))
@@ -293,7 +333,13 @@ func _build_ui() -> void:
 	top_phase.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_phase.clip_text = true
 	tb.add_child(top_phase)
-	play_btn = _btn(tb, "暂停", func(): eng.toggle_play())
+	play_btn = _btn(tb, "暂停", func():
+		if eng.s.ending != "":
+			_ending_dismissed = false
+			_modal_key = ""
+			_dirty = true
+		else:
+			eng.toggle_play())
 	speed_pick = OptionButton.new()
 	for sp in [[1.0, "×1"], [2.0, "×2"], [5.0, "×5"], [20.0, "×20"], [60.0, "×60"], [240.0, "×240"]]:
 		speed_pick.add_item(sp[1])
@@ -472,6 +518,8 @@ func _add_tab(name_: String) -> RichTextLabel:
 func _toggle_drawer() -> void:
 	drawer.visible = not drawer.visible
 	drawer_btn.button_pressed = drawer.visible
+	if room_hint != null:
+		room_hint.offset_right = -416 if drawer.visible else -16
 	_dirty = true
 
 
@@ -593,6 +641,14 @@ func _build_center() -> void:
 	snap_check = CheckBox.new()
 	snap_check.text = "吸附网格"
 	snap_check.button_pressed = true
+	snap_check.add_theme_color_override("font_color", TEXT)
+	snap_check.add_theme_color_override("font_pressed_color", Color("#e9c98a"))
+	snap_check.add_theme_color_override("font_hover_color", Color("#fff4dc"))
+	snap_check.add_theme_color_override("font_hover_pressed_color", Color("#fff4dc"))
+	snap_check.add_theme_stylebox_override("normal", _style(Color("#2c2219"), LINE, 5, 6))
+	snap_check.add_theme_stylebox_override("pressed", _style(Color("#3a2d22"), BRASS, 5, 6))
+	snap_check.add_theme_stylebox_override("hover", _style(Color("#3a2d22"), BRASS, 5, 6))
+	snap_check.add_theme_stylebox_override("hover_pressed", _style(Color("#463628"), BRASS, 5, 6))
 	snap_check.toggled.connect(func(on: bool):
 		editor.snap_on = on
 		editor.queue_redraw())
@@ -709,8 +765,9 @@ func _toast(text: String) -> void:
 # ───────────────────────── 设计存取 ─────────────────────────
 func _load_designs() -> void:
 	designs.clear()
-	if FileAccess.file_exists(DESIGN_FILE):
-		var f := FileAccess.open(DESIGN_FILE, FileAccess.READ)
+	var dp := design_save_path()
+	if FileAccess.file_exists(dp):
+		var f := FileAccess.open(dp, FileAccess.READ)
 		var p: Variant = JSON.parse_string(f.get_as_text())
 		if p is Dictionary: designs = p
 
@@ -723,9 +780,10 @@ func _design_for(room_id: String) -> Dictionary:
 func _save_design() -> void:
 	if editor.design.is_empty(): return
 	designs[editor.design.room_id] = editor.design.duplicate(true)
-	DirAccess.make_dir_recursive_absolute("user://dual_world")
-	var f := FileAccess.open(DESIGN_FILE, FileAccess.WRITE)
-	f.store_string(JSON.stringify(designs))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(save_dir_path()))
+	var f := FileAccess.open(design_save_path(), FileAccess.WRITE)
+	if f != null:
+		f.store_string(JSON.stringify(designs))
 	_toast("设计已保存：" + str(editor.design.name))
 
 
@@ -744,35 +802,15 @@ func _update_editor_status() -> void:
 
 
 # ───────────────────────── 存读档 ─────────────────────────
-static func save_dir() -> String:
-	for argument in OS.get_cmdline_user_args():
-		if argument.begins_with("--dv-save-slot="):
-			var slot := argument.trim_prefix("--dv-save-slot=").strip_edges()
-			if slot != "": return "user://sessions/%s/dual_world" % slot
-	return "user://dual_world"
-
-
-static func auto_save_path() -> String:
-	return save_dir().path_join("auto.json")
-
-
-static func slot_save_path(slot: int) -> String:
-	return save_dir().path_join("save_%d.json" % slot)
-
-
 func _write_save(path: String) -> void:
 	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f != null: f.store_string(JSON.stringify(eng.save_dict()))
 
 
-## 自动存档：「继续游戏」读这一份。通关后删除，避免下次继续时直接停在结局上。
+## 自动存档：「继续游戏」读这一份。通关后同样保留最终案卷状态，方便随时回看案卷或重开。
 func _write_auto() -> void:
-	var ap := auto_save_path()
-	if eng.s.ending != "":
-		if FileAccess.file_exists(ap): DirAccess.remove_absolute(ap)
-		return
-	_write_save(ap)
+	_write_save(auto_save_path())
 
 
 func _save_game(slot: int) -> void:
@@ -784,10 +822,16 @@ func _save_game(slot: int) -> void:
 func _read_save(path: String) -> bool:
 	if not FileAccess.file_exists(path): return false
 	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null: return false
 	var p: Variant = JSON.parse_string(f.get_as_text())
 	if not (p is Dictionary and eng.load_dict(p)): return false
-	# 读档后保持时间暂停，避免高倍速存档（如 ×240）在玩家反应前瞬间冲进结局
-	eng.s.playing = false
+	# 交互读档后默认暂停，并将过高的快进倍率回调至安全阅读倍率，防止读档瞬间连跳数小时
+	if not instant_story:
+		eng.s.playing = false
+		if float(eng.s.speed) > 20.0:
+			eng.s.speed = 5.0
+	_sync_speed_pick()
+	_ending_dismissed = false
 	_modal_key = ""
 	_sub_queue.clear()
 	subtitle.visible = false
@@ -806,7 +850,7 @@ func _load_game(slot: int) -> void:
 	if not FileAccess.file_exists(sp):
 		_toast("槽位为空")
 		return
-	if _read_save(sp): _toast("已读取槽位 %d（时间已暂停，准备好后点「继续」）" % slot)
+	if _read_save(sp): _toast("已读取槽位 %d（已暂停）" % slot)
 
 
 # ───────────────────────── 3D：单房间 ─────────────────────────
@@ -822,13 +866,55 @@ func _ensure_room() -> void:
 	_det_to_home()
 
 
+func _clamp_design_to_lowpoly(ds: Dictionary) -> void:
+	if not _lowpoly_ok or lowpoly == null: return
+	var wr: Rect2 = lowpoly.walk_rect(0.58)
+	var obs: Array = lowpoly.obstacle_rects()
+	var taken: Array = []
+	for pr in ds.get("props", []):
+		if str(pr.get("kind", "")) != "evidence_marker": continue
+		var p := Vector2(
+			clampf(float(pr.x), wr.position.x, wr.end.x),
+			clampf(float(pr.z), wr.position.y, wr.end.y)
+		)
+		var ok := func(cand: Vector2) -> bool:
+			if not wr.has_point(cand): return false
+			for r in obs:
+				if (r as Rect2).grow(0.18).has_point(cand): return false
+			for t in taken:
+				if (t as Vector2).distance_to(cand) < 0.55: return false
+			return true
+		if not ok.call(p):
+			var found := false
+			for rad_step in range(1, 14):
+				var rad := float(rad_step) * 0.32
+				for ang_step in 12:
+					var ang := float(ang_step) * TAU / 12.0
+					var cand := Vector2(
+						clampf(p.x + cos(ang) * rad, wr.position.x, wr.end.x),
+						clampf(p.y + sin(ang) * rad, wr.position.y, wr.end.y)
+					)
+					if ok.call(cand):
+						p = cand
+						found = true
+						break
+				if found: break
+		pr.x = p.x
+		pr.z = p.y
+		taken.append(p)
+
+
 func _build_room(id: String) -> void:
 	_room_loaded = id
 	var ds := _design_for(id)
-	# Lowpoly 房间优先：先试挂 Lowpoly，再决定程序化房间是否只留证物标记
+	# Lowpoly 房间优先：先挂载并对齐中心，再将证物标记夹取进真实室内边界、注入顶灯
 	_lowpoly_ok = lowpoly.attach(room_mesh, id, ds)
+	if _lowpoly_ok:
+		_clamp_design_to_lowpoly(ds)
 	room_mesh.lowpoly_mode = _lowpoly_ok
 	room_mesh.build(ds, eng.s.evidence)
+	if _lowpoly_ok:
+		room_mesh.lamps.append_array(lowpoly.lamps)
 	_build_grid()
 	_occ_key = ""
 	_fit_camera()
@@ -864,16 +950,17 @@ func _fit_camera() -> void:
 	var x1 := w
 	var z1 := d
 	var top := 1.9
-	# Lowpoly 房间以中心为原点、部分美术墙面高于程序化 1.9m 包围盒，
-	# 按真实场景中心对称取样，避免过于俯视时边墙被裁出画面。
+	# Lowpoly 房间已将其真实网格中心平移至 lowpoly.center()，围绕真实中心对称取景
 	if _lowpoly_ok and lowpoly != null:
 		var fs: Vector2 = lowpoly.floor_size()
-		var lp_root: Node3D = lowpoly.get("_root")
-		if fs.x > 0.1 and fs.y > 0.1 and lp_root != null:
-			x0 = lp_root.position.x - maxf(w * 0.5, fs.x * 0.5 + 0.35)
-			x1 = lp_root.position.x + maxf(w * 0.5, fs.x * 0.5 + 0.35)
-			z0 = lp_root.position.z - maxf(d * 0.5, fs.y * 0.5 + 0.35)
-			z1 = lp_root.position.z + maxf(d * 0.5, fs.y * 0.5 + 0.35)
+		var c3: Vector3 = lowpoly.center()
+		if fs.x > 0.1 and fs.y > 0.1:
+			var hw := fs.x * 0.5 + 0.35
+			var hd := fs.y * 0.5 + 0.35
+			x0 = c3.x - hw
+			x1 = c3.x + hw
+			z0 = c3.z - hd
+			z1 = c3.z + hd
 			top = 3.2
 	var corners: Array = []
 	for x in [x0, x1]:
@@ -913,28 +1000,52 @@ func _free_slots(n: int) -> Array:
 	var out: Array = []
 	var tp := {"id": "slot", "kind": "planter", "x": 0.0, "z": 0.0, "yaw": 0.0, "params": {}}
 	var cands: Array = []
-	var x := 0.8
-	while x < ds.w - 0.8:
-		var z := 0.8
-		while z < ds.d - 0.8:
+	var x0 := 0.8
+	var x1 := float(ds.w) - 0.8
+	var z0 := 0.8
+	var z1 := float(ds.d) - 0.8
+	var mid := Vector2(float(ds.w) * 0.5, float(ds.d) * 0.5)
+	var lp_obs: Array = []
+	if _lowpoly_ok and lowpoly != null:
+		var wr: Rect2 = lowpoly.walk_rect(0.65)
+		x0 = wr.position.x
+		x1 = wr.end.x
+		z0 = wr.position.y
+		z1 = wr.end.y
+		var c3: Vector3 = lowpoly.center()
+		mid = Vector2(c3.x, c3.z)
+		lp_obs = lowpoly.obstacle_rects()
+	var x := x0
+	while x <= x1 + 0.01:
+		var z := z0
+		while z <= z1 + 0.01:
 			cands.append(Vector2(x, z))
 			z += 0.55
 		x += 0.55
-	var mid := Vector2(ds.w * 0.5, ds.d * 0.5)
+	if cands.is_empty():
+		cands.append(mid)
 	cands.sort_custom(func(a, b): return a.distance_to(mid) < b.distance_to(mid))
 	for c in cands:
 		tp.x = c.x
 		tp.z = c.y
 		var ok := true
-		for p in ds.props:
-			if Geo.prop_dims(p).blocking and Geo.rects_overlap(tp, p, 0.12):
-				ok = false
-				break
+		if _lowpoly_ok:
+			for r in lp_obs:
+				if (r as Rect2).grow(0.24).has_point(c):
+					ok = false
+					break
+		else:
+			for p in ds.props:
+				if Geo.prop_dims(p).blocking and Geo.rects_overlap(tp, p, 0.12):
+					ok = false
+					break
 		if ok:
 			for o in out:
-				if o.distance_to(c) < 0.9: ok = false
+				if o.distance_to(c) < 0.85: ok = false
 		if ok: out.append(c)
 		if out.size() >= n: break
+	while out.size() < n:
+		out.append(mid)
 	return out
 
 
@@ -948,7 +1059,8 @@ func _sync_figures(force := false) -> void:
 	for c in figures_root.get_children(): c.queue_free()
 	figures.clear()
 	var slots := _free_slots(list.size() + 1)  # 第 0 个空位留给侦探
-	var mid := Vector2(room_mesh.design.w * 0.5, room_mesh.design.d * 0.5)
+	var c3: Vector3 = lowpoly.center() if (_lowpoly_ok and lowpoly != null) else room_mesh.center()
+	var mid := Vector2(c3.x, c3.z)
 	for i in mini(list.size(), slots.size() - 1):
 		var a: Dictionary = data.actor_by_id[list[i]]
 		var f: Node3D = Figure.new()
@@ -957,7 +1069,6 @@ func _sync_figures(force := false) -> void:
 		f.position = Vector3(sp.x, 0.0, sp.y)
 		var to := mid - sp
 		f.rotation.y = atan2(to.x, to.y)
-		# Lowpoly 房间：人物站在 Lowpoly 家具的空地上（设计坐标系与 Lowpoly 坐标系已对齐）
 		figures_root.add_child(f)
 		figures[a.id] = f
 		var tag := Label3D.new()
@@ -1021,9 +1132,7 @@ func _det_to_home() -> void:
 	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	det.rotation.y = az  # 正面朝向镜头
 	det.set_pose("stand")
-	# 开场：侦探在 R05 床上醒来（四人里最晚）——新局且在 R05 时，侦探躺在床上
-	# （仅在新局 beat_cursor==0 时；读档/重进房间不躺床）
-	if str(eng.s.room) == "R05" and eng.s.beat_cursor == 0 and not instant_story:
+	if str(eng.s.room) == "R05" and float(eng.s.t) <= float(eng.T(1, 7, 2)) and int(eng.s.beat_cursor) <= 1 and not instant_story:
 		var bed := _bed_info()
 		if not bed.is_empty():
 			det_pos = bed.pos
@@ -1067,7 +1176,7 @@ func _bed_info() -> Dictionary:
 	return {}
 
 
-## 找 R05 的床：Lowpoly 房间里找 DormBed 实例，找不到就用设计里的 bed 家具。
+## 找 R05 的床：优先使用 Lowpoly 房间解析出的真实床垫几何中心，避免触发 !is_inside_tree 或落到床头板原点。
 func _bed_spot() -> Vector2:
 	var bed := _bed_info()
 	return bed.pos if not bed.is_empty() else Vector2.ZERO
@@ -1120,19 +1229,22 @@ func _step_wake_up(delta: float) -> void:
 	det.set_pose("stand")
 
 
-
 func _build_grid() -> void:
 	var ds: Dictionary = room_mesh.design
-	# Lowpoly 房间：走路网格按 Lowpoly 实际尺寸建（家具碰撞来自设计 blocking 家具的近似）
 	var gw: float = float(ds.w)
 	var gd: float = float(ds.d)
+	var lp_wr := Rect2()
+	var lp_obs: Array = []
 	if _lowpoly_ok and lowpoly != null:
 		var fs: Vector2 = lowpoly.floor_size()
+		var c3: Vector3 = lowpoly.center()
 		if fs.x > 0.1 and fs.y > 0.1:
-			gw = maxf(gw, fs.x + 0.4)
-			gd = maxf(gd, fs.y + 0.4)
-	var cx := int(ceil(gw / CELL))
-	var cz := int(ceil(gd / CELL))
+			gw = maxf(gw, c3.x + fs.x * 0.5 + 0.6)
+			gd = maxf(gd, c3.z + fs.y * 0.5 + 0.6)
+		lp_wr = lowpoly.walk_rect(0.36)
+		lp_obs = lowpoly.obstacle_rects()
+	var cx := maxi(4, int(ceil(gw / CELL)))
+	var cz := maxi(4, int(ceil(gd / CELL)))
 	_grid = AStarGrid2D.new()
 	_grid.region = Rect2i(0, 0, cx, cz)
 	_grid.cell_size = Vector2(CELL, CELL)
@@ -1145,12 +1257,21 @@ func _build_grid() -> void:
 		for iz in cz:
 			var px := (ix + 0.5) * CELL
 			var pz := (iz + 0.5) * CELL
-			var blocked := px < margin or px > gw - margin or pz < margin or pz > gd - margin
-			if not blocked:
-				for pr in ds.props:
-					if Geo.prop_dims(pr).blocking and Geo.point_in_prop(pr, px, pz, 0.2):
-						blocked = true
-						break
+			var blocked := false
+			if _lowpoly_ok and lp_wr.size.x > 0.1:
+				blocked = not lp_wr.has_point(Vector2(px, pz))
+				if not blocked:
+					for r in lp_obs:
+						if (r as Rect2).grow(0.14).has_point(Vector2(px, pz)):
+							blocked = true
+							break
+			else:
+				blocked = px < margin or px > gw - margin or pz < margin or pz > gd - margin
+				if not blocked:
+					for pr in ds.props:
+						if Geo.prop_dims(pr).blocking and Geo.point_in_prop(pr, px, pz, 0.2):
+							blocked = true
+							break
 			if blocked: _grid.set_point_solid(Vector2i(ix, iz), true)
 
 
@@ -1241,6 +1362,7 @@ func _inspect_walk(eid: String) -> void:
 func _rebuild_markers() -> void:
 	room_mesh.lowpoly_mode = _lowpoly_ok
 	room_mesh.build(room_mesh.design, eng.s.evidence)
+	if _lowpoly_ok: room_mesh.lamps.append_array(lowpoly.lamps)
 	_occ_key = ""
 	_sync_figures()
 
@@ -1391,13 +1513,14 @@ func _process(delta: float) -> void:
 	_walk_step(delta)
 	_auto_search_step(delta)
 	if toast.visible and now > _toast_until: toast.visible = false
-	for n in eng.notices:
-		if now - n.at / 1000.0 < 0.2: _toast(n.text)
+	while not eng.notices.is_empty():
+		var n: Dictionary = eng.notices.pop_front()
+		_toast(str(n.get("text", "")))
 	var c: Dictionary = eng.clock()
 	top_clock.text = "第 %d 天  %s  %s" % [c.day, c.text, _day_label(c.hour)]
 	var hold_msg: String = eng.hold_text()
 	top_phase.text = hold_msg if hold_msg != "" else "%s · %s" % [eng.phase().title, eng.phase().sub]
-	play_btn.text = "继续" if not eng.s.playing else "暂停"
+	play_btn.text = "结局" if eng.s.ending != "" else ("继续" if not eng.s.playing else "暂停")
 	map_view.hour = c.hour
 	_light_cd -= delta
 	if _light_cd <= 0.0:
@@ -1544,6 +1667,8 @@ func _objective_text() -> String:
 	if did != "" and data.deduction_by_id.has(did):
 		var g: Dictionary = eng.deduction_progress(did)
 		var dd: Dictionary = data.deduction_by_id[did]
+		if int(g.have) >= int(g.need):
+			return "目标：「%s」所需证物已齐（%d/%d），准备完成推演。" % [str(dd.title), int(g.have), int(g.need)]
 		var rooms: Array = []
 		for eid in g.get("missing", []):
 			var lb := str(data.room_by_id[data.evidence_by_id[eid].room].label)
@@ -1575,7 +1700,9 @@ func _refresh_left() -> void:
 	if view == "map" and map_view.selected != "" and map_view.selected != rid:
 		var sr: Dictionary = data.room_by_id[map_view.selected]
 		left_text.append_text("\n[color=#4f9dde]选中：%s（双击进入）[/color]" % sr.label)
-	for c in left_actions.get_children(): c.queue_free()
+	for c in left_actions.get_children():
+		left_actions.remove_child(c)
+		c.queue_free()
 	var h := Label.new()
 	h.text = "出口"
 	h.add_theme_color_override("font_color", BRASS)
@@ -1699,9 +1826,10 @@ func _refresh_right() -> void:
 	tab_lex.clear()
 	tab_lex.append_text("[color=#e9c98a][b]%s[/b][/color]\n[color=#a8957b]%s[/color]\n\n" % [td.word, td.note if author else "同一个词，在不同人脑里是不同的事实。"])
 	var shown := 0
+	var term_unlocked: bool = bool(s.get("unlocked_terms", {}).get(term, false))
 	for a in data.actors:
-		if a.id == "demon" and not author: continue
-		var known := author
+		if a.id == "demon" and not author and not term_unlocked: continue
+		var known: bool = author or (term_unlocked and (bool(data.lex_overrides.get(a.id, {}).has(term)) or a.id in ["ward", "huo", "su", "detective", "demon"]))
 		if not known:
 			for cid in s.conflicts:
 				var c: Dictionary = data.conflict_by_id[cid]
@@ -1727,8 +1855,10 @@ func _refresh_right() -> void:
 	for k in s.relations:
 		var rel: Dictionary = s.relations[k]
 		var pr := str(k).split("|")
-		var bar := "█".repeat(int(rel.trust / 10.0)) + "░".repeat(10 - int(rel.trust / 10.0))
-		tab_rel.append_text("%s ↔ %s  [color=%s]%s %d%s[/color]\n" % [_name_bb(pr[0]), _name_bb(pr[1]), "#ea9c8c" if rel.trust < 40 else "#a8c89a", bar, int(rel.trust), "  永久受损" if rel.permanent else ""])
+		var filled := clampi(int(rel.trust / 10.0), 0, 10)
+		var bar := "█".repeat(filled) + "░".repeat(10 - filled)
+		var bad_rel := int(rel.trust) < 40 or bool(rel.get("permanent", false))
+		tab_rel.append_text("%s ↔ %s  [color=%s]%s %d%s[/color]\n" % [_name_bb(pr[0]), _name_bb(pr[1]), "#ea9c8c" if bad_rel else "#a8c89a", bar, int(rel.trust), "  永久受损" if rel.permanent else ""])
 		for g in rel.grievances:
 			tab_rel.append_text("[color=#a8957b]　　%s[/color]\n" % g.text)
 	if s.irreparable:
@@ -1807,7 +1937,7 @@ func _sync_modal() -> void:
 	var s: Dictionary = eng.s
 	var key := ""
 	if _intro_pending: key = "intro"
-	elif s.ending != "": key = "end:" + s.ending
+	elif s.ending != "" and not _ending_dismissed: key = "end:" + s.ending
 	elif not s.pending_deduction.is_empty(): key = "ded:" + str(s.pending_deduction.id)
 	elif s.pending_conflict != "": key = "con:" + str(s.pending_conflict)
 	elif not s.pending_choice.is_empty(): key = "cho:" + str(s.pending_choice.beat_id)
@@ -1831,9 +1961,18 @@ func _modal_deduction(did: String) -> void:
 	_ink_label(v, "推演在节拍时刻弹出：侦探已到现场。证物不足时假设按钮不可点——先去取证，齐了会自动回来；判错后可在「案卷 → 推演」里重新推演。", 12)
 	var prog: Dictionary = eng.deduction_progress(did)
 	var checks: Dictionary = {}
-	var pl := _ink_label(v, "已取得 %d / 至少需要 %d 件相关证物" % [prog.have, prog.need], 14)
-	pl.add_theme_color_override("font_color", Color("#2f6b3a") if prog.have >= prog.need else Color("#a03a24"))
-	var pick_label := _ink_label(v, "手头的证物（已默认勾选，至少勾选 %d 件作为依据）：" % int(prog.need), 13)
+	var hyp_btns: Array = []
+	var pl := _ink_label(v, "", 14)
+	var count_hdr := HBoxContainer.new()
+	count_hdr.add_theme_constant_override("separation", 8)
+	v.add_child(count_hdr)
+	var chk_hint := _ink_label(count_hdr, "手头的证物（已自动勾选作为依据）：", 13)
+	chk_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var select_all_btn := Button.new()
+	select_all_btn.text = "全选已得证物"
+	select_all_btn.focus_mode = Control.FOCUS_NONE
+	select_all_btn.visible = false
+	count_hdr.add_child(select_all_btn)
 	for eid in dd.evidence:
 		var cb := CheckBox.new()
 		var have: bool = eng.s.evidence.has(eid)
@@ -1841,23 +1980,40 @@ func _modal_deduction(did: String) -> void:
 		cb.disabled = not have
 		cb.button_pressed = have
 		cb.focus_mode = Control.FOCUS_NONE
-		for color_name in ["font_color", "font_pressed_color", "font_hover_color", "font_hover_pressed_color", "font_focus_color"]:
-			cb.add_theme_color_override(color_name, TEXT)
-		cb.add_theme_color_override("font_disabled_color", Color("#8a7a68"))
 		v.add_child(cb)
 		checks[eid] = cb
 	var can_answer: bool = prog.can_answer
-	var warn_lbl := _ink_label(v, "", 13)
-	warn_lbl.add_theme_color_override("font_color", Color("#a03a24"))
-	warn_lbl.visible = false
+	var uncheck_warn := _ink_label(v, "", 13)
+	uncheck_warn.add_theme_color_override("font_color", Color("#a03a24"))
+	uncheck_warn.visible = false
+	var sync_check_state := func() -> void:
+		var checked_cnt := 0
+		for k in checks:
+			if checks[k].button_pressed and not checks[k].disabled:
+				checked_cnt += 1
+		pl.text = "已勾选 %d / 已取得 %d 件相关证物（至少需要 %d 件）" % [checked_cnt, int(prog.have), int(prog.need)]
+		var enough_checked := checked_cnt >= int(prog.need) or int(prog.have) < int(prog.need)
+		pl.add_theme_color_override("font_color", Color("#2f6b3a") if (int(prog.have) >= int(prog.need) and enough_checked) else Color("#a03a24"))
+		select_all_btn.visible = int(prog.have) > checked_cnt
+		var block_for_uncheck := can_answer and int(prog.have) >= int(prog.need) and checked_cnt < int(prog.need)
+		uncheck_warn.visible = block_for_uncheck
+		if block_for_uncheck:
+			uncheck_warn.text = "请至少保持勾选 %d 件已得证物（点右上「全选已得证物」可一键恢复），否则推演无法成立。" % int(prog.need)
+		for hb in hyp_btns:
+			hb.disabled = (not can_answer) or block_for_uncheck
+	select_all_btn.pressed.connect(func():
+		for k in checks:
+			if not checks[k].disabled: checks[k].button_pressed = true
+		sync_check_state.call())
+	for k in checks:
+		checks[k].toggled.connect(func(_on: bool): sync_check_state.call())
 	if not can_answer:
-		warn_lbl.text = "证物不足，现在下结论只会判错。先去现场取证，证物齐了推演会自动回来。"
-		warn_lbl.visible = true
+		var warn := _ink_label(v, "证物不足，现在下结论只会判错。先去现场取证，证物齐了推演会自动回来。", 13)
+		warn.add_theme_color_override("font_color", Color("#a03a24"))
 	elif prog.have < prog.need:
-		warn_lbl.text = "能取到的证物都查过了，只能凭现有线索推演（证物不足会判错，之后可在「案卷 → 推演」里重新推演）。"
-		warn_lbl.visible = true
-	_ink_label(v, str(dd.get("question", "哪一种解释更说得通？")), 13)
-	var hyp_buttons: Array = []
+		var warn2 := _ink_label(v, "能取到的证物都查过了，只能凭现有线索推演（证物不足会判错，之后可在「案卷 → 推演」里重新推演）。", 13)
+		warn2.add_theme_color_override("font_color", Color("#a03a24"))
+	_ink_label(v, str(dd.get("question", "哪一种推论更站得住脚？")), 13)
 	for h in dd.hypotheses:
 		var b := Button.new()
 		b.text = str(h.label)
@@ -1873,24 +2029,12 @@ func _modal_deduction(did: String) -> void:
 			_dismiss_modal()
 			eng.solve_deduction(did, str(h.id), picked))
 		v.add_child(b)
-		hyp_buttons.append(b)
-	var sync_checked := func() -> void:
-		var cnt := 0
-		for k in checks:
-			if checks[k].button_pressed and not checks[k].disabled: cnt += 1
-		pick_label.text = "手头的证物（已勾选 %d / 至少需要 %d 件作为依据，默认已全选）：" % [cnt, int(prog.need)]
-		if can_answer and prog.have >= prog.need:
-			var enough := cnt >= int(prog.need)
-			for hb in hyp_buttons: hb.disabled = not enough
-			warn_lbl.visible = not enough
-			if not enough:
-				warn_lbl.text = "当前仅勾选 %d/%d 件证物，请至少勾选 %d 件后再点击结论。" % [cnt, int(prog.need), int(prog.need)]
-	for k in checks:
-		checks[k].toggled.connect(func(_on: bool): sync_checked.call())
-	sync_checked.call()
+		hyp_btns.append(b)
+	sync_check_state.call()
 	if not can_answer:
 		var go := Button.new()
 		go.text = "先去取证（时间保持暂停）"
+		go.focus_mode = Control.FOCUS_NONE
 		go.pressed.connect(func():
 			go.disabled = true
 			_dismiss_modal()
@@ -1900,15 +2044,19 @@ func _modal_deduction(did: String) -> void:
 
 func _modal_conflict(cid: String) -> void:
 	var c: Dictionary = data.conflict_by_id[cid]
-	var present_ids: Array = []
-	for p in c.parties:
-		if not present_ids.has(str(p)): present_ids.append(str(p))
-	for ln in c.lines:
-		var sp := str(ln[0])
-		if sp != "narrator" and sp != "demon" and not present_ids.has(sp): present_ids.append(sp)
-	var v := _modal_shell("争执 · " + str(c.title), "第 %d 天 · 在场：%s" % [int(c.day), "、".join(present_ids.map(func(i): return data.actor_name(str(i))))])
-	# 争执说明：正解只在推演成功后出现；选错会永久折损信任
-	_ink_label(v, "争执里只有一方能得到申诉证据，另一方永远不知道自己「违约」了。\n正解选项只有在对应推演成功后才会出现——选错会永久折损人物之间的信任。", 12)
+	var v := _modal_shell("争执 · " + str(c.title), "第 %d 天 · 在场：%s" % [int(c.day), "、".join(c.parties.map(func(i): return data.actor_name(str(i))))])
+	var perm: bool = bool(c.get("permanent", false))
+	var ded_id: String = str(c.get("deduction", "")) if c.get("deduction", null) != null else ""
+	var ded_state: String = str(eng.s.deductions.get(ded_id, "")) if ded_id != "" else "solved"
+	var desc := "争执里只有一方能得到申诉证据，另一方并不知道自己「违约」了。"
+	if perm:
+		desc += "\n这是关键对质：选错会造成三组人物信任永久受损，事后查明真相也无法复原。"
+	else:
+		desc += "\n选错会折损双方信任，也可先搁下留白。"
+	_ink_label(v, desc, 12)
+	if ded_id != "" and ded_state != "solved":
+		var miss_lbl := _ink_label(v, "注意：前置推演「%s」尚未解开，关键拆解项当前未出现！建议先翻回案卷重做推演。" % str(data.deduction_by_id[ded_id].title), 13)
+		miss_lbl.add_theme_color_override("font_color", Color("#a03a24"))
 	for ln in c.lines:
 		var who: String = ln[0]
 		var l := _ink_label(v, "%s：%s" % [data.actor_name(who), ln[1]])
@@ -1919,22 +2067,18 @@ func _modal_conflict(cid: String) -> void:
 		for sn in eng.conflict_senses(cid): txt += "%s=%s；" % [sn.name, sn.sense]
 		var al := _ink_label(v, txt, 12)
 		al.add_theme_color_override("font_color", Color("#6b3fa0"))
-	var deduction_id := str(c.get("deduction", "")) if c.get("deduction", null) != null else ""
-	if deduction_id != "" and eng.s.deductions.get(deduction_id, "") == "wrong":
-		var deduction_title := str(data.deduction_by_id[deduction_id].title)
-		var warning := _ink_label(v, "「%s」上一次推演判错，这场争执里看不到正解。可以先回案卷重推，完成后会返回这场争执。" % deduction_title, 13)
-		warning.add_theme_color_override("font_color", Color("#a03a24"))
-		var retry_button := Button.new()
-		retry_button.text = "先回案卷重推「%s」（争执等着）" % deduction_title
-		retry_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		retry_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		retry_button.focus_mode = Control.FOCUS_NONE
-		retry_button.pressed.connect(func():
-			retry_button.disabled = true
-			if eng.retry_deduction(deduction_id): _dismiss_modal()
-			else: retry_button.disabled = false)
-		v.add_child(retry_button)
 	_ink_label(v, "你要怎么回应？", 13)
+	if ded_id != "" and ded_state == "wrong":
+		var rb := Button.new()
+		rb.text = "↺ 先翻回案卷重新推演「%s」（解开后自动回到本场对质）" % str(data.deduction_by_id[ded_id].title)
+		rb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rb.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		rb.focus_mode = Control.FOCUS_NONE
+		rb.pressed.connect(func():
+			rb.disabled = true
+			_dismiss_modal()
+			eng.retry_conflict_deduction(cid))
+		v.add_child(rb)
 	for o in eng.conflict_options(cid):
 		var b := Button.new()
 		b.text = str(o.label)
@@ -1946,7 +2090,7 @@ func _modal_conflict(cid: String) -> void:
 			_dismiss_modal()
 			eng.resolve_conflict(cid, str(o.id)))
 		v.add_child(b)
-	if not c.get("permanent", false):
+	if not perm:
 		var d := Button.new()
 		d.text = "先搁下（义项分歧照旧落空）"
 		d.pressed.connect(func():
@@ -1968,12 +2112,13 @@ func _modal_intro() -> void:
 	_ink_label(v, "你扮演侦探。第一天清晨，你在 R05 居室的床上醒来——四人里醒得最晚。\n霍铎、沈师傅和苏泠已经在乙区小厨房（B-P）等着了。", 14)
 	_ink_label(v, "每一天都按同一个节奏：", 14)
 	_ink_label(v, "① 取证：点房间里的金色标记查看证物。证物不足时推演不会弹出，时间也会停住；自动搜证是可选辅助，开局默认关闭。", 14)
-	_ink_label(v, "② 推演：弹窗会显示「已取得 X / 至少需要 N」。证物不足时先去调查；判错的推演之后能在「案卷 → 推演」里重新推演。", 14)
-	_ink_label(v, "③ 争执：正解选项只有推演成功才会出现。选错会永久折损人物之间的信任，第一天的「对质」尤其如此，务必先把证物取齐。", 14)
-	_ink_label(v, "剧情按场景逐幕播放：一幕只显示该房间真正开口的人。08:00 的厨房现场需要你从 R05 亲自走过去；时间会停在门口等你，不会把人瞬移到别的地图。\n操作：WASD/方向键亲自走动；点光柱或左侧证物查看；空格推进字幕；顶栏可暂停、调速或开启自动搜证。", 13)
+	_ink_label(v, "② 推演：弹窗会显示「已勾选 / 已取得 / 至少需要」。证物不足时先去调查；判错的推演可在「案卷 → 推演」或争执前重做。", 14)
+	_ink_label(v, "③ 争执：正解选项只有推演成功才会出现。第一天正午的「对质」选错会永久折损三组人物信任，务必先把证物取齐。", 14)
+	_ink_label(v, "剧情按场景逐幕播放：一幕只显示该房间真正开口或等候的人。08:00 的厨房现场需要你从 R05 亲自走过去；时间会停在门口等你，不会把人瞬移到别的地图。\n操作：WASD/方向键亲自走动；点光柱或左侧证物查看；空格推进字幕；顶栏可暂停、调速或开启自动搜证。", 13)
 	var row := HBoxContainer.new()
 	v.add_child(row)
 	var go := _btn(row, "开始", func(): pass)
+	go.custom_minimum_size = Vector2(140, 38)
 	go.pressed.connect(func():
 		go.disabled = true
 		_intro_pending = false
@@ -1985,7 +2130,7 @@ func _modal_choice() -> void:
 	var pc: Dictionary = eng.s.pending_choice
 	var v := _modal_shell(str(pc.choice.prompt), "")
 	# 抉择说明：不同选择会改变后续剧情与人物关系
-	_ink_label(v, "这是一个抉择：不同选择会改变后续剧情与人物关系。选定后不能撤销（推演判错可重推，抉择不行）。", 12)
+	_ink_label(v, "这是一个抉择：不同选择会改变后续剧情走向与人物反应。选定后不能撤销（推演判错可重推，抉择不行）。", 12)
 	for o in pc.choice.options:
 		var b := Button.new()
 		b.text = str(o.label)
@@ -2002,18 +2147,55 @@ func _modal_choice() -> void:
 func _modal_ending() -> void:
 	var e: Dictionary = data.endings[eng.s.ending]
 	var v := _modal_shell(str(e.title), "")
-	# 结局说明：结局由推演、争执与抉择共同决定
 	_ink_label(v, "结局由你的推演、争执与抉择共同决定。重新开始可以换一条路走。", 12)
-	_ink_label(v, eng.ending_text(), 16)
+	_ink_label(v, eng.ending_summary(), 16)
 	_ink_label(v, "知识 %d/%d · 证物 %d/%d · %s" % [eng.knowledge_count(), data.knowledge.size(), eng.s.found_count, data.evidence.size(), "有不可弥合的裂痕" if eng.s.irreparable else "没有无法回头的关系"], 13)
 	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
 	v.add_child(row)
-	_btn(row, "重新开始", func():
+	var b_restart := _btn(row, "重新开始", func():
+		_ending_dismissed = false
 		eng.new_game()
+		_write_auto()
 		_modal_key = ""
 		if show_intro and not instant_story: _begin_intro()
 		_sub_queue.clear()
 		_finish_transit_now()
 		_room_loaded = ""
 		_ensure_room())
-	_btn(row, "返回", func(): _close())
+	b_restart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b_restart.custom_minimum_size = Vector2(140, 38)
+	var b_case := _btn(row, "翻看案卷", func():
+		_ending_dismissed = true
+		_dismiss_modal()
+		if not drawer.visible: _toggle_drawer())
+	b_case.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b_case.custom_minimum_size = Vector2(140, 38)
+	var b_back := _btn(row, "返回标题", func(): _close())
+	b_back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b_back.custom_minimum_size = Vector2(140, 38)
+
+
+func mcp_observe() -> Dictionary:
+	var ck: Dictionary = eng.clock()
+	var ph: Dictionary = eng.phase()
+	return {
+		"mode": "dual_world",
+		"view": view,
+		"room": str(eng.s.room),
+		"room_label": str(data.room_by_id.get(eng.s.room, {}).get("label", eng.s.room)),
+		"day": int(ck.day),
+		"clock": str(ck.text),
+		"phase": str(ph.title),
+		"playing": bool(eng.s.playing),
+		"speed": float(eng.s.speed),
+		"waiting": bool(eng.s.waiting),
+		"ending": str(eng.s.ending),
+		"knowledge_count": int(eng.knowledge_count()),
+		"found_count": int(eng.s.found_count),
+		"pending_deduction": str(eng.s.pending_deduction.get("id", "")),
+		"pending_conflict": str(eng.s.pending_conflict),
+		"pending_choice": str(eng.s.pending_choice.get("beat_id", "")),
+		"modal_key": _modal_key,
+		"actors_in_room": eng.actors_in_room(str(eng.s.room)),
+	}

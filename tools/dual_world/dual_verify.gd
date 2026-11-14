@@ -158,7 +158,8 @@ func _init() -> void:
 		else:
 			hb.search_step()
 			hb.tick(1.0)
-	check(hb.s.ending != "" and short == 0, "诚实搜证走完五日：每个推演都有足够证物（不足 %d 个）" % short)
+	check(hb.s.ending == "best" and short == 0 and hb.knowledge_count() == data.knowledge.size(),
+		"诚实搜证走完五日：证物充足（不足 %d）、集齐 %d/%d 知识并达成 best 结局（实际 %s）" % [short, hb.knowledge_count(), data.knowledge.size(), hb.s.ending])
 	# 6. 存读档
 	var snap := e.save_dict()
 	var e2 := Engine_.new(data)
@@ -347,7 +348,7 @@ func _init() -> void:
 	var b_d3_ration := {}
 	for b in data.beats:
 		if str(b.id) == "d3_case": b_d3_ration = d3r._resolve_beat(b)
-	check(str(b_d3_ration.get("title", "")).contains("空箱回收原账"), "第三天候选案响应第二天打谱选择（%s）" % str(b_d3_ration.get("title", "")))
+	check(str(b_d3_ration.get("lines", [])).contains("空箱回收原账"), "第三天候选案响应第二天打谱选择（%s）" % str(b_d3_ration.get("title", "")))
 	# 11g. 门锁越权与 17:00 外院返程保护
 	var lk := Engine_.new(data)
 	lk.s.t = float(lk.T(1, 9, 0))
@@ -379,5 +380,63 @@ func _init() -> void:
 	dup.inspect_evidence("e_b_drag")
 	dup.inspect_evidence("e_b_drag")
 	check(dup.s.log.size() == before_log + 1, "重复调查读法未变的证物不刷屏日志")
+	var rr := Engine_.new(data)
+	rr.s.room = "B-P"
+	rr.inspect_evidence("e_b_sleeve")
+	var was_naive: bool = not bool(rr.s.evidence["e_b_sleeve"].get("correct", true)) and rr.s.misconceptions.size() == 1
+	rr.s.deductions["ded_drag"] = "solved"
+	rr.open_conflict("c_door")
+	rr.resolve_conflict("c_door", "echo")
+	var got_acoustic: bool = bool(rr.s.knowledge.has("k_acoustic"))
+	rr.grant_knowledge("k_density", "test")
+	var flipped_truth: bool = bool(rr.s.evidence["e_b_sleeve"].get("correct", false)) and rr.s.misconceptions.is_empty()
+	check(was_naive and got_acoustic and flipped_truth, "拆解争执发放源质知识，且旧证物自动改读为客观读法")
+	var cd := Engine_.new(data)
+	for eid in ["e_m_pillar", "e_m_record", "e_m_timeshare"]:
+		cd.s.evidence[eid] = {"at": 0, "correct": true}
+	cd.open_deduction("ded_truth", "c_demon")
+	cd.solve_deduction("ded_truth", "lie")
+	var hidden_before: bool = cd.conflict_options("c_demon").filter(func(o): return o.id == "lexeme").is_empty()
+	var bounced: bool = cd.retry_conflict_deduction("c_demon") and str(cd.s.pending_deduction.get("id", "")) == "ded_truth"
+	cd.solve_deduction("ded_truth", "literal")
+	var shown_after: bool = cd.s.pending_conflict == "c_demon" and not cd.conflict_options("c_demon").filter(func(o): return o.id == "lexeme").is_empty()
+	check(hidden_before and bounced and shown_after, "关键对质（c_demon）判错前置推演后可直接返回重推并解锁正解")
+	var lex_ok := true
+	for c in data.conflicts:
+		var uniq := {}
+		for p in c.parties:
+			uniq[data.sense_of(str(p), str(c.word))] = true
+		if uniq.size() < 2:
+			print("    词义无分歧：", c.id, " ", c.word, " ", uniq)
+			lex_ok = false
+	check(lex_ok, "全部 %d 场争执均存在真实词义分歧（至少 2 种不同义项）" % data.conflicts.size())
+	var br_ok := true
+	for pair in [["d1_poem", "poem", "stakeout", "indulge"], ["d3_case", "ruanCase", "probe", "page"], ["d4_night", "d4", "lock", "trap"], ["d5_final_verdict", "final", "lexeme", "demon"]]:
+		var b_found: Dictionary = {}
+		for b in data.beats:
+			if b.id == pair[0]: b_found = b
+		var ea := Engine_.new(data)
+		ea.s.choices[pair[1]] = pair[2]
+		var eb := Engine_.new(data)
+		eb.s.choices[pair[1]] = pair[3]
+		if str(ea.effective_beat_lines(b_found)) == str(eb.effective_beat_lines(b_found)):
+			br_ok = false
+	check(br_ok, "四大关键抉择（黑板诗／打谱／第四夜／结案页）均产生差异化后续剧情")
+	var Lp := load("res://scenes/dual_world/LowpolyRoom.gd")
+	var lp_count := 0
+	var lp_ok := true
+	var dummy_parent := Node3D.new()
+	for room in data.rooms:
+		var lp = Lp.new()
+		var ds := Geo.make_design(room, data)
+		if lp.attach(dummy_parent, str(room.id), ds):
+			lp_count += 1
+			var wr: Rect2 = lp.walk_rect(0.58)
+			if wr.size.x < 1.0 or wr.size.y < 1.0 or lp.lamps.is_empty():
+				lp_ok = false
+			lp.detach()
+		lp.free()
+	dummy_parent.free()
+	check(lp_ok and lp_count == 36, "%d 间 Lowpoly 3D 房间全部完成中心对齐、可行走边界提取与暖色顶灯挂载" % lp_count)
 	print("失败 %d" % fails)
 	quit(1 if fails > 0 else 0)

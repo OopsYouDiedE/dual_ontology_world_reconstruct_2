@@ -13,10 +13,10 @@ static func lighting(hour: float) -> Dictionary:
 	elif day > 0.15: sky = Color("#3d3540")
 	return {
 		"day": day, "sun_color": sun_color, "sky": sky,
-		"sun_energy": 0.35 + day * 1.65,
-		"ambient_energy": 0.55 + day * 0.65,
-		"lamp_on": clampf(1.0 - day * 1.25, 0.0, 1.0),
-		"fog": Color("#2a2430") if day > 0.4 else Color("#100e16"),
+		"sun_energy": 0.45 + day * 1.55,
+		"ambient_energy": 0.78 + day * 0.48,
+		"lamp_on": clampf(1.0 - day * 1.15, 0.15, 1.0),
+		"fog": Color("#2a2430") if day > 0.4 else Color("#15121d"),
 	}
 
 
@@ -40,21 +40,23 @@ static func apply(hour: float, sun: DirectionalLight3D, env: Environment, lamps:
 		env.background_mode = Environment.BG_COLOR
 		env.background_color = L.sky if L.day > 0.35 else Color("#15121a")
 		env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-		env.ambient_light_color = L.sky.lerp(Color("#2a1d12"), 0.35)
+		var night_bounce := Color("#554c60")
+		var day_bounce: Color = (L.sky as Color).lerp(Color("#d8c8b0"), 0.35)
+		env.ambient_light_color = night_bounce.lerp(day_bounce, clampf(float(L.day), 0.0, 1.0))
 		env.ambient_light_energy = L.ambient_energy * 0.95
 		env.fog_enabled = true
 		env.fog_light_color = L.fog
-		env.fog_density = 0.004
+		env.fog_density = 0.003
 		# 色调映射与辉光：让 Lowpoly 房间的暖色更柔和（美术：案卷暖调）
 		env.tonemap_mode = Environment.TONE_MAPPER_ACES
-		env.tonemap_exposure = 1.05
+		env.tonemap_exposure = 1.08
 		env.glow_enabled = true
 		env.glow_intensity = 0.35
 		env.glow_strength = 0.8
 		env.glow_bloom = 0.08
 	for lamp in lamps:
 		if is_instance_valid(lamp):
-			lamp.light_energy = 0.35 + float(L.lamp_on) * 1.9
+			lamp.light_energy = 0.45 + float(L.lamp_on) * 1.65
 	for m in glow_materials:
 		if m is StandardMaterial3D:
 			m.emission_energy_multiplier = 0.25 + float(L.lamp_on) * 1.1

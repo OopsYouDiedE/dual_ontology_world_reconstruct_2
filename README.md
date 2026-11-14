@@ -1,6 +1,6 @@
 # Dual Ontology World Reconstruct 2
 
-Godot .NET 4.7.2 / .NET 8。正式入口为 `scenes/main/Boot.tscn`，启动自检通过后进入 `scenes/main/Main.tscn`，提供正式游戏（双本体新局，标题菜单第一项「开始新游戏」）、测试场景（五人生活推演）与建筑设计工具；C# DV、Reasoning、Runtime 共用于 Godot 和 CLI。
+Godot 4.7.2。正式入口为 `scenes/main/Boot.tscn`，启动自检通过后进入 `scenes/main/Main.tscn`，提供正式游戏（双本体新局，标题菜单第一项「开始新游戏」）与建筑设计工具。正式游戏使用纯 GDScript，可用标准版 Godot 运行；五人生活测试场景及旧版 C# 调试面板使用 Godot .NET / .NET 8，C# DV、Reasoning、Runtime 共用于 Godot 和 CLI。
 
 ## VSCode 构建
 
@@ -24,7 +24,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 
 Linux / macOS / WSL 可执行 `tools/build/build.sh` 构建，或设置 `GODOT_MONO` 后执行 `tools/build/run.sh` 构建并运行。
 
-环境要求：Godot .NET (mono) 4.7.2 及 .NET SDK 8.0.4xx；不使用标准版 Godot 运行完整游戏。SDK 由 `global.json` 限定 .NET 8 补丁系列。Windows 开发者可把引擎放在 `.runtime/godot/4.7.2/`（该目录被 `.gitignore` 忽略，干净克隆里不存在，自行下载）；其他情况用环境变量 `GODOT` / `GODOT_MONO` 指向引擎可执行文件即可。
+完整开发环境使用 Godot .NET (mono) 4.7.2 及 .NET SDK 8.0.4xx。标准版 Godot 4.7.2 可运行五日正式游戏，标题菜单会隐藏依赖 C# 的生活与调试入口。SDK 由 `global.json` 限定 .NET 8 补丁系列。Windows 开发者可把引擎放在 `.runtime/godot/4.7.2/`（该目录被 `.gitignore` 忽略，干净克隆里不存在，自行下载）；其他情况用环境变量 `GODOT` / `GODOT_MONO` 指向引擎可执行文件即可。
 
 ## Linux 快速开始
 
@@ -55,9 +55,15 @@ dotnet .runtime/build/bin/DuelView.Cli/Debug/net8.0/DuelView.Cli.dll --verify-ch
 
 新局默认暂停并弹出一次性引导：**取证 → 推演 → 争执**。推演弹窗显示「已取得 X / 至少需要 N」，证物不足时假设按钮不可点，可「先去取证」（时间保持暂停，证物齐了推演自动弹回）；判错的推演可在右侧案卷抽屉的「推演」页「重新推演」。字幕按游戏内计时（随时间缩放），空格 / 回车推进，菜单里有「自动跳过字幕」。
 
+Fable 5.2 补丁将五日流程整理为 42 个节拍，黑板诗、打谱布局、第四夜与最终结案按抉择播放各自后续；新增知识会自动改读已收集证物并记入案卷。推演可用「全选已得证物」恢复勾选。通关后自动存档保留最终案卷，可在结局页翻看案卷、重新开始或返回标题。
+
+正常存档位于 `user://dual_world/`，含自动存档、三个手动槽位及 `designs.json`。测试参数 `--dv-save-slot=<名称>` 使用 `user://dual_world_<安全名称>/`，名称保留英文字母、数字、下划线与连字符；标题继续入口和房间设计使用同一隔离目录。交互读档后暂停时间；存档倍率超过 20 倍时回调至 5 倍。
+
 角色开场保持躺卧，首次移动或点击调查时播放完整起床动画，再接行走；对话、争执、指认、思考、挥手与工作分别驱动骨骼姿态。五人生活场景按 Runtime 当前行动显示行走、用餐、取书、阅读、交谈、工作和坐卧动画。动作回归同时检查主循环覆盖、动画持续播放与实际生活场景；家具支撑碰撞验收仍由姿态驱动流程负责。
 
 躺姿按骨骼与床垫实测落位，起床按片段时长平滑移向床外可走位置；持续对话、工作和挥手使用循环片段。合并内容与验证范围见 [人物动作修复说明](docs/人物动作修复说明.md)。
+
+Lowpoly 房间按网格实测中心对齐，行走范围与家具障碍来自实际房间几何，证物标记落在室内可达位置；暖色顶灯与昼夜环境光共同照明。
 
 迁移、融合实施与验证边界见 [实施与验收](docs/33%20实施与验收.md)。
 

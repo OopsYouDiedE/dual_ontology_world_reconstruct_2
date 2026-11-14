@@ -80,7 +80,7 @@ text = "生活手记"
 
 [node name="CampaignButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "案件案卷（剧情）"
+text = "旧版原型（C# 调试面板）"
 
 [node name="BuilderButton" type="Button" parent="Menu"]
 layout_mode = 2
@@ -106,7 +106,7 @@ anchor_top = 0.93
 anchor_right = 0.6
 anchor_bottom = 0.98
 theme_type_variation = &"HintLabel"
-text = "点击桌上的案卷，翻阅生活手记或案件案卷"
+text = "选择「开始新游戏」进入五日正篇；点击桌上的书册可调整设置"
 
 [node name="Fade" type="ColorRect" parent="."]
 layout_mode = 1

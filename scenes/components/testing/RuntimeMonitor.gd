@@ -38,9 +38,10 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(directory))
 	metadata["frame_clock"] = "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
 	metadata["content_text_policy"] = "visible_active_viewports"
-	metadata["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree())
+	metadata["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree(), str(metadata.get("launch_scene", "")))
 	metadata["fps_window"] = "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
 	metadata["audio_method"] = "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
+	metadata["audio_capture_buffer_s"] = 15.0
 	metadata["audio_dba"] = {"value": null, "reason": "digital output has no calibrated acoustic SPL reference; use LUFS"}
 	metadata["vram_method"] = "Godot renderer resource allocation; not driver-wide dedicated GPU residency"
 	metadata["render_backend"] = RenderingServer.get_current_rendering_method()
@@ -57,7 +58,9 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	if frames != null: frames.store_line("frame,elapsed_s,node,frame_ms,draw_calls,static_ram_mb,gpu_resource_mb")
 	pcm = FileAccess.open(directory + "/mix.f32le", FileAccess.WRITE)
 	capture = AudioEffectCapture.new()
-	capture.buffer_length = 2.0
+	# Scene construction can block longer than the default ring. Preserve its
+	# audio while the unscaled frame clock continues to report that stall.
+	capture.buffer_length = 15.0
 	AudioServer.add_bus_effect(0, capture)
 	capture_index = AudioServer.get_bus_effect_count(0) - 1
 	_start_audio_worker()

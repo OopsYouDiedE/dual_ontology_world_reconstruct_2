@@ -39,7 +39,7 @@ func _start_monitor() -> void:
 	add_child(monitor)
 	monitor.visible = false
 	var directory := ".runtime/mainline-runs/" + Time.get_datetime_string_from_system().replace(":", "-") + "-" + str(OS.get_process_id())
-	monitor.configure(directory, {"mock": false, "entry": "production_title", "monitor_visible": false, "capture_policy": "real mainline; independent Terra review required"}, content)
+	monitor.configure(directory, {"mock": false, "entry": "production_title", "launch_scene": launch_scene, "monitor_visible": false, "capture_policy": "real mainline; independent Terra review required"}, content)
 
 func _tag_monitor() -> void:
 	if monitor == null or _monitor_stopped: return
@@ -196,7 +196,14 @@ func _handle(request: Dictionary) -> void:
 		result["metrics_directory"] = monitor.output_dir
 		result["metrics"] = monitor.latest
 	if bool(request.get("capture_image", true)):
-		result["image_base64"] = Marshalls.raw_to_base64(get_viewport().get_texture().get_image().save_png_to_buffer())
+		var captured := get_viewport().get_texture().get_image()
+		var encoder := Thread.new()
+		var encoding := encoder.start(func(): return Marshalls.raw_to_base64(captured.save_png_to_buffer()))
+		if encoding != OK:
+			_reply(identity, {}, "截图编码线程启动失败：" + error_string(encoding))
+			return
+		while encoder.is_alive(): await get_tree().process_frame
+		result["image_base64"] = encoder.wait_to_finish()
 	_reply(identity, result)
 
 func _collect(node: Node, controls: Array) -> void:

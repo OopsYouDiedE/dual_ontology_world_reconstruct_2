@@ -12,6 +12,34 @@ ROOT = Path(__file__).resolve().parents[2]
 DIRECTORY = Path("artifacts/acceptance/gameplay-reviews")
 
 
+def repository_directory(root: Path) -> Path:
+    marker = root.resolve() / ".git"
+    if marker.is_file():
+        value = marker.read_text(encoding="utf-8").strip()
+        if not value.startswith("gitdir: "):
+            raise ValueError("Invalid source checkout metadata")
+        marker = (root / value[8:]).resolve()
+    common = marker / "commondir"
+    if common.is_file():
+        marker = (marker / common.read_text(encoding="utf-8").strip()).resolve()
+    if not marker.is_dir():
+        raise ValueError("Source checkout repository is missing")
+    return marker.resolve()
+
+
+def validate_project_source(identity: dict, root: Path) -> None:
+    source_root = Path(identity.get("project_root", ""))
+    if not source_root.is_absolute() or repository_directory(source_root) != repository_directory(root):
+        raise ValueError("Review source project mismatch; only this repository and its linked worktrees are accepted")
+
+
+def validate_session_source(data: dict, identity: dict, session: str) -> None:
+    source = data.get("source_identity", {})
+    keys = ("project_root", "project_sha256", "configured_main_scene", "launch_scene", "process_id", "executable_path")
+    if data.get("session_id") != session or any(source.get(key) != identity.get(key) for key in keys):
+        raise ValueError("Review evidence belongs to a different project or host session")
+
+
 def evidence_path(root: Path, value: str) -> Path:
     candidate = (root / value).resolve()
     if not candidate.is_relative_to(root.resolve()) or not candidate.is_file():
@@ -53,6 +81,7 @@ def validate(record: dict, root: Path = ROOT) -> dict:
         raise ValueError("Review session does not match its original on receipt")
     if not identity.get("project_root") or not identity.get("project_sha256") or not identity.get("process_id"):
         raise ValueError("Original process/project provenance is incomplete")
+    validate_project_source(identity, root)
     start_path = evidence_path(root, source["start_receipt"])
     start = json.loads(start_path.read_text(encoding="utf-8-sig"))
     start_data = start.get("data", {})
@@ -60,6 +89,7 @@ def validate(record: dict, root: Path = ROOT) -> dict:
         raise ValueError("New-game R05 entry receipt is required")
     if start_data.get("session_id") != source["session_id"] or start_data.get("source_identity", {}).get("process_id") != identity["process_id"]:
         raise ValueError("New-game entry must belong to the same actual host")
+    validate_session_source(start_data, identity, source["session_id"])
     evidence_path(root, record["report"])
     if record.get("metrics"):
         evidence_path(root, record["metrics"])
@@ -70,6 +100,11 @@ def validate(record: dict, root: Path = ROOT) -> dict:
         path = evidence_path(root, image["path"])
         if sha256(path.read_bytes()).hexdigest() != image["sha256"]:
             raise ValueError("Review screenshot hash mismatch: " + image["path"])
+        sidecar = evidence_path(root, image["path"] + ".json")
+        image_source = json.loads(sidecar.read_text(encoding="utf-8-sig"))
+        validate_session_source(image_source, identity, source["session_id"])
+        if image_source.get("image_sha256") != image["sha256"]:
+            raise ValueError("Review screenshot sidecar hash mismatch")
     for path in record.get("receipts", []):
         evidence_path(root, path)
     return record

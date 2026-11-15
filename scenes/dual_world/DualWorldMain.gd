@@ -24,6 +24,7 @@ const CorridorGathering := preload("res://scenes/dual_world/CorridorGathering.gd
 const KitchenExploration := preload("res://scenes/dual_world/KitchenExploration.gd")
 const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLibrary.gd")
 const InteractionDirector := preload("res://scenes/components/interaction/InteractionDirector.gd")
+const RoomEvidenceDetails := preload("res://scenes/components/interaction/RoomEvidenceDetails.gd")
 const ShadowCeiling := preload("res://scenes/components/world/ShadowCeiling.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
@@ -65,6 +66,10 @@ static func slot_save_path(slot: int) -> String:
 	return save_dir_path() + "/" + (SAVE_FILE % slot)
 
 
+static func chapter_save_path(chapter: int) -> String:
+	return save_dir_path() + "/chapter_%d.json" % chapter
+
+
 static func design_save_path() -> String:
 	return save_dir_path() + "/" + DESIGN_FILE
 
@@ -77,11 +82,14 @@ var _room_loaded := ""
 var _occ_key := ""
 var _modal_key := ""
 var _ending_dismissed := false
+var _chapter_dismissed := false
 var _dirty := true
 var _panel_cd := 0.0
 var _light_cd := 0.0
 var _music_cd := 0.0
 var interactions: Node
+var evidence_presentations: Dictionary = {}
+var evidence_details: Node3D
 
 # 控件
 var top_clock: Label
@@ -198,7 +206,7 @@ var _sub_queue: Array = []
 var _autosave_due := false
 var _autosave_cd := 0.0
 var _fit_dist := 9.0
-const AUTOSAVE_EVENTS := ["beat", "choice", "conflict", "deduction", "evidence", "knowledge", "jump", "room", "ending"]
+const AUTOSAVE_EVENTS := ["beat", "choice", "conflict", "deduction", "evidence", "knowledge", "jump", "room", "ending", "chapter"]
 
 
 func _ready() -> void:
@@ -215,6 +223,7 @@ func _ready() -> void:
 	add_child(score)
 	eng.changed.connect(func(why: String):
 		_dirty = true
+		if why == "chapter": _chapter_dismissed = false
 		if why in AUTOSAVE_EVENTS: _autosave_due = true)
 	eng.said.connect(_on_said)
 	eng.sfx.connect(func(k: String): score.sfx(k))
@@ -309,6 +318,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _close() -> void:
+	_stop_exploration()
 	_finish_transit_now()
 	_write_auto()
 	closed.emit()
@@ -981,8 +991,11 @@ func _read_save(path: String) -> bool:
 	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null: return false
 	var p: Variant = JSON.parse_string(f.get_as_text())
-	if not (p is Dictionary and eng.load_dict(p)): return false
-	_stop_opening()
+	if not p is Dictionary: return false
+	var candidate = Engine_.new(data)
+	if not candidate.load_dict(p): return false
+	_stop_exploration()
+	if not eng.load_dict(p): return false
 	# 交互读档后默认暂停，并将过高的快进倍率回调至安全阅读倍率，防止读档瞬间连跳数小时
 	if not instant_story:
 		eng.s.playing = false
@@ -990,6 +1003,7 @@ func _read_save(path: String) -> bool:
 			eng.s.speed = 5.0
 	_sync_speed_pick()
 	_ending_dismissed = false
+	_chapter_dismissed = false
 	_modal_key = ""
 	_sub_queue.clear()
 	subtitle.visible = false
@@ -1063,6 +1077,7 @@ func _clamp_design_to_lowpoly(ds: Dictionary) -> void:
 
 
 func _build_room(id: String) -> void:
+	_clear_evidence_details()
 	_room_loaded = id
 	var ds := _design_for(id)
 	# Lowpoly 房间优先：先挂载并对齐中心，再将证物标记夹取进真实室内边界、注入顶灯
@@ -1082,6 +1097,41 @@ func _build_room(id: String) -> void:
 		room_mesh.refresh_walls(az)
 	DayNight.apply(eng.clock().hour, sun, env, room_mesh.lamps, room_mesh.glow_materials)
 	_sync_figures(true)
+	_install_evidence_details()
+
+
+func _clear_evidence_details() -> void:
+	evidence_presentations.clear()
+	if is_instance_valid(evidence_details):
+		if evidence_details.get_parent() != null: evidence_details.get_parent().remove_child(evidence_details)
+		evidence_details.queue_free()
+	evidence_details = null
+
+
+func _install_evidence_details() -> void:
+	if _room_loaded != "B-P": return
+	evidence_details = RoomEvidenceDetails.new()
+	det_root.get_parent().add_child(evidence_details)
+	evidence_presentations = evidence_details.install(self)
+
+
+## 读档与离开统一结束当前交互，先恢复相机，再应用新状态。
+func _stop_exploration() -> void:
+	if is_instance_valid(interactions): interactions.cancel()
+	if is_instance_valid(gathering):
+		gathering.stop()
+		gathering.queue_free()
+		gathering = null
+	if is_instance_valid(kitchen):
+		if kitchen.active: kitchen.end()
+		kitchen.queue_free()
+		kitchen = null
+	_stop_opening()
+	det_path.clear()
+	det_done = Callable()
+	_sub_queue.clear()
+	subtitle.visible = false
+	_cine = false
 
 
 func _aim(distance: float) -> void:
@@ -1550,15 +1600,22 @@ func _inspect_walk(eid: String) -> void:
 	_go(_route(det_pos, stand), func():
 		if _room_loaded != eng.s.room or _transit_active(): return
 		det.rotation.y = atan2(target.x - det_pos.x, target.y - det_pos.y)
-		eng.inspect_evidence(eid)
-		_rebuild_markers())
+		var kind: String = interactions.kind_for(eid)
+		if not kind.is_empty() and evidence_presentations.has(kind):
+			interactions.begin_gameplay(self, kind, func(success: bool):
+				if success:
+					eng.inspect_evidence(eid, true)
+					_rebuild_markers())
+		else:
+			eng.inspect_evidence(eid)
+			_rebuild_markers())
 
 
 func _rebuild_markers() -> void:
 	room_mesh.lowpoly_mode = _lowpoly_ok
 	room_mesh.build(room_mesh.design, eng.s.evidence)
 	if _lowpoly_ok: room_mesh.lamps.append_array(lowpoly.lamps)
-	_occ_key = ""
+	if is_instance_valid(evidence_details): evidence_details.sync_markers()
 	_sync_figures()
 
 
@@ -1718,6 +1775,9 @@ func _process(delta: float) -> void:
 	if opening != null and opening.active: opening.process(delta)
 	if gathering != null and gathering.active: gathering.process(delta)
 	if kitchen != null and kitchen.active: kitchen.process(delta)
+	if is_instance_valid(evidence_details) and not _cine:
+		evidence_details.sync_body_anchor()
+		evidence_details.sync_markers()
 	# 台词在播、侦探在走路时，故事时间冻结：玩家始终看得见「发生了什么」
 	var frozen := not instant_story and (_transit_active() or _story_busy())
 	if not frozen: eng.tick(delta)
@@ -2211,6 +2271,7 @@ func _sync_modal() -> void:
 	var key := ""
 	if _intro_pending: key = "intro"
 	elif s.ending != "" and not _ending_dismissed: key = "end:" + s.ending
+	elif bool(s.get("chapter_complete", false)) and not _chapter_dismissed: key = "chapter:1"
 	elif not s.pending_deduction.is_empty(): key = "ded:" + str(s.pending_deduction.id)
 	elif s.pending_conflict != "": key = "con:" + str(s.pending_conflict)
 	elif not s.pending_choice.is_empty(): key = "cho:" + str(s.pending_choice.beat_id)
@@ -2221,6 +2282,7 @@ func _sync_modal() -> void:
 		_clear_modal()
 		return
 	if key == "intro": _modal_intro()
+	elif key == "chapter:1": _modal_chapter()
 	elif key.begins_with("ded:"): _modal_deduction(str(s.pending_deduction.id))
 	elif key.begins_with("con:"): _modal_conflict(str(s.pending_conflict))
 	elif key.begins_with("cho:"): _modal_choice()
@@ -2446,6 +2508,30 @@ func _modal_choice() -> void:
 		v.add_child(b)
 
 
+func _modal_chapter() -> void:
+	_write_auto()
+	_write_save(chapter_save_path(1))
+	var body := _modal_shell("第一章完成", "夜深，明日继续。")
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	body.add_child(row)
+	_btn(row, "案卷", func():
+		_chapter_dismissed = true
+		_dismiss_modal()
+		if not drawer.visible: _toggle_drawer())
+	_btn(row, "第二章", func():
+		_dismiss_modal()
+		_cine = true
+		_fade(1.0, 0.3, func():
+			if eng.continue_chapter():
+				_build_room(str(eng.s.room))
+				_det_to_home()
+				_write_auto()
+			_cine = false
+			_fade(0.0, 0.4)))
+	_btn(row, "标题", _close)
+
+
 func _modal_ending() -> void:
 	var e: Dictionary = data.endings[eng.s.ending]
 	var v := _modal_shell(str(e.title), "")
@@ -2457,7 +2543,7 @@ func _modal_ending() -> void:
 	v.add_child(row)
 	var b_restart := _btn(row, "重新开始", func():
 		_ending_dismissed = false
-		_stop_opening()
+		_stop_exploration()
 		eng.new_game()
 		_write_auto()
 		_modal_key = ""
@@ -2498,6 +2584,9 @@ func mcp_observe() -> Dictionary:
 		"speed": float(eng.s.speed),
 		"waiting": bool(eng.s.waiting),
 		"ending": str(eng.s.ending),
+		"chapter": int(eng.s.get("chapter", 1)),
+		"chapter_complete": bool(eng.s.get("chapter_complete", false)),
+		"interaction": interactions.active.test_snapshot() if interactions != null and is_instance_valid(interactions.active) else {},
 		"knowledge_count": int(eng.knowledge_count()),
 		"found_count": int(eng.s.found_count),
 		"pending_deduction": str(eng.s.pending_deduction.get("id", "")),

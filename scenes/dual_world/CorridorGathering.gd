@@ -287,6 +287,23 @@ func _build_corridor() -> void:
 
 
 # ───────────────────────── 站位 ─────────────────────────
+## 读档、返回标题共用的终止路径，恢复房间原节点。
+func stop() -> void:
+	active = false
+	phase = "off"
+	for item in [_card, _prompt, _hint, _root]:
+		if is_instance_valid(item):
+			if item.get_parent() != null: item.get_parent().remove_child(item)
+			item.queue_free()
+	for id in _npc: host.figures.erase(id)
+	_npc.clear()
+	host.room_mesh.visible = true
+	host.figures_root.visible = true
+	host.sun.visible = _sun_was_on
+	host._cine = false
+	host._occ_key = ""
+
+
 func _slot(ang_deg: float, r: float) -> Vector2:
 	return CIRCLE + Vector2(cos(deg_to_rad(ang_deg)), sin(deg_to_rad(ang_deg))) * r
 
@@ -532,9 +549,8 @@ func _item_defs() -> Array:
 	defs.append({"id": "gate", "label": "乙区大门（锁）", "pos": Vector2(0.3, 1.7), "stand": Vector2(1.3, 1.7), "y": 1.7,
 		"lines": [["detective", "走廊西头的大门，厚实的橡木，门上有锁孔，没有把手。"],
 			["detective", "我们四个都没有这把钥匙。是谁把乙区锁起来的？", "think"]]})
-	defs.append({"id": "kitchen", "label": "走进乙区小厨房（可选）", "pos": Vector2(LEN - 0.3, 1.7), "stand": Vector2(LEN - 1.4, 1.7), "y": 1.7,
-		"lines": [["detective", "走廊尽头是乙区小厨房，暖光从拱门里漫出来。没有谁说非去不可。"],
-			["detective", "……不过，我想进去看看。", "think"]]})
+	defs.append({"id": "kitchen", "label": "去小厨房复查", "pos": Vector2(LEN - 0.3, 1.7), "stand": Vector2(LEN - 1.4, 1.7), "y": 1.7,
+		"lines": [["detective", "厨房还留着昨夜的痕迹。先一起把现场复查一遍。", "think"]]})
 	for id in ["huo", "shen", "su"]:
 		var a: Dictionary = host.data.actor_by_id[id]
 		defs.append({"id": "npc_" + id, "label": str(a.name), "pos": Vector2.ZERO, "stand": Vector2.ZERO, "npc": id,
@@ -595,35 +611,16 @@ func _build_items() -> void:
 	for def in _item_defs():
 		var marker := Node3D.new()
 		_root.add_child(marker)
-		var gem := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = 0.15
-		sm.height = 0.34
-		sm.radial_segments = 4
-		sm.rings = 2
-		gem.mesh = sm
 		var locked: bool = "（锁）" in str(def.label)
-		var mat := StandardMaterial3D.new()
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = Color("#d9604f") if locked else Color("#ffa51f")
-		mat.emission_enabled = true
-		mat.emission = Color("#c02a1a") if locked else Color("#ff8a00")
-		mat.emission_energy_multiplier = 1.6
-		gem.material_override = mat
-		gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		marker.add_child(gem)
-		var tag := Label3D.new()
-		tag.text = str(def.label)
-		tag.font = host.SANS_FONT
-		tag.font_size = 40
-		tag.pixel_size = 0.0055
-		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		tag.position = Vector3(0.0, 0.26, 0.0)
-		tag.modulate = Color("#ffe3a3")
-		tag.outline_size = 12
-		tag.no_depth_test = true
-		tag.visible = false
-		marker.add_child(tag)
+		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, str(def.label), {
+			"albedo_color": Color("#d9604f") if locked else Color("#ffa51f"),
+			"emission_color": Color("#c02a1a") if locked else Color("#ff8a00"),
+			"emission_energy_multiplier": 1.6,
+			"font": host.SANS_FONT,
+		})
+		var gem: MeshInstance3D = parts["gem"]
+		var mat: StandardMaterial3D = parts["mat"]
+		var tag: Label3D = parts["tag"]
 		var it: Dictionary = def
 		it["marker"] = marker
 		it["gem"] = gem
@@ -762,7 +759,7 @@ func _step_free(delta: float) -> void:
 	_prompt.visible = show_prompt
 	if show_prompt:
 		var it: Dictionary = _items[near]
-		_prompt.text = "E  ·  %s" % ("走进乙区小厨房（可选）" if str(it.id) == "kitchen" else "查看「%s」" % str(it.label).replace("（锁）", ""))
+		_prompt.text = "E %s" % ("去小厨房复查" if str(it.id) == "kitchen" else str(it.label).replace("（锁）", ""))
 	for i in _items.size():
 		# 同伴头顶已有名牌，不再重复显示标记标签
 		(_items[i].tag as Label3D).visible = (i == _hover or i == near) and str(_items[i].get("npc", "")) == ""

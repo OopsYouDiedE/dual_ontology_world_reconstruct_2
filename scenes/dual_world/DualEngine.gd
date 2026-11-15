@@ -12,6 +12,8 @@ signal said(who: String, text: String, kind: String)
 signal sfx(kind: String)
 
 const END_T := 4 * 1440 + 23 * 60 + 59
+const CHAPTER_ONE_END_T := 22 * 60
+const CHAPTER_TWO_START_T := 1440 + 7 * 60
 ## 默认倍速：×5（旧版是 ×20，台词、搜证都来不及看）。
 const DEFAULT_SPEED := 5.0
 const LOCKS := ["zone.0", "zone.1", "zone.2", "zone.3", "service_map", "demon", "wind", "granary", "archive"]
@@ -36,8 +38,8 @@ func new_game(announce := true) -> void:
 	for p in d.relation_pairs:
 		rel[Data.pair_key(p[0], p[1])] = {"trust": 62, "damage": 0, "permanent": false, "grievances": []}
 	s = {
-		"version": 1, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
-		"day": 1, "room": "R05", "author_view": false,
+		"version": 2, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
+		"day": 1, "room": "R05", "author_view": false, "chapter": 1, "chapter_complete": false,
 		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
 		"pending_deduction": {}, "postponed": {}, "current_beat": "", "story_gate": {},
 		"evidence": {}, "knowledge": {}, "beliefs": {}, "misconceptions": [], "log": [],
@@ -64,9 +66,119 @@ func load_dict(st: Dictionary) -> bool:
 	for k in st: s[k] = st[k]
 	if not s.has("unlocked_terms") or typeof(s["unlocked_terms"]) != TYPE_DICTIONARY:
 		s["unlocked_terms"] = {}
+	_migrate_chapter_state(not st.has("chapter") or not st.has("chapter_complete"))
 	s.waiting = not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty()
+	if bool(s.chapter_complete): s.waiting = false
 	set_door_flags()
 	changed.emit("load")
+	return true
+
+
+func _chapter_for_time(t: float) -> int:
+	return 2 if t >= CHAPTER_TWO_START_T else 1
+
+
+func _migrate_chapter_state(legacy: bool) -> void:
+	var inferred := _chapter_for_time(float(s.t))
+	var chapter := inferred if legacy else int(s.get("chapter", inferred))
+	if chapter < 1 or chapter > 2: chapter = inferred
+	s.chapter = chapter
+	if legacy:
+		s.chapter_complete = chapter == 1 and float(s.t) >= CHAPTER_ONE_END_T
+		if bool(s.chapter_complete):
+			s.t = CHAPTER_ONE_END_T
+			s.playing = false
+		var cursor := clampi(int(s.get("beat_cursor", 0)), 0, d.beats.size())
+		while cursor < d.beats.size() and float(d.beats[cursor].at) < float(s.t) - 0.01:
+			cursor += 1
+		s.beat_cursor = cursor
+	elif chapter != 1:
+		s.chapter_complete = false
+	elif bool(s.get("chapter_complete", false)):
+		s.t = minf(float(s.t), float(CHAPTER_ONE_END_T))
+		s.playing = false
+	else:
+		s.chapter_complete = false
+	s.day = clock().day
+
+
+func chapter_status() -> Dictionary:
+	return {
+		"id": int(s.get("chapter", _chapter_for_time(float(s.t)))),
+		"complete": bool(s.get("chapter_complete", false)),
+		"ready_for_rest": int(s.get("chapter", 1)) == 1 and bool(s.get("chapter_complete", false)),
+	}
+
+
+func _is_chapter_one() -> bool:
+	return int(s.get("chapter", 1)) == 1
+
+
+func _chapter_one_completion_ready() -> bool:
+	if not _is_chapter_one() or bool(s.get("chapter_complete", false)):
+		return false
+	if float(s.t) < float(CHAPTER_ONE_END_T):
+		return false
+	var plan_index := -1
+	for i in d.beats.size():
+		if str(d.beats[i].id) == "d1_plan":
+			plan_index = i
+			break
+	if plan_index < 0 or int(s.get("beat_cursor", 0)) <= plan_index:
+		return false
+	if not bool(s.get("flags", {}).get("day2_plan", false)):
+		return false
+	return not bool(s.get("waiting", false)) \
+		and s.get("hold", {}).is_empty() \
+		and s.get("postponed", {}).is_empty() \
+		and s.get("story_gate", {}).is_empty() \
+		and s.get("pending_choice", {}).is_empty() \
+		and str(s.get("pending_conflict", "")) == "" \
+		and s.get("conflict_queue", []).is_empty() \
+		and s.get("pending_deduction", {}).is_empty()
+
+
+func _complete_chapter_one() -> void:
+	if not _chapter_one_completion_ready(): return
+	s.t = float(CHAPTER_ONE_END_T)
+	s.day = 1
+	s.chapter_complete = true
+	s.playing = false
+	s.waiting = false
+	s.hold = {}
+	s.postponed = {}
+	s.story_gate = {}
+	_log("system", "第一天晚间收束。第一章完成，众人按作息休息。", [])
+	_debug("chapter", "第一章完成，等待明确继续到第二天。")
+	changed.emit("chapter")
+
+
+func continue_chapter() -> bool:
+	if not _is_chapter_one() or not bool(s.get("chapter_complete", false)):
+		notice("第一章尚未完成。")
+		return false
+	s.chapter = 2
+	s.chapter_complete = false
+	s.t = float(CHAPTER_TWO_START_T)
+	s.day = 2
+	s.room = "R05"
+	s.playing = true
+	s.waiting = false
+	s.hold = {}
+	s.postponed = {}
+	s.story_gate = {}
+	s.pending_choice = {}
+	s.pending_conflict = ""
+	s.conflict_queue = []
+	s.pending_deduction = {}
+	s.beat_cursor = d.beats.size()
+	for i in d.beats.size():
+		if float(d.beats[i].at) >= s.t:
+			s.beat_cursor = i
+			break
+	_debug("chapter", "进入第二章：第二天 07:00。")
+	set_door_flags()
+	changed.emit("chapter")
 	return true
 
 
@@ -589,8 +701,29 @@ func effective_beat_lines(b: Dictionary) -> Array:
 
 
 func next_beat() -> void:
+	if _is_chapter_one() and bool(s.get("chapter_complete", false)):
+		notice("第一章已完成，请明确选择继续第二章。")
+		return
+	# 先消费当前时刻已经抵达的第一章节拍（尤其是 d1_plan），再寻找下一节拍。
+	# 否则开发跳拍停在 21:35 时会绕过收束节拍，直接把章节标为完成。
+	if _is_chapter_one():
+		process_beats()
+		if bool(s.get("chapter_complete", false)):
+			changed.emit("jump")
+			return
 	if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty() or not s.get("postponed", {}).is_empty():
 		notice("请先处理当前现场取证或弹窗事项。")
+		return
+	if _is_chapter_one():
+		for b in d.beats:
+			if float(b.at) > float(s.t) + 0.01 and float(b.at) <= CHAPTER_ONE_END_T:
+				s.t = float(b.at)
+				process_beats()
+				changed.emit("jump")
+				return
+		s.t = float(CHAPTER_ONE_END_T)
+		process_beats()
+		changed.emit("jump")
 		return
 	for b in d.beats:
 		if b["at"] > s.t + 0.01:
@@ -608,8 +741,17 @@ func jump_day(day: int) -> void:
 		new_game(false)
 		for k in keep: s[k] = keep[k]
 	s.t = target
+	s.chapter = 1 if day <= 1 else 2
+	s.chapter_complete = false
+	s.playing = true
+	s.waiting = false
 	s.postponed = {}
 	s.hold = {}
+	s.story_gate = {}
+	s.pending_choice = {}
+	s.pending_conflict = ""
+	s.conflict_queue = []
+	s.pending_deduction = {}
 	s.beat_cursor = d.beats.size()
 	for i in d.beats.size():
 		if d.beats[i]["at"] >= s.t:
@@ -635,10 +777,12 @@ func _resolve_beat(b: Dictionary) -> Dictionary:
 
 
 func process_beats() -> void:
+	if _is_chapter_one() and bool(s.get("chapter_complete", false)): return
 	if s.waiting: return
 	var fired := 0
 	while s.beat_cursor < d.beats.size() and d.beats[s.beat_cursor]["at"] <= s.t:
 		var b: Dictionary = _resolve_beat(d.beats[s.beat_cursor])
+		if _is_chapter_one() and float(b.at) >= CHAPTER_TWO_START_T: break
 		# 场景门：标记为现场到达型的节拍不会把玩家瞬移到房间；时间停住，等玩家亲自走到场景。
 		if b.get("requires_room", false) and not s.author_view and str(b.get("room", "")) != str(s.room):
 			var target_room := str(b.get("room", ""))
@@ -691,12 +835,18 @@ func process_beats() -> void:
 		break
 	s.day = clock().day
 	set_door_flags()
+	if _chapter_one_completion_ready():
+		_complete_chapter_one()
 	if fired > 0: changed.emit("beat")
 
 
 ## 以「游戏分钟」推进（真实秒 × 倍率）。有待决事项时时间冻结，直到玩家处理。
 func tick(dt: float) -> void:
 	if not s.playing or s.waiting or s.ending != "": return
+	if _is_chapter_one() and bool(s.get("chapter_complete", false)): return
+	if _is_chapter_one() and float(s.t) >= CHAPTER_ONE_END_T:
+		process_beats()
+		return
 	if not s.get("story_gate", {}).is_empty():
 		if str(s.room) != str(s.story_gate.get("room", "")): return
 		s.story_gate = {}
@@ -716,7 +866,9 @@ func tick(dt: float) -> void:
 	if s.t >= END_T:
 		finish()
 		return
-	var next_t := minf(float(END_T), s.t + dt * s.speed)
+	var horizon := float(END_T)
+	if _is_chapter_one(): horizon = minf(horizon, float(CHAPTER_ONE_END_T))
+	var next_t := minf(horizon, s.t + dt * s.speed)
 	# 高倍速（如 ×60/×240）下精确停靠在下一未触发节拍时刻，避免跳过风窗或连撞多拍
 	if s.beat_cursor < d.beats.size():
 		var beat_at := float(d.beats[s.beat_cursor]["at"])
@@ -725,6 +877,8 @@ func tick(dt: float) -> void:
 	s.t = next_t
 	set_door_flags()
 	process_beats()
+	if _is_chapter_one() and float(s.t) >= CHAPTER_ONE_END_T:
+		return
 	if s.t >= END_T and not s.waiting: finish()
 
 

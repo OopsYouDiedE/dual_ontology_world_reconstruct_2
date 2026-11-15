@@ -2,6 +2,20 @@
   "schema_version": 1,
   "iterations": [
     {
+      "id": "20261116-kitchen-object-in-room-01",
+      "changed_side": "object",
+      "character_changed": false,
+      "object_changed": true,
+      "before_evidence": "artifacts/acceptance/terra-integrated-20261116/receipts/kitchen/000002-0.png",
+      "issues": ["Kitchen evidence opened a separate closeup world instead of zooming the existing room"],
+      "changes": ["Install seven persistent details at the production room object or wrist anchors", "Move the existing camera into and out of the same room world", "Restore camera and interaction state before room changes or loads"],
+      "numeric_evidence": ".runtime/chapter1-development/in-room-evidence-final.log",
+      "measurements": {"development_checks": 63, "development_failures": 0, "process_exit_code": 0},
+      "after_evidence": null,
+      "acceptance": "pending_terra_rendered_runtime_review",
+      "remaining_issues": ["Character overlap is tracked for the following character-only iteration"]
+    },
+    {
       "id": "20261116-prop-01",
       "changed_side": "object",
       "character_changed": false,

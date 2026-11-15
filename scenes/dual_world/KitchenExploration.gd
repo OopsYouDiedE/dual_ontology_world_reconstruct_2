@@ -115,6 +115,10 @@ func process(delta: float) -> void:
 
 
 func _step_free(delta: float) -> void:
+	for item in _items:
+		var kind: String = host.interactions.kind_for(str(item.id))
+		var detail: Node3D = host.evidence_presentations.get(kind)
+		if is_instance_valid(detail): item.pos = Vector3(detail.global_position.x, 0.0, detail.global_position.z)
 	var sub_up: bool = host.subtitle.visible or not host._sub_queue.is_empty()
 	var near := _nearest_item(NEAR)
 	var show_prompt: bool = near >= 0 and not sub_up and _busy_item < 0 and not host.modal.visible and not host._cine
@@ -128,18 +132,14 @@ func _step_free(delta: float) -> void:
 		var seen_count := 0
 		for item in _items:
 			if _seen(item): seen_count += 1
-		_hint.text = "WASD移动"
-	if _hint != null and _free_t > 14.0:
-		_hint.modulate.a = move_toward(_hint.modulate.a, 0.0, delta * 0.3)
+		_hint.text = "现场 %d/7" % seen_count
 	_maybe_finish()
 
 
-## 7 件证物都查过、首个推演已经有结论、也没有弹窗：交还完整界面（出口、地图、案卷）。
+## 首个推演完成后交还导航；其余证物仍可在原房间复查。
 func _maybe_finish() -> void:
 	if host.modal.visible or not host.eng.s.pending_deduction.is_empty(): return
-	if host.eng.s.deductions.is_empty(): return
-	for it in _items:
-		if not _seen(it): return
+	if not host.eng.s.deductions.has("ded_drag"): return
 	end()
 
 
@@ -238,36 +238,13 @@ func _build_markers() -> void:
 		var pos := Vector3(n.global_position.x, 0.0, n.global_position.z)
 		var marker := Node3D.new()
 		_markers_root.add_child(marker)
-		var gem := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = 0.15
-		sm.height = 0.34
-		sm.radial_segments = 4
-		sm.rings = 2
-		gem.mesh = sm
-		var mat := StandardMaterial3D.new()
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = Color("#ffa51f")
-		mat.emission_enabled = true
-		mat.emission = Color("#ff8a00")
-		mat.emission_energy_multiplier = 1.6
-		gem.material_override = mat
-		gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		marker.add_child(gem)
-		var tag := Label3D.new()
-		tag.text = str(SHORT_LABELS.get(eid,e.label))
-		tag.font = host.SANS_FONT
-		tag.font_size = 40
-		tag.pixel_size = 0.0055
-		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		tag.position = Vector3(0.0, 0.26, 0.0)
-		tag.modulate = Color("#ffe3a3")
-		tag.outline_size = 12
-		tag.no_depth_test = true
-		tag.visible = false
-		marker.add_child(tag)
+		var label := str(SHORT_LABELS.get(eid,e.label))
+		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, label, {"font": host.SANS_FONT})
+		var gem: MeshInstance3D = parts["gem"]
+		var mat: StandardMaterial3D = parts["mat"]
+		var tag: Label3D = parts["tag"]
 		marker.position = Vector3(pos.x, GEM_Y, pos.z)
-		_items.append({"id": eid, "label": str(SHORT_LABELS.get(eid,e.label)), "pos": pos, "marker": marker, "gem": gem, "mat": mat, "tag": tag})
+		_items.append({"id": eid, "label": label, "pos": pos, "marker": marker, "gem": gem, "mat": mat, "tag": tag})
 
 
 func _seen(it: Dictionary) -> bool:

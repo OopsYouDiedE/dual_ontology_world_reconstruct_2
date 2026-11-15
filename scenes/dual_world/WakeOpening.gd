@@ -313,33 +313,10 @@ func _build_markers() -> void:
 		var marker := Node3D.new()
 		marker.position = Vector3(pos.x, float(def.y), pos.z)
 		_markers_root.add_child(marker)
-		var gem := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = 0.15
-		sm.height = 0.34
-		sm.radial_segments = 4
-		sm.rings = 2
-		gem.mesh = sm
-		var mat := StandardMaterial3D.new()
-		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = Color("#ffa51f")
-		mat.emission_enabled = true
-		mat.emission = Color("#ff8a00")
-		mat.emission_energy_multiplier = 1.8
-		gem.material_override = mat
-		gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		marker.add_child(gem)
-		var tag := Label3D.new()
-		tag.text = str(def.label)
-		tag.font_size = 40
-		tag.pixel_size = 0.0055
-		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		tag.position = Vector3(0.0, 0.26, 0.0)
-		tag.modulate = Color("#ffe3a3")
-		tag.outline_size = 12
-		tag.no_depth_test = true
-		tag.visible = false
-		marker.add_child(tag)
+		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, str(def.label), {"emission_energy_multiplier": 1.8})
+		var gem: MeshInstance3D = parts["gem"]
+		var mat: StandardMaterial3D = parts["mat"]
+		var tag: Label3D = parts["tag"]
 		_items.append({"id": str(def.id), "label": str(def.label), "lines": def.lines, "pos": pos,
 			"marker": marker, "gem": gem, "mat": mat, "tag": tag, "seen": false, "base_y": float(def.y)})
 

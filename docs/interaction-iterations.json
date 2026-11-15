@@ -7,21 +7,39 @@
       "character_changed": false,
       "object_changed": true,
       "before_evidence": "artifacts/acceptance/terra-integrated-20261116/receipts/kitchen/000002-0.png",
-      "issues": ["Kitchen evidence opened a separate closeup world instead of zooming the existing room"],
-      "changes": ["Install seven persistent details at the production room object or wrist anchors", "Move the existing camera into and out of the same room world", "Restore camera and interaction state before room changes or loads"],
+      "issues": [
+        "Kitchen evidence opened a separate closeup world instead of zooming the existing room"
+      ],
+      "changes": [
+        "Install seven persistent details at the production room object or wrist anchors",
+        "Move the existing camera into and out of the same room world",
+        "Restore camera and interaction state before room changes or loads"
+      ],
       "numeric_evidence": ".runtime/chapter1-development/in-room-evidence-final.log",
-      "measurements": {"development_checks": 63, "development_failures": 0, "process_exit_code": 0},
+      "measurements": {
+        "development_checks": 63,
+        "development_failures": 0,
+        "process_exit_code": 0
+      },
       "after_evidence": null,
       "acceptance": "pending_terra_rendered_runtime_review",
-      "remaining_issues": ["Character overlap is tracked for the following character-only iteration"]
+      "remaining_issues": [
+        "Character overlap is tracked for the following character-only iteration"
+      ]
     },
     {
       "id": "20261116-prop-01",
       "changed_side": "object",
       "character_changed": false,
       "before_evidence": ".runtime/testing-dev/interactions-rendered-01/sheets/sleeve.jpg",
-      "issues": ["Cuff volume intersects the comparison hand", "Lifted fibers leave the close-up frame"],
-      "changes": ["Lower and thin cuff geometry; retain existing hand motion", "Lower sampled fiber/tool end anchors; retain camera and character motion"],
+      "issues": [
+        "Cuff volume intersects the comparison hand",
+        "Lifted fibers leave the close-up frame"
+      ],
+      "changes": [
+        "Lower and thin cuff geometry; retain existing hand motion",
+        "Lower sampled fiber/tool end anchors; retain camera and character motion"
+      ],
       "after_evidence": null,
       "acceptance": "pending_runtime_review"
     },
@@ -31,33 +49,56 @@
       "character_changed": true,
       "object_changed": false,
       "before_evidence": ".runtime/testing-dev/reconstruction-02/sheets/manual.jpg",
-      "issues": ["Detective wrist contact misses by approximately 0.123 m", "The door obscures the actor side of the reconstruction"],
-      "changes": ["Adjust character wrist targets and planted-foot pelvis response", "Move the observation camera to expose the actor side; retain all prop geometry and prop anchors"],
+      "issues": [
+        "Detective wrist contact misses by approximately 0.123 m",
+        "The door obscures the actor side of the reconstruction"
+      ],
+      "changes": [
+        "Adjust character wrist targets and planted-foot pelvis response",
+        "Move the observation camera to expose the actor side; retain all prop geometry and prop anchors"
+      ],
       "after_evidence": ".runtime/testing-dev/reconstruction-03/sheets/manual.jpg",
-      "measurements": {"pull_contact_error_m": 0.0000000596, "remaining_cloth_contact_error_m": 0.114},
+      "measurements": {
+        "pull_contact_error_m": 5.96e-08,
+        "remaining_cloth_contact_error_m": 0.114
+      },
       "acceptance": "pending_terra_and_blind_review",
-      "remaining_issues": ["Shen cloth reach remains inaccurate", "Actors crowd the provisional freestanding door; physical threshold placement needs an object-only correction"]
+      "remaining_issues": [
+        "Shen cloth reach remains inaccurate",
+        "Actors crowd the provisional freestanding door; physical threshold placement needs an object-only correction"
+      ]
     },
     {
-      "id":"20261116-reconstruction-character-04",
-      "changed_side":"character",
-      "character_changed":true,
-      "object_changed":false,
-      "before_evidence":"artifacts/acceptance/terra-reconstruction-expression-20261116/",
-      "changes":["Separate character stances to create reachable wrist targets and head clearance","Deeper planted-foot crouch for cloth contact","Record shoulder/elbow/wrist and chain reach diagnostics"],
-      "numeric_evidence":".runtime/parallel-checks/integration-02/contact-current/contact-probe.json",
-      "measurements":{"baseline_cloth_contact_error_m":0.11538858,"current_max_cloth_contact_error_m":0.00000008561,"current_max_foot_anchor_error_m":0.00006915},
-      "acceptance":"pending_rendered_terra_and_blind_review"
+      "id": "20261116-reconstruction-character-04",
+      "changed_side": "character",
+      "character_changed": true,
+      "object_changed": false,
+      "before_evidence": "artifacts/acceptance/terra-reconstruction-expression-20261116/",
+      "changes": [
+        "Separate character stances to create reachable wrist targets and head clearance",
+        "Deeper planted-foot crouch for cloth contact",
+        "Record shoulder/elbow/wrist and chain reach diagnostics"
+      ],
+      "numeric_evidence": ".runtime/parallel-checks/integration-02/contact-current/contact-probe.json",
+      "measurements": {
+        "baseline_cloth_contact_error_m": 0.11538858,
+        "current_max_cloth_contact_error_m": 8.561e-08,
+        "current_max_foot_anchor_error_m": 6.915e-05
+      },
+      "acceptance": "pending_rendered_terra_and_blind_review"
     },
     {
-      "id":"20261116-wardrobe-object-02",
-      "changed_side":"object",
-      "character_changed":false,
-      "object_changed":true,
-      "before_evidence":"artifacts/acceptance/blind-wardrobe-20261116/BLIND_REVIEW.md",
-      "changes":["Clarify warm wood interior layers and add local object fill light","Keep the real front hinge fixed and open the door to -145 degrees to clear the aperture"],
-      "numeric_evidence":".runtime/parallel-checks/integration-02/wardrobe-structure/wardrobe-probe.json",
-      "acceptance":"pending_rendered_terra_and_blind_review"
+      "id": "20261116-wardrobe-object-02",
+      "changed_side": "object",
+      "character_changed": false,
+      "object_changed": true,
+      "before_evidence": "artifacts/acceptance/blind-wardrobe-20261116/BLIND_REVIEW.md",
+      "changes": [
+        "Clarify warm wood interior layers and add local object fill light",
+        "Keep the real front hinge fixed and open the door to -145 degrees to clear the aperture"
+      ],
+      "numeric_evidence": ".runtime/parallel-checks/integration-02/wardrobe-structure/wardrobe-probe.json",
+      "acceptance": "pending_rendered_terra_and_blind_review"
     },
     {
       "id": "20261116-character-spacing-01",
@@ -82,6 +123,24 @@
       },
       "acceptance": "pending_terra_mainline_runtime_review",
       "remaining_issues": []
+    },
+    {
+      "id": "20261116-r05-wardrobe-object-03",
+      "changed_side": "object",
+      "character_changed": false,
+      "object_changed": true,
+      "issues": [
+        "正式R05缺少衣柜现场呈现注册，失败后忙碌状态未释放",
+        "开场跟随镜头会覆盖现场近景相机"
+      ],
+      "changes": [
+        "在原R05衣柜内将原门、嵌板、把手绑定双铰链；原家具内部空腔中保留整齐大衣",
+        "同一相机推近、柜门0.24秒阻尼弹开、木音与返回；调查失败释放busy",
+        "窗面局部薄雾与窗孔聚光替代全房间雾和全域直射太阳"
+      ],
+      "validation": "Godot --check-only 对生产脚本语法检查通过；实际画面待独立Terra真实主线复测",
+      "after_evidence": null,
+      "acceptance": "pending_independent_mainline_review"
     }
   ]
 }

@@ -40,6 +40,10 @@ func _ready() -> void:
 		_hide(host.kitchen._prompt)
 		for item in host.kitchen._items:
 			_hide(item.marker)
+	if host.opening != null and host.opening.active:
+		_hide(host.opening._hint)
+		_hide(host.opening._prompt)
+		for item in host.opening._items: _hide(item.marker)
 	for node in [prop.tool, prop.hand]:
 		if is_instance_valid(node):
 			_saved_visibility.append([node, node.visible])
@@ -70,7 +74,7 @@ func _ready() -> void:
 	if _closing or not is_inside_tree(): return
 	_ready_for_input = true
 	observed.emit(_event("closeup"))
-	if kind in ["ratchet", "grille", "seal"]: prop.activate()
+	if kind in ["wardrobe", "ratchet", "grille", "seal"]: prop.activate()
 
 func _hide(node: Node) -> void:
 	if not is_instance_valid(node): return

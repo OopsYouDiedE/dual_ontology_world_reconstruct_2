@@ -35,7 +35,9 @@ static func apply(hour: float, sun: DirectionalLight3D, env: Environment, lamps:
 	if sun != null:
 		sun.rotation_degrees = Vector3(-a.x, a.y, 0.0)
 		sun.light_color = L.sun_color if L.day > 0.05 else Color("#5b6c9a")  # 夜间冷色月光
-		sun.light_energy = L.sun_energy
+		# 剖面室内的直射光由真实窗孔发出，避免无顶房间被全域太阳照亮。
+		sun.light_energy = 0.0
+		preload("res://scenes/components/world/WindowAtmosphere.gd").apply(sun.get_parent(), L)
 	if env != null:
 		env.background_mode = Environment.BG_COLOR
 		env.background_color = L.sky if L.day > 0.35 else Color("#15121a")
@@ -44,9 +46,8 @@ static func apply(hour: float, sun: DirectionalLight3D, env: Environment, lamps:
 		var day_bounce: Color = (L.sky as Color).lerp(Color("#d8c8b0"), 0.35)
 		env.ambient_light_color = night_bounce.lerp(day_bounce, clampf(float(L.day), 0.0, 1.0))
 		env.ambient_light_energy = L.ambient_energy * 0.95
-		env.fog_enabled = true
-		env.fog_light_color = L.fog
-		env.fog_density = 0.003
+		env.fog_enabled = false
+		env.volumetric_fog_enabled = false
 		# 色调映射与辉光：让 Lowpoly 房间的暖色更柔和（美术：案卷暖调）
 		env.tonemap_mode = Environment.TONE_MAPPER_ACES
 		env.tonemap_exposure = 0.92

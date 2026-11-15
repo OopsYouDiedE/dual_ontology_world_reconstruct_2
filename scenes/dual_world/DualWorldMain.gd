@@ -1116,7 +1116,7 @@ func _clear_evidence_details() -> void:
 
 
 func _install_evidence_details() -> void:
-	if _room_loaded != "B-P": return
+	if _room_loaded not in ["R05", "B-P"]: return
 	evidence_details = RoomEvidenceDetails.new()
 	det_root.get_parent().add_child(evidence_details)
 	evidence_presentations = evidence_details.install(self)

@@ -324,6 +324,8 @@ func _build_openings(pieces: Array, wall: Dictionary) -> void:
 			glass.position = Vector3(c.x + n.x * wall.thickness * 0.03, 1.6, c.y + n.y * wall.thickness * 0.03)
 			glass.rotation.y = atan2(n.x, n.y)  # QuadMesh 面朝 +Z
 			_walls_root.add_child(glass)
+			var toward_room := Vector3(design.w * 0.5 - c.x, 0, design.d * 0.5 - c.y).normalized()
+			preload("res://scenes/components/world/WindowAtmosphere.gd").install(_walls_root, glass.global_position, toward_room, pm.size, str(op.get("id", "window")))
 			var fr := _box(Vector3(op.width * 0.96, 0.05, 0.07), "#3d2d22", Vector3(c.x, 1.6, c.y))  # 窗框：与玻璃不同平面
 			fr.rotation.y = yaw
 			_walls_root.add_child(fr)

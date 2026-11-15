@@ -8,6 +8,14 @@ var _sleeve: Node3D
 
 func install(h: Control) -> Dictionary:
 	host = h
+	if str(host.eng.s.room) == "R05":
+		if not host._lowpoly_ok: return presentations
+		var wardrobe := host.lowpoly._root.get_node_or_null("Instances/R05_wardrobe_01") as Node3D
+		if wardrobe != null:
+			var mechanism := preload("res://scenes/components/interaction/RoomWardrobe.gd").new()
+			if mechanism.install(wardrobe): presentations["wardrobe"] = mechanism
+			else: mechanism.free()
+		return presentations
 	if str(host.eng.s.room) != "B-P": return presentations
 	for evidence_id in KINDS:
 		var marker: Node3D = host.room_mesh.evidence_nodes.get(evidence_id)

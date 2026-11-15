@@ -115,6 +115,8 @@ func process(delta: float) -> void:
 	if str(host.eng.s.room) != "R05":
 		_end()
 		return
+	# 调查接管同一相机期间暂停探索跟随，返回后继续原镜头。
+	if is_instance_valid(host.interactions.active): return
 	_clock += delta
 	_pt += delta
 	match phase:
@@ -418,9 +420,10 @@ func _arrive(i: int) -> void:
 	host.det.set_pose("stand")
 	if str(it.id) == "wardrobe":
 		_busy_item = i
-		host.interactions.begin_gameplay(host,"wardrobe",func(success: bool):
+		var started: bool = host.interactions.begin_gameplay(host,"wardrobe",func(success: bool):
 			_busy_item = -1
 			if success: it.seen = true)
+		if not started: _busy_item = -1
 		return
 	it.seen = true
 	for ln in it.lines: host.eng.say("detective", str(ln), "think")

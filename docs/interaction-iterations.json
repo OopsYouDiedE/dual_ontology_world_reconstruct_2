@@ -261,9 +261,9 @@
       "changes": [
         "Parent each physical detail to the actual original door, window or cloth rack using a local transform instead of a one-time global copy."
       ],
-      "validation": "Production DualWorldMain and dependency Godot --check-only passed; independent rendered review pending.",
-      "after_evidence": null,
-      "acceptance": "pending_independent_real_mainline_review"
+      "validation": "Static check passed. Real Boot/new-game replay shows all four kitchen actors and no host_errors; boot trace remains behind the wall. Gesture completes, evidence confirmation not exercised. Independent final-version review pending.",
+      "after_evidence": "artifacts/acceptance/oriha-mainline-14d1538/receipts/000052-0.png",
+      "acceptance": "failed_developer_real_mainline_occlusion_independent_review_pending"
     }
   ]
 }

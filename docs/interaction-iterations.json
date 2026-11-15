@@ -58,6 +58,30 @@
       "changes":["Clarify warm wood interior layers and add local object fill light","Keep the real front hinge fixed and open the door to -145 degrees to clear the aperture"],
       "numeric_evidence":".runtime/parallel-checks/integration-02/wardrobe-structure/wardrobe-probe.json",
       "acceptance":"pending_rendered_terra_and_blind_review"
+    },
+    {
+      "id": "20261116-character-spacing-01",
+      "changed_side": "character",
+      "character_changed": true,
+      "object_changed": false,
+      "before_evidence": "artifacts/acceptance/terra-integrated-20261116/receipts/kitchen/000002-0.png",
+      "issues": [
+        "厨房中央侦探与 NPC 重叠",
+        "候选不足时中心点重复，手动与路径移动可穿过 NPC"
+      ],
+      "changes": [
+        "按 GLB 水平包围盒最大半径 0.683m 设置角色胶囊占位",
+        "统一出生候选与寻路网格，移除重复中心回退",
+        "为路径与 WASD 增加 NPC 占位与绕行"
+      ],
+      "numeric_evidence": "tools/test/character_spacing.gd",
+      "measurements": {
+        "actor_radius_m": 0.68,
+        "minimum_touch_distance_m": 1.36,
+        "preferred_distance_m": 1.52
+      },
+      "acceptance": "pending_terra_mainline_runtime_review",
+      "remaining_issues": []
     }
   ]
 }

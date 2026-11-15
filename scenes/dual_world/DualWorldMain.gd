@@ -177,6 +177,13 @@ var fade_rect: ColorRect
 # 侦探在 3D 里的行走
 const CELL := 0.3
 const WALK_SPEED := 3.0
+# 当前 GLB 在 B-P 的最大水平半径量测为 0.683m；取 0.68m 作为人物胶囊半径。
+const ACTOR_RADIUS := 0.68
+const ACTOR_CLEARANCE := 0.16
+const ACTOR_MIN_DISTANCE := ACTOR_RADIUS * 2.0 + ACTOR_CLEARANCE
+const ACTOR_TOUCH_DISTANCE := ACTOR_RADIUS * 2.0
+const ACTOR_FURNITURE_MARGIN := ACTOR_RADIUS + 0.10
+const ACTOR_WALL_MARGIN := ACTOR_RADIUS + 0.16
 var det_root: Node3D
 var det: Node3D
 var det_pos := Vector2.ZERO
@@ -1219,7 +1226,7 @@ func _free_slots(n: int) -> Array:
 	var mid := Vector2(float(ds.w) * 0.5, float(ds.d) * 0.5)
 	var lp_obs: Array = []
 	if _lowpoly_ok and lowpoly != null:
-		var wr: Rect2 = lowpoly.walk_rect(0.65)
+		var wr: Rect2 = lowpoly.walk_rect(ACTOR_WALL_MARGIN)
 		x0 = wr.position.x
 		x1 = wr.end.x
 		z0 = wr.position.y
@@ -1227,37 +1234,45 @@ func _free_slots(n: int) -> Array:
 		var c3: Vector3 = lowpoly.center()
 		mid = Vector2(c3.x, c3.z)
 		lp_obs = lowpoly.obstacle_rects()
-	var x := x0
-	while x <= x1 + 0.01:
-		var z := z0
-		while z <= z1 + 0.01:
-			cands.append(Vector2(x, z))
-			z += 0.55
-		x += 0.55
-	if cands.is_empty():
-		cands.append(mid)
-	cands.sort_custom(func(a, b): return a.distance_to(mid) < b.distance_to(mid))
-	for c in cands:
-		tp.x = c.x
-		tp.z = c.y
-		var ok := true
-		if _lowpoly_ok:
-			for r in lp_obs:
-				if (r as Rect2).grow(0.24).has_point(c):
-					ok = false
-					break
-		else:
-			for p in ds.props:
-				if Geo.prop_dims(p).blocking and Geo.rects_overlap(tp, p, 0.12):
-					ok = false
-					break
-		if ok:
-			for o in out:
-				if o.distance_to(c) < 1.35: ok = false
-		if ok: out.append(c)
-		if out.size() >= n: break
-	while out.size() < n:
-		out.append(mid)
+	# 出生点和路径共用 CELL 中心，人物不会从寻路不可达的位置开始。
+	for ix in _grid.region.size.x:
+		for iz in _grid.region.size.y:
+			var c := Vector2((float(ix) + 0.5) * CELL, (float(iz) + 0.5) * CELL)
+			if c.x < x0 or c.x > x1 or c.y < z0 or c.y > z1: continue
+			if _grid.is_point_solid(Vector2i(ix, iz)): continue
+			tp.x = c.x
+			tp.z = c.y
+			var ok := true
+			if _lowpoly_ok:
+				for r in lp_obs:
+					if (r as Rect2).grow(ACTOR_FURNITURE_MARGIN).has_point(c):
+						ok = false
+						break
+			else:
+				for p in ds.props:
+					if Geo.prop_dims(p).blocking and Geo.rects_overlap(tp, p, ACTOR_FURNITURE_MARGIN):
+						ok = false
+						break
+			if ok: cands.append(c)
+	# 正常空间保留可见间隙；窄空间收紧到模型胶囊恰好不重叠的距离。
+	for minimum_distance in [ACTOR_MIN_DISTANCE, ACTOR_TOUCH_DISTANCE]:
+		out.clear()
+		while out.size() < n:
+			var best := Vector2.INF
+			var best_score := -INF
+			for c in cands:
+				if out.has(c): continue
+				var nearest := INF
+				for placed in out: nearest = minf(nearest, c.distance_to(placed))
+				if not out.is_empty() and nearest < minimum_distance: continue
+				var score: float = -c.distance_to(mid) if out.is_empty() else nearest
+				if score > best_score:
+					best = c
+					best_score = score
+			if best == Vector2.INF: break
+			out.append(best)
+		if out.size() == n: return out
+	# 物理候选仍不足时只返回唯一格，禁止重复中心点制造角色重叠。
 	return out
 
 
@@ -1267,13 +1282,16 @@ func _sync_figures(force := false) -> void:
 	var list: Array = eng.actors_in_room(_room_loaded).filter(func(i): return str(i) != "detective")
 	var key := ",".join(list.map(func(i): return str(i))) + "@" + _room_loaded
 	if key == _occ_key: return
+	var slots := _free_slots(list.size() + 1)  # 第 0 个空位留给侦探
+	if slots.size() < list.size() + 1:
+		push_error("角色落点不足：%s 需要 %d，得到 %d" % [_room_loaded, list.size() + 1, slots.size()])
+		return
 	_occ_key = key
 	for c in figures_root.get_children(): c.queue_free()
 	figures.clear()
-	var slots := _free_slots(list.size() + 1)  # 第 0 个空位留给侦探
 	var c3: Vector3 = lowpoly.center() if (_lowpoly_ok and lowpoly != null) else room_mesh.center()
 	var mid := Vector2(c3.x, c3.z)
-	for i in mini(list.size(), slots.size() - 1):
+	for i in list.size():
 		var a: Dictionary = data.actor_by_id[list[i]]
 		var f: Node3D = Figure.new()
 		f.setup(a, data.rig_spec.get("poses", {}))
@@ -1335,7 +1353,10 @@ func _spawn_detective() -> void:
 func _home_spot() -> Vector2:
 	var slots := _free_slots(1)
 	if not slots.is_empty(): return slots[0]
-	return Vector2(room_mesh.design.w * 0.5, room_mesh.design.d * 0.5)
+	var mid := Vector2(room_mesh.design.w * 0.5, room_mesh.design.d * 0.5)
+	if _grid == null: return mid
+	var cell := _nearest_free(_cell_of(mid))
+	return Vector2((float(cell.x) + 0.5) * CELL, (float(cell.y) + 0.5) * CELL)
 
 
 func _det_to_home() -> void:
@@ -1524,27 +1545,85 @@ func _cell_of(p: Vector2) -> Vector2i:
 	return Vector2i(clampi(int(floor(p.x / CELL)), 0, r.size.x - 1), clampi(int(floor(p.y / CELL)), 0, r.size.y - 1))
 
 
-func _nearest_free(c: Vector2i) -> Vector2i:
-	if not _grid.is_point_solid(c): return c
+func _nearest_free(c: Vector2i, source: AStarGrid2D = null) -> Vector2i:
+	var grid := _grid if source == null else source
+	if not grid.is_point_solid(c): return c
 	for r in range(1, 9):
 		for dx in range(-r, r + 1):
 			for dz in range(-r, r + 1):
 				if maxi(absi(dx), absi(dz)) != r: continue
 				var q := Vector2i(c.x + dx, c.y + dz)
-				if _grid.is_in_boundsv(q) and not _grid.is_point_solid(q): return q
+				if grid.is_in_boundsv(q) and not grid.is_point_solid(q): return q
 	return c
 
 
-## 房间内绕开家具的路线（网格 A*）；终点本身不在障碍里时才精确走到终点。
+func _det_can_occupy(candidate: Vector2) -> bool:
+	if _grid == null: return false
+	var cell := _cell_of(candidate)
+	if not _grid.is_in_boundsv(cell) or _grid.is_point_solid(cell): return false
+	for figure in figures.values():
+		if not is_instance_valid(figure): continue
+		var npc := Vector2(figure.global_position.x, figure.global_position.z)
+		if candidate.distance_to(npc) < ACTOR_MIN_DISTANCE: return false
+	return true
+
+
+func _det_slide_target(step: Vector2) -> Vector2:
+	if step.length_squared() <= 0.000001: return det_pos
+	var forward := step.normalized()
+	var side := Vector2(-forward.y, forward.x)
+	var distance := step.length()
+	var directions: Array[Vector2] = [
+		forward,
+		(forward + side).normalized(),
+		(forward - side).normalized(),
+		Vector2(forward.x, 0.0).normalized(),
+		Vector2(0.0, forward.y).normalized(),
+		side,
+		-side,
+	]
+	for direction in directions:
+		if direction.length_squared() <= 0.000001: continue
+		var candidate := det_pos + direction * distance
+		if _det_can_occupy(candidate): return candidate
+	return det_pos
+
+
+func _route_grid_with_figures() -> AStarGrid2D:
+	var grid := AStarGrid2D.new()
+	grid.region = _grid.region
+	grid.cell_size = _grid.cell_size
+	grid.diagonal_mode = _grid.diagonal_mode
+	grid.default_compute_heuristic = _grid.default_compute_heuristic
+	grid.default_estimate_heuristic = _grid.default_estimate_heuristic
+	grid.update()
+	for ix in grid.region.size.x:
+		for iz in grid.region.size.y:
+			var cell := Vector2i(ix, iz)
+			var blocked := _grid.is_point_solid(cell)
+			if not blocked:
+				var center := Vector2((float(ix) + 0.5) * CELL, (float(iz) + 0.5) * CELL)
+				for figure in figures.values():
+					if not is_instance_valid(figure): continue
+					var npc := Vector2(figure.global_position.x, figure.global_position.z)
+					if center.distance_to(npc) < ACTOR_MIN_DISTANCE:
+						blocked = true
+						break
+			if blocked: grid.set_point_solid(cell, true)
+	return grid
+
+
+## 房间内绕开家具和人物的路线（网格 A*）；终点本身可占用时才精确走到终点。
 func _route(from: Vector2, to: Vector2) -> Array:
 	if _grid == null: return [to]
-	var a := _nearest_free(_cell_of(from))
-	var b := _nearest_free(_cell_of(to))
-	var ids: Array[Vector2i] = _grid.get_id_path(a, b)
+	var grid := _route_grid_with_figures()
+	var a := _nearest_free(_cell_of(from), grid)
+	var b := _nearest_free(_cell_of(to), grid)
+	var ids: Array[Vector2i] = grid.get_id_path(a, b)
 	var out: Array = []
 	for id in ids: out.append(Vector2((id.x + 0.5) * CELL, (id.y + 0.5) * CELL))
 	if out.size() > 1: out.pop_front()
-	if not _grid.is_point_solid(_cell_of(to)): out.append(to)
+	if _det_can_occupy(to): out.append(to)
 	return out
 
 
@@ -1566,13 +1645,18 @@ func _walk_step(delta: float) -> void:
 			var l := dv.length()
 			if l > 0.001:
 				det.rotation.y = lerp_angle(det.rotation.y, atan2(dv.x, dv.y), minf(1.0, delta * 14.0))
-			if l <= step:
+			if l <= step and _det_can_occupy(tgt):
 				det_pos = tgt
 				step -= l
 				det_path.pop_front()
 			else:
-				det_pos += dv / l * step
-				step = 0.0
+				if l <= 0.001: break
+				var previous := det_pos
+				var candidate := _det_slide_target(dv / l * minf(step, l))
+				var travelled := previous.distance_to(candidate)
+				if travelled <= 0.0001: break
+				det_pos = candidate
+				step -= minf(step, travelled)
 		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	if not det_path.is_empty():
 		det.set_pose("walk")
@@ -1938,15 +2022,9 @@ func _manual_move_step(delta: float) -> void:
 	# 按镜头方向移动：W = 屏幕向上，D = 屏幕向右（与方位角 az 无关；右键拖动转视角后依旧成立）。
 	var dir := _screen_to_world(vec)
 	var step: Vector2 = dir * WALK_SPEED * delta
-	# 先试合成方向，被挡住再分别试 x / z 分量：贴着墙和家具滑行，而不是粘住不动。
-	var moved := false
-	for cand in [det_pos + step, det_pos + Vector2(step.x, 0.0), det_pos + Vector2(0.0, step.y)]:
-		if cand == det_pos: continue
-		var cell := _cell_of(cand)
-		if _grid.is_in_boundsv(cell) and not _grid.is_point_solid(cell):
-			det_pos = cand
-			moved = true
-			break
+	var next := _det_slide_target(step)
+	var moved := next.distance_to(det_pos) > 0.0001
+	if moved: det_pos = next
 	det.rotation.y = lerp_angle(det.rotation.y, atan2(dir.x, dir.y), minf(1.0, delta * 14.0))
 	if moved:
 		det.position = Vector3(det_pos.x, 0.0, det_pos.y)

@@ -61,6 +61,8 @@ def validate(record: dict, root: Path = ROOT) -> dict:
     if start_data.get("session_id") != source["session_id"] or start_data.get("source_identity", {}).get("process_id") != identity["process_id"]:
         raise ValueError("New-game entry must belong to the same actual host")
     evidence_path(root, record["report"])
+    if record.get("metrics"):
+        evidence_path(root, record["metrics"])
     images = record.get("images", [])
     if not images:
         raise ValueError("Mainline reviews require actual screenshot evidence")

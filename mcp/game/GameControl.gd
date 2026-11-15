@@ -200,22 +200,4 @@ func _handle(request: Dictionary) -> void:
 	_reply(identity, result)
 
 func _collect(node: Node, controls: Array) -> void:
-	if node is SubViewport and node.has_meta("physical_book_view"):
-		var book: Node = node.get_meta("physical_book_view")
-		if not is_instance_valid(book) or not book.is_active(): return
-	if node is Control:
-		if not node.is_visible_in_tree(): return
-		var text := ""
-		if node is Label or node is BaseButton: text = node.text
-		if not text.is_empty():
-			var rect: Rect2 = node.get_global_rect()
-			var ancestor := node.get_parent()
-			while ancestor != null and not ancestor is Viewport:
-				if ancestor is Control and ancestor.clip_contents: rect = rect.intersection(ancestor.get_global_rect())
-				ancestor = ancestor.get_parent()
-			if not rect.has_area(): return
-			var viewport := node.get_viewport()
-			if viewport.has_meta("physical_book_view"): rect = viewport.get_meta("physical_book_view").screen_rect_for_control(node, rect)
-			if not get_viewport().get_visible_rect().intersects(rect): return
-			controls.append({"text": text, "x": rect.position.x, "y": rect.position.y, "width": rect.size.x, "height": rect.size.y, "class": node.get_class(), "path": str(node.get_path()), "disabled": node.disabled if node is BaseButton else false})
-	for child in node.get_children(): _collect(child, controls)
+	preload("res://scenes/components/testing/VisibleText.gd").collect(node, get_viewport(), controls, false)

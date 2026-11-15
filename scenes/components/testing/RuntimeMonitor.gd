@@ -37,6 +37,7 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	_owner = content
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(directory))
 	metadata["frame_clock"] = "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+	metadata["content_text_policy"] = "visible_active_viewports"
 	metadata["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree())
 	metadata["fps_window"] = "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
 	metadata["audio_method"] = "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
@@ -161,28 +162,14 @@ static func _low(sorted: PackedFloat64Array, fraction: float) -> float:
 	return 1000.0 * count / maxf(sum, 0.001)
 
 static func visible_text(root: Node) -> Dictionary:
+	if root == null: return {"characters": 0, "strings": []}
 	var strings: Array[String] = []
-	_collect_text(root, strings)
+	var entries: Array = []
+	preload("res://scenes/components/testing/VisibleText.gd").collect(root, root.get_viewport(), entries)
+	for entry in entries: strings.append(str(entry.text))
 	var count := 0
 	for value in strings: count += value.length()
 	return {"characters": count, "strings": strings}
-
-static func _collect_text(root: Node, strings: Array[String]) -> void:
-	if root == null: return
-	# The closed physical book keeps rendering pages in its own viewport. Those
-	# labels are off screen and must follow the same visibility gate as input.
-	if root is SubViewport and root.has_meta("physical_book_view"):
-		var book: Node = root.get_meta("physical_book_view")
-		if not is_instance_valid(book) or not book.is_active(): return
-	if root is CanvasItem and not root.is_visible_in_tree(): return
-	if root is CanvasItem and root.modulate.a <= 0.001: return
-	if root is Node3D and not root.is_visible_in_tree(): return
-	if root is Label or root is BaseButton or root is RichTextLabel or root is Label3D:
-		var self_visible: bool = root.self_modulate.a > 0.001 if root is CanvasItem else root.modulate.a > 0.001
-		if self_visible:
-			var value: String = root.get_parsed_text() if root is RichTextLabel else str(root.text)
-			if not value.is_empty(): strings.append(value)
-	for child in root.get_children(): _collect_text(child, strings)
 
 func _number(value: Variant, decimals := 1) -> String:
 	return ("%.*f" % [decimals, float(value)]) if value != null else "—"

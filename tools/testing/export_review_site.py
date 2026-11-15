@@ -250,6 +250,12 @@ def review_timeline(scene: dict, history: list[dict], page: Path) -> tuple[str, 
             body += '<p>' + escape(record['summary']) + '</p>'
             md += '\n' + record['summary'] + '\n'
         body += '<ul>' + ''.join('<li>' + escape(d + '：' + str(reason)) + '</li>' for d, reason in zip(DIMENSIONS, record['score_reasons']) if reason) + '</ul>'
+        if record.get('metrics'):
+            measurement = read_json(ROOT / record['metrics'], {}).get('segments', {}).get(scene['id'], {})
+            if measurement:
+                performance = f"{measurement['frame_samples']:,} 帧 · 平均 {measurement['avg_fps']:.1f} FPS · P95/P99 {measurement['frame_p95_ms']:.2f}/{measurement['frame_p99_ms']:.2f} ms · {measurement['spikes_over_33_3_ms']} 次尖峰 · 最大 {measurement['max_frame_ms']:.2f} ms"
+                body += '<p class="note">' + escape(performance) + '</p><p>' + link(ROOT / record['metrics'], '该段原始指标与音频分析', page) + '</p>'
+                md += '\n' + performance + '\n'
         for dimension, reason in zip(DIMENSIONS, record['score_reasons']):
             if reason: md += '\n- ' + dimension + '：' + str(reason)
         images = [ROOT / image['path'] for image in record['images']]

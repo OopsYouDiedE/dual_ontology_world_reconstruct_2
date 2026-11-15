@@ -60,7 +60,7 @@ def source_snapshot() -> tuple:
         "assets/data/test_scenarios/gameplay_review_plan.json",
         "docs/采集路径修复.md", "docs/剧情重构实施状态.md", "docs/第一章可玩版本范围.md",
         "docs/主线评分轨迹.md", "docs/代码依赖与清理.md",
-        "tools/testing/export_review_site.py", "tools/testing/mainline_reviews.py"))
+        "tools/testing/export_review_site.py", "tools/testing/mainline_reviews.py", "tools/testing/mainline_metrics.py"))
     # Asset replacements should refresh their image hashes as well as their links.
     paths.update(p for p in (ROOT / "output/imagegen").rglob("*") if p.suffix.lower() in EXTENSIONS)
     result = []

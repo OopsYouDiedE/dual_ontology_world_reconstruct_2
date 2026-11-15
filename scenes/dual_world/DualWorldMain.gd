@@ -1263,6 +1263,9 @@ func _free_slots(n: int) -> Array:
 			var best_score := -INF
 			for c in cands:
 				if out.has(c): continue
+				# The first slot belongs to the player; companions leave the
+				# visible doorway's complete entry lane clear for that player.
+				if not out.is_empty() and _blocks_entry_lane(c): continue
 				var nearest := INF
 				for placed in out: nearest = minf(nearest, c.distance_to(placed))
 				if not out.is_empty() and nearest < minimum_distance: continue
@@ -1275,6 +1278,14 @@ func _free_slots(n: int) -> Array:
 		if out.size() == n: return out
 	# 物理候选仍不足时只返回唯一格，禁止重复中心点制造角色重叠。
 	return out
+
+
+func _blocks_entry_lane(candidate: Vector2) -> bool:
+	if not _lowpoly_ok or lowpoly == null: return false
+	for door in lowpoly.doorways():
+		var closest := Geometry2D.get_closest_point_to_segment(candidate, door.pos, door.inner)
+		if candidate.distance_to(closest) < ACTOR_MIN_DISTANCE: return true
+	return false
 
 
 func _sync_figures(force := false) -> void:
@@ -2668,6 +2679,26 @@ func _modal_ending() -> void:
 func mcp_observe() -> Dictionary:
 	var ck: Dictionary = eng.clock()
 	var ph: Dictionary = eng.phase()
+	var route: Array = []
+	for point in det_path:
+		route.append([point.x, point.y])
+	var neighbours: Array = []
+	for actor_id in figures:
+		var figure = figures[actor_id]
+		if not is_instance_valid(figure): continue
+		var position := Vector2(figure.global_position.x, figure.global_position.z)
+		neighbours.append({"id": str(actor_id), "position": [position.x, position.y], "distance": det_pos.distance_to(position)})
+	var navigation := {
+		"position": [det_pos.x, det_pos.y],
+		"pose": str(det.pose) if is_instance_valid(det) else "",
+		"route": route,
+		"next_step_allowed": _det_can_occupy(det_pos.move_toward(det_path[0], 0.04)) if not det_path.is_empty() else null,
+		"door_crossing": not _door_passage.is_empty(),
+		"cinematic": _cine,
+		"manual_moving": _manual_moving,
+		"kitchen_phase": str(kitchen.phase) if is_instance_valid(kitchen) else "off",
+		"neighbours": neighbours,
+	}
 	return {
 		"mode": "dual_world",
 		"view": view,
@@ -2690,4 +2721,5 @@ func mcp_observe() -> Dictionary:
 		"pending_choice": str(eng.s.pending_choice.get("beat_id", "")),
 		"modal_key": _modal_key,
 		"actors_in_room": eng.actors_in_room(str(eng.s.room)),
+		"navigation": navigation,
 	}

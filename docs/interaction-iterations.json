@@ -175,6 +175,23 @@
       "validation": "Godot对DualWorldMain及依赖脚本check-only通过；独立Terra真实主线复测待执行",
       "after_evidence": null,
       "acceptance": "pending_independent_real_mainline_review"
+    },
+    {
+      "id": "20261116-doorway-navigation-character-03",
+      "changed_side": "character",
+      "character_changed": true,
+      "object_changed": false,
+      "before_evidence": "artifacts/acceptance/chapter1-candidate-50a862c/REPORT.md",
+      "issues": [
+        "Independent real mainline replay still stops at the west doorway. Nearby actor occupancy may block the entry lane."
+      ],
+      "changes": [
+        "Reserve the existing doorway-to-interior lane when selecting NPC spawn slots.",
+        "Expose read-only player route, next-step permission, actor distances and cinematic phase in input receipts."
+      ],
+      "validation": "Godot production-script --check-only passed. Runtime cause and outcome await an independent real-mainline replay.",
+      "after_evidence": null,
+      "acceptance": "pending_independent_real_mainline_review"
     }
   ]
 }

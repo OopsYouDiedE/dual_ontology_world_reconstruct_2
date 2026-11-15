@@ -106,6 +106,10 @@ func door_for(direction: Vector2) -> Dictionary:
 	return selected.duplicate()
 
 
+func doorways() -> Array[Dictionary]:
+	return _doors.duplicate()
+
+
 func _collect_meshes(node: Node, acc_xf: Transform3D, tag_chain: String, out: Array) -> void:
 	var xf := acc_xf
 	if node is Node3D and node != _root:

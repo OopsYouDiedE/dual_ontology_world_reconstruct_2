@@ -84,6 +84,9 @@ func _inspection_position(focus: Vector3) -> Vector3:
 			var inward := Vector3(center.x - focus.x, 0, center.z - focus.z).normalized()
 			var reach := maxf(Vector2(offset.x, offset.z).length(), 1.25)
 			offset = inward * reach + Vector3.UP * maxf(absf(offset.y), 0.65)
+			if kind in ["water", "drag", "boots"]:
+				# Look down onto floor traces without crossing the doorway leaf or jamb.
+				offset = inward * 0.45 + Vector3.UP * 1.8
 		var bounds: Rect2 = host.lowpoly.walk_rect(0.38)
 		var local: Vector3 = host.lowpoly.to_local(focus + offset)
 		local.x = clampf(local.x, bounds.position.x, bounds.end.x)
@@ -196,5 +199,8 @@ func test_snapshot() -> Dictionary:
 		"prop_id": prop.get_instance_id() if is_instance_valid(prop) else 0,
 		"camera_id": camera.get_instance_id() if is_instance_valid(camera) else 0,
 		"camera_position": camera.global_position if is_instance_valid(camera) else Vector3.ZERO,
+		"camera_forward": -camera.global_basis.z if is_instance_valid(camera) else Vector3.ZERO,
+		"camera_is_current": camera.is_current() if is_instance_valid(camera) else false,
+		"room_transform": host.lowpoly._root.global_transform if host._lowpoly_ok else Transform3D.IDENTITY,
 		"focus_position": prop.to_global(prop.get_meta("focus", Vector3.ZERO)) if is_instance_valid(prop) else Vector3.ZERO,
 		"progress": prop.progress if is_instance_valid(prop) else 0.0}

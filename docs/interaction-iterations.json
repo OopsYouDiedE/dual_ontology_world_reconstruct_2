@@ -231,6 +231,23 @@
       "validation": "Godot --check-only on DualWorldMain and its dependencies passed; independent mainline replay pending.",
       "after_evidence": null,
       "acceptance": "pending_independent_real_mainline_review"
+    },
+    {
+      "id": "20261116-floor-closeup-object-06",
+      "changed_side": "object",
+      "character_changed": false,
+      "object_changed": true,
+      "before_evidence": "artifacts/acceptance/oriha-mainline-dd3807d/receipts/000034-0.png",
+      "issues": [
+        "Boot-print closeup remains obscured from the shallow doorway angle."
+      ],
+      "changes": [
+        "Use a steep downward view above the existing floor trace within the same room.",
+        "Expose the current camera direction and room transform for capture diagnosis."
+      ],
+      "validation": "Production DualWorldMain and dependency Godot --check-only passed; rendered replay pending.",
+      "after_evidence": null,
+      "acceptance": "pending_independent_real_mainline_review"
     }
   ]
 }

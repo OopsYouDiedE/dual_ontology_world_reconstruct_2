@@ -31,7 +31,7 @@ def summarize(directory: Path, *, incomplete: bool = False) -> dict:
         for line in stream:
             if line.startswith("timeline:"):
                 in_timeline = True
-            elif line.startswith("summary:"):
+            elif line.startswith(("summary:", '"summary":')):
                 finalized = True
                 break
             elif in_timeline and line.startswith("  - "):

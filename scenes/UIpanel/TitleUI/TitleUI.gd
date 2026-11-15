@@ -85,6 +85,10 @@ func show_title(can_continue: bool, first := false) -> void:
 func hide_title(duration := 0.4) -> void:
 	interactive = false
 	if _tween != null: _tween.kill()
+	if duration <= 0.0:
+		modulate.a = 0.0
+		hide()
+		return
 	_tween = create_tween()
 	_tween.tween_property(self, "modulate:a", 0.0, duration)
 	_tween.tween_callback(hide)

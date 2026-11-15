@@ -28,8 +28,6 @@ async def run(options):
         arguments["duration_seconds"] = seconds
     if not 0 < seconds <= 86400:
         raise ValueError("run duration must be between 0 and 86400 seconds")
-    if options.content_path:
-        arguments["content_path"] = str(provenance.project_path(options.content_path, ROOT, allow_external=True))
     destination = provenance.project_path(options.receipt, ROOT)
     destination.parent.mkdir(parents=True, exist_ok=True)
     parameters = StdioServerParameters(command=sys.executable,
@@ -68,6 +66,5 @@ if __name__ == "__main__":
     deadline.add_argument("--deadline")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--viewer", default="detective")
-    parser.add_argument("--content-path")
     parser.add_argument("--receipt", required=True)
     asyncio.run(run(parser.parse_args()))

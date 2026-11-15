@@ -15,15 +15,14 @@ import time
 import xml.etree.ElementTree as Xml
 from environment import resolve_dotnet, resolve_godot
 import build_cache
-import linux_display
 import asset_bundle
+from host_process import spawn, terminate
+import review_watcher
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import capture_provenance as provenance
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "tools/testing"))
-from review_refresh import start_review_watcher
 SESSIONS = {}
 BUILD_LOCK = threading.Lock()
 
@@ -39,52 +38,6 @@ def remaining(deadline, maximum):
     if seconds <= 0:
         raise DeadlineReached("Configured wall-clock deadline reached.")
     return seconds
-
-
-def terminate(process):
-    if process.poll() is not None: return
-    if os.name == "nt":
-        try:
-            subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,
-                           creationflags=subprocess.CREATE_NO_WINDOW)
-        except (OSError, subprocess.TimeoutExpired):
-            pass
-    else:
-        process.kill()
-    if process.poll() is None: process.kill()
-    process.wait(timeout=5)
-
-def spawn(command, **kwargs):
-    environment = os.environ.copy()
-    # MCP stdio clients may intentionally inherit a minimal Windows environment.
-    # NuGet resolves its user configuration under APPDATA even for local builds.
-    if os.name == "nt":
-        environment.setdefault("APPDATA", str(Path.home() / "AppData/Roaming"))
-        environment.setdefault("LOCALAPPDATA", str(Path.home() / "AppData/Local"))
-        drive = environment.get("SYSTEMDRIVE", "C:")
-        for key, folder in {"ProgramFiles": "Program Files", "ProgramFiles(x86)": "Program Files (x86)",
-                            "ProgramData": "ProgramData", "ALLUSERSPROFILE": "ProgramData", "WINDIR": "Windows"}.items():
-            environment.setdefault(key, drive + "/" + folder)
-    environment.setdefault("DOTNET_ROLL_FORWARD", "Major")
-    environment.setdefault("DOTNET_CLI_HOME", str(ROOT / ".runtime/dotnet-home"))
-    environment.setdefault("NUGET_PACKAGES", str(ROOT / ".runtime/nuget/packages"))
-    environment.setdefault("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1")
-    environment.setdefault("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
-    environment.setdefault("DOTNET_EnableDiagnostics", "0")
-    local_dotnet = ROOT / ".runtime/dotnet"
-    if local_dotnet.is_dir():
-        environment["DOTNET_ROOT"] = str(local_dotnet)
-        environment["PATH"] = str(local_dotnet) + os.pathsep + environment.get("PATH", "")
-    if "godot" in Path(str(command[0])).name.lower() and "--headless" not in command:
-        environment = linux_display.environment(environment)
-        if environment.get("DV_CLOUD_DISPLAY") == "1" and "--audio-driver" not in command:
-            command = [*command, "--audio-driver", "Dummy"]
-    return subprocess.Popen([str(part) for part in command], cwd=ROOT,
-                            encoding="utf-8", errors="replace", text=True,
-                            env=environment,
-                            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-                            **kwargs)
 
 
 @contextmanager
@@ -307,8 +260,13 @@ def _movie_hash(path):
 
 
 def start(arguments, deadline=None):
-    start_review_watcher()
     mode = arguments.get("mode", "cli_ai")
+    if mode not in ("cli_ai", "cli_manual", "cli_auto", "godot_manual", "godot_auto"):
+        raise ValueError("Unknown production session mode.")
+    retired = {"scene", "test_config", "test_suite", "content_path"}.intersection(arguments)
+    if retired:
+        raise ValueError("Scene fixtures and content overrides are retired; use the fixed production title/new-game path.")
+    review_watcher.ensure_started()
     controller = arguments.get("controller", "ai" if mode in ("cli_auto", "godot_auto") else "player")
     if mode == "cli_auto" and controller != "ai":
         raise ValueError("cli_auto requires controller=ai; use cli_ai for SubAgent decisions.")
@@ -317,7 +275,7 @@ def start(arguments, deadline=None):
     endpoint = Endpoint(mode, controller, deadline)
     movie_filename = arguments.get("movie_filename")
     if movie_filename is not None:
-        if endpoint.backend != "godot" or mode not in ("godot_manual", "scene"):
+        if endpoint.backend != "godot" or mode != "godot_manual":
             raise ValueError("Movie capture is available only for formal Godot input sessions.")
         if not arguments.get("background_capture", True):
             raise ValueError("Movie capture requires background_capture=true.")
@@ -335,23 +293,8 @@ def start(arguments, deadline=None):
         endpoint.movie_path = movie_directory / movie_filename
     elif "movie_fps" in arguments:
         raise ValueError("movie_fps requires movie_filename.")
-    fixture_options = []
-    if "test_config" in arguments or "test_suite" in arguments:
-        if mode != "scene" or arguments.get("scene") not in ("res://tools/testing/StoryTest.tscn", "res://tools/testing/InteractionLab.tscn"):
-            raise ValueError("Test options require an explicit workbench scene.")
-        if arguments.get("test_config"):
-            fixture = provenance.project_path(arguments["test_config"], ROOT)
-            if not fixture.is_file() or fixture.suffix.lower() not in (".yaml", ".yml", ".json"):
-                raise ValueError("test_config must name an existing project-local YAML/JSON file.")
-            fixture_options.append("--scenario=" + str(fixture))
-        if arguments.get("test_suite"):
-            if arguments["test_suite"] not in ("interactions", "lighting", "building"):
-                raise ValueError("Unknown fixture test suite.")
-            fixture_options.append("--test-suite=" + arguments["test_suite"])
-        fixture_options.append("--test-output=" + str(provenance.project_path(".runtime/test-runs/mcp-" + endpoint.token, ROOT)))
-    endpoint.content_path = str(provenance.project_path(arguments.get("content_path", endpoint.content_path), ROOT, allow_external=True))
     backend = endpoint.backend
-    # Validate fixture/content options before reserving an output file.
+    # Validate capture options before reserving an output file.
     if endpoint.movie_path:
         try:
             descriptor = os.open(endpoint.movie_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -383,17 +326,6 @@ def start(arguments, deadline=None):
                 command += ["--write-movie", endpoint.movie_path, "--fixed-fps", str(arguments.get("movie_fps", 30))]
             if arguments.get("background_capture", True):
                 command += ["--windowed", "--position", "-32000,-32000"]
-            scene = arguments.get("scene", "")
-            if mode == "scene":
-                path = (ROOT / "." / scene.removeprefix("res://")).resolve()
-                if not any(path.is_relative_to((ROOT / folder).resolve()) for folder in ("scenes", "tools")):
-                    raise ValueError("Scene must be inside scenes/ or tools/.")
-                if path.suffix != ".tscn" or not path.is_file():
-                    raise ValueError("scene must name an existing scenes/*.tscn resource.")
-                command.append("res://" + path.relative_to(ROOT / ".").as_posix())
-                endpoint.launch_scene = command[-1]
-            elif scene:
-                raise ValueError("scene is only accepted in mode=scene.")
             # The opt-in GameMcp autoload is available in every production scene.
             command += ["--", f"--dv-mcp-port={port}", f"--dv-mcp-token={endpoint.token}",
                         f"--dv-controller={controller}", f"--dv-seed={arguments.get('seed', 1)}",
@@ -404,7 +336,6 @@ def start(arguments, deadline=None):
             if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", save_slot):
                 raise ValueError("Invalid save slot")
             command.append("--dv-save-slot=" + save_slot)
-            command.extend(fixture_options)
             if arguments.get("background_capture", True):
                 command.append("--dv-background-capture")
             else:
@@ -472,7 +403,7 @@ def execute(name, arguments):
         if endpoint.backend == "cli":
             if operation.get("type") not in ("select", "advance", "observe", "case_reasoning"):
                 raise ValueError("CLI operations: select(choice_id), advance(steps), observe.")
-        elif operation.get("type") not in ("start", "load", "select", "input_action", "click", "drag", "observe", "reload_content", "case_reasoning", "character"):
+        elif operation.get("type") not in ("start", "select", "input_action", "click", "drag", "observe", "case_reasoning", "character"):
             raise ValueError("Godot operations: start, select(choice_id), input_action(action,frames), click(x,y), observe.")
         if operation.get("type") == "case_reasoning":
             query = json.loads(operation.get("case_request", "{}"))
@@ -482,8 +413,6 @@ def execute(name, arguments):
         if endpoint.backend == "godot":
             operation["wait_ms"] = arguments.get("wait_ms", 200)
             operation["capture_image"] = arguments.get("capture_image", True)
-        if operation.get("type") == "reload_content" and not operation.get("path") and "content_source" not in operation:
-            operation["path"] = endpoint.content_path
         # A legal CLI batch can complete up to 100 formal actions. Give it a
         # bounded host budget inside the input client's 240-second timeout;
         # a failed request still closes the session and is never retried.

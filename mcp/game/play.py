@@ -5,7 +5,8 @@ import sys
 
 from environment import resolve_godot
 from run_environment import main as prepare_environment
-from runtime import ROOT, build, spawn, terminate
+from host_process import spawn, terminate
+from runtime import ROOT, build
 
 
 def main():

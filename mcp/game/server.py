@@ -20,7 +20,7 @@ def schema(properties, required=()):
 SESSION = {"type": "string", "description": "session_id returned by on in this MCP connection"}
 WAIT = {"type": "integer", "minimum": 0, "maximum": 10000, "default": 200}
 OPERATION = schema({
-    "type": {"type": "string", "enum": ["select", "advance", "start", "load", "input_action", "click", "drag", "reload_content", "case_reasoning", "character"]},
+    "type": {"type": "string", "enum": ["select", "advance", "start", "input_action", "click", "drag", "case_reasoning", "character"]},
     "command": {"type":"string","enum":["action","deduce","conversation","order","continue","cancel","save","walk","pause"]},
     "paused": {"type":"boolean"},
     "action_id": {"type":"string"},
@@ -28,8 +28,6 @@ OPERATION = schema({
     "order": {"type":"array","items":{"type":"string"}},
     "position": {"type":"array","items":{"type":"number"},"minItems":3,"maxItems":3},
     "case_request": {"type": "string", "description": "JSON actor proof request: operation info/questions/scene/infer/check/prove/check_goal/check_natural/review/strategy/travel_actor/sim4_plan/sim4_execute; seal_scene requires case_id and query_id and commits DV-declared cognitive time, repeats are idempotent; no author evidence injection"},
-    "path": {"type": "string", "description": "DV definition script file for reload_content"},
-    "content_source": {"type": "string", "description": "Replacement DV source for reload_content; never a state snapshot"},
     "choice_id": {"type": "string"},
     "decision_maker": {"type": "string", "enum": ["human", "agent", "llm", "player"], "description": "Who submitted this CLI choice; does not change its controller or AI scores."},
     "steps": {"type": "integer", "minimum": 1, "maximum": 100},
@@ -42,8 +40,7 @@ RUN = schema({
     "duration_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 86400, "description": "Wall-clock duration including build/startup; default 60 seconds"},
     "deadline": {"type": "string", "description": "Alternative absolute ISO-8601 deadline with timezone, e.g. +08:00 or Z"},
     "seed": {"type": "integer", "minimum": 0, "default": 1},
-    "viewer": {"type": "string", "default": "detective"},
-    "content_path": {"type": "string", "description": "Optional external content definition file"}
+    "viewer": {"type": "string", "default": "detective"}
 })
 TOOLS = {
     "input": [
@@ -52,10 +49,6 @@ TOOLS = {
                                        "seed": {"type": "integer", "minimum": 0, "default": 1},
                                        "viewer": {"type": "string", "default": "detective"},
                                        "decision_maker": {"type": "string", "enum": ["human", "agent", "llm", "player"], "description": "Decision maker recorded for CLI player input."},
-                                       "content_path": {"type": "string", "description": "Optional external content definition file"},
-                                       "scene": {"type": "string", "description": "Optional Godot single scene: res://scenes/...tscn"},
-                                       "test_config": {"type": "string", "description": "Project-local YAML/JSON Mock fixture; only with tools/testing/StoryTest.tscn or InteractionLab.tscn. Output and saves are isolated."},
-                                       "test_suite": {"type": "string", "enum": ["interactions", "lighting", "building"], "description": "Explicit workbench fixture traversal; not campaign AI input."},
                                        "save_slot": {"type":"string","pattern":"^[A-Za-z0-9_-]{1,64}$","description":"Optional stable isolated save slot for a local player interface."},
                                        "movie_filename": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.avi$", "description": "Optional new Godot Movie Maker AVI basename in artifacts/recordings; existing files are never overwritten."},
                                        "movie_fps": {"type": "integer", "minimum": 1, "maximum": 60, "description": "Fixed simulation/video frame rate for movie capture (30 if omitted); this is not a real-time performance benchmark."},
@@ -85,9 +78,7 @@ def execute(service, name, arguments):
         return automation.tool("godot" if name == "GodotMCP" else "cli", arguments)
     if name == "on":
         backend = arguments.get("backend", "cli")
-        if arguments.get("scene") and backend != "godot":
-            raise ValueError("scene is only available for backend=godot")
-        options = dict(arguments, mode="scene" if arguments.get("scene") else ("cli_ai" if backend == "cli" else "godot_manual"), controller="player")
+        options = dict(arguments, mode="cli_ai" if backend == "cli" else "godot_manual", controller="player")
         return runtime.start(options)
     return runtime.execute(name, arguments)
 
@@ -106,7 +97,7 @@ async def main(service):
         "Automatic tests belong to the auto MCP (GodotMCP/CliMCP); one call runs to the deadline without Agent input. "
         "Input MCP exposes only on, step, observe, close; each SubAgent opens its own session. "
         "The environment MCP prepares a project-local Godot .NET distribution when missing. "
-        "Use explicit test_config workbench sessions for requested isolated Mock fixtures; keep them separate from campaign sessions. "
+        "Godot input starts at the production title and follows the real new-game path. "
         "Never forge receipts or inject author facts into campaign sessions. Deadline reached is not a campaign pass."))
 
     @server.list_tools()

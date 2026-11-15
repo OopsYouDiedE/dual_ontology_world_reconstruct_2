@@ -126,7 +126,6 @@ def tool(backend, arguments):
             "server_identity": runtime.provenance.server_identity(runtime.ROOT, Path(__file__).with_name("server.py")),
             "deadline_epoch": deadline, "seed": arguments.get("seed", 1),
             "viewer": arguments.get("viewer", "detective")}
-    if arguments.get("content_path"): spec["content_path"] = arguments["content_path"]
     if backend != "cli": save(directory / "request.json", spec)
     report = dict(spec, status="queued", deadline=datetime.fromtimestamp(deadline, timezone.utc).isoformat(),
                   report_path=str(directory / ("report.yaml" if backend == "cli" else "report.json")), agent_required=False,
@@ -207,7 +206,6 @@ def run(spec, report):
     try:
         options = {"mode": spec["backend"] + "_auto", "controller": "ai", "seed": spec["seed"], "viewer": spec["viewer"]}
         if spec["backend"] == "cli": options["receipt_path"] = report["receipt_path"]
-        if spec.get("content_path"): options["content_path"] = spec["content_path"]
         observation = runtime.start(options, deadline=deadline)
         endpoint = runtime.SESSIONS[observation["session_id"]]
         timer = threading.Timer(max(0, deadline - time.monotonic()), endpoint.stop)

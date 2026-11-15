@@ -74,7 +74,7 @@ func _ready() -> void:
 	if _closing or not is_inside_tree(): return
 	_ready_for_input = true
 	observed.emit(_event("closeup"))
-	if kind in ["wardrobe", "ratchet", "grille", "seal"]: prop.activate()
+	if kind in ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"]: prop.activate()
 
 func _hide(node: Node) -> void:
 	if not is_instance_valid(node): return

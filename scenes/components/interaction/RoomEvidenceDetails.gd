@@ -15,6 +15,13 @@ func install(h: Control) -> Dictionary:
 			var mechanism := preload("res://scenes/components/interaction/RoomWardrobe.gd").new()
 			if mechanism.install(wardrobe): presentations["wardrobe"] = mechanism
 			else: mechanism.free()
+		var observations := {"bed": "R05_bed_01", "desk": "R05_residential_accessories_01", "lamp": "R05_banker_lamp_01", "wash": "R05_wash_table_01", "window": "R05_window_01"}
+		for kind in observations:
+			var original := host.lowpoly._root.get_node_or_null("Instances/" + str(observations[kind])) as Node3D
+			if original == null: continue
+			var observation := preload("res://scenes/components/interaction/RoomObservation.gd").new()
+			if observation.install(original, str(kind)): presentations[kind] = observation
+			else: observation.queue_free()
 		return presentations
 	if str(host.eng.s.room) != "B-P": return presentations
 	for evidence_id in KINDS:

@@ -418,15 +418,20 @@ func _arrive(i: int) -> void:
 	var dv: Vector2 = Vector2(p.x, p.z) - host.det_pos
 	if dv.length() > 0.05: host.det.rotation.y = atan2(dv.x, dv.y)
 	host.det.set_pose("stand")
-	if str(it.id) == "wardrobe":
+	if host.evidence_presentations.has(str(it.id)):
 		_busy_item = i
-		var started: bool = host.interactions.begin_gameplay(host,"wardrobe",func(success: bool):
+		var started: bool = host.interactions.begin_gameplay(host,str(it.id),func(success: bool):
 			_busy_item = -1
-			if success: it.seen = true)
+			if success:
+				it.seen = true
+				var remarks := {"bed": "想不起何时睡着的。", "desk": "这半行字，是我写的？", "lamp": "我习惯开灯睡觉吗？", "wash": "水碰到抓痕，刺痛。", "window": "陌生庭院……这是哪儿？", "wardrobe": "大衣整齐。手背却有抓痕。"}
+				if remarks.has(str(it.id)): host.eng.say("detective", remarks[str(it.id)], "think"))
 		if not started: _busy_item = -1
 		return
 	it.seen = true
-	for ln in it.lines: host.eng.say("detective", str(ln), "think")
+	if str(it.id) == "door": host.eng.say("detective", "走廊里有人。去看看。", "think")
+	else:
+		for ln in it.lines: host.eng.say("detective", str(ln), "think")
 	if str(it.id) == "door":
 		for dr in host.data.doors:
 			var other := ""

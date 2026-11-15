@@ -141,6 +141,21 @@
       "validation": "Godot --check-only 对生产脚本语法检查通过；实际画面待独立Terra真实主线复测",
       "after_evidence": null,
       "acceptance": "pending_independent_mainline_review"
+    },
+    {
+      "id": "20261116-r05-observations-object-04",
+      "changed_side": "object",
+      "character_changed": false,
+      "object_changed": true,
+      "before_evidence": "artifacts/acceptance/chapter1-independent-20261116/independent-terra-report.md",
+      "changes": [
+        "卧室原床被褥与枕头、原台灯罩、桌上原纸张封页、原洗手盆水纹在房间内呈现观察",
+        "所有六项居室调查使用原相机推进与返回，保留房间空间参照",
+        "长对白缩为物理观察后的短句，保留失忆与手背抓痕线索"
+      ],
+      "validation": "四个生产脚本Godot --check-only通过；未启动辅助场景或流程探针",
+      "after_evidence": null,
+      "acceptance": "pending_independent_real_mainline_review"
     }
   ]
 }

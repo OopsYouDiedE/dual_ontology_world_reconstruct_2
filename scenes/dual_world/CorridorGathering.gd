@@ -30,18 +30,15 @@ const ANG3 := {"huo": 255.0, "shen": 330.0, "su": 28.0}
 const ANG4 := {"huo": 238.0, "shen": 312.0, "su": 12.0, "detective": 150.0}
 
 const LINES := [
-	["huo", "来了。先说一件事：我们三个醒来都一样——名字记得，可从入学那天起的事，全是空的。你呢？"],
-	["detective", "一样。名字还在，入学以来的记忆没了。连这条走廊我是什么时候走过的，都说不上来。", "think"],
-	["shen", "那就别凭印象说话，只说自己屋里亲眼看到的东西。我先来：袖口是湿的，还没干透。是水还是别的什么，我不知道。"],
-	["su", "我的琴盒里，高音弦断了，断口很新，袖子也破了一道。可我想不起是怎么弄的——也请别急着替我解释。"],
-	["huo", "我的工具箱里少了一个曲柄销，别的都在。它去了哪儿，我一点印象都没有。"],
-	["detective", "我这边：门没被撬，笔记本最后一页只写了半行字，抖得厉害。手背上有三道抓痕。", "think"],
-	["huo", "也就是说，昨晚发生过什么，我们谁也确定不了。能确定的只有一件事：四个人都丢了同样的东西，而且各自房里都留下了点什么。"],
-	["su", "甲区那边的人……会不会也一样？没人能保证。"],
-	["detective", "先别下结论。三步：一，各自把自己屋里看到的东西记下来；二，只记录，不推断；三，别人的门都锁着，谁也别硬闯，对得上再说。"],
-	["shen", "那我先回自己那边，把袖口和那块湿布再看一遍。你们也各看各的，别漏。"],
-	["huo", "同意。谁的话和痕迹对不上，就当场指出来，不记仇。"],
-	["detective", "好。我先在走廊里转转，看看这一层到底是什么样子。", "think"],
+	["huo", "我们只记得名字。你呢？"],
+	["detective", "入学后的记忆全没了。", "think"],
+	["shen", "我的袖口还湿着。"],
+	["su", "琴弦新断，袖子也破了。"],
+	["huo", "工具箱少了曲柄销。"],
+	["detective", "笔记只剩半行字。", "think"],
+	["detective", "手背还有三道抓痕。", "think"],
+	["shen", "先复查，别人的门锁着。"],
+	["detective", "去厨房看看昨夜的痕迹。", "think"],
 ]
 
 var host: Control
@@ -74,6 +71,9 @@ var _free_t := 0.0
 var _prompt: Label
 var _hint: Label
 var _enter_pending := false
+var _world_labels: Array[Label3D] = []
+var _detective_tag: Label3D
+var _detective_tag_was_visible := true
 
 
 func begin(h: Control, to_room: String) -> void:
@@ -87,6 +87,11 @@ func begin(h: Control, to_room: String) -> void:
 	host.left_card.visible = false
 	host.room_hint.visible = false
 	host.drawer.visible = false
+	for child in host.det.get_children():
+		if child is Label3D:
+			_detective_tag = child
+			_detective_tag_was_visible = child.visible
+			child.visible = false
 	host._fade(1.0, 0.3, _setup_stage)
 
 
@@ -121,6 +126,7 @@ func _setup_stage() -> void:
 		tag.outline_modulate = Color(0.04, 0.03, 0.02, 0.95)
 		if id == "shen": tag.position.y += 0.24   # 三人站得近：错开名牌高度，避免互相压住
 		tag.no_depth_test = true
+		tag.visible = false
 		f.add_child(tag)
 	_place_npcs(true)
 	# 侦探从 R05 的门里走出来
@@ -173,6 +179,7 @@ func _label(text: String, pos: Vector3, size := 0.0045, c := Color("#ffe3a3")) -
 	t.modulate = c
 	t.outline_size = 10
 	_root.add_child(t)
+	_world_labels.append(t)
 
 
 ## 盆栽：陶盆（上宽下窄）+ 土面 + 一圈斜插的叶片，替代原先的「绿方块 + 棕方柱」。
@@ -252,13 +259,13 @@ func _build_corridor() -> void:
 		if own:
 			var leaf := _box(Vector3(x - 0.45, 1.05, 0.5), Vector3(0.08, 2.05, 0.85), Color("#6b4a2e"))
 			leaf.rotation.y = deg_to_rad(-62.0)
-			_label("%s · %s（我的门）" % [d[0], d[1]], Vector3(x, 2.6, 0.2), 0.0042)
+			_label("%s · 我" % d[0], Vector3(x, 2.6, 0.2), 0.0042)
 		else:
 			_box(Vector3(x, 1.05, 0.1), Vector3(0.96, 2.05, 0.07), Color("#5f4229"))               # 关紧的门扇
 			_box(Vector3(x, 1.05, 0.145), Vector3(0.62, 1.5, 0.02), Color("#6d4c30"))              # 门板嵌线
 			_box(Vector3(x + 0.34, 1.0, 0.19), Vector3(0.07, 0.07, 0.12), Color("#c2a35b"), 0.3)   # 铜把手
 			_box(Vector3(x + 0.34, 1.2, 0.16), Vector3(0.13, 0.22, 0.04), Color("#b83a2e"), 0.9)   # 锁牌
-			_label("%s · %s（锁）" % [d[0], d[1]], Vector3(x, 2.6, 0.2), 0.0042, Color("#e0b7a8"))
+			_label(str(d[0]), Vector3(x, 2.6, 0.2), 0.0042, Color("#e0b7a8"))
 	# 门间：窗（晨光）、长凳、盆栽，让走廊不空
 	for wx in [5.0, 9.0, 13.0]:
 		_box(Vector3(wx, 1.7, 0.03), Vector3(0.9, 0.9, 0.06), Color("#b9d0e0"), 0.45)
@@ -289,6 +296,7 @@ func _build_corridor() -> void:
 # ───────────────────────── 站位 ─────────────────────────
 ## 读档、返回标题共用的终止路径，恢复房间原节点。
 func stop() -> void:
+	_restore_detective_tag()
 	active = false
 	phase = "off"
 	for item in [_card, _prompt, _hint, _root]:
@@ -341,7 +349,7 @@ func process(delta: float) -> void:
 			else:
 				det.rotation.y = lerp_angle(det.rotation.y, PI * 0.5, 1.0 - exp(-delta * 6.0))
 				if _pt > 1.2 and not talking:
-					host.eng.say("detective", "走廊那头有人声，压得很低。不是争吵——像是在互相确认什么。", "think")
+					host.eng.say("detective", "那头有人在低声交谈。", "think")
 					phase = "hear"
 					_pt = 0.0
 		"hear":
@@ -370,7 +378,7 @@ func process(delta: float) -> void:
 					_pt = 0.0
 					_show_card()
 		"card":
-			if _pt > 5.5: _enter_free()
+			if _pt > 1.8: _enter_free()
 		"free":
 			_step_free(delta)
 		"out":
@@ -381,6 +389,9 @@ func process(delta: float) -> void:
 		else: _face(f, _look_target(id), delta, 5.0)
 	if phase in ["join", "talk", "card"]:
 		_place_npcs(false, delta)
+	var labels_visible := not talking and phase != "card"
+	if phase == "free": labels_visible = labels_visible and _hover < 0 and not _prompt.visible
+	for label in _world_labels: label.visible = labels_visible
 	_camera_drive(delta)
 
 
@@ -474,7 +485,7 @@ func _show_card() -> void:
 	_card = PanelContainer.new()
 	_card.add_theme_stylebox_override("panel", host._style(Color(0.07, 0.055, 0.04, 0.9), host.BRASS, 10, 14))
 	var l := Label.new()
-	l.text = "对账小结\n\n已对上　门被反扣（霍铎）· 拖痕朝内 · 湿布挂在钩上（沈鼎）\n对不上　「开门」是谁喊的（苏泠）· 你手背上的抓痕\n下一步　① 各自复查自己的屋子　② 只记录不推断　③ 别人的门上着锁，不硬闯"
+	l.text = "各自失忆\n去厨房复查"
 	l.add_theme_font_size_override("font_size", 17)
 	l.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_card.add_child(l)
@@ -493,6 +504,7 @@ func _finish() -> void:
 
 
 func _swap_to_room() -> void:
+	_restore_detective_tag()
 	if _card != null: _card.queue_free()
 	if _prompt != null: _prompt.queue_free()
 	if _hint != null: _hint.queue_free()
@@ -521,6 +533,10 @@ func _swap_to_room() -> void:
 	active = false
 	host._fade(0.0, 0.4)
 	queue_free()
+
+
+func _restore_detective_tag() -> void:
+	if is_instance_valid(_detective_tag): _detective_tag.visible = _detective_tag_was_visible
 
 
 # ───────────────────────── 第三幕：走廊自由活动 ─────────────────────────
@@ -594,7 +610,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
-	_hint.text = "WASD / 方向键 移动　·　点击发光的物件，或靠近后按 E 查看　·　◀ 西：乙区大门（锁）　▶ 东：乙区小厨房"
+	_hint.text = "点物调查"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
@@ -761,8 +777,8 @@ func _step_free(delta: float) -> void:
 		var it: Dictionary = _items[near]
 		_prompt.text = "E %s" % ("去小厨房复查" if str(it.id) == "kitchen" else str(it.label).replace("（锁）", ""))
 	for i in _items.size():
-		# 同伴头顶已有名牌，不再重复显示标记标签
-		(_items[i].tag as Label3D).visible = (i == _hover or i == near) and str(_items[i].get("npc", "")) == ""
+		(_items[i].tag as Label3D).visible = i == _hover and not show_prompt and not sub_up
+	_hint.visible = not sub_up and not show_prompt and _hover < 0
 	if _free_t > 14.0: _hint.modulate.a = move_toward(_hint.modulate.a, 0.0, delta * 0.3)
 	_update_markers()
 

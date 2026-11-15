@@ -1255,27 +1255,31 @@ func _free_slots(n: int) -> Array:
 						ok = false
 						break
 			if ok: cands.append(c)
-	# 正常空间保留可见间隙；窄空间收紧到模型胶囊恰好不重叠的距离。
+	var player_target := mid
+	if n > 1 and _lowpoly_ok and lowpoly != null:
+		var entry: Dictionary = lowpoly.door_for(Vector2.ZERO)
+		if not entry.is_empty(): player_target = entry.inner
+	cands.sort_custom(func(a: Vector2, b: Vector2): return a.distance_squared_to(player_target) < b.distance_squared_to(player_target))
+	# A central first slot can consume the only usable floor between furniture.
+	# Try alternate player slots before reducing the preferred actor spacing.
 	for minimum_distance in [ACTOR_MIN_DISTANCE, ACTOR_TOUCH_DISTANCE]:
-		out.clear()
-		while out.size() < n:
-			var best := Vector2.INF
-			var best_score := -INF
-			for c in cands:
-				if out.has(c): continue
-				# The first slot belongs to the player; companions leave the
-				# visible doorway's complete entry lane clear for that player.
-				if not out.is_empty() and _blocks_entry_lane(c): continue
-				var nearest := INF
-				for placed in out: nearest = minf(nearest, c.distance_to(placed))
-				if not out.is_empty() and nearest < minimum_distance: continue
-				var score: float = -c.distance_to(mid) if out.is_empty() else nearest
-				if score > best_score:
-					best = c
-					best_score = score
-			if best == Vector2.INF: break
-			out.append(best)
-		if out.size() == n: return out
+		for seed in cands:
+			var trial: Array = [seed]
+			while trial.size() < n:
+				var best := Vector2.INF
+				var best_score := -INF
+				for c in cands:
+					if trial.has(c) or _blocks_entry_lane(c): continue
+					var nearest := INF
+					for placed in trial: nearest = minf(nearest, c.distance_to(placed))
+					if nearest < minimum_distance: continue
+					if nearest > best_score:
+						best = c
+						best_score = nearest
+				if best == Vector2.INF: break
+				trial.append(best)
+			if trial.size() == n: return trial
+			if trial.size() > out.size(): out = trial
 	# 物理候选仍不足时只返回唯一格，禁止重复中心点制造角色重叠。
 	return out
 
@@ -1295,10 +1299,10 @@ func _sync_figures(force := false) -> void:
 	var key := ",".join(list.map(func(i): return str(i))) + "@" + _room_loaded
 	if key == _occ_key: return
 	var slots := _free_slots(list.size() + 1)  # 第 0 个空位留给侦探
+	_occ_key = key
 	if slots.size() < list.size() + 1:
 		push_error("角色落点不足：%s 需要 %d，得到 %d" % [_room_loaded, list.size() + 1, slots.size()])
 		return
-	_occ_key = key
 	for c in figures_root.get_children(): c.queue_free()
 	figures.clear()
 	var c3: Vector3 = lowpoly.center() if (_lowpoly_ok and lowpoly != null) else room_mesh.center()

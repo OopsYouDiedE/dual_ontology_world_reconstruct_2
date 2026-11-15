@@ -21,13 +21,10 @@ const WALK := 2.6
 const DOORS := [["R05", "侦探", 3.0], ["R06", "霍铎", 7.0], ["R07", "沈鼎", 11.0], ["R08", "苏泠", 15.0]]
 const OWN_DOOR := "R05"      # 侦探只有自己房间的钥匙
 const FREE_BOUNDS := Rect2(0.6, 0.75, 18.6, 2.3)   # 第三幕可走区域（x, z, 宽, 深）
-const NPC_BODY := 0.5        # 第三幕：与三位同伴保持的最小距离
-const CIRCLE := Vector2(16.9, 1.95)
-const R3 := 0.95             # 三人弧半径（给侦探留开口）
-const R4 := 1.1              # 四人圈半径
-# 角度：atan2(z, x)，+z 朝镜头。开口朝西（侦探从西边来）。
-const ANG3 := {"huo": 255.0, "shen": 330.0, "su": 28.0}
-const ANG4 := {"huo": 238.0, "shen": 312.0, "su": 12.0, "detective": 150.0}
+const CIRCLE := Vector2(16.4, 1.75)
+const PLAYER_SPOT := Vector2(16.4, 2.6)
+# The north-side group leaves a continuous south-side route to the kitchen.
+const NPC_SPOTS := {"huo": Vector2(14.6, 0.9), "shen": Vector2(16.4, 0.9), "su": Vector2(18.2, 0.9)}
 
 const LINES := [
 	["huo", "我们只记得名字。你呢？"],
@@ -48,9 +45,6 @@ var _pt := 0.0
 var _clock := 0.0
 var _root: Node3D
 var _npc: Dictionary = {}          # id -> Figure
-var _ang: Dictionary = {}          # id -> 当前角度（度）
-var _ang_goal: Dictionary = {}
-var _radius := R3
 var _line := 0
 var _card: PanelContainer
 var _focus := Vector3(4.0, 0.7, 1.6)
@@ -112,8 +106,6 @@ func _setup_stage() -> void:
 		_root.add_child(f)
 		host.figures[id] = f
 		_npc[id] = f
-		_ang[id] = float(ANG3[id])
-		_ang_goal[id] = float(ANG3[id])
 		var tag := Label3D.new()
 		tag.text = str(host.data.actor_by_id[id].name)
 		tag.font = host.SANS_FONT
@@ -128,7 +120,7 @@ func _setup_stage() -> void:
 		tag.no_depth_test = true
 		tag.visible = false
 		f.add_child(tag)
-	_place_npcs(true)
+	_place_npcs()
 	# 侦探从 R05 的门里走出来
 	host.det_pos = Vector2(DOORS[0][2], -0.35)
 	host.det.position = Vector3(host.det_pos.x, 0.0, host.det_pos.y)
@@ -312,10 +304,6 @@ func stop() -> void:
 	host._occ_key = ""
 
 
-func _slot(ang_deg: float, r: float) -> Vector2:
-	return CIRCLE + Vector2(cos(deg_to_rad(ang_deg)), sin(deg_to_rad(ang_deg))) * r
-
-
 func _face(node: Node3D, at: Vector2, delta: float, rate := 8.0) -> void:
 	var p := Vector2(node.position.x, node.position.z)
 	var to := at - p
@@ -323,14 +311,12 @@ func _face(node: Node3D, at: Vector2, delta: float, rate := 8.0) -> void:
 	node.rotation.y = lerp_angle(node.rotation.y, atan2(to.x, to.y), 1.0 - exp(-delta * rate))
 
 
-func _place_npcs(snap: bool, delta := 0.0) -> void:
+func _place_npcs() -> void:
 	for id in _npc:
-		_ang[id] = float(_ang[id]) if snap else lerpf(float(_ang[id]), float(_ang_goal[id]), 1.0 - exp(-delta * 4.0))
-		var sp := _slot(float(_ang[id]), _radius)
+		var sp: Vector2 = NPC_SPOTS[id]
 		var f: Node3D = _npc[id]
 		f.position = Vector3(sp.x, 0.0, sp.y)
-		if snap:
-			_face(f, CIRCLE, 1.0, 100.0)
+		_face(f, PLAYER_SPOT, 1.0, 100.0)
 
 
 # ───────────────────────── 每帧 ─────────────────────────
@@ -357,7 +343,7 @@ func process(delta: float) -> void:
 			det.rotation.y = lerp_angle(det.rotation.y, PI * 0.5, 1.0 - exp(-delta * 6.0))
 			if not talking and _pt > 0.6: phase = "approach"
 		"approach":
-			var goal2 := _slot(150.0, R4)
+			var goal2 := PLAYER_SPOT
 			var d2: float = host.det_pos.distance_to(goal2)
 			if d2 > 0.06:
 				_walk_to(goal2, delta)
@@ -387,8 +373,6 @@ func process(delta: float) -> void:
 		var f: Node3D = _npc[id]
 		if _target == "det" and not _joined: _face(f, host.det_pos, delta, 5.0)
 		else: _face(f, _look_target(id), delta, 5.0)
-	if phase in ["join", "talk", "card"]:
-		_place_npcs(false, delta)
 	var labels_visible := not talking and phase != "card"
 	if phase == "free": labels_visible = labels_visible and _hover < 0 and not _prompt.visible
 	for label in _world_labels: label.visible = labels_visible
@@ -424,9 +408,6 @@ func _join() -> void:
 	_joined = true
 	_target = ""
 	host.det.set_pose("stand")
-	_radius = R4
-	for id in ANG4:
-		if id != "detective": _ang_goal[id] = float(ANG4[id])
 	phase = "join"
 	_pt = 0.0
 
@@ -660,9 +641,9 @@ func _item_stand(i: int) -> Vector2:
 	var it: Dictionary = _items[i]
 	if str(it.get("npc", "")) != "":
 		var p := _item_pos(i)
-		var away: Vector2 = host.det_pos - p
-		if away.length() < 0.05: away = Vector2(-1.0, 0.0)
-		return p + away.normalized() * 0.9
+		return Vector2(p.x, PLAYER_SPOT.y)
+	if it.stand.x >= 13.5:
+		return Vector2(minf(float(it.stand.x) + (0.4 if str(it.id) == "kitchen" else 0.0), FREE_BOUNDS.end.x), PLAYER_SPOT.y)
 	return it.stand
 
 
@@ -800,6 +781,6 @@ func _push_out(p: Vector2) -> Vector2:
 		var n: Node3D = _npc[id]
 		var np := Vector2(n.position.x, n.position.z)
 		var d := p - np
-		if d.length() < NPC_BODY:
-			p = np + (d.normalized() if d.length() > 0.001 else Vector2(-1.0, 0.0)) * NPC_BODY
+		if d.length() < host.ACTOR_MIN_DISTANCE:
+			p = np + (d.normalized() if d.length() > 0.001 else Vector2(0.0, 1.0)) * host.ACTOR_MIN_DISTANCE
 	return p

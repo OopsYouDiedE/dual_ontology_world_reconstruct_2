@@ -192,6 +192,25 @@
       "validation": "Godot production-script --check-only passed. Runtime cause and outcome await an independent real-mainline replay.",
       "after_evidence": null,
       "acceptance": "pending_independent_real_mainline_review"
+    },
+    {
+      "id": "20261116-actor-layout-character-04",
+      "changed_side": "character",
+      "character_changed": true,
+      "object_changed": false,
+      "before_evidence": "artifacts/acceptance/oriha-mainline-6db23b2/REPORT.md",
+      "issues": [
+        "Kitchen entry becomes usable but a greedy central player slot leaves only three actor slots.",
+        "Corridor approach permits player/NPC distances as low as 0.709m."
+      ],
+      "changes": [
+        "Try alternate valid player seeds while reserving door entry lanes for all NPC layouts.",
+        "Place corridor companions along the north wall with a continuous south-side player route, matching production actor clearance.",
+        "Remove repeated failed spawn retries and obsolete moving conversation-circle state."
+      ],
+      "validation": "Production DualWorldMain dependency parse check passed. Independent rendered replay is required.",
+      "acceptance": "pending_independent_real_mainline_review",
+      "after_evidence": null
     }
   ]
 }

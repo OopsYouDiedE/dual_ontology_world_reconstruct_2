@@ -4,7 +4,7 @@
   "owner": "Astra",
   "purpose": "actual-scene-conditioned aesthetic reference plan",
   "generation": {
-    "status": "seven_correct_root_references_ready_for_comparison",
+    "status": "ten_references_ready_including_three_mainline_morning_rooms",
     "builtin_image_gen_available": false,
     "actual_model": "gpt-image-2.6-sunburst",
     "latest_available_model_verified": true,
@@ -40,9 +40,9 @@
       "source": "existing custom provider in user config; credentials never persisted",
       "checked_date": "2026-11-16"
     },
-    "generated_count": 12,
+    "generated_count": 15,
     "accepted_count": 0,
-    "ready_for_comparison_count": 7,
+    "ready_for_comparison_count": 10,
     "quarantined_count": 5
   },
   "design_sources": [
@@ -57,7 +57,8 @@
     "Formal bedroom observed clock is 07:14; it was not relabeled as 08/14/22.",
     "Title input is a fade-in frame without visible UI text. Proposed title/menu lettering uses current-project code and right-side menu footprint, pending settled UI comparison.",
     "Historical audit FORMAL_UI_AUDIT.md describes the original five-image incident; current status is this manifest and README.",
-    "Title menus and title Book settings retain their existing layouts and are exempt from character-count limits per user instruction. Expressions retain expression-development-preview classification; reconstruction generation deferred for occluded action and overlapping character silhouettes."
+    "Title menus and title Book settings retain their existing layouts and are exempt from character-count limits per user instruction. Expressions retain expression-development-preview classification; reconstruction generation deferred for occluded action and overlapping character silhouettes.",
+    "First-chapter R05, corridor and kitchen references registered from verified real-mainline captures; no acceptance score assigned."
   ],
   "entries": [
     {
@@ -3904,6 +3905,261 @@
       "prompt": "Deferred until real action contact and separate character silhouettes are visible. Preserve runtime geometry, identity, action and UI; then improve only materials and lighting.",
       "recapture_plan": "artifacts/references/reconstruction_correct_root-recapture-plan.md",
       "generation_receipt_file": "artifacts/references/reconstruction_correct_root-receipt.json"
+    },
+    {
+      "id": "chapter1_r05_morning",
+      "label": "第一章 R05 清晨原房间",
+      "status": "ready_for_comparison",
+      "generated": true,
+      "reference_image": "output/imagegen/chapter1/R05-morning-v1.png",
+      "source_images": [
+        {
+          "path": "artifacts/acceptance/terra-correct-root-20261115/attempt-2/game-client/000004-free-exploration.png",
+          "role": "verified real-mainline source",
+          "provenance_valid": true
+        }
+      ],
+      "needs_current_capture": false,
+      "allowed_for_implementation": true,
+      "allowed_for_visual_comparison": true,
+      "reference_is_acceptance_evidence": false,
+      "acceptance_score": null,
+      "user_review_required": false,
+      "comparison_scope": "Materials and aperture-constrained morning lighting. Existing geometry, actor placement and UI remain authoritative.",
+      "generation_receipt": {
+        "tool": "original bundled image_gen.py edit",
+        "model": "gpt-image-2.6-sunburst",
+        "mode": "authorized CLI/API fallback",
+        "quality": "high",
+        "size": "auto",
+        "command_argv": [
+          "python",
+          "C:/Users/iii/.codex/skills/.system/imagegen/scripts/image_gen.py",
+          "edit",
+          "--model",
+          "gpt-image-2.6-sunburst",
+          "--image",
+          "artifacts/acceptance/terra-correct-root-20261115/attempt-2/game-client/000004-free-exploration.png",
+          "--image",
+          "assets/data/test_scenarios/user_reference/formal_game_ui.png",
+          "--prompt-file",
+          "artifacts/references/chapter1-20261116/R05-morning-prompt.txt",
+          "--quality",
+          "high",
+          "--size",
+          "auto",
+          "--out",
+          "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\output\\imagegen\\chapter1\\R05-morning-v1.png",
+          "--no-augment"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 33.399,
+        "environment_policy": "credentials and configured provider URL read only into process environment, omitted from receipt",
+        "output_path": "output/imagegen/chapter1/R05-morning-v1.png",
+        "output_exists": true,
+        "prompt_file": "artifacts/references/chapter1-20261116/R05-morning-prompt.txt",
+        "status": "ready_for_comparison_material_and_lighting_only",
+        "output_sha256": "0e448ace9780ff195d954855ae5f3e52cc54a41c1f976e84751a25055e82ac10",
+        "width": 1586,
+        "height": 992,
+        "visually_reviewed": true,
+        "accepted": false,
+        "reference_is_acceptance_evidence": false,
+        "visual_review": {
+          "retained": [
+            "full viewport low-poly R05 room",
+            "bed, window, door, two cupboards, desk, bedside table and washstand positions",
+            "floor tile pattern and traversable bed-side gap",
+            "small 侦探 / 床 labels, compact E prompt and gold selection ring"
+          ],
+          "improvements": [
+            "deep walnut reduces source orange saturation",
+            "cabinet and doorway recesses gain readable fill",
+            "floor and furniture contact shadows soften while room layout remains legible"
+          ],
+          "comparison_checks": [
+            "Door gold interaction marker is less distinct in generated output; production must preserve its original gold marker visibility.",
+            "Generated wood grain, highlights and small bevels are aesthetic guidance; exact mesh and navigation dimensions remain from runtime.",
+            "This is the verified source clock 07:14 morning reference; night return remains uncaptured."
+          ]
+        }
+      },
+      "generation_receipt_file": "artifacts/references/chapter1-20261116/R05-morning-receipt.json",
+      "prompt": "Use case: lighting-weather\nAsset type: chapter-one formal R05 bedroom architecture and morning-light implementation reference.\nInput images: Image 1 is the exact current-project formal runtime edit target, R05 at observed 07:14, entering Boot -> Main -> DualWorldMain -> WakeOpening, full-room exploration. Image 2 is the user-approved formal game UI design reference; use only its full-viewport presentation, small world labels, gold interaction markers and compact E prompt.\nPrimary request: Refine ONLY material response and morning lighting in Image 1 into a clear, cohesive low-poly game art reference. Retain its exact room plan, camera angle, framing, character pose and scale, door and window placement and opening shapes, wall-panel construction, floor tile pattern, furniture counts, bed orientation, standing and walking clearances, desk, tall cabinet, narrow dark cabinet, bedside table, lamps, picture, washstand and green rug footprints.\nStyle/medium: actual playable low-poly 3D game room, restrained simple planes and clean readable edges. Early-1900s academy interior. Warm deep walnut paneling rather than saturated orange; muted forest-green bedding and rug; matte ivory stone/ceramic floor; restrained brass fittings. Keep the original room geometry and polygon density.\nLighting/mood: same early-morning source direction and sun patch footprint as Image 1, warm porcelain-yellow lamp light, natural soft fill that keeps cabinet recesses, door threshold and bed-side route readable, clear contact shadows, restrained highlights. Preserve scene exposure sufficient to see the walkable floor. This image represents only the observed morning state.\nText (verbatim): preserve Image 1 labels \"侦探\", \"床\", and compact \"E · 查看「床」\". Preserve existing gold interaction markers and selection ring in their original locations. Room remains full viewport.\nConstraints: change only material colors, roughness, ambient fill and shadow softness. Keep all architecture, object silhouettes, layout, camera and character identity/pose from Image 1. Preserve every doorway and traversable gap. No extra props, invented windows, new evidence, new characters, annotations, borders, panels, control bars, minimap, cinematic crop, photorealistic detail or watermark. No purple/gold supernatural atmosphere. Title and book layouts are outside this asset scope.\n"
+    },
+    {
+      "id": "chapter1_corridor_morning",
+      "label": "第一章 乙区走廊晨光",
+      "status": "ready_for_comparison",
+      "generated": true,
+      "reference_image": "output/imagegen/chapter1/corridor-morning-v1.png",
+      "source_images": [
+        {
+          "path": "artifacts/acceptance/oriha-mainline-1fadfd1/receipts/000017-0.png",
+          "role": "verified real-mainline source",
+          "provenance_valid": true
+        }
+      ],
+      "needs_current_capture": false,
+      "allowed_for_implementation": true,
+      "allowed_for_visual_comparison": true,
+      "reference_is_acceptance_evidence": false,
+      "acceptance_score": null,
+      "user_review_required": false,
+      "comparison_scope": "Materials and aperture-constrained morning lighting. Existing geometry, actor placement and UI remain authoritative.",
+      "generation_receipt": {
+        "tool": "original bundled image_gen.py edit",
+        "model": "gpt-image-2.6-sunburst",
+        "mode": "authorized CLI/API fallback",
+        "quality": "high",
+        "size": "auto",
+        "command_argv": [
+          "python",
+          "C:\\Users\\iii\\.codex\\skills\\.system\\imagegen\\scripts\\image_gen.py",
+          "edit",
+          "--model",
+          "gpt-image-2.6-sunburst",
+          "--image",
+          ".runtime/input-client/1967555f46fd1e2c/000017-0.png",
+          "--image",
+          "assets/data/test_scenarios/user_reference/formal_game_ui.png",
+          "--prompt-file",
+          "artifacts/references/chapter1-20261116/corridor-morning-prompt.txt",
+          "--quality",
+          "high",
+          "--size",
+          "auto",
+          "--out",
+          "output/imagegen/chapter1/corridor-morning-v1.png",
+          "--no-augment"
+        ],
+        "started_at": "2026-11-16T05:53:21.5542396+08:00",
+        "completed_at": "2026-11-16T05:54:08.6900479+08:00",
+        "elapsed_seconds": 47.108,
+        "exit_code": 0,
+        "environment_policy": "Configured credentials and endpoint read into process environment only; omitted from receipts and sanitized logs",
+        "cli_sha256": "3666b807de3f0a1d0a4a767b886d612c0b8f71025c500bba6693d1c6995a0873",
+        "source_verification": "artifacts/references/chapter1-20261116/mainline-room-source-verification.json",
+        "output_path": "output/imagegen/chapter1/corridor-morning-v1.png",
+        "output_exists": true,
+        "prompt_file": "artifacts/references/chapter1-20261116/corridor-morning-prompt.txt",
+        "status": "ready_for_comparison_material_and_lighting_only",
+        "accepted": false,
+        "reference_is_acceptance_evidence": false,
+        "output_sha256": "35f3012cc196ffb38b90648a246d9227881372dc3915110b7356d28152a76eab",
+        "width": 1586,
+        "height": 992,
+        "visually_reviewed": true,
+        "prompt_sha256": "f0d9f99a538069550a1eacb986c522247af5d3c2b063a4f67f5d911661637202",
+        "visual_review": {
+          "retained": [
+            "Full corridor viewport, original perspective and white exterior background",
+            "Four visible characters in original relative positions and poses",
+            "R07/R08 doors and labels, bench, potted plant and red/gold carpet",
+            "Gold and coral markers remain readable"
+          ],
+          "improvements": [
+            "Readable subtle wood grain, woven carpet and plaster roughness",
+            "Warm morning light from right-end opening; clear interior air",
+            "Condensation confined to existing pane surfaces"
+          ],
+          "comparison_checks": [
+            "Generated pane edge highlights/rims and carpet thickness differ slightly; keep production mesh dimensions.",
+            "Use actual source opening dimensions and occlusion for implementation; source screenshot supplies the layout.",
+            "Exact lighting/render equivalence and continuous playable route require runtime verification."
+          ],
+          "missing_requested_assets": []
+        }
+      },
+      "generation_receipt_file": "artifacts/references/chapter1-20261116/corridor-morning-receipt.json",
+      "prompt": "Use case: lighting-weather\nAsset type: Chapter 1 formal-game corridor material and morning-light reference.\nPrimary request: Edit Image 1 conservatively, improving only material response, physically plausible early morning light at 07:31, contact shadows and subtle condensation on existing window glass.\nInput images: Image 1 is the exact edit target, a verified live mainline corridor capture. Image 2 is the user's authoritative formal-game visual/UI style reference only. Keep Image 1's scene.\nStyle/medium: The same restrained low-poly 3D game rendering, faceted small character models, simple readable geometry and sparse game UI.\nComposition/framing: Preserve Image 1's entire viewport, camera angle, crop, perspective, room footprint, walls, openings, floor, narrow red carpet with its gold stripe, R07 and R08 doors, bench, potted plant, every character's exact location/scale/pose and every existing gold or coral marker. Keep the existing white exterior background and all four visible characters.\nMaterials/textures: Slightly richer restrained warm walnut grain on existing wood, softer plaster roughness, readable woven red carpet and subtle diffuse floor texture. Preserve the original material categories and colors. Material grain stays small and quiet, supporting the low-poly forms.\nLighting/mood: Early morning sunlight enters only through the existing right-end opening and existing glazed window openings shown in Image 1. Match directional floor/wall illumination to those actual openings; use restrained warm bounce with cool ambient fill. Preserve existing indoor lights and their locations. Shade opaque wall areas correctly. Keep details and faces readable without glowing walls.\nWindow treatment: Thin pale condensation on the surfaces of existing glass panes only, with clear room air. Preserve each opening's size and location. No room-wide fog or atmospheric shafts.\nText (verbatim): Preserve only the existing \"R07\" and \"R08\" labels in their original locations and scale.\nConstraints: Change only materials and lighting/window condensation. Exact geometry, all furniture, openings, character identities/positions, marker shapes/locations and UI remain fixed. Preserve marker readability and full-room game presentation.\nAvoid: New objects, new people, new windows or openings, extra text, cinematic overlays, invented investigation scene, new architectural detailing, volumetric mist, painterly or photorealistic restyling.\n"
+    },
+    {
+      "id": "chapter1_kitchen_morning",
+      "label": "第一章 公共小厨房晨光",
+      "status": "ready_for_comparison",
+      "generated": true,
+      "reference_image": "output/imagegen/chapter1/kitchen-morning-v1.png",
+      "source_images": [
+        {
+          "path": "artifacts/acceptance/oriha-mainline-1fadfd1/receipts/000020-0.png",
+          "role": "verified real-mainline source",
+          "provenance_valid": true
+        }
+      ],
+      "needs_current_capture": false,
+      "allowed_for_implementation": true,
+      "allowed_for_visual_comparison": true,
+      "reference_is_acceptance_evidence": false,
+      "acceptance_score": null,
+      "user_review_required": false,
+      "comparison_scope": "Materials and aperture-constrained morning lighting. Existing geometry, actor placement and UI remain authoritative.",
+      "generation_receipt": {
+        "tool": "original bundled image_gen.py edit",
+        "model": "gpt-image-2.6-sunburst",
+        "mode": "authorized CLI/API fallback",
+        "quality": "high",
+        "size": "auto",
+        "command_argv": [
+          "python",
+          "C:\\Users\\iii\\.codex\\skills\\.system\\imagegen\\scripts\\image_gen.py",
+          "edit",
+          "--model",
+          "gpt-image-2.6-sunburst",
+          "--image",
+          ".runtime/input-client/1967555f46fd1e2c/000020-0.png",
+          "--image",
+          "assets/data/test_scenarios/user_reference/formal_game_ui.png",
+          "--prompt-file",
+          "artifacts/references/chapter1-20261116/kitchen-morning-prompt.txt",
+          "--quality",
+          "high",
+          "--size",
+          "auto",
+          "--out",
+          "output/imagegen/chapter1/kitchen-morning-v1.png",
+          "--no-augment"
+        ],
+        "started_at": "2026-11-16T05:54:47.5188281+08:00",
+        "completed_at": "2026-11-16T05:55:27.3353708+08:00",
+        "elapsed_seconds": 39.791,
+        "exit_code": 0,
+        "environment_policy": "Configured credentials and endpoint read into process environment only; omitted from receipts and sanitized logs",
+        "cli_sha256": "3666b807de3f0a1d0a4a767b886d612c0b8f71025c500bba6693d1c6995a0873",
+        "source_verification": "artifacts/references/chapter1-20261116/mainline-room-source-verification.json",
+        "output_path": "output/imagegen/chapter1/kitchen-morning-v1.png",
+        "output_exists": true,
+        "prompt_file": "artifacts/references/chapter1-20261116/kitchen-morning-prompt.txt",
+        "status": "ready_for_comparison_material_and_lighting_only",
+        "accepted": false,
+        "reference_is_acceptance_evidence": false,
+        "output_sha256": "8b471c5f7c1dd51ebd8e223185aca2f34436d2437485851c23205f090b10d992",
+        "width": 1586,
+        "height": 992,
+        "visually_reviewed": true,
+        "prompt_sha256": "fee4e2d279ccb42b93fc648e49f21c67fbf5865092dd4e4d218130ded53183f3",
+        "visual_review": {
+          "retained": [
+            "Full B-P kitchen viewport and original perspective",
+            "Four characters, stove/hood, shelves, sink, table/mug, two chairs and cupboard in original relative positions",
+            "Arched boarded/grilled window, doorway and threshold",
+            "Gold markers, detective selection ring, name labels, E prompt and field counter"
+          ],
+          "improvements": [
+            "Walnut grain, matte floor tiles and restrained ceramic/metal response",
+            "Window-shaped sunlight patches align with existing arched opening and grille",
+            "Fine condensation stays on glass, clear room air, readable contact shadows"
+          ],
+          "comparison_checks": [
+            "Small object bevels, pot silhouettes and facial details are generated approximations; production mesh and identities remain authoritative.",
+            "Rendered E prompt uses a slightly altered glyph appearance; preserve source UI text in implementation.",
+            "Exact lighting/render equivalence and evidence interactions require runtime verification."
+          ],
+          "missing_requested_assets": []
+        }
+      },
+      "generation_receipt_file": "artifacts/references/chapter1-20261116/kitchen-morning-receipt.json",
+      "prompt": "Use case: lighting-weather\nAsset type: Chapter 1 formal-game kitchen material and morning-light reference.\nPrimary request: Edit Image 1 conservatively, improving only material response, physically plausible early morning light at 07:32, contact shadows and subtle condensation on the existing window glass.\nInput images: Image 1 is the exact edit target, a verified live mainline kitchen capture. Image 2 is the user's authoritative formal-game visual/UI style reference only. Keep Image 1's kitchen.\nStyle/medium: The same restrained low-poly 3D game rendering, faceted small character models, simple readable geometry and sparse game UI.\nComposition/framing: Preserve Image 1's entire viewport, camera angle, crop, perspective, room footprint, walls, doorway and threshold, stove and hood, cookware, shelves and crockery, countertop, sink, arched window with boards/grille, table with mug, two chairs, cupboard and all four characters at their exact positions and poses. Preserve the green pendant lamp, wall lamp, white exterior background, gold interaction markers and detective selection ring.\nMaterials/textures: Deep restrained warm walnut wood with subtle grain on existing panels and furniture, softly matte cream floor tiles, understated ceramic sheen, dark stove metal and muted green fabric/lamp. Keep the original low-poly shapes, material categories, tile pattern and all object colors.\nLighting/mood: Early morning sun enters through the existing arched window's visible glass gaps and actual existing exterior-connected openings only. The boards/grille interrupt and shape the light. Physically coherent small sunlight patches, soft contact shadows and warm reflected light help read the floor and walking space. Preserve existing indoor lights and locations. Correct opaque-wall shading; maintain readable faces and evidence without broad impossible light spill.\nWindow treatment: Fine pale condensation strictly on the existing arched glass surfaces, retaining grille/board silhouettes and clear room air. Preserve the original window geometry.\nText (verbatim): Keep the existing \"苏泠\", \"沈鼎\", \"霍铎\", \"侦探\", \"E 门缝\", and \"现场 0/7\" labels exactly as in Image 1, at their existing locations and sizes.\nConstraints: Change only materials and lighting/window condensation. Preserve exact room geometry, furniture, evidence, character identities/positions/poses, gold markers, selection ring and UI. Keep a complete full-room game viewport with the same layout.\nAvoid: New objects, people, text, windows or doorways; invented investigation world; added architectural decoration; room-wide haze, volumetric fog, cinematic overlays, photorealistic or painterly restyling.\n"
     }
   ],
   "user_design_baseline": {

@@ -28,6 +28,7 @@ var _last_audio_frames := 0
 var _owner: Control
 var measurement_context := "rendered_runtime"
 var _audio_snapshot_errors := 0
+var sample_context: Dictionary = {}
 
 func configure(directory: String, metadata: Dictionary, content: Control) -> void:
 	output_dir = preload("res://mcp/CaptureSource.gd").project_output(directory)
@@ -143,6 +144,7 @@ func _process(delta: float) -> void:
 		"monitor_visible": visible,
 		"measurement_context": measurement_context
 	}
+	latest.merge(sample_context, true)
 	_update_label()
 	latest["monitor_characters"] = _label.text.length() if visible else 0
 	latest["total_visible_characters"] = int(latest.content_text.characters) + int(latest.monitor_characters)

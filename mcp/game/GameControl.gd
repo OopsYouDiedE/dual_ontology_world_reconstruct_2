@@ -6,6 +6,8 @@ var buffer := PackedByteArray()
 var token := ""
 var busy := false
 var launch_scene := ""
+var monitor: Control
+var _monitor_stopped := false
 
 func _ready() -> void:
 	var port := 0
@@ -17,8 +19,68 @@ func _ready() -> void:
 	if token.length() < 32 or server.listen(port, "127.0.0.1") != OK:
 		push_error("Game MCP transport could not start")
 		set_process(false)
+		return
+	add_to_group("lifecycle_hosts")
+	_start_monitor.call_deferred()
+
+func _start_monitor() -> void:
+	await get_tree().process_frame
+	var content := get_tree().current_scene as Control
+	if content == null: return
+	monitor = preload("res://scenes/components/testing/RuntimeMonitor.gd").new()
+	monitor.name = "MainlineMetrics"
+	add_child(monitor)
+	monitor.visible = false
+	var directory := ".runtime/mainline-runs/" + Time.get_datetime_string_from_system().replace(":", "-") + "-" + str(OS.get_process_id())
+	monitor.configure(directory, {"mock": false, "entry": "production_title", "monitor_visible": false, "capture_policy": "real mainline; independent Terra review required"}, content)
+
+func _tag_monitor() -> void:
+	if monitor == null or _monitor_stopped: return
+	var main := get_tree().current_scene
+	if main == null: return
+	monitor._owner = main as Control
+	var story: Control = main.get("dual_world")
+	var segment := "title"
+	var room := ""
+	var clock := ""
+	var exempt := false
+	var title: Control = main.get("title_ui")
+	var book: Control = main.get("book_ui")
+	if is_instance_valid(title) and title.is_visible_in_tree(): exempt = true
+	if is_instance_valid(book) and book.is_open: exempt = book.page_id() == "settings"
+	if is_instance_valid(story):
+		exempt = false
+		room = str(story.eng.s.room)
+		clock = str(story.eng.clock().text)
+		match room:
+			"R05": segment = "wake" if story.opening != null and story.opening.active else "chapter_end"
+			"B-P":
+				segment = "kitchen_evidence"
+				if story.kitchen != null and is_instance_valid(story.kitchen._order_replay) and story.kitchen._order_replay.active: segment = "kitchen_reconstruction"
+			"A-P", "service_stair_M", "F01": segment = "service_route"
+			"C-P", "D-P", "2F-cross-M": segment = "cross_zone"
+			"2F-North-Stair", "1F-Shaft-Monitor": segment = "shaft"
+			"T01": segment = "poem"
+			"Wind-Corridor", "W-102", "S-102", "B-102", "F-104": segment = "institutes"
+			"F03", "F05": segment = "dinner"
+			_: segment = "travel"
+		if story.gathering != null and story.gathering.active: segment = "corridor"
+	monitor.node_id = segment + "/" + room
+	monitor.sample_context = {"gameplay_segment": segment, "room": room, "story_clock": clock, "text_exempt": exempt}
+
+func begin_shutdown() -> void:
+	_monitor_stopped = true
+	if monitor != null: monitor.finish()
+
+func wait_for_shutdown() -> void:
+	if monitor == null: return
+	var deadline := Time.get_ticks_msec() + 12000
+	while monitor._worker_pid > 0 and OS.is_process_running(monitor._worker_pid) and Time.get_ticks_msec() < deadline:
+		await get_tree().create_timer(0.05).timeout
+	if monitor._worker_pid > 0 and OS.is_process_running(monitor._worker_pid): push_error("Mainline audio worker did not finalize before shutdown")
 
 func _process(_delta: float) -> void:
+	_tag_monitor()
 	if peer == null:
 		if server.is_connection_available(): peer = server.take_connection()
 		return
@@ -56,8 +118,8 @@ func _handle(request: Dictionary) -> void:
 			await preload("res://scenes/components/shared/HostLifecycle.gd").quit(get_tree())
 			return
 		"start":
-			if not main.has_method("open_life"): _reply(identity, {}, "当前场景不支持生活新局"); return
-			main.open_life()
+			if not main.has_method("open_dual_world"): _reply(identity, {}, "当前场景不支持主线新局"); return
+			main.open_dual_world()
 		"click":
 			var point := Vector2(float(request.get("x", -1)), float(request.get("y", -1)))
 			if not get_viewport().get_visible_rect().has_point(point): _reply(identity, {}, "点击越界"); return
@@ -123,6 +185,9 @@ func _handle(request: Dictionary) -> void:
 	result["controls"] = controls
 	result["scene"] = main.scene_file_path
 	result["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
+	if monitor != null:
+		result["metrics_directory"] = monitor.output_dir
+		result["metrics"] = monitor.latest
 	if bool(request.get("capture_image", true)):
 		result["image_base64"] = Marshalls.raw_to_base64(get_viewport().get_texture().get_image().save_png_to_buffer())
 	_reply(identity, result)

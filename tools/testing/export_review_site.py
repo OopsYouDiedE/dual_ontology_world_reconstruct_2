@@ -210,6 +210,17 @@ def canonical_images(base: Path) -> list[Path]:
     return sorted(primary or paths)
 
 
+def linked_markdown(text: str, source: Path) -> str:
+    """Keep local links usable when a report moves into the review folder."""
+    def replace(match):
+        prefix, label, target = match.groups()
+        resolved = local_path(target, source)
+        if resolved is None:
+            return match.group()
+        return f'{prefix}[{label}](<{resolved.as_posix()}>)'
+    return re.sub(r'(!?)\[([^\]]*)\]\((<?[^)]+>?)\)', replace, text)
+
+
 def report_page(source: Path) -> tuple[Path, list[Path]]:
     relative = source.relative_to(ROOT)
     page = OUT / "reports" / ("--".join(relative.with_suffix("").parts[1:]) + ".html")
@@ -228,7 +239,7 @@ def report_page(source: Path) -> tuple[Path, list[Path]]:
     if images:
         body += f'<section><h2>关联画面 · {len(images)} 张</h2><p class="meta">点击放大；每张保留原图链接。序列表可追溯到原始截图。</p>' + gallery(images, page) + "</section>"
     page.write_text(wrap(title, body, page, source.relative_to(ROOT).as_posix()), encoding="utf-8")
-    md = f"# {title}\n\n原始报告：[打开原文](<{source.as_posix()}>)\n\n" + text
+    md = f"# {title}\n\n原始报告：[打开原文](<{source.as_posix()}>)\n\n" + linked_markdown(text, source)
     if images:
         md += "\n\n## 关联截图与序列\n"
         for image in images:
@@ -273,7 +284,9 @@ def validate_export() -> dict:
                 image_count += 1
     for page in OUT.rglob("*.md"):
         for url in re.findall(r"!\[[^\]]*\]\(([^)]+)\)", page.read_text(encoding="utf-8-sig")):
-            path = Path(unquote(url))
+            path = Path(unquote(url.strip().strip("<>")))
+            if urlsplit(url.strip().strip("<>")).scheme in ("http", "https"):
+                continue
             if not path.is_absolute() or not path.is_file():
                 broken.append({"page": str(page), "image": url})
     data = read_json(OUT / "score_records.json")
@@ -301,7 +314,8 @@ def main() -> int:
     manifest = read_json(ROOT / "assets/data/test_scenarios/reference_manifest.json", {})
     refs = [r for r in manifest.get("entries", []) if r.get("status") == "ready_for_comparison" and r.get("reference_image")]
     reports = sorted((ROOT / "artifacts/acceptance").rglob("*.md"))
-    reports += [ROOT / p for p in ("artifacts/references/README.md", "artifacts/references/FORMAL_UI_AUDIT.md", "artifacts/references/reconstruction_correct_root-recapture-plan.md", "docs/采集路径修复.md", "docs/剧情重构实施状态.md")]
+    reports += sorted((ROOT / "artifacts/references").rglob("*.md"))
+    reports += [ROOT / p for p in ("docs/采集路径修复.md", "docs/剧情重构实施状态.md", "docs/第一章可玩版本范围.md")]
     converted = []
     for source in reports:
         if source.is_file():
@@ -345,7 +359,7 @@ def main() -> int:
         md += ' '.join(f'[{name}](<{(run/name).as_posix()}>)' for name in ('frames.csv','timeline.yaml','audio.json','mix.wav') if (run/name).is_file()) + '\n'
         for preview in previews:
             md += f'\n![{preview.stem}]({preview.as_posix()})\n'
-    body += '</section><section id="references"><h2>实机与 Astra 参考图</h2><p class="meta">7 张可比较参考；相似度均待评分。点击图片放大。</p>'
+    body += f'</section><section id="references"><h2>实机与 Astra 参考图</h2><p class="meta">{len(refs)} 张可比较参考；相似度均待评分。点击图片放大。</p>'
     md += '\n## 实机与 Astra 参考图\n\n相似度评分均待完成。\n'
     for ref in refs:
         reference = ROOT/ref['reference_image']
@@ -367,7 +381,7 @@ def main() -> int:
         body += f'<div class="card report-card"><b>{escape(title)}</b><div class="meta">{escape(item["source"])}</div><p>{item["images"]} 张关联画面</p><div class="links">{link(destination,"图文 HTML",page)}{link(destination.with_suffix(".md"),"带图 Markdown",page)}{link(source,"原报告",page)}</div></div>'
         md += f'- {title}：[HTML](<{destination.as_posix()}>) · [带图 Markdown](<{destination.with_suffix(".md").as_posix()}>) · [原报告](<{source.as_posix()}>)\n'
     body += '</div></section>'
-    page.write_text(wrap('采集与评分记录',body,page,'2026-11-16 · 按场景查看七项记录、实际画面、参考图和原始测量。'),encoding='utf-8')
+    page.write_text(wrap('采集与评分记录',body,page,'按场景查看七项记录、实际画面、参考图和原始测量。'),encoding='utf-8')
     (OUT/'评分总览.md').write_text(md,encoding='utf-8')
     (OUT/'score_records.json').write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding='utf-8')
     verification = validate_export()

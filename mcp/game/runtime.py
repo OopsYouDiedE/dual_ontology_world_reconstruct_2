@@ -22,6 +22,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import capture_provenance as provenance
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/testing"))
+from review_refresh import start_review_watcher
 SESSIONS = {}
 BUILD_LOCK = threading.Lock()
 
@@ -305,6 +307,7 @@ def _movie_hash(path):
 
 
 def start(arguments, deadline=None):
+    start_review_watcher()
     mode = arguments.get("mode", "cli_ai")
     controller = arguments.get("controller", "ai" if mode in ("cli_auto", "godot_auto") else "player")
     if mode == "cli_auto" and controller != "ai":

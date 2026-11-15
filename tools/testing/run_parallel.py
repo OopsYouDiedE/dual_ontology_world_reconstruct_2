@@ -15,6 +15,7 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "mcp"))
 import capture_provenance as provenance
+from review_refresh import start_review_watcher
 
 
 def source_fingerprint() -> str:
@@ -117,6 +118,7 @@ def main() -> int:
     parser.add_argument("--fixed-fps", type=int, choices=range(1, 241), default=60)
     parser.add_argument("--output")
     args = parser.parse_args()
+    start_review_watcher()
     manifest_path = provenance.project_path(args.manifest, ROOT)
     jobs = validate_jobs(json.loads(manifest_path.read_text(encoding="utf-8-sig")))
     output = provenance.project_path(args.output or ".runtime/parallel-checks/" + datetime.now().strftime("%Y%m%d-%H%M%S-%f"), ROOT)

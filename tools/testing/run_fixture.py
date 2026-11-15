@@ -12,6 +12,7 @@ from datetime import datetime
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "mcp"))
 import capture_provenance as provenance
+from review_refresh import start_review_watcher
 
 
 def make_sheets(directory: Path) -> list[dict]:
@@ -63,6 +64,7 @@ def main() -> int:
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--assemble-only", action="store_true")
     args = parser.parse_args()
+    start_review_watcher()
     directory = provenance.project_path(args.output or ".runtime/test-runs/" + datetime.now().strftime("%Y%m%d-%H%M%S-%f"), ROOT)
     if args.assemble_only:
         print(json.dumps({"sheets": make_sheets(directory)}, ensure_ascii=False))

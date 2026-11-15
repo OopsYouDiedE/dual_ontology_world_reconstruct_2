@@ -16,7 +16,7 @@ import sys
 from urllib.parse import quote, unquote, urlsplit
 
 import yaml
-from mainline_reviews import load_reviews
+from mainline_reviews import capture_time, load_reviews
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "mcp"))
@@ -230,9 +230,17 @@ def review_timeline(scene: dict, history: list[dict], page: Path) -> tuple[str, 
     if not history:
         return body + '<p class="muted">待独立 Terra 抵达该主线段落。</p></section>', md + '\n待独立 Terra 抵达该主线段落。\n'
     previous = None
+    superseded = {record['supersedes'] for record in history if record.get('supersedes')}
     for record in history:
-        title = record['observed_at'] + ' · ' + record['revision'][:8] + ' · ' + record['status']
+        captured = capture_time(record, ROOT).isoformat(timespec='seconds')
+        title = '采集 ' + captured + ' · ' + record['revision'][:8] + ' · ' + record['status']
         body += '<article class="trajectory-entry"><h3>' + escape(title) + '</h3><p class="meta">' + escape(record['reviewer'] + ' / ' + record['source']['session_id']) + '</p>'
+        audit = '评分核定 ' + record['observed_at']
+        if record['id'] in superseded:
+            audit += ' · 已有追加核定，原记录保留'
+        if record.get('supersedes'):
+            audit += ' · 核定记录 ' + record['supersedes']
+        body += '<p class="meta">' + escape(audit) + '</p>'
         body += '<div class="scroll"><table><tr>' + ''.join('<th>' + d + '</th>' for d in DIMENSIONS) + '</tr><tr>'
         md += '\n### ' + title + '\n\n| ' + ' | '.join(DIMENSIONS) + ' |\n|' + ' --- |' * 7 + '\n| '
         for index, score in enumerate(record['scores']):
@@ -245,6 +253,7 @@ def review_timeline(scene: dict, history: list[dict], page: Path) -> tuple[str, 
             body += '<td><span class="score ' + css + '">' + escape(text) + '</span></td>'
             md += text + ' | '
         md += '\n'
+        md += '\n' + audit + '\n'
         body += '</tr></table></div>'
         if record.get('summary'):
             body += '<p>' + escape(record['summary']) + '</p>'
@@ -269,7 +278,8 @@ def review_timeline(scene: dict, history: list[dict], page: Path) -> tuple[str, 
         converted = OUT / 'reports' / ('--'.join(report.relative_to(ROOT).with_suffix('').parts[1:]) + '.html')
         body += '<p class="links">' + link(converted, '完整图文报告', page) + link(report, '原始评审', page) + link(ROOT / record['source']['on_receipt'], '启动回执', page) + link(ROOT / record['source']['start_receipt'], '新游戏回执', page) + '</p></article>'
         md += '\n[原始评审](<' + report.as_posix() + '>)\n'
-        previous = record
+        if record['id'] not in superseded:
+            previous = record
     return body + '</section>', md
 
 
@@ -291,7 +301,9 @@ def gameplay_pages(records: list[dict]) -> tuple[str, str, list[dict]]:
     fragments = []
     for scene in plan.get("scenes", []):
         versions = [record for record in history if record['segment_id'] == scene['id']]
-        review = versions[-1] if versions else reviews.get("scenes", {}).get(scene["id"], {})
+        superseded = {record['supersedes'] for record in versions if record.get('supersedes')}
+        effective = [record for record in versions if record['id'] not in superseded]
+        review = effective[-1] if effective else reviews.get("scenes", {}).get(scene["id"], {})
         scores = review.get("scores", [None] * 7)
         if len(scores) != 7 or any(s is not None and (isinstance(s, bool) or not isinstance(s, (int, float)) or not 0 <= s <= 10) for s in scores):
             raise ValueError("Invalid gameplay scores: " + scene['id'])

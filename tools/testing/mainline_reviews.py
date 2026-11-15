@@ -75,12 +75,33 @@ def validate(record: dict, root: Path = ROOT) -> dict:
     return record
 
 
+def capture_time(record: dict, root: Path = ROOT) -> datetime:
+    """Order a replay by its captured evidence, preserving the later audit time."""
+    captures = record.get("source_capture_at", [])
+    if isinstance(captures, str):
+        captures = [captures]
+    times = [datetime.fromisoformat(value) for value in captures]
+    for image in record.get("images", []):
+        sidecar = root / (image["path"] + ".json")
+        if sidecar.is_file():
+            epoch = json.loads(sidecar.read_text(encoding="utf-8-sig")).get("captured_epoch")
+            if isinstance(epoch, (int, float)):
+                times.append(datetime.fromtimestamp(epoch).astimezone())
+    return max(times) if times else datetime.fromisoformat(record["observed_at"])
+
+
 def load_reviews(root: Path = ROOT) -> list[dict]:
     records = [validate(json.loads(path.read_text(encoding="utf-8-sig")), root) for path in sorted((root / DIRECTORY).glob("*.json"))]
     ids = [record["id"] for record in records]
     if len(ids) != len(set(ids)):
         raise ValueError("Duplicate immutable review IDs")
-    return sorted(records, key=lambda record: (record["observed_at"], record["id"]))
+    by_id = {record["id"]: record for record in records}
+    for record in records:
+        if record.get("supersedes"):
+            original = by_id.get(record["supersedes"])
+            if original is None or any(original[key] != record[key] for key in ("revision", "segment_id")):
+                raise ValueError("A review audit must reference the same revision and segment")
+    return sorted(records, key=lambda record: (capture_time(record, root), record["observed_at"], record["id"]))
 
 
 def append(record: dict, root: Path = ROOT) -> Path:

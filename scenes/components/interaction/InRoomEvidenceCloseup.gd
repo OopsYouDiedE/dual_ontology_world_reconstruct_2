@@ -15,6 +15,9 @@ var _last := Vector2.ZERO
 var _has_result := false
 var _restored := false
 var _close_button: Button
+var _gesture_hint: Label
+var _drag_origin := Vector2.ZERO
+var _hand_start_x := 0.0
 var _saved_visibility: Array = []
 signal finished(success: bool)
 signal observed(event: Dictionary)
@@ -55,26 +58,56 @@ func _ready() -> void:
 	_close_button.custom_minimum_size = Vector2(44, 44)
 	_close_button.pressed.connect(close)
 	add_child(_close_button)
+	_build_gesture_hint()
 	gui_input.connect(_on_input)
 	prop.sampled.connect(_on_sampled)
 	camera.near = 0.015
 	var focus: Vector3 = prop.to_global(prop.get_meta("focus", Vector3.ZERO))
-	var offset: Vector3 = prop.global_basis * Vector3(prop.get_meta("camera_offset", Vector3(0.4, 0.5, 1.0)))
-	var camera_position := focus + offset
-	if host._lowpoly_ok:
-		var bounds: Rect2 = host.lowpoly.walk_rect(0.12)
-		camera_position.x = clampf(camera_position.x, bounds.position.x, bounds.end.x)
-		camera_position.z = clampf(camera_position.z, bounds.position.y, bounds.end.y)
+	var camera_position := _inspection_position(focus)
 	var target := Transform3D(Basis.IDENTITY, camera_position).looking_at(focus, Vector3.UP)
 	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_tween.tween_property(camera, "global_transform", target, 0.85)
-	_tween.parallel().tween_property(camera, "fov", 42.0, 0.85)
+	_tween.parallel().tween_property(camera, "fov", float(prop.get_meta("camera_fov", 48.0)), 0.85)
 	observed.emit(_event("anchor"))
 	await _tween.finished
 	if _closing or not is_inside_tree(): return
 	_ready_for_input = true
 	observed.emit(_event("closeup"))
 	if kind in ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"]: prop.activate()
+
+func _inspection_position(focus: Vector3) -> Vector3:
+	var offset: Vector3 = prop.global_basis.orthonormalized() * Vector3(prop.get_meta("camera_offset", Vector3(0.4, 0.5, 1.0)))
+	if host._lowpoly_ok:
+		# Wall props face the room interior. Their prefab forward axis can face a wall.
+		if kind in ["water", "drag", "boots", "ratchet", "seal", "cloth", "window"]:
+			var center: Vector3 = host.lowpoly.to_global(host.lowpoly.center())
+			var inward := Vector3(center.x - focus.x, 0, center.z - focus.z).normalized()
+			var reach := maxf(Vector2(offset.x, offset.z).length(), 1.25)
+			offset = inward * reach + Vector3.UP * maxf(absf(offset.y), 0.65)
+		var bounds: Rect2 = host.lowpoly.walk_rect(0.38)
+		var local: Vector3 = host.lowpoly.to_local(focus + offset)
+		local.x = clampf(local.x, bounds.position.x, bounds.end.x)
+		local.z = clampf(local.z, bounds.position.y, bounds.end.y)
+		return host.lowpoly.to_global(local)
+	return focus + offset
+
+func _build_gesture_hint() -> void:
+	var text := ""
+	if kind in ["water", "cloth", "chalk", "drag", "boots"]: text = "按住划取"
+	elif kind in ["hand", "sleeve", "copper"]: text = "向右拖动对齐" if kind == "sleeve" else "按住转动手腕"
+	if text.is_empty(): return
+	_gesture_hint = Label.new()
+	_gesture_hint.name = "EvidenceGesture"
+	_gesture_hint.text = text
+	_gesture_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gesture_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_gesture_hint.offset_top = -65
+	_gesture_hint.offset_bottom = -25
+	_gesture_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gesture_hint.add_theme_color_override("font_color", Color("#ffe3a3"))
+	_gesture_hint.add_theme_color_override("font_outline_color", Color("#21180f"))
+	_gesture_hint.add_theme_constant_override("outline_size", 6)
+	add_child(_gesture_hint)
 
 func _hide(node: Node) -> void:
 	if not is_instance_valid(node): return
@@ -89,6 +122,7 @@ func _event(phase: String) -> Dictionary:
 func _on_sampled() -> void:
 	_has_result = true
 	if is_instance_valid(_close_button): _close_button.text = "✓"
+	if is_instance_valid(_gesture_hint): _gesture_hint.text = "已取证"
 	observed.emit(_event("result"))
 
 func _surface_rect() -> Rect2:
@@ -107,6 +141,8 @@ func _on_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		_dragging = event.pressed and _surface_rect().has_point(_viewport_point(event.position))
 		_last = event.position
+		_drag_origin = event.position
+		_hand_start_x = prop.hand.position.x if is_instance_valid(prop.hand) else 0.0
 	elif event is InputEventMouseMotion and _dragging:
 		var area := _surface_rect()
 		var point := _viewport_point(event.position)
@@ -117,7 +153,8 @@ func _on_input(event: InputEvent) -> void:
 		if kind in ["water", "cloth", "chalk", "drag", "boots"]:
 			prop.sweep(distance, (normalized - Vector2.ONE * 0.5) * Vector2(0.8, 0.4))
 		elif kind in ["hand", "sleeve", "copper"]:
-			prop.align_hand(Vector2((normalized.x - 0.5) * 0.9, 0))
+			var travel: float = (event.position.x - _drag_origin.x) / maxf(size.x * 0.25, 1.0)
+			prop.align_hand(Vector2(_hand_start_x + travel, 0))
 		accept_event()
 
 func close() -> void:
@@ -158,4 +195,6 @@ func test_snapshot() -> Dictionary:
 	return {"kind": kind, "presentation": "in_room", "completed": _has_result, "ready": _ready_for_input,
 		"prop_id": prop.get_instance_id() if is_instance_valid(prop) else 0,
 		"camera_id": camera.get_instance_id() if is_instance_valid(camera) else 0,
+		"camera_position": camera.global_position if is_instance_valid(camera) else Vector3.ZERO,
+		"focus_position": prop.to_global(prop.get_meta("focus", Vector3.ZERO)) if is_instance_valid(prop) else Vector3.ZERO,
 		"progress": prop.progress if is_instance_valid(prop) else 0.0}

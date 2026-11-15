@@ -43,7 +43,8 @@ func install(original: Node3D, observation: String) -> bool:
 			var glass := original.find_child("Glass", true, false) as MeshInstance3D
 			var center := to_local(glass.to_global(glass.get_aabb().get_center())) if glass != null else Vector3(0, 0.8, 0)
 			set_meta("focus", center)
-			set_meta("camera_offset", Vector3(0.2, 0.1, 1.6))
+			set_meta("camera_offset", Vector3(0.3, 0.25, 4.2))
+			set_meta("camera_fov", 58.0)
 		_: return false
 	_sound = AudioStreamPlayer3D.new()
 	_sound.bus = &"Sfx" if AudioServer.get_bus_index("Sfx") >= 0 else &"Master"

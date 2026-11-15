@@ -52,10 +52,10 @@ func _anchor_to_room(detail: Node3D) -> void:
 	var rack := scene.get_node_or_null("Instances/B_P_cloth_rack_01") as Node3D
 	if is_instance_valid(door):
 		match str(detail.kind):
-			"water": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, -0.16, 0.12))
+			"water": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, 0.015, 0.34))
 			"drag": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, -0.035, 1.0))
 			"boots": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0.95, -0.035, 0.65))
-			"ratchet": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0.65, 0.6, 0.16))
+			"ratchet": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0.65, 0.6, 0.34))
 	if str(detail.kind) == "seal" and is_instance_valid(window):
 		detail.global_transform = window.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, 0.45, 0.12))
 	if str(detail.kind) == "cloth" and is_instance_valid(rack):

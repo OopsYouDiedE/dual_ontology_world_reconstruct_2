@@ -211,6 +211,26 @@
       "validation": "Production DualWorldMain dependency parse check passed. Independent rendered replay is required.",
       "acceptance": "pending_independent_real_mainline_review",
       "after_evidence": null
+    },
+    {
+      "id": "20261116-closeup-framing-object-05",
+      "changed_side": "object",
+      "character_changed": false,
+      "object_changed": true,
+      "before_evidence": "artifacts/acceptance/oriha-mainline-1fadfd1/receipts/000022-0.png",
+      "issues": [
+        "Door-gap closeup is obscured by the existing wall or door.",
+        "Window closeup crops the frame severely.",
+        "Evidence gestures have no visible instruction, so repeated cuff clicks do not perform the required drag."
+      ],
+      "changes": [
+        "Place wall and floor investigation cameras toward the actual room interior with a safe interior margin.",
+        "Move door evidence details just inside the existing doorway and frame the full bedroom window.",
+        "Show a brief physical gesture instruction and apply relative hand drag; retain the same camera, world and prop."
+      ],
+      "validation": "Godot --check-only on DualWorldMain and its dependencies passed; independent mainline replay pending.",
+      "after_evidence": null,
+      "acceptance": "pending_independent_real_mainline_review"
     }
   ]
 }

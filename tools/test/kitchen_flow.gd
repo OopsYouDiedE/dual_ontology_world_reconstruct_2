@@ -19,7 +19,15 @@ func _check(ok: bool, msg: String) -> void:
 
 func _shot(out: String, tag: String) -> void:
 	for i in 10: await process_frame
-	root.get_texture().get_image().save_png("%s_%s.png" % [out, tag])
+	if DisplayServer.get_name() == "headless":
+		print("shot skipped (headless renderer): ", tag)
+		return
+	var texture := root.get_texture()
+	var image: Image = texture.get_image() if texture != null else null
+	if image == null:
+		print("shot skipped (headless renderer): ", tag)
+		return
+	image.save_png("%s_%s.png" % [out, tag])
 	print("shot ", tag)
 
 func _hold(action: String, ms: int) -> void:

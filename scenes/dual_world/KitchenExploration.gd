@@ -16,6 +16,7 @@ extends Node
 
 const ROOM := "B-P"
 const FROM_ROOM := "R05"
+const OrderReplay := preload("res://scenes/dual_world/KitchenOrderReplay.gd")
 const ENTER_AZ := 0.12       # 与走廊镜头一致，换场时视角不跳
 const ENTER_PITCH := 1.0
 const ENTER_DIST := 7.4
@@ -37,6 +38,7 @@ var _hover := -1
 var _busy_item := -1
 var _prompt: Label
 var _hint: Label
+var _order_replay: Node = null
 
 
 func begin(h: Control) -> bool:
@@ -56,6 +58,18 @@ func begin(h: Control) -> bool:
 	focus = _goal_focus()
 	host._update_camera()
 	return true
+
+
+## 首个乙区推演证物齐全时，以房间内的动作复演替代抽象多选题。
+func begin_order_replay(did: String) -> bool:
+	if not active or did != "ded_drag": return false
+	if _order_replay != null and is_instance_valid(_order_replay) and _order_replay.active: return true
+	_order_replay = OrderReplay.new()
+	add_child(_order_replay)
+	if _order_replay.begin(host, did): return true
+	_order_replay.queue_free()
+	_order_replay = null
+	return false
 
 
 ## 侦探从门外走进来：和房间之间换场（_transit_swap）用的是同一扇门、同一条路线。
@@ -103,7 +117,13 @@ func _step_free(delta: float) -> void:
 	if show_prompt:
 		_prompt.text = "E  ·  %s「%s」" % ["复查" if _seen(_items[near]) else "查看", str(_items[near].label)]
 	for i in _items.size():
-		(_items[i].tag as Label3D).visible = i == _hover or i == near
+		# 近距离时底部 E 提示已经给出名称；3D 名牌只跟随鼠标悬停，避免压住角色与动作。
+		(_items[i].tag as Label3D).visible = i == _hover and i != near
+	if _hint != null:
+		var seen_count := 0
+		for item in _items:
+			if _seen(item): seen_count += 1
+		_hint.text = "现场线索 %d/7　·　WASD/方向键移动（W = 屏幕向上）　·　点击证物或靠近按 E 查看　·　右键转视角　·　Esc 切换界面" % seen_count
 	if _hint != null and _free_t > 14.0:
 		_hint.modulate.a = move_toward(_hint.modulate.a, 0.0, delta * 0.3)
 	_maybe_finish()
@@ -360,6 +380,7 @@ func _cleanup() -> void:
 ## 交还完整界面：与卧室的 _end 一致，恢复顶栏 / 左卡并重新取景。
 func end() -> void:
 	if not active: return
+	if _order_replay != null and is_instance_valid(_order_replay) and _order_replay.active: _order_replay.stop()
 	active = false
 	phase = "off"
 	_cleanup()

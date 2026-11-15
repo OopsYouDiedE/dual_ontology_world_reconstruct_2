@@ -1585,6 +1585,9 @@ func _watch_room_change() -> void:
 				det_done = Callable()
 			else: _transit.to = eng.s.room
 		return
+	# 厨房漫游只属于 B-P；剧情/搜证一旦离开，先交还常规场景 UI 与导航。
+	if kitchen != null and kitchen.active and str(eng.s.room) != KitchenExploration.ROOM:
+		kitchen.end()
 	if eng.s.room != _room_loaded: _begin_transit(str(eng.s.room))
 
 
@@ -2219,6 +2222,8 @@ func _choice_style(b: Button) -> void:
 
 
 func _modal_deduction(did: String) -> void:
+	# ded_drag 仍由 DualEngine 持有证物门槛与结果；正式厨房里改用角色动作复演确认先后。
+	if kitchen != null and kitchen.active and kitchen.begin_order_replay(did): return
 	var dd: Dictionary = data.deduction_by_id[did]
 	var v := _modal_shell("案卷推演 · " + str(dd.title), str(dd.prompt))
 	# 推演说明：让玩家明白「为什么现在弹推演」以及「证物不够会怎样」

@@ -789,7 +789,8 @@ func process_beats() -> void:
 			if str(s.get("story_gate", {}).get("beat", "")) != str(b.id):
 				s.story_gate = {"beat": b.id, "room": target_room}
 				s.t = float(b.at)
-				notice("剧情停在现场门口：请亲自前往「%s」，不会自动切图。" % d.room_by_id[target_room].label if d.room_by_id.has(target_room) else "请前往剧情现场。")
+				var destination := str(d.room_by_id[target_room].label) if d.room_by_id.has(target_room) else "剧情现场"
+				notice("前往 " + destination.left(12))
 			break
 		if not s.get("story_gate", {}).is_empty() and str(s.story_gate.get("beat", "")) == str(b.id):
 			s.story_gate = {}

@@ -16,6 +16,7 @@ import sys
 from urllib.parse import quote, unquote, urlsplit
 
 import yaml
+from mainline_reviews import load_reviews
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "mcp"))
@@ -50,6 +51,7 @@ def local_path(value: str, source: Path) -> Path | None:
         value = value[6:]
     if value.startswith(("http://", "https://", "#")):
         return None
+    value = re.sub(r":\d+$", "", value)
     candidates = [Path(value)] if Path(value).is_absolute() else [source.parent / value, ROOT / value]
     for candidate in candidates:
         if candidate.exists() and candidate.resolve().is_relative_to(ROOT):
@@ -133,7 +135,7 @@ def markdown_html(text: str, source: Path, page: Path) -> str:
 
 
 def wrap(title: str, content: str, page: Path, subtitle: str = "") -> str:
-    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)} · 交互测试</title><style>{CSS}</style></head><body><header><div class="eyebrow">DUAL ONTOLOGY · EVIDENCE REVIEW</div><h1>{escape(title)}</h1><p class="lede">{escape(subtitle)}</p><nav>{link(OUT / 'index.html', '评分总览', page)}{link(OUT / '评分总览.md', 'Markdown 总览', page)}{link(OUT / 'score_records.json', '结构化记录', page)}</nav></header><main>{content}<footer>导出于 {datetime.now().astimezone().isoformat(timespec='seconds')} · 原始采集与报告保留原文件。此页面支持直接打开和打印。</footer></main><div id="lightbox" class="lightbox" hidden><button class="close" type="button">关闭 · Esc</button><img alt="证据原图"></div><script>{JS}</script></body></html>'''
+    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)} · 场景评分</title><style>{CSS}</style></head><body><header><div class="eyebrow">DUAL ONTOLOGY · EVIDENCE REVIEW</div><h1>{escape(title)}</h1><p class="lede">{escape(subtitle)}</p><nav>{link(OUT / 'gameplay.html', '游戏场景评分', page)}{link(OUT / 'index.html', '全部评分与报告', page)}{link(OUT / '评分总览.md', 'Markdown 总览', page)}{link(OUT / 'score_records.json', '结构化记录', page)}</nav></header><main>{content}<footer>导出于 {datetime.now().astimezone().isoformat(timespec='seconds')} · 原始采集与报告保留原文件。此页面支持直接打开和打印。</footer></main><div id="lightbox" class="lightbox" hidden><button class="close" type="button">关闭 · Esc</button><img alt="证据原图"></div><script>{JS}</script></body></html>'''
 
 
 def image_figure(path: Path, page: Path, caption: str = "") -> str:
@@ -219,6 +221,116 @@ def linked_markdown(text: str, source: Path) -> str:
             return match.group()
         return f'{prefix}[{label}](<{resolved.as_posix()}>)'
     return re.sub(r'(!?)\[([^\]]*)\]\((<?[^)]+>?)\)', replace, text)
+
+
+def review_timeline(scene: dict, history: list[dict], page: Path) -> tuple[str, str]:
+    label = scene['label']
+    body = '<section id="trajectory-' + escape(scene['id']) + '"><h2>' + escape(label) + ' · 迭代轨迹</h2>'
+    md = '\n## ' + label + ' · 迭代轨迹\n'
+    if not history:
+        return body + '<p class="muted">待独立 Terra 抵达该主线段落。</p></section>', md + '\n待独立 Terra 抵达该主线段落。\n'
+    previous = None
+    for record in history:
+        title = record['observed_at'] + ' · ' + record['revision'][:8] + ' · ' + record['status']
+        body += '<article class="trajectory-entry"><h3>' + escape(title) + '</h3><p class="meta">' + escape(record['reviewer'] + ' / ' + record['source']['session_id']) + '</p>'
+        body += '<div class="scroll"><table><tr>' + ''.join('<th>' + d + '</th>' for d in DIMENSIONS) + '</tr><tr>'
+        md += '\n### ' + title + '\n\n| ' + ' | '.join(DIMENSIONS) + ' |\n|' + ' --- |' * 7 + '\n| '
+        for index, score in enumerate(record['scores']):
+            css = '' if score is None else 'ok' if score >= 8 else 'fail'
+            delta = ''
+            if previous and score is not None and previous['scores'][index] is not None:
+                difference = score - previous['scores'][index]
+                delta = f' ({difference:+g})'
+            text = '待评' if score is None else str(score) + delta
+            body += '<td><span class="score ' + css + '">' + escape(text) + '</span></td>'
+            md += text + ' | '
+        md += '\n'
+        body += '</tr></table></div>'
+        if record.get('summary'):
+            body += '<p>' + escape(record['summary']) + '</p>'
+            md += '\n' + record['summary'] + '\n'
+        body += '<ul>' + ''.join('<li>' + escape(d + '：' + str(reason)) + '</li>' for d, reason in zip(DIMENSIONS, record['score_reasons']) if reason) + '</ul>'
+        for dimension, reason in zip(DIMENSIONS, record['score_reasons']):
+            if reason: md += '\n- ' + dimension + '：' + str(reason)
+        images = [ROOT / image['path'] for image in record['images']]
+        if previous:
+            before = ROOT / previous['images'][-1]['path']
+            body += '<div class="compare">' + image_figure(before, page, '上一轮 · ' + previous['revision'][:8]) + image_figure(images[0], page, '本轮 · ' + record['revision'][:8]) + '</div>'
+        body += gallery(images, page)
+        for image in record['images']:
+            md += '\n\n![' + image.get('caption', label) + '](<' + (ROOT / image['path']).as_posix() + '>)\n'
+        report = ROOT / record['report']
+        converted = OUT / 'reports' / ('--'.join(report.relative_to(ROOT).with_suffix('').parts[1:]) + '.html')
+        body += '<p class="links">' + link(converted, '完整图文报告', page) + link(report, '原始评审', page) + link(ROOT / record['source']['on_receipt'], '启动回执', page) + link(ROOT / record['source']['start_receipt'], '新游戏回执', page) + '</p></article>'
+        md += '\n[原始评审](<' + report.as_posix() + '>)\n'
+        previous = record
+    return body + '</section>', md
+
+
+def gameplay_pages(records: list[dict]) -> tuple[str, str, list[dict]]:
+    plan = read_json(ROOT / "assets/data/test_scenarios/gameplay_review_plan.json", {"scenes": []})
+    reviews = read_json(ROOT / "artifacts/acceptance/gameplay_reviews.json", {})
+    history = load_reviews(ROOT)
+    page = OUT / "gameplay.html"
+    body = '<section id="gameplay"><h2>第一章 · 游戏场景测试评分</h2>'
+    status = reviews.get("status", "独立 Terra 正在从标题进行实际玩家测试；完整第一章评分尚未交齐。")
+    body += '<p class="note">' + escape(status) + '</p>'
+    body += '<p class="rule">只沿正式标题、新游戏和真实玩家输入评价主线。每段保留所有版本、原图、输入回执、七项分数与原因；待测项随真实测试补齐。</p>'
+    md = "# 第一章游戏场景测试评分\n\n" + status + "\n\n[打开图文 HTML](<" + page.as_posix() + ">)\n\n"
+    header = '| 游戏段落 | ' + ' | '.join(DIMENSIONS) + ' | 测试状态 |\n| --- |' + ' --- |' * 8 + '\n'
+    md += header
+    body += '<div class="scroll"><table class="score-table"><thead><tr><th>游戏段落</th>' + ''.join('<th>' + d + '</th>' for d in DIMENSIONS) + '<th>测试状态</th></tr></thead><tbody>'
+    entries = []
+    by_run = {record['id']: record for record in records}
+    fragments = []
+    for scene in plan.get("scenes", []):
+        versions = [record for record in history if record['segment_id'] == scene['id']]
+        review = versions[-1] if versions else reviews.get("scenes", {}).get(scene["id"], {})
+        scores = review.get("scores", [None] * 7)
+        if len(scores) != 7 or any(s is not None and (isinstance(s, bool) or not isinstance(s, (int, float)) or not 0 <= s <= 10) for s in scores):
+            raise ValueError("Invalid gameplay scores: " + scene['id'])
+        if any(score is not None for score in scores) and not review.get("report"):
+            raise ValueError("Gameplay scores require an independent source report: " + scene['id'])
+        label = scene['label']
+        state = review.get('status', '待独立玩家测试记录')
+        report = local_path(review['report'], ROOT / 'artifacts/acceptance/gameplay_reviews.json') if review.get('report') else None
+        if review.get('report') and report is None:
+            raise ValueError('Missing gameplay review report: ' + scene['id'])
+        body += '<tr><td><a href="#trajectory-' + escape(scene['id']) + '"><b>' + escape(label) + '</b></a><div class="meta">' + escape(' / '.join(scene['rooms'])) + ' · ' + str(len(versions)) + ' 轮</div></td>'
+        for score in scores:
+            cls = '' if score is None else 'ok' if score >= 8 else 'fail'
+            body += f'<td><span class="score {cls}">{score if score is not None else "待评"}</span></td>'
+        body += '<td>' + escape(state) + (('<br>' + link(report, '独立测试报告', page)) if report else '') + '</td></tr>'
+        md += '| ' + label + ' | ' + ' | '.join(str(s) if s is not None else '待评' for s in scores) + ' | ' + state + ' |\n'
+        entries.append({**scene, **review, "scores": scores, "status": state, "history": versions})
+        fragment = by_run.get(scene.get('fragment_run'))
+        if fragment:
+            fragments.append((scene, fragment))
+    body += '</tbody></table></div></section>'
+    for scene in plan.get('scenes', []):
+        section, markdown = review_timeline(scene, [record for record in history if record['segment_id'] == scene['id']], page)
+        body += section
+        md += markdown
+    body += '<section><details><summary>历史辅助采集归档 · 已停止，排除于主线评价</summary><p class="rule">以下旧 Mock 片段保留供追溯。</p>'
+    md += '\n## 历史辅助采集归档（已停止，排除于主线评价）\n\n'
+    for scene, fragment in fragments:
+        body += '<h3>' + escape(scene['label']) + '</h3><div class="scroll"><table><tr>' + ''.join('<th>' + d + '</th>' for d in DIMENSIONS) + '</tr><tr>'
+        for score in fragment['scores']:
+            body += '<td>' + (str(score) if score is not None else '待评') + '</td>'
+        body += '</tr></table></div><ul>' + ''.join('<li>' + escape(d + '：' + reason) + '</li>' for d, reason in zip(DIMENSIONS, fragment['score_reasons']) if reason != '待评') + '</ul>'
+        run = ROOT / fragment['run_path']
+        previews = [ROOT / p for p in fragment['previews']] or sorted(run.rglob('*.png'))[:3]
+        if previews:
+            body += gallery(previews, page)
+        body += '<p>' + link(OUT / 'index.html', '全部指标、原图和报告', page) + '</p>'
+        md += '\n### ' + scene['label'] + '\n\n' + header
+        md += '| ' + scene['label'] + ' | ' + ' | '.join(str(s) if s is not None else '待评' for s in fragment['scores']) + ' | 片段采集 |\n'
+        for preview in previews:
+            md += f'\n![{preview.stem}](<{preview.as_posix()}>)\n'
+    body += '</details></section>'
+    page.write_text(wrap('第一章游戏场景测试评分', body, page, '按实际游戏段落查看测试进度、七项评分与运行画面。'), encoding='utf-8')
+    (OUT / '游戏场景评分.md').write_text(md, encoding='utf-8')
+    return body, md, entries
 
 
 def report_page(source: Path) -> tuple[Path, list[Path]]:
@@ -311,11 +423,12 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     annotations = read_json(ROOT / "artifacts/acceptance/score_annotations.json", {})
     records = collect_runs(annotations.get("annotations", {}))
+    gameplay_body, gameplay_md, gameplay_entries = gameplay_pages(records)
     manifest = read_json(ROOT / "assets/data/test_scenarios/reference_manifest.json", {})
     refs = [r for r in manifest.get("entries", []) if r.get("status") == "ready_for_comparison" and r.get("reference_image")]
     reports = sorted((ROOT / "artifacts/acceptance").rglob("*.md"))
     reports += sorted((ROOT / "artifacts/references").rglob("*.md"))
-    reports += [ROOT / p for p in ("docs/采集路径修复.md", "docs/剧情重构实施状态.md", "docs/第一章可玩版本范围.md")]
+    reports += [ROOT / p for p in ("docs/采集路径修复.md", "docs/剧情重构实施状态.md", "docs/第一章可玩版本范围.md", "docs/主线评分轨迹.md", "docs/代码依赖与清理.md")]
     converted = []
     for source in reports:
         if source.is_file():
@@ -323,13 +436,13 @@ def main() -> int:
             converted.append({"source":source.relative_to(ROOT).as_posix(),"html":page.relative_to(ROOT).as_posix(),"markdown":page.with_suffix('.md').relative_to(ROOT).as_posix(),"images":len(images)})
     data = {"schema_version":1,"generated_at":datetime.now().astimezone().isoformat(timespec="seconds"),"dimensions":DIMENSIONS,"overall_passed":False,
             "scoring_basis":"Threshold entries recomputed from archived CSV/YAML/audio. Subjective missing reviews remain null. Visual-only blind scores are separate from audiovisual narrative acceptance.",
-            "runs":records,"text_exemptions":read_json(ROOT/'assets/data/test_scenarios/text_exemptions.json'),"converted_reports":converted,"references_ready":len(refs),"references_accepted":0}
+            "runs":records,"gameplay_scenes":gameplay_entries,"text_exemptions":read_json(ROOT/'assets/data/test_scenarios/text_exemptions.json'),"converted_reports":converted,"references_ready":len(refs),"references_accepted":0}
     (OUT / "score_records.json").write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding="utf-8")
     page = OUT / "index.html"
     current = [r for r in records if r["scope"]=="current"]
-    body = '<div class="stats">' + ''.join(f'<div class="stat"><b>{v}</b><span>{k}</span></div>' for k,v in [("当前采集会话",len(current)),("已导出报告",len(converted)),("可比较参考图",len(refs)),("七项全部通过",0)]) + '</div>'
+    body = gameplay_body + '<div class="stats">' + ''.join(f'<div class="stat"><b>{v}</b><span>{k}</span></div>' for k,v in [("当前采集会话",len(current)),("已导出报告",len(converted)),("可比较参考图",len(refs)),("七项全部通过",0)]) + '</div>'
     body += '<section id="scores"><h2>七项评分记录</h2><p class="rule">绿色为单项阈值满足，红色为已确认失败，灰色为待评。字数来自后台采样；视听盲测、美学相似度与剧情评审保留待评。总体验收持续进行。</p><div class="toolbar"><input id="search" aria-label="搜索场景" placeholder="搜索场景或采集批次"><select id="scope" aria-label="记录范围"><option value="all">全部记录</option><option value="current">当前使用</option><option value="history">历史复采 / 缺项记录</option></select></div><div class="scroll"><table class="score-table"><thead><tr><th>场景 / 采集批次</th>' + ''.join(f'<th>{d}</th>' for d in DIMENSIONS) + '<th>状态</th></tr></thead><tbody>'
-    md = "# 采集与评分总览\n\n更新：" + data["generated_at"] + "\n\n[打开 HTML 总览](<" + page.as_posix() + ">)\n\n已确认的阈值分与待评项目分别保留；七项全部通过数：0。\n\n| 场景 | " + " | ".join(DIMENSIONS) + " | 状态 |\n| --- |" + " --- |"*8 + "\n"
+    md = "# 采集与评分总览\n\n更新：" + data["generated_at"] + "\n\n[游戏场景评分](<" + (OUT / '游戏场景评分.md').as_posix() + ">) · [打开 HTML 总览](<" + page.as_posix() + ">)\n\n已确认的阈值分与待评项目分别保留；七项全部通过数：0。\n\n| 场景 | " + " | ".join(DIMENSIONS) + " | 状态 |\n| --- |" + " --- |"*8 + "\n"
     for index, record in enumerate(records):
         record["anchor"] = f"run-{index}"
         scope = "历史" if record["scope"]=="history" else "当前"

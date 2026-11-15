@@ -248,6 +248,22 @@
       "validation": "Production DualWorldMain and dependency Godot --check-only passed; rendered replay pending.",
       "after_evidence": null,
       "acceptance": "pending_independent_real_mainline_review"
+    },
+    {
+      "id": "20261116-parent-evidence-object-07",
+      "changed_side": "object",
+      "character_changed": false,
+      "object_changed": true,
+      "before_evidence": "artifacts/acceptance/oriha-mainline-9743f78/receipts/000043-0.png",
+      "issues": [
+        "Room transform and evidence focus differ by a fixed offset; traces appear outside the original doorway and are occluded."
+      ],
+      "changes": [
+        "Parent each physical detail to the actual original door, window or cloth rack using a local transform instead of a one-time global copy."
+      ],
+      "validation": "Production DualWorldMain and dependency Godot --check-only passed; independent rendered review pending.",
+      "after_evidence": null,
+      "acceptance": "pending_independent_real_mainline_review"
     }
   ]
 }

@@ -52,15 +52,20 @@ func _anchor_to_room(detail: Node3D) -> void:
 	var rack := scene.get_node_or_null("Instances/B_P_cloth_rack_01") as Node3D
 	if is_instance_valid(door):
 		match str(detail.kind):
-			"water": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, 0.015, 0.34))
-			"drag": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, -0.035, 1.0))
-			"boots": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0.95, -0.035, 0.65))
-			"ratchet": detail.global_transform = door.global_transform * Transform3D(Basis.IDENTITY, Vector3(0.65, 0.6, 0.34))
+			"water": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0, 0.015, 0.34)))
+			"drag": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0, -0.035, 1.0)))
+			"boots": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0.95, -0.035, 0.65)))
+			"ratchet": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0.65, 0.6, 0.34)))
 	if str(detail.kind) == "seal" and is_instance_valid(window):
-		detail.global_transform = window.global_transform * Transform3D(Basis.IDENTITY, Vector3(0, 0.45, 0.12))
+		_attach_detail(detail, window, Transform3D(Basis.IDENTITY, Vector3(0, 0.45, 0.12)))
 	if str(detail.kind) == "cloth" and is_instance_valid(rack):
-		detail.global_transform = rack.global_transform * Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0, 1.3, 0.16))
+		_attach_detail(detail, rack, Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0, 1.3, 0.16)))
 		detail.set_meta("camera_offset", Vector3(0.35, 0.75, -0.55))
+
+func _attach_detail(detail: Node3D, original: Node3D, local_transform: Transform3D) -> void:
+	# Keep the detail in the original object's coordinate system across room reparenting.
+	if detail.get_parent() != original: detail.reparent(original, false)
+	detail.transform = local_transform
 
 func sync_markers() -> void:
 	for kind in presentations:

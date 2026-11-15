@@ -169,6 +169,11 @@ static func visible_text(root: Node) -> Dictionary:
 
 static func _collect_text(root: Node, strings: Array[String]) -> void:
 	if root == null: return
+	# The closed physical book keeps rendering pages in its own viewport. Those
+	# labels are off screen and must follow the same visibility gate as input.
+	if root is SubViewport and root.has_meta("physical_book_view"):
+		var book: Node = root.get_meta("physical_book_view")
+		if not is_instance_valid(book) or not book.is_active(): return
 	if root is CanvasItem and not root.is_visible_in_tree(): return
 	if root is CanvasItem and root.modulate.a <= 0.001: return
 	if root is Node3D and not root.is_visible_in_tree(): return

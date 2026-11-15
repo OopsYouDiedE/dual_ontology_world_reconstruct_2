@@ -18,6 +18,9 @@ import build_cache
 import linux_display
 import asset_bundle
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import capture_provenance as provenance
+
 ROOT = Path(__file__).resolve().parents[2]
 SESSIONS = {}
 BUILD_LOCK = threading.Lock()
@@ -227,6 +230,11 @@ class Endpoint:
         self.deadline = deadline
         self.stop_lock = threading.RLock()
         self.movie_path = None
+        self.expected_source = provenance.project_identity(ROOT)
+        self.server_source = provenance.server_identity(ROOT, Path(__file__).with_name("server.py"))
+        self.launch_scene = self.expected_source["configured_main_scene"]
+        self.executable = None
+        self.last_source = None
 
     def attach(self, process):
         self.process = process
@@ -254,12 +262,21 @@ class Endpoint:
             response = json.loads(line)
             if response.get("id") != self.serial:
                 raise RuntimeError("Host response id mismatch.")
+            if "error" not in response and self.backend == "godot":
+                provenance.validate_source(response.get("result", {}).get("source_identity"), self.expected_source,
+                    pid=self.process.pid, executable=self.executable, launch_scene=self.launch_scene)
         except (queue.Empty, TimeoutError, OSError, ValueError, RuntimeError) as error:
             self.stop()
             raise RuntimeError("Host request failed; session closed to prevent duplicate actions. " + str(error)) from error
         if "error" in response:
             raise RuntimeError(str(response["error"]))
         result = response["result"]
+        if isinstance(result, dict):
+            if self.backend == "cli":
+                result["source_identity"] = dict(self.expected_source, process_id=self.process.pid,
+                    executable_path=self.executable, verification="server-bound-process")
+            self.last_source = result.get("source_identity")
+            result["server_identity"] = self.server_source
         if self.backend == "godot":
             result["host_errors"] = [line for line in self.logs if "ERROR:" in line or "SCRIPT ERROR" in line]
         return result
@@ -278,6 +295,15 @@ class Endpoint:
                     if stream: stream.close()
 
 
+def _movie_hash(path):
+    import hashlib
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def start(arguments, deadline=None):
     mode = arguments.get("mode", "cli_ai")
     controller = arguments.get("controller", "ai" if mode in ("cli_auto", "godot_auto") else "player")
@@ -288,7 +314,7 @@ def start(arguments, deadline=None):
     endpoint = Endpoint(mode, controller, deadline)
     movie_filename = arguments.get("movie_filename")
     if movie_filename is not None:
-        if endpoint.backend != "godot" or mode != "godot_manual":
+        if endpoint.backend != "godot" or mode not in ("godot_manual", "scene"):
             raise ValueError("Movie capture is available only for formal Godot input sessions.")
         if not arguments.get("background_capture", True):
             raise ValueError("Movie capture requires background_capture=true.")
@@ -304,19 +330,36 @@ def start(arguments, deadline=None):
             raise ValueError("Movie directory must remain inside the project.")
         movie_directory.mkdir(parents=True, exist_ok=True)
         endpoint.movie_path = movie_directory / movie_filename
+    elif "movie_fps" in arguments:
+        raise ValueError("movie_fps requires movie_filename.")
+    fixture_options = []
+    if "test_config" in arguments or "test_suite" in arguments:
+        if mode != "scene" or arguments.get("scene") not in ("res://tools/testing/StoryTest.tscn", "res://tools/testing/InteractionLab.tscn"):
+            raise ValueError("Test options require an explicit workbench scene.")
+        if arguments.get("test_config"):
+            fixture = provenance.project_path(arguments["test_config"], ROOT)
+            if not fixture.is_file() or fixture.suffix.lower() not in (".yaml", ".yml", ".json"):
+                raise ValueError("test_config must name an existing project-local YAML/JSON file.")
+            fixture_options.append("--scenario=" + str(fixture))
+        if arguments.get("test_suite"):
+            if arguments["test_suite"] not in ("interactions", "lighting", "building"):
+                raise ValueError("Unknown fixture test suite.")
+            fixture_options.append("--test-suite=" + arguments["test_suite"])
+        fixture_options.append("--test-output=" + str(provenance.project_path(".runtime/test-runs/mcp-" + endpoint.token, ROOT)))
+    endpoint.content_path = str(provenance.project_path(arguments.get("content_path", endpoint.content_path), ROOT, allow_external=True))
+    backend = endpoint.backend
+    # Validate fixture/content options before reserving an output file.
+    if endpoint.movie_path:
         try:
             descriptor = os.open(endpoint.movie_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         except FileExistsError as error:
             raise ValueError("Movie file already exists; choose a new name.") from error
         os.close(descriptor)
-    elif "movie_fps" in arguments:
-        raise ValueError("movie_fps requires movie_filename.")
-    endpoint.content_path = str(Path(arguments.get("content_path", endpoint.content_path)).resolve())
-    backend = endpoint.backend
     try:
         output_directory = build(backend, deadline)
         if backend == "cli":
-            endpoint.attach(spawn([resolve_dotnet(deadline=deadline), output_directory / "DuelView.Cli.dll"],
+            endpoint.executable = resolve_dotnet(deadline=deadline)
+            endpoint.attach(spawn([endpoint.executable, output_directory / "DuelView.Cli.dll"],
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
             open_options = {
                 "controller": controller, "viewer": arguments.get("viewer", "detective"),
@@ -324,14 +367,15 @@ def start(arguments, deadline=None):
                 "campaign": {"seed": arguments.get("seed", 1)}, "content_path": endpoint.content_path,
                 "audit": False, "developer": False}
             if arguments.get("receipt_path"):
-                open_options["receipt_path"] = str(Path(arguments["receipt_path"]).resolve())
+                open_options["receipt_path"] = str(provenance.project_path(arguments["receipt_path"], ROOT))
             observation = endpoint.request({"type": "open", "options": open_options})
         else:
             with socket.socket() as reservation:
                 reservation.bind(("127.0.0.1", 0))
                 port = reservation.getsockname()[1]
             # Use the project's renderer, matching editor and exported gameplay.
-            command = [resolve_godot(deadline=deadline), "--path", ROOT / "."]
+            endpoint.executable = provenance.host_executable(resolve_godot(deadline=deadline))
+            command = [endpoint.executable, "--path", ROOT]
             if endpoint.movie_path:
                 command += ["--write-movie", endpoint.movie_path, "--fixed-fps", str(arguments.get("movie_fps", 30))]
             if arguments.get("background_capture", True):
@@ -344,17 +388,20 @@ def start(arguments, deadline=None):
                 if path.suffix != ".tscn" or not path.is_file():
                     raise ValueError("scene must name an existing scenes/*.tscn resource.")
                 command.append("res://" + path.relative_to(ROOT / ".").as_posix())
+                endpoint.launch_scene = command[-1]
             elif scene:
                 raise ValueError("scene is only accepted in mode=scene.")
             # The opt-in GameMcp autoload is available in every production scene.
             command += ["--", f"--dv-mcp-port={port}", f"--dv-mcp-token={endpoint.token}",
                         f"--dv-controller={controller}", f"--dv-seed={arguments.get('seed', 1)}",
                         "--dv-viewer=" + arguments.get("viewer", "detective")]
+            command.append("--dv-launch-scene=" + endpoint.launch_scene)
             command.append("--dv-content=" + endpoint.content_path)
             save_slot = arguments.get("save_slot", endpoint.token)
             if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", save_slot):
                 raise ValueError("Invalid save slot")
             command.append("--dv-save-slot=" + save_slot)
+            command.extend(fixture_options)
             if arguments.get("background_capture", True):
                 command.append("--dv-background-capture")
             else:
@@ -405,17 +452,24 @@ def execute(name, arguments):
             finally:
                 endpoint.stop()
                 SESSIONS.pop(identity, None)
-            result = {"session_id": identity, "closed": True, "graceful_exit": graceful}
+            result = {"session_id": identity, "closed": True, "graceful_exit": graceful,
+                      "source_identity": endpoint.last_source, "server_identity": endpoint.server_source}
             if endpoint.movie_path:
                 result.update(movie_path=str(endpoint.movie_path),
                               movie_finalized=graceful and endpoint.movie_path.is_file() and endpoint.movie_path.stat().st_size > 0,
                               movie_bytes=endpoint.movie_path.stat().st_size if endpoint.movie_path.is_file() else 0)
+                if result["movie_finalized"]:
+                    digest = _movie_hash(endpoint.movie_path)
+                    result["movie_sha256"] = digest
+                    sidecar = dict(result, capture_kind="fixed-step-runtime-video", realtime_performance_eligible=False,
+                                   movie_timing="Godot Movie Maker fixed-step; use for motion/narrative evidence")
+                    endpoint.movie_path.with_suffix(".avi.json").write_text(json.dumps(sidecar, ensure_ascii=False, indent=2), encoding="utf-8")
             return result
         operation = dict(arguments.get("operation", {})) if name == "step" else {"type": "observe"}
         if endpoint.backend == "cli":
             if operation.get("type") not in ("select", "advance", "observe", "case_reasoning"):
                 raise ValueError("CLI operations: select(choice_id), advance(steps), observe.")
-        elif operation.get("type") not in ("start", "load", "select", "input_action", "click", "observe", "reload_content", "case_reasoning", "character"):
+        elif operation.get("type") not in ("start", "load", "select", "input_action", "click", "drag", "observe", "reload_content", "case_reasoning", "character"):
             raise ValueError("Godot operations: start, select(choice_id), input_action(action,frames), click(x,y), observe.")
         if operation.get("type") == "case_reasoning":
             query = json.loads(operation.get("case_request", "{}"))

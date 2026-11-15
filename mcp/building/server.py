@@ -1,5 +1,6 @@
 """Project-local Godot MCP input: real host, real UI, original receipts; no C# build."""
 import asyncio
+import argparse
 import atexit
 import base64
 import json
@@ -8,6 +9,7 @@ from pathlib import Path
 import secrets
 import socket
 import subprocess
+import sys
 import threading
 import time
 
@@ -16,14 +18,17 @@ from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "mcp"))
+import capture_provenance as provenance
 SESSIONS = {}
+BUILDING_SCENE = 'res://tools/building_construction/BuildingSimulator.tscn'
 
 
 class Host:
     def __init__(self):
         self.identity = secrets.token_hex(8)
         self.token = secrets.token_hex(32)
-        self.directory = ROOT / '.runtime' / 'mcp-runs' / self.identity
+        self.directory = provenance.project_path(ROOT / '.runtime' / 'mcp-runs' / self.identity, ROOT)
         self.directory.mkdir(parents=True, exist_ok=False)
         self.process = None
         self.connection = None
@@ -31,6 +36,9 @@ class Host:
         self.logs = []
         self.lock = threading.Lock()
         self.sequence = 0
+        self.expected_source = provenance.project_identity(ROOT)
+        self.server_source = provenance.server_identity(ROOT, __file__)
+        self.executable = None
 
     def request(self, operation):
         with self.lock:
@@ -43,6 +51,13 @@ class Host:
             response = json.loads(line)
             if response.get('id') != self.sequence:
                 raise RuntimeError('Godot response ID mismatch')
+            if 'error' not in response:
+                try:
+                    provenance.validate_source(response.get('result', {}).get('source_identity'), self.expected_source,
+                        pid=self.process.pid, executable=self.executable, launch_scene=BUILDING_SCENE)
+                except ValueError:
+                    self.stop()
+                    raise
             receipt = dict(response)
             if isinstance(receipt.get('result'), dict):
                 receipt['result'] = {k: v for k, v in receipt['result'].items() if k != 'image_base64'}
@@ -50,6 +65,7 @@ class Host:
             if 'error' in response:
                 raise RuntimeError(response['error'])
             result = response['result']
+            result['server_identity'] = self.server_source
             result.update(session_id=self.identity, host_errors=[x for x in self.logs if 'ERROR:' in x or 'SCRIPT ERROR' in x])
             return result
 
@@ -74,24 +90,29 @@ class Host:
 
 
 def on(arguments):
-    executable = next(iter(sorted((ROOT / '.runtime/godot').glob('*/Godot*_console.exe'))), None)
+    # Use the production .NET resolver; never silently pick a different engine.
+    sys.path.insert(0, str(ROOT / 'mcp/game'))
+    from environment import resolve_godot
+    executable = provenance.host_executable(resolve_godot())
     if executable is None:
         raise RuntimeError('Project-local Godot .NET executable is missing')
     host = Host()
+    host.executable = executable
     try:
         command = [str(executable), '--headless', '--path', str(ROOT), '--editor', '--import', '--quit']
-        built = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf-8', errors='replace', timeout=120, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        built = subprocess.run(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf-8', errors='replace', timeout=120, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
         (host.directory / 'import.log').write_text('COMMAND ' + ' '.join(command) + '\n' + built.stdout + '\nEXIT ' + str(built.returncode), encoding='utf-8')
         if built.returncode or 'SCRIPT ERROR:' in built.stdout:
             raise RuntimeError('Godot import failed: ' + built.stdout[-6000:])
         with socket.socket() as reservation:
             reservation.bind(('127.0.0.1', 0))
             port = reservation.getsockname()[1]
-        command = [str(executable), '--path', str(ROOT)]
+        command = [str(executable), '--path', str(ROOT), BUILDING_SCENE]
         if arguments.get('background_capture', True):
             command += ['--windowed', '--position', '-32000,-32000']
-        command += ['--', '--building-mcp-port=' + str(port), '--building-mcp-token=' + host.token, '--building-mcp-receipts=' + str(host.directory)]
-        host.process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf-8', errors='replace', creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        command += ['--', '--building-mcp-port=' + str(port), '--building-mcp-token=' + host.token,
+                    '--building-mcp-receipts=' + str(host.directory), '--building-launch-scene=' + BUILDING_SCENE]
+        host.process = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf-8', errors='replace', creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
         threading.Thread(target=host.collect, daemon=True).start()
         deadline = time.monotonic() + 30
         while True:
@@ -169,4 +190,8 @@ def cleanup():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--expected-project-root')
+    options = parser.parse_args()
+    provenance.assert_root(ROOT, options.expected_project_root)
     asyncio.run(main())

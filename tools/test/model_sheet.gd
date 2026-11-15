@@ -1,6 +1,7 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## 模型检查表：四个人物并排，指定姿态与视角，输出 PNG。
-## 用法：godot --path . -s tools/test/model_sheet.gd -- pose=stand yaw=0 out=/tmp/shots/a.png
+## 用法：godot --path . -s tools/test/model_sheet.gd -- pose=stand yaw=0 out=.runtime/screens/a.png
 const Data := preload("res://scenes/dual_world/DualData.gd")
 const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
 const ImportedFix := preload("res://scenes/components/characters/RigWeightFix.gd")
@@ -13,7 +14,7 @@ func _arg(k: String, d: String) -> String:
 func _initialize() -> void:
 	var pose := _arg("pose", "stand")
 	var yaw := float(_arg("yaw", "0"))
-	var out := _arg("out", "/tmp/shots/sheet.png")
+	var out := _arg("out", ".runtime/screens/sheet.png")
 	var ids := _arg("ids", "detective,huo,shen,su").split(",")
 	var zoom := float(_arg("zoom", "1"))
 	var data = Data.get_data()
@@ -58,7 +59,7 @@ func _initialize() -> void:
 	var t0 := Time.get_ticks_msec()
 	while (Time.get_ticks_msec() - t0) < t * 1000.0: await process_frame
 	var img := root.get_texture().get_image()
-	img.save_png(out)
+	if not CaptureReceipt.save(img, out, self): quit(1); return
 	print("saved ", out, " ", img.get_size(), " fix=", ImportedFix.report.keys().size())
 	for k in ImportedFix.report: print("  ", k.get_file(), ImportedFix.report[k])
 	quit()

@@ -17,10 +17,10 @@ const PAGES := [
 ]
 const LEFT_HALF := Rect2(0.0, 0.0, 0.5, 1.0)
 const RIGHT_HALF := Rect2(0.5, 0.0, 0.5, 1.0)
-const INK := Color("2b1d14")
-const ACCENT := Color("7a2318")
-const FAINT := Color(0.24, 0.15, 0.10, 0.85)
-const CREAM := Color("f1e6cc")
+const INK := Color("241d14")
+const ACCENT := Color("694d2e")
+const FAINT := Color(0.33, 0.28, 0.22, 0.88)
+const CREAM := Color("eae0c4")
 const NUMERALS := ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
 
 @onready var page_viewport: SubViewport = $PageViewport

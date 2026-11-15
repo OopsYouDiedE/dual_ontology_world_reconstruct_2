@@ -16,15 +16,18 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "mcp"))
+import capture_provenance as provenance
 PYTHON = Path(sys.executable)
 ALLOWED = {"on", "step", "observe", "close"}
 
 
 async def main():
-    receipt_dir = ROOT / ".runtime" / "input-client" / secrets.token_hex(8)
+    expected = provenance.project_identity(ROOT)
+    receipt_dir = provenance.project_path(ROOT / ".runtime" / "input-client" / secrets.token_hex(8), ROOT)
     receipt_dir.mkdir(parents=True, exist_ok=False)
     parameters = StdioServerParameters(command=str(PYTHON),
-        args=[str(ROOT / "mcp/game/server.py"), "--service", "input"], cwd=str(ROOT), env=os.environ.copy())
+        args=[str(ROOT / "mcp/game/server.py"), "--service", "input", "--expected-project-root", str(ROOT)], cwd=str(ROOT), env=os.environ.copy())
     current = None
     index = 0
     async with stdio_client(parameters) as (reader, writer):
@@ -32,7 +35,7 @@ async def main():
             await client.initialize()
             tools = await client.list_tools()
             print(json.dumps({"ready": True, "receipt_directory": str(receipt_dir),
-                "tools": [tool.name for tool in tools.tools]}), flush=True)
+                "expected_project": expected, "tools": [tool.name for tool in tools.tools]}), flush=True)
             try:
                 while True:
                     line = await asyncio.to_thread(sys.stdin.readline)
@@ -54,12 +57,16 @@ async def main():
                             arguments = dict(arguments, session_id=current)
                         result = await client.call_tool(tool, arguments)
                         index += 1
+                        data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
+                        if not result.isError:
+                            provenance.validate_source(data.get("source_identity"), expected)
                         images = []
                         for block in result.content:
                             if block.type == "image":
                                 suffix = ".png" if block.mimeType == "image/png" else ".jpg"
                                 image_path = receipt_dir / f"{index:06d}-{len(images)}{suffix}"
                                 image_path.write_bytes(base64.b64decode(block.data, validate=True))
+                                provenance.save_image_sidecar(image_path, data)
                                 images.append(str(image_path))
                         payload = {"tool": tool, "is_error": bool(result.isError),
                             "data": result.structuredContent,
@@ -75,7 +82,7 @@ async def main():
                         data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
                         summary = {"tool": tool, "is_error": bool(result.isError), "session_id": current,
                             "receipt": str(receipt), "images": images}
-                        for key in ("started", "busy", "scene", "observation_path", "host_errors",
+                        for key in ("started", "busy", "scene", "observation_path", "host_errors", "source_identity", "server_identity",
                                     "closed", "graceful_exit", "movie_path", "movie_finalized", "movie_bytes"):
                             if key in data:
                                 summary[key] = data[key]

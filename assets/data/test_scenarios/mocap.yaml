@@ -1,0 +1,7 @@
+schema_version: 1
+id: mocap-walk-pipeline
+mode: mocap
+root-policy: grounded
+motion: res://.runtime/mocap/runs/opencv-front-01/motion.json
+time: {day: 1, hour: 8, minute: 0}
+mock: {}

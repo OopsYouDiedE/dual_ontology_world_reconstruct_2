@@ -1,0 +1,7 @@
+schema_version: 1
+id: lighting
+mode: lighting
+room: R05
+time: {day: 1, hour: 8, minute: 0}
+weather: clear
+mock: {}

@@ -12,6 +12,10 @@ const EYE_HEIGHT := 1.15
 const KAYKIT_THREE_HEAD_SCALE := 0.58
 const RETARGET_SAMPLE_FPS := 24.0
 const ARM_LATERAL_SWING_RATIO := 0.55
+## Disk cache entries are immutable and keyed by every input that changes a retargeted clip.
+## They live under user:// so exported games can reuse a completed build across launches.
+const RETARGET_CACHE_SCHEMA := 2
+const RETARGET_CACHE_DIR := "user://mixamo-retarget-cache-v2"
 const ARM_CHAIN_ROOT := {
 	"upperarm.l": "upperarm.l", "lowerarm.l": "upperarm.l", "hand.l": "upperarm.l",
 	"upperarm.r": "upperarm.r", "lowerarm.r": "upperarm.r", "hand.r": "upperarm.r"
@@ -51,7 +55,27 @@ static var _retargeted_lib_cache: Dictionary = {}
 static var retarget_builds := 0
 static var retarget_cache_hits := 0
 static var retarget_build_usec := 0
+static var retarget_disk_cache_hits := 0
+static var retarget_disk_cache_hit_usec := 0
+static var retarget_cache_writes := 0
+static var retarget_cache_invalidations := 0
+static var retarget_last_cache_key := ""
 static var _figurine_material_cache: Dictionary = {}
+
+static func get_retarget_cache_stats() -> Dictionary:
+	return {
+		"builds": retarget_builds,
+		"memory_hits": retarget_cache_hits - retarget_disk_cache_hits,
+		"disk_hits": retarget_disk_cache_hits,
+		"build_usec": retarget_build_usec,
+		"disk_hit_usec": retarget_disk_cache_hit_usec,
+		"writes": retarget_cache_writes,
+		"invalidations": retarget_cache_invalidations,
+		"last_cache_key": retarget_last_cache_key
+	}
+
+static func clear_retarget_memory_cache() -> void:
+	_retargeted_lib_cache.clear()
 
 static func resolve_model_path(path: String, _character_id: String = "") -> String:
 	return path
@@ -214,18 +238,33 @@ static func _get_source_rig_data() -> Dictionary:
 	return _source_rig_data
 
 static func _get_or_build_mixamo_library(skel_t: Skeleton3D, skel_rel_path: String, yaw_degrees: float, _resolved_path: String) -> AnimationLibrary:
-	var signature: Array = [skel_rel_path, yaw_degrees]
+	var target_signature: Array = [skel_rel_path, yaw_degrees]
 	for index in skel_t.get_bone_count():
-		signature.append([skel_t.get_bone_name(index), skel_t.get_bone_parent(index), skel_t.get_bone_rest(index)])
-	var cache_key := var_to_bytes(signature).hex_encode().sha256_text()
-	if _retargeted_lib_cache.has(cache_key):
+		target_signature.append([skel_t.get_bone_name(index), skel_t.get_bone_parent(index), skel_t.get_bone_rest(index)])
+	var memory_key := var_to_bytes(target_signature).hex_encode().sha256_text()
+	if _retargeted_lib_cache.has(memory_key):
 		retarget_cache_hits += 1
-		return _retargeted_lib_cache[cache_key]
+		return _retargeted_lib_cache[memory_key]
 	var build_started := Time.get_ticks_usec()
 
+	var cache_key := _retarget_cache_key(target_signature, _resolved_path)
+	retarget_last_cache_key = cache_key
+	if _retarget_disk_cache_enabled():
+		var disk_cached := _load_retarget_disk_cache(cache_key)
+		if disk_cached != null:
+			_cache_retargeted_library(memory_key, disk_cached)
+			retarget_cache_hits += 1
+			retarget_disk_cache_hits += 1
+			retarget_disk_cache_hit_usec += Time.get_ticks_usec() - build_started
+			return disk_cached
 	var src_lib: AnimationLibrary = ANIM_LIB_HELPER.get_library()
+	if src_lib == null:
+		return null
+	# Loading the source may create its generated library on the first run.
+	cache_key = _retarget_cache_key(target_signature,_resolved_path)
+	retarget_last_cache_key = cache_key
 	var src_rig := _get_source_rig_data()
-	if src_lib == null or src_rig.is_empty():
+	if src_rig.is_empty():
 		return null
 
 	var s_order: Array = src_rig["order"]
@@ -342,11 +381,265 @@ static func _get_or_build_mixamo_library(skel_t: Skeleton3D, skel_rel_path: Stri
 			var alias_anim: Animation = (built_clips[base_name] as Animation).duplicate(false)
 			dst_lib.add_animation(alias_name, alias_anim)
 
-	if _retargeted_lib_cache.size() >= 64: _retargeted_lib_cache.erase(_retargeted_lib_cache.keys()[0])
-	_retargeted_lib_cache[cache_key] = dst_lib
+	if _retarget_disk_cache_enabled():
+		_store_retarget_disk_cache(cache_key, dst_lib)
+	_cache_retargeted_library(memory_key, dst_lib)
 	retarget_builds += 1
 	retarget_build_usec += Time.get_ticks_usec() - build_started
 	return dst_lib
+
+static func _cache_retargeted_library(memory_key: String, library: AnimationLibrary) -> void:
+	if _retargeted_lib_cache.size() >= 64:
+		_retargeted_lib_cache.erase(_retargeted_lib_cache.keys()[0])
+	_retargeted_lib_cache[memory_key] = library
+
+static func _retarget_disk_cache_enabled() -> bool:
+	return not OS.get_cmdline_user_args().has("--animation-retarget-cache-disable=1")
+
+static func _retarget_cache_key(target_signature: Array, resolved_path: String) -> String:
+	var inputs := {
+		"schema": RETARGET_CACHE_SCHEMA,
+		"target_skeleton": target_signature,
+		"target_model_sha256": _resource_sha256(resolved_path),
+		"source_rig_sha256": _resource_sha256(SOURCE_RIG_PATH),
+		"source_library_sha256": _resource_sha256(ANIM_LIB_HELPER.TRES_PATH),
+		"source_animation_inputs_sha256": _source_animation_inputs_sha256(),
+		"retarget_script_sha256": _resource_sha256("res://scenes/components/characters/ImportedCharacter.gd"),
+		"source_library_script_sha256": _resource_sha256("res://scenes/components/characters/KayKitAnimationLibrary.gd"),
+		"parameters": {
+			"sample_fps": RETARGET_SAMPLE_FPS,
+			"arm_lateral_swing_ratio": ARM_LATERAL_SWING_RATIO,
+			"bone_map": MIXAMO_TO_KAYKIT,
+			"arm_chain_root": ARM_CHAIN_ROOT,
+			"aliases": ALIAS_CLIPS
+		}
+	}
+	return var_to_bytes(inputs).hex_encode().sha256_text()
+
+static func _resource_sha256(path: String) -> String:
+	return FileAccess.get_sha256(path) if FileAccess.file_exists(path) else "missing"
+
+static func _source_animation_inputs_sha256() -> String:
+	var source_paths: Array[String] = []
+	for source_path in ANIM_LIB_HELPER.CLIPS_CONFIG.keys():
+		source_paths.append(String(source_path))
+	source_paths.sort()
+	var source_files: Array = []
+	for source_path in source_paths:
+		source_files.append([source_path, _resource_sha256(source_path)])
+	return var_to_bytes([source_files, ANIM_LIB_HELPER.CLIPS_CONFIG]).hex_encode().sha256_text()
+
+static func _retarget_cache_directory() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--animation-retarget-cache-dir="):
+			return argument.trim_prefix("--animation-retarget-cache-dir=").rstrip("/")
+	return RETARGET_CACHE_DIR
+
+static func _retarget_cache_resource_path(cache_key: String) -> String:
+	# Variant serialization preserves sampled Quaternion/Vector3 key values exactly.
+	return _retarget_cache_directory().path_join(cache_key + ".animation-library.bin")
+
+static func _retarget_cache_manifest_path(cache_key: String) -> String:
+	return _retarget_cache_directory().path_join(cache_key + ".manifest.json")
+
+static func _load_retarget_disk_cache(cache_key: String) -> AnimationLibrary:
+	var manifest_path := _retarget_cache_manifest_path(cache_key)
+	var resource_path := _retarget_cache_resource_path(cache_key)
+	var manifest_file := FileAccess.open(manifest_path, FileAccess.READ)
+	if manifest_file == null:
+		return null
+	var parsed: Variant = JSON.parse_string(manifest_file.get_as_text())
+	manifest_file.close()
+	if not (parsed is Dictionary):
+		_invalidate_retarget_disk_cache(cache_key)
+		return null
+	var manifest: Dictionary = parsed
+	if int(manifest.get("schema", -1)) != RETARGET_CACHE_SCHEMA or String(manifest.get("cache_key", "")) != cache_key or String(manifest.get("resource", "")) != resource_path.get_file():
+		_invalidate_retarget_disk_cache(cache_key)
+		return null
+	if not FileAccess.file_exists(resource_path) or String(manifest.get("resource_sha256", "")) != FileAccess.get_sha256(resource_path):
+		_invalidate_retarget_disk_cache(cache_key)
+		return null
+	var cached := read_retarget_library_snapshot(resource_path)
+	if not _is_retargeted_library_complete(cached):
+		_invalidate_retarget_disk_cache(cache_key)
+		return null
+	return cached
+
+static func _is_retargeted_library_complete(candidate: AnimationLibrary) -> bool:
+	if candidate == null:
+		return false
+	for source in ANIM_LIB_HELPER.CLIPS_CONFIG.values():
+		for targets in source.values():
+			for target in targets:
+				var anim := candidate.get_animation(str(target.name))
+				if anim == null or anim.get_track_count() == 0 or anim.loop_mode != int(target.loop):
+					return false
+	for alias_name in ALIAS_CLIPS:
+		if candidate.get_animation(alias_name) == null:
+			return false
+	return true
+
+static func _store_retarget_disk_cache(cache_key: String, library: AnimationLibrary) -> void:
+	var cache_dir_abs := ProjectSettings.globalize_path(_retarget_cache_directory())
+	if DirAccess.make_dir_recursive_absolute(cache_dir_abs) != OK:
+		push_warning("Could not create Mixamo retarget cache directory: " + cache_dir_abs)
+		return
+	if not _acquire_retarget_cache_write_lock(cache_key):
+		return
+	var resource_path := _retarget_cache_resource_path(cache_key)
+	var manifest_path := _retarget_cache_manifest_path(cache_key)
+	if FileAccess.file_exists(resource_path) and _load_retarget_disk_cache(cache_key) != null:
+		_release_retarget_cache_write_lock(cache_key)
+		return
+	_invalidate_retarget_disk_cache(cache_key)
+	var nonce := "%d-%d" % [OS.get_process_id(), Time.get_ticks_usec()]
+	var temp_resource := resource_path + "." + nonce + ".tmp"
+	if write_retarget_library_snapshot(library, temp_resource) != OK:
+		push_warning("Could not save Mixamo retarget cache resource: " + temp_resource)
+		_release_retarget_cache_write_lock(cache_key)
+		return
+	var resource_sha := FileAccess.get_sha256(temp_resource)
+	var temp_manifest := manifest_path + "." + nonce + ".tmp"
+	var manifest_file := FileAccess.open(temp_manifest, FileAccess.WRITE)
+	if manifest_file == null:
+		_remove_file(temp_resource)
+		_release_retarget_cache_write_lock(cache_key)
+		return
+	manifest_file.store_string(JSON.stringify({
+		"schema": RETARGET_CACHE_SCHEMA,
+		"cache_key": cache_key,
+		"resource": resource_path.get_file(),
+		"resource_sha256": resource_sha
+	}, "\t"))
+	manifest_file.close()
+	if not _promote_cache_file(temp_resource, resource_path):
+		_remove_file(temp_manifest)
+		_release_retarget_cache_write_lock(cache_key)
+		return
+	if not _promote_cache_file(temp_manifest, manifest_path):
+		# Keep the published resource only when its matching manifest was promoted.
+		_remove_file(temp_manifest)
+		_release_retarget_cache_write_lock(cache_key)
+		return
+	retarget_cache_writes += 1
+	_release_retarget_cache_write_lock(cache_key)
+
+static func _retarget_cache_lock_path(cache_key: String) -> String:
+	return _retarget_cache_directory().path_join(cache_key + ".lock")
+
+static func _acquire_retarget_cache_write_lock(cache_key: String) -> bool:
+	# Creating a directory is atomic on the supported filesystems. A competing process
+	# keeps its completed in-memory result and will read the winner's manifest next launch.
+	return DirAccess.make_dir_absolute(ProjectSettings.globalize_path(_retarget_cache_lock_path(cache_key))) == OK
+
+static func _release_retarget_cache_write_lock(cache_key: String) -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(_retarget_cache_lock_path(cache_key)))
+
+static func _promote_cache_file(temp_path: String, final_path: String) -> bool:
+	if FileAccess.file_exists(final_path):
+		return false
+	var result := DirAccess.rename_absolute(ProjectSettings.globalize_path(temp_path), ProjectSettings.globalize_path(final_path))
+	return result == OK
+
+static func _invalidate_retarget_disk_cache(cache_key: String) -> void:
+	var resource_path := _retarget_cache_resource_path(cache_key)
+	var manifest_path := _retarget_cache_manifest_path(cache_key)
+	var removed := false
+	if FileAccess.file_exists(manifest_path):
+		_remove_file(manifest_path)
+		removed = true
+	if FileAccess.file_exists(resource_path):
+		_remove_file(resource_path)
+		removed = true
+	if removed:
+		retarget_cache_invalidations += 1
+
+static func _remove_file(path: String) -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+static func write_retarget_library_snapshot(library: AnimationLibrary, path: String) -> Error:
+	if library == null:
+		return ERR_INVALID_PARAMETER
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_buffer(var_to_bytes(_animation_library_snapshot_data(library)))
+	file.close()
+	return OK
+
+static func read_retarget_library_snapshot(path: String) -> AnimationLibrary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var data: Variant = bytes_to_var(file.get_buffer(file.get_length()))
+	file.close()
+	return _animation_library_from_snapshot_data(data)
+
+static func _animation_library_snapshot_data(library: AnimationLibrary) -> Dictionary:
+	var clips: Array = []
+	var names := library.get_animation_list()
+	names.sort()
+	for name in names:
+		var animation := library.get_animation(name)
+		if animation == null:
+			continue
+		var tracks: Array = []
+		for track in range(animation.get_track_count()):
+			var keys: Array = []
+			for key in range(animation.track_get_key_count(track)):
+				keys.append([animation.track_get_key_time(track, key), _snapshot_animation_value(animation.track_get_key_value(track, key)), animation.track_get_key_transition(track, key)])
+			tracks.append([animation.track_get_type(track), animation.track_get_path(track), animation.track_get_interpolation_type(track), keys])
+		clips.append([name, animation.length, animation.loop_mode, tracks])
+	return {"schema": RETARGET_CACHE_SCHEMA, "clips": clips}
+
+static func _animation_library_from_snapshot_data(data: Variant) -> AnimationLibrary:
+	if not (data is Dictionary):
+		return null
+	var snapshot: Dictionary = data
+	if int(snapshot.get("schema", -1)) != RETARGET_CACHE_SCHEMA or not (snapshot.get("clips", []) is Array):
+		return null
+	var library := AnimationLibrary.new()
+	for clip_data in snapshot["clips"]:
+		if not (clip_data is Array) or clip_data.size() != 4:
+			return null
+		var animation := Animation.new()
+		animation.length = float(clip_data[1])
+		animation.loop_mode = int(clip_data[2])
+		for track_data in clip_data[3]:
+			if not (track_data is Array) or track_data.size() != 4:
+				return null
+			var track := animation.add_track(int(track_data[0]))
+			animation.track_set_path(track, track_data[1])
+			animation.track_set_interpolation_type(track, int(track_data[2]))
+			for key_data in track_data[3]:
+				if not (key_data is Array) or key_data.size() != 3:
+					return null
+				animation.track_insert_key(track, float(key_data[0]), _restore_animation_value(key_data[1]), float(key_data[2]))
+		library.add_animation(String(clip_data[0]), animation)
+	return library
+
+static func _snapshot_animation_value(value: Variant) -> Variant:
+	# Variant's built-in Quaternion/Vector3 binary encoding is float32. Store components
+	# as scalar floats so an offline cache reconstructs the exact runtime keys.
+	if value is Quaternion:
+		var quaternion := value as Quaternion
+		return {"type": "Quaternion64", "value": [quaternion.x, quaternion.y, quaternion.z, quaternion.w]}
+	if value is Vector3:
+		var vector := value as Vector3
+		return {"type": "Vector364", "value": [vector.x, vector.y, vector.z]}
+	return value
+
+static func _restore_animation_value(value: Variant) -> Variant:
+	if value is Dictionary:
+		var encoded: Dictionary = value
+		var components: Variant = encoded.get("value", [])
+		if components is Array:
+			if encoded.get("type", "") == "Quaternion64" and components.size() == 4:
+				return Quaternion(float(components[0]), float(components[1]), float(components[2]), float(components[3]))
+			if encoded.get("type", "") == "Vector364" and components.size() == 3:
+				return Vector3(float(components[0]), float(components[1]), float(components[2]))
+	return value
 
 static func _retarget_single_clip(
 	src_anim: Animation,

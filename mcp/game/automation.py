@@ -53,7 +53,7 @@ def persist_report(report):
             "content", "initial_state", "final_state", "final_state_source", "audit_persistence",
             "observations", "completed_actions", "total_action_receipts", "recoverable_cancellations", "rejected_action_receipts", "blocked_action_attempts", "unexpected_action_failures", "flushed_execution_receipts",
             "in_budget_execution_receipts", "out_of_budget_execution_receipts",
-            "receipt_outcomes", "receipt_categories", "progress", "receipt_path", "transcript_path", "detail_log_path", "receipt_read_detail", "last_fault_attempt", "close_error", "coverage", "performance")
+            "receipt_outcomes", "receipt_categories", "progress", "receipt_path", "transcript_path", "detail_log_path", "receipt_read_detail", "last_fault_attempt", "close_error", "coverage", "performance", "source_identity", "server_identity")
     value = {"format": "dv-cli-story-v1", "controller": "engine-ai", "execution": "formal-model",
              "story_scope": "All actual action completions; narrative text is visible to the named viewer.",
              "game_time_unit": "minute"}
@@ -120,9 +120,10 @@ def tool(backend, arguments):
     if not 0 < deadline - created <= 86400:
         raise ValueError("Deadline must be in the next 24 hours")
     identity = backend + "-" + secrets.token_hex(12)
-    directory = RUNS / identity
+    directory = runtime.provenance.project_path(RUNS / identity, runtime.ROOT)
     directory.mkdir(parents=True)
     spec = {"run_id": identity, "backend": backend, "created_epoch": created,
+            "server_identity": runtime.provenance.server_identity(runtime.ROOT, Path(__file__).with_name("server.py")),
             "deadline_epoch": deadline, "seed": arguments.get("seed", 1),
             "viewer": arguments.get("viewer", "detective")}
     if arguments.get("content_path"): spec["content_path"] = arguments["content_path"]
@@ -155,11 +156,13 @@ def run(spec, report):
         if spec["backend"] == "cli" and time.monotonic() > deadline:
             return  # A late batch cannot extend the in-budget observation cut.
         observation = dict(observation)
+        report["source_identity"] = observation.get("source_identity")
         png = observation.pop("image_base64", None)
         if png:
             pending = directory / "latest.png.tmp"
             pending.write_bytes(base64.b64decode(png))
             publish(pending, directory / "latest.png")
+            runtime.provenance.save_image_sidecar(directory / "latest.png", observation)
             report["screenshot_path"] = str(directory / "latest.png")
             report["screenshot_updated_epoch"] = time.time()
         report["observation"] = observation

@@ -1,9 +1,10 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## 第四幕验收：从走廊主动走进 B-P 小厨房后的探索交互。
 ## 检查：① 无顶栏 / 左卡 / 抽屉，7 个宝石证物，原版光柱被隐藏  ② 侦探从门口走进来
 ##       ③ WASD 按镜头方向（含 az 被右键拖动改变之后）  ④ 台词在播时仍可移动
 ##       ⑤ 顶着家具 / 墙会滑行而不是粘住  ⑥ 靠近按 E / 点击走近后取得证物  ⑦ Esc 切换完整界面
-## 用法：xvfb-run -a godot --path . --rendering-driver opengl3 -s tools/test/kitchen_flow.gd -- out=/tmp/shots/kf scale=4.0
+## 用法：xvfb-run -a godot --path . --rendering-driver opengl3 -s tools/test/kitchen_flow.gd -- out=.runtime/screens/kf scale=4.0
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 
 var fails := 0
@@ -27,7 +28,7 @@ func _shot(out: String, tag: String) -> void:
 	if image == null:
 		print("shot skipped (headless renderer): ", tag)
 		return
-	image.save_png("%s_%s.png" % [out, tag])
+	if not CaptureReceipt.save(image, "%s_%s.png" % [out, tag], self): quit(1); return
 	print("shot ", tag)
 
 func _hold(action: String, ms: int) -> void:
@@ -89,7 +90,7 @@ func _wait_quiet(m, max_s := 30.0) -> void:
 	for i in 6: await process_frame
 
 func _initialize() -> void:
-	var out := _arg("out", "/tmp/shots/kf")
+	var out := _arg("out", ".runtime/screens/kf")
 	Engine.time_scale = float(_arg("scale", "4.0"))
 	var m = Main.instantiate()
 	m.show_intro = false

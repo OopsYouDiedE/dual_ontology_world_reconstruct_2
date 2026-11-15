@@ -1,8 +1,9 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## 第三幕验收：走廊对账结束后进入自由活动。
 ## 检查：① 没有顶栏 / 左卡 / 右侧案卷抽屉  ② 不会被自动送进厨房  ③ 他人的门锁着、只有 R05 是开的
 ##       ④ 走近物件按 E 出台词  ⑤ 玩家主动互动厨房拱门才进 B-P。
-## 用法：xvfb-run -a godot --path . --rendering-driver opengl3 -s tools/test/capture_scene3.gd -- out=/tmp/shots/s3 scale=4.0
+## 用法：xvfb-run -a godot --path . --rendering-driver opengl3 -s tools/test/capture_scene3.gd -- out=.runtime/screens/s3 scale=4.0
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 
 var fails := 0
@@ -18,7 +19,7 @@ func _check(ok: bool, msg: String) -> void:
 
 func _shot(out: String, tag: String) -> void:
 	for i in 10: await process_frame
-	root.get_texture().get_image().save_png("%s_%s.png" % [out, tag])
+	if not CaptureReceipt.save(root.get_texture().get_image(), "%s_%s.png" % [out, tag], self): quit(1); return
 	print("shot ", tag)
 
 func _idx(g, id: String) -> int:
@@ -34,7 +35,7 @@ func _wait_quiet(m, max_s := 40.0) -> void:
 	for i in 6: await process_frame
 
 func _initialize() -> void:
-	var out := _arg("out", "/tmp/shots/s3")
+	var out := _arg("out", ".runtime/screens/s3")
 	Engine.time_scale = float(_arg("scale", "4.0"))
 	var m = Main.instantiate()
 	m.show_intro = false

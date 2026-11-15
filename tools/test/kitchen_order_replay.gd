@@ -1,5 +1,6 @@
 extends SceneTree
-## 正式 Godot 渲染验收：厨房首题收齐四件线索后进入角色动作复演，并可排列、确认时间顺序。
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
+## 开发回归截图（直接设置前置状态）：厨房首题收齐四件线索后进入角色动作复演，并可排列、确认时间顺序。
 ## 用法：godot --path . -s tools/test/kitchen_order_replay.gd -- out=.runtime/screens/order/replay.png
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 const REQUIRED := ["e_b_sleeve", "e_b_drag", "e_b_water", "e_b_ratchet"]
@@ -19,13 +20,10 @@ func _shot(path: String) -> void:
 	if DisplayServer.get_name() == "headless":
 		print("shot skipped (headless renderer)")
 		return
-	var absolute_path := ProjectSettings.globalize_path(path)
-	var parent := absolute_path.get_base_dir()
-	if parent != "": DirAccess.make_dir_recursive_absolute(parent)
 	for i in 12: await process_frame
 	var image := root.get_texture().get_image()
-	if image != null: image.save_png(absolute_path)
-	print("shot ", absolute_path)
+	if not CaptureReceipt.save(image, path, self): quit(1); return
+	print("shot ", path)
 
 func _initialize() -> void:
 	Engine.time_scale = 2.0

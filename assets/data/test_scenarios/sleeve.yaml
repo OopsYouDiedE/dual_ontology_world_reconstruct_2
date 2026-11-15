@@ -1,0 +1,6 @@
+schema_version: 1
+id: sleeve
+mode: interaction
+kind: sleeve
+time: {day: 1, hour: 8, minute: 0}
+mock: {}

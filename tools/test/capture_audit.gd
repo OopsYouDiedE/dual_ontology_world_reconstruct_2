@@ -1,6 +1,7 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## UI / 场景审计截图：标题、各房间（B-P / C-P / 1F 壁龛 / R05）、推演弹窗、字幕。
-## 用法：xvfb-run -a -s "-screen 0 1440x900x24" godot --path . --rendering-driver opengl3 -s tools/test/capture_audit.gd -- out=/tmp/shots/a
+## 用法：xvfb-run -a -s "-screen 0 1440x900x24" godot --path . --rendering-driver opengl3 -s tools/test/capture_audit.gd -- out=.runtime/screens/a
 const MainScene := preload("res://scenes/main/Main.tscn")
 const World := preload("res://scenes/dual_world/DualWorldMain.tscn")
 
@@ -14,11 +15,11 @@ func _frames(n: int) -> void:
 
 func _shot(out: String, tag: String) -> void:
 	await _frames(8)
-	root.get_texture().get_image().save_png("%s_%s.png" % [out, tag])
+	if not CaptureReceipt.save(root.get_texture().get_image(), "%s_%s.png" % [out, tag], self): quit(1); return
 	print("shot ", tag)
 
 func _initialize() -> void:
-	var out := _arg("out", "/tmp/shots/a")
+	var out := _arg("out", ".runtime/screens/a")
 	var only := _arg("only", "all")
 	if only in ["all", "title"]:
 		var main = MainScene.instantiate()

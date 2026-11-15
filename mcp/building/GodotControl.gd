@@ -7,6 +7,7 @@ var token := ""
 var busy := false
 var observation_id := 0
 var receipt_directory := ""
+var launch_scene := ""
 
 func _ready() -> void:
 	var port := 0
@@ -14,7 +15,10 @@ func _ready() -> void:
 		if argument.begins_with("--building-mcp-port="): port = int(argument.trim_prefix("--building-mcp-port="))
 		elif argument.begins_with("--building-mcp-token="): token = argument.trim_prefix("--building-mcp-token=")
 		elif argument.begins_with("--building-mcp-receipts="): receipt_directory = argument.trim_prefix("--building-mcp-receipts=")
+		elif argument.begins_with("--building-launch-scene="): launch_scene = argument.trim_prefix("--building-launch-scene=")
 	if port == 0: set_process(false); return
+	receipt_directory = preload("res://mcp/CaptureSource.gd").project_output(receipt_directory)
+	if receipt_directory.is_empty(): set_process(false); return
 	if token.length() < 32 or server.listen(port,"127.0.0.1") != OK:
 		push_error("Building MCP transport could not start")
 		set_process(false)
@@ -70,7 +74,7 @@ func _handle(request: Dictionary) -> void:
 	var id = request.get("id")
 	match str(request.get("type","observe")):
 		"close":
-			_reply(id,{"closed":true})
+			_reply(id,{"closed":true, "source_identity": preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)})
 			await preload("res://scenes/components/shared/HostLifecycle.gd").quit(get_tree())
 			return
 		"click":
@@ -145,6 +149,7 @@ func _handle(request: Dictionary) -> void:
 	_collect(get_tree().root,controls)
 	var scene := get_tree().current_scene
 	var result := {"observation_id":observation_id,"project":ProjectSettings.globalize_path("res://"),"scene":scene.scene_file_path,"viewport":get_viewport().get_visible_rect().size,"controls":controls}
+	result["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
 	# Read-only authored scene evidence, alongside the viewport and UI tree.
 	if scene.get("state") is RefCounted and scene.state.get("data") is Dictionary:
 		result["authored_scene"] = scene.state.data.duplicate(true)
@@ -160,15 +165,18 @@ func _handle(request: Dictionary) -> void:
 	if bool(request.get("capture_image",true)):
 		var png := get_viewport().get_texture().get_image().save_png_to_buffer()
 		var file := FileAccess.open(stem+".png",FileAccess.WRITE)
-		if file != null: file.store_buffer(png); file.close()
+		if file == null: _reply(id, {}, "Cannot write capture PNG"); return
+		file.store_buffer(png)
+		file.close()
 		result["screenshot_path"] = stem+".png"
+		result["image_sha256"] = FileAccess.get_sha256(stem+".png")
 		result["image_base64"] = Marshalls.raw_to_base64(png)
 	var receipt := FileAccess.open(stem+".json",FileAccess.WRITE)
-	if receipt != null:
-		var metadata := result.duplicate()
-		metadata.erase("image_base64")
-		receipt.store_string(JSON.stringify(metadata,"  "))
-		receipt.close()
+	if receipt == null: _reply(id, {}, "Cannot write capture source receipt"); return
+	var metadata := result.duplicate()
+	metadata.erase("image_base64")
+	receipt.store_string(JSON.stringify(metadata,"  "))
+	receipt.close()
 	_reply(id,result)
 
 func _collect(node: Node, result: Array) -> void:

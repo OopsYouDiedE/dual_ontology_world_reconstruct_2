@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "approved_by": "user",
+  "approved_date": "2026-11-16",
+  "production_character_limit": 25,
+  "auxiliary_character_limit": 40,
+  "exemptions": [
+    {
+      "id": "title_menu",
+      "script": "res://scenes/UIpanel/TitleUI/TitleUI.gd",
+      "scope": "Title menu before entering the story",
+      "preserve_existing_layout": true,
+      "character_limit_exempt": true
+    },
+    {
+      "id": "title_book_settings",
+      "script": "res://scenes/UIpanel/BookUI/BookUI.gd",
+      "scope": "SettingsPage opened through the title SettingsButton",
+      "preserve_existing_layout": true,
+      "character_limit_exempt": true
+    }
+  ],
+  "measurement_policy": "Keep raw visible-character measurements; attach the applicable exemption when evaluating these exact screens. Campaign evidence and deduction pages retain the production limit."
+}

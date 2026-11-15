@@ -1,4 +1,5 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## 启动 DualWorldMain（跳过开场），进入指定房间，打印几何并截图。
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 func _arg(k: String, d: String) -> String:
@@ -25,5 +26,5 @@ func _initialize() -> void:
 	print("actors=", m.eng.actors_in_room(room), " det_pos=", m.det_pos)
 	m.top_bar.visible = false; m.left_card.visible = false; m.drawer.visible = false
 	for i in 20: await process_frame
-	root.get_texture().get_image().save_png(_arg("out", "/tmp/shots/bp.png"))
+	if not CaptureReceipt.save(root.get_texture().get_image(), _arg("out", ".runtime/screens/bp.png"), self): quit(1); return
 	quit()

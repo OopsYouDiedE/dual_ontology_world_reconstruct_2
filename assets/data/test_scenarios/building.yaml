@@ -1,0 +1,5 @@
+schema_version: 1
+id: building
+mode: building
+time: {day: 1, hour: 14, minute: 0}
+mock: {}

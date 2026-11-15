@@ -1,4 +1,5 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## 集成回归：真实开场与走廊选择进入厨房，再自动搜证并处理第一天四区首题。
 ## 四题结论交回 DualEngine；随后检查原有门禁与场景节拍，不修改剧情数据。
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
@@ -33,8 +34,7 @@ func _shot(out: String, tag: String) -> void:
 	for i in 3: await process_frame
 	var image := root.get_texture().get_image()
 	if image == null: return
-	DirAccess.make_dir_recursive_absolute(out)
-	image.save_png(out.path_join(tag + ".png"))
+	if not CaptureReceipt.save(image, out.path_join(tag + ".png"), self): quit(1); return
 	print("shot ", tag)
 
 func _wait_modal(game, key: String, max_ms := 12000) -> bool:
@@ -55,7 +55,7 @@ func _initialize() -> void:
 	var handled_deductions := {}
 	var handled_conflicts := {}
 	var handled_replay := false
-	var out := ProjectSettings.globalize_path(".runtime/screens/first_four")
+	var out := "res://.runtime/screens/first_four"
 
 	while Time.get_ticks_msec() - start < 240000:
 		await process_frame

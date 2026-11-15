@@ -177,10 +177,10 @@ func _step_free(delta: float) -> void:
 	var near := _nearest_item(1.5)
 	var show_prompt := near >= 0 and not sub_up and _busy_item < 0 and _pending_exit == ""
 	_prompt.visible = show_prompt
-	if show_prompt: _prompt.text = "E  ·  查看「%s」" % str(_items[near].label)
+	if show_prompt: _prompt.text = "E %s" % str(_items[near].label)
 	for i in _items.size():
 		var tag: Label3D = _items[i].tag
-		tag.visible = i == _hover or i == near
+		tag.visible = i == _hover and i != near and not host._cine
 	if _hint != null and _free_t > 14.0:
 		_hint.modulate.a = move_toward(_hint.modulate.a, 0.0, delta * 0.3)
 	# 全部看过：提醒去门口
@@ -286,7 +286,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
-	_hint.text = "WASD / 方向键 移动　·　点击发光的物件，或靠近后按 E 查看　·　Esc 显示 / 隐藏完整界面"
+	_hint.text = "WASD移动"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
@@ -410,6 +410,7 @@ func interact_nearest() -> void:
 
 func interact(i: int) -> void:
 	if phase != "free" or _busy_item >= 0 or _pending_exit != "": return
+	if host._cine or host.subtitle.visible or not host._sub_queue.is_empty(): return
 	var it: Dictionary = _items[i]
 	var p: Vector3 = it.pos
 	var target := Vector2(p.x, p.z)
@@ -438,6 +439,12 @@ func _arrive(i: int) -> void:
 	var dv: Vector2 = Vector2(p.x, p.z) - host.det_pos
 	if dv.length() > 0.05: host.det.rotation.y = atan2(dv.x, dv.y)
 	host.det.set_pose("stand")
+	if str(it.id) == "wardrobe":
+		_busy_item = i
+		host.interactions.begin_gameplay(host,"wardrobe",func(success: bool):
+			_busy_item = -1
+			if success: it.seen = true)
+		return
 	it.seen = true
 	for ln in it.lines: host.eng.say("detective", str(ln), "think")
 	if str(it.id) == "door":

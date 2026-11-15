@@ -1,0 +1,6 @@
+schema_version: 1
+id: interaction
+mode: interaction
+kind: wardrobe
+time: {day: 1, hour: 8, minute: 0}
+mock: {}

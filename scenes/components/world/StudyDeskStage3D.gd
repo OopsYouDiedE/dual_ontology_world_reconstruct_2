@@ -22,7 +22,7 @@ const BOOK_YAW := -0.06
 const SEA_Y := -6.0
 const VOLCANO := Vector3(-30.0, SEA_Y, -105.0)
 const VOLCANO_HEIGHT := 14.0
-const PAPER := Color(0.87, 0.81, 0.69)
+const PAPER := Color("eae0c4")
 const TITLE_CAMERA := {"position": Vector3(0.66, 0.60, 1.06), "target": Vector3(-0.06, 0.18, -0.50), "fov": 44.0, "h_offset": 0.20}
 const READ_FOV := 40.0
 
@@ -192,7 +192,9 @@ func _process(delta: float) -> void:
 	_update_camera(motion)
 	# 灯焰与灯光的不规则闪烁。
 	var flicker := 0.5 * sin(_time * 7.3) + 0.3 * sin(_time * 13.1 + 1.7) + 0.2 * sin(_time * 23.7 + 0.4)
-	_lamp_light.light_energy = 1.25 + 0.10 * flicker * motion
+	var reading := smoothstep(0.0, 1.0, focus)
+	_lamp_light.light_color = Color(1.0, 0.66, 0.36).lerp(Color(1.0, 0.88, 0.70), reading)
+	_lamp_light.light_energy = lerpf(1.25, 0.90, reading) + lerpf(0.10, 0.025, reading) * flicker * motion
 	_flame_material.set_shader_parameter("wind", (0.10 * sin(_time * 1.9) + 0.05 * flicker) * motion)
 	_flame_material.set_shader_parameter("intensity", 1.0 + 0.08 * flicker * motion)
 	for material in _curtains: material.set_shader_parameter("sway", 0.25 if reduce_motion else 1.0)

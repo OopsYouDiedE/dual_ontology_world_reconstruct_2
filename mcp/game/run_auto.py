@@ -11,6 +11,8 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "mcp"))
+import capture_provenance as provenance
 
 
 async def run(options):
@@ -27,11 +29,11 @@ async def run(options):
     if not 0 < seconds <= 86400:
         raise ValueError("run duration must be between 0 and 86400 seconds")
     if options.content_path:
-        arguments["content_path"] = str(Path(options.content_path).resolve())
-    destination = Path(options.receipt).resolve()
+        arguments["content_path"] = str(provenance.project_path(options.content_path, ROOT, allow_external=True))
+    destination = provenance.project_path(options.receipt, ROOT)
     destination.parent.mkdir(parents=True, exist_ok=True)
     parameters = StdioServerParameters(command=sys.executable,
-        args=[str(ROOT / "mcp/game/server.py"), "--service", "auto"], cwd=str(ROOT), env=os.environ.copy())
+        args=[str(ROOT / "mcp/game/server.py"), "--service", "auto", "--expected-project-root", str(ROOT)], cwd=str(ROOT), env=os.environ.copy())
     tool = "CliMCP" if options.backend == "cli" else "GodotMCP"
     async with stdio_client(parameters) as (reader, writer):
         async with ClientSession(reader, writer,
@@ -40,8 +42,11 @@ async def run(options):
             result = await session.call_tool(tool, arguments,
                 read_timeout_seconds=timedelta(seconds=seconds + 90))
             receipt = {"tool": tool, "arguments": arguments, "isError": result.isError,
+                "expected_project": provenance.project_identity(ROOT),
                 "data": result.structuredContent,
                 "text": [block.text for block in result.content if block.type == "text"]}
+            if not result.isError:
+                provenance.validate_source((result.structuredContent or {}).get("server_identity"), receipt["expected_project"])
             destination.write_text(json.dumps(receipt, ensure_ascii=False, indent=2), encoding="utf-8")
             print("RECEIPT", destination, flush=True)
             data = result.structuredContent or {}

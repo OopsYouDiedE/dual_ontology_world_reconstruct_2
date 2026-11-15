@@ -264,7 +264,7 @@ func read_evidence(eid: String) -> Dictionary:
 	}
 
 
-func inspect_evidence(eid: String) -> bool:
+func inspect_evidence(eid: String, visual_presented := false) -> bool:
 	if not d.evidence_by_id.has(eid): return false
 	var e: Dictionary = d.evidence_by_id[eid]
 	if s.room != e.room and not s.author_view:
@@ -284,8 +284,9 @@ func inspect_evidence(eid: String) -> bool:
 	# 仅在首次调查或知识补齐改读时写入玩家日志，避免复查同一证物刷屏重复记录
 	if first or (r.correct and not prev_correct):
 		_log("evidence", "【%s】%s" % [e.label, r.text], e.get("actors", []))
-	say("detective", r.text, "truth" if r.correct else "think")
-	sfx.emit("pen")
+	if not visual_presented:
+		say("detective", r.text, "truth" if r.correct else "think")
+		sfx.emit("pen")
 	# 主观认知：各人保存自己那一份（知识补齐才会改）
 	var who: Array = e.actors if not e.get("actors", []).is_empty() else ["detective"]
 	for a in who:

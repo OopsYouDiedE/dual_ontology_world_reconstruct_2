@@ -7,6 +7,7 @@ extends Control
 ## 全部界面用代码构建，不依赖 .tscn 子节点；可作为独立场景运行，也可由 Main.gd 嵌入。
 
 signal closed
+signal reconstruction_observed(event: Dictionary)
 
 const Data := preload("res://scenes/dual_world/DualData.gd")
 const Engine_ := preload("res://scenes/dual_world/DualEngine.gd")
@@ -22,6 +23,8 @@ const WakeOpening := preload("res://scenes/dual_world/WakeOpening.gd")
 const CorridorGathering := preload("res://scenes/dual_world/CorridorGathering.gd")
 const KitchenExploration := preload("res://scenes/dual_world/KitchenExploration.gd")
 const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLibrary.gd")
+const InteractionDirector := preload("res://scenes/components/interaction/InteractionDirector.gd")
+const ShadowCeiling := preload("res://scenes/components/world/ShadowCeiling.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
@@ -78,6 +81,7 @@ var _dirty := true
 var _panel_cd := 0.0
 var _light_cd := 0.0
 var _music_cd := 0.0
+var interactions: Node
 
 # 控件
 var top_clock: Label
@@ -204,6 +208,9 @@ func _ready() -> void:
 	pitch = 1.25
 	_load_designs()
 	_build_ui()
+	interactions = InteractionDirector.new()
+	interactions.name = "SharedInteractions"
+	add_child(interactions)
 	score = Score.new()
 	add_child(score)
 	eng.changed.connect(func(why: String):
@@ -270,6 +277,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# 浏览器与桌面端都要求用户手势后才能出声：首次点击或按键时启动合成器
 	if event is InputEventMouseButton or event is InputEventKey:
 		if score != null and not score._started and score.enabled: score.start()
+	if interactions != null and is_instance_valid(interactions.active): return
 	# 键盘 / 手柄：空格、回车（ui_accept）推进字幕
 	if event.is_action_pressed("ui_accept") and subtitle != null and subtitle.visible and not modal.visible:
 		_sub_until = 0.0
@@ -878,6 +886,15 @@ func _pump_subtitles(now: float) -> void:
 	var ln: Dictionary = _sub_queue.pop_front()
 	var who: String = ln.who
 	var text: String = ln.text
+	# Keep complete dialogue in order, with short on-screen fragments.
+	if text.length() > 16:
+		var split_at := 16
+		for index in range(15,7,-1):
+			if text[index] in ["，","。","；","！","？","、"," "]: split_at = index+1; break
+		var remainder := ln.duplicate()
+		remainder.text = text.substr(split_at)
+		_sub_queue.push_front(remainder)
+		text = text.left(split_at)
 	_speaker = who
 	if who != "narrator" and data.actor_by_id.has(who):
 		sub_name.text = str(data.actor_name(who))
@@ -1056,6 +1073,8 @@ func _build_room(id: String) -> void:
 	room_mesh.build(ds, eng.s.evidence)
 	if _lowpoly_ok:
 		room_mesh.lamps.append_array(lowpoly.lamps)
+	var ceiling_bounds: Rect2 = lowpoly.walk_rect(0.0) if _lowpoly_ok else Rect2(0,0,float(ds.w),float(ds.d))
+	ShadowCeiling.install(room_mesh,Vector3(ceiling_bounds.get_center().x,0,ceiling_bounds.get_center().y),ceiling_bounds.size)
 	_build_grid()
 	_occ_key = ""
 	_fit_camera()
@@ -1515,6 +1534,7 @@ func _walk_step(delta: float) -> void:
 		var cb := det_done
 		det_done = Callable()
 		cb.call()
+	if moving and det_path.is_empty(): _dirty = true
 
 
 ## 3D 里点证物光柱 / 左侧点证物：侦探先走到跟前，再查看。

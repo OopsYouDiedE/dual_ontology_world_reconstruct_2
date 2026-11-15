@@ -1,4 +1,5 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## 第二幕截图：直接调用 start_gathering，按阶段 / 台词抽帧。Engine.time_scale 加速。
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 func _arg(k: String, d: String) -> String:
@@ -6,7 +7,7 @@ func _arg(k: String, d: String) -> String:
 		if str(a).begins_with(k + "="): return str(a).substr(k.length() + 1)
 	return d
 func _initialize() -> void:
-	var out := _arg("out", "/tmp/shots/s2")
+	var out := _arg("out", ".runtime/screens/s2")
 	Engine.time_scale = float(_arg("scale", "2.0"))
 	var m = Main.instantiate()
 	m.show_intro = false
@@ -27,7 +28,7 @@ func _initialize() -> void:
 			if shot.has("done"): break
 			if last_phase == "out":
 				for i in 60: await process_frame
-				root.get_texture().get_image().save_png("%s_final_room.png" % out)
+				if not CaptureReceipt.save(root.get_texture().get_image(), "%s_final_room.png" % out, self): quit(1); return
 				print("room after: ", m.eng.s.room, " loaded=", m._room_loaded, " det=", m.det_pos, " cine=", m._cine, " playing=", m.eng.s.playing)
 				shot["done"] = true
 			continue
@@ -39,7 +40,7 @@ func _initialize() -> void:
 				shot[key] = true
 				n += 1
 				var p := "%s_%02d_%s_%d.png" % [out, n, g.phase, g._line]
-				root.get_texture().get_image().save_png(p)
+				if not CaptureReceipt.save(root.get_texture().get_image(), p, self): quit(1); return
 				print("shot ", p, " det=", m.det_pos, " subtitle=", m.subtitle.text.left(14))
 			last_phase = g.phase
 			last_line = g._line

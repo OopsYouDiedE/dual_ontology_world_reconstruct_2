@@ -13,7 +13,9 @@ from mcp.client.stdio import stdio_client
 
 
 async def main():
-    parameters = StdioServerParameters(command=sys.executable, args=[str(Path(__file__).with_name('server.py'))])
+    root = Path(__file__).resolve().parents[2]
+    parameters = StdioServerParameters(command=sys.executable, args=[str(Path(__file__).with_name('server.py')),
+        '--expected-project-root', str(root)], cwd=str(root))
     async with stdio_client(parameters) as streams:
         async with ClientSession(*streams) as session:
             await session.initialize()

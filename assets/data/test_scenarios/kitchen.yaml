@@ -1,0 +1,11 @@
+schema_version: 1
+id: kitchen
+mode: story
+scene: res://scenes/dual_world/DualWorldMain.tscn
+room: B-P
+entry: exploration
+time: {day: 1, hour: 8, minute: 15}
+playing: false
+mock:
+  beat_cursor: 4
+  current_beat: ""

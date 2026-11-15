@@ -1,0 +1,9 @@
+schema_version: 1
+id: wake
+mode: story
+scene: res://scenes/dual_world/DualWorldMain.tscn
+room: R05
+entry: wake
+time: {day: 1, hour: 7, minute: 0}
+playing: true
+mock: {}

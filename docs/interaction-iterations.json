@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "iterations": [
+    {
+      "id": "20261116-prop-01",
+      "changed_side": "object",
+      "character_changed": false,
+      "before_evidence": ".runtime/testing-dev/interactions-rendered-01/sheets/sleeve.jpg",
+      "issues": ["Cuff volume intersects the comparison hand", "Lifted fibers leave the close-up frame"],
+      "changes": ["Lower and thin cuff geometry; retain existing hand motion", "Lower sampled fiber/tool end anchors; retain camera and character motion"],
+      "after_evidence": null,
+      "acceptance": "pending_runtime_review"
+    },
+    {
+      "id": "20261116-reconstruction-character-02",
+      "changed_side": "character",
+      "character_changed": true,
+      "object_changed": false,
+      "before_evidence": ".runtime/testing-dev/reconstruction-02/sheets/manual.jpg",
+      "issues": ["Detective wrist contact misses by approximately 0.123 m", "The door obscures the actor side of the reconstruction"],
+      "changes": ["Adjust character wrist targets and planted-foot pelvis response", "Move the observation camera to expose the actor side; retain all prop geometry and prop anchors"],
+      "after_evidence": ".runtime/testing-dev/reconstruction-03/sheets/manual.jpg",
+      "measurements": {"pull_contact_error_m": 0.0000000596, "remaining_cloth_contact_error_m": 0.114},
+      "acceptance": "pending_terra_and_blind_review",
+      "remaining_issues": ["Shen cloth reach remains inaccurate", "Actors crowd the provisional freestanding door; physical threshold placement needs an object-only correction"]
+    },
+    {
+      "id":"20261116-reconstruction-character-04",
+      "changed_side":"character",
+      "character_changed":true,
+      "object_changed":false,
+      "before_evidence":"artifacts/acceptance/terra-reconstruction-expression-20261116/",
+      "changes":["Separate character stances to create reachable wrist targets and head clearance","Deeper planted-foot crouch for cloth contact","Record shoulder/elbow/wrist and chain reach diagnostics"],
+      "numeric_evidence":".runtime/parallel-checks/integration-02/contact-current/contact-probe.json",
+      "measurements":{"baseline_cloth_contact_error_m":0.11538858,"current_max_cloth_contact_error_m":0.00000008561,"current_max_foot_anchor_error_m":0.00006915},
+      "acceptance":"pending_rendered_terra_and_blind_review"
+    },
+    {
+      "id":"20261116-wardrobe-object-02",
+      "changed_side":"object",
+      "character_changed":false,
+      "object_changed":true,
+      "before_evidence":"artifacts/acceptance/blind-wardrobe-20261116/BLIND_REVIEW.md",
+      "changes":["Clarify warm wood interior layers and add local object fill light","Keep the real front hinge fixed and open the door to -145 degrees to clear the aperture"],
+      "numeric_evidence":".runtime/parallel-checks/integration-02/wardrobe-structure/wardrobe-probe.json",
+      "acceptance":"pending_rendered_terra_and_blind_review"
+    }
+  ]
+}

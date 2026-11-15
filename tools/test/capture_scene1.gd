@@ -1,6 +1,7 @@
 extends SceneTree
+const CaptureReceipt := preload("res://mcp/CaptureReceipt.gd")
 ## 第一幕截图：真实进入 DualWorldMain，按 WakeOpening 阶段与起床过程抽帧。
-## 用法：xvfb-run -a godot --path . --rendering-driver opengl3 -s tools/test/capture_scene1.gd -- out=/tmp/shots/s1 scale=1.0
+## 用法：xvfb-run -a godot --path . --rendering-driver opengl3 -s tools/test/capture_scene1.gd -- out=.runtime/screens/s1 scale=1.0
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 
 func _arg(k: String, d: String) -> String:
@@ -10,11 +11,11 @@ func _arg(k: String, d: String) -> String:
 
 func _shot(out: String, n: int, tag: String) -> void:
 	var p := "%s_%02d_%s.png" % [out, n, tag]
-	root.get_texture().get_image().save_png(p)
+	if not CaptureReceipt.save(root.get_texture().get_image(), p, self): quit(1); return
 	print("shot ", p)
 
 func _initialize() -> void:
-	var out := _arg("out", "/tmp/shots/s1")
+	var out := _arg("out", ".runtime/screens/s1")
 	Engine.time_scale = float(_arg("scale", "1.0"))
 	var m = Main.instantiate()
 	root.add_child(m)

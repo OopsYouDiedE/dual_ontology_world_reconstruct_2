@@ -23,6 +23,7 @@ const ENTER_DIST := 7.4
 const FOLLOW_PITCH := 0.95
 const NEAR := 1.5            # E 键判定半径
 const GEM_Y := 1.05
+const SHORT_LABELS := {"e_b_sleeve":"袖口","e_b_drag":"鞋跟痕","e_b_water":"门缝","e_b_cloth":"湿布","e_b_ratchet":"棘轮","e_b_boots":"靴印","e_b_seal":"铅封"}
 
 var host: Control
 var active := false
@@ -66,6 +67,7 @@ func begin_order_replay(did: String) -> bool:
 	if _order_replay != null and is_instance_valid(_order_replay) and _order_replay.active: return true
 	_order_replay = OrderReplay.new()
 	add_child(_order_replay)
+	_order_replay.observed.connect(func(event: Dictionary): host.reconstruction_observed.emit(event))
 	if _order_replay.begin(host, did): return true
 	_order_replay.queue_free()
 	_order_replay = null
@@ -101,6 +103,9 @@ func process(delta: float) -> void:
 		return
 	_clock += delta
 	_hide_floor_pillars()
+	if host._cine:
+		_animate_markers()
+		return
 	if phase == "free":
 		_free_t += delta
 		_step_free(delta)
@@ -112,18 +117,18 @@ func process(delta: float) -> void:
 func _step_free(delta: float) -> void:
 	var sub_up: bool = host.subtitle.visible or not host._sub_queue.is_empty()
 	var near := _nearest_item(NEAR)
-	var show_prompt: bool = near >= 0 and not sub_up and _busy_item < 0 and not host.modal.visible
+	var show_prompt: bool = near >= 0 and not sub_up and _busy_item < 0 and not host.modal.visible and not host._cine
 	_prompt.visible = show_prompt
 	if show_prompt:
-		_prompt.text = "E  ·  %s「%s」" % ["复查" if _seen(_items[near]) else "查看", str(_items[near].label)]
+		_prompt.text = "E %s" % str(_items[near].label)
 	for i in _items.size():
 		# 近距离时底部 E 提示已经给出名称；3D 名牌只跟随鼠标悬停，避免压住角色与动作。
-		(_items[i].tag as Label3D).visible = i == _hover and i != near
+		(_items[i].tag as Label3D).visible = i == _hover and i != near and not host._cine
 	if _hint != null:
 		var seen_count := 0
 		for item in _items:
 			if _seen(item): seen_count += 1
-		_hint.text = "现场线索 %d/7　·　WASD/方向键移动（W = 屏幕向上）　·　点击证物或靠近按 E 查看　·　右键转视角　·　Esc 切换界面" % seen_count
+		_hint.text = "WASD移动"
 	if _hint != null and _free_t > 14.0:
 		_hint.modulate.a = move_toward(_hint.modulate.a, 0.0, delta * 0.3)
 	_maybe_finish()
@@ -207,7 +212,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
-	_hint.text = "WASD / 方向键 移动（W = 屏幕向上）　·　点击发光的证物，或靠近后按 E 查看　·　右键拖动转视角　·　Esc 显示 / 隐藏完整界面"
+	_hint.text = "WASD移动"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
@@ -250,7 +255,7 @@ func _build_markers() -> void:
 		gem.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		marker.add_child(gem)
 		var tag := Label3D.new()
-		tag.text = str(e.label)
+		tag.text = str(SHORT_LABELS.get(eid,e.label))
 		tag.font = host.SANS_FONT
 		tag.font_size = 40
 		tag.pixel_size = 0.0055
@@ -262,7 +267,7 @@ func _build_markers() -> void:
 		tag.visible = false
 		marker.add_child(tag)
 		marker.position = Vector3(pos.x, GEM_Y, pos.z)
-		_items.append({"id": eid, "label": str(e.label), "pos": pos, "marker": marker, "gem": gem, "mat": mat, "tag": tag})
+		_items.append({"id": eid, "label": str(SHORT_LABELS.get(eid,e.label)), "pos": pos, "marker": marker, "gem": gem, "mat": mat, "tag": tag})
 
 
 func _seen(it: Dictionary) -> bool:
@@ -334,6 +339,7 @@ func interact_nearest() -> void:
 
 func interact(i: int) -> void:
 	if phase != "free" or _busy_item >= 0 or host.modal.visible: return
+	if host._cine: return
 	if host.subtitle.visible or not host._sub_queue.is_empty(): return
 	var p: Vector3 = _items[i].pos
 	var target := Vector2(p.x, p.z)
@@ -361,9 +367,17 @@ func _arrive(i: int) -> void:
 	var dv: Vector2 = Vector2(p.x, p.z) - host.det_pos
 	if dv.length() > 0.05: host.det.rotation.y = atan2(dv.x, dv.y)
 	host.det.set_pose("stand")
-	host.eng.inspect_evidence(str(_items[i].id))
-	host._rebuild_markers()
-	_hide_floor_pillars()   # 重建会让原版光柱重新可见：同一帧内再收起，避免闪一下
+	var evidence_id := str(_items[i].id)
+	var kind: String = host.interactions.kind_for(evidence_id)
+	if kind.is_empty(): return
+	_busy_item = i
+	var started: bool = host.interactions.begin_gameplay(host,kind,func(success: bool):
+		_busy_item = -1
+		if success:
+			host.eng.inspect_evidence(evidence_id,true)
+			host._rebuild_markers()
+			_hide_floor_pillars())
+	if not started: _busy_item = -1
 
 
 # ───────────────────────── 收尾 ─────────────────────────

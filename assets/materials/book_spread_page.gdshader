@@ -8,10 +8,10 @@ uniform sampler2D snapshot_texture : source_color, filter_linear, repeat_disable
 uniform bool left_snapshot = false;
 uniform bool right_snapshot = false;
 uniform float page_fade : hint_range(0.0, 1.0) = 1.0;
-uniform vec4 paper_color : source_color = vec4(0.87, 0.81, 0.69, 1.0);
-uniform vec4 paper_edge : source_color = vec4(0.62, 0.50, 0.35, 1.0);
+uniform vec4 paper_color : source_color = vec4(0.918, 0.878, 0.769, 1.0);
+uniform vec4 paper_edge : source_color = vec4(0.725, 0.651, 0.494, 1.0);
 // Keeps the ink legible under the warm night lamp without flattening the paper.
-uniform float reading_glow : hint_range(0.0, 1.0) = 0.22;
+uniform float reading_glow : hint_range(0.0, 1.0) = 0.28;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -35,9 +35,9 @@ void fragment() {
 	// Outer edges age; the gutter only darkens through the binding shadow below.
 	float outer = left ? uv.x * 2.0 : (1.0 - uv.x) * 2.0;
 	float edge = min(outer, min(uv.y, 1.0 - uv.y) * 1.44);
-	paper = mix(paper_edge.rgb, paper, smoothstep(0.0, 0.07, edge + (fibre - 0.5) * 0.03));
+	paper = mix(paper_edge.rgb, paper, smoothstep(0.0, 0.04, edge + (fibre - 0.5) * 0.012));
 	float gutter = abs(uv.x - 0.5) * 2.0;
-	float binding = mix(0.52, 1.0, smoothstep(0.0, 0.10, gutter));
+	float binding = mix(0.70, 1.0, smoothstep(0.0, 0.07, gutter));
 	vec3 color = mix(paper, ink.rgb, ink.a * page_fade) * binding;
 	ALBEDO = color;
 	ROUGHNESS = 0.93;

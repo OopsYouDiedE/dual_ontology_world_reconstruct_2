@@ -187,6 +187,7 @@ const ACTOR_WALL_MARGIN := ACTOR_RADIUS + 0.16
 var det_root: Node3D
 var det: Node3D
 var det_pos := Vector2.ZERO
+var _door_passage: Dictionary = {}
 var det_path: Array = []
 var det_done := Callable()
 var _det_talk := ""
@@ -1360,6 +1361,7 @@ func _home_spot() -> Vector2:
 
 
 func _det_to_home() -> void:
+	_door_passage.clear()
 	det_path.clear()
 	det_done = Callable()
 	_wake_timer = 0.0
@@ -1560,7 +1562,11 @@ func _nearest_free(c: Vector2i, source: AStarGrid2D = null) -> Vector2i:
 func _det_can_occupy(candidate: Vector2) -> bool:
 	if _grid == null: return false
 	var cell := _cell_of(candidate)
-	if not _grid.is_in_boundsv(cell) or _grid.is_point_solid(cell): return false
+	var crossing := false
+	if not _door_passage.is_empty():
+		var nearest := Geometry2D.get_closest_point_to_segment(candidate, _door_passage.outer, _door_passage.inner)
+		crossing = candidate.distance_to(nearest) <= 0.24
+	if not crossing and (not _grid.is_in_boundsv(cell) or _grid.is_point_solid(cell)): return false
 	for figure in figures.values():
 		if not is_instance_valid(figure): continue
 		var npc := Vector2(figure.global_position.x, figure.global_position.z)
@@ -1712,6 +1718,9 @@ func _room_dir(a: String, b: String) -> Vector2:
 
 ## 选一扇最朝向 dirv 的门：返回 {pos 墙上, inward 朝室内, inner 室内站位, outer 室外站位}。
 func _door_for(ds: Dictionary, dirv: Vector2) -> Dictionary:
+	if _lowpoly_ok and lowpoly != null:
+		var rendered: Dictionary = lowpoly.door_for(dirv)
+		if not rendered.is_empty(): return rendered
 	var wall: Dictionary = ds.walls[0]
 	var segs: Array = Geo.wall_segments(wall)
 	var mid := Vector2(float(ds.w) * 0.5, float(ds.d) * 0.5)
@@ -1734,6 +1743,14 @@ func _door_for(ds: Dictionary, dirv: Vector2) -> Dictionary:
 			best_dot = dv
 			best = {"pos": pos, "inward": inward, "inner": pos + inward * 0.65, "outer": pos - inward * 0.9}
 	return best
+
+
+## Only the current visible opening can cross the room navigation boundary.
+func _go_through_door(op: Dictionary, points: Array, done: Callable) -> void:
+	_door_passage = op.duplicate()
+	_go(points, func():
+		_door_passage.clear()
+		if done.is_valid(): done.call())
 
 
 func _watch_room_change() -> void:
@@ -1766,7 +1783,7 @@ func _begin_transit(to: String) -> void:
 	if op.is_empty():
 		_transit_swap()
 		return
-	_go(_route(det_pos, op.inner) + [op.pos, op.outer], _transit_exit_done)
+	_go_through_door(op, _route(det_pos, op.inner) + [op.pos, op.outer], _transit_exit_done)
 
 
 func _transit_exit_done() -> void:
@@ -1800,7 +1817,7 @@ func _transit_swap() -> void:
 	det_pos = op.outer
 	det.position = Vector3(det_pos.x, 0.0, det_pos.y)
 	det.rotation.y = atan2(op.inward.x, op.inward.y)
-	_go([op.pos, op.inner] + _route(op.inner, _home_spot()), _transit_done)
+	_go_through_door(op, [op.pos, op.inner] + _route(op.inner, _home_spot()), _transit_done)
 
 
 func _transit_done() -> void:
@@ -1810,6 +1827,7 @@ func _transit_done() -> void:
 
 ## 离开房间视图 / 读档 / 关闭时：直接落位，不再演走路。
 func _finish_transit_now() -> void:
+	_door_passage.clear()
 	if not _transit_active(): return
 	if _fade_tween != null: _fade_tween.kill()
 	fade_rect.modulate.a = 0.0

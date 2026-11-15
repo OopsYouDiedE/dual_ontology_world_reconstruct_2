@@ -29,6 +29,7 @@ var _floor_size := Vector2.ZERO
 var _local_bounds := AABB()
 var _target_center := Vector2.ZERO
 var _obstacles: Array = []
+var _doors: Array[Dictionary] = []
 var _bed_pos := Vector2.ZERO
 var lamps: Array = []
 var _attached := false
@@ -73,8 +74,36 @@ func attach(parent: Node3D, rid: String, design: Dictionary) -> bool:
 	_extract_features(mesh_items, inst.position)
 	_spawn_indoor_lamps(inst, bc)
 	parent.add_child(inst)
+	_doors.clear()
+	_collect_doors(inst)
 	preload("res://scenes/components/world/WindowAtmosphere.gd").install_room(inst, center())
 	return true
+
+
+func _collect_doors(node: Node) -> void:
+	if node is Node3D and "_door_" in str(node.name).to_lower():
+		var door := node as Node3D
+		var point := to_local(door.global_position)
+		var position_2d := Vector2(point.x, point.z)
+		var axis := global_basis.inverse() * door.global_basis.z
+		var inward := Vector2(axis.x, axis.z).normalized()
+		if inward.dot(_target_center - position_2d) < 0.0: inward = -inward
+		_doors.append({"pos": position_2d, "inward": inward,
+			"inner": position_2d + inward * 1.2, "outer": position_2d - inward * 0.9})
+		return
+	for child in node.get_children(): _collect_doors(child)
+
+
+## Use the rendered doorway instead of the blueprint's differently oriented opening.
+func door_for(direction: Vector2) -> Dictionary:
+	var selected: Dictionary = {}
+	var score := -INF
+	for door in _doors:
+		var alignment: float = (-door.inward).dot(direction)
+		if alignment > score:
+			score = alignment
+			selected = door
+	return selected.duplicate()
 
 
 func _collect_meshes(node: Node, acc_xf: Transform3D, tag_chain: String, out: Array) -> void:

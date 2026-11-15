@@ -85,7 +85,7 @@ func _place_at_door() -> void:
 	host.det.position = Vector3(host.det_pos.x, 0.0, host.det_pos.y)
 	host.det.rotation.y = atan2(op.inward.x, op.inward.y)
 	host.det.set_pose("stand")
-	host._go([op.pos, op.inner], _enter_free)
+	host._go_through_door(op, [op.pos, op.inner], _enter_free)
 
 
 func _enter_free() -> void:

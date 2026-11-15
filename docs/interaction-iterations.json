@@ -156,6 +156,25 @@
       "validation": "四个生产脚本Godot --check-only通过；未启动辅助场景或流程探针",
       "after_evidence": null,
       "acceptance": "pending_independent_real_mainline_review"
+    },
+    {
+      "id": "20261116-doorway-navigation-character-02",
+      "changed_side": "character",
+      "character_changed": true,
+      "object_changed": false,
+      "before_evidence": "artifacts/acceptance/chapter1-candidate-608c3cf/REPORT.md",
+      "issues": [
+        "厨房实际门在西墙，蓝图选门却将侦探放到南墙外",
+        "室内寻路边界阻止门外角色跨入房间，入场路径永久等待"
+      ],
+      "changes": [
+        "从现有房间门节点读取位置和朝向，统一厨房与常规换房的实际门口路径",
+        "只在当前门口中心线两侧0.24米内放行入出场路径，继续保留NPC距离检查",
+        "入场完成或直接归位时清除门口通行状态；家具与碰撞体保持原状"
+      ],
+      "validation": "Godot对DualWorldMain及依赖脚本check-only通过；独立Terra真实主线复测待执行",
+      "after_evidence": null,
+      "acceptance": "pending_independent_real_mainline_review"
     }
   ]
 }

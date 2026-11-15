@@ -24,9 +24,16 @@ func _ready() -> void:
 	_start_monitor.call_deferred()
 
 func _start_monitor() -> void:
-	await get_tree().process_frame
-	var content := get_tree().current_scene as Control
-	if content == null: return
+	# Boot replaces itself at the first frame boundary. Wait until the title owns
+	# the tree so a transient null current_scene cannot discard the recorder.
+	var content: Control
+	for attempt in 120:
+		await get_tree().process_frame
+		content = get_tree().current_scene as Control
+		if is_instance_valid(content) and content.has_method("open_dual_world"): break
+	if not is_instance_valid(content) or not content.has_method("open_dual_world"):
+		push_error("Mainline metrics could not find the production title")
+		return
 	monitor = preload("res://scenes/components/testing/RuntimeMonitor.gd").new()
 	monitor.name = "MainlineMetrics"
 	add_child(monitor)

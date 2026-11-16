@@ -188,6 +188,10 @@ const ACTOR_MIN_DISTANCE := ACTOR_RADIUS * 2.0 + ACTOR_CLEARANCE
 const ACTOR_TOUCH_DISTANCE := ACTOR_RADIUS * 2.0
 const ACTOR_FURNITURE_MARGIN := ACTOR_RADIUS + 0.10
 const ACTOR_WALL_MARGIN := ACTOR_RADIUS + 0.16
+# B-P's farthest-grid-point placement puts Huo across the only route to the
+# window seal. This authored subcell position leaves that passage open without
+# changing anyone else's slot or the furniture/camera/evidence geometry.
+const KITCHEN_HUO_CLEAR_STAND := Vector2(6.65, 1.75)
 var det_root: Node3D
 var det: Node3D
 var det_pos := Vector2.ZERO
@@ -1316,11 +1320,57 @@ func _free_slots(n: int) -> Array:
 
 
 func _blocks_entry_lane(candidate: Vector2) -> bool:
-	if not _lowpoly_ok or lowpoly == null: return false
-	for door in lowpoly.doorways():
-		var closest := Geometry2D.get_closest_point_to_segment(candidate, door.pos, door.inner)
+	if _lowpoly_ok and lowpoly != null:
+		for door in lowpoly.doorways():
+			var closest := Geometry2D.get_closest_point_to_segment(candidate, door.pos, door.inner)
+			if candidate.distance_to(closest) < ACTOR_MIN_DISTANCE: return true
+		return false
+	# Procedural rooms have the same doorway hazard: a spawn slot whose centre
+	# is inside the actor clearance of a passable door's inner approach can make
+	# that original door permanently unusable without moving any actor. Keep
+	# the exact production door geometry (wall segment, centre and inward
+	# offset) rather than inventing a replacement opening.
+	if room_mesh == null or room_mesh.design.is_empty(): return false
+	var ds: Dictionary = room_mesh.design
+	if not ds.has("walls") or (ds.walls as Array).is_empty(): return false
+	var wall: Dictionary = ds.walls[0]
+	var segments: Array = Geo.wall_segments(wall)
+	var mid := Vector2(float(ds.w) * 0.5, float(ds.d) * 0.5)
+	for op in wall.openings:
+		if not Geo.is_passable(str(op.type)): continue
+		var segment: Dictionary = {}
+		for candidate_segment in segments:
+			if int(candidate_segment.index) == int(op.segment): segment = candidate_segment
+		if segment.is_empty(): continue
+		var a: Vector2 = segment.a
+		var b: Vector2 = segment.b
+		var u: Vector2 = (b - a) / float(segment.len)
+		var pos: Vector2 = a + u * float(op.center)
+		var inward := Vector2(-u.y, u.x)
+		if inward.dot(mid - pos) < 0.0: inward = -inward
+		var inner: Vector2 = pos + inward * 0.65
+		var closest := Geometry2D.get_closest_point_to_segment(candidate, pos, inner)
 		if candidate.distance_to(closest) < ACTOR_MIN_DISTANCE: return true
 	return false
+
+
+## Apply the authored position to Huo only, and only while it satisfies the same
+## wall, furniture, doorway and actor clearances as regular spawn placement.
+## On a live cast change, never place him on top of the moving detective.
+func _kitchen_huo_slot(fallback: Vector2, slots: Array, slot_index: int, rebuilding_room: bool) -> Vector2:
+	if _room_loaded != "B-P" or not _lowpoly_ok or lowpoly == null or _grid == null: return fallback
+	var candidate := KITCHEN_HUO_CLEAR_STAND
+	if not lowpoly.walk_rect(ACTOR_WALL_MARGIN).has_point(candidate): return fallback
+	if _grid.is_point_solid(_cell_of(candidate)) or _blocks_entry_lane(candidate): return fallback
+	for obstacle: Rect2 in lowpoly.obstacle_rects():
+		if obstacle.grow(ACTOR_FURNITURE_MARGIN).has_point(candidate): return fallback
+	for other_index in slots.size():
+		if other_index == slot_index: continue
+		var other: Vector2 = slots[other_index]
+		if candidate.distance_to(other) < ACTOR_MIN_DISTANCE: return fallback
+	if not rebuilding_room and is_instance_valid(det) and candidate.distance_to(det_pos) < ACTOR_MIN_DISTANCE:
+		return fallback
+	return candidate
 
 
 func _sync_figures(force := false) -> void:
@@ -1340,25 +1390,32 @@ func _sync_figures(force := false) -> void:
 	var mid := Vector2(c3.x, c3.z)
 	for i in list.size():
 		var a: Dictionary = data.actor_by_id[list[i]]
-		var f: Node3D = Figure.new()
-		f.setup(a, data.rig_spec.get("poses", {}))
 		var sp: Vector2 = slots[i + 1]
-		f.position = Vector3(sp.x, 0.0, sp.y)
-		var to := mid - sp
-		f.rotation.y = atan2(to.x, to.y)
-		figures_root.add_child(f)
-		figures[a.id] = f
-		var tag := Label3D.new()
-		tag.text = str(a.name)
-		tag.font_size = 40
-		tag.pixel_size = 0.006
-		tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		tag.position = Vector3(0, float(a.look.height) + 0.28 + 0.2 * float(i % 2), 0)
-		tag.modulate = Color(str(a.color)).lightened(0.55)
-		tag.outline_size = 14
-		tag.outline_modulate = Color(0.04, 0.03, 0.02, 0.95)
-		tag.no_depth_test = true
-		f.add_child(tag)
+		if str(list[i]) == "huo": sp = _kitchen_huo_slot(sp, slots, i + 1, force)
+		figures[a.id] = _make_room_figure(a, i, sp, mid)
+
+
+## The same original figure and nameplate construction is used for a saved
+## transit cast. Restoring a checkpoint must not invent new actor placements.
+func _make_room_figure(a: Dictionary, index: int, sp: Vector2, mid: Vector2) -> Node3D:
+	var f: Node3D = Figure.new()
+	f.setup(a, data.rig_spec.get("poses", {}))
+	f.position = Vector3(sp.x, 0.0, sp.y)
+	var to := mid - sp
+	f.rotation.y = atan2(to.x, to.y)
+	figures_root.add_child(f)
+	var tag := Label3D.new()
+	tag.text = str(a.name)
+	tag.font_size = 40
+	tag.pixel_size = 0.006
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.position = Vector3(0, float(a.look.height) + 0.28 + 0.2 * float(index % 2), 0)
+	tag.modulate = Color(str(a.color)).lightened(0.55)
+	tag.outline_size = 14
+	tag.outline_modulate = Color(0.04, 0.03, 0.02, 0.95)
+	tag.no_depth_test = true
+	f.add_child(tag)
+	return f
 
 
 # ───────────────────────── 3D：侦探走路 ─────────────────────────
@@ -1828,12 +1885,24 @@ func _watch_room_change() -> void:
 	if eng.s.room != _room_loaded: _begin_transit(str(eng.s.room))
 
 
+## Keep unrelated rooms' established entrance/exit presentation unchanged.
+## This one documented route must face its first graph hop, not the distant
+## final room: the latter selects an occupied arch on the opposite side.
+static func _exit_heading_room(from: String, to: String, hops: Array, rooms: Dictionary) -> String:
+	if from == "2F-cross-M" and to == "1F-Shaft-Monitor" and hops.size() > 2:
+		var next := str(hops[1])
+		if str(hops.front()) == from and str(hops.back()) == to and next != from and rooms.has(next):
+			return next
+	return to
+
+
 ## 换房间：先在旧房间里走向通往目的地的门，出门后黑场，再从新房间对应的门走进来。
 func _begin_transit(to: String) -> void:
 	var from := _room_loaded
-	var op := _door_for(room_mesh.design, _room_dir(from, to))
-	_transit = {"active": true, "from": from, "to": to, "phase": "exit"}
 	var hops: Array = eng.path_to(to, from)
+	var heading := _exit_heading_room(from, to, hops, data.room_by_id)
+	var op := _door_for(room_mesh.design, _room_dir(from, heading))
+	_transit = {"active": true, "from": from, "to": to, "phase": "exit"}
 	if hops.size() > 2:
 		var names: Array = []
 		for i in range(1, hops.size() - 1): names.append(str(data.room_by_id[hops[i]].label))

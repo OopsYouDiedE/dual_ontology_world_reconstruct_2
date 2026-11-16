@@ -2,6 +2,7 @@ extends SceneTree
 ## Focused checkpoint continuations, selected independently to keep room checks short.
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 const Checkpoint := preload("res://scenes/components/testing/StoryCheckpoint.gd")
+const Source := preload("res://mcp/CaptureSource.gd")
 var failed := 0
 func check(ok: bool, message: String) -> void:
 	print(("PASS " if ok else "FAIL ") + message)
@@ -39,12 +40,48 @@ func run() -> void:
 		check(game.opening._name_tag.visible and game.opening._free_t == 5.0, "free bedroom nameplate and elapsed time retained")
 		game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/opening-free.json")
 	elif probe == "transit":
+		# Fixture: the rendered origin cast can legitimately lag the rule engine
+		# while a room change is in progress. Add a known actor to exercise this
+		# mismatch; these coordinates are test data, not a game placement change.
+		var fixture_id := "huo"
+		if not game.figures.has(fixture_id):
+			var center: Vector3 = game.room_mesh.center()
+			game.figures[fixture_id] = game._make_room_figure(game.data.actor_by_id[fixture_id], game.figures.size(), Vector2(2.0, 1.0), Vector2(center.x, center.z))
 		game.eng.s.room = "B-P"
 		game._begin_transit("B-P")
 		var room_before: String = game._room_loaded
-		game.checkpoints.save_now(path)
+		var cast_before: Array = game.figures.keys()
+		var transform_before: Transform3D = game.figures[fixture_id].transform
+		var animation_shape: Dictionary = game.checkpoints.capture().presentation.actors[fixture_id].duplicate(true)
+		animation_shape["animation"] = StringName("idle")
+		animation_shape["position"] = 0.0
+		check(Checkpoint._valid_saved_actor(animation_shape), "native Godot StringName animation accepted")
+		animation_shape["animation"] = "idle"
+		check(Checkpoint._valid_saved_actor(animation_shape), "legacy String animation accepted")
+		animation_shape["animation"] = 3
+		check(not Checkpoint._valid_saved_actor(animation_shape), "invalid animation type rejected")
+		var saved_route: Array = game.det_path.duplicate()
+		var saved_door: Dictionary = game._door_passage.duplicate(true)
+		check(not game.eng.actors_in_room(room_before).has(fixture_id), "fixture visible cast differs from current engine cast")
+		check(game.checkpoints.save_now(path), "mismatched transit cast snapshot saved")
 		check(game.checkpoints.restore_file(path), "mid-transit checkpoint restored")
 		check(game._room_loaded == room_before and game._transit.to == "B-P", "rendered origin and destination preserved")
+		check(game.figures.keys() == cast_before and game.figures.has(fixture_id) and game.figures[fixture_id].transform.is_equal_approx(transform_before), "exact saved transit actor order and transform restored")
+		check(game.det_path == saved_route and game._door_passage == saved_door and game.det_done.is_valid(), "saved route, doorway and semantic callback restored")
+		# An internally checksummed but invalid actor must be rejected before any
+		# scene mutation; a valid envelope alone is not sufficient.
+		var bad: Dictionary = game.checkpoints.capture()
+		bad.presentation.actors["not-a-real-actor"] = bad.presentation.detective.duplicate(true)
+		var bad_path := Source.project_output(path + ".invalid-actor")
+		check(Checkpoint.write_snapshot(bad_path, bad, 1) == OK, "invalid-cast fixture has valid envelope and checksum")
+		var before_invalid: Dictionary = game.checkpoints.capture()
+		check(not game.checkpoints.restore_file(bad_path) and game.checkpoints.error.begins_with("Checkpoint transit actor invalid"), "unknown transit actor rejected")
+		check(game.eng.save_dict() == before_invalid.engine and game.figures.keys() == cast_before and game.det_path == saved_route, "invalid cast rejected before scene mutation")
+		bad = before_invalid.duplicate(true)
+		bad.presentation.actors[fixture_id].transform = Vector3.ZERO
+		check(Checkpoint.write_snapshot(bad_path, bad, 2) == OK, "invalid-transform fixture has valid envelope and checksum")
+		check(not game.checkpoints.restore_file(bad_path) and game.checkpoints.error.begins_with("Checkpoint transit actor invalid"), "malformed transit actor transform rejected")
+		check(game.eng.save_dict() == before_invalid.engine and game.figures.keys() == cast_before and game.det_path == saved_route, "invalid transform rejected before scene mutation")
 		game.det_path.clear()
 		game.det_done.call()
 		check(game._transit.phase == "fade" and game._door_passage.is_empty(), "restored exit callback releases doorway and advances fade")

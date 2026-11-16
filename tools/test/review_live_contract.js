@@ -22,7 +22,10 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.resolve(__dirname, '../testing/review.js'), 'utf8'), context);
 assert.equal(list.children.length, 1);
 assert.equal(list.children[0].children[0].textContent, first.at + ' · 修改 · ' + first.summary);
-assert.equal(list.children[0].children[2].children[0].href, '../../artifacts/%E5%B8%A6%20%E7%A9%BA%E6%A0%BC.png');
+const pendingEvidence = list.children[0].children[2].children[0];
+assert.equal(pendingEvidence.tag, 'span', 'a live event cannot link unverified evidence');
+assert.equal(pendingEvidence.textContent, '证据待批量核验：artifacts/带 空格.png');
+assert.equal(pendingEvidence.href, undefined, 'missing or changed evidence cannot create a live broken link');
 const original = list.children[0];
 const script = body.children.at(-1);
 script.onload();
@@ -37,4 +40,4 @@ assert.equal(list.children[0], original, 'original event node must be retained')
 assert.equal(list.children[2].className, 'complete');
 assert.equal(list.children[2].children.at(-1).textContent, '确认事件：one、two');
 assert.equal(empty.hidden, true);
-console.log(JSON.stringify({passed:true,checks:8,scope:'append-only live progress, escaping, evidence URL, completion association'}));
+console.log(JSON.stringify({passed:true,checks:12,scope:'append-only live progress, escaping, unlinked pending evidence, completion association'}));

@@ -181,6 +181,12 @@ func _read_exact(path: String) -> Dictionary:
 		error = "Checkpoint controller state missing"; return {}
 	if not p.ui.get("fade_rect") is Dictionary or not p.ui.fade_rect.get("modulate") is Color or (p.host.has("_transit") and not p.host._transit is Dictionary):
 		error = "Checkpoint fade presentation invalid"; return {}
+	# While a transit is active the rules may already describe the destination
+	# and a later time. Validate the *saved visible* cast before changing a scene.
+	if p.controller == "room" and bool(p.host.get("_transit", {}).get("active", false)):
+		for id in p.actors:
+			if not id is String or id == "detective" or not host.data.actor_by_id.has(id) or not _valid_saved_actor(p.actors[id]):
+				error = "Checkpoint transit actor invalid: " + str(id); return {}
 	var fade_alpha: float = p.ui.fade_rect.modulate.a
 	if not is_finite(fade_alpha) or fade_alpha < 0.0 or fade_alpha > 1.0:
 		error = "Checkpoint fade alpha invalid"; return {}
@@ -302,8 +308,13 @@ func restore_file(path: String) -> bool:
 	elif not host._inspect_intent.is_empty() and not p.has("interaction"):
 		var evidence_id: String = host._inspect_intent
 		host.det_done = func(): host._inspect_arrived(evidence_id)
-	for id in p.actors:
-		if host.figures.has(id) and is_instance_valid(host.figures[id]): _apply_actor(host.figures[id], p.actors[id])
+	if p.controller == "room" and bool(p.host.get("_transit", {}).get("active", false)):
+		# _build_room uses the current rule-engine cast, which may differ from
+		# the still-visible origin room. Recreate exactly the saved cast first.
+		_restore_transit_cast(p.actors)
+	else:
+		for id in p.actors:
+			if host.figures.has(id) and is_instance_valid(host.figures[id]): _apply_actor(host.figures[id], p.actors[id])
 	_apply_actor(host.det, p.detective)
 	for kind in p.props:
 		var prop: Node = host.evidence_presentations.get(kind)
@@ -469,6 +480,39 @@ static func _actor(actor: Node3D) -> Dictionary:
 		result["animation"] = actor._glb_player.current_animation
 		result["position"] = actor._glb_player.current_animation_position
 	return result
+
+static func _valid_saved_actor(value: Variant) -> bool:
+	if not value is Dictionary or not value.get("transform") is Transform3D or not value.get("visible") is bool or not value.get("pose") is String:
+		return false
+	if not (value.get("clock") is float or value.get("clock") is int) or not is_finite(float(value.clock)):
+		return false
+	if not (value.transform as Transform3D).is_finite(): return false
+	if value.has("animation"):
+		# AnimationPlayer.current_animation is a StringName in Godot 4;
+		# older checkpoints may also contain an ordinary String.
+		if not (value.animation is String or value.animation is StringName) or not (value.get("position") is float or value.get("position") is int) or not is_finite(float(value.position)):
+			return false
+	return true
+
+func _restore_transit_cast(saved: Dictionary) -> void:
+	for child in host.figures_root.get_children():
+		host.figures_root.remove_child(child)
+		child.queue_free()
+	host.figures.clear()
+	var ids: Array = saved.keys()
+	var center: Vector3 = host.lowpoly.center() if host._lowpoly_ok and host.lowpoly != null else host.room_mesh.center()
+	var mid := Vector2(center.x, center.z)
+	for index in ids.size():
+		var id: String = ids[index]
+		var state: Dictionary = saved[id]
+		var transform: Transform3D = state.transform
+		var position := Vector2(transform.origin.x, transform.origin.z)
+		var actor: Node3D = host._make_room_figure(host.data.actor_by_id[id], index, position, mid)
+		host.figures[id] = actor
+		_apply_actor(actor, state)
+	# Once transit finishes, the usual rule-engine synchronization can detect any
+	# genuine subsequent cast change. The saved positions themselves remain exact.
+	host._occ_key = ",".join(ids.map(func(id): return str(id))) + "@" + str(host._room_loaded)
 
 static func _apply_actor(actor: Node3D, value: Dictionary) -> void:
 	actor.transform = value.transform

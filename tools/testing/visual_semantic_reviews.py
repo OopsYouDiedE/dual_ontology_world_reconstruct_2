@@ -26,6 +26,8 @@ def validate(record, root=ROOT):
     if record['segment_id'] not in {s['id'] for s in plan['scenes']}:
         raise ValueError('Unknown mainline segment')
     raw = read(record['observations'],root)
+    if bool(record.get('synthetic_test_fixture')) != bool(raw.get('synthetic_test_fixture')):
+        raise ValueError('Synthetic observation and record markers must match')
     if raw.get('blind') is not True or raw.get('reviewer') != 'Terra':
         raise ValueError('Require independent Terra blind observations')
     groups = [g for g in raw['groups'] if g['group_id'] == record['group_id']]
@@ -79,6 +81,8 @@ def load(root=ROOT):
     for path in sorted((root/DIRECTORY).glob('*.json')):
         envelope=read(path,root)
         record=envelope['record']
+        if record.get('synthetic_test_fixture'):
+            raise ValueError('Synthetic semantic fixtures cannot appear in published history')
         validated=validate(record,root)
         for item in envelope['evidence_sha256']:
             if hashlib.sha256(provenance.project_path(item['path'],root).read_bytes()).hexdigest()!=item['sha256']:

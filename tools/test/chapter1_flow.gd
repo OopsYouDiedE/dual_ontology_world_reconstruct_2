@@ -79,8 +79,50 @@ func _teardown_game(game) -> void:
 
 
 func _initialize() -> void:
+	# This optional development-only cap avoids giant per-frame walking steps
+	# during the script's 120x time acceleration. It never changes game code.
+	var motion_scale := 120.0
+	var stall_snapshot := ""
+	var pretransit_snapshot := ""
+	var pretransit_from := ""
+	var pretransit_to := ""
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--dv-motion-scale="):
+			var value := argument.trim_prefix("--dv-motion-scale=")
+			if not value.is_valid_float() or float(value) <= 0.0 or float(value) > 120.0:
+				printerr("Invalid --dv-motion-scale; expected a number in (0, 120]")
+				call_deferred("quit", 2)
+				return
+			motion_scale = float(value)
+		elif argument.begins_with("--dv-stall-snapshot="):
+			stall_snapshot = preload("res://mcp/CaptureSource.gd").project_output(argument.trim_prefix("--dv-stall-snapshot="))
+			if stall_snapshot.is_empty():
+				printerr("Stall checkpoint must be an output inside the authorized project")
+				call_deferred("quit", 2)
+				return
+		elif argument.begins_with("--dv-pretransit-snapshot="):
+			pretransit_snapshot = preload("res://mcp/CaptureSource.gd").project_output(argument.trim_prefix("--dv-pretransit-snapshot="))
+			if pretransit_snapshot.is_empty():
+				printerr("Transit checkpoint must be an output inside the authorized project")
+				call_deferred("quit", 2)
+				return
+		elif argument.begins_with("--dv-pretransit-from="):
+			pretransit_from = argument.trim_prefix("--dv-pretransit-from=")
+		elif argument.begins_with("--dv-pretransit-to="):
+			pretransit_to = argument.trim_prefix("--dv-pretransit-to=")
+	if (not pretransit_snapshot.is_empty() or not pretransit_from.is_empty() or not pretransit_to.is_empty()) and (pretransit_snapshot.is_empty() or pretransit_from.is_empty() or pretransit_to.is_empty()):
+		printerr("Transit checkpoint requires snapshot, from and to together")
+		call_deferred("quit", 2)
+		return
+	if not pretransit_snapshot.is_empty():
+		var rooms: Dictionary = Data.get_data().room_by_id
+		if not rooms.has(pretransit_from) or not rooms.has(pretransit_to) or pretransit_from == pretransit_to:
+			printerr("Transit checkpoint room IDs must name two different project rooms")
+			call_deferred("quit", 2)
+			return
 	# 测试专用：加速镜头与复演，同时停住自然时钟；后文仍只通过 next_beat 推进剧情。
 	Engine.time_scale = 120.0
+	print("[DEV DIAGNOSTIC] walking/transit time-scale cap=", motion_scale, "; no acceptance claim")
 	var game = Main.instantiate()
 	root.add_child(game)
 	game.skip_subtitles = true
@@ -99,9 +141,61 @@ func _initialize() -> void:
 	var prepared_hold := {}
 	var handled_choice := false
 	var reached_plan := false
+	var pretransit_captured := false
+	var last_state := ""
+	var last_progress := Time.get_ticks_msec()
 
 	while Time.get_ticks_msec() - started < 180000:
 		await process_frame
+		if motion_scale < 120.0:
+			var pending_room_change: bool = game.view == "room" and game._room_loaded != "" and str(game.eng.s.room) != str(game._room_loaded)
+			var desired_scale := motion_scale if game._transit_active() or not game.det_path.is_empty() or pending_room_change else 120.0
+			if not is_equal_approx(Engine.time_scale, desired_scale):
+				Engine.time_scale = desired_scale
+				print("[DEV DIAGNOSTIC] walking/transit test time_scale=", desired_scale)
+		# A stuck development driver is not a game verdict. Preserve the actual
+		# gates and UI state instead of burning the whole slow-loop timeout.
+		var diagnostic := {"beat":str(game.eng.s.current_beat), "room":str(game.eng.s.room),
+			"time":game.eng.s.t, "cursor":game.eng.s.beat_cursor, "hold":game.eng.s.hold,
+			"postponed":game.eng.s.postponed, "story_gate":game.eng.s.story_gate,
+			"waiting":game.eng.s.waiting, "pending_deduction":game.eng.s.pending_deduction,
+			"pending_conflict":game.eng.s.pending_conflict, "pending_choice":game.eng.s.pending_choice,
+			"story_busy":game._story_busy(), "cinematic":game._cine,
+			"modal_visible":game.modal.visible, "modal_key":game._modal_key,
+			"subtitle_visible":game.subtitle.visible, "subtitle_queue":game._sub_queue.size(),
+			"path_points":game.det_path.size(), "detective_x":snappedf(game.det_pos.x,0.01),
+			"detective_z":snappedf(game.det_pos.y,0.01),
+			"opening":str(game.opening.phase) if is_instance_valid(game.opening) and game.opening.active else "",
+			"corridor":str(game.gathering.phase) if is_instance_valid(game.gathering) and game.gathering.active else "",
+			"kitchen":str(game.kitchen.phase) if is_instance_valid(game.kitchen) and game.kitchen.active else ""}
+		var state_text := JSON.stringify(diagnostic)
+		if state_text != last_state:
+			last_state = state_text
+			last_progress = Time.get_ticks_msec()
+		elif Time.get_ticks_msec() - last_progress > 30000:
+			# Observe the live production path without moving the actor or changing
+			# its occupancy: this diagnoses the accelerated test driver only.
+			var observation: Dictionary = game.mcp_observe()
+			diagnostic["navigation"] = observation.get("navigation", {})
+			diagnostic["loaded_room"] = str(game._room_loaded)
+			diagnostic["transit_active"] = bool(game._transit_active())
+			diagnostic["transit_phase"] = str(game._transit.get("phase", ""))
+			diagnostic["wake_timer"] = float(game._wake_timer)
+			diagnostic["current_position_occupiable"] = bool(game._det_can_occupy(game.det_pos))
+			diagnostic["engine_time_scale"] = Engine.time_scale
+			diagnostic["target_cells"] = []
+			if game._grid != null:
+				for point: Vector2 in game.det_path:
+					var cell: Vector2i = game._cell_of(point)
+					diagnostic.target_cells.append({"position": [point.x, point.y], "cell": [cell.x, cell.y],
+						"static_solid": bool(game._grid.is_point_solid(cell)),
+						"occupiable": bool(game._det_can_occupy(point))})
+			if not stall_snapshot.is_empty():
+				diagnostic["stall_snapshot_saved"] = game.checkpoints.save_now(stall_snapshot)
+				diagnostic["stall_snapshot"] = stall_snapshot if diagnostic.stall_snapshot_saved else ""
+				diagnostic["stall_snapshot_error"] = str(game.checkpoints.error)
+			print("[DEV DIAGNOSTIC] STALLED_NO_PROGRESS " + JSON.stringify(diagnostic))
+			break
 		# 开发加速字幕，不修改剧情数据或自动搜证开关。
 		if game.subtitle.visible: game._sub_until = 0.0
 
@@ -175,7 +269,27 @@ func _initialize() -> void:
 		var can_advance: bool = seeded_kitchen and game.eng.s.pending_deduction.is_empty() and game.eng.s.pending_conflict == "" and game.eng.s.pending_choice.is_empty() and game.eng.s.hold.is_empty() and game.eng.s.postponed.is_empty() and game.eng.s.story_gate.is_empty() and not game.eng.s.waiting and not game._story_busy() and (game.kitchen == null or not game.kitchen.active or replay_done)
 		if can_advance:
 			print("[DEV DIAGNOSTIC] 下一节拍：", game.eng.s.current_beat, " ->")
+			# next_beat may change rooms synchronously. Lower the clock before
+			# the next host frame, rather than after its first oversized walk step.
+			if motion_scale < 120.0: Engine.time_scale = motion_scale
 			game.eng.next_beat()
+			if not pretransit_captured and not pretransit_snapshot.is_empty() and str(game._room_loaded) == pretransit_from and str(game.eng.s.room) == pretransit_to and not game._transit_active():
+				var detective_before: Vector2 = game.det_pos
+				var camera_before: Transform3D = game.cam.global_transform
+				var rules_before: Dictionary = game.eng.save_dict()
+				# Explicitly invoke the same production watcher before the next
+				# frame, so the checkpoint records the planned route before any
+				# movement. This is a development intervention, not natural play.
+				game._watch_room_change()
+				var planned: bool = game._transit_active() and str(game._transit.get("phase", "")) == "exit"
+				var untouched: bool = game.det_pos.is_equal_approx(detective_before) and game.cam.global_transform.is_equal_approx(camera_before) and game.eng.save_dict() == rules_before
+				var saved: bool = planned and untouched and game.checkpoints.save_now(pretransit_snapshot)
+				pretransit_captured = true
+				print("[DEV DIAGNOSTIC] PRETRANSIT_SNAPSHOT " + JSON.stringify({"saved":saved, "planned":planned, "detective_camera_rules_unchanged":untouched,
+					"from":pretransit_from, "to":pretransit_to, "detective":[game.det_pos.x,game.det_pos.y],
+					"path_points":game.det_path.size(), "explicit_watcher_before_next_frame":true,
+					"path":pretransit_snapshot if saved else "", "error":str(game.checkpoints.error), "acceptance_eligible":false}))
+				_check(saved, "开发过门首次移动前快照已保存")
 
 	_check(asked_kitchen, "开发输入已从走廊请求进入 B-P")
 	_check(seeded_kitchen, "厨房专属探索已实际启动")

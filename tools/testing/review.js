@@ -24,10 +24,11 @@
       row.className = e.kind;
       row.append(node('b', e.at + ' · ' + labels[e.kind] + ' · ' + e.summary), node('p', String(e.result)));
       const evidence = document.createElement('p'); evidence.className = 'evidence-links';
+      // A live ledger update does not re-read or re-hash historical files.
+      // Avoid producing a potentially broken/stale link until milestone export
+      // verifies it; the original path remains visible as plain text.
       for (const path of e.evidence || []) {
-        const a = node('a', path.split('/').pop());
-        a.href = document.body.dataset.projectBase + path.split('/').map(encodeURIComponent).join('/');
-        evidence.append(a);
+        evidence.append(node('span', '证据待批量核验：' + path, 'evidence-pending'));
       }
       row.append(evidence, node('small', e.work_id + ' · ' + e.segment_id + ' · ' + e.revision.slice(0, 8)));
       if (e.kind === 'complete') row.append(node('small', '确认事件：' + e.related_event_ids.join('、')));

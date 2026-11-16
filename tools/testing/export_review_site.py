@@ -44,6 +44,90 @@ def project_file(value):
     return path
 
 
+def audit_progress(progress):
+    """Audit immutable progress evidence at milestone export, not on each update.
+
+    Missing, changed and unhashed evidence remain visible as gaps. None may be
+    linked, promoted to a trajectory or used to certify an overall pass. Formal
+    player-review and capture validation remain strict and separate.
+    """
+    counts = {key: 0 for key in ('valid', 'missing', 'changed', 'unverified')}
+    events, issues, cache = {}, [], {}
+    for event in progress.get('events', []):
+        event_id = event.get('event_id')
+        if not isinstance(event_id, str) or not event_id or event_id in events:
+            raise ValueError('Evidence audit requires unique progress event IDs')
+        expected = {}
+        for item in event.get('evidence_sha256', []):
+            if not isinstance(item, dict) or not isinstance(item.get('path'), str):
+                continue
+            value, digest = item['path'], item.get('sha256')
+            expected[value] = digest if value not in expected or expected[value] == digest else None
+        rows = []
+        for value in event.get('evidence', []):
+            if not isinstance(value, str):
+                raise ValueError('Evidence paths must be strings')
+            path = provenance.project_path(value, ROOT)
+            relative = path.relative_to(ROOT).as_posix()
+            recorded = expected.get(relative, expected.get(value))
+            actual = None
+            if not path.is_file():
+                status = 'missing'
+            elif not isinstance(recorded, str) or not re.fullmatch(r'[0-9a-f]{64}', recorded):
+                status = 'unverified'
+            else:
+                before = path.stat()
+                key = (path, before.st_size, before.st_mtime_ns)
+                if key not in cache:
+                    digest = hashlib.sha256()
+                    with path.open('rb') as stream:
+                        for block in iter(lambda: stream.read(1024 * 1024), b''):
+                            digest.update(block)
+                    after = path.stat()
+                    cache[key] = digest.hexdigest() if (before.st_size, before.st_mtime_ns) == (after.st_size, after.st_mtime_ns) else None
+                actual = cache[key]
+                status = 'unverified' if actual is None else 'valid' if actual == recorded else 'changed'
+            row = {'path': relative, 'status': status, 'expected_sha256': recorded, 'actual_sha256': actual}
+            counts[status] += 1
+            rows.append(row)
+            if status != 'valid':
+                issues.append(dict(event_id=event_id, **row))
+        events[event_id] = rows
+    return {'complete': not issues, 'counts': counts, 'events': events, 'issues': issues}
+
+
+def progress_evidence(event, page, audit=None):
+    audit = audit if audit is not None else audit_progress({'events': [event]})
+    labels = {'missing': '证据缺失', 'changed': '内容已变化', 'unverified': '缺少校验值或文件正在变化'}
+    rendered = []
+    for item in audit['events'].get(event['event_id'], []):
+        if item['status'] == 'valid':
+            rendered.append(link(project_file(item['path']), Path(item['path']).name, page))
+            continue
+        recorded = item.get('expected_sha256') or '未记录'
+        detail = f"{labels[item['status']]}：{item['path']}（记录 SHA-256：{recorded}）"
+        if item.get('actual_sha256'):
+            detail += '（当前 SHA-256：' + item['actual_sha256'] + '）'
+        rendered.append('<span class="evidence-issue">' + escape(detail) + '</span>')
+    return ''.join(rendered)
+
+
+def overall_passed(entries, audit):
+    # A complete current review cannot hide an incomplete historical audit.
+    return bool(entries) and bool(audit.get('complete')) and all(e['status'] == '合格' for e in entries)
+
+
+def evidence_banner(audit, page):
+    counts = audit['counts']
+    status = '完整' if audit['complete'] else '不完整 · 不得视为验收通过'
+    detail = f"已核验 {counts['valid']} 项；缺失 {counts['missing']} 项，内容变化 {counts['changed']} 项，未核验 {counts['unverified']} 项。"
+    return '<aside class="evidence-banner"><b>历史证据：' + status + '</b><p>' + escape(detail) + ' 缺失或变化项仅以文字标记，不提供失效链接。</p>' + link(OUT / 'evidence-audit.json', '查看证据审计清单', page) + '</aside>'
+
+
+def markdown_links(text):
+    return [value.strip().strip('<>') for value in re.findall(r'!?\[[^\]]*\]\(([^)]+)\)', text)]
+
+
 def atomic_write(path, text):
     temporary = path.with_name(path.name + f'.{os.getpid()}.tmp')
     temporary.write_text(text, encoding='utf-8')
@@ -136,7 +220,7 @@ def review_details(record, page):
     return body + '<p class="evidence-links">' + ''.join(link(project_file(p), title, page) for p, title in files) + '</p>'
 
 
-def repair_feedback(changes, events, page):
+def repair_feedback(changes, events, page, audit):
     body = '<div class="feedback"><h3>本段反馈与修正</h3>'
     if not changes and not events:
         return body + '<p class="muted">等待本段主线游玩反馈。</p></div>'
@@ -150,15 +234,21 @@ def repair_feedback(changes, events, page):
         body += '<small>' + escape(row['time'] + ' · ' + row['revision'][:8]) + '</small></li>'
     for e in events:
         body += '<li><b>' + escape({'change': '修正', 'check': '检查', 'complete': '完成确认'}[e['kind']] + ' · ' + e['summary']) + '</b><p>' + escape(str(e['result'])) + '</p>'
-        body += '<p class="evidence-links">' + ''.join(link(project_file(p), Path(p).name, page) for p in e.get('evidence', [])) + '</p>'
+        body += '<p class="evidence-links">' + progress_evidence(e, page, audit) + '</p>'
         body += '<small>' + escape(e['at'] + ' · ' + e['work_id']) + '</small></li>'
     return body + '</ol></div>'
 
 
-def build_segments(reviews, changes, progress, revision):
+def build_segments(reviews, changes, progress, revision, audit=None):
     entries = []
+    audit = audit if audit is not None else audit_progress(progress)
     semantic_reviews = visual_semantic_reviews.load(ROOT)
-    recordings = mainline_recordings.load(progress['events'],ROOT)
+    # Do not load a missing or changed capture receipt as a validated recording.
+    recording_events = []
+    for event in progress['events']:
+        allowed = [item['path'] for item in audit['events'][event['event_id']] if item['status'] == 'valid']
+        recording_events.append(dict(event, evidence=allowed))
+    recordings = mainline_recordings.load(recording_events, ROOT)
     for scene in read_json(PLAN)['scenes']:
         history = [r for r in reviews if r['segment_id'] == scene['id'] and not r.get('source_isolated') and r.get('acceptance_eligible') is not False]
         superseded = {r['supersedes'] for r in history if r.get('supersedes')}
@@ -171,12 +261,14 @@ def build_segments(reviews, changes, progress, revision):
         for event in events:
             if event['kind'] != 'check':
                 continue
-            for evidence in event.get('evidence', []):
-                path = project_file(evidence)
+            for evidence in audit['events'][event['event_id']]:
+                if evidence['status'] != 'valid':
+                    continue
+                path = project_file(evidence['path'])
                 if path.suffix.lower() not in ('.png', '.jpg', '.jpeg') or path in seen_images:
                     continue
                 provenance.verify_image(path, ROOT, allow_fixture=True)
-                development_images.append({'path': evidence, 'caption': event['summary'] + ' · ' + path.stem})
+                development_images.append({'path': evidence['path'], 'caption': event['summary'] + ' · ' + path.stem})
                 seen_images.add(path)
         semantic_history = [r for r in semantic_reviews if r['segment_id'] == scene['id']]
         semantic = semantic_history[-1] if semantic_history else None
@@ -257,7 +349,7 @@ def semantic_details(review, page):
     return body
 
 
-def segment_card(entry, number, page):
+def segment_card(entry, number, page, audit):
     current = entry['current']
     body = f'<article class="segment" id="trajectory-{entry["id"]}" data-segment="{entry["id"]}">'
     # The actual image sequence is the first element of every mainline segment.
@@ -284,7 +376,7 @@ def segment_card(entry, number, page):
     body += '<details class="acceptance-dimensions"><summary>完整实机七项验收 · ' + entry['status'] + '</summary>' + dimension_scores(current) + '</details>'
     if current:
         body += review_details(current, page)
-    body += repair_feedback(entry['changes'], entry['events'], page)
+    body += repair_feedback(entry['changes'], entry['events'], page, audit)
     if entry['history']:
         body += f'<details class="history"><summary>历次实机评分与对照 · {len(entry["history"])} 条</summary>'
         previous = None
@@ -299,12 +391,13 @@ def segment_card(entry, number, page):
     return body + '</article>'
 
 
-def progress_section(progress, page):
+def progress_section(progress, page, audit=None):
+    audit = audit if audit is not None else audit_progress(progress)
     labels = {'change': '修改', 'check': '检测', 'complete': '完成确认'}
     rows = []
     for e in progress['events']:
         row = f'<li class="{e["kind"]}" data-event-id="{escape(e["event_id"], quote=True)}"><b>{escape(e["at"] + " · " + labels[e["kind"]] + " · " + e["summary"])}</b><p>{escape(str(e["result"]))}</p>'
-        row += '<p class="evidence-links">' + ''.join(link(project_file(p), Path(p).name, page) for p in e.get('evidence', [])) + '</p>'
+        row += '<p class="evidence-links">' + progress_evidence(e, page, audit) + '</p>'
         row += '<small>' + escape(e['work_id'] + ' · ' + e['segment_id'] + ' · ' + e['revision'][:8]) + '</small>'
         if e['kind'] == 'complete':
             row += '<small>确认事件：' + escape('、'.join(e['related_event_ids'])) + '</small>'
@@ -317,8 +410,9 @@ def wrap(title, body, page, revision, navigation=''):
     return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + escape(title) + '</title><link rel="stylesheet" href="' + href(OUT / 'review.css', page) + '"></head><body data-project-base="' + href(ROOT, page) + '/"><header><div class="brand">DUAL ONTOLOGY · CHAPTER 01</div><h1>' + escape(title) + '</h1><p>沿主线查看实机轨迹、逐项评分与反馈修正。</p><div class="header-links">' + link(OUT / 'index.html', '主线评分', page) + link(OUT / 'archive.html', '历史与辅助资料', page) + link(OUT / '评分总览.md', '带图 Markdown', page) + '<span>版本 ' + escape(revision[:8]) + '</span></div></header>' + navigation + '<main>' + body + '</main><dialog id="image-view"><button aria-label="关闭原图">关闭 · Esc</button><img alt="实机原图"></dialog><script src="' + href(OUT / 'review.js', page) + '"></script></body></html>'
 
 
-def markdown(entries, revision, progress):
-    lines = ['# 第一章主线评分', '', '版本：' + revision, '', f'[HTML 主线](<{(OUT / "index.html").as_posix()}>) · [历史与辅助资料](<{(OUT / "archive.html").as_posix()}>)', '']
+def markdown(entries, revision, progress, audit):
+    integrity = '完整' if audit['complete'] else '不完整；不得视为验收通过'
+    lines = ['# 第一章主线评分', '', '版本：' + revision, '', '**历史证据：' + integrity + '**', '', f'[证据审计](<{(OUT / "evidence-audit.json").as_posix()}>) · [HTML 主线](<{(OUT / "index.html").as_posix()}>) · [历史与辅助资料](<{(OUT / "archive.html").as_posix()}>)', '']
     for i, entry in enumerate(entries, 1):
         lines += [f'## {i:02d} · {entry["label"]}', '']
         images = entry['current'].get('images', []) or semantic_images(entry)
@@ -360,6 +454,10 @@ def markdown(entries, revision, progress):
     lines += ['', '## 实时进展', '']
     for e in progress['events']:
         lines += ['- ' + e['at'] + ' · ' + e['kind'] + ' · ' + e['work_id'] + '：' + e['summary'] + '；' + str(e['result'])]
+        for item in audit['events'][e['event_id']]:
+            if item['status'] != 'valid':
+                label = {'missing': '证据缺失', 'changed': '内容已变化', 'unverified': '未核验'}[item['status']]
+                lines += ['  - **' + label + '**：`' + item['path'].replace('`', '') + '`；记录 SHA-256：`' + str(item.get('expected_sha256') or '未记录') + '`']
         if e['kind'] == 'complete':
             lines += ['  完成确认：' + '、'.join(e['related_event_ids'])]
     return '\n'.join(lines) + '\n'
@@ -415,23 +513,29 @@ def validate_export():
             if not path.is_relative_to(ROOT) or not path.exists() or (target.fragment and path in documents and target.fragment not in documents[path].ids):
                 broken.append({'page': str(page), 'url': url})
     for page in OUT.rglob('*.md'):
-        for url in re.findall(r'!\[[^\]]*\]\(([^)]+)\)', page.read_text(encoding='utf-8-sig')):
-            value = url.strip().strip('<>')
-            if urlsplit(value).scheme in ('http', 'https'):
+        for url in markdown_links(page.read_text(encoding='utf-8-sig')):
+            target = urlsplit(url)
+            if target.scheme in ('http', 'https', 'mailto', 'data'):
                 continue
-            path = Path(unquote(value))
+            checked += 1
+            if target.scheme:
+                broken.append({'page': str(page), 'url': url})
+                continue
+            path = Path(unquote(target.path)) if target.path else page
             if not path.is_absolute():
                 path = page.parent / path
-            if not path.resolve().is_relative_to(ROOT) or not path.is_file():
-                broken.append({'page': str(page), 'image': url})
+            path = path.resolve()
+            if not path.is_relative_to(ROOT) or not path.is_file() or (target.fragment and path in documents and target.fragment not in documents[path].ids):
+                broken.append({'page': str(page), 'url': url})
     data = read_json(OUT / 'score_records.json')
     expected = [s['id'] for s in read_json(PLAN)['scenes']]
     if [e['id'] for e in data['gameplay_scenes']] != expected or any(len(e['scores']) != 7 for e in data['gameplay_scenes']):
         raise ValueError('Invalid mainline order or scores')
-    passed = all(e['status'] == '合格' for e in data['gameplay_scenes'])
+    integrity = data.get('history_evidence', {})
+    passed = overall_passed(data['gameplay_scenes'], integrity)
     if data['overall_passed'] != passed:
         raise ValueError('Mainline acceptance inconsistent')
-    report = dict(generated_at=datetime.now().astimezone().isoformat(timespec='seconds'), html_files=len(documents), markdown_files=len(list(OUT.rglob('*.md'))), local_links_checked=checked, broken_links=broken, mainline_segments=len(expected), overall_passed=passed)
+    report = dict(generated_at=datetime.now().astimezone().isoformat(timespec='seconds'), html_files=len(documents), markdown_files=len(list(OUT.rglob('*.md'))), local_links_checked=checked, broken_links=broken, mainline_segments=len(expected), history_evidence_complete=integrity.get('complete', False), history_evidence_counts=integrity.get('counts', {}), overall_passed=passed)
     atomic_write(OUT / 'export-verification.json', json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     if broken:
         raise ValueError(f'{len(broken)} broken local links; see export-verification.json')
@@ -443,7 +547,11 @@ def render():
     OUT.mkdir(parents=True, exist_ok=True)
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, stdin=subprocess.DEVNULL, text=True).strip()
     progress, reviews = load_progress(), load_reviews(ROOT)
-    entries = build_segments(reviews, load_changes(), progress, revision)
+    audit = audit_progress(progress)
+    audit_document = dict(generated_at=datetime.now().astimezone().isoformat(timespec='seconds'),
+                          complete=audit['complete'], counts=audit['counts'], issues=audit['issues'])
+    atomic_write(OUT / 'evidence-audit.json', json.dumps(audit_document, ensure_ascii=False, indent=2) + '\n')
+    entries = build_segments(reviews, load_changes(), progress, revision, audit)
     previous = read_json(OUT / 'score_records.json', {})
     if previous.get('runs') and not (OUT / 'archive-score-records.json').exists():
         atomic_write(OUT / 'archive-score-records.json', json.dumps(previous, ensure_ascii=False, indent=2) + '\n')
@@ -454,12 +562,13 @@ def render():
     for filename in ('index.html', 'gameplay.html'):
         page = OUT / filename
         nav = '<nav class="chapter-nav" aria-label="主线剧情顺序">' + ''.join(f'<a href="#trajectory-{e["id"]}"><span>{i:02d}</span>{escape(e["label"])}</a>' for i, e in enumerate(entries, 1)) + '</nav>'
-        body = ''.join(segment_card(e, i, page) for i, e in enumerate(entries, 1)) + progress_section(progress, page)
+        body = evidence_banner(audit, page) + ''.join(segment_card(e, i, page, audit) for i, e in enumerate(entries, 1)) + progress_section(progress, page, audit)
         atomic_write(page, wrap('第一章 · 主线评分与修正', body, page, revision, nav))
     archive_page(reviews, revision)
     for name in ('评分总览.md', '游戏场景评分.md'):
-        atomic_write(OUT / name, markdown(entries, revision, progress))
-    data = dict(schema_version=2, generated_at=datetime.now().astimezone().isoformat(timespec='seconds'), revision=revision, dimensions=DIMENSIONS, overall_passed=all(e['status'] == '合格' for e in entries), gameplay_scenes=entries)
+        atomic_write(OUT / name, markdown(entries, revision, progress, audit))
+    integrity = dict(complete=audit['complete'], counts=audit['counts'], audit='evidence-audit.json')
+    data = dict(schema_version=2, generated_at=datetime.now().astimezone().isoformat(timespec='seconds'), revision=revision, dimensions=DIMENSIONS, history_evidence=integrity, overall_passed=overall_passed(entries, integrity), gameplay_scenes=entries)
     atomic_write(OUT / 'score_records.json', json.dumps(data, ensure_ascii=False, indent=2) + '\n')
     if not (OUT / 'live-progress.js').exists():
         atomic_write(OUT / 'live-progress.js', 'window.MAINLINE_PROGRESS=' + json.dumps(progress, ensure_ascii=False).replace('<', '\\u003c') + ';\n')

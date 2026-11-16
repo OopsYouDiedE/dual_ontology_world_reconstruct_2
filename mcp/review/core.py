@@ -240,6 +240,8 @@ class Store:
     def semantic_append(self, **args):
         self.project(args)
         record = args['record']
+        if record.get('synthetic_test_fixture') and not self.testing:
+            raise ValueError('Synthetic semantic fixtures are restricted to test sandboxes')
         if not re.fullmatch(ID, record['id']):
             raise ValueError('Invalid comparison ID')
         validated = visual_semantic_reviews.validate(record, self.root)

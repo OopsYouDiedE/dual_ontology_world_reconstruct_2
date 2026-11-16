@@ -2,6 +2,10 @@ extends RefCounted
 ## Direct fixture diagnostics. Physical ray proxies are attached only to this test host.
 const Source := preload("res://mcp/CaptureSource.gd")
 const RAY_LAYER := 1 << 19
+const REQUIRED_TARGETS := {
+	"opening": ["bed", "lamp", "desk", "window", "wardrobe", "wash", "door"],
+	"kitchen": ["e_b_sleeve", "e_b_drag", "e_b_water", "e_b_cloth", "e_b_ratchet", "e_b_boots", "e_b_seal"],
+}
 var host: Control
 var proxies: Array = []
 var colliders := {}
@@ -17,6 +21,7 @@ var errors: Array[String] = []
 var skinned_proxy_count := 0
 var restored_state := {}
 var exclusion_grids := {}
+var navigation_wait_frames := 0
 
 static func xyz(p: Vector3) -> Array: return [p.x,p.y,p.z]
 static func xz(p: Vector2) -> Array: return [p.x,p.y]
@@ -95,7 +100,8 @@ func _path_explanation(start: Vector2, requested: Vector2, interaction: Vector2)
 	for id in exclusion_grids:
 		excluded[id] = _route_probe(exclusion_grids[id],start,requested)
 		excluded[id]["interaction_stands"] = _nearby_stands(exclusion_grids[id],start,interaction)
-	return {"static_furniture_grid":_route_probe(host._grid,start,requested),"with_all_figures":_route_probe(grid,start,requested),"interaction_stands":_nearby_stands(grid,start,interaction),"figure_exclusion_probes":excluded,"probe_semantics":"diagnostic_grid_only_original_actors_unchanged"}
+	return {"static_furniture_grid":_route_probe(host._grid,start,requested),"with_all_figures":_route_probe(grid,start,requested),"interaction_stands":_nearby_stands(grid,start,interaction),"figure_exclusion_probes":excluded,
+		"probe_semantics":"diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction"}
 
 func _navigation() -> void:
 	var mesh := NavigationMesh.new()
@@ -127,6 +133,42 @@ func _navigation() -> void:
 	agent_body.add_child(agent)
 	nav_map = host.cam.get_world_3d().navigation_map
 	NavigationServer3D.map_force_update(nav_map)
+
+## The map iteration counter can already be nonzero before this new region's
+## polygons are published. Check ownership and an actual free-cell projection,
+## not just the counter, before measuring paths.
+func navigation_readiness() -> Dictionary:
+	var result := {"ready":false, "reason":"navigation_objects_missing", "iteration":0,
+		"probe":[], "nearest":[], "owner_matches_region":false}
+	if grid == null or not is_instance_valid(region) or not nav_map.is_valid(): return result
+	result.iteration = NavigationServer3D.map_get_iteration_id(nav_map)
+	if not NavigationServer3D.map_is_active(nav_map) or NavigationServer3D.region_get_map(region.get_region_rid()) != nav_map:
+		result.reason = "navigation_region_not_on_active_map"
+		return result
+	if region.navigation_mesh == null or region.navigation_mesh.get_polygon_count() == 0:
+		result.reason = "navigation_mesh_empty"
+		return result
+	if int(result.iteration) < 2:
+		result.reason = "navigation_map_not_synchronized"
+		return result
+	var point := Vector3.INF
+	for x in range(grid.region.position.x, grid.region.end.x):
+		for z in range(grid.region.position.y, grid.region.end.y):
+			if not grid.is_point_solid(Vector2i(x,z)):
+				point = Vector3((x+0.5)*host.CELL, 0.0, (z+0.5)*host.CELL)
+				break
+		if point != Vector3.INF: break
+	if point == Vector3.INF:
+		result.reason = "no_free_navigation_cells"
+		return result
+	var nearest := NavigationServer3D.map_get_closest_point(nav_map, point)
+	var owner := NavigationServer3D.map_get_closest_point_owner(nav_map, point)
+	result.probe = xyz(point)
+	result.nearest = xyz(nearest)
+	result.owner_matches_region = owner == region.get_region_rid()
+	result.ready = bool(result.owner_matches_region) and nearest.distance_to(point) < 0.03
+	result.reason = "ready" if result.ready else "navigation_mesh_not_published"
+	return result
 
 func _make_proxies() -> void:
 	var meshes: Array = host.room_vp.find_children("*","MeshInstance3D",true,false)
@@ -253,8 +295,11 @@ func _stand(item: Dictionary, start: Vector2) -> Dictionary:
 	var raw = item.get("pos",Vector2.ZERO)
 	var point := Vector2(raw.x,raw.z) if raw is Vector3 else Vector2(raw)
 	if is_instance_valid(host.kitchen) and host.kitchen.active:
-		var approach := preload("res://scenes/components/interaction/InteractionApproach.gd").plan(host, point, _target_kind(str(item.id)), start)
-		return {"point":point,"desired":approach.stand,"cell":host._cell_of(approach.stand),"stand":approach.stand,"already_near":approach.already_near,"approach_ok":approach.ok}
+		var kind: String = host.interactions.kind_for(str(item.id))
+		var approach := preload("res://scenes/components/interaction/InteractionApproach.gd").plan(host, point, kind, start)
+		return {"point":point,"desired":approach.stand,"cell":host._cell_of(approach.stand),"stand":approach.stand,
+			"already_near":approach.already_near,"approach_ok":approach.ok,
+			"approach_reason":str(approach.get("reason", "")),"planned_path":approach.path}
 	if start.distance_to(point) <= 1.3:
 		return {"point":point,"desired":start,"cell":host._cell_of(start),"stand":start,"already_near":true}
 	var stand: Vector2
@@ -267,6 +312,40 @@ func _stand(item: Dictionary, start: Vector2) -> Dictionary:
 	var resolved: Vector2i = host._nearest_free(desired)
 	var grid_stand := Vector2((resolved.x+0.5)*host.CELL,(resolved.y+0.5)*host.CELL)
 	return {"point":point,"desired":stand,"cell":resolved,"stand":grid_stand,"already_near":false}
+
+static func production_plan_path(plan: Dictionary, start: Vector2, fallback_route: Callable) -> Array:
+	if not bool(plan.get("approach_ok", true)): return []
+	if bool(plan.get("already_near", false)): return [start]
+	if plan.has("planned_path"): return plan.planned_path
+	return fallback_route.call(start, plan.stand)
+
+static func navigation_target_claim(reaches_returned_stand: bool, approach_ok: bool) -> bool:
+	return reaches_returned_stand and approach_ok
+
+## Do not let an empty, incomplete, duplicated or unsupported item list pass
+## vacuously. Corridor and other rooms need their own explicitly scoped checker.
+static func target_coverage(controller: String, items: Array) -> Dictionary:
+	var expected: Array = REQUIRED_TARGETS.get(controller, [])
+	var seen := []
+	var duplicates := []
+	var unexpected := []
+	for value in items:
+		if not value is Dictionary or not value.has("id"):
+			unexpected.append("<invalid>")
+			continue
+		var id := str(value.id)
+		if seen.has(id): duplicates.append(id)
+		else: seen.append(id)
+		if not expected.has(id): unexpected.append(id)
+	var missing := []
+	for id in expected:
+		if not seen.has(id): missing.append(id)
+	return {"controller":controller,"supported":REQUIRED_TARGETS.has(controller),
+		"expected":expected,"observed":seen,"missing":missing,"duplicates":duplicates,"unexpected":unexpected,
+		"complete":REQUIRED_TARGETS.has(controller) and not expected.is_empty() and missing.is_empty() and duplicates.is_empty() and unexpected.is_empty()}
+
+static func ray_claim(ray: Dictionary, required: bool) -> bool:
+	return bool(ray.get("pass", false)) and (not required or bool(ray.get("applicable", false)))
 
 func _target_kind(id: String) -> String:
 	if host.evidence_presentations.has(id): return id
@@ -354,7 +433,22 @@ func inspect_ray(id: String, stand: Vector2) -> Dictionary:
 	return result
 
 func run() -> Dictionary:
-	NavigationServer3D.map_force_update(nav_map)
+	var controller := "opening" if is_instance_valid(host.opening) and host.opening.active else ("kitchen" if is_instance_valid(host.kitchen) and host.kitchen.active else "other")
+	var items := _items()
+	var coverage := target_coverage(controller, items)
+	if not coverage.complete:
+		return {"format":"room-fast-check-v1", "status":"blocked", "pass":false,
+			"project":Source.identity(host.get_tree(), "res://scenes/dual_world/DualWorldMain.tscn"),
+			"room":str(host._room_loaded), "engine_room":str(host.eng.s.room), "controller":controller,
+			"target_coverage":coverage, "interactions":[], "errors":[],
+			"blocking_reasons":["目标房间交互清单缺失、重复或不受此快检支持"]}
+	var ready := navigation_readiness()
+	if not ready.ready:
+		return {"format":"room-fast-check-v1", "status":"blocked", "pass":false,
+			"project":Source.identity(host.get_tree(), "res://scenes/dual_world/DualWorldMain.tscn"),
+			"room":str(host._room_loaded), "engine_room":str(host.eng.s.room), "controller":controller,
+			"target_coverage":coverage, "navigation_readiness":ready, "navigation_wait_frames":navigation_wait_frames,
+			"interactions":[], "errors":[], "blocking_reasons":["导航网格尚未发布到当前房间地图"]}
 	var entry := _entry()
 	var start: Vector2 = entry.position
 	var actors := _actors(start)
@@ -370,10 +464,13 @@ func run() -> Dictionary:
 	var from := Vector3(start.x,0,start.y)
 	var nearest_start: Vector3 = NavigationServer3D.map_get_closest_point(nav_map,from)
 	agent_body.global_position = from
-	for item in _items():
+	for item in items:
 		var stand := _stand(item,start)
 		var requested: Vector2 = stand.stand
-		var production: Array = [start] if stand.already_near else host._route(start,requested)
+		var approach_ok: bool = bool(stand.get("approach_ok", true))
+		# Kitchen's real click handler executes the plan's returned path, not a
+		# second _route() to the fallback stand. Preserve an empty rejected plan.
+		var production := production_plan_path(stand, start, Callable(host, "_route"))
 		var end: Vector2 = production.back() if not production.is_empty() else start
 		var end_cell: Vector2i = host._cell_of(end)
 		var pass_goal: bool = not grid.is_point_solid(end_cell) and host._det_can_occupy(end)
@@ -385,27 +482,41 @@ func run() -> Dictionary:
 		var agent_path: PackedVector3Array = agent.get_current_navigation_path()
 		var server_path := NavigationServer3D.map_get_path(nav_map,from,dest,true)
 		var nearest_end: Vector3 = NavigationServer3D.map_get_closest_point(nav_map,dest)
-		var nav_ok := not server_path.is_empty() and nearest_start.distance_to(from)<0.03 and nearest_end.distance_to(dest)<0.03 and server_path[server_path.size()-1].distance_to(dest)<0.03
-		var agent_ok := not agent_path.is_empty() and agent_path[agent_path.size()-1].distance_to(dest)<0.03
+		var raw_nav_ok := not server_path.is_empty() and nearest_start.distance_to(from)<0.03 and nearest_end.distance_to(dest)<0.03 and server_path[server_path.size()-1].distance_to(dest)<0.03
+		var raw_agent_ok := not agent_path.is_empty() and agent_path[agent_path.size()-1].distance_to(dest)<0.03
+		var nav_ok := navigation_target_claim(raw_nav_ok, approach_ok)
+		var agent_ok := navigation_target_claim(raw_agent_ok, approach_ok)
 		var arrival_near: bool = end.distance_to(stand.point) <= _interaction_radius()
-		var path_ok: bool = start_valid and pass_goal and not production.is_empty() and not astar.is_empty() and nav_ok and agent_ok and arrival_near
+		var path_ok: bool = approach_ok and start_valid and pass_goal and not production.is_empty() and not astar.is_empty() and nav_ok and agent_ok and arrival_near
 		if not path_ok: paths_ok = false
 		var ray: Dictionary = await inspect_ray(str(item.id),end)
-		if not ray.pass: rays_ok = false
+		ray["context"] = "forced_visual_probe_from_fallback_not_a_completed_interaction" if not approach_ok else "visual_probe_after_planned_approach"
+		# The bedroom door is an exit rather than an evidence close-up. Every
+		# other listed target requires a real original-scene ray, not an implicit
+		# pass from a missing presentation or an unknown kind.
+		var ray_required := not (controller == "opening" and str(item.id) == "door")
+		if not ray_claim(ray, ray_required): rays_ok = false
 		var snapshot_stand := _stand(item,saved_detective_position)
-		var snapshot_route: Array = [saved_detective_position] if snapshot_stand.already_near else host._route(saved_detective_position,snapshot_stand.stand)
+		var snapshot_approach_ok: bool = bool(snapshot_stand.get("approach_ok", true))
+		var snapshot_route := production_plan_path(snapshot_stand, saved_detective_position, Callable(host, "_route"))
 		var snapshot_end: Vector2 = snapshot_route.back() if not snapshot_route.is_empty() else saved_detective_position
 		var snapshot_ray: Dictionary = await inspect_ray(str(item.id),snapshot_end)
-		if not snapshot_ray.pass: rays_ok = false
-		results.append({"id":str(item.id),"interaction_position":xz(stand.point),"requested_stand":xz(stand.desired),
+		snapshot_ray["context"] = "forced_visual_probe_from_fallback_not_a_completed_interaction" if not snapshot_approach_ok else "visual_probe_after_planned_approach"
+		if not ray_claim(snapshot_ray, ray_required): rays_ok = false
+		results.append({"id":str(item.id),"ray_required":ray_required,"interaction_position":xz(stand.point),"requested_stand":xz(stand.desired),
 			"resolved_stand":xz(requested),"actual_stand":xz(end),"stand_occupiable":pass_goal,"astar_cells":astar.size(),
+			"approach_plan_ok":approach_ok,"approach_failure_reason":str(stand.get("approach_reason", "")),
+			"returned_stand_is_rejection_fallback":not approach_ok,
 			"arrival_distance":end.distance_to(stand.point),"arrival_within_interaction_range":arrival_near,
 			"interaction_radius":_interaction_radius(),"skip_approach_radius":1.3,"arrival_within_skip_approach_radius":end.distance_to(stand.point)<=1.3,
 			"navigation_agent_points":agent_path.size(),"navigation_server_points":server_path.size(),
 			"production_path":production.map(func(point: Vector2): return xz(point)),"astar_path":grid_path(astar,host.CELL),"navigation_path":nav_path(server_path),
+			"navigation_agent_reaches_returned_stand":raw_agent_ok,"navigation_server_reaches_returned_stand":raw_nav_ok,
 			"navigation_agent_reaches_target":agent_ok,"navigation_reaches_target":nav_ok,"path_pass":path_ok,"ray":ray,
 			"path_explanation":_path_explanation(start,requested,stand.point),
-			"snapshot_interaction":{"already_near":snapshot_stand.already_near,"actual_stand":xz(snapshot_end),"arrival_distance":snapshot_end.distance_to(stand.point),"path":snapshot_route.map(func(point: Vector2): return xz(point)),"ray":snapshot_ray}})
+			"snapshot_interaction":{"already_near":snapshot_stand.already_near,"approach_plan_ok":snapshot_approach_ok,
+				"approach_failure_reason":str(snapshot_stand.get("approach_reason", "")),"actual_stand":xz(snapshot_end),
+				"arrival_distance":snapshot_end.distance_to(stand.point),"path":snapshot_route.map(func(point: Vector2): return xz(point)),"ray":snapshot_ray}})
 	host.det_pos = saved_detective_position
 	host.det.transform = saved_detective_transform
 	host.cam.global_transform = saved_camera_transform
@@ -413,7 +524,8 @@ func run() -> Dictionary:
 	return {"format":"room-fast-check-v1","purpose":"runtime_geometry_diagnostic","project":Source.identity(host.get_tree(),"res://scenes/dual_world/DualWorldMain.tscn"),"launch_arguments":OS.get_cmdline_args(),"snapshot":str(host.checkpoints.argument("--dv-snapshot")),
 		"restored_state":restored_state,"room_checks_context":"prospective_exploration_geometry" if actors.occupancy_context == "opening_bed_performance" else "free_exploration_geometry",
 		"source_sha256":{"checker":FileAccess.get_sha256("res://scenes/components/testing/RoomFastCheck.gd"),"main":FileAccess.get_sha256("res://scenes/dual_world/DualWorldMain.gd"),"closeup":FileAccess.get_sha256("res://scenes/components/interaction/InRoomEvidenceCloseup.gd"),"snapshot":FileAccess.get_sha256(str(host.checkpoints.argument("--dv-snapshot")))},
-		"room":str(host.eng.s.room),"controller": "opening" if host.opening != null and host.opening.active else ("kitchen" if host.kitchen != null and host.kitchen.active else "other"),
+		"room":str(host.eng.s.room),"controller":controller,"target_coverage":coverage,
+		"navigation_readiness":ready,"navigation_wait_frames":navigation_wait_frames,
 		"entry":{"position":xz(start),"source":entry.source,"cell_open":start_valid},"actors":actors,
 		"proxies":proxies.size(),"skinned_pose_proxies":skinned_proxy_count,"navigation_mesh_cells":grid.region.size.x*grid.region.size.y,"navigation_diagnostics":{"region_valid":region.get_region_rid().is_valid(),"region_map_valid":NavigationServer3D.region_get_map(region.get_region_rid()).is_valid(),"region_map_equal":NavigationServer3D.region_get_map(region.get_region_rid()) == nav_map,"map_active":NavigationServer3D.map_is_active(nav_map),"map_iteration":NavigationServer3D.map_get_iteration_id(nav_map),"region_enabled":region.enabled,"nav_map_valid":nav_map.is_valid(),"regions":NavigationServer3D.map_get_regions(nav_map).size(),"polygons":region.navigation_mesh.get_polygon_count(),"vertices":region.navigation_mesh.vertices.size(),"nearest_start":xyz(nearest_start)},"interactions":results,
 		"path_pass":paths_ok,"ray_pass":rays_ok,"elapsed_ms":elapsed,"under_5_seconds":elapsed<5000.0,

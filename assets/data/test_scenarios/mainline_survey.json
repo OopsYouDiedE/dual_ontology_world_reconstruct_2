@@ -1,0 +1,553 @@
+[
+  {
+    "id": "wake-bedroom",
+    "segment_id": "wake",
+    "fixture": {
+      "schema_version": 1,
+      "id": "wake-bedroom",
+      "mode": "story",
+      "room": "R05",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 7,
+        "minute": 15
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 1,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "corridor-meeting",
+    "segment_id": "corridor",
+    "fixture": {
+      "schema_version": 1,
+      "id": "corridor-meeting",
+      "mode": "story",
+      "room": "R05",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 7,
+        "minute": 20
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 1,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "snapshot": "res://.runtime/checkpoints/fixtures/corridor-free.json",
+    "controller": "corridor"
+  },
+  {
+    "id": "service-stair",
+    "segment_id": "service_route",
+    "fixture": {
+      "schema_version": 1,
+      "id": "service-stair",
+      "mode": "story",
+      "room": "service_stair_M",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 9,
+        "minute": 15
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 5,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "beat": "d1_route"
+  },
+  {
+    "id": "service-maintenance",
+    "segment_id": "service_route",
+    "fixture": {
+      "schema_version": 1,
+      "id": "service-maintenance",
+      "mode": "story",
+      "room": "A-P",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 9,
+        "minute": 40
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 6,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "service-hall",
+    "segment_id": "service_route",
+    "fixture": {
+      "schema_version": 1,
+      "id": "service-hall",
+      "mode": "story",
+      "room": "F01",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 9,
+        "minute": 41
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 7,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "cross-c-window",
+    "segment_id": "cross_zone",
+    "fixture": {
+      "schema_version": 1,
+      "id": "cross-c-window",
+      "mode": "story",
+      "room": "C-P",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 10,
+        "minute": 20
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 8,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "cross-d-pressure",
+    "segment_id": "cross_zone",
+    "fixture": {
+      "schema_version": 1,
+      "id": "cross-d-pressure",
+      "mode": "story",
+      "room": "D-P",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 10,
+        "minute": 50
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 10,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "cross-central",
+    "segment_id": "cross_zone",
+    "fixture": {
+      "schema_version": 1,
+      "id": "cross-central",
+      "mode": "story",
+      "room": "2F-cross-M",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 11,
+        "minute": 5
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 10,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "beat": "d1_meeting"
+  },
+  {
+    "id": "shaft-north-stair",
+    "segment_id": "shaft",
+    "fixture": {
+      "schema_version": 1,
+      "id": "shaft-north-stair",
+      "mode": "story",
+      "room": "2F-North-Stair",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 11,
+        "minute": 25
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 12,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "shaft-four-anchors",
+    "segment_id": "shaft",
+    "fixture": {
+      "schema_version": 1,
+      "id": "shaft-four-anchors",
+      "mode": "story",
+      "room": "1F-Shaft-Monitor",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 11,
+        "minute": 24
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 12,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "shaft-question",
+    "segment_id": "shaft",
+    "fixture": {
+      "schema_version": 1,
+      "id": "shaft-question",
+      "mode": "story",
+      "room": "1F-Shaft-Monitor",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 11,
+        "minute": 25
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 12,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "beat": "d1_q1"
+  },
+  {
+    "id": "poem-stakeout",
+    "segment_id": "poem",
+    "fixture": {
+      "schema_version": 1,
+      "id": "poem-stakeout",
+      "mode": "story",
+      "room": "T01",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 13,
+        "minute": 35
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 18,
+        "flags": {
+          "service_map": true
+        },
+        "choices": {
+          "poem": "stakeout"
+        }
+      }
+    },
+    "beat": "d1_poem"
+  },
+  {
+    "id": "poem-expose",
+    "segment_id": "poem",
+    "fixture": {
+      "schema_version": 1,
+      "id": "poem-expose",
+      "mode": "story",
+      "room": "T01",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 13,
+        "minute": 35
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 18,
+        "flags": {
+          "service_map": true
+        },
+        "choices": {
+          "poem": "expose"
+        }
+      }
+    },
+    "beat": "d1_poem"
+  },
+  {
+    "id": "poem-indulge",
+    "segment_id": "poem",
+    "fixture": {
+      "schema_version": 1,
+      "id": "poem-indulge",
+      "mode": "story",
+      "room": "T01",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 13,
+        "minute": 35
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 18,
+        "flags": {
+          "service_map": true
+        },
+        "choices": {
+          "poem": "indulge"
+        }
+      }
+    },
+    "beat": "d1_poem"
+  },
+  {
+    "id": "institutes-corridor",
+    "segment_id": "institutes",
+    "fixture": {
+      "schema_version": 1,
+      "id": "institutes-corridor",
+      "mode": "story",
+      "room": "Wind-Corridor",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 15,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 20,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "institute-w-102",
+    "segment_id": "institutes",
+    "fixture": {
+      "schema_version": 1,
+      "id": "institute-w-102",
+      "mode": "story",
+      "room": "W-102",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 15,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 20,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "institute-s-102",
+    "segment_id": "institutes",
+    "fixture": {
+      "schema_version": 1,
+      "id": "institute-s-102",
+      "mode": "story",
+      "room": "S-102",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 15,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 20,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "institute-b-102",
+    "segment_id": "institutes",
+    "fixture": {
+      "schema_version": 1,
+      "id": "institute-b-102",
+      "mode": "story",
+      "room": "B-102",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 15,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 20,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "institute-f-104",
+    "segment_id": "institutes",
+    "fixture": {
+      "schema_version": 1,
+      "id": "institute-f-104",
+      "mode": "story",
+      "room": "F-104",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 15,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 20,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "dinner-dumpling",
+    "segment_id": "dinner",
+    "fixture": {
+      "schema_version": 1,
+      "id": "dinner-dumpling",
+      "mode": "story",
+      "room": "F03",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 17,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 20,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "beat": "d1_dumpling"
+  },
+  {
+    "id": "dinner-medical",
+    "segment_id": "dinner",
+    "fixture": {
+      "schema_version": 1,
+      "id": "dinner-medical",
+      "mode": "story",
+      "room": "F05",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 17,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 21,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  },
+  {
+    "id": "dinner-plan",
+    "segment_id": "dinner",
+    "fixture": {
+      "schema_version": 1,
+      "id": "dinner-plan",
+      "mode": "story",
+      "room": "F03",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 21,
+        "minute": 35
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 21,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "finish_chapter": true,
+    "beat": "d1_plan"
+  },
+  {
+    "id": "chapter-night",
+    "segment_id": "chapter_end",
+    "fixture": {
+      "schema_version": 1,
+      "id": "chapter-night",
+      "mode": "story",
+      "room": "R05",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 22,
+        "minute": 0
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 22,
+        "flags": {
+          "service_map": true,
+          "day2_plan": true
+        },
+        "chapter_complete": true
+      }
+    }
+  }
+]

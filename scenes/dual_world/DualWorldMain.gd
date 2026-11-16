@@ -24,6 +24,7 @@ const CorridorGathering := preload("res://scenes/dual_world/CorridorGathering.gd
 const KitchenExploration := preload("res://scenes/dual_world/KitchenExploration.gd")
 const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLibrary.gd")
 const InteractionDirector := preload("res://scenes/components/interaction/InteractionDirector.gd")
+const ExplorationUiState := preload("res://scenes/components/interaction/ExplorationUiState.gd")
 const RoomEvidenceDetails := preload("res://scenes/components/interaction/RoomEvidenceDetails.gd")
 const ShadowCeiling := preload("res://scenes/components/world/ShadowCeiling.gd")
 const Checkpoint := preload("res://scenes/components/testing/StoryCheckpoint.gd")
@@ -89,6 +90,7 @@ var _panel_cd := 0.0
 var _light_cd := 0.0
 var _music_cd := 0.0
 var interactions: Node
+var exploration_ui: Node
 var evidence_presentations: Dictionary = {}
 var evidence_details: Node3D
 var checkpoints: Node
@@ -227,6 +229,10 @@ func _ready() -> void:
 	pitch = 1.25
 	_load_designs()
 	_build_ui()
+	exploration_ui = ExplorationUiState.new()
+	exploration_ui.name = "ExplorationUiState"
+	add_child(exploration_ui)
+	exploration_ui.bind(self)
 	interactions = InteractionDirector.new()
 	interactions.name = "SharedInteractions"
 	add_child(interactions)
@@ -309,6 +315,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	# 浏览器与桌面端都要求用户手势后才能出声：首次点击或按键时启动合成器
 	if event is InputEventMouseButton or event is InputEventKey:
 		if score != null and not score._started and score.enabled: score.start()
+	if not event.is_echo() and (event.is_action_pressed("notebook") or event.is_action_pressed("settings") or ((event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel")) and not modal.visible)):
+		var page := "settings" if event.is_action_pressed("settings") else "journal"
+		if _open_exploration_book(page):
+			get_viewport().set_input_as_handled()
+			return
 	if interactions != null and is_instance_valid(interactions.active): return
 	# 键盘 / 手柄：空格、回车（ui_accept）推进字幕
 	if event.is_action_pressed("ui_accept") and subtitle != null and subtitle.visible and not modal.visible:
@@ -321,7 +332,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			gathering.interact_nearest()
 			get_viewport().set_input_as_handled()
 			return
-	# 第四幕：小厨房自由探索，E 键查看最近的证物，Esc 切换完整界面
+	# 第四幕：小厨房自由探索，E 键查看最近的证物。
 	if kitchen != null and kitchen.active:
 		if event.is_action_pressed("interact") and not event.is_echo() and not modal.visible:
 			kitchen.interact_nearest()
@@ -692,6 +703,9 @@ func _add_tab(name_: String) -> RichTextLabel:
 
 
 func _toggle_drawer() -> void:
+	if view == "room" and not instant_story:
+		_open_exploration_book("journal")
+		return
 	drawer.visible = not drawer.visible
 	drawer_btn.button_pressed = drawer.visible
 	if room_hint != null:
@@ -877,6 +891,7 @@ func _set_view(v: String, animate := false) -> void:
 		else: _fit_camera()
 	if v == "editor": _open_editor(eng.s.room if map_view.selected == "" else map_view.selected)
 	if v == "map": map_view.center_on(eng.s.room)
+	_sync_exploration_ui()
 	_dirty = true
 
 
@@ -2018,7 +2033,16 @@ func _auto_search_step(delta: float) -> void:
 
 
 ## 弹窗打开时：底层漫游提示与位置卡一并淡出，避免「还能走动」的错觉。
+func _sync_exploration_ui() -> void:
+	if is_instance_valid(exploration_ui): exploration_ui.apply()
+
+
+func _open_exploration_book(page := "journal") -> bool:
+	return is_instance_valid(exploration_ui) and exploration_ui.open_book(page)
+
+
 func _sync_hud_for_modal() -> void:
+	_sync_exploration_ui()
 	var m: bool = modal != null and modal.visible
 	var a := 0.0 if m else 1.0
 	var talking: bool = subtitle != null and subtitle.visible

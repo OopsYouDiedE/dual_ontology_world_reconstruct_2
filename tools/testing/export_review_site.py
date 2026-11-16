@@ -162,9 +162,21 @@ def build_segments(reviews, changes, progress, revision):
         current = next((r for r in reversed(effective) if revision.startswith(r['revision'])), {})
         repairs = [r for r in changes if r['segment_id'] == scene['id']]
         events = [e for e in progress['events'] if e['segment_id'] == scene['id']]
+        development_images = [image for row in repairs for image in row.get('images', [])]
+        seen_images = {project_file(image['path']) for image in development_images}
+        for event in events:
+            if event['kind'] != 'check':
+                continue
+            for evidence in event.get('evidence', []):
+                path = project_file(evidence)
+                if path.suffix.lower() not in ('.png', '.jpg', '.jpeg') or path in seen_images:
+                    continue
+                provenance.verify_image(path, ROOT, allow_fixture=True)
+                development_images.append({'path': evidence, 'caption': event['summary'] + ' · ' + path.stem})
+                seen_images.add(path)
         entries.append(dict(scene, current=current, history=history, changes=repairs, events=events,
                             modification_count=len(repairs) + sum(e['kind'] == 'change' for e in events),
-                            development_images=[image for row in repairs for image in row.get('images', [])],
+                            development_images=development_images,
                             scores=current.get('scores', [None] * 7), status=review_result(current)))
     return entries
 

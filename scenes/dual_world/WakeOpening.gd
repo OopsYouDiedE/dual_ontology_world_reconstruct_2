@@ -259,19 +259,12 @@ func _drive_camera(delta: float) -> void:
 # ───────────────────────── 界面 ─────────────────────────
 func _hide_chrome() -> void:
 	chrome_shown = false
-	host.top_bar.visible = false
-	host.left_card.visible = false
-	host.room_hint.visible = false
-	host.drawer.visible = false
+	host.ExplorationUiState.hide_chrome(host)
 
 
 func toggle_chrome() -> void:
-	chrome_shown = not chrome_shown
-	host.top_bar.visible = chrome_shown
-	host.left_card.visible = chrome_shown
-	host.room_hint.visible = chrome_shown
-	if not chrome_shown: host.drawer.visible = false
-	if host.drawer_btn != null and not chrome_shown: host.drawer_btn.button_pressed = false
+	_hide_chrome()
+	host._open_exploration_book("journal")
 
 
 func _build_overlay() -> void:
@@ -458,10 +451,7 @@ func handoff() -> void:
 	if _prompt != null: _prompt.queue_free()
 	if _hint != null: _hint.queue_free()
 	_items.clear()
-	host.top_bar.visible = false
-	host.left_card.visible = false
-	host.room_hint.visible = false
-	host.drawer.visible = false
+	_hide_chrome()
 
 
 func _end() -> void:
@@ -480,8 +470,6 @@ func _end() -> void:
 	if _prompt != null: _prompt.queue_free()
 	if _hint != null: _hint.queue_free()
 	_items.clear()
-	host.top_bar.visible = true
-	host.left_card.visible = true
-	host.room_hint.visible = true
+	_hide_chrome()
 	host.pitch = 1.25
 	host._fit_camera()

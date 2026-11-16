@@ -92,6 +92,14 @@ def run():
     entries = site.build_segments(records, [], {'events': []}, '3333333' + 'a' * 33)
     check('new commits start pending without reusing old scores', entries[0]['current'] == {} and entries[0]['scores'] == [None] * 7)
 
+    image = 'assets/data/test_scenarios/user_reference/formal_game_ui.png'
+    event = dict(kind='check', segment_id='wake', evidence=[image, image], summary='开发采集')
+    with patch.object(site.provenance, 'verify_image') as verify:
+        entries = site.build_segments([], [], {'events': [event]}, 'a' * 40)
+        check('MCP check images appear in their segment trajectory', len(entries[0]['development_images']) == 1)
+        check('projected images require provenance validation', verify.call_count == 1)
+        check('development trajectories preserve pending independent scores', entries[0]['status'] == '待评' and entries[0]['scores'] == [None] * 7)
+
     report = dict(passed=True, checks=len(checks), results=checks, generated_at=datetime.now().astimezone().isoformat(),
                   limitations=['Browser visual preview stopped at URL verification; this report checks generated structure and logic.'])
     output = ROOT / '.runtime/review-tests/site-contract-result.json'

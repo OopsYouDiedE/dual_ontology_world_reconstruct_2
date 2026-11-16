@@ -182,20 +182,12 @@ func _drive_camera(delta: float) -> void:
 # ───────────────────────── 界面 ─────────────────────────
 func _hide_chrome() -> void:
 	chrome_shown = false
-	host.top_bar.visible = false
-	host.left_card.visible = false
-	host.room_hint.visible = false
-	host.drawer.visible = false
+	host.ExplorationUiState.hide_chrome(host)
 
 
 func toggle_chrome() -> void:
-	chrome_shown = not chrome_shown
-	host.top_bar.visible = chrome_shown
-	host.left_card.visible = chrome_shown
-	host.room_hint.visible = chrome_shown
-	if not chrome_shown:
-		host.drawer.visible = false
-		if host.drawer_btn != null: host.drawer_btn.button_pressed = false
+	_hide_chrome()
+	host._open_exploration_book("journal")
 
 
 func _build_overlay() -> void:
@@ -367,15 +359,13 @@ func _cleanup() -> void:
 	_items.clear()
 
 
-## 交还完整界面：与卧室的 _end 一致，恢复顶栏 / 左卡并重新取景。
+## 结束本段控制器，正式探索继续使用共用的精简界面。
 func end() -> void:
 	if not active: return
 	if _order_replay != null and is_instance_valid(_order_replay) and _order_replay.active: _order_replay.stop()
 	active = false
 	phase = "off"
 	_cleanup()
-	host.top_bar.visible = true
-	host.left_card.visible = true
-	host.room_hint.visible = true
+	_hide_chrome()
 	host.pitch = 1.25
 	host._fit_camera()

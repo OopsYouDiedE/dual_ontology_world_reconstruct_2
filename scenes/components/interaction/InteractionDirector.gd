@@ -61,6 +61,8 @@ func begin_gameplay(host: Control, kind: String, callback := Callable()) -> bool
 	var closeup := InRoomCloseup.new()
 	closeup.host = host
 	closeup.kind = kind
+	closeup.checkpoint_return_playing = was_playing
+	closeup.checkpoint_return_cinematic = was_cinematic
 	var started := _start(host.center, closeup, func(success: bool):
 		if is_instance_valid(host):
 			host.eng.s.playing = was_playing

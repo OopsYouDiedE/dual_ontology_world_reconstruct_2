@@ -49,6 +49,24 @@ class CaptureProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "MCP project root mismatch"):
             capture.assert_root(self.root, self.root.parent / "engine")
 
+    def test_runtime_root_is_bound_to_authorized_checkout(self):
+        with patch("pathlib.Path.home", return_value=self.root.parent):
+            with self.assertRaisesRegex(ValueError, "Unauthorized runtime project root"):
+                capture.assert_runtime_root(self.root)
+            authorized = self.root.parent / "Desktop" / "dual_ontology_world_reconstruct_2"
+            authorized.mkdir(parents=True)
+            (authorized / "project.godot").write_text("[application]\n", encoding="utf-8")
+            self.assertEqual(capture.assert_runtime_root(authorized), authorized.resolve())
+
+    def test_snapshot_capture_is_marked_ineligible(self):
+        image = self.root / "snapshot.png"
+        image.write_bytes(b"snapshot test bytes")
+        capture.save_image_sidecar(image, {"source_identity": self.source,
+            "acceptance_eligible": False, "snapshot_path": str(self.root / "snapshot.json")})
+        with self.assertRaisesRegex(ValueError, "fixture"):
+            capture.verify_image(image, self.root)
+        self.assertTrue(capture.verify_image(image, self.root, allow_fixture=True)["provenance_valid"])
+
     def test_paths_bind_to_project_independent_of_cwd(self):
         with patch("pathlib.Path.cwd", return_value=self.root.parent):
             self.assertEqual(capture.project_path(".runtime/screens/test.png", self.root), self.root / ".runtime/screens/test.png")

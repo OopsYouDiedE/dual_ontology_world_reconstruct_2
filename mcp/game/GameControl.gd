@@ -8,14 +8,30 @@ var busy := false
 var launch_scene := ""
 var monitor: Control
 var _monitor_stopped := false
+var snapshot_path := ""
 
 func _ready() -> void:
 	var port := 0
+	var expected_root := ""
+	var expected_hash := ""
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--dv-mcp-port="): port = int(argument.trim_prefix("--dv-mcp-port="))
 		elif argument.begins_with("--dv-mcp-token="): token = argument.trim_prefix("--dv-mcp-token=")
 		elif argument.begins_with("--dv-launch-scene="): launch_scene = argument.trim_prefix("--dv-launch-scene=")
+		elif argument.begins_with("--dv-project-root="): expected_root = argument.trim_prefix("--dv-project-root=")
+		elif argument.begins_with("--dv-project-sha256="): expected_hash = argument.trim_prefix("--dv-project-sha256=")
+		elif argument.begins_with("--dv-snapshot="): snapshot_path = argument.trim_prefix("--dv-snapshot=")
 	if port == 0: set_process(false); return
+	var source := preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
+	var root_path := str(source.project_root).replace("\\", "/").simplify_path().trim_suffix("/")
+	var required_root := expected_root.replace("\\", "/").simplify_path().trim_suffix("/")
+	if OS.get_name() == "Windows":
+		root_path = root_path.to_lower()
+		required_root = required_root.to_lower()
+	if expected_root.is_empty() or root_path != required_root or expected_hash.is_empty() or source.project_sha256 != expected_hash or int(source.process_id) <= 0:
+		push_error("Game MCP project identity or PID validation failed")
+		set_process(false)
+		return
 	if token.length() < 32 or server.listen(port, "127.0.0.1") != OK:
 		push_error("Game MCP transport could not start")
 		set_process(false)
@@ -30,8 +46,8 @@ func _start_monitor() -> void:
 	for attempt in 120:
 		await get_tree().process_frame
 		content = get_tree().current_scene as Control
-		if is_instance_valid(content) and content.has_method("open_dual_world"): break
-	if not is_instance_valid(content) or not content.has_method("open_dual_world"):
+		if is_instance_valid(content) and (content.has_method("open_dual_world") or (not snapshot_path.is_empty() and content.has_method("start_kitchen_exploration"))): break
+	if not is_instance_valid(content) or not (content.has_method("open_dual_world") or (not snapshot_path.is_empty() and content.has_method("start_kitchen_exploration"))):
 		push_error("Mainline metrics could not find the production title")
 		return
 	monitor = preload("res://scenes/components/testing/RuntimeMonitor.gd").new()
@@ -39,20 +55,46 @@ func _start_monitor() -> void:
 	add_child(monitor)
 	monitor.visible = false
 	var directory := ".runtime/mainline-runs/" + Time.get_datetime_string_from_system().replace(":", "-") + "-" + str(OS.get_process_id())
-	monitor.configure(directory, {"mock": false, "entry": "production_title", "launch_scene": launch_scene, "monitor_visible": false, "capture_policy": "real mainline; independent Terra review required"}, content)
+	monitor.configure(directory, {"mock": not snapshot_path.is_empty(), "entry": "snapshot" if not snapshot_path.is_empty() else "production_title", "snapshot_path": snapshot_path, "acceptance_eligible": snapshot_path.is_empty(), "launch_scene": launch_scene, "process_id": OS.get_process_id(), "project_sha256": FileAccess.get_sha256("res://project.godot"), "monitor_visible": false, "capture_policy": "independent Terra review required"}, content)
+
+func _story(main: Node) -> Control:
+	if not is_instance_valid(main): return null
+	if main.has_method("start_kitchen_exploration"): return main as Control
+	if main.has_method("open_dual_world"): return main.get("dual_world") as Control
+	return null
+
+func _checkpoint_status(main: Node) -> Dictionary:
+	var story := _story(main)
+	if not is_instance_valid(story): return {}
+	var checkpoint: Node = story.get("checkpoints")
+	if not is_instance_valid(checkpoint): return {}
+	var controller := "room"
+	var phase := ""
+	if is_instance_valid(story.opening) and story.opening.active:
+		controller = "opening"
+		phase = str(story.opening.phase)
+	elif is_instance_valid(story.gathering) and story.gathering.active:
+		controller = "corridor"
+		phase = str(story.gathering.phase)
+	elif is_instance_valid(story.kitchen) and story.kitchen.active:
+		controller = "kitchen"
+		phase = str(story.kitchen.phase)
+	return {"checkpoint_path": checkpoint.output_path, "checkpoint_restored": checkpoint.restored,
+		"checkpoint_error": checkpoint.error, "controller": controller, "controller_phase": phase}
 
 func _tag_monitor() -> void:
 	if monitor == null or _monitor_stopped: return
 	var main := get_tree().current_scene
 	if main == null: return
 	monitor._owner = main as Control
-	var story: Control = main.get("dual_world")
+	var direct_story := main.has_method("start_kitchen_exploration")
+	var story := _story(main)
 	var segment := "title"
 	var room := ""
 	var clock := ""
 	var exempt := false
-	var title: Control = main.get("title_ui")
-	var book: Control = main.get("book_ui")
+	var title: Control = null if direct_story else main.get("title_ui")
+	var book: Control = null if direct_story else main.get("book_ui")
 	if is_instance_valid(title) and title.is_visible_in_tree(): exempt = true
 	if is_instance_valid(book) and book.is_open: exempt = book.page_id() == "settings"
 	if is_instance_valid(story):
@@ -187,6 +229,7 @@ func _handle(request: Dictionary) -> void:
 	await get_tree().process_frame
 	main = get_tree().current_scene
 	var result: Dictionary = main.mcp_observe() if main.has_method("mcp_observe") else {"scene": main.scene_file_path}
+	result.merge(_checkpoint_status(main), true)
 	var controls: Array = []
 	_collect(get_tree().root, controls)
 	result["controls"] = controls

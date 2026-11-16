@@ -49,6 +49,7 @@ TOOLS = {
                                        "seed": {"type": "integer", "minimum": 0, "default": 1},
                                        "viewer": {"type": "string", "default": "detective"},
                                        "decision_maker": {"type": "string", "enum": ["human", "agent", "llm", "player"], "description": "Decision maker recorded for CLI player input."},
+                                       "snapshot_path": {"type":"string","description":"Project-local snapshot to restore in a Godot development session; ineligible for independent acceptance."},
                                        "save_slot": {"type":"string","pattern":"^[A-Za-z0-9_-]{1,64}$","description":"Optional stable isolated save slot for a local player interface."},
                                        "movie_filename": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.avi$", "description": "Optional new Godot Movie Maker AVI basename in artifacts/recordings; existing files are never overwritten."},
                                        "movie_fps": {"type": "integer", "minimum": 1, "maximum": 60, "description": "Fixed simulation/video frame rate for movie capture (30 if omitted); this is not a real-time performance benchmark."},
@@ -72,6 +73,7 @@ TOOLS = {
 
 
 def execute(service, name, arguments):
+    runtime.provenance.assert_runtime_root(runtime.ROOT)
     if service == "environment":
         return dict(environment.prepare(**arguments), server_identity=runtime.provenance.server_identity(runtime.ROOT, __file__))
     if service == "auto":
@@ -127,5 +129,5 @@ if __name__ == "__main__":
     parser.add_argument("--service", choices=list(TOOLS), default="input")
     parser.add_argument("--expected-project-root")
     options = parser.parse_args()
-    runtime.provenance.assert_root(runtime.ROOT, options.expected_project_root)
+    runtime.provenance.assert_runtime_root(runtime.ROOT, options.expected_project_root)
     asyncio.run(main(options.service))

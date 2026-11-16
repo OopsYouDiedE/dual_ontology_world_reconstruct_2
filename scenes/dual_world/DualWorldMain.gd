@@ -26,6 +26,7 @@ const WakePoseLibrary := preload("res://scenes/components/characters/WakePoseLib
 const InteractionDirector := preload("res://scenes/components/interaction/InteractionDirector.gd")
 const RoomEvidenceDetails := preload("res://scenes/components/interaction/RoomEvidenceDetails.gd")
 const ShadowCeiling := preload("res://scenes/components/world/ShadowCeiling.gd")
+const Checkpoint := preload("res://scenes/components/testing/StoryCheckpoint.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
 const SERIF_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
@@ -90,6 +91,7 @@ var _music_cd := 0.0
 var interactions: Node
 var evidence_presentations: Dictionary = {}
 var evidence_details: Node3D
+var checkpoints: Node
 
 # 控件
 var top_clock: Label
@@ -190,6 +192,7 @@ var det_pos := Vector2.ZERO
 var _door_passage: Dictionary = {}
 var det_path: Array = []
 var det_done := Callable()
+var _inspect_intent := ""
 var _det_talk := ""
 var _grid: AStarGrid2D
 var _transit: Dictionary = {}
@@ -243,8 +246,20 @@ func _ready() -> void:
 			_toast("存档无法读取，已从头开始")
 	# 正式游戏默认进 3D 房间（单房间俯视角）：侦探在房间里走动；2D 地图是辅助视图
 	_set_view("room")
-	if resume_path == "": _start_opening()
+	checkpoints = Checkpoint.new()
+	checkpoints.name = "StoryCheckpoints"
+	add_child(checkpoints)
+	checkpoints.bind(self)
+	if not Checkpoint.argument("--dv-snapshot").is_empty() and not checkpoints.restored:
+		push_error(checkpoints.error)
+		get_tree().quit(2)
+		return
+	if resume_path == "" and not checkpoints.restored: _start_opening()
 	_dirty = true
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(checkpoints) and not checkpoints.finalized and is_instance_valid(cam): checkpoints.begin_shutdown()
 
 
 func _start_opening() -> void:
@@ -326,6 +341,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _close() -> void:
+	if is_instance_valid(checkpoints): checkpoints.begin_shutdown()
 	_stop_exploration()
 	_finish_transit_now()
 	_write_auto()
@@ -1138,6 +1154,7 @@ func _stop_exploration() -> void:
 	det_path.clear()
 	det_done = Callable()
 	_sub_queue.clear()
+	_inspect_intent = ""
 	subtitle.visible = false
 	_cine = false
 
@@ -1702,18 +1719,30 @@ func _inspect_walk(eid: String) -> void:
 	var away := det_pos - target
 	if away.length() < 0.05: away = Vector2(0, 1)
 	var stand := target + away.normalized() * 0.6
-	_go(_route(det_pos, stand), func():
-		if _room_loaded != eng.s.room or _transit_active(): return
-		det.rotation.y = atan2(target.x - det_pos.x, target.y - det_pos.y)
-		var kind: String = interactions.kind_for(eid)
-		if not kind.is_empty() and evidence_presentations.has(kind):
-			interactions.begin_gameplay(self, kind, func(success: bool):
-				if success:
-					eng.inspect_evidence(eid, true)
-					_rebuild_markers())
-		else:
-			eng.inspect_evidence(eid)
-			_rebuild_markers())
+	_inspect_intent = eid
+	_go(_route(det_pos, stand), func(): _inspect_arrived(eid))
+
+
+func _inspect_arrived(eid: String) -> void:
+	if _room_loaded != eng.s.room or _transit_active(): return
+	var marker: Node3D = room_mesh.evidence_nodes.get(eid)
+	if not is_instance_valid(marker): return
+	var target := Vector2(marker.global_position.x, marker.global_position.z)
+	det.rotation.y = atan2(target.x - det_pos.x, target.y - det_pos.y)
+	var kind: String = interactions.kind_for(eid)
+	if not kind.is_empty() and evidence_presentations.has(kind):
+		interactions.begin_gameplay(self, kind, func(success: bool): _complete_evidence_inspection(eid, success))
+	else:
+		_inspect_intent = ""
+		eng.inspect_evidence(eid)
+		_rebuild_markers()
+
+
+func _complete_evidence_inspection(eid: String, success: bool) -> void:
+	_inspect_intent = ""
+	if success:
+		eng.inspect_evidence(eid, true)
+		_rebuild_markers()
 
 
 func _rebuild_markers() -> void:

@@ -23,6 +23,7 @@ ALLOWED = {"on", "step", "observe", "close"}
 
 
 async def main():
+    provenance.assert_runtime_root(ROOT)
     expected = provenance.project_identity(ROOT)
     receipt_dir = provenance.project_path(ROOT / ".runtime" / "input-client" / secrets.token_hex(8), ROOT)
     receipt_dir.mkdir(parents=True, exist_ok=False)
@@ -30,6 +31,8 @@ async def main():
         args=[str(ROOT / "mcp/game/server.py"), "--service", "input", "--expected-project-root", str(ROOT)], cwd=str(ROOT), env=os.environ.copy())
     current = None
     index = 0
+    host_pid = None
+    server_pid = None
     async with stdio_client(parameters) as (reader, writer):
         async with ClientSession(reader, writer) as client:
             await client.initialize()
@@ -59,7 +62,17 @@ async def main():
                         index += 1
                         data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
                         if not result.isError:
-                            provenance.validate_source(data.get("source_identity"), expected)
+                            source = data.get("source_identity") or {}
+                            server = data.get("server_identity") or {}
+                            provenance.validate_source(source, expected, pid=host_pid)
+                            provenance.validate_source(server, expected)
+                            if not isinstance(source.get("process_id"), int) or source["process_id"] <= 0:
+                                raise ValueError("Host PID is missing from capture identity")
+                            if not isinstance(server.get("server_pid"), int) or server["server_pid"] <= 0:
+                                raise ValueError("Server PID is missing from capture identity")
+                            if server_pid is not None and server["server_pid"] != server_pid:
+                                raise ValueError("Server PID changed during capture")
+                            host_pid, server_pid = source["process_id"], server["server_pid"]
                         images = []
                         for block in result.content:
                             if block.type == "image":
@@ -79,11 +92,14 @@ async def main():
                             current = result.structuredContent["session_id"]
                         elif not result.isError and tool == "close":
                             current = None
+                            host_pid = None
                         data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
                         summary = {"tool": tool, "is_error": bool(result.isError), "session_id": current,
                             "receipt": str(receipt), "images": images}
                         for key in ("started", "busy", "scene", "observation_path", "host_errors", "source_identity", "server_identity",
-                                    "closed", "graceful_exit", "movie_path", "movie_finalized", "movie_bytes"):
+                                    "closed", "graceful_exit", "movie_path", "movie_finalized", "movie_bytes",
+                                    "checkpoint_path", "checkpoint_restored", "checkpoint_error", "checkpoint_saved",
+                                    "controller", "controller_phase", "metrics_directory", "acceptance_eligible"):
                             if key in data:
                                 summary[key] = data[key]
                         if result.isError:

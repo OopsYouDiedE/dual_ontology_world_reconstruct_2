@@ -33,6 +33,15 @@ def assert_root(root, expected=None):
     return root
 
 
+def assert_runtime_root(root, expected=None):
+    """Bind real launchers to the one authorized checkout before any I/O."""
+    root = assert_root(root, expected)
+    authorized = (Path.home() / "Desktop" / "dual_ontology_world_reconstruct_2").resolve()
+    if root != authorized:
+        raise ValueError("Unauthorized runtime project root: " + str(root))
+    return root
+
+
 def project_identity(root):
     root = assert_root(root)
     content = (root / "project.godot").read_bytes()
@@ -82,7 +91,7 @@ def validate_source(source, expected, *, pid=None, executable=None, launch_scene
 def save_image_sidecar(path, data):
     path = Path(path)
     metadata = {key: data[key] for key in ("source_identity", "server_identity", "session_id",
-                "scene", "observation_id", "capture_kind") if key in data}
+                "scene", "observation_id", "capture_kind", "acceptance_eligible", "snapshot_path") if key in data}
     metadata.update(image_path=str(path.resolve()), image_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
                     captured_epoch=time.time())
     path.with_suffix(path.suffix + ".json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -153,5 +153,25 @@ func stop() -> void:
 		if host.modal.visible: host._dismiss_modal()
 	queue_free()
 
+func checkpoint_state() -> Dictionary:
+	return {"version":1,"active":active,"playing":_playing,"order":_order.duplicate(),
+		"status":_status.text if is_instance_valid(_status) else "",
+		"performance":_performance.checkpoint_state() if is_instance_valid(_performance) else {}}
+
+func restore_checkpoint(state: Dictionary) -> void:
+	if not active or int(state.get("version",0)) != 1 or not is_instance_valid(_performance): return
+	var saved_order: Array = state.get("order",[])
+	var sorted := saved_order.duplicate()
+	var expected_sorted := EXPECTED.duplicate()
+	sorted.sort()
+	expected_sorted.sort()
+	if sorted != expected_sorted: return
+	_order.clear()
+	for item in saved_order: _order.append(str(item))
+	_performance.restore_checkpoint(state.get("performance",{}))
+	_playing = _performance.running
+	_status.text = str(state.get("status",""))
+	_render()
+
 func test_snapshot() -> Dictionary:
 	return {"active":active,"playing":_playing,"order":_order,"performance":_performance.test_snapshot() if is_instance_valid(_performance) else {}}

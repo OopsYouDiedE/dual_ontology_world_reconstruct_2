@@ -19,8 +19,81 @@ var _gesture_hint: Label
 var _drag_origin := Vector2.ZERO
 var _hand_start_x := 0.0
 var _saved_visibility: Array = []
+var checkpoint_return_playing := false
+var checkpoint_return_cinematic := false
 signal finished(success: bool)
 signal observed(event: Dictionary)
+
+func checkpoint_state() -> Dictionary:
+	var visibility := {}
+	for entry in _saved_visibility:
+		if is_instance_valid(entry[0]): visibility[_visibility_key(entry[0])] = entry[1]
+	return {"kind": kind, "saved_transform": _saved_transform, "saved_fov": _saved_fov, "saved_near": _saved_near,
+		"ready": _ready_for_input, "closing": _closing, "has_result": _has_result, "visibility": visibility,
+		"camera": camera.global_transform, "fov": camera.fov,
+		"return_playing": checkpoint_return_playing, "return_cinematic": checkpoint_return_cinematic,
+		"elapsed": _tween.get_total_elapsed_time() if _tween != null and _tween.is_valid() else 0.85}
+
+func restore_checkpoint(state: Dictionary) -> void:
+	if _tween != null: _tween.kill()
+	_saved_transform = state.saved_transform
+	_saved_fov = float(state.saved_fov)
+	_saved_near = float(state.saved_near)
+	_has_result = bool(state.has_result)
+	_saved_visibility.clear()
+	for path in state.visibility:
+		var node := _visibility_node(path)
+		if node != null: _saved_visibility.append([node, state.visibility[path]])
+	camera.global_transform = state.camera
+	camera.fov = state.fov
+	_dragging = false
+	_closing = false
+	_ready_for_input = bool(state.ready)
+	if _has_result: _on_sampled()
+	if bool(state.closing):
+		close(maxf(0.01, 0.65 - float(state.elapsed)))
+	elif not _ready_for_input:
+		var focus: Vector3 = prop.to_global(prop.get_meta("focus", Vector3.ZERO))
+		var target := Transform3D(Basis.IDENTITY, _inspection_position(focus)).looking_at(focus, Vector3.UP)
+		_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		var remaining := maxf(0.01, 0.85 - float(state.elapsed))
+		_tween.tween_property(camera, "global_transform", target, remaining)
+		_tween.parallel().tween_property(camera, "fov", float(prop.get_meta("camera_fov", 48.0)), remaining)
+		_tween.finished.connect(func():
+			_ready_for_input = true
+			if kind in ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"] and not prop.completed: prop.activate())
+	elif kind in ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"] and not prop.completed:
+		prop.activate()
+
+func _visibility_key(node: Node) -> String:
+	for key in ["top_bar", "left_card", "drawer", "room_hint", "det_ring"]:
+		if host.get(key) == node: return "host:" + key
+	for key in ["tool", "hand"]:
+		if prop.get(key) == node: return "prop:" + key
+	for controller in [host.opening, host.kitchen]:
+		if not is_instance_valid(controller) or not controller.active: continue
+		for key in ["_hint", "_prompt"]:
+			if controller.get(key) == node: return "controller:" + key
+		for item in controller._items:
+			if item.marker == node: return "item:" + str(item.id)
+	if node is Label3D:
+		return "label3d:" + str(host.room_vp.find_children("*", "Label3D", true, false).find(node))
+	return str(host.get_path_to(node))
+
+func _visibility_node(key: String) -> Node:
+	if key.begins_with("host:"): return host.get(key.trim_prefix("host:"))
+	if key.begins_with("prop:"): return prop.get(key.trim_prefix("prop:"))
+	if key.begins_with("label3d:"):
+		var labels: Array = host.room_vp.find_children("*", "Label3D", true, false)
+		var index := int(key.trim_prefix("label3d:"))
+		return labels[index] if index >= 0 and index < labels.size() else null
+	for controller in [host.opening, host.kitchen]:
+		if not is_instance_valid(controller) or not controller.active: continue
+		if key.begins_with("controller:"): return controller.get(key.trim_prefix("controller:"))
+		if key.begins_with("item:"):
+			for item in controller._items:
+				if str(item.id) == key.trim_prefix("item:"): return item.marker
+	return host.get_node_or_null(NodePath(key))
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -160,14 +233,14 @@ func _on_input(event: InputEvent) -> void:
 			prop.align_hand(Vector2(_hand_start_x + travel, 0))
 		accept_event()
 
-func close() -> void:
+func close(duration := 0.65) -> void:
 	if _closing or not is_instance_valid(camera): return
 	_closing = true
 	_ready_for_input = false
 	if _tween != null: _tween.kill()
 	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_tween.tween_property(camera, "global_transform", _saved_transform, 0.65)
-	_tween.parallel().tween_property(camera, "fov", _saved_fov, 0.65)
+	_tween.tween_property(camera, "global_transform", _saved_transform, duration)
+	_tween.parallel().tween_property(camera, "fov", _saved_fov, duration)
 	await _tween.finished
 	_restore()
 	observed.emit(_event("return"))

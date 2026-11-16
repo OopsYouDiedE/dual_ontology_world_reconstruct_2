@@ -27,6 +27,11 @@ var _generation := 0
 var _tweens: Array[Tween] = []
 var _cloth_target: Node3D
 var _wrist_target: Node3D
+# One explicit timeline makes the active shot seekable at frame boundaries.
+const PHASE_DURATIONS := [0.001,1.0,0.65,0.8,0.4,0.42,0.35,0.5,0.9,0.5,0.30,0.65,0.6,0.65,0.4,0.8,1.0,0.8,0.8]
+var _phase := -1
+var _phase_time := 0.0
+var _phase_start: Dictionary = {}
 signal observed(event: Dictionary)
 signal finished
 
@@ -113,123 +118,247 @@ func begin(h: Control) -> void:
 func play() -> void:
 	if running: return
 	_generation += 1
-	var generation := _generation
 	running = true
 	for actor in actors.values(): actor.visible = false
 	_cloth.visible = false
 	_door_pivot.rotation.y = 0
-	for driver in drivers.values(): driver.reach_weight = 0.0
+	_ratchet.completed = false
+	_ratchet.pivot.rotation.z = 0.0
 	_place_characters()
-	for driver in drivers.values():
+	for id in drivers:
+		var driver = drivers[id]
+		driver.reach_weight = 0.0
+		driver.right_target = null
 		driver.pelvis_offset_world = Vector3.ZERO
 		driver.head_pitch = 0.0
 		driver.head_roll = 0.0
 		driver.torso_pitch = 0.0
 		driver.foot_targets.clear()
-	for id in ["su","detective"]: actors[id].rotation.y = atan2(-_inward.x,-_inward.z)
-	for id in ["shen","huo"]: actors[id].rotation.y = atan2(-_inward.x,-_inward.z)
-	await get_tree().process_frame
-	if generation != _generation: return
-	for driver in drivers.values(): driver.plant_feet()
-	_stage("anchor")
-	actors.su.visible = true
-	actors.detective.visible = true
+		actors[id].rotation.y = atan2(-_inward.x,-_inward.z)
+	_phase = 0
+	_phase_time = 0.0
+	_phase_start = _scene_state()
+
+func _enter_phase(next: int) -> void:
+	_phase = next
+	_phase_time = 0.0
 	var wrist := _slot("su")
-	await _camera(wrist.global_position,2.1,0.60,1.0)
-	if generation != _generation: return
-	await get_tree().create_timer(0.65).timeout
-	if generation != _generation: return
-	_stage("what")
-	await _camera(_threshold+Vector3.UP*0.75+_inward*0.65,4.0,0.60,0.8)
-	if generation != _generation: return
-	var su_driver: SkeletonModifier3D = drivers.su
-	var det_driver: SkeletonModifier3D = drivers.detective
-	if _target.get_parent() != _door_pivot: _target.reparent(_door_pivot,false)
-	_target.position = Vector3(0.94,0.92,0.12)
-	su_driver.right_target = _target
-	var handle_reach := _tween()
-	handle_reach.tween_property(su_driver,"reach_weight",1.0,0.4)
-	await handle_reach.finished
-	if generation != _generation: return
-	var open := _tween()
-	open.tween_property(_door_pivot,"rotation:y",-0.25,0.42)
-	_sound.play_sound("wood")
-	await open.finished
-	if generation != _generation: return
-	_wrist_target.global_position = _target.global_position
-	su_driver.right_target = _wrist_target
-	var release := _tween()
-	release.tween_property(_wrist_target,"global_position",release_wrist_position(),0.35)
-	await release.finished
-	if generation != _generation: return
-	det_driver.right_target = wrist
-	var reach := _tween()
-	reach.tween_property(det_driver,"reach_weight",1.0,0.5)
-	await reach.finished
-	if generation != _generation: return
-	# Planted feet stay fixed as the hips and torso yield under the pull.
-	var retreat := _tween().set_parallel(true)
-	retreat.tween_property(su_driver,"pelvis_offset_world",_inward*0.12-Vector3.UP*0.05,0.9)
-	retreat.tween_property(_wrist_target,"global_position",_wrist_target.global_position+_inward*0.10,0.9)
-	retreat.tween_property(su_driver,"torso_pitch",0.24,0.9)
-	_sound.play_sound("cloth")
-	await retreat.finished
-	if generation != _generation: return
-	observed.emit({"stage":"what","shot":"pull_contact","measurement":test_snapshot()})
-	await get_tree().create_timer(0.5).timeout
-	if generation != _generation: return
-	det_driver.reach_weight = 0.0
-	actors.su.visible = false
-	actors.detective.visible = false
-	var close := _tween()
-	close.tween_property(_door_pivot,"rotation:y",0.0,0.30)
-	await close.finished
-	if generation != _generation: return
-	actors.shen.visible = true
-	drivers.shen.right_target = _cloth_target
-	var crouch := _tween().set_parallel(true)
-	crouch.tween_property(drivers.shen,"pelvis_offset_world",-Vector3.UP*SHEN_CROUCH_DROP,0.65)
-	crouch.tween_property(drivers.shen,"torso_pitch",SHEN_CROUCH_PITCH,0.65)
-	crouch.tween_property(drivers.shen,"reach_weight",1.0,0.65)
-	await _camera(_threshold+Vector3.UP*0.30,2.1,0.45,0.65)
-	if generation != _generation: return
-	_cloth.visible = true
-	_sound.play_sound("cloth")
-	observed.emit({"stage":"what","shot":"cloth_after_pull","measurement":test_snapshot()})
-	await get_tree().create_timer(0.6).timeout
-	if generation != _generation: return
-	actors.shen.visible = false
-	actors.huo.visible = true
-	drivers.huo.right_target = _target
-	var lock_reach := _tween()
-	lock_reach.tween_property(drivers.huo,"reach_weight",1.0,0.45)
-	await _camera(_target.global_position,1.9,0.30,0.65)
-	if generation != _generation: return
-	_ratchet.activate()
-	observed.emit({"stage":"what","shot":"ratchet_last","measurement":test_snapshot()})
-	await get_tree().create_timer(0.4).timeout
-	if generation != _generation: return
-	actors.huo.visible = false
-	actors.su.visible = true
-	actors.detective.visible = true
-	_stage("why")
-	drivers.su.head_pitch = -0.16
-	drivers.su.head_roll = 0.10
-	drivers.detective.head_pitch = 0.12
-	drivers.detective.torso_pitch = 0.10
-	det_driver.reach_weight = 1.0
-	await _camera(wrist.global_position,1.7,0.32,0.8)
-	if generation != _generation: return
-	_sound.play_sound("cloth")
-	await get_tree().create_timer(1.0).timeout
-	if generation != _generation: return
-	await _camera(actors.su.global_position+Vector3.UP*1.1,2.0,0.22,0.8)
-	if generation != _generation: return
-	await get_tree().create_timer(0.8).timeout
-	if generation != _generation: return
-	running = false
-	observed.emit({"stage":"complete","contact_error_m":det_driver.contact_error_m,"acceptance":"pending_runtime_and_blind_review"})
-	finished.emit()
+	match next:
+		1:
+			for driver in drivers.values(): driver.plant_feet()
+			_stage("anchor")
+			actors.su.visible = true
+			actors.detective.visible = true
+		3: _stage("what")
+		4:
+			if _target.get_parent() != _door_pivot: _target.reparent(_door_pivot,false)
+			_target.position = Vector3(0.94,0.92,0.12)
+			drivers.su.right_target = _target
+		5: _sound.play_sound("wood")
+		6:
+			_wrist_target.global_position = _target.global_position
+			drivers.su.right_target = _wrist_target
+		7: drivers.detective.right_target = wrist
+		8: _sound.play_sound("cloth")
+		9: observed.emit({"stage":"what","shot":"pull_contact","measurement":test_snapshot()})
+		10:
+			drivers.detective.reach_weight = 0.0
+			actors.su.visible = false
+			actors.detective.visible = false
+		11:
+			actors.shen.visible = true
+			drivers.shen.right_target = _cloth_target
+		12:
+			_cloth.visible = true
+			_sound.play_sound("cloth")
+			observed.emit({"stage":"what","shot":"cloth_after_pull","measurement":test_snapshot()})
+		13:
+			actors.shen.visible = false
+			actors.huo.visible = true
+			drivers.huo.right_target = _target
+		14:
+			_ratchet.play_sound("metal")
+			observed.emit({"stage":"what","shot":"ratchet_last","measurement":test_snapshot()})
+		15:
+			_ratchet.completed = true
+			actors.huo.visible = false
+			actors.su.visible = true
+			actors.detective.visible = true
+			_stage("why")
+			drivers.su.head_pitch = -0.16
+			drivers.su.head_roll = 0.10
+			drivers.detective.head_pitch = 0.12
+			drivers.detective.torso_pitch = 0.10
+			drivers.detective.reach_weight = 1.0
+		16: _sound.play_sound("cloth")
+	_phase_start = _scene_state()
+
+func _blend_camera(point: Vector3, distance: float, camera_pitch: float, t: float) -> void:
+	var camera: Dictionary = _phase_start.camera
+	host.kitchen.focus = _vec(camera.focus).lerp(point,t)
+	host.dist = lerpf(float(camera.dist),distance,t)
+	host.pitch = lerpf(float(camera.pitch),camera_pitch,t)
+
+func _apply_phase(value: float) -> void:
+	var t := (1.0-cos(clampf(value,0.0,1.0)*PI))*0.5
+	var d: Dictionary = _phase_start.drivers
+	match _phase:
+		1: _blend_camera(_slot("su").global_position,2.1,0.60,t)
+		3: _blend_camera(_threshold+Vector3.UP*0.75+_inward*0.65,4.0,0.60,t)
+		4: drivers.su.reach_weight = lerpf(float(d.su.reach),1.0,t)
+		5: _door_pivot.rotation.y = lerpf(float(_phase_start.door_y),-0.25,t)
+		6: _wrist_target.global_position = _vec(_phase_start.wrist_position).lerp(release_wrist_position(),t)
+		7: drivers.detective.reach_weight = lerpf(float(d.detective.reach),1.0,t)
+		8:
+			drivers.su.pelvis_offset_world = _vec(d.su.pelvis).lerp(_inward*0.12-Vector3.UP*0.05,t)
+			_wrist_target.global_position = _vec(_phase_start.wrist_position).lerp(_vec(_phase_start.wrist_position)+_inward*0.10,t)
+			drivers.su.torso_pitch = lerpf(float(d.su.torso_pitch),0.24,t)
+		10: _door_pivot.rotation.y = lerpf(float(_phase_start.door_y),0.0,t)
+		11:
+			drivers.shen.pelvis_offset_world = _vec(d.shen.pelvis).lerp(-Vector3.UP*SHEN_CROUCH_DROP,t)
+			drivers.shen.torso_pitch = lerpf(float(d.shen.torso_pitch),SHEN_CROUCH_PITCH,t)
+			drivers.shen.reach_weight = lerpf(float(d.shen.reach),1.0,t)
+			_blend_camera(_threshold+Vector3.UP*0.30,2.1,0.45,t)
+		13:
+			drivers.huo.reach_weight = lerpf(float(d.huo.reach),1.0,minf(_phase_time/0.45,1.0))
+			_blend_camera(_target.global_position,1.9,0.30,t)
+		14:
+			var angles := [0.0,0.07,-0.035,0.05,0.0]
+			var key := minf(_phase_time/0.055,4.0)
+			var index := mini(int(key),3)
+			_ratchet.pivot.rotation.z = lerpf(angles[index],angles[index+1],key-index)
+		15: _blend_camera(_slot("su").global_position,1.7,0.32,t)
+		17: _blend_camera(actors.su.global_position+Vector3.UP*1.1,2.0,0.22,t)
+
+func _advance_timeline(delta: float) -> void:
+	var remaining := delta
+	while running:
+		var duration: float = PHASE_DURATIONS[_phase]
+		var step := minf(remaining,maxf(0.0,duration-_phase_time))
+		_phase_time += step
+		remaining -= step
+		_apply_phase(_phase_time/duration)
+		if _phase_time + 0.000001 < duration: break
+		if _phase + 1 >= PHASE_DURATIONS.size():
+			running = false
+			observed.emit({"stage":"complete","contact_error_m":drivers.detective.contact_error_m,"acceptance":"pending_runtime_and_blind_review"})
+			finished.emit()
+			break
+		_enter_phase(_phase+1)
+		if remaining <= 0.0: break
+
+static func _xyz(v: Vector3) -> Array:
+	return [v.x,v.y,v.z]
+
+static func _vec(value: Array) -> Vector3:
+	return Vector3(float(value[0]),float(value[1]),float(value[2]))
+
+func _target_name(value: Node3D) -> String:
+	if value == _target: return "door"
+	if value == _wrist_target: return "wrist"
+	if value == _cloth_target: return "cloth"
+	if value == _slot("su"): return "su_hand"
+	return ""
+
+func _named_target(value: String) -> Node3D:
+	match value:
+		"door": return _target
+		"wrist": return _wrist_target
+		"cloth": return _cloth_target
+		"su_hand": return _slot("su")
+	return null
+
+func _scene_state() -> Dictionary:
+	var bodies := {}
+	var poses := {}
+	for id in actors:
+		var actor: Node3D = actors[id]
+		var driver = drivers[id]
+		var feet := {}
+		for side in driver.foot_targets: feet[side] = _xyz(driver.foot_targets[side])
+		bodies[id] = {"position":_xyz(actor.global_position),"rotation":_xyz(actor.rotation),"visible":actor.visible}
+		poses[id] = {"reach":driver.reach_weight,"head_pitch":driver.head_pitch,"head_roll":driver.head_roll,
+			"torso_pitch":driver.torso_pitch,"pelvis":_xyz(driver.pelvis_offset_world),"foot_targets":feet,
+			"right_target":_target_name(driver.right_target),"left_target":_target_name(driver.left_target)}
+	var mist := []
+	for item in _gas: mist.append(_xyz(item.position))
+	return {"camera":{"focus":_xyz(host.kitchen.focus),"az":host.az,"dist":host.dist,"pitch":host.pitch},
+		"actors":bodies,"drivers":poses,"door_y":_door_pivot.rotation.y,"cloth_visible":_cloth.visible,
+		"target_parent":"door" if _target.get_parent() == _door_pivot else "root",
+		"target_position":_xyz(_target.position),"wrist_position":_xyz(_wrist_target.global_position),
+		"ratchet_z":_ratchet.pivot.rotation.z,"ratchet_completed":_ratchet.completed,"gas":mist}
+
+func _stage_elapsed() -> float:
+	var first := 15 if _phase >= 15 else (3 if _phase >= 3 else 1)
+	var elapsed := _phase_time
+	for index in range(first,_phase): elapsed += PHASE_DURATIONS[index]
+	return elapsed
+
+func checkpoint_state() -> Dictionary:
+	if not is_instance_valid(root): return {}
+	var saved_visibility := []
+	for item in _saved.get("visibility",[]): saved_visibility.append(bool(item[1]))
+	return {"version":1,"running":running,"stage":stage,"stage_elapsed":_stage_elapsed(),"phase":_phase,"phase_time":_phase_time,
+		"clock":_clock,"phase_start":_phase_start.duplicate(true),"scene":_scene_state(),
+		"previous":{"playing":_saved.get("playing",false),"cine":_saved.get("cine",false),
+			"az":_saved.get("az",0.12),"pitch":_saved.get("pitch",0.95),"dist":_saved.get("dist",7.4),
+			"focus":_xyz(_saved.get("focus",Vector3.ZERO)),"visibility":saved_visibility}}
+
+func restore_checkpoint(state: Dictionary) -> void:
+	if not is_instance_valid(root) or int(state.get("version",0)) != 1: return
+	var phase := int(state.get("phase",-1))
+	var scene = state.get("scene",{})
+	var start = state.get("phase_start",{})
+	if phase < 0 or phase >= PHASE_DURATIONS.size() or not scene is Dictionary or not start is Dictionary or scene.is_empty() or start.is_empty(): return
+	_generation += 1
+	for tween in _tweens:
+		if tween.is_valid(): tween.kill()
+	_tweens.clear()
+	var previous: Dictionary = state.get("previous",{})
+	_saved.playing = bool(previous.get("playing",false))
+	_saved.cine = bool(previous.get("cine",false))
+	_saved.az = float(previous.get("az",0.12))
+	_saved.pitch = float(previous.get("pitch",0.95))
+	_saved.dist = float(previous.get("dist",7.4))
+	_saved.focus = _vec(previous.get("focus",[0,0,0]))
+	var saved_visibility: Array = previous.get("visibility",[])
+	for i in mini(saved_visibility.size(),_saved.visibility.size()): _saved.visibility[i][1] = bool(saved_visibility[i])
+	var parent: Node = _door_pivot if scene.get("target_parent","") == "door" else root
+	if _target.get_parent() != parent: _target.reparent(parent,false)
+	_target.position = _vec(scene.target_position)
+	_wrist_target.global_position = _vec(scene.wrist_position)
+	_door_pivot.rotation.y = float(scene.door_y)
+	_cloth.visible = bool(scene.cloth_visible)
+	_ratchet.pivot.rotation.z = float(scene.ratchet_z)
+	_ratchet.completed = bool(scene.ratchet_completed)
+	for id in actors:
+		var body: Dictionary = scene.actors[id]
+		var pose: Dictionary = scene.drivers[id]
+		actors[id].global_position = _vec(body.position)
+		actors[id].rotation = _vec(body.rotation)
+		actors[id].visible = bool(body.visible)
+		var driver = drivers[id]
+		driver.reach_weight = float(pose.reach)
+		driver.head_pitch = float(pose.head_pitch)
+		driver.head_roll = float(pose.head_roll)
+		driver.torso_pitch = float(pose.torso_pitch)
+		driver.pelvis_offset_world = _vec(pose.pelvis)
+		driver.right_target = _named_target(str(pose.right_target))
+		driver.left_target = _named_target(str(pose.left_target))
+		driver.foot_targets.clear()
+		for side in pose.foot_targets: driver.foot_targets[side] = _vec(pose.foot_targets[side])
+	for i in mini(_gas.size(),scene.gas.size()): _gas[i].position = _vec(scene.gas[i])
+	host.kitchen.focus = _vec(scene.camera.focus)
+	host.az = float(scene.camera.az)
+	host.pitch = float(scene.camera.pitch)
+	host.dist = float(scene.camera.dist)
+	_phase = phase
+	_phase_time = clampf(float(state.get("phase_time",0.0)),0.0,float(PHASE_DURATIONS[phase]))
+	_clock = float(state.get("clock",0.0))
+	_phase_start = start.duplicate(true)
+	stage = str(state.get("stage","off"))
+	running = bool(state.get("running",false))
+	host._update_camera()
 
 func _stage(value: String) -> void:
 	stage = value
@@ -264,6 +393,7 @@ func _tween() -> Tween:
 func _process(delta: float) -> void:
 	if host == null or not is_instance_valid(root): return
 	_clock += delta
+	if running: _advance_timeline(delta)
 	host._update_camera()
 	for index in _gas.size():
 		_gas[index].position.y += sin(_clock*1.7+index)*delta*0.02

@@ -11,7 +11,9 @@ import runtime
 
 class MovieReservationTests(unittest.TestCase):
     def setUp(self):
-        temporary = tempfile.TemporaryDirectory()
+        local_temp = runtime.ROOT / ".runtime"
+        local_temp.mkdir(exist_ok=True)
+        temporary = tempfile.TemporaryDirectory(dir=local_temp)
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name).resolve()
         (self.root / "project.godot").write_text(
@@ -19,14 +21,18 @@ class MovieReservationTests(unittest.TestCase):
         patcher = patch.object(runtime, "ROOT", self.root)
         patcher.start()
         self.addCleanup(patcher.stop)
-        self.arguments = {"mode": "scene", "scene": "res://tools/testing/StoryTest.tscn",
-                          "movie_filename": "capture.avi"}
+        # The fixture tests reservation behaviour only. The separate isolation
+        # test below exercises the real guard without mocking it.
+        guard = patch.object(runtime.provenance, "assert_runtime_root", return_value=self.root)
+        guard.start()
+        self.addCleanup(guard.stop)
+        self.arguments = {"mode": "godot_manual", "movie_filename": "capture.avi"}
         self.movie = self.root / "artifacts/recordings/capture.avi"
 
-    def test_invalid_fixture_does_not_reserve_movie(self):
+    def test_missing_snapshot_does_not_reserve_movie(self):
         with patch.object(runtime, "build") as build:
-            with self.assertRaisesRegex(ValueError, "existing project-local"):
-                runtime.start(dict(self.arguments, test_config="missing.yaml"))
+            with self.assertRaisesRegex(ValueError, "Snapshot file does not exist"):
+                runtime.start(dict(self.arguments, snapshot_path="missing.json"))
             build.assert_not_called()
         self.assertFalse(self.movie.exists())
 
@@ -49,6 +55,24 @@ class MovieReservationTests(unittest.TestCase):
                 runtime.start(self.arguments)
             build.assert_not_called()
         self.assertEqual(self.movie.read_bytes(), b"existing recording")
+
+
+class RuntimeIsolationTests(unittest.TestCase):
+    def test_foreign_root_is_rejected_before_host_or_output_creation(self):
+        local_temp = runtime.ROOT / ".runtime"
+        local_temp.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=local_temp) as directory:
+            foreign = Path(directory).resolve()
+            (foreign / "project.godot").write_text(
+                '[application]\nrun/main_scene="res://scenes/main/Boot.tscn"\n', encoding="utf-8")
+            with patch.object(runtime, "ROOT", foreign), \
+                 patch.object(runtime, "build") as build, \
+                 patch.object(runtime, "Endpoint") as endpoint:
+                with self.assertRaisesRegex(ValueError, "Unauthorized runtime project root"):
+                    runtime.start({"mode": "godot_manual", "movie_filename": "capture.avi"})
+                build.assert_not_called()
+                endpoint.assert_not_called()
+            self.assertFalse((foreign / "artifacts").exists())
 
 
 if __name__ == "__main__":

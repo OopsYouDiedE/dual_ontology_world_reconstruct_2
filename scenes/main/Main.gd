@@ -162,6 +162,7 @@ func begin_shutdown() -> void:
 	shutting_down = true
 	paused = true
 	if is_instance_valid(dual_world):
+		if is_instance_valid(dual_world.checkpoints): dual_world.checkpoints.begin_shutdown()
 		dual_world._finish_transit_now()
 		dual_world._write_auto()
 	if active and bridge != null: status_text = bridge.Save(_slot_path("auto"))

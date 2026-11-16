@@ -234,6 +234,8 @@ def review_timeline(scene: dict, history: list[dict], page: Path) -> tuple[str, 
     for record in history:
         captured = capture_time(record, ROOT).isoformat(timespec='seconds')
         title = '采集 ' + captured + ' · ' + record['revision'][:8] + ' · ' + record['status']
+        if record.get('source_isolated'):
+            title += ' · 历史来源已隔离'
         body += '<article class="trajectory-entry"><h3>' + escape(title) + '</h3><p class="meta">' + escape(record['reviewer'] + ' / ' + record['source']['session_id']) + '</p>'
         audit = '评分核定 ' + record['observed_at']
         if record['id'] in superseded:
@@ -278,7 +280,7 @@ def review_timeline(scene: dict, history: list[dict], page: Path) -> tuple[str, 
         converted = OUT / 'reports' / ('--'.join(report.relative_to(ROOT).with_suffix('').parts[1:]) + '.html')
         body += '<p class="links">' + link(converted, '完整图文报告', page) + link(report, '原始评审', page) + link(ROOT / record['source']['on_receipt'], '启动回执', page) + link(ROOT / record['source']['start_receipt'], '新游戏回执', page) + '</p></article>'
         md += '\n[原始评审](<' + report.as_posix() + '>)\n'
-        if record['id'] not in superseded:
+        if record['id'] not in superseded and not record.get('source_isolated'):
             previous = record
     return body + '</section>', md
 
@@ -289,7 +291,7 @@ def gameplay_pages(records: list[dict]) -> tuple[str, str, list[dict]]:
     history = load_reviews(ROOT)
     page = OUT / "gameplay.html"
     body = '<section id="gameplay"><h2>第一章 · 游戏场景测试评分</h2>'
-    status = reviews.get("status", "独立 Terra 正在从标题进行实际玩家测试；完整第一章评分尚未交齐。")
+    status = "当前工程等待独立 Terra 主线采集；历史评分与画面按原版本保留。"
     body += '<p class="note">' + escape(status) + '</p>'
     body += '<p class="rule">只沿正式标题、新游戏和真实玩家输入评价主线。每段保留所有版本、原图、输入回执、七项分数与原因；待测项随真实测试补齐。</p>'
     md = "# 第一章游戏场景测试评分\n\n" + status + "\n\n[打开图文 HTML](<" + page.as_posix() + ">)\n\n"
@@ -302,8 +304,8 @@ def gameplay_pages(records: list[dict]) -> tuple[str, str, list[dict]]:
     for scene in plan.get("scenes", []):
         versions = [record for record in history if record['segment_id'] == scene['id']]
         superseded = {record['supersedes'] for record in versions if record.get('supersedes')}
-        effective = [record for record in versions if record['id'] not in superseded]
-        review = effective[-1] if effective else reviews.get("scenes", {}).get(scene["id"], {})
+        effective = [record for record in versions if record['id'] not in superseded and not record.get('source_isolated')]
+        review = effective[-1] if effective else {}
         scores = review.get("scores", [None] * 7)
         if len(scores) != 7 or any(s is not None and (isinstance(s, bool) or not isinstance(s, (int, float)) or not 0 <= s <= 10) for s in scores):
             raise ValueError("Invalid gameplay scores: " + scene['id'])

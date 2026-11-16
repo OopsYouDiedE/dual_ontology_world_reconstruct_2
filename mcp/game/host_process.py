@@ -2,6 +2,10 @@
 import os
 from pathlib import Path
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import capture_provenance as provenance
 
 import linux_display
 
@@ -32,6 +36,11 @@ def terminate(process):
 
 def spawn(command, **kwargs):
     """Start a project-owned process with the reproducible tool environment."""
+    provenance.assert_runtime_root(ROOT)
+    if "--path" in command:
+        index = command.index("--path")
+        if index + 1 >= len(command) or Path(command[index + 1]).resolve() != ROOT.resolve():
+            raise ValueError("Host project path mismatch")
     environment = os.environ.copy()
     # MCP stdio clients may intentionally inherit a minimal Windows environment.
     # NuGet resolves its user configuration under APPDATA even for local builds.

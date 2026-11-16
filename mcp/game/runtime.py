@@ -14,7 +14,6 @@ import time
 from environment import resolve_dotnet, resolve_godot
 from build_runtime import DeadlineReached, build, remaining
 from host_process import spawn, terminate
-import review_watcher
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import capture_provenance as provenance
@@ -53,6 +52,9 @@ class Endpoint:
         self.launch_scene = self.expected_source["configured_main_scene"]
         self.executable = None
         self.last_source = None
+        self.snapshot_path = None
+        self.checkpoint_path = None
+        self.checkpoint_stop_path = None
 
     def attach(self, process):
         self.process = process
@@ -81,8 +83,17 @@ class Endpoint:
             if response.get("id") != self.serial:
                 raise RuntimeError("Host response id mismatch.")
             if "error" not in response and self.backend == "godot":
-                provenance.validate_source(response.get("result", {}).get("source_identity"), self.expected_source,
+                payload = response.get("result", {})
+                provenance.validate_source(payload.get("source_identity"), self.expected_source,
                     pid=self.process.pid, executable=self.executable, launch_scene=self.launch_scene)
+                if payload.get("checkpoint_path"):
+                    actual = provenance.project_path(payload["checkpoint_path"], ROOT)
+                    if actual != self.checkpoint_path:
+                        raise ValueError("Host checkpoint path mismatch")
+                if payload.get("metrics_directory"):
+                    metrics = provenance.project_path(payload["metrics_directory"], ROOT)
+                    if not metrics.name.endswith("-" + str(self.process.pid)):
+                        raise ValueError("Monitor directory PID mismatch")
         except (queue.Empty, TimeoutError, OSError, ValueError, RuntimeError) as error:
             self.stop()
             raise RuntimeError("Host request failed; session closed to prevent duplicate actions. " + str(error)) from error
@@ -95,6 +106,9 @@ class Endpoint:
                     executable_path=self.executable, verification="server-bound-process")
             self.last_source = result.get("source_identity")
             result["server_identity"] = self.server_source
+            if self.snapshot_path is not None:
+                result["snapshot_path"] = str(self.snapshot_path)
+                result["acceptance_eligible"] = False
         if self.backend == "godot":
             result["host_errors"] = [line for line in self.logs if "ERROR:" in line or "SCRIPT ERROR" in line]
         return result
@@ -123,19 +137,27 @@ def _movie_hash(path):
 
 
 def start(arguments, deadline=None):
+    provenance.assert_runtime_root(ROOT)
     mode = arguments.get("mode", "cli_ai")
     if mode not in ("cli_ai", "cli_manual", "cli_auto", "godot_manual", "godot_auto"):
         raise ValueError("Unknown production session mode.")
     retired = {"scene", "test_config", "test_suite", "content_path"}.intersection(arguments)
     if retired:
         raise ValueError("Scene fixtures and content overrides are retired; use the fixed production title/new-game path.")
-    review_watcher.ensure_started()
     controller = arguments.get("controller", "ai" if mode in ("cli_auto", "godot_auto") else "player")
     if mode == "cli_auto" and controller != "ai":
         raise ValueError("cli_auto requires controller=ai; use cli_ai for SubAgent decisions.")
     if mode in ("cli_ai", "cli_manual") and controller != "player":
         raise ValueError("cli_ai / cli_manual require controller=player.")
     endpoint = Endpoint(mode, controller, deadline)
+    snapshot_path = arguments.get("snapshot_path")
+    if snapshot_path is not None:
+        if endpoint.backend != "godot" or mode != "godot_manual":
+            raise ValueError("Snapshot restore is only available for local Godot input sessions.")
+        snapshot_path = provenance.project_path(snapshot_path, ROOT)
+        if not snapshot_path.is_file():
+            raise ValueError("Snapshot file does not exist inside the authorized project.")
+        endpoint.snapshot_path = snapshot_path
     movie_filename = arguments.get("movie_filename")
     if movie_filename is not None:
         if endpoint.backend != "godot" or mode != "godot_manual":
@@ -185,6 +207,10 @@ def start(arguments, deadline=None):
             # Use the project's renderer, matching editor and exported gameplay.
             endpoint.executable = provenance.host_executable(resolve_godot(deadline=deadline))
             command = [endpoint.executable, "--path", ROOT]
+            checkpoint_dir = provenance.project_path(ROOT / ".runtime/checkpoints/mcp" / endpoint.token, ROOT)
+            checkpoint_dir.mkdir(parents=True, exist_ok=False)
+            endpoint.checkpoint_path = checkpoint_dir / "latest.json"
+            endpoint.checkpoint_stop_path = checkpoint_dir / "interrupt.request"
             if endpoint.movie_path:
                 command += ["--write-movie", endpoint.movie_path, "--fixed-fps", str(arguments.get("movie_fps", 30))]
             if arguments.get("background_capture", True):
@@ -194,7 +220,13 @@ def start(arguments, deadline=None):
                         f"--dv-controller={controller}", f"--dv-seed={arguments.get('seed', 1)}",
                         "--dv-viewer=" + arguments.get("viewer", "detective")]
             command.append("--dv-launch-scene=" + endpoint.launch_scene)
+            command.append("--dv-project-root=" + endpoint.expected_source["project_root"])
+            command.append("--dv-project-sha256=" + endpoint.expected_source["project_sha256"])
             command.append("--dv-content=" + endpoint.content_path)
+            command.append("--dv-checkpoint-output=" + str(endpoint.checkpoint_path))
+            command.append("--dv-checkpoint-stop=" + str(endpoint.checkpoint_stop_path))
+            if snapshot_path is not None:
+                command.append("--dv-snapshot=" + str(snapshot_path))
             save_slot = arguments.get("save_slot", endpoint.token)
             if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", save_slot):
                 raise ValueError("Invalid save slot")
@@ -215,6 +247,9 @@ def start(arguments, deadline=None):
                     time.sleep(.1)
             endpoint.stream = endpoint.connection.makefile("rb")
             observation = endpoint.request({"type": "observe", "wait_ms": 300})
+            if snapshot_path is not None and not observation.get("checkpoint_restored", False):
+                detail = observation.get("checkpoint_error") or " ".join(observation.get("host_errors", []))
+                raise RuntimeError("Snapshot restoration failed: " + (detail or "restored host did not report success"))
         identity = secrets.token_hex(8)
         SESSIONS[identity] = endpoint
         return dict(observation, session_id=identity, mode=mode,
@@ -251,6 +286,25 @@ def execute(name, arguments):
                 SESSIONS.pop(identity, None)
             result = {"session_id": identity, "closed": True, "graceful_exit": graceful,
                       "source_identity": endpoint.last_source, "server_identity": endpoint.server_source}
+            if endpoint.backend == "godot":
+                result.update(checkpoint_path=str(endpoint.checkpoint_path), checkpoint_saved=False,
+                              checkpoint_error="")
+                if endpoint.snapshot_path is not None:
+                    result.update(snapshot_path=str(endpoint.snapshot_path), acceptance_eligible=False)
+                try:
+                    envelope = json.loads(endpoint.checkpoint_path.read_text(encoding="utf-8-sig"))
+                    if envelope.get("project") != "dual_ontology_world_reconstruct_2" or envelope.get("host_pid") != endpoint.process.pid:
+                        raise ValueError("Final checkpoint project or host PID mismatch")
+                    if envelope.get("format") != "story-checkpoint-v1":
+                        raise ValueError("Final checkpoint format mismatch")
+                    import base64
+                    import hashlib
+                    payload = base64.b64decode(envelope["payload"], validate=True)
+                    if hashlib.sha256(payload).hexdigest() != envelope.get("sha256"):
+                        raise ValueError("Final checkpoint checksum mismatch")
+                    result["checkpoint_saved"] = True
+                except (OSError, ValueError, TypeError, KeyError) as error:
+                    result["checkpoint_error"] = str(error)
             if endpoint.movie_path:
                 result.update(movie_path=str(endpoint.movie_path),
                               movie_finalized=graceful and endpoint.movie_path.is_file() and endpoint.movie_path.stat().st_size > 0,

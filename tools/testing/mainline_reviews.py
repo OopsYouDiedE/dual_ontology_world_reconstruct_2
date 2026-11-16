@@ -29,8 +29,9 @@ def repository_directory(root: Path) -> Path:
 
 def validate_project_source(identity: dict, root: Path) -> None:
     source_root = Path(identity.get("project_root", ""))
-    if not source_root.is_absolute() or repository_directory(source_root) != repository_directory(root):
-        raise ValueError("Review source project mismatch; only this repository and its linked worktrees are accepted")
+    # Reject foreign roots before opening any repository metadata there.
+    if not source_root.is_absolute() or source_root.resolve() != root.resolve():
+        raise ValueError("Review source project mismatch; only the current project root is accepted")
 
 
 def validate_session_source(data: dict, identity: dict, session: str) -> None:
@@ -47,7 +48,7 @@ def evidence_path(root: Path, value: str) -> Path:
     return candidate
 
 
-def validate(record: dict, root: Path = ROOT) -> dict:
+def validate(record: dict, root: Path = ROOT, *, archived: bool = False) -> dict:
     if record.get("schema_version") != 1 or not re.fullmatch(r"[a-z0-9][a-z0-9_-]{1,119}", record.get("id", "")):
         raise ValueError("Review schema/id is invalid")
     plan = json.loads((root / "assets/data/test_scenarios/gameplay_review_plan.json").read_text(encoding="utf-8-sig"))
@@ -81,7 +82,12 @@ def validate(record: dict, root: Path = ROOT) -> dict:
         raise ValueError("Review session does not match its original on receipt")
     if not identity.get("project_root") or not identity.get("project_sha256") or not identity.get("process_id"):
         raise ValueError("Original process/project provenance is incomplete")
-    validate_project_source(identity, root)
+    try:
+        validate_project_source(identity, root)
+    except ValueError:
+        if not archived:
+            raise
+        record = dict(record, source_isolated=True, acceptance_eligible=False)
     start_path = evidence_path(root, source["start_receipt"])
     start = json.loads(start_path.read_text(encoding="utf-8-sig"))
     start_data = start.get("data", {})
@@ -126,7 +132,7 @@ def capture_time(record: dict, root: Path = ROOT) -> datetime:
 
 
 def load_reviews(root: Path = ROOT) -> list[dict]:
-    records = [validate(json.loads(path.read_text(encoding="utf-8-sig")), root) for path in sorted((root / DIRECTORY).glob("*.json"))]
+    records = [validate(json.loads(path.read_text(encoding="utf-8-sig")), root, archived=True) for path in sorted((root / DIRECTORY).glob("*.json"))]
     ids = [record["id"] for record in records]
     if len(ids) != len(set(ids)):
         raise ValueError("Duplicate immutable review IDs")

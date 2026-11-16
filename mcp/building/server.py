@@ -90,6 +90,7 @@ class Host:
 
 
 def on(arguments):
+    provenance.assert_runtime_root(ROOT)
     # Use the production .NET resolver; never silently pick a different engine.
     sys.path.insert(0, str(ROOT / 'mcp/game'))
     from environment import resolve_godot
@@ -193,5 +194,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--expected-project-root')
     options = parser.parse_args()
-    provenance.assert_root(ROOT, options.expected_project_root)
+    provenance.assert_runtime_root(ROOT, options.expected_project_root)
     asyncio.run(main())

@@ -52,14 +52,20 @@ func _anchor_to_room(detail: Node3D) -> void:
 	var rack := scene.get_node_or_null("Instances/B_P_cloth_rack_01") as Node3D
 	if is_instance_valid(door):
 		match str(detail.kind):
-			"water": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0, 0.015, 0.34)))
-			"drag": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0, -0.035, 1.0)))
-			"boots": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0.95, -0.035, 0.65)))
-			"ratchet": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0.65, 0.6, 0.34)))
+			# This prefab's -Z faces the room; +Z is beyond the left wall.
+			"water": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0, 0.004, -0.25)))
+			"drag": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0, 0.004, -1.0)))
+			"boots": _attach_detail(detail, door, Transform3D(Basis.IDENTITY, Vector3(0.42, 0.004, -1.65)))
+			"ratchet":
+				var leaf := door.get_node_or_null("VisualRoot/ModelInstance/Asset/Left_hinge") as Node3D
+				var mount := Transform3D(Basis(Vector3.UP, PI), Vector3(0.38, 0.6, -0.14))
+				if is_instance_valid(leaf):
+					_attach_detail(detail, leaf, leaf.global_transform.affine_inverse() * door.global_transform * mount)
+				else: _attach_detail(detail, door, mount)
 	if str(detail.kind) == "seal" and is_instance_valid(window):
 		_attach_detail(detail, window, Transform3D(Basis.IDENTITY, Vector3(0, 0.45, 0.12)))
 	if str(detail.kind) == "cloth" and is_instance_valid(rack):
-		_attach_detail(detail, rack, Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3(0, 1.3, 0.16)))
+		_attach_detail(detail, rack, Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), Vector3(0.0715, 1.05, -0.025)))
 		detail.set_meta("camera_offset", Vector3(0.35, 0.75, -0.55))
 
 func _attach_detail(detail: Node3D, original: Node3D, local_transform: Transform3D) -> void:

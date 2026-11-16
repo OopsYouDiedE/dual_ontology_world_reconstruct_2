@@ -114,6 +114,10 @@ func _tag_monitor() -> void:
 			"F03", "F05": segment = "dinner"
 			_: segment = "travel"
 		if story.gathering != null and story.gathering.active: segment = "corridor"
+		var scene_root: Node = story.lowpoly._root if story._lowpoly_ok else story.room_mesh
+		if story.gathering != null and story.gathering.active and is_instance_valid(story.gathering._root): scene_root = story.gathering._root
+		monitor.tag_scene(str(scene_root.get_instance_id()) + "/" + story._room_loaded)
+	else: monitor.tag_scene("title")
 	monitor.node_id = segment + "/" + room
 	monitor.sample_context = {"gameplay_segment": segment, "room": room, "story_clock": clock, "text_exempt": exempt}
 

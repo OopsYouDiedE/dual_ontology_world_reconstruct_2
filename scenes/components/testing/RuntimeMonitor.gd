@@ -8,7 +8,7 @@ var latest: Dictionary = {}
 var audio: Dictionary = {}
 var report := Timeline.new()
 var frames: FileAccess
-var pcm: FileAccess
+var pcm := preload("res://scenes/components/testing/AsyncPcmWriter.gd").new()
 var capture: AudioEffectCapture
 var capture_index := -1
 var _label: Label
@@ -17,7 +17,6 @@ var _cursor := 0
 var _last_usec := 0
 var _started_usec := 0
 var _sample_clock := 0.0
-var _audio_clock := 0.0
 var _frame_count := 0
 var _spikes := 0
 var _max_ms := 0.0
@@ -29,6 +28,11 @@ var _owner: Control
 var measurement_context := "rendered_runtime"
 var _audio_snapshot_errors := 0
 var sample_context: Dictionary = {}
+var _scene_identity := ""
+var _warmup_until_usec := 0
+var _warmup_reason := "cold_start"
+var _steady_spikes := 0
+var _warmup_frames := 0
 
 func configure(directory: String, metadata: Dictionary, content: Control) -> void:
 	output_dir = preload("res://mcp/CaptureSource.gd").project_output(directory)
@@ -37,6 +41,7 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	_owner = content
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(directory))
 	metadata["frame_clock"] = "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+	metadata["warmup_policy"] = "Cold start and each constructed room/stage: first 1.5 s recorded separately; only explicitly marked steady frames determine the 33.3 ms veto"
 	metadata["content_text_policy"] = "visible_active_viewports"
 	metadata["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree(), str(metadata.get("launch_scene", "")))
 	metadata["fps_window"] = "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
@@ -55,8 +60,8 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 		push_error(report.error)
 		return
 	frames = FileAccess.open(directory + "/frames.csv", FileAccess.WRITE)
-	if frames != null: frames.store_line("frame,elapsed_s,node,frame_ms,draw_calls,static_ram_mb,gpu_resource_mb")
-	pcm = FileAccess.open(directory + "/mix.f32le", FileAccess.WRITE)
+	if frames != null: frames.store_line("frame,elapsed_s,node,frame_ms,draw_calls,static_ram_mb,gpu_resource_mb,measurement_phase,warmup_reason")
+	if pcm.start(directory + "/mix.f32le") != OK: push_error("Audio recording file could not open")
 	capture = AudioEffectCapture.new()
 	# Scene construction can block longer than the default ring. Preserve its
 	# audio while the unscaled frame clock continues to report that stall.
@@ -66,7 +71,14 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	_start_audio_worker()
 	_started_usec = Time.get_ticks_usec()
 	_last_usec = _started_usec
+	_warmup_until_usec = _started_usec + 1500000
 	set_process(true)
+
+func tag_scene(identity: String) -> void:
+	if identity == _scene_identity: return
+	_warmup_reason = "cold_start" if _scene_identity.is_empty() else "scene_load"
+	_scene_identity = identity
+	_warmup_until_usec = Time.get_ticks_usec() + 1500000
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -100,6 +112,9 @@ func _process(delta: float) -> void:
 	_frame_count += 1
 	_max_ms = maxf(_max_ms, ms)
 	if ms > 33.3: _spikes += 1
+	var warming := now <= _warmup_until_usec
+	if warming: _warmup_frames += 1
+	elif ms > 33.3: _steady_spikes += 1
 	if _times.size() < 3600:
 		_times.append(ms)
 	else:
@@ -108,15 +123,11 @@ func _process(delta: float) -> void:
 	var draw_calls := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 	var static_mb := Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0
 	var gpu_mb := Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0
-	if frames != null: frames.store_csv_line([str(_frame_count), "%.6f" % (float(now - _started_usec) / 1000000.0), node_id, "%.4f" % ms, str(draw_calls), "%.3f" % static_mb, "%.3f" % gpu_mb])
+	if frames != null: frames.store_csv_line([str(_frame_count), "%.6f" % (float(now - _started_usec) / 1000000.0), node_id, "%.4f" % ms, str(draw_calls), "%.3f" % static_mb, "%.3f" % gpu_mb, "loading_warmup" if warming else "steady", _warmup_reason if warming else ""])
 	if capture != null and pcm != null:
 		var count := capture.get_frames_available()
-		if count > 0: pcm.store_buffer(capture.get_buffer(count).to_byte_array())
+		if count > 0: pcm.enqueue(capture.get_buffer(count).to_byte_array())
 		_capture_lost = int(capture.get_discarded_frames())
-	_audio_clock += delta
-	if _audio_clock >= 0.1:
-		_audio_clock = 0.0
-		if pcm != null: pcm.flush()
 	_sample_clock += delta
 	if _sample_clock < 0.5: return
 	_sample_clock = 0.0
@@ -139,6 +150,8 @@ func _process(delta: float) -> void:
 		"low_5_fps": _low(sorted, 0.05), "low_1_fps": _low(sorted, 0.01),
 		"frame_p95_ms": _percentile(sorted, 0.95), "frame_p99_ms": _percentile(sorted, 0.99),
 		"max_frame_ms": _max_ms, "spikes_over_33_3_ms": _spikes,
+		"steady_spikes_over_33_3_ms": _steady_spikes, "loading_warmup_frames": _warmup_frames,
+		"measurement_phase": "loading_warmup" if warming else "steady", "audio_writer": pcm.stats(),
 		"draw_calls": draw_calls, "static_ram_mb": static_mb,
 		"ram_mb": audio.get("ram_mb"), "gpu_resource_mb": gpu_mb if gpu_mb > 0.0 else null,
 		"audio": audio.duplicate(true), "audio_discarded_frames": _capture_lost,
@@ -186,10 +199,8 @@ func finish() -> void:
 	_finished = true
 	set_process(false)
 	if pcm != null:
-		if capture != null and capture.get_frames_available() > 0: pcm.store_buffer(capture.get_buffer(capture.get_frames_available()).to_byte_array())
-		pcm.flush()
-		pcm.close()
-		pcm = null
+		if capture != null and capture.get_frames_available() > 0: pcm.enqueue(capture.get_buffer(capture.get_frames_available()).to_byte_array())
+		pcm.finish()
 	if output_dir != "":
 		var stop := FileAccess.open(output_dir + "/audio.stop", FileAccess.WRITE)
 		if stop != null: stop.store_string("finalize"); stop.close()
@@ -200,7 +211,7 @@ func finish() -> void:
 				AudioServer.remove_bus_effect(0, index)
 				break
 	if frames != null: frames.flush(); frames.close(); frames = null
-	report.finish({"frames": _frame_count, "max_frame_ms": _max_ms, "spikes_over_33_3_ms": _spikes, "audio_discarded_frames": _capture_lost, "acceptance": "pending_independent_evidence_review"})
+	report.finish({"frames": _frame_count, "max_frame_ms": _max_ms, "spikes_over_33_3_ms": _spikes, "steady_spikes_over_33_3_ms": _steady_spikes, "loading_warmup_frames": _warmup_frames, "audio_writer": pcm.stats(), "audio_discarded_frames": _capture_lost, "acceptance": "pending_independent_evidence_review"})
 
 func _exit_tree() -> void:
 	finish()

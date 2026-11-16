@@ -9,9 +9,14 @@ import json
 import math
 from pathlib import Path
 import subprocess
+import sys
 
 import yaml
 from audio_watch import find_ffmpeg, update_metadata
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "mcp"))
+import capture_provenance as provenance
 
 
 def file_hash(path: Path) -> str:
@@ -22,8 +27,21 @@ def file_hash(path: Path) -> str:
     return digest.hexdigest()
 
 
+def frame_statistics(values: list[float]) -> dict:
+    frames = sorted(values)
+    if not frames:
+        return {"frame_samples": 0, "spikes_over_33_3_ms": 0}
+    percentile = lambda p: frames[max(0, math.ceil(len(frames) * p) - 1)]
+    low = lambda p: 1000 / (sum(frames[-max(1, math.ceil(len(frames) * p)):]) / max(1, math.ceil(len(frames) * p)))
+    return dict(frame_samples=len(frames), avg_fps=1000 * len(frames) / sum(frames),
+                low_5_fps=low(.05), low_1_fps=low(.01), frame_p95_ms=percentile(.95),
+                frame_p99_ms=percentile(.99), max_frame_ms=frames[-1],
+                spikes_over_33_3_ms=sum(value > 33.3 for value in frames))
+
+
 def summarize(directory: Path, *, incomplete: bool = False) -> dict:
-    directory = directory.resolve()
+    provenance.assert_runtime_root(ROOT)
+    directory = provenance.project_path(directory, ROOT)
     timeline = directory / "timeline.yaml"
     header, samples = [], []
     in_timeline, finalized = False, False
@@ -45,6 +63,10 @@ def summarize(directory: Path, *, incomplete: bool = False) -> dict:
     if not finalized and not incomplete:
         raise ValueError("Close the real session before final segment analysis")
     metadata = yaml.safe_load("".join(header))["metadata"]
+    source = metadata.get("source_identity", {})
+    provenance.validate_source(source, provenance.project_identity(ROOT))
+    if not isinstance(source.get("process_id"), int) or source["process_id"] <= 0:
+        raise ValueError("Recorded actual host PID is required")
     if metadata.get("mock") is not False or metadata.get("entry") != "production_title":
         raise ValueError("Only production title/new-game capture enters mainline metrics")
     if metadata.get("measurement_context") != "rendered_runtime":
@@ -61,10 +83,14 @@ def summarize(directory: Path, *, incomplete: bool = False) -> dict:
                 if incomplete:
                     continue
                 raise
-            if not math.isfinite(frame) or frame <= 0 or elapsed < previous_time:
+            if not math.isfinite(frame) or not math.isfinite(elapsed) or frame <= 0 or elapsed < previous_time:
                 raise ValueError("Invalid wall-clock frame sample")
-            segment = segments.setdefault(name, {"frames": [], "intervals_s": [], "text_samples": []})
+            segment = segments.setdefault(name, {"frames": [], "steady_frames": [], "warmup_frames": [], "intervals_s": [], "text_samples": []})
             segment["frames"].append(frame)
+            phase = row.get("measurement_phase", "steady")
+            if phase not in ("steady", "loading_warmup"):
+                raise ValueError("Unknown frame measurement phase")
+            segment["warmup_frames" if phase == "loading_warmup" else "steady_frames"].append(frame)
             if name != previous_segment:
                 segment["intervals_s"].append([previous_time, elapsed])
             else:
@@ -76,21 +102,21 @@ def summarize(directory: Path, *, incomplete: bool = False) -> dict:
             segments[name]["text_samples"].append(sample.get("total_visible_characters"))
     audio_path = directory / "audio.json"
     audio = json.loads(audio_path.read_text(encoding="utf-8-sig")) if audio_path.is_file() else {}
-    audio_complete = finalized and audio.get("status") == "complete" and not any(s.get("audio_discarded_frames", 0) for s in samples)
+    audio_complete = finalized and audio.get("status") == "complete" and not any(s.get("audio_discarded_frames", 0) or s.get("audio_writer", {}).get("error", 0) for s in samples)
     ffmpeg = find_ffmpeg() if audio_complete else None
     for name, segment in segments.items():
-        frames = sorted(segment.pop("frames"))
+        all_frames = frame_statistics(segment.pop("frames"))
+        steady = frame_statistics(segment.pop("steady_frames"))
+        warmup = frame_statistics(segment.pop("warmup_frames"))
         text = [n for n in segment.pop("text_samples") if isinstance(n, (int, float))]
-        spikes = sum(value > 33.3 for value in frames)
-        percentile = lambda p: frames[max(0, math.ceil(len(frames) * p) - 1)]
-        low = lambda p: 1000 / (sum(frames[-max(1, math.ceil(len(frames) * p)):]) / max(1, math.ceil(len(frames) * p)))
-        segment.update(frame_samples=len(frames), avg_fps=1000 * len(frames) / sum(frames),
-                       low_5_fps=low(.05), low_1_fps=low(.01), frame_p95_ms=percentile(.95),
-                       frame_p99_ms=percentile(.99), max_frame_ms=frames[-1], spikes_over_33_3_ms=spikes,
+        spikes = steady["spikes_over_33_3_ms"]
+        segment.update(all_frames)
+        segment.update(steady=steady, loading_warmup=warmup,
+                       raw_spikes_over_33_3_ms=all_frames["spikes_over_33_3_ms"], spikes_over_33_3_ms=spikes,
                        max_recorded_visible_characters=max(text) if text else None,
                        text_visibility_policy=metadata.get("content_text_policy", "legacy_visibility_requires_screenshot_audit"))
         # Threshold scores describe observed data. Subjective and missing items stay pending.
-        segment["measured_scores"] = [6 if spikes else 8 if finalized else None, None, None, None, None, None, None]
+        segment["measured_scores"] = [6 if spikes else 8 if finalized and steady["frame_samples"] else None, None, None, None, None, None, None]
         if text and metadata.get("content_text_policy") == "visible_active_viewports":
             segment["measured_scores"][1] = 6 if max(text) > 25 else 10 if max(text) == 0 else 8 if finalized else None
         segment["audio"] = {"status": "pending", "reason": "Final complete audio and FFmpeg are required"}

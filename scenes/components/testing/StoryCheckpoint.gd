@@ -225,6 +225,12 @@ func capture() -> Dictionary:
 		presentation["items"] = _items(host.opening._items)
 		presentation["rig"] = _fields(host.opening._rig, ["sit", "head_yaw", "head_pitch", "head_roll"])
 	if is_instance_valid(host.interactions.active): presentation["interaction"] = host.interactions.active.checkpoint_state()
+	var controller: Node = host.gathering if presentation.controller == "corridor" else host.kitchen if presentation.controller == "kitchen" else host.opening if presentation.controller == "opening" else null
+	if is_instance_valid(controller):
+		presentation["controller_ui"] = {}
+		for key in ["_hint", "_prompt"]:
+			var overlay: Control = controller.get(key)
+			if is_instance_valid(overlay): presentation.controller_ui[key] = _fields(overlay, ["visible", "modulate", "text"])
 	return {"source": Source.identity(get_tree()), "engine": host.eng.save_dict(), "presentation": presentation,
 		"session": {"restored": restored, "frame": Engine.get_process_frames(), "unix_time": Time.get_unix_time_from_system()}}
 
@@ -252,6 +258,7 @@ func restore_file(path: String) -> bool:
 			host.show_intro = true
 			host._start_opening()
 			controller = host.opening
+			if p.controller_state.phase == "free": controller._enter("free")
 		"corridor":
 			host.start_gathering(str(p.get("to_room", "B-P")))
 			controller = host.gathering
@@ -269,6 +276,7 @@ func restore_file(path: String) -> bool:
 		_apply_fields(controller, p.controller_state)
 		_apply_items(controller._items, p.get("items", {}))
 		if p.has("rig"): _apply_fields(controller._rig, p.rig)
+		for key in p.get("controller_ui", {}): _apply_fields(controller.get(key), p.controller_ui[key])
 	# Reconstruct callbacks from explicit intents; Callables never enter the file.
 	_apply_fields(host, p.host)
 	host.det_done = Callable()

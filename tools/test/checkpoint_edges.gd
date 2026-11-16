@@ -18,7 +18,20 @@ func run() -> void:
 	await process_frame
 	var probe := Checkpoint.argument("--probe", "transit")
 	var path := "res://.runtime/checkpoints/edge-" + probe + ".json"
-	if probe == "transit":
+	if probe == "opening-free":
+		game.det.set_pose("lie")
+		game.show_intro = true
+		game._start_opening()
+		game.opening._enter("free")
+		game.opening._free_t = 5.0
+		game.opening._hint.modulate.a = 0.4
+		game.opening._snap_camera()
+		check(game.checkpoints.save_now(path), "free bedroom snapshot saved")
+		check(game.checkpoints.restore_file(path), "free bedroom restored")
+		check(game.opening._hint.visible and is_equal_approx(game.opening._hint.modulate.a, 0.4), "free bedroom hint visibility and fade retained")
+		check(game.opening._name_tag.visible and game.opening._free_t == 5.0, "free bedroom nameplate and elapsed time retained")
+		game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/opening-free.json")
+	elif probe == "transit":
 		game.eng.s.room = "B-P"
 		game._begin_transit("B-P")
 		var room_before: String = game._room_loaded

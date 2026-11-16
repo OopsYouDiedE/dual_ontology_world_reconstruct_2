@@ -1,0 +1,118 @@
+{
+  "generator": "bundled image_gen.py CLI edit",
+  "model": "gpt-image-2.6-sunburst",
+  "reference": "output/imagegen/chapter1/kitchen-seven-evidence-grid-v1.png",
+  "prompt": "output/imagegen/chapter1/evidence-decal-atlas-v1.prompt.txt",
+  "source": "output/imagegen/chapter1/evidence-decal-atlas-v1.png",
+  "source_size": [
+    1254,
+    1254
+  ],
+  "postprocess": "Equal quadrant crops, Lanczos resample to 512x512, alpha <=2 cleared to RGBA zero. Original generated alpha preserved otherwise.",
+  "assets": [
+    {
+      "path": "assets/textures/evidence/water_burlap_decal_v1.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "source_crop": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "fully_transparent_pixels": 205619,
+      "partially_transparent_pixels": 56504,
+      "opaque_pixels": 21,
+      "nonzero_edge_pixels": 0,
+      "visible_bounds": [
+        52,
+        107,
+        451,
+        403
+      ]
+    },
+    {
+      "path": "assets/textures/evidence/drag_scuff_decal_v1.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "source_crop": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "alpha_min": 0,
+      "alpha_max": 254,
+      "fully_transparent_pixels": 226287,
+      "partially_transparent_pixels": 35857,
+      "opaque_pixels": 0,
+      "nonzero_edge_pixels": 0,
+      "visible_bounds": [
+        24,
+        125,
+        465,
+        419
+      ]
+    },
+    {
+      "path": "assets/textures/evidence/wet_bootprint_decal_v1.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "source_crop": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "fully_transparent_pixels": 192495,
+      "partially_transparent_pixels": 69541,
+      "opaque_pixels": 108,
+      "nonzero_edge_pixels": 0,
+      "visible_bounds": [
+        138,
+        28,
+        376,
+        490
+      ]
+    },
+    {
+      "path": "assets/textures/evidence/purple_gold_residue_decal_v1.png",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "source_crop": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "alpha_min": 0,
+      "alpha_max": 255,
+      "fully_transparent_pixels": 235596,
+      "partially_transparent_pixels": 26540,
+      "opaque_pixels": 8,
+      "nonzero_edge_pixels": 0,
+      "visible_bounds": [
+        140,
+        68,
+        339,
+        445
+      ]
+    }
+  ]
+}

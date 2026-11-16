@@ -29,6 +29,7 @@ func install(h: Control) -> Dictionary:
 		if marker == null: continue
 		var detail := Prop.new()
 		detail.kind = KINDS[evidence_id]
+		detail.original_surface = true
 		add_child(detail)
 		detail.set_meta("evidence_id", evidence_id)
 		detail.global_position = marker.global_position

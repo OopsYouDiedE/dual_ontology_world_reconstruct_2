@@ -1,0 +1,8 @@
+Use case: stylized-concept
+Asset type: production game surface decal atlas, four isolated marks on TRUE alpha transparency.
+Input image is a style and evidence reference only. Extract the material language of its evidence traces and create a NEW strictly orthographic top-down decal sheet. Output 1024x1024 PNG, exact four equal 512 square quadrants, no separators. Each mark stays centered in its own quadrant with at least 50 pixels of fully transparent margin.
+Top-left: irregular shallow water stain and droplets with a small splayed cluster of thin tan burlap fibers. Translucent grey-brown damp trace, subtle soft pale highlights, no reflected window.
+Top-right: one elongated slightly curved muddy dragging scuff, parallel streaks, scattered gritty flecks and fading broken edges.
+Bottom-left: a single wet muddy boot sole impression, toe at top, heel at bottom, recognizable segmented lug tread, partial transfer, scattered tiny drops.
+Bottom-right: sparse violet and gold crystalline residue intended to overlay dark cloth; two small angular purple crystal flakes edged gold and scattered pale gold dust grains. ONLY residue, no cloth swatch.
+Style: tactile lightly stylized realistic game texture matching reference. Every asset is only the surface trace itself, flat orthographic straight overhead. No host floor, no tile, no wood, no board, no garment, no swatch, no scene, no perspective, no lettering, no labels, no border, no baked cast shadows, no ambient occlusion backdrop, no checkerboard drawn into pixels. Background is genuine transparent alpha. Clean edges and generous separation. Production decal albedo.

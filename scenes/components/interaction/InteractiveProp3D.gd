@@ -1,6 +1,7 @@
 extends Node3D
 ## Shared physical detail models for gameplay close-ups and the interaction laboratory.
 @export var kind := "wardrobe"
+@export var original_surface := false
 var pivot: Node3D
 var hand: Node3D
 var sleeve: Node3D
@@ -153,16 +154,18 @@ func _body_trace() -> void:
 
 func _sample_surface() -> void:
 	var cloth := kind == "cloth"
-	box(self, Vector3(0.95, 0.04, 0.7), Vector3(0, 0.16, 0), Color("#4b4034"))
-	if not cloth: box(self, Vector3(0.93, 0.33, 0.07), Vector3(0, 0.35, -0.27), Color("#443c34"))
-	box(self, Vector3(0.56, 0.009, 0.23), Vector3(0, 0.186, 0.04), Color("#777d73") if cloth else Color("#314c50"))
-	if cloth:
-		for index in 16: rod(self, Vector3(-0.26 + index * 0.034, 0.194, -0.07), Vector3(-0.26 + index * 0.034, 0.194, 0.15), 0.0015, Color("#b9b4a0"))
-	for index in 12:
-		var at := Vector3(sin(index * 2.5) * 0.22, 0.198, cos(index * 1.7) * 0.085 + 0.04)
-		rod(self, at, at + Vector3(0.045, 0.003, 0.012), 0.0018, Color("#e2dfc2"))
-		if cloth:
-			box(self, Vector3(0.012, 0.012, 0.018), at + Vector3(0, 0.005, 0), Color("#956892"), 0.6).rotation.z = 0.4
+	if not original_surface:
+		# The laboratory supplies a neutral support; gameplay uses its real floor/towel.
+		box(self, Vector3(0.95, 0.04, 0.7), Vector3(0, -0.025, 0), Color("#4b4034"))
+	if kind == "chalk":
+		for index in 12:
+			var at := Vector3(sin(index * 2.5) * 0.22, 0.002, cos(index * 1.7) * 0.085)
+			rod(self, at, at + Vector3(0.045, 0, 0.012), 0.0018, Color("#e2dfc2"))
+	else:
+		var decal := preload("res://scenes/components/interaction/SurfaceDecal3D.gd").new()
+		add_child(decal)
+		decal.install(kind, Vector2(0.10, 0.32) if cloth and original_surface else Vector2(0.72, 0.32), true)
+		decal.position.y = 0.002
 	fibers = Node3D.new()
 	add_child(fibers)
 	fibers.position = Vector3(0.22, 0.37, 0.08)
@@ -173,32 +176,29 @@ func _sample_surface() -> void:
 	tool.position = Vector3(0.1, 0.26, 0.08)
 	rod(tool, Vector3(-0.009, 0, 0), Vector3(-0.025, 0.17, 0.04), 0.005, Color("#b4bdba"))
 	rod(tool, Vector3(0.009, 0, 0), Vector3(0.025, 0.17, 0.04), 0.005, Color("#b4bdba"))
-	set_meta("focus", Vector3(0, 0.2, 0.01))
+	if original_surface:
+		tool.scale = Vector3.ONE * (0.35 if cloth else 0.6)
+		tool.position = Vector3(0, 0.06, 0)
+		fibers.scale = Vector3.ONE * (0.35 if cloth else 0.7)
+		fibers.position = Vector3(0.025, 0.12, 0)
+	set_meta("sample_extent", Vector2(0.10, 0.32) if cloth and original_surface else Vector2(0.72, 0.32))
+	set_meta("focus", Vector3(0, 0.002, 0))
 	set_meta("camera_offset", Vector3(0.35, 0.65, 0.65))
 
 func _floor_trace() -> void:
-	box(self,Vector3(1.4,0.08,1.45),Vector3(0,0.03,0),Color("#787363"))
-	for side in [-1.0,1.0]:
-		for step in 5:
-			var z := -0.55+step*0.24
-			var heel := box(self,Vector3(0.11,0.003,0.12+step*0.009),Vector3(side*0.14,0.072,z),Color("#343e3c"))
-			heel.rotation.y = side*0.12
-			if kind == "drag":
-				for scratch in 3:
-					rod(self,Vector3(side*0.14+(scratch-1)*0.026,0.075,z),Vector3(side*0.14+(scratch-1)*0.026,0.075,z+0.16),0.002,Color("#d0c5a1"))
-	if kind == "boots":
-		for index in 4:
-			var sole := box(self,Vector3(0.08+index*0.012,0.028,0.22),Vector3(-0.48+index*0.32,0.10,0.61),Color("#3b302a"))
-			sole.rotation.y = PI/2
-			for groove in 4: box(sole,Vector3(0.12,0.006,0.007),Vector3(0,0.017,-0.07+groove*0.045),Color("#bdad85"))
+	if not original_surface: box(self,Vector3(1.4,0.04,1.45),Vector3(0,-0.025,0),Color("#787363"))
+	var decal := preload("res://scenes/components/interaction/SurfaceDecal3D.gd").new()
+	add_child(decal)
+	decal.install(kind, Vector2(0.65, 1.10) if kind == "boots" else Vector2(0.60, 1.3), kind == "boots")
+	decal.position.y = 0.002
 	tool = Node3D.new()
 	add_child(tool)
-	tool.position = Vector3(0,0.10,-0.40)
+	tool.position = Vector3(0,0.025,-0.40)
 	box(tool,Vector3(0.10,0.06,0.20),Vector3.ZERO,Color("#594535"))
 	fibers = Node3D.new()
 	add_child(fibers)
 	fibers.visible = false
-	set_meta("focus",Vector3(0,0.10,0))
+	set_meta("focus",Vector3(0,0.002,0))
 	set_meta("camera_offset",Vector3(0.35,1.30,1.25))
 
 func _sealed_grille() -> void:
@@ -236,8 +236,11 @@ func activate() -> void:
 func sweep(distance: float, local_position: Vector2) -> void:
 	if completed or tool == null: return
 	if kind in ["drag","boots"]:
-		tool.position = Vector3(0.14,0.11,clampf(local_position.x*2.0,-0.4,0.5))
-	else: tool.position = Vector3(clampf(local_position.x, -0.28, 0.28), 0.23, clampf(local_position.y, -0.08, 0.16))
+		tool.position = Vector3(0.14,0.025,clampf(local_position.x*2.0,-0.4,0.5))
+	else:
+		var extent: Vector2 = get_meta("sample_extent", Vector2(0.72, 0.32))
+		tool.position = Vector3(clampf(local_position.x / 0.4, -1, 1) * extent.x * 0.45,
+			0.06 if original_surface else 0.1, clampf(local_position.y / 0.2, -1, 1) * extent.y * 0.45)
 	progress = minf(1.0, progress + distance / 180.0)
 	if progress < 1.0: return
 	completed = true
@@ -245,8 +248,8 @@ func sweep(distance: float, local_position: Vector2) -> void:
 	play_sound("cloth")
 	if kind in ["drag","boots"]: sampled.emit(); return
 	var tween := create_tween().set_parallel(true)
-	tween.tween_property(tool, "position", Vector3(0.22, 0.41, 0.08), 0.55)
-	tween.tween_property(fibers, "position:y", 0.40, 0.55)
+	tween.tween_property(tool, "position", Vector3(0.025, 0.14, 0) if original_surface else Vector3(0.22, 0.41, 0.08), 0.55)
+	tween.tween_property(fibers, "position:y", 0.14 if original_surface else 0.40, 0.55)
 	sampled.emit()
 
 func align_hand(offset: Vector2) -> void:

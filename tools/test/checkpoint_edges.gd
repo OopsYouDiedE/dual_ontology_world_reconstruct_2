@@ -22,7 +22,14 @@ func run() -> void:
 		game.det.set_pose("lie")
 		game.show_intro = true
 		game._start_opening()
-		game.opening._enter("free")
+		game.eng.process_beats()
+		game._sub_queue.clear()
+		game.subtitle.visible = false
+		game.opening._enter("getup")
+		var getup_duration: float = game._wake_total
+		game._step_wake_up(getup_duration + 0.01)
+		game.opening.process(getup_duration + 0.01)
+		check(game.opening.phase == "free" and game.det.pose == "stand" and game._det_can_occupy(game.det_pos), "free bedroom starts at completed production get-up landing")
 		game.opening._free_t = 5.0
 		game.opening._hint.modulate.a = 0.4
 		game.opening._snap_camera()

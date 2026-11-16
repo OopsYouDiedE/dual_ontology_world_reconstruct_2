@@ -1716,11 +1716,12 @@ func _inspect_walk(eid: String) -> void:
 		return
 	var n: Node3D = room_mesh.evidence_nodes[eid]
 	var target := Vector2(n.global_position.x, n.global_position.z)
-	var away := det_pos - target
-	if away.length() < 0.05: away = Vector2(0, 1)
-	var stand := target + away.normalized() * 0.6
+	var kind: String = interactions.kind_for(eid)
+	var approach := preload("res://scenes/components/interaction/InteractionApproach.gd").plan(self, target, kind, det_pos)
+	if not approach.ok: return
 	_inspect_intent = eid
-	_go(_route(det_pos, stand), func(): _inspect_arrived(eid))
+	if approach.already_near: _inspect_arrived(eid)
+	else: _go(approach.path, func(): _inspect_arrived(eid))
 
 
 func _inspect_arrived(eid: String) -> void:

@@ -321,15 +321,14 @@ func interact(i: int) -> void:
 	var p: Vector3 = _items[i].pos
 	var target := Vector2(p.x, p.z)
 	var from: Vector2 = host.det_pos
-	if from.distance_to(target) <= 1.3:
+	var kind: String = host.interactions.kind_for(str(_items[i].id))
+	var approach := preload("res://scenes/components/interaction/InteractionApproach.gd").plan(host, target, kind, from)
+	if not approach.ok: return
+	if approach.already_near:
 		_arrive(i)
 		return
 	_busy_item = i
-	var away := (from - target).normalized()
-	var stand := target + away * 0.7
-	var cell: Vector2i = host._nearest_free(host._cell_of(stand))
-	stand = Vector2((cell.x + 0.5) * host.CELL, (cell.y + 0.5) * host.CELL)
-	host._go(host._route(from, stand), func(): _arrive(i))
+	host._go(approach.path, func(): _arrive(i))
 
 
 func cancel_walk() -> void:

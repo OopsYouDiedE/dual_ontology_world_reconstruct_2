@@ -16,8 +16,12 @@ func run() -> void:
 	var started := Time.get_ticks_msec()
 	game = Main.instantiate()
 	root.add_child(game)
+	current_scene = game
+	# Advance production controllers explicitly so fixtures are deterministic.
+	game.set_process(false)
 	await process_frame
 	game.eng.s.playing = false
+	game.eng.process_beats()
 	var path := "res://.runtime/checkpoints/roundtrip.json"
 	var opening = game.opening
 	check(opening != null and opening.active, "production opening active")
@@ -42,23 +46,36 @@ func run() -> void:
 	check(is_equal_approx(game.cam.fov, 54.0), "original camera optics restored")
 	game._sub_queue.clear()
 	game.subtitle.visible = false
+	opening = game.opening
+	opening._enter("getup")
+	var getup_duration: float = game._wake_total
+	game._step_wake_up(getup_duration + 0.01)
+	opening.process(getup_duration + 0.01)
+	check(opening.phase == "free" and game.det.pose == "stand" and game._det_can_occupy(game.det_pos), "bedroom free fixture uses completed production get-up and walkable landing")
+	check(game.eng.s.playing and is_equal_approx(game.eng.s.speed, opening.AMBIENT_SPEED), "bedroom free fixture keeps natural exploration clock")
+	game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/opening-free.json")
 	game._stop_exploration()
-	game.eng.s.room = "B-P"
+	check(game.eng.enter_room("B-P"), "kitchen entered through rule engine")
 	game._build_room("B-P")
 	game._det_to_home()
 	game.start_kitchen_exploration()
-	game.kitchen._enter_free()
-	game.det_path.clear()
-	game.det_done = Callable()
-	game.eng.s.playing = false
-	game.det_pos = Vector2(2.4, 2.7)
-	game.det.position = Vector3(2.4, 0, 2.7)
+	# Finish the real doorway route; its callback clears _door_passage before free.
+	for step in 600:
+		if game.kitchen.phase == "free": break
+		game._walk_step(1.0/60.0)
+	check(game.kitchen.phase == "free" and game.det_path.is_empty() and not game.det_done.is_valid() and game._door_passage.is_empty(), "kitchen fixture has completed doorway crossing with no stale callback")
+	check(game.eng.s.playing and game._det_can_occupy(game.det_pos), "kitchen fixture enables player movement at actual entry landing")
+	var clock_before: float = game.eng.s.t
+	game.eng.tick(1.0)
+	check(is_equal_approx(game.eng.s.t, clock_before + game.eng.s.speed), "kitchen natural clock advances without stale story or door locks")
+	game.kitchen.process(0.0)
 	var before: Vector3 = game.det.position
 	check(game.checkpoints.save_now(path), "kitchen snapshot saved")
 	game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/kitchen-free.json")
 	check(game.checkpoints.restore_file(path), "kitchen restored directly")
 	check(game.eng.s.room == "B-P" and game.kitchen.active and game.kitchen.phase == "free", "production kitchen controller resumed")
-	check(game.det.position.is_equal_approx(before) and game.det_pos.is_equal_approx(Vector2(2.4, 2.7)), "actor position retained")
+	check(game.det.position.is_equal_approx(before) and game.det_pos.is_equal_approx(Vector2(before.x, before.z)), "actual kitchen entrance position retained")
+	check(game._door_passage.is_empty() and game.eng.s.playing, "restored kitchen remains outside doorway crossing with natural clock enabled")
 	var item := -1
 	for i in game.kitchen._items.size():
 		if str(game.kitchen._items[i].id) == "e_b_water": item = i

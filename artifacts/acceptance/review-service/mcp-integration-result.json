@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "passed": true,
+  "checks": 33,
+  "results": [
+    {
+      "check": "initialize/list/append",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "identical retry deduplicated",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "immutable event overwrite rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Immutable event ID already has different content"
+    },
+    {
+      "check": "foreign project assertion rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Project root mismatch"
+    },
+    {
+      "check": "path traversal rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Capture path escapes the expected project: C:\\Users\\iii\\Desktop\\outside-evidence.txt"
+    },
+    {
+      "check": "missing evidence rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Evidence must be an existing project-local file: .runtime/absent-review-evidence.txt"
+    },
+    {
+      "check": "caller-supplied PID rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "Input validation error: Additional properties are not allowed ('source_identity' was unexpected)"
+    },
+    {
+      "check": "unknown revision rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Revision does not identify a commit in this project"
+    },
+    {
+      "check": "unknown confirmation rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Confirmation references must identify existing events of the same work"
+    },
+    {
+      "check": "check appended",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "partial completion rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Complete must confirm every existing change/check event for this work"
+    },
+    {
+      "check": "completion confirmation appended",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "completed work is sealed",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Completed work is sealed; assign a new work_id"
+    },
+    {
+      "check": "completion retry deduplicated",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "flush repairs projection",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "test full render isolated from production",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Full rendering is disabled for test sandboxes"
+    },
+    {
+      "check": "independent Terra gate preserved",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Independent Terra reviewer identity is required"
+    },
+    {
+      "check": "real-mainline gate preserved",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Only actual title/new-game mainline evidence enters this trajectory"
+    },
+    {
+      "check": "per-score reasons preserved",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Every assigned score needs a source reason"
+    },
+    {
+      "check": "mismatched host PID rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: New-game entry must belong to the same actual host"
+    },
+    {
+      "check": "foreign review project rejected before access",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Review source project mismatch; only the current project root is accepted"
+    },
+    {
+      "check": "image SHA256 gate preserved",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Review screenshot hash mismatch: .runtime/review-tests/run-19f2130984ac4ed9acb2a60237894462/synthetic-review/image.png"
+    },
+    {
+      "check": "sandbox review commit and check event",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "production refuses synthetic review fixtures",
+      "passed": true
+    },
+    {
+      "check": "immutable review retry deduplicated",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "immutable review overwrite rejected",
+      "passed": true,
+      "expected_error": true,
+      "message": "ValueError: Immutable review ID already has different content"
+    },
+    {
+      "check": "concurrent writer 1",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "concurrent writer 2",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "concurrent writer 3",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "concurrent writer 0",
+      "passed": true,
+      "expected_error": false,
+      "message": "ok"
+    },
+    {
+      "check": "four-process writes retain every event and original ordering",
+      "passed": true
+    },
+    {
+      "check": "production review render invokes exporter once and deduplicates retries (mocked exporter, isolated files)",
+      "passed": true
+    },
+    {
+      "check": "failed render leaves retryable immutable review state (mocked exporter, isolated files)",
+      "passed": true
+    }
+  ],
+  "protocol": {
+    "protocol_version": "2025-11-25",
+    "server": {
+      "name": "dual-ontology-review",
+      "title": null,
+      "version": "1.0.0",
+      "websiteUrl": null,
+      "icons": null
+    },
+    "tools": [
+      "progress_append",
+      "review_append",
+      "flush",
+      "render"
+    ],
+    "os_verified_server": {
+      "pid": 35908,
+      "executable": "C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+      "command": "\"C:\\Users\\iii\\AppData\\Local\\Programs\\Python\\Python310\\python.exe\" C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\mcp\\review\\server.py --expected-project-root C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2 --test-sandbox C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\review-tests\\run-19f2130984ac4ed9acb2a60237894462"
+    }
+  },
+  "sandbox": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\review-tests\\run-19f2130984ac4ed9acb2a60237894462",
+  "event_count": 8,
+  "synthetic_review_fixture_only": true,
+  "production_review_written": false,
+  "production_render_plumbing_mocked": true,
+  "completed_at": "2026-11-16T12:26:49.593504+08:00"
+}

@@ -1,0 +1,28 @@
+# 项目评分与进展 MCP
+
+服务只接受当前项目。根目录来自服务文件位置，并与授权根目录及可选 expected_project_root 双重核对；调用者不能提供来源 PID。服务来源由实际进程生成，评审来源由原 on/start 收据和图像 sidecar 交叉校验。
+
+`progress_append` 必填：work_id、segment_id、kind（change/check/complete）、summary、result、revision（本项目存在的 Git commit）、evidence（项目内已有文件的路径数组）。可选 event_id、related_event_ids、expected_project_root。complete 必须引用相同工作所有先前事件 ID，完成后该 work_id 封闭。project 是基础设施专用段；其余段使用 gameplay_review_plan.json 的场景 ID。
+
+`review_append` 必填 work_id、summary、record。record 原样经过 mainline_reviews.validate，保持独立 Terra 与真实主线全部校验，并生成对应 check 事件。supersedes 审计限定同版本同段。review 和进展跨两个文件采用可恢复提交：评分文件先完整发布，事件后发布；相同请求重试补齐投影。生产评分随后自动全量渲染 HTML，渲染成功回执位于 `.runtime/review-export/review-<id>.rendered.json`；成功重试复用回执，失败重试补做导出。返回成功时评分、进展与对应 HTML 均已发布。独立渲染锁串行全量导出，普通进展写入持续可用。测试沙盒评分只返回 skipped_test_sandbox，始终跳过正式页面。
+
+持久化：跨线程与跨进程写锁；同目录临时文件 flush/fsync 后原子替换；独立评分通过硬链接 create-only 发布；进展由 YAML 作为持久源，JS 为轻量派生快照。YAML/JS 各自原子更新；进程在两次写入间终止时，重试原请求或调用 flush 重建 JS。所有事件只追加，旧 ID 内容不能覆盖。未关联该写锁的旧脚本应停止直接写进展；评分的旧 append 仍有独占创建保护。
+
+页面通过 script 标签重载 live-progress.js，支持直接 file:// 打开。事件追加不扫描报告链接；render 才调用现有完整导出器。服务本身不声称已完成浏览器视觉验收。
+
+项目配置位于 `.codex/config.toml`。正在运行的会话通常已固定工具集合；若工具列表没有 dual_ontology_review，可立即运行：
+
+```powershell
+& ./.runtime/python/Scripts/python.exe mcp/review/client.py
+& ./.runtime/python/Scripts/python.exe mcp/review/client.py progress_append --arguments '@.runtime/review-request.json'
+& ./.runtime/python/Scripts/python.exe mcp/review/client.py flush
+& ./.runtime/python/Scripts/python.exe mcp/review/client.py render
+```
+
+请求示例（revision 替换为本项目当前 Git commit）：
+
+```json
+{"work_id":"review-interface-v1","segment_id":"project","kind":"change","summary":"建立项目进展接口","result":"已完成文件修改","revision":"995d0254891b150b2ad8ffae93651d0def653d2f","evidence":["mcp/review/server.py"]}
+```
+
+测试入口：`python mcp/review/test_integration.py`，必须使用本项目 `.runtime/python/Scripts/python.exe`。测试通过真实 stdio MCP 执行 initialize / tools/list / tools/call，临时数据限 `.runtime/review-tests/`；测试评分不会进入正式轨迹。`--test-sandbox` 只能指向该目录下的子目录，测试服务禁止全量渲染。

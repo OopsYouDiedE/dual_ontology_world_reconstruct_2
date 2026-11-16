@@ -1,4 +1,4 @@
-"""Refresh review HTML/Markdown automatically when archived evidence changes."""
+"""Export at explicit mainline milestones; ordinary progress stays lightweight."""
 from __future__ import annotations
 
 import argparse
@@ -10,17 +10,22 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 STATE = ROOT / ".runtime/review-export"
-EXTENSIONS = {".md", ".json", ".yaml", ".yml", ".csv", ".png", ".jpg", ".jpeg", ".wav"}
+sys.path.insert(0, str(ROOT / 'mcp'))
+import capture_provenance as provenance
 
 
 @contextmanager
-def watcher_lock():
+def watcher_lock(name='watch.lock'):
     """The OS releases the lock if the watcher exits or the computer restarts."""
     STATE.mkdir(parents=True, exist_ok=True)
-    stream = (STATE / "watch.lock").open("a+b")
+    provenance.assert_runtime_root(ROOT)
+    if name not in ('watch.lock', 'render.lock'):
+        raise ValueError('Unknown review lock')
+    stream = (STATE / name).open("a+b")
     if stream.tell() == 0:
         stream.write(b"0")
         stream.flush()
@@ -51,31 +56,28 @@ def watcher_lock():
 
 
 def source_snapshot() -> tuple:
-    paths = set()
-    for folder in ("artifacts/acceptance", "artifacts/references"):
-        paths.update(p for p in (ROOT / folder).rglob("*") if p.suffix.lower() in EXTENSIONS)
-    paths.update(ROOT / name for name in (
-        "assets/data/test_scenarios/reference_manifest.json",
-        "assets/data/test_scenarios/text_exemptions.json",
-        "assets/data/test_scenarios/gameplay_review_plan.json",
-        "docs/采集路径修复.md", "docs/剧情重构实施状态.md", "docs/第一章可玩版本范围.md",
-        "docs/主线评分轨迹.md", "docs/代码依赖与清理.md",
-        "tools/testing/export_review_site.py", "tools/testing/mainline_reviews.py", "tools/testing/mainline_metrics.py"))
-    # Asset replacements should refresh their image hashes as well as their links.
-    paths.update(p for p in (ROOT / "output/imagegen").rglob("*") if p.suffix.lower() in EXTENSIONS)
-    result = []
-    for path in sorted(paths):
-        try:
-            stat = path.stat()
-            if path.is_file():
-                result.append((path.relative_to(ROOT).as_posix(), stat.st_size, stat.st_mtime_ns))
-        except FileNotFoundError:
-            pass  # A writer may atomically replace a file during this scan.
-    return tuple(result)
+    """One marker stat; never walk capture folders or react to every YAML update."""
+    path = STATE / 'request.json'
+    try:
+        stat = path.stat()
+        return (stat.st_size, stat.st_mtime_ns)
+    except FileNotFoundError:
+        return ()
+
+
+def request_review_export(reason: str) -> None:
+    """Compatibility entry for non-MCP milestone callers."""
+    provenance.assert_runtime_root(ROOT)
+    STATE.mkdir(parents=True, exist_ok=True)
+    temporary = STATE / ('request-' + uuid.uuid4().hex + '.tmp')
+    temporary.write_text(json.dumps({'reason': reason, 'request_id': uuid.uuid4().hex,
+                                   'project_root': str(ROOT), 'pid': os.getpid()}), encoding='utf-8')
+    temporary.replace(STATE / 'request.json')
+    start_review_watcher()
 
 
 def write_status(**values):
-    data = {"pid": os.getpid(), "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"), **values}
+    data = {"pid": os.getpid(), "project_root": str(ROOT), "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"), **values}
     temporary = STATE / "status.tmp"
     temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     temporary.replace(STATE / "status.json")
@@ -95,7 +97,7 @@ def watch(interval: float, debounce: float) -> int:
             now = time.monotonic()
             if current != previous:
                 previous, stable_since = current, now
-            if current != exported and now - stable_since >= debounce and now >= retry_after:
+            if current and current != exported and now - stable_since >= debounce and now >= retry_after:
                 write_status(state="exporting", source_files=len(current))
                 try:
                     result = subprocess.run(
@@ -123,6 +125,7 @@ def watch(interval: float, debounce: float) -> int:
 def start_review_watcher() -> None:
     """Start at most one hidden watcher for this checkout; capture continues on failure."""
     try:
+        provenance.assert_runtime_root(ROOT)
         STATE.mkdir(parents=True, exist_ok=True)
         with watcher_lock() as available:
             if not available:

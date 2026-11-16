@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "mcp"))
 sys.path.insert(0, str(ROOT / "tools/testing"))
 import capture_provenance as provenance
 import mainline_reviews
+import visual_semantic_reviews
 
 ID = r"[a-z0-9][a-z0-9_-]{1,119}"
 _THREAD_LOCK = threading.Lock()
@@ -235,6 +236,37 @@ class Store:
         # Release the progress lock before the full exporter; ordinary writers stay responsive.
         result["render"] = self._review_render(record)
         return result
+
+    def semantic_append(self, **args):
+        self.project(args)
+        record = args['record']
+        if not re.fullmatch(ID, record['id']):
+            raise ValueError('Invalid comparison ID')
+        validated = visual_semantic_reviews.validate(record, self.root)
+        self.revision(record['revision'])
+        files = [record[k] for k in ('observations','source_map','input_manifest')]
+        files += [s['path'] for c in record['comparisons'] for s in c['truth_sources']]
+        files += [f[k] for f in validated['frames'].values() for k in ('original','masked')]
+        evidence = self.evidence(list(dict.fromkeys(files)))
+        destination = self.base / visual_semantic_reviews.DIRECTORY / (record['id']+'.json')
+        with self.locked():
+            duplicate = destination.exists()
+            if duplicate:
+                original = json.loads(destination.read_text(encoding='utf-8'))
+                if original['record'] != record or original['evidence_sha256'] != evidence:
+                    raise ValueError('Immutable semantic ID already has different content/evidence')
+            event_args = dict(work_id=args['work_id'], segment_id=record['segment_id'],kind='check',
+                summary=args['summary'], result=record['conclusion'],revision=record['revision'],
+                evidence=[record['observations'],record['source_map'],record['input_manifest']],
+                event_id='semantic-'+digest(record['id'])[:32])
+            data=self.load()
+            progress=self._progress(event_args,data,persist=False)
+            if not duplicate:
+                atomic_write(destination,json.dumps(dict(record=record,evidence_sha256=evidence,
+                    appended_at=datetime.now().astimezone().isoformat(),server_identity=self.identity()),
+                    ensure_ascii=False,indent=2)+'\n',exclusive=True)
+            self.publish(data)
+        return dict(record_path=str(destination),record_duplicate=duplicate,**progress)
 
     def _review_render(self, record):
         if self.testing:

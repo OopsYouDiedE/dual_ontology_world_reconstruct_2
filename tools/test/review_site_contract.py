@@ -94,7 +94,7 @@ def run():
 
     image = 'assets/data/test_scenarios/user_reference/formal_game_ui.png'
     event = dict(kind='check', segment_id='wake', evidence=[image, image], summary='开发采集')
-    with patch.object(site.provenance, 'verify_image') as verify:
+    with patch.object(site.provenance, 'verify_image') as verify, patch.object(site.visual_semantic_reviews, 'load', return_value=[]):
         entries = site.build_segments([], [], {'events': [event]}, 'a' * 40)
         check('MCP check images appear in their segment trajectory', len(entries[0]['development_images']) == 1)
         check('projected images require provenance validation', verify.call_count == 1)

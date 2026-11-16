@@ -14,6 +14,8 @@
 
 项目级 MCP 配置：`.codex/config.toml`，服务 `dual-ontology-review`。新会话加载后可直接调用 `progress_append`、`review_append`、`flush`、`render`。
 
+- 图片评审优先展示“独立测试者看到的动作／猜测的意图 → 剧情实际动作／意图 → 误读、漏读与分项得分”。使用 `semantic_append` 接口，每段填写结构化比较。Terra 只接收匿名图片，不接触答案；保留名牌、遮住叙事文字。原始观察不可改写，来源与评分均保留版本。图片评审与完整实机七项验收分别标识。设定来源保存不可变副本，后续修复不得覆盖旧评审；每段／每批闭环调用 render 批量导出。接口说明见 `mcp/review/README.md`。
+
 - 每一次文件修改、每一次检测结束后，立即调用 `progress_append`，`kind` 分别为 `change`、`check`。填写稳定 `work_id`、计划中的 `segment_id`、具体 `summary`、真实 `result`、当前 Git `revision`、项目内已存在的 `evidence` 文件路径数组。共享基础设施使用 `segment_id: project`。
 - `event_id` 可指定唯一 ID；省略时按输入自动生成。相同输入重试返回原事件；相同 ID 改写会被拒绝。事件记录实际服务 PID、项目根与证据 SHA256。
 - 工作完成后另行调用 `progress_append(kind=complete)`，相同 `work_id` / `segment_id`，`related_event_ids` 列出该工作全部 change/check 事件 ID。确认是新的不可变事件。后续修改使用新的 `work_id`。

@@ -14,6 +14,7 @@ import sys
 from urllib.parse import quote, unquote, urlsplit
 import yaml
 from mainline_reviews import load_reviews, capture_time
+import visual_semantic_reviews
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'mcp'))
@@ -155,6 +156,7 @@ def repair_feedback(changes, events, page):
 
 def build_segments(reviews, changes, progress, revision):
     entries = []
+    semantic_reviews = visual_semantic_reviews.load(ROOT)
     for scene in read_json(PLAN)['scenes']:
         history = [r for r in reviews if r['segment_id'] == scene['id'] and not r.get('source_isolated') and r.get('acceptance_eligible') is not False]
         superseded = {r['supersedes'] for r in history if r.get('supersedes')}
@@ -174,21 +176,73 @@ def build_segments(reviews, changes, progress, revision):
                 provenance.verify_image(path, ROOT, allow_fixture=True)
                 development_images.append({'path': evidence, 'caption': event['summary'] + ' · ' + path.stem})
                 seen_images.add(path)
+        semantic_history = [r for r in semantic_reviews if r['segment_id'] == scene['id']]
+        semantic = semantic_history[-1] if semantic_history else None
         entries.append(dict(scene, current=current, history=history, changes=repairs, events=events,
+                            semantic=semantic, semantic_history=semantic_history,
                             modification_count=len(repairs) + sum(e['kind'] == 'change' for e in events),
                             development_images=development_images,
                             scores=current.get('scores', [None] * 7), status=review_result(current)))
     return entries
 
 
+def semantic_images(entry):
+    review = entry.get('semantic')
+    if not review:
+        return entry['development_images']
+    return [dict(path=f['original'],caption=f['frame_id']) for f in review['mapping']['frames']]
+
+
+def semantic_details(review, page):
+    observation = review['observation']
+    verdict = '合格' if min(review['action_score'],review['intent_score']) >= 8 else '不合格'
+    body = '<div class="semantic-review"><div class="semantic-heading"><h3>图片盲读 · 动作与意图对照</h3>' + badge(verdict) + '</div>'
+    body += '<p class="semantic-scores">动作一致度 <b>' + str(review['action_score']) + '/10</b>　意图一致度 <b>' + str(review['intent_score']) + '/10</b></p>'
+    body += '<p class="meta">独立 Terra · 遮字静态图 · 无音频 · 图片版本 ' + escape(review['mapping'].get('source_revision') or '历史开发素材') + ' · 开发评审</p>'
+    body += '<p class="meta">' + escape(review['mapping'].get('source_note','')) + ' · 测试者自评可读性 ' + str(observation['readability_score']) + '/10</p>'
+    body += '<p><b>评审结论：</b>' + escape(review['conclusion']) + '</p>'
+    body += '<div class="blind-original"><h4>测试者原始判断</h4><p><b>看到的动作：</b>' + escape(observation['action_observed']) + '</p><p><b>猜测的意图：</b>' + escape(observation['intent_guessed']) + '</p><p><b>无法确认：</b>' + escape(observation['uncertainty']) + '</p></div>'
+    body += '<div class="semantic-table-scroll"><table class="semantic-table"><thead><tr><th>对应图片／测试者原话</th><th>剧情实际动作与意图</th><th>差异与评分</th></tr></thead><tbody>'
+    for item in review['comparisons']:
+        ids = set(item['frame_ids'])
+        claims = [c for c in observation['claims'] if ids.intersection(c['frame_ids'])]
+        body += '<tr><td><p class="evidence-links">'
+        for fid in item['frame_ids']:
+            f = review['frames'][fid]
+            body += link(project_file(f['original']),fid+' 原图',page) + link(project_file(f['masked']),'盲读图',page)
+        body += '</p>'
+        if not claims:
+            body += '<p>测试者未单独描述这些帧；使用本组原始判断对照。</p>'
+        for claim in claims:
+            body += '<p><b>动作：</b>' + escape(claim['action_observed']) + '<br><b>意图：</b>' + escape(claim['intent_guessed']) + '</p>'
+        body += '</td><td><p><b>动作目标：</b>' + escape(item['expected_action']) + '</p><p><b>意图目标：</b>' + escape(item['expected_intent']) + '</p><p><b>当前实现：</b>' + escape(item['implementation']) + '</p>'
+        body += '<details><summary>设定来源</summary>'
+        for source in item['truth_sources']:
+            body += '<p>' + link(project_file(source['path']),source['locator'],page) + '</p>'
+        body += '</details></td><td><p>' + escape(item['difference']) + '</p><p>动作 <b>' + str(item['action_score']) + '/10</b> · 意图 <b>' + str(item['intent_score']) + '/10</b></p></td></tr>'
+    body += '</tbody></table></div><p class="meta">计分：每项目标相符10、部分相符5、漏读或误读0；动作与意图分别取各项目标均值，均达8分合格。对应关系由主智能体依据盲读原文及设定评分。</p>'
+    body += '<p><b>下一次修正：</b>' + escape(review['next_fix']) + '</p>'
+    body += '<p class="evidence-links">' + link(project_file(review['observations']),'Terra 完整原始记录',page) + link(project_file(review['record_path']),'对照评分记录',page) + link(project_file(review['input_manifest']),'匿名输入清单',page) + '</p></div>'
+    return body
+
+
 def segment_card(entry, number, page):
     current = entry['current']
     body = f'<article class="segment" id="trajectory-{entry["id"]}" data-segment="{entry["id"]}">'
     # The actual image sequence is the first element of every mainline segment.
-    body += trajectory(current.get('images', []) or entry['development_images'], page, development=not bool(current))
-    body += f'<div class="segment-heading"><div><small>第一章 · {number:02d} / 11</small><h2>{escape(entry["label"])}</h2></div><div class="conclusion">{badge(entry["status"])}<span>修改 <b>{entry["modification_count"]}</b> 次</span></div></div>'
+    body += trajectory(current.get('images', []) or semantic_images(entry), page, development=not bool(current))
+    conclusion = entry['status']
+    conclusion_label = '实机验收'
+    if entry.get('semantic'):
+        conclusion = '合格' if min(entry['semantic']['action_score'],entry['semantic']['intent_score']) >= 8 else '不合格'
+        conclusion_label = '图片盲读'
+    body += f'<div class="segment-heading"><div><small>第一章 · {number:02d} / 11</small><h2>{escape(entry["label"])}</h2></div><div class="conclusion"><span>{conclusion_label}</span>{badge(conclusion)}<span>修改 <b>{entry["modification_count"]}</b> 次</span></div></div>'
     body += '<p class="meta">' + escape(' / '.join(entry['rooms'])) + ' · 当前版本 ' + ('独立评审已记录' if current else '待独立实机评审') + '</p>'
-    body += dimension_scores(current)
+    if entry.get('semantic'):
+        body += semantic_details(entry['semantic'],page)
+    else:
+        body += '<p class="muted">图片动作／意图盲读：等待独立测试者记录。</p>'
+    body += '<details class="acceptance-dimensions"><summary>完整实机七项验收 · ' + entry['status'] + '</summary>' + dimension_scores(current) + '</details>'
     if current:
         body += review_details(current, page)
     body += repair_feedback(entry['changes'], entry['events'], page)
@@ -199,6 +253,8 @@ def segment_card(entry, number, page):
             body += '<div class="review-history">' + trajectory(r['images'], page) + badge(review_result(r)) + dimension_scores(r, previous) + review_details(r, page) + '</div>'
             previous = r
         body += '</details>'
+    if len(entry.get('semantic_history',[])) > 1:
+        body += '<details><summary>历次图片盲读对照</summary>' + ''.join(semantic_details(r,page) for r in entry['semantic_history'][:-1]) + '</details>'
     return body + '</article>'
 
 
@@ -224,11 +280,20 @@ def markdown(entries, revision, progress):
     lines = ['# 第一章主线评分', '', '版本：' + revision, '', f'[HTML 主线](<{(OUT / "index.html").as_posix()}>) · [历史与辅助资料](<{(OUT / "archive.html").as_posix()}>)', '']
     for i, entry in enumerate(entries, 1):
         lines += [f'## {i:02d} · {entry["label"]}', '']
-        images = entry['current'].get('images', []) or entry['development_images']
+        images = entry['current'].get('images', []) or semantic_images(entry)
         lines += [' '.join(f'![{image.get("caption", "实机轨迹")}](<{project_file(image["path"]).as_posix()}>)' for image in images) if images else '起始 → 过程 → 结束：实机轨迹待采集。', '']
         if images and not entry['current']:
             lines += ['开发快反画面；本段验收待独立评审。', '']
-        lines += [f'**{entry["status"]} · 修改 {entry["modification_count"]} 次**', '', '| 分项 | 分数 | 原因 |', '| --- | --- | --- |']
+        lines += [f'**完整实机验收：{entry["status"]} · 修改 {entry["modification_count"]} 次**', '']
+        semantic = entry.get('semantic')
+        if semantic:
+            observation = semantic['observation']
+            lines += ['### 图片盲读动作／意图对照','', f'动作一致度：{semantic["action_score"]}/10；意图一致度：{semantic["intent_score"]}/10。', '', '评审结论：'+semantic['conclusion'], '', '测试者看到的动作：'+observation['action_observed'], '', '测试者猜测的意图：'+observation['intent_guessed'], '', '测试者无法确认：'+observation['uncertainty'], '', '| 图片 | 实际动作／意图 | 差异 | 动作分／意图分 |','| --- | --- | --- | --- |']
+            for c in semantic['comparisons']:
+                cell=lambda s:str(s).replace('|','／').replace('\n',' ')
+                lines.append('| '+'、'.join(c['frame_ids'])+' | '+cell(c['expected_action']+'；'+c['expected_intent'])+' | '+cell(c['difference'])+f' | {c["action_score"]}／{c["intent_score"]} |')
+            lines += ['', '下一次修正：'+semantic['next_fix'],'', '[Terra 原始记录](<'+project_file(semantic['observations']).as_posix()+'>)', '']
+        lines += ['| 实机验收分项 | 分数 | 原因 |', '| --- | --- | --- |']
         for name, score, reason in zip(DIMENSIONS, entry['scores'], entry['current'].get('score_reasons', [None] * 7)):
             lines.append('| ' + name + ' | ' + ('待评' if score is None else str(score)) + ' | ' + str(reason or '等待独立实机评审').replace('|', '／').replace('\n', ' ') + ' |')
         lines += ['', '### 本段反馈与修正', '']

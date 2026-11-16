@@ -1,5 +1,9 @@
 # 项目评分与进展 MCP
 
+`semantic_append(work_id, summary, record)` 保存图片盲读对照。它与真实标题新游戏的 `review_append` 分开，独立图片评审可立即呈现结论。record 参见 `tools/testing/visual_semantic_reviews.py`：填写 schema_version=1、唯一 id、segment_id、revision、带时区 evaluated_at、modality=text_masked_stills、group_id、observations（独立 Terra 原始 JSON）、source_map、input_manifest、comparisons、conclusion、next_fix。每个 comparison 包含 frame_ids、expected_action、expected_intent、implementation、difference、action_score、intent_score、truth_sources（path、locator）。单项目标相符10、部分相符5、误读或漏读0；动作和意图分别平均，全部达到8分为图片盲读合格。
+
+原始猜测与对照评分分别保存；调用者保持 Terra 报告原文。剧情来源先存入本轮不可变 truth-sources，保证以后代码修复仍能复核当时设定。服务检查匿名帧／原图哈希、主线对应关系、未知帧、来源文件和同 ID 内容冲突；每条记录追加 check 进展。段落／整批闭环后调用 render，刷新两份 HTML、带图 Markdown 并检查链接。常规追加保持轻量。新会话通过现有项目 MCP 注册自动获得此入口，旧会话可用 `client.py semantic_append --arguments @请求.json`。
+
 服务只接受当前项目。根目录来自服务文件位置，并与授权根目录及可选 expected_project_root 双重核对；调用者不能提供来源 PID。服务来源由实际进程生成，评审来源由原 on/start 收据和图像 sidecar 交叉校验。
 
 `progress_append` 必填：work_id、segment_id、kind（change/check/complete）、summary、result、revision（本项目存在的 Git commit）、evidence（项目内已有文件的路径数组）。可选 event_id、related_event_ids、expected_project_root。complete 必须引用相同工作所有先前事件 ID，完成后该 work_id 封闭。project 是基础设施专用段；其余段使用 gameplay_review_plan.json 的场景 ID。

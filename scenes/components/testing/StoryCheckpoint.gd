@@ -23,6 +23,8 @@ var _stop_file := ""
 var automatic := true
 var finalized := false
 var recovery_path := ""
+var _resumed_fade: Dictionary = {}
+var _resumed_fade_tween: Tween
 signal saved(path: String)
 signal loaded(path: String)
 
@@ -177,7 +179,14 @@ func _read_exact(path: String) -> Dictionary:
 		error = "Checkpoint presentation types invalid"; return {}
 	if p.controller != "room" and not p.get("controller_state") is Dictionary:
 		error = "Checkpoint controller state missing"; return {}
-	if int(value.get("source", {}).get("process_id", -1)) != int(envelope.get("host_pid", -2)):
+	if not p.ui.get("fade_rect") is Dictionary or not p.ui.fade_rect.get("modulate") is Color or (p.host.has("_transit") and not p.host._transit is Dictionary):
+		error = "Checkpoint fade presentation invalid"; return {}
+	var fade_alpha: float = p.ui.fade_rect.modulate.a
+	if not is_finite(fade_alpha) or fade_alpha < 0.0 or fade_alpha > 1.0:
+		error = "Checkpoint fade alpha invalid"; return {}
+	if p.has("fade_transition") and not _valid_fade(p, value.engine):
+		error = "Checkpoint fade transition invalid"; return {}
+	if not value.get("source") is Dictionary or int(value.source.get("process_id", -1)) <= 0 or int(value.source.get("process_id", -1)) != int(envelope.get("host_pid", -2)):
 		error = "Checkpoint host PID mismatch"; return {}
 	var current_root := ProjectSettings.globalize_path("res://").simplify_path().trim_suffix("/").replace("\\", "/").to_lower()
 	if str(value.get("source", {}).get("project_root", "")).replace("\\", "/").to_lower().trim_suffix("/") != current_root:
@@ -224,6 +233,7 @@ func capture() -> Dictionary:
 		presentation["controller_state"] = _fields(host.opening, OPENING_FIELDS)
 		presentation["items"] = _items(host.opening._items)
 		presentation["rig"] = _fields(host.opening._rig, ["sit", "head_yaw", "head_pitch", "head_roll"])
+	presentation["fade_transition"] = _capture_fade(presentation, host.eng.s)
 	if is_instance_valid(host.interactions.active): presentation["interaction"] = host.interactions.active.checkpoint_state()
 	var controller: Node = host.gathering if presentation.controller == "corridor" else host.kitchen if presentation.controller == "kitchen" else host.opening if presentation.controller == "opening" else null
 	if is_instance_valid(controller):
@@ -283,7 +293,6 @@ func restore_file(path: String) -> bool:
 	if bool(host._transit.get("active", false)):
 		match str(host._transit.phase):
 			"exit": host.det_done = func(): host._door_passage.clear(); host._transit_exit_done()
-			"fade": host._fade(1.0, 0.22, host._transit_swap)
 			"enter": host.det_done = func(): host._door_passage.clear(); host._transit_done()
 	elif str(p.controller) == "kitchen" and str(controller.phase) == "enter":
 		host.det_done = func(): host._door_passage.clear(); controller._enter_free()
@@ -324,16 +333,15 @@ func restore_file(path: String) -> bool:
 	if p.has("reconstruction") and is_instance_valid(controller):
 		controller.begin_order_replay("ded_drag")
 		if is_instance_valid(controller._order_replay): controller._order_replay.restore_checkpoint(p.reconstruction)
-	if str(p.controller) == "corridor" and str(controller.phase) == "fadeout": host._fade(1.0, 0.3, controller._setup_stage)
-	elif str(p.controller) == "corridor" and str(controller.phase) == "out": host._fade(1.0, 0.35, controller._swap_to_room)
-	elif str(p.controller) == "opening" and str(controller.phase) == "fade": host._fade(0.0, maxf(0.01, 1.8 - float(controller._pt)))
 	host.eng.s.playing = snapshot.engine.playing
-	if not p.has("interaction") and not p.has("reconstruction"):
+	if not p.has("interaction") and not p.has("reconstruction") and _fade_spec(p, snapshot.engine).intent != "chapter_swap":
 		host._sync_modal()
 		var checks: Array = host.modal.find_children("*", "CheckBox", true, false)
 		var saved_checks: Array = p.get("modal_checks", [])
 		for i in mini(checks.size(), saved_checks.size()):
 			if checks[i].text == str(saved_checks[i].text): checks[i].button_pressed = bool(saved_checks[i].pressed)
+	# Rebuild the fade only after presentation alpha and all callback targets exist.
+	_resume_fade(p, snapshot.engine)
 	host._dirty = true
 	restoring = false
 	restored = true
@@ -343,10 +351,96 @@ func restore_file(path: String) -> bool:
 	if receipt != null:
 		receipt.store_string(JSON.stringify({"source_identity": Source.identity(get_tree()), "snapshot_path": Source.project_output(path), "recovery_path": recovery_path,
 			"room": host.eng.s.room, "controller": p.controller, "phase": p.get("controller_state", {}).get("phase", ""),
-			"position": [host.det_pos.x, host.det_pos.y], "acceptance_eligible": false}))
+			"position": [host.det_pos.x, host.det_pos.y], "fade_resume": _resumed_fade, "acceptance_eligible": false}))
 		receipt.close()
 	loaded.emit(path)
 	return true
+
+# Semantic intents recreate callbacks without serializing a Tween or Callable.
+# Durations match the production _fade call sites; old v1 files infer them from phase.
+static func _fade_spec(p: Dictionary, engine: Dictionary) -> Dictionary:
+	var transit: Dictionary = p.host.get("_transit", {})
+	var phase := str(p.get("controller_state", {}).get("phase", ""))
+	if bool(transit.get("active", false)):
+		if str(transit.get("phase")) == "fade": return {"intent": "transit_swap", "target": 1.0, "duration": 0.22}
+		if str(transit.get("phase")) == "enter": return {"intent": "transit_enter", "target": 0.0, "duration": 0.3}
+	if str(p.controller) == "opening":
+		if phase == "black": return {"intent": "opening_black", "target": 1.0, "duration": 0.0}
+		return {"intent": "opening_reveal", "target": 0.0, "duration": 1.8}
+	if str(p.controller) == "corridor":
+		if phase == "fadeout": return {"intent": "corridor_stage", "target": 1.0, "duration": 0.3}
+		if phase == "out": return {"intent": "corridor_room", "target": 1.0, "duration": 0.35}
+		return {"intent": "corridor_reveal", "target": 0.0, "duration": 0.5}
+	if bool(engine.get("chapter_complete", false)) and bool(p.host.get("_cine", false)):
+		return {"intent": "chapter_swap", "target": 1.0, "duration": 0.3}
+	return {"intent": "room_reveal", "target": 0.0, "duration": 0.4}
+
+static func _inferred_fade(p: Dictionary, engine: Dictionary) -> Dictionary:
+	var spec := _fade_spec(p, engine)
+	var alpha: float = p.ui.fade_rect.modulate.a
+	var duration: float = spec.duration
+	var distance := absf(float(spec.target) - alpha)
+	var remaining := duration * distance
+	if spec.intent == "opening_reveal" and str(p.get("controller_state", {}).get("phase")) == "fade":
+		remaining = maxf(0.001, duration - float(p.controller_state.get("_pt", 0.0))) if distance > 0.00001 else 0.0
+	var callback: bool = spec.intent in ["transit_swap", "corridor_stage", "corridor_room", "chapter_swap"]
+	return {"version": 1, "intent": spec.intent, "alpha": alpha, "target": spec.target,
+		"total_seconds": duration, "remaining_seconds": maxf(0.001, remaining) if callback else remaining,
+		"elapsed_seconds": maxf(0.0, duration - remaining), "active": callback or (distance > 0.00001 and duration > 0.0),
+		"legacy_inferred": true}
+
+func _capture_fade(p: Dictionary, engine: Dictionary) -> Dictionary:
+	var state := _inferred_fade(p, engine)
+	var tween: Tween = host._fade_tween
+	if tween != null and tween.is_valid() and state.intent != "opening_black":
+		var elapsed := tween.get_total_elapsed_time()
+		if tween == _resumed_fade_tween and _resumed_fade.get("intent") == state.intent:
+			state.remaining_seconds = maxf(0.001, float(_resumed_fade.remaining_seconds) - elapsed)
+			state.elapsed_seconds = float(_resumed_fade.elapsed_seconds) + elapsed
+			state.total_seconds = _resumed_fade.total_seconds
+		else:
+			state.remaining_seconds = maxf(0.001, float(state.total_seconds) - elapsed)
+			state.elapsed_seconds = minf(elapsed, float(state.total_seconds))
+		state.active = true
+		state.legacy_inferred = false
+	return state
+
+static func _valid_fade(p: Dictionary, engine: Dictionary) -> bool:
+	if not p.fade_transition is Dictionary: return false
+	var state: Dictionary = p.fade_transition
+	var spec := _fade_spec(p, engine)
+	if int(state.get("version", 0)) != 1 or state.get("intent") != spec.intent or not state.get("active") is bool: return false
+	for key in ["alpha", "target", "total_seconds", "remaining_seconds", "elapsed_seconds"]:
+		if not (state.get(key) is float or state.get(key) is int) or not is_finite(float(state[key])): return false
+	if float(state.alpha) < 0.0 or float(state.alpha) > 1.0 or not is_equal_approx(float(state.alpha), p.ui.fade_rect.modulate.a): return false
+	if not is_equal_approx(float(state.target), float(spec.target)): return false
+	if float(state.total_seconds) < 0.0 or float(state.total_seconds) > 1.8 or float(state.remaining_seconds) < 0.0 or float(state.remaining_seconds) > 1.801 or float(state.elapsed_seconds) < 0.0: return false
+	if spec.intent == "opening_black": return not bool(state.active)
+	if spec.intent in ["transit_swap", "corridor_stage", "corridor_room", "chapter_swap"] and not bool(state.active): return false
+	if absf(float(state.target) - float(state.alpha)) > 0.00001 and not bool(state.active): return false
+	return true
+
+func _resume_fade(p: Dictionary, engine: Dictionary) -> void:
+	if host._fade_tween != null: host._fade_tween.kill()
+	_resumed_fade_tween = null
+	_resumed_fade = p.get("fade_transition", _inferred_fade(p, engine)).duplicate(true)
+	if not bool(_resumed_fade.active): return
+	var callback := Callable()
+	match str(_resumed_fade.intent):
+		"transit_swap": callback = host._transit_swap
+		"corridor_stage": callback = host.gathering._setup_stage
+		"corridor_room": callback = host.gathering._swap_to_room
+		"chapter_swap": callback = _continue_chapter
+	host._fade(float(_resumed_fade.target), maxf(0.001, float(_resumed_fade.remaining_seconds)), callback)
+	_resumed_fade_tween = host._fade_tween
+
+func _continue_chapter() -> void:
+	if host.eng.continue_chapter():
+		host._build_room(str(host.eng.s.room))
+		host._det_to_home()
+		host._write_auto()
+	host._cine = false
+	host._fade(0.0, 0.4)
 
 static func _fields(object: Object, keys: Array) -> Dictionary:
 	var result := {}

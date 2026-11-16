@@ -37,7 +37,7 @@ async def run():
                 init = await session.initialize()
                 listing = await session.list_tools()
                 metadata.update(protocol_version=init.protocolVersion, server=init.serverInfo.model_dump(), tools=[t.name for t in listing.tools])
-                assert set(metadata["tools"]) == {"progress_append", "review_append", "flush", "render"}
+                assert set(metadata["tools"]) == {"progress_append", "review_append", "semantic_append", "flush", "render"}
                 yield session
 
     async def call(session, name, args, *, error=False, label):

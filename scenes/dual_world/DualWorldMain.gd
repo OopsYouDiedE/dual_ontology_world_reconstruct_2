@@ -1250,7 +1250,6 @@ func _fit_camera() -> void:
 func _free_slots(n: int) -> Array:
 	var ds: Dictionary = room_mesh.design
 	var out: Array = []
-	var tp := {"id": "slot", "kind": "planter", "x": 0.0, "z": 0.0, "yaw": 0.0, "params": {}}
 	var cands: Array = []
 	var x0 := 0.8
 	var x1 := float(ds.w) - 0.8
@@ -1273,8 +1272,6 @@ func _free_slots(n: int) -> Array:
 			var c := Vector2((float(ix) + 0.5) * CELL, (float(iz) + 0.5) * CELL)
 			if c.x < x0 or c.x > x1 or c.y < z0 or c.y > z1: continue
 			if _grid.is_point_solid(Vector2i(ix, iz)): continue
-			tp.x = c.x
-			tp.z = c.y
 			var ok := true
 			if _lowpoly_ok:
 				for r in lp_obs:
@@ -1283,7 +1280,9 @@ func _free_slots(n: int) -> Array:
 						break
 			else:
 				for p in ds.props:
-					if Geo.prop_dims(p).blocking and Geo.rects_overlap(tp, p, ACTOR_FURNITURE_MARGIN):
+					# The probe is the actor center. Inflate the real prop once by
+					# the actor clearance, matching the rendered-room probe above.
+					if Geo.prop_dims(p).blocking and Geo.point_in_prop(p, c.x, c.y, ACTOR_FURNITURE_MARGIN):
 						ok = false
 						break
 			if ok: cands.append(c)

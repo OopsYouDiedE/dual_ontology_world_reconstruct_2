@@ -18,8 +18,8 @@ def read(path, root):
 
 
 def validate(record, root=ROOT):
-    if record.get('schema_version') != 1 or record.get('modality') != 'text_masked_stills':
-        raise ValueError('Visual comparison requires schema 1 and text_masked_stills modality')
+    if record.get('schema_version') != 1 or record.get('modality') not in ('text_masked_stills','original_subtitled_stills'):
+        raise ValueError('Visual comparison requires schema 1 and an explicit image modality')
     if datetime.fromisoformat(record['evaluated_at']).tzinfo is None:
         raise ValueError('Comparison requires timezone')
     plan = read('assets/data/test_scenarios/gameplay_review_plan.json',root)
@@ -31,6 +31,8 @@ def validate(record, root=ROOT):
     groups = [g for g in raw['groups'] if g['group_id'] == record['group_id']]
     mapping = [g for g in read(record['source_map'],root) if g['group_id'] == record['group_id']]
     inputs = read(record['input_manifest'],root)
+    if record['modality']=='original_subtitled_stills' and (inputs.get('text_mode')!='original_subtitles' or raw.get('modality')!='original_subtitled_stills'):
+        raise ValueError('Original-subtitle review must identify its actual input modality')
     public = [g for g in inputs['groups'] if g['group_id'] == record['group_id']]
     if len(groups) != 1 or len(mapping) != 1 or len(public) != 1 or mapping[0]['segment_id'] != record['segment_id']:
         raise ValueError('Blind group/source mapping mismatch')
@@ -44,12 +46,18 @@ def validate(record, root=ROOT):
         masked = provenance.project_path(f['masked'],root)
         if hashlib.sha256(masked.read_bytes()).hexdigest() != f['masked_sha256']:
             raise ValueError('Masked frame changed after blind read')
+        if record['modality']=='original_subtitled_stills' and (f['original_sha256']!=f['masked_sha256'] or f.get('masks')):
+            raise ValueError('Original-subtitle inputs must retain every original pixel')
     observation = groups[0]
     if not all(observation.get(k) for k in ('action_observed','intent_guessed','uncertainty','claims')):
         raise ValueError('Missing raw action/intent/uncertainty/claims')
+    if record['modality']=='original_subtitled_stills' and not all(observation.get(k) for k in ('visual_only','dialogue_understanding')):
+        raise ValueError('Subtitled review must distinguish visual reading from dialogue understanding')
     for claim in observation['claims']:
         if not claim['frame_ids'] or not set(claim['frame_ids']) <= set(frames):
             raise ValueError('Observer references unknown frames')
+        if record['modality']=='original_subtitled_stills' and claim.get('evidence_basis') not in ('visual','dialogue','both'):
+            raise ValueError('Each subtitled claim must identify its observation basis')
     if not record.get('comparisons') or not record.get('conclusion') or not record.get('next_fix'):
         raise ValueError('Comparison needs explicit targets, conclusion and next fix')
     for item in record['comparisons']:

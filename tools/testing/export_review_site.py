@@ -15,6 +15,7 @@ from urllib.parse import quote, unquote, urlsplit
 import yaml
 from mainline_reviews import load_reviews, capture_time
 import visual_semantic_reviews
+import mainline_recordings
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'mcp'))
@@ -157,6 +158,7 @@ def repair_feedback(changes, events, page):
 def build_segments(reviews, changes, progress, revision):
     entries = []
     semantic_reviews = visual_semantic_reviews.load(ROOT)
+    recordings = mainline_recordings.load(progress['events'],ROOT)
     for scene in read_json(PLAN)['scenes']:
         history = [r for r in reviews if r['segment_id'] == scene['id'] and not r.get('source_isolated') and r.get('acceptance_eligible') is not False]
         superseded = {r['supersedes'] for r in history if r.get('supersedes')}
@@ -179,6 +181,7 @@ def build_segments(reviews, changes, progress, revision):
         semantic_history = [r for r in semantic_reviews if r['segment_id'] == scene['id']]
         semantic = semantic_history[-1] if semantic_history else None
         entries.append(dict(scene, current=current, history=history, changes=repairs, events=events,
+                            recordings=recordings.get(scene['id'],[]),
                             semantic=semantic, semantic_history=semantic_history,
                             modification_count=len(repairs) + sum(e['kind'] == 'change' for e in events),
                             development_images=development_images,
@@ -187,21 +190,47 @@ def build_segments(reviews, changes, progress, revision):
 
 
 def semantic_images(entry):
+    if entry.get('recordings'):
+        return entry['recordings'][-1]['images']
     review = entry.get('semantic')
     if not review:
         return entry['development_images']
     return [dict(path=f['original'],caption=f['frame_id']) for f in review['mapping']['frames']]
 
 
+def recording_details(record, page):
+    coverage = record['coverage_data']
+    body = '<section class="continuous-recording"><h3>完整过程 · 原速与原字幕</h3>'
+    target_phase = 'look' if record['segment_id']=='wake' else 'join'
+    poster = next((f for f in record['images'] if ' · '+target_phase in f['caption']),record['images'][0])
+    body += '<video controls preload="metadata" playsinline poster="'+href(project_file(poster['path']),page)+'" src="'+href(project_file(record['video']),page)+'" style="width:100%;max-height:560px;background:#101417"></video>'
+    body += '<p>覆盖检查：<b>完整</b> · 连续视频 '+str(round(record['end_s']-record['start_s'],1))+' 秒 · 本段对白 '+str(len(record['subtitles']))+' 个显示片段。</p>'
+    body += '<p class="meta">生产流程开发录制；画面采集为12帧/秒，性能数据包含采集开销。完整实机验收另行评审。</p>'
+    if coverage.get('audio_signal_present') is False:
+        body += '<p class="meta">本轮录制音轨无信号，音频表现与响度保持待评。</p>'
+    body += '<details><summary>阶段与对白时间轴 · 点击时间回看片段</summary><ol class="dialogue-timeline">'
+    rows = [(e['time_s'],e['state'].split(':',1)[1]) for e in record['phases']]
+    rows += [(s['start_s'],s['speaker']+'：'+s['text']) for s in record['subtitles']]
+    for time, text in sorted(rows):
+        offset = max(0,time-record['start_s'])
+        body += '<li><a href="'+href(project_file(record['video']),page)+'#t='+str(round(offset,2))+'">'+f'{offset:.1f}s'+'</a> · '+escape(text)+'</li>'
+    body += '</ol></details><p class="evidence-links">'+link(project_file(record['coverage']),'完整覆盖清单',page)+link(project_file(record['sequence']),'原始逐帧与对白记录',page)+link(project_file(record['full_video']),'第一二段连续视频',page)+link(project_file(record['end_snapshot']),'结束快照',page)+'</p></section>'
+    return body
+
+
 def semantic_details(review, page):
     observation = review['observation']
     verdict = '合格' if min(review['action_score'],review['intent_score']) >= 8 else '不合格'
     body = '<div class="semantic-review"><div class="semantic-heading"><h3>图片盲读 · 动作与意图对照</h3>' + badge(verdict) + '</div>'
-    body += '<p class="semantic-scores">动作一致度 <b>' + str(review['action_score']) + '/10</b>　意图一致度 <b>' + str(review['intent_score']) + '/10</b></p>'
-    body += '<p class="meta">独立 Terra · 遮字静态图 · 无音频 · 图片版本 ' + escape(review['mapping'].get('source_revision') or '历史开发素材') + ' · 开发评审</p>'
+    intent_label = '意图理解（含原字幕）' if review['modality']=='original_subtitled_stills' else '意图一致度'
+    body += '<p class="semantic-scores">动作一致度 <b>' + str(review['action_score']) + '/10</b>　'+intent_label+' <b>' + str(review['intent_score']) + '/10</b></p>'
+    modality = '原字幕静态图 · 未提供剧本' if review['modality']=='original_subtitled_stills' else '遮字静态图'
+    body += '<p class="meta">独立 Terra · '+modality+' · 无音频 · 图片版本 ' + escape(review['mapping'].get('source_revision') or '历史开发素材') + ' · 开发评审</p>'
     body += '<p class="meta">' + escape(review['mapping'].get('source_note','')) + ' · 测试者自评可读性 ' + str(observation['readability_score']) + '/10</p>'
     body += '<p><b>评审结论：</b>' + escape(review['conclusion']) + '</p>'
     body += '<div class="blind-original"><h4>测试者原始判断</h4><p><b>看到的动作：</b>' + escape(observation['action_observed']) + '</p><p><b>猜测的意图：</b>' + escape(observation['intent_guessed']) + '</p><p><b>无法确认：</b>' + escape(observation['uncertainty']) + '</p></div>'
+    if observation.get('visual_only'):
+        body += '<p><b>只看画面读到：</b>'+escape(observation['visual_only'])+'</p><p><b>字幕补充理解：</b>'+escape(observation['dialogue_understanding'])+'</p>'
     body += '<div class="semantic-table-scroll"><table class="semantic-table"><thead><tr><th>对应图片／测试者原话</th><th>剧情实际动作与意图</th><th>差异与评分</th></tr></thead><tbody>'
     for item in review['comparisons']:
         ids = set(item['frame_ids'])
@@ -209,12 +238,14 @@ def semantic_details(review, page):
         body += '<tr><td><p class="evidence-links">'
         for fid in item['frame_ids']:
             f = review['frames'][fid]
-            body += link(project_file(f['original']),fid+' 原图',page) + link(project_file(f['masked']),'盲读图',page)
+            body += link(project_file(f['original']),fid+' 原图',page) + link(project_file(f['masked']),'评审图',page)
         body += '</p>'
         if not claims:
             body += '<p>测试者未单独描述这些帧；使用本组原始判断对照。</p>'
         for claim in claims:
             body += '<p><b>动作：</b>' + escape(claim['action_observed']) + '<br><b>意图：</b>' + escape(claim['intent_guessed']) + '</p>'
+            if claim.get('evidence_basis'):
+                body += '<p class="meta">判断依据：'+{'visual':'直接画面','dialogue':'字幕信息','both':'画面与字幕'}[claim['evidence_basis']]+'</p>'
         body += '</td><td><p><b>动作目标：</b>' + escape(item['expected_action']) + '</p><p><b>意图目标：</b>' + escape(item['expected_intent']) + '</p><p><b>当前实现：</b>' + escape(item['implementation']) + '</p>'
         body += '<details><summary>设定来源</summary>'
         for source in item['truth_sources']:
@@ -239,6 +270,14 @@ def segment_card(entry, number, page):
     body += f'<div class="segment-heading"><div><small>第一章 · {number:02d} / 11</small><h2>{escape(entry["label"])}</h2></div><div class="conclusion"><span>{conclusion_label}</span>{badge(conclusion)}<span>修改 <b>{entry["modification_count"]}</b> 次</span></div></div>'
     body += '<p class="meta">' + escape(' / '.join(entry['rooms'])) + ' · 当前版本 ' + ('独立评审已记录' if current else '待独立实机评审') + '</p>'
     if entry.get('semantic'):
+        semantic = entry['semantic']
+        intent = '意图理解（含原字幕）' if semantic['modality']=='original_subtitled_stills' else '意图一致度'
+        body += '<p class="semantic-scores">动作一致度 <b>'+str(semantic['action_score'])+'/10</b>　'+intent+' <b>'+str(semantic['intent_score'])+'/10</b></p>'
+    if entry.get('recordings'):
+        body += recording_details(entry['recordings'][-1],page)
+    if entry.get('semantic'):
+        if entry.get('recordings') and entry['semantic']['modality']!='original_subtitled_stills':
+            body += '<p class="meta">下方保留上一轮抽帧评审，评分对应其原始素材；本轮完整录制评审随后追加。</p>'
         body += semantic_details(entry['semantic'],page)
     else:
         body += '<p class="muted">图片动作／意图盲读：等待独立测试者记录。</p>'
@@ -255,6 +294,8 @@ def segment_card(entry, number, page):
         body += '</details>'
     if len(entry.get('semantic_history',[])) > 1:
         body += '<details><summary>历次图片盲读对照</summary>' + ''.join(semantic_details(r,page) for r in entry['semantic_history'][:-1]) + '</details>'
+    if len(entry.get('recordings',[])) > 1:
+        body += '<details><summary>历次完整录制</summary>'+''.join(trajectory(r['images'],page,development=True)+recording_details(r,page) for r in entry['recordings'][:-1])+'</details>'
     return body + '</article>'
 
 
@@ -285,10 +326,19 @@ def markdown(entries, revision, progress):
         if images and not entry['current']:
             lines += ['开发快反画面；本段验收待独立评审。', '']
         lines += [f'**完整实机验收：{entry["status"]} · 修改 {entry["modification_count"]} 次**', '']
+        if entry.get('recordings'):
+            recording=entry['recordings'][-1]
+            lines += ['完整过程已录制，保留原速与原字幕；本段对白显示片段 '+str(len(recording['subtitles']))+' 个。', '',
+                      '[本段连续视频](<'+project_file(recording['video']).as_posix()+'>) · [覆盖清单](<'+project_file(recording['coverage']).as_posix()+'>) · [第一二段完整视频](<'+project_file(recording['full_video']).as_posix()+'>)', '']
+        if entry.get('recordings'):
+            capture = entry['recordings'][-1]
+            lines += ['完整原速录制、原字幕对白覆盖：完整。', '', '[本段视频](<'+project_file(capture['video']).as_posix()+'>) · [覆盖清单](<'+project_file(capture['coverage']).as_posix()+'>)', '']
         semantic = entry.get('semantic')
         if semantic:
             observation = semantic['observation']
             lines += ['### 图片盲读动作／意图对照','', f'动作一致度：{semantic["action_score"]}/10；意图一致度：{semantic["intent_score"]}/10。', '', '评审结论：'+semantic['conclusion'], '', '测试者看到的动作：'+observation['action_observed'], '', '测试者猜测的意图：'+observation['intent_guessed'], '', '测试者无法确认：'+observation['uncertainty'], '', '| 图片 | 实际动作／意图 | 差异 | 动作分／意图分 |','| --- | --- | --- | --- |']
+            if observation.get('visual_only'):
+                lines[-2:-2] = ['只看画面读到：'+observation['visual_only'],'','字幕补充理解：'+observation['dialogue_understanding'],'']
             for c in semantic['comparisons']:
                 cell=lambda s:str(s).replace('|','／').replace('\n',' ')
                 lines.append('| '+'、'.join(c['frame_ids'])+' | '+cell(c['expected_action']+'；'+c['expected_intent'])+' | '+cell(c['difference'])+f' | {c["action_score"]}／{c["intent_score"]} |')

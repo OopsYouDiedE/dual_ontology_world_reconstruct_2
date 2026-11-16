@@ -30,3 +30,7 @@
 ```
 
 测试入口：`python mcp/review/test_integration.py`，必须使用本项目 `.runtime/python/Scripts/python.exe`。测试通过真实 stdio MCP 执行 initialize / tools/list / tools/call，临时数据限 `.runtime/review-tests/`；测试评分不会进入正式轨迹。`--test-sandbox` 只能指向该目录下的子目录，测试服务禁止全量渲染。
+
+完整原字幕录制：`tools/testing/record_opening_complete.py --output <新的项目内目录>` 原速运行起床、六件家具、房门自然交棒、完整走廊会合，生成连续视频、关键帧、对白与阶段时间轴、恢复快照。`tools/testing/publish_opening_recording.py --output <录制目录>` 核验生产流程、逐字对白、后台帧写入和来源后，通过 `progress_append(kind=check)` 附加 `*.capture.json`。每段闭环调用 `render`，页面自动以本段完整关键帧作为首行，显示可播放视频和对白时间轴，保留旧评审。`complete` 仍须独立调用确认。覆盖完整与正式七项验收分别记录；无信号的音轨如实标识。
+
+`semantic_append` 支持 `original_subtitled_stills`：input_manifest 的 `text_mode` 为 `original_subtitles`，原始 Terra 观察的 modality 同名，每组填写 `visual_only` 和 `dialogue_understanding`，每条 claim 填写 `evidence_basis: visual/dialogue/both`。兼容字段 `masked` 此时指向与原图逐字节相同的匿名图，`masks` 为空；服务验证哈希一致。正式台词按原时机完整显示。独立开发遮字轮继续使用 `text_masked_stills`，历史评分保持其原输入口径。

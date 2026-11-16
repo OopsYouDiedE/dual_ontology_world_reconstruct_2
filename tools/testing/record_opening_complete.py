@@ -29,6 +29,8 @@ def encode(folder, sequence):
     gaps = [b['time_s'] - a['time_s'] for a, b in zip(frames, frames[1:])]
     concat = folder / 'video.ffconcat'
     rows = ['ffconcat version 1.0']
+    # Retain initial loading/black time; clip boundaries use the original clock.
+    rows += ["file 'video/000000.jpg'",f"duration {frames[0]['time_s']:.6f}"]
     for i, frame in enumerate(frames):
         # All generated names are controlled, relative ASCII paths.
         rows += [f"file 'video/{i:06d}.jpg'", f"duration {gaps[i] if i < len(gaps) else 1/12:.6f}"]
@@ -38,7 +40,8 @@ def encode(folder, sequence):
                '-f', 'f32le', '-ar', str(int(sequence['audio_sample_rate'])), '-ac', '2',
                '-i', str(folder/'monitor/mix.f32le'), '-vf', 'fps=12', '-c:v', 'libx264',
                '-preset', 'veryfast', '-crf', '20', '-pix_fmt', 'yuv420p', '-c:a', 'aac',
-               '-b:a', '160k', '-shortest', '-movflags', '+faststart', str(folder/'complete.mp4')]
+               '-b:a', '160k', '-af',f"adelay={round(frames[0]['time_s']*1000)}:all=1,apad",
+               '-t',str(sequence['duration_s']), '-movflags', '+faststart', str(folder/'complete.mp4')]
     with (folder/'encoding.log').open('w', encoding='utf-8') as log:
         subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
     boundary = next(e['time_s'] for e in sequence['events'] if e.get('state') == 'corridor:fadeout')

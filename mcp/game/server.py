@@ -71,6 +71,8 @@ TOOLS = {
                    inputSchema=schema({"session_id": SESSION, "path": {"type":"string", "minLength":1}, "text": {"type":"string", "minLength":1}, "category": {"type":"string", "enum":["dialogue", "spoken_dialogue", "speech", "prompt", "interaction_prompt", "nameplate", "single_key_icon", "action_key_icon", "hud", "menu", "other_ui"]}, "english_verified": {"type":"boolean"}}, ["session_id", "path", "text", "category", "english_verified"])),
         types.Tool(name="close", description="Close this session and release its actual host process.",
                    inputSchema=schema({"session_id": SESSION}, ["session_id"])),
+        types.Tool(name="metrics_status", description="Poll same-session telemetry analysis after close; keep this MCP connection open until complete or error.",
+                   inputSchema=schema({"session_id": SESSION}, ["session_id"])),
     ],
     "auto": [
         types.Tool(name="GodotMCP", description="Run a complete autonomous real Godot engine-AI test until completion, fault or the configured deadline, then return its final report/observation. One call; no Agent input, polling or follow-up steps required. Duration includes build/startup.", inputSchema=RUN),
@@ -105,7 +107,14 @@ def observer_result(service, name, result):
     if endpoint is None or not getattr(endpoint, "assessment_plan", None):
         return result
     allowed = ("session_id", "source_identity", "server_identity", "image_base64", "audio_base64")
-    return {key: result[key] for key in allowed if key in result}
+    visible = {key: result[key] for key in allowed if key in result}
+    # Runtime scene paths are also nested in capture provenance. Retain only
+    # the static project identity and owning process needed for validation.
+    if isinstance(visible.get("source_identity"), dict):
+        keys = ("project_root", "project_sha256", "configured_main_scene", "process_id", "executable_path")
+        visible["source_identity"] = {key: visible["source_identity"][key] for key in keys
+                                      if key in visible["source_identity"]}
+    return visible
 
 
 async def execute_owned(service, name, arguments):

@@ -21,7 +21,7 @@ import capture_provenance as provenance
 PYTHON = Path(sys.executable)
 HOST_TOOLS = {"on", "step", "observe", "close"}
 NOTE_TOOLS = {"event_script", "character_script", "charactor_script", "review_visible_text"}
-ALLOWED = HOST_TOOLS | NOTE_TOOLS
+ALLOWED = HOST_TOOLS | NOTE_TOOLS | {"metrics_status"}
 
 
 def retain_audio(block, receipt_dir, index, audio_index):
@@ -42,6 +42,7 @@ async def main():
     parameters = StdioServerParameters(command=str(PYTHON),
         args=[str(ROOT / "mcp/game/server.py"), "--service", "input", "--expected-project-root", str(ROOT)], cwd=str(ROOT), env=os.environ.copy())
     current = None
+    last_closed = None
     blind_session = False
     index = 0
     host_pid = None
@@ -65,7 +66,9 @@ async def main():
                             raise ValueError("Use a supported tool with an arguments object.")
                         if tool == "on" and current is not None:
                             raise ValueError("Close the current session before opening another.")
-                        if tool != "on":
+                        if tool == "metrics_status":
+                            arguments = dict(arguments, session_id=arguments.get("session_id") or last_closed)
+                        elif tool != "on":
                             if current is None:
                                 raise ValueError("Open a session first.")
                             if "session_id" in arguments and arguments["session_id"] != current:
@@ -110,6 +113,7 @@ async def main():
                             current = result.structuredContent["session_id"]
                             blind_session = bool(arguments.get("assessment_plan"))
                         elif not result.isError and tool == "close":
+                            last_closed = current
                             current = None
                             host_pid = None
                         data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
@@ -118,7 +122,8 @@ async def main():
                         for key in (() if blind_session and tool in ("on", "step", "observe") else ("started", "busy", "scene", "observation_path", "host_errors", "source_identity", "server_identity",
                                     "closed", "graceful_exit", "movie_path", "movie_finalized", "movie_bytes",
                                     "checkpoint_path", "checkpoint_restored", "checkpoint_error", "checkpoint_saved",
-                                    "controller", "controller_phase", "metrics_directory", "acceptance_eligible")):
+                                    "controller", "controller_phase", "metrics_directory", "acceptance_eligible",
+                                    "metrics_status", "metrics_summary_path", "metrics_error", "metrics_poll_tool")):
                             if key in data:
                                 summary[key] = data[key]
                         if result.isError:

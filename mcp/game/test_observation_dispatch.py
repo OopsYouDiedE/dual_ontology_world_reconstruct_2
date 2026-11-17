@@ -46,13 +46,14 @@ class ObservationDispatchTests(unittest.TestCase):
     def test_assessed_gameplay_response_hides_internal_story_state(self):
         endpoint = SimpleNamespace(assessment_plan={"test_id": "blind"})
         result = {"session_id": "owned", "image_base64": "pixels", "audio_base64": "audio",
-                  "source_identity": {"process_id": 7}, "server_identity": {"server_pid": 8},
+                  "source_identity": {"process_id": 7, "current_scene": "secret", "launch_scene": "secret"}, "server_identity": {"server_pid": 8},
                   "controls": [{"text": "hidden text"}], "phase": "secret", "navigation": {"position": [1, 2]},
                   "room": "secret room", "controller_phase": "free"}
         with patch.dict(runtime.SESSIONS, {"owned": endpoint}):
             visible = server.observer_result("input", "observe", result)
         self.assertEqual(set(visible), {"session_id", "image_base64", "audio_base64", "source_identity", "server_identity"})
         self.assertEqual(visible["image_base64"], "pixels")
+        self.assertEqual(visible["source_identity"], {"process_id": 7})
         with patch.dict(runtime.SESSIONS, {"owned": SimpleNamespace(assessment_plan=None)}):
             self.assertIs(server.observer_result("input", "observe", result), result)
 

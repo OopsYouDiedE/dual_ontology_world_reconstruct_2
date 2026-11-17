@@ -21,6 +21,21 @@ import capture_provenance as provenance
 
 ROOT = Path(__file__).resolve().parents[2]
 SESSIONS = {}
+COMPLETED = {}
+METRICS_JOBS = {}
+
+
+def collect_metrics_async(identity, endpoint, graceful):
+    """Keep expensive audio analysis outside the shutdown RPC."""
+    METRICS_JOBS[identity] = {"session_id": identity, "metrics_status": "running"}
+    def collect():
+        try:
+            result = finalize_metrics(endpoint, graceful)
+        except Exception as error:
+            result = {"metrics_status": "error", "metrics_error": str(error)}
+        METRICS_JOBS[identity] = dict(result, session_id=identity)
+    threading.Thread(target=collect, name="session-metrics-" + identity, daemon=True).start()
+    return {"metrics_status": "running", "metrics_poll_tool": "metrics_status"}
 def drain(stream, target):
     for line in stream:
         if isinstance(target, queue.Queue):
@@ -254,6 +269,9 @@ def _scenario_start_ready(endpoint, observation):
 
 def start(arguments, deadline=None):
     provenance.assert_runtime_root(ROOT)
+    launch_deadline = min(deadline, time.monotonic() + 200) if deadline else time.monotonic() + 200
+    session_deadline = deadline
+    deadline = launch_deadline
     mode = arguments.get("mode", "cli_ai")
     if mode not in ("cli_ai", "cli_manual", "cli_auto", "godot_manual", "godot_auto"):
         raise ValueError("Unknown production session mode.")
@@ -394,6 +412,7 @@ def start(arguments, deadline=None):
                 detail = observation.get("checkpoint_error") or " ".join(observation.get("host_errors", []))
                 raise RuntimeError("Snapshot restoration failed: " + (detail or "restored host did not report success"))
         identity = secrets.token_hex(8)
+        endpoint.deadline = session_deadline
         SESSIONS[identity] = endpoint
         return dict(observation, session_id=identity, mode=mode,
                     **({"movie_path": str(endpoint.movie_path), "movie_fps": arguments.get("movie_fps", 30),
@@ -409,6 +428,12 @@ def execute(name, arguments):
     if name == "on":
         return start(arguments)
     identity = arguments["session_id"]
+    if name == "metrics_status":
+        if identity not in METRICS_JOBS:
+            raise ValueError("No metrics job for this session in this MCP connection")
+        return dict(METRICS_JOBS[identity])
+    if name == "close" and identity in COMPLETED:
+        return dict(COMPLETED[identity])
     endpoint = SESSIONS.get(identity)
     if endpoint is None:
         raise ValueError("Unknown session_id in this MCP server. Start your own session.")
@@ -457,7 +482,10 @@ def execute(name, arguments):
                     result["checkpoint_saved"] = True
                 except (OSError, ValueError, TypeError, KeyError) as error:
                     result["checkpoint_error"] = str(error)
-            result.update(finalize_metrics(endpoint, graceful))
+            if endpoint.backend == "godot" and graceful and endpoint.metrics_directory:
+                result.update(collect_metrics_async(identity, endpoint, graceful))
+            else:
+                result.update(finalize_metrics(endpoint, graceful))
             if endpoint.concurrency_observation_error:
                 result["concurrency_observation_error"] = endpoint.concurrency_observation_error
             if endpoint.movie_path:
@@ -470,6 +498,7 @@ def execute(name, arguments):
                     sidecar = dict(result, capture_kind="fixed-step-runtime-video", realtime_performance_eligible=False,
                                    movie_timing="Godot Movie Maker fixed-step; use for motion/narrative evidence")
                     endpoint.movie_path.with_suffix(".avi.json").write_text(json.dumps(sidecar, ensure_ascii=False, indent=2), encoding="utf-8")
+            COMPLETED[identity] = dict(result)
             return result
         operation = dict(arguments.get("operation", {})) if name == "step" else {"type": "observe"}
         if endpoint.backend == "cli":

@@ -11,6 +11,33 @@ import runtime
 
 
 class FinalizeMetricsTests(unittest.TestCase):
+    def test_slow_analysis_does_not_block_close_receipt_and_can_be_polled(self):
+        entered, release, finished = threading.Event(), threading.Event(), threading.Event()
+        def analyze(endpoint, graceful):
+            entered.set()
+            release.wait(5)
+            finished.set()
+            return {"metrics_status": "complete", "metrics_summary_path": "same-session.json"}
+        with patch.object(runtime, "finalize_metrics", side_effect=analyze):
+            result = runtime.collect_metrics_async("slow-test", object(), True)
+            self.assertEqual(result["metrics_status"], "running")
+            self.assertTrue(entered.wait(2))
+            self.assertEqual(runtime.execute("metrics_status", {"session_id": "slow-test"})["metrics_status"], "running")
+            release.set()
+            self.assertTrue(finished.wait(2))
+        import time
+        for _ in range(100):
+            result = runtime.execute("metrics_status", {"session_id": "slow-test"})
+            if result["metrics_status"] == "complete":
+                break
+            time.sleep(.01)
+        self.assertEqual(result["metrics_summary_path"], "same-session.json")
+
+    def test_close_retry_returns_original_receipt(self):
+        receipt = {"session_id": "closed-test", "closed": True, "graceful_exit": True}
+        with patch.dict(runtime.COMPLETED, {"closed-test": receipt}):
+            self.assertEqual(runtime.execute("close", {"session_id": "closed-test"}), receipt)
+
     def endpoint(self, directory, **changes):
         values = dict(backend="godot", snapshot_path=None, scenario_path=None, movie_path=None,
                       metrics_directory=directory, process=SimpleNamespace(pid=123), expected_source={})

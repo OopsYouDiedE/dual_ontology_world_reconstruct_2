@@ -97,6 +97,17 @@ def execute(service, name, arguments):
 
 
 
+def observer_result(service, name, result):
+    """Keep blind gameplay responses to pixels and transport provenance."""
+    if service != "input" or name not in ("on", "step", "observe") or not isinstance(result, dict):
+        return result
+    endpoint = runtime.SESSIONS.get(result.get("session_id"))
+    if endpoint is None or not getattr(endpoint, "assessment_plan", None):
+        return result
+    allowed = ("session_id", "source_identity", "server_identity", "image_base64", "audio_base64")
+    return {key: result[key] for key in allowed if key in result}
+
+
 async def execute_owned(service, name, arguments):
     """Close a session if the caller disappears while its launch is running."""
     task = asyncio.create_task(asyncio.to_thread(execute, service, name, arguments))
@@ -140,6 +151,7 @@ async def main(service):
         if name not in {tool.name for tool in tools}: raise ValueError("Unknown tool")
         try:
             result = await execute_owned(service, name, arguments)
+            result = observer_result(service, name, result)
             png = result.pop("image_base64", None)
             audio = result.pop("audio_base64", None)
             content = [types.TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]

@@ -228,3 +228,5 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 ## Standard blind test flow — 2026-11-17
 
 - One test agent plays and records its own English interpretation from the observed visuals and gameplay, including uncertainty, without access to the canonical plot. After the agent completes its account, it evaluates the same session against the visual reference. At the end, the main agent compares the recorded blind account with the true plot and scores narrative match. Keep all assessments tied to the same test ID and session.
+
+- In blind gameplay the test agent uses MCP images and visible English UI for decisions and story interpretation. Hide internal scene, controller, navigation and story-state fields from the observer; transport identifiers and collection records are for the main agent.

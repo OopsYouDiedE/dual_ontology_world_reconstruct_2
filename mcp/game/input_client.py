@@ -42,6 +42,7 @@ async def main():
     parameters = StdioServerParameters(command=str(PYTHON),
         args=[str(ROOT / "mcp/game/server.py"), "--service", "input", "--expected-project-root", str(ROOT)], cwd=str(ROOT), env=os.environ.copy())
     current = None
+    blind_session = False
     index = 0
     host_pid = None
     server_pid = None
@@ -107,16 +108,17 @@ async def main():
                         payload["receipt"] = str(receipt)
                         if not result.isError and tool == "on":
                             current = result.structuredContent["session_id"]
+                            blind_session = bool(arguments.get("assessment_plan"))
                         elif not result.isError and tool == "close":
                             current = None
                             host_pid = None
                         data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
                         summary = {"tool": tool, "is_error": bool(result.isError), "session_id": current,
                             "receipt": str(receipt), "images": images, "audio": audio}
-                        for key in ("started", "busy", "scene", "observation_path", "host_errors", "source_identity", "server_identity",
+                        for key in (() if blind_session and tool in ("on", "step", "observe") else ("started", "busy", "scene", "observation_path", "host_errors", "source_identity", "server_identity",
                                     "closed", "graceful_exit", "movie_path", "movie_finalized", "movie_bytes",
                                     "checkpoint_path", "checkpoint_restored", "checkpoint_error", "checkpoint_saved",
-                                    "controller", "controller_phase", "metrics_directory", "acceptance_eligible"):
+                                    "controller", "controller_phase", "metrics_directory", "acceptance_eligible")):
                             if key in data:
                                 summary[key] = data[key]
                         if result.isError:

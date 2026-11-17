@@ -49,6 +49,7 @@ TOOLS = {
                                        "seed": {"type": "integer", "minimum": 0, "default": 1},
                                        "viewer": {"type": "string", "default": "detective"},
                                        "decision_maker": {"type": "string", "enum": ["human", "agent", "llm", "player"], "description": "Decision maker recorded for CLI player input."},
+                                       "assessment_plan": {"type": "string", "description": "Project-local simultaneous seven-category plan; required for agent Godot tests. Validates all channels, blind observer readiness and reference images before launch."},
                                        "snapshot_path": {"type":"string","description":"Project-local snapshot to restore in a Godot development session; ineligible for independent acceptance."},
                                        "save_slot": {"type":"string","pattern":"^[A-Za-z0-9_-]{1,64}$","description":"Optional stable isolated save slot for a local player interface."},
                                        "movie_filename": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.avi$", "description": "Optional new Godot Movie Maker AVI basename in artifacts/recordings; existing files are never overwritten."},

@@ -253,6 +253,13 @@ def start(arguments, deadline=None):
     elif "movie_fps" in arguments:
         raise ValueError("movie_fps requires movie_filename.")
     backend = endpoint.backend
+    if backend == "godot" and (arguments.get("assessment_plan") or arguments.get("decision_maker") in ("agent", "llm")):
+        from assessment_plan import validate
+        if not arguments.get("assessment_plan"):
+            raise ValueError("Agent tests require an assessment_plan with all seven synchronous channels ready")
+        endpoint.assessment_plan = validate(arguments["assessment_plan"], ROOT)
+        if endpoint.movie_path:
+            raise ValueError("Complete evaluation requires real-time capture; fixed-step movie capture cannot measure fluidity")
     # Validate capture options before reserving an output file.
     if endpoint.movie_path:
         try:
@@ -280,7 +287,7 @@ def start(arguments, deadline=None):
                 port = reservation.getsockname()[1]
             # Use the project's renderer, matching editor and exported gameplay.
             endpoint.executable = provenance.host_executable(resolve_godot(deadline=deadline))
-            command = [endpoint.executable, "--path", ROOT]
+            command = [endpoint.executable, "--path", ROOT, "--language", "en", "--max-fps", "60"]
             checkpoint_dir = provenance.project_path(ROOT / ".runtime/checkpoints/mcp" / endpoint.token, ROOT)
             checkpoint_dir.mkdir(parents=True, exist_ok=False)
             endpoint.checkpoint_path = checkpoint_dir / "latest.json"
@@ -297,6 +304,8 @@ def start(arguments, deadline=None):
             command.append("--dv-project-root=" + endpoint.expected_source["project_root"])
             command.append("--dv-project-sha256=" + endpoint.expected_source["project_sha256"])
             command.append("--dv-content=" + endpoint.content_path)
+            if getattr(endpoint, "assessment_plan", None):
+                command.append("--dv-assessment-plan=" + endpoint.assessment_plan["plan_path"])
             command.append("--dv-checkpoint-output=" + str(endpoint.checkpoint_path))
             command.append("--dv-checkpoint-stop=" + str(endpoint.checkpoint_stop_path))
             if snapshot_path is not None:
@@ -351,7 +360,9 @@ def execute(name, arguments):
                     endpoint.request({"type": "close"}, timeout=15)
                     if endpoint.process:
                         try:
-                            endpoint.process.wait(timeout=30)
+                            # The monitor allows 35 seconds to drain parallel
+                            # Master/background audio workers before engine exit.
+                            endpoint.process.wait(timeout=45)
                             graceful = endpoint.process.returncode == 0
                         except subprocess.TimeoutExpired:
                             graceful = False

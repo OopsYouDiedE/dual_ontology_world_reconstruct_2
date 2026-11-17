@@ -39,7 +39,7 @@ def frame_statistics(values: list[float]) -> dict:
                 spikes_over_33_3_ms=sum(value > 33.3 for value in frames))
 
 
-def audio_score(audio: dict) -> tuple[int | None, str]:
+def audio_score(audio: dict, background: dict | None = None) -> tuple[int | None, str]:
     """Score only evidence that supports the documented loudness thresholds."""
     if audio.get("status") != "complete" or not audio.get("signal_present"):
         return None, "Segment audio is incomplete or contains no verified signal"
@@ -52,8 +52,16 @@ def audio_score(audio: dict) -> tuple[int | None, str]:
         return None, "Integrated loudness and true peak are both required"
     if loudness >= -20:
         return 6, "Integrated loudness is not below -20 LUFS"
+    if background and background.get("complete") and background.get("signal_present"):
+        measured = background.get("measured_peak_dbtp")
+        if _valid_gain(measured) and measured >= -20:
+            return 6, "Measured isolated background true peak is not below -20 dBTP"
     if peak < -20:
         return 8, "Integrated loudness and the entire mix peak are below -20"
+    if background and background.get("complete") and background.get("signal_present"):
+        bound = background.get("peak_upper_bound_dbtp")
+        if isinstance(bound, (int, float)) and not isinstance(bound, bool) and math.isfinite(bound) and bound < -20:
+            return 8, "Integrated loudness and isolated background peak upper bound are below -20"
     return None, "Ambient-only peak is not isolated from dialogue or effects"
 
 
@@ -61,7 +69,7 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
     provenance.assert_runtime_root(ROOT)
     directory = provenance.project_path(directory, ROOT)
     timeline = directory / "timeline.yaml"
-    header, samples = [], []
+    header, samples, summary_lines = [], [], []
     in_timeline, finalized = False, False
     with timeline.open(encoding="utf-8-sig") as stream:
         for line in stream:
@@ -69,7 +77,11 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
                 in_timeline = True
             elif line.startswith(("summary:", '"summary":')):
                 finalized = True
-                break
+                summary_lines.append(line)
+                continue
+            elif finalized:
+                summary_lines.append(line)
+                continue
             elif in_timeline and line.startswith("  - "):
                 try:
                     samples.append(json.loads(line[4:]))
@@ -81,6 +93,7 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
     if not finalized and not incomplete:
         raise ValueError("Close the real session before final segment analysis")
     metadata = yaml.safe_load("".join(header))["metadata"]
+    summary = (yaml.safe_load("".join(summary_lines)) or {}).get("summary", {}) if finalized else {}
     source = metadata.get("source_identity", {})
     provenance.validate_source(source, provenance.project_identity(ROOT))
     if not isinstance(source.get("process_id"), int) or source["process_id"] <= 0:
@@ -129,7 +142,8 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
             segments[name]["text_samples"].append(sample.get("total_visible_characters"))
     audio_path = directory / "audio.json"
     audio = json.loads(audio_path.read_text(encoding="utf-8-sig")) if audio_path.is_file() else {}
-    audio_complete = finalized and audio.get("status") == "complete" and not any(s.get("audio_discarded_frames", 0) or s.get("audio_writer", {}).get("error", 0) for s in samples)
+    audio_complete = finalized and audio.get("status") == "complete" and not (summary.get("audio_discarded_frames", 0) or summary.get("audio_writer", {}).get("error", 0)) and not any(s.get("audio_discarded_frames", 0) or s.get("audio_writer", {}).get("error", 0) for s in samples)
+    route = summary.get("audio_route", {})
     ffmpeg = find_ffmpeg() if audio_complete else None
     for name, segment in segments.items():
         all_frames = frame_statistics(segment.pop("frames"))
@@ -150,32 +164,143 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
         segment["text_score_reason"] = "Visible aggregate lacks prompt classification, word count and English coverage"
         segment["audio"] = {"status": "pending", "reason": "Final complete audio and FFmpeg are required"}
         if ffmpeg and name not in ("boot", "title"):
-            segment["audio"] = analyze_audio(directory, name, segment["intervals_s"], int(audio["sample_rate"]), ffmpeg)
-            segment["measured_scores"][3], segment["audio_score_reason"] = audio_score(segment["audio"])
+            segment_route = route_for_intervals(route, segment["intervals_s"])
+            snapshot = segment_route.get("snapshot", {})
+            buses = snapshot.get("buses", {})
+            master = buses.get("Master", {})
+            route_valid = segment_route.get("stable") is True and snapshot.get("any_solo") is False and master.get("muted") is False and master.get("bypass") is False and master.get("capture_active") is True and _valid_gain(master.get("volume_db"))
+            if not route_valid:
+                segment["audio_score_reason"] = "Audio route changed during this scene or capture was muted or unavailable"
+                continue
+            master_offset = summary.get("master_start_offset_s")
+            if not _valid_gain(master_offset):
+                segment["audio_score_reason"] = "Master capture time offset is unavailable"
+                continue
+            master_intervals = shift_intervals(segment["intervals_s"], master_offset)
+            segment["audio"] = analyze_audio(directory, name, master_intervals, int(audio["sample_rate"]), ffmpeg, gain_db=master["volume_db"])
+            background = analyze_background(directory, name, segment["intervals_s"], int(audio["sample_rate"]), ffmpeg, metadata, dict(summary, audio_route=segment_route))
+            segment["background_audio"] = background
+            segment["measured_scores"][3], segment["audio_score_reason"] = audio_score(segment["audio"], background)
     return {"schema_version": 1, "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
             "finalized": finalized, "source_directory": str(directory), "source_identity": metadata.get("source_identity"),
             "entry": metadata.get("entry"), "measurement_context": metadata.get("measurement_context"),
             "snapshot_path": str(snapshot_path) if snapshot_path is not None else None,
             "acceptance_eligible": False if snapshot_path is not None else metadata.get("acceptance_eligible", True),
             "acceptance_scored": False,
-            "frame_clock": metadata.get("frame_clock"), "audio_alignment": "PCM sample time from recording start; contiguous frame segment intervals; capture loss makes audio pending",
+            "frame_clock": metadata.get("frame_clock"), "audio_alignment": "Frame intervals shifted by each capture start offset; audio mix-block timing uncertainty remains; capture loss makes audio pending",
             "source_sha256": {path.name: file_hash(path) for path in [timeline, directory / "frames.csv"]},
             "segments": segments}
 
 
-def analyze_audio(directory: Path, name: str, intervals: list, rate: int, ffmpeg: str) -> dict:
+def _valid_gain(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def route_for_intervals(route, intervals):
+    """Choose one unchanged route for the scene; nearby transitions fail closed."""
+    if not isinstance(route, dict) or not intervals:
+        return {}
+    changes = route.get("changes")
+    if changes is None:
+        return route if route.get("stable") is True else {}
+    if not isinstance(changes, list) or not changes:
+        return {}
+    previous = -1.0
+    for change in changes:
+        if not isinstance(change, dict) or not _valid_gain(change.get("elapsed_s")) or change["elapsed_s"] < previous or not isinstance(change.get("snapshot"), dict):
+            return {}
+        previous = change["elapsed_s"]
+    if changes[0]["elapsed_s"] != 0:
+        return {}
+    selected = None
+    for start, end in intervals:
+        if not _valid_gain(start) or not _valid_gain(end) or start < 0 or end <= start:
+            return {}
+        # Route is sampled once per frame; leave a 50 ms margin around changes.
+        if any(start - .05 <= change["elapsed_s"] <= end + .05 for change in changes[1:]):
+            return {}
+        candidates = [change for change in changes if change["elapsed_s"] < start or change["elapsed_s"] == 0]
+        if not candidates:
+            return {}
+        current = candidates[-1]["snapshot"]
+        if selected is not None and current != selected:
+            return {}
+        selected = current
+    return {"stable": True, "snapshot": selected}
+
+
+def shift_intervals(intervals, offset):
+    if not _valid_gain(offset): raise ValueError("Capture timing offset unavailable")
+    result = [[start + offset, end + offset] for start, end in intervals]
+    if any(start < 0 or end <= start for start, end in result): raise ValueError("Invalid capture interval")
+    return result
+
+
+def analyze_background(directory: Path, name: str, intervals: list, rate: int, ffmpeg: str, metadata: dict, summary: dict) -> dict:
+    """Bound simultaneous pre-fader captures after bus and master gains.
+
+    The linear sum of individual peak amplitudes is conservative even when
+    tracks peak at different times. An unknown route or missing channel fails closed.
+    """
+    out = {"complete": False, "signal_present": False, "tracks": {}, "peak_upper_bound_dbtp": None}
+    route = summary.get("audio_route", {})
+    snap = route.get("snapshot", {})
+    buses = snap.get("buses", {})
+    master = buses.get("Master", {})
+    inventory = metadata.get("background_bus_inventory", [])
+    statuses = summary.get("background_audio", {})
+    if not inventory or route.get("stable") is not True or snap.get("any_solo") is not False or master.get("muted") is not False or master.get("bypass") is not False or master.get("capture_active") is not True or master.get("other_effects") or not _valid_gain(master.get("volume_db")):
+        out["reason"] = "Background route, master effects, or source inventory is not verifiable"
+        return out
+    peaks = []
+    for bus in inventory:
+        if bus not in ("Music", "Ambient"):
+            out["reason"] = "Unrecognized background bus"
+            return out
+        info, status = buses.get(bus, {}), statuses.get(bus, {})
+        stem = "background-" + bus.lower()
+        path = directory / (stem + ".json")
+        try:
+            channel = json.loads(path.read_text(encoding="utf-8-sig"))
+            valid = (info.get("muted") is False and info.get("bypass") is False and info.get("capture_active") is True and info.get("send") == "Master" and _valid_gain(info.get("volume_db")) and status.get("worker_pid", -1) > 0 and status.get("discarded_frames") == 0 and status.get("writer", {}).get("error") == 0 and status.get("writer", {}).get("bytes_queued") == 0 and _valid_gain(status.get("start_offset_s")) and channel.get("status") == "complete" and channel.get("ffmpeg_exit_code") == 0 and (directory / (stem + ".f32le")).is_file() and status.get("writer", {}).get("bytes_written", 0) > 0 and status["writer"]["bytes_written"] == (directory / (stem + ".f32le")).stat().st_size)
+            if not valid:
+                raise ValueError("channel incomplete or route invalid")
+            state = analyze_audio(directory, name, shift_intervals(intervals, status["start_offset_s"]), rate, ffmpeg, stem=stem, gain_db=info["volume_db"] + master["volume_db"])
+            if state.get("status") != "complete": raise ValueError("segment analysis failed")
+            out["tracks"][bus] = state
+            if state.get("signal_present"):
+                peak = state.get("true_peak_dbtp")
+                if not _valid_gain(peak): raise ValueError("peak unavailable")
+                peaks.append(float(peak))
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+            out["reason"] = str(exc)
+            return out
+    out["complete"] = True
+    if peaks:
+        out["signal_present"] = True
+        # A single non-silent track has a measured background peak. With two
+        # or more tracks, summing magnitudes gives only a conservative bound.
+        if len(peaks) == 1:
+            out["measured_peak_dbtp"] = peaks[0]
+        out["peak_upper_bound_dbtp"] = 20 * math.log10(sum(10 ** (p / 20) for p in peaks))
+    else:
+        out["reason"] = "No verified background audio signal in this scene interval"
+    return out
+
+
+def analyze_audio(directory: Path, name: str, intervals: list, rate: int, ffmpeg: str, *, stem: str = "mix", gain_db: float = 0.0) -> dict:
     # Select only this observed segment, so title music cannot determine room LUFS.
     expression = "+".join("between(t,%.6f,%.6f)" % (start, end) for start, end in intervals)
-    filters = "aselect='" + expression + "',asetpts=N/SR/TB,ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'"
+    filters = "aselect='" + expression + "',asetpts=N/SR/TB,volume=" + str(gain_db) + "dB,ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'"
     command = [ffmpeg, "-hide_banner", "-nostats", "-f", "f32le", "-ar", str(rate), "-ac", "2",
-               "-i", str(directory / "mix.f32le"), "-af", filters, "-f", "null", "-"]
+               "-i", str(directory / (stem + ".f32le")), "-af", filters, "-f", "null", "-"]
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
                             timeout=180, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     state = {"status": "complete" if result.returncode == 0 else "error", "ffmpeg_exit_code": result.returncode,
              "method": "FFmpeg EBU R128 / ITU BS.1770 on this segment only", "intervals_s": intervals}
     for line in result.stdout.splitlines():
         update_metadata(state, line)
-    log = directory / ("segment-" + name + "-audio.log")
+    log = directory / ("segment-" + name + "-" + stem + "-audio.log")
     log.write_text("COMMAND " + json.dumps(command, ensure_ascii=False) + "\n" + result.stderr, encoding="utf-8")
     return state
 

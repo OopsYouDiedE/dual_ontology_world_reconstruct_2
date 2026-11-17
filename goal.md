@@ -1,8 +1,8 @@
 # Chapter 1 completion and evaluation
 
-本 Goal 创建时间：2026-11-17 10:07:04 +08:00。累计工作上限 8 小时；本轮既定熔断检查时间为 2026-11-17 18:07:04 +08:00。
+本 Goal 创建时间：2026-11-17 18:43:39 +08:00。累计工作上限 8 小时；本轮既定熔断检查时间为 2026-11-18 02:43:39 +08:00。
 
-The user explicitly authorized this new eight-hour window on 2026-11-17 and requested continuous work on Chapter 1. Work remains on `main` in this repository. Preserve pre-existing working-tree changes and record progress in the project review ledger.
+The user explicitly authorized a new test window by requesting “现在开测” on 2026-11-17 after the prior window expired. This window is for simultaneous complete seven-category collection and evaluation. Preserve the previous receipt and all real evidence. Work only on main in this repository.
 
 ## Priorities
 
@@ -44,3 +44,7 @@ The user explicitly authorized this new eight-hour window on 2026-11-17 and requ
 - 10:41: Development flow and UI now use the shared audio-draining shutdown path. A focused flow run and a full batch exit cleanly; flow, fixtures, visual survey, UI, bedroom and kitchen pass. Corridor remains blocked on navigation and macro-camera coverage.
 
 At the deadline stop feature changes, terminate owned test processes, export the final report, preserve evidence and provide a handover. Commit only changes whose provenance and scope are verified.
+
+## Current simultaneous evaluation window
+
+All seven collection and assessment channels must be ready before starting any new evaluated run. Use at most three test-owned rendered hosts capped at 60 FPS. Prepare verified references, independent blind observers, full dynamic visual/audio capture, and a common run/scene/time identity before launch. End the run with one complete evidence-backed score batch.

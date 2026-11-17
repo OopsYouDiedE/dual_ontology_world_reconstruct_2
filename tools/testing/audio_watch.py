@@ -122,7 +122,7 @@ def run(args: argparse.Namespace) -> int:
         return 2
     command = [ffmpeg, "-hide_banner", "-nostats", "-f", "f32le", "-ar", str(args.rate), "-ac", "2", "-i", "pipe:0", "-af", "ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'", "-f", "null", "-"]
     state["command"] = command
-    log = output.with_name("audio-ffmpeg.log").open("w", encoding="utf-8")
+    log = output.with_name("audio-ffmpeg.log" if output.name == "audio.json" else output.stem + "-ffmpeg.log").open("w", encoding="utf-8")
     process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     state["status"] = "measuring"
     publish()
@@ -174,7 +174,7 @@ def run(args: argparse.Namespace) -> int:
     with lock:
         state.update(status="complete" if code == 0 else "error", ffmpeg_exit_code=code, duration_s=source.stat().st_size / (8 * args.rate))
         publish()
-    write_float_wav(source, output.with_name("mix.wav"), args.rate)
+    write_float_wav(source, output.with_name("mix.wav" if output.name == "audio.json" else output.stem + ".wav"), args.rate)
     return 0 if code == 0 else 1
 
 

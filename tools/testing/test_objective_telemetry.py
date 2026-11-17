@@ -2,7 +2,7 @@
 import unittest
 
 from audio_watch import update_metadata
-from mainline_metrics import audio_score, frame_statistics
+from mainline_metrics import audio_score, frame_statistics, route_for_intervals
 
 
 class ObjectiveTelemetryTests(unittest.TestCase):
@@ -27,6 +27,36 @@ class ObjectiveTelemetryTests(unittest.TestCase):
         for lufs, peak in [(None, -21), (-25, None), (True, -21), (-25, False)]:
             state = dict(status="complete", signal_present=True, integrated_lufs=lufs, true_peak_dbtp=peak)
             self.assertIsNone(audio_score(state)[0])
+
+    def test_background_measured_failure_and_multitrack_upper_bound(self):
+        mix = dict(status="complete", signal_present=True, integrated_lufs=-25, true_peak_dbtp=-10)
+        isolated = dict(complete=True, signal_present=True, measured_peak_dbtp=-20.0, peak_upper_bound_dbtp=-20.0)
+        self.assertEqual(audio_score(mix, isolated)[0], 6)
+        mix["true_peak_dbtp"] = -21
+        self.assertEqual(audio_score(mix, isolated)[0], 6)
+        mix["true_peak_dbtp"] = -10
+        isolated["measured_peak_dbtp"] = -21
+        isolated["peak_upper_bound_dbtp"] = -21
+        self.assertEqual(audio_score(mix, isolated)[0], 8)
+        combined_upper_bound = dict(complete=True, signal_present=True, peak_upper_bound_dbtp=-15)
+        self.assertIsNone(audio_score(mix, combined_upper_bound)[0])
+        isolated["complete"] = False
+        self.assertIsNone(audio_score(mix, isolated)[0])
+        mix["signal_present"] = False
+        isolated["complete"] = True
+        self.assertIsNone(audio_score(mix, isolated)[0])
+
+    def test_route_changes_only_invalidate_overlapping_scenes(self):
+        one = {"buses": {"Master": {"volume_db": 0}}}
+        two = {"buses": {"Master": {"volume_db": -3}}}
+        route = {"stable": False, "changes": [{"elapsed_s": 0, "snapshot": one},
+                 {"elapsed_s": 10, "snapshot": two}]}
+        self.assertEqual(route_for_intervals(route, [[1, 5]])["snapshot"], one)
+        self.assertEqual(route_for_intervals(route, [[11, 15]])["snapshot"], two)
+        self.assertEqual(route_for_intervals(route, [[9, 11]]), {})
+        self.assertEqual(route_for_intervals(route, [[1, 5], [11, 15]]), {})
+        self.assertEqual(route_for_intervals(route, [[10.02, 11]]), {})
+        self.assertEqual(route_for_intervals({"stable": False}, [[1, 5]]), {})
 
     def test_frame_statistics_include_tail_and_threshold(self):
         stats = frame_statistics([10.0] * 99 + [40.0])

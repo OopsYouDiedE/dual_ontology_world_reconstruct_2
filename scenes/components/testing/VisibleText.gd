@@ -53,6 +53,14 @@ static func _append(node: Node, rect: Rect2, output: Array) -> void:
 	if not rect.has_area(): return
 	var text: String = node.get_parsed_text() if node is RichTextLabel else str(node.text)
 	if text.is_empty(): return
-	output.append({"text": text, "x": rect.position.x, "y": rect.position.y, "width": rect.size.x,
+	var category := str(node.get_meta("text_category", "unknown"))
+	if node is Label3D: category = "nameplate"
+	elif text.strip_edges().length() == 1: category = "single_key_or_text"
+	var english_characters_only := true
+	for index in text.length():
+		if text.unicode_at(index) > 127: english_characters_only = false
+	var words := RegEx.new()
+	words.compile("[A-Za-z]+(?:['-][A-Za-z]+)*")
+	output.append({"text": text, "category": category, "word_count": words.search_all(text).size(), "character_count": text.length(), "ascii_only": english_characters_only, "english_verified": false, "x": rect.position.x, "y": rect.position.y, "width": rect.size.x,
 		"height": rect.size.y, "class": node.get_class(), "path": str(node.get_path()),
 		"disabled": node.disabled if node is BaseButton else false})

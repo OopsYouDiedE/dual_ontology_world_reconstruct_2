@@ -9,6 +9,9 @@ var launch_scene := ""
 var monitor: Control
 var _monitor_stopped := false
 var snapshot_path := ""
+var assessment_plan_path := ""
+var assessment_test_id := ""
+var realtime_capture: Node
 
 func _ready() -> void:
 	var port := 0
@@ -21,6 +24,7 @@ func _ready() -> void:
 		elif argument.begins_with("--dv-project-root="): expected_root = argument.trim_prefix("--dv-project-root=")
 		elif argument.begins_with("--dv-project-sha256="): expected_hash = argument.trim_prefix("--dv-project-sha256=")
 		elif argument.begins_with("--dv-snapshot="): snapshot_path = argument.trim_prefix("--dv-snapshot=")
+		elif argument.begins_with("--dv-assessment-plan="): assessment_plan_path = argument.trim_prefix("--dv-assessment-plan=")
 	if port == 0: set_process(false); return
 	var source := preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
 	var root_path := str(source.project_root).replace("\\", "/").simplify_path().trim_suffix("/")
@@ -55,7 +59,19 @@ func _start_monitor() -> void:
 	add_child(monitor)
 	monitor.visible = false
 	var directory := ".runtime/mainline-runs/" + Time.get_datetime_string_from_system().replace(":", "-") + "-" + str(OS.get_process_id())
-	monitor.configure(directory, {"mock": not snapshot_path.is_empty(), "entry": "snapshot" if not snapshot_path.is_empty() else "production_title", "snapshot_path": snapshot_path, "acceptance_eligible": snapshot_path.is_empty(), "launch_scene": launch_scene, "process_id": OS.get_process_id(), "project_sha256": FileAccess.get_sha256("res://project.godot"), "monitor_visible": false, "capture_policy": "independent Terra review required"}, content)
+	var metadata := {"mock": not snapshot_path.is_empty(), "entry": "snapshot" if not snapshot_path.is_empty() else "production_title", "snapshot_path": snapshot_path, "acceptance_eligible": snapshot_path.is_empty(), "launch_scene": launch_scene, "process_id": OS.get_process_id(), "project_sha256": FileAccess.get_sha256("res://project.godot"), "monitor_visible": false, "capture_policy": "independent Terra review required", "max_fps": Engine.max_fps}
+	if not assessment_plan_path.is_empty():
+		var plan = JSON.parse_string(FileAccess.get_file_as_string(assessment_plan_path))
+		if not plan is Dictionary:
+			push_error("Simultaneous assessment plan could not be read")
+			return
+		assessment_test_id = str(plan.test_id)
+		metadata.merge({"test_id": plan.test_id, "revision": plan.revision, "assessment_plan": assessment_plan_path, "assessment_plan_sha256": FileAccess.get_sha256(assessment_plan_path), "collection_mode": "simultaneous", "assessment_channels": plan.channels})
+	monitor.configure(directory, metadata, content)
+	if not assessment_plan_path.is_empty():
+		realtime_capture = preload("res://scenes/components/testing/RealtimeCapture.gd").new()
+		add_child(realtime_capture)
+		realtime_capture.configure(monitor)
 
 func _story(main: Node) -> Control:
 	if not is_instance_valid(main): return null
@@ -122,15 +138,19 @@ func _tag_monitor() -> void:
 	monitor.sample_context = {"gameplay_segment": segment, "room": room, "story_clock": clock, "text_exempt": exempt}
 
 func begin_shutdown() -> void:
+	if realtime_capture != null: realtime_capture.finish()
 	_monitor_stopped = true
 	if monitor != null: monitor.finish()
 
 func wait_for_shutdown() -> void:
 	if monitor == null: return
-	var deadline := Time.get_ticks_msec() + 12000
-	while monitor._worker_pid > 0 and OS.is_process_running(monitor._worker_pid) and Time.get_ticks_msec() < deadline:
-		await get_tree().create_timer(0.05).timeout
-	if monitor._worker_pid > 0 and OS.is_process_running(monitor._worker_pid): push_error("Mainline audio worker did not finalize before shutdown")
+	var deadline := Time.get_ticks_msec() + 35000
+	var workers: Array[int] = [monitor._worker_pid]
+	for stream in monitor.background_streams: workers.append(int(stream.worker_pid))
+	for pid in workers:
+		while pid > 0 and OS.is_process_running(pid) and Time.get_ticks_msec() < deadline:
+			await get_tree().create_timer(0.05).timeout
+		if pid > 0 and OS.is_process_running(pid): push_error("Audio worker did not finalize before shutdown: " + str(pid))
 
 func _process(_delta: float) -> void:
 	_tag_monitor()
@@ -242,6 +262,8 @@ func _handle(request: Dictionary) -> void:
 	if monitor != null:
 		result["metrics_directory"] = monitor.output_dir
 		result["metrics"] = monitor.latest
+		result["assessment_test_id"] = assessment_test_id
+		result["assessment_segment"] = monitor.node_id
 	if bool(request.get("capture_image", true)):
 		var captured := get_viewport().get_texture().get_image()
 		var encoder := Thread.new()

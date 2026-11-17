@@ -32,14 +32,29 @@ class BatchScoresTest(unittest.TestCase):
         self.assertTrue(execute(self.store, 'add_scores', self.args)['duplicate'])
         self.assertEqual(len(self.store.load()['events']), 1)
         event = execute(self.store, 'see_score', {'trajectory_id': 'wake'})['latest_test']
-        self.assertEqual(event['test_result']['scores'], self.args['scores'])
-        self.assertEqual(event['test_result']['reasons'], self.args['reasons'])
+        self.assertEqual(event['test_result']['scores']['audio_loudness'], 0)
+        self.assertEqual(event['test_result']['provisional_categories'], ['audio_loudness'])
+        self.assertEqual(event['test_result']['status'], 'incomplete')
+        self.assertIn('Audio capture unavailable', event['test_result']['reasons']['audio_loudness'])
+        self.assertIn('Provisional 0', event['test_result']['reasons']['audio_loudness'])
+        self.assertEqual(event['test_result']['scores']['fluidity'], 8)
         self.assertEqual(len(event['revision']), 40)
         changed = copy.deepcopy(self.args)
         changed['scores']['fluidity'] = 9
         with self.assertRaises(ValueError):
             execute(self.store, 'add_scores', changed)
         self.assertEqual(len(self.store.load()['events']), 1)
+
+    def test_explicit_incomplete_keeps_observed_numeric_failures(self):
+        self.args['scores'] = {category: 6 for category in SCORE_CATEGORIES}
+        self.args['status'] = 'incomplete'
+        event = execute(self.store, 'add_scores', self.args)['event']
+        result = event['test_result']
+        self.assertEqual(result['status'], 'incomplete')
+        self.assertEqual(result['provisional_categories'], [])
+        self.assertTrue(all(score == 6 for score in result['scores'].values()))
+        import test_results
+        self.assertEqual(test_results.collect([], [event])[0]['status'], '已测 · 测试未完成')
 
     def test_invalid_batches_leave_no_event(self):
         variants = []

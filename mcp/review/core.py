@@ -237,7 +237,7 @@ class Store:
             self.publish(data)
             return result
 
-    def add_scores(self, trajectory_id, test_id, scores, reasons, evidence, expected_project_root=None):
+    def add_scores(self, trajectory_id, test_id, scores, reasons, evidence, expected_project_root=None, status="complete"):
         """Record all seven dimensions of one test in a single immutable event."""
         self.project({"expected_project_root": expected_project_root})
         plan = json.loads((self.root / "assets/data/test_scenarios/gameplay_review_plan.json").read_text(encoding="utf-8-sig"))
@@ -257,7 +257,12 @@ class Store:
                 raise ValueError("Each score or missing measurement requires a reason")
         if not isinstance(evidence, list) or any(not isinstance(item, str) for item in evidence) or len(evidence) != len(set(evidence)):
             raise ValueError("Evidence must be a list of unique paths")
+        if status not in ("complete", "incomplete"):
+            raise ValueError("Test status must be complete or incomplete")
         request = dict(trajectory_id=trajectory_id, test_id=test_id, scores=scores, reasons=reasons, evidence=evidence)
+        # Keep existing request fingerprints stable when callers use the default.
+        if status != "complete":
+            request["status"] = status
         fingerprint = digest(request)
         with self.locked():
             data = self.load()
@@ -273,7 +278,15 @@ class Store:
                               kind="check", summary="Test scores: " + test_id,
                               result="Seven dimensions recorded", revision=revision, evidence=evidence)
             result = self._progress(event_args, data, persist=False)
-            result["event"]["test_result"] = dict(test_id=test_id, scores=scores, reasons=reasons)
+            missing = [category for category in SCORE_CATEGORIES if scores[category] is None]
+            published_scores = {category: (0 if scores[category] is None else scores[category])
+                                for category in SCORE_CATEGORIES}
+            published_reasons = {category: ("Provisional 0: evidence unavailable; test incomplete. " + reasons[category]
+                                             if category in missing else reasons[category])
+                                 for category in SCORE_CATEGORIES}
+            result["event"]["test_result"] = dict(test_id=test_id, scores=published_scores,
+                                                  reasons=published_reasons, provisional_categories=missing,
+                                                  status="incomplete" if missing or status == "incomplete" else "complete")
             result["event"]["test_request_sha256"] = fingerprint
             self.publish(data)
             return result

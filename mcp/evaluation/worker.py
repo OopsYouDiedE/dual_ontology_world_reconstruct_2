@@ -782,7 +782,7 @@ class Evaluation:
                         evidence = list(dict.fromkeys([score_evidence, *evidence]))
                         results[segment] = {"test_id": self.state["run_id"] + "-" + segment,
                                             "scores": group["scores"], "reasons": group["reasons"],
-                                            "jobs": ["survey-" + item for item in group["case_ids"]],
+                                            "status": group.get("status", "complete"), "jobs": ["survey-" + item for item in group["case_ids"]],
                                             "evidence": evidence}
                 else:
                     results = build_test_results(self.state, self.directory, self.root)
@@ -792,7 +792,8 @@ class Evaluation:
                 for segment, result in results.items():
                     try:
                         self.store.add_scores(trajectory_id=segment, test_id=result["test_id"],
-                                              scores=result["scores"], reasons=result["reasons"], evidence=result["evidence"])
+                                              scores=result["scores"], reasons=result["reasons"], evidence=result["evidence"],
+                                              status=result.get("status", "complete"))
                     except Exception as error:
                         with self.lock:
                             result["publication_error"] = type(error).__name__ + ": " + str(error)

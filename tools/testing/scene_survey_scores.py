@@ -188,6 +188,9 @@ def aggregate(cases):
         group["evidence"].extend(case["evidence"])
     for segment, group in groups.items():
         rows = [case for case in cases if case["segment_id"] == segment]
+        group["status"] = ("incomplete" if any(row.get("status") != "passed" or
+                                                  any(row["scores"][key] is None for key in CATEGORIES)
+                                                  for row in rows) else "complete")
         for category in CATEGORIES:
             present = [(row["case_id"], row["scores"][category]) for row in rows if row["scores"][category] is not None]
             absent_rows = [row for row in rows if row["scores"][category] is None]

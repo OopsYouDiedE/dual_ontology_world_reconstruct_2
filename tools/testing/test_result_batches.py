@@ -18,9 +18,11 @@ class ResultBatches(unittest.TestCase):
         old = self.event('old', '2026-11-17T01:00:00+00:00', [9] * 7)
         new = self.event('new', '2026-11-17T02:00:00+00:00', [6, None, 8, 7, 5, 4, 9])
         latest = results.latest_by_segment(results.collect([], [new, old]))['wake']
-        self.assertEqual(latest['scores'], [6, None, 8, 7, 5, 4, 9])
+        self.assertEqual(latest['scores'], [6, 0, 8, 7, 5, 4, 9])
+        self.assertEqual(latest['provisional_categories'], ['text_density'])
+        self.assertIn('Provisional 0', latest['reasons'][1])
         self.assertEqual(latest['id'], 'new')
-        self.assertEqual(latest['status'], '不合格')
+        self.assertEqual(latest['status'], '已测 · 测试未完成')
 
     def test_legacy_single_score_does_not_merge_with_another_test(self):
         events = [dict(event_id=str(i), segment_id='wake', revision='abc1234',
@@ -28,8 +30,16 @@ class ResultBatches(unittest.TestCase):
                        development_score=dict(category=key, score=8))
                   for i, key in enumerate(results.CATEGORIES)]
         latest = results.latest_by_segment(results.collect([], events))['wake']
-        self.assertEqual(latest['scores'], [None] * 6 + [8])
+        self.assertEqual(latest['scores'], [0] * 6 + [8])
+        self.assertEqual(len(latest['provisional_categories']), 6)
         self.assertTrue(all(latest['reasons']))
+
+    def test_observed_zero_is_distinct_from_missing_evidence(self):
+        event = self.event('zero', '2026-11-17T01:00:00+00:00', [0, 8, 8, 8, 8, 8, 8])
+        result = results.collect([], [event])[0]
+        self.assertEqual(result['status'], '不合格')
+        self.assertEqual(result['provisional_categories'], [])
+        self.assertNotIn('Provisional 0', result['reasons'][0])
 
     def test_all_dimensions_visible_and_html_escaped(self):
         r = results.collect([], [self.event('one', '2026-11-17T01:00:00+00:00', [8] * 7)])[0]
@@ -45,7 +55,8 @@ class ResultBatches(unittest.TestCase):
 
     def test_missing_and_blocked_results(self):
         r = results.collect([], [self.event('one', '2026-11-17T01:00:00+00:00', [8] * 6 + [None])])[0]
-        self.assertEqual(r['status'], '已测 · 评分不全')
+        self.assertEqual(r['status'], '已测 · 测试未完成')
+        self.assertIn('暂定·缺证据', results.card(dict(id='wake', label='Opening'), r, None, None, None, None))
         review = dict(id='blocked', segment_id='wake', revision='abc1234',
                       observed_at=r['at'], scores=[8] * 7, score_reasons=['Observed'] * 7,
                       report='report.md', status='blocked')

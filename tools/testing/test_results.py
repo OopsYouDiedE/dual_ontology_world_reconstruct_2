@@ -21,10 +21,21 @@ def normalize(test_id, segment, revision, at, scores, reasons, **extra):
     notes = [str(note).strip() or ('This test did not collect this dimension.' if value is None
                                   else 'Imported from the original test record.')
              for value, note in zip(values, notes)]
-    status = ('不合格' if any(v is not None and v < 8 for v in values)
-              else '已测 · 评分不全' if any(v is None for v in values) else '合格')
+    explicit_provisional = set(extra.pop('provisional_categories', []))
+    missing = {category for category, value in zip(CATEGORIES, values) if value is None} | explicit_provisional
+    for index, category in enumerate(CATEGORIES):
+        if category in missing:
+            if values[index] is not None and values[index] != 0:
+                raise ValueError('A provisional missing-evidence score must be zero')
+            values[index] = 0
+            if not notes[index].startswith('Provisional 0:'):
+                notes[index] = 'Provisional 0: evidence unavailable; test incomplete. ' + notes[index]
+    test_status = extra.pop('test_status', '')
+    status = ('已测 · 测试未完成' if missing or test_status == 'incomplete'
+              else '不合格' if any(v < 8 for v in values) else '合格')
     return dict(id=test_id, segment_id=segment, revision=revision, at=at,
-                scores=values, reasons=notes, status=status, **extra)
+                scores=values, reasons=notes, status=status, provisional_categories=sorted(missing), **extra)
+
 
 
 def collect(reviews, events):
@@ -46,7 +57,8 @@ def collect(reviews, events):
         if batch:
             results.append(normalize(batch['test_id'], event['segment_id'], event['revision'],
                                      event['at'], batch['scores'], batch['reasons'],
-                                     images=[], evidence=event.get('evidence', []), event_id=event['event_id'], independent_review=False))
+                                     images=[], evidence=event.get('evidence', []), event_id=event['event_id'], independent_review=False,
+                                     provisional_categories=batch.get('provisional_categories', []), test_status=batch.get('status', '')))
         elif event.get('development_score'):
             old = event['development_score']
             results.append(normalize(event['event_id'], event['segment_id'], event['revision'],
@@ -73,7 +85,8 @@ def matrix(scenes, latest):
     for scene in scenes:
         result = latest.get(scene['id'])
         values = result['scores'] if result else [None] * 7
-        cells = ''.join(f'<td data-batch-score="{category}">{score_text(v)}</td>'
+        cells = ''.join(f'<td data-batch-score="{category}">{score_text(v)}'
+                        + (' (暂定·缺证据)' if result and category in result.get('provisional_categories', []) else '') + '</td>'
                         for category, v in zip(CATEGORIES, values))
         label = f'<a href="#trajectory-{escape(scene["id"], quote=True)}">{escape(scene["label"])}</a>'
         rows.append(f'<tr data-test-segment="{escape(scene["id"], quote=True)}"><th>{label}</th>'
@@ -95,9 +108,10 @@ def card(scene, result, page, link, project_file, trajectory):
     body += '</span> · 版本 <span data-result-revision>' + escape(result['revision'][:12]) + '</span></p>'
     body += '<p data-result-status>' + result['status'] + '</p><div class="dimensions">'
     for category, name, value, reason in zip(CATEGORIES, LABELS, result['scores'], result['reasons']):
-        cls = 'pending' if value is None else 'pass' if value >= 8 else 'fail'
+        provisional = category in result.get('provisional_categories', [])
+        cls = 'pending' if provisional else 'pass' if value >= 8 else 'fail'
         body += (f'<div class="dimension {cls}" data-result-category="{category}"><span>{name}</span>'
-                 f'<b>{score_text(value)}</b><p>{escape(reason)}</p></div>')
+                 f'<b>{score_text(value)}{" (暂定·缺证据)" if provisional else ""}</b><p>{escape(reason)}</p></div>')
     body += '</div>'
     if result.get('images'):
         body += trajectory(result['images'], page)
@@ -123,13 +137,13 @@ def markdown(scenes, latest, revision):
         r = latest.get(scene['id'])
         values = r['scores'] if r else [None] * 7
         lines.append('| ' + scene['label'] + ' | ' + (r['id'] if r else '尚未测试') + ' | '
-                     + ' | '.join(score_text(v) for v in values) + ' |')
+                     + ' | '.join(score_text(v) + (' (暂定·缺证据)' if r and category in r.get('provisional_categories', []) else '') for category, v in zip(CATEGORIES, values)) + ' |')
     for scene in scenes:
         r = latest.get(scene['id'])
         if not r:
             continue
         lines += ['', '## ' + scene['label'], '', f"{r['id']} · {r['at']} · {r['revision']} · {r['status']}", '']
-        lines += [f'- {name}：{score_text(v)} — {reason}' for name, v, reason in zip(LABELS, r['scores'], r['reasons'])]
+        lines += [f'- {name}：{score_text(v)}' + (' (暂定·缺证据)' if category in r.get('provisional_categories', []) else '') + f' — {reason}' for category, name, v, reason in zip(CATEGORIES, LABELS, r['scores'], r['reasons'])]
     return '\n'.join(lines) + '\n'
 
 

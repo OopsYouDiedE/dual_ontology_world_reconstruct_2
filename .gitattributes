@@ -1,0 +1,4 @@
+
+# Preserve evidence hashes across Windows and Unix checkouts.
+artifacts/evaluation/** -text
+artifacts/review/** -text

@@ -1,0 +1,362 @@
+{
+  "wake-bedroom": {
+    "path": "output/imagegen/chapter1/R05-morning-v1.png",
+    "sha256": "0e448ace9780ff195d954855ae5f3e52cc54a41c1f976e84751a25055e82ac10",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "receipt": "artifacts/references/chapter1-20261116/R05-morning-receipt.json",
+      "scope": "prior verified same-project reference; lighting/material comparison"
+    }
+  },
+  "corridor-meeting": {
+    "path": "output/imagegen/chapter1/corridor-morning-v1.png",
+    "sha256": "35f3012cc196ffb38b90648a246d9227881372dc3915110b7356d28152a76eab",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "receipt": "artifacts/references/chapter1-20261116/corridor-morning-receipt.json",
+      "scope": "prior verified same-project reference; lighting/material comparison"
+    }
+  },
+  "kitchen-evidence": {
+    "path": "output/imagegen/chapter1/kitchen-morning-v1.png",
+    "sha256": "8b471c5f7c1dd51ebd8e223185aca2f34436d2437485851c23205f090b10d992",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "receipt": "artifacts/references/chapter1-20261116/kitchen-morning-receipt.json",
+      "scope": "prior verified same-project reference; lighting/material comparison"
+    }
+  },
+  "kitchen-reconstruction": {
+    "path": "output/imagegen/scene-survey-20261117/kitchen-reconstruction.png",
+    "sha256": "7707376ccebbab45b6567a824e3bb3097ff13187ae2d96e27cae722a5f51377e",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/02-reconstruction.png",
+      "source_sha256": "09e700333f25829e7893f4db1b595a1028d70f43b43986f09671bb65149d36ab",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/02-reconstruction.png.json",
+      "scope": "occluded reconstruction camera capture; preserve observed obstruction as comparison baseline, not target for correct placement"
+    }
+  },
+  "service-stair": {
+    "path": "output/imagegen/scene-survey-20261117/service-stair.png",
+    "sha256": "a5d8eb0ebf4bcd905153b78051e4705a15591805d5627e5adc934c6d96ae94bc",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/01-entry.png",
+      "source_sha256": "1774b99ad718c46ecc49fb8011ebd7631a9942ee16806f4b9636306c6d3ba1fd",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "service-maintenance": {
+    "path": "output/imagegen/scene-survey-20261117/service-maintenance.png",
+    "sha256": "2fbaa63f8348983089611d9d5e2cde1c8fd03c02219af2e8f2511fcfa7829c09",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/01-entry.png",
+      "source_sha256": "694787c3a454265d7856933e5b0a156af98adee7a53ff1e8db3df3cd6a53469f",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "service-hall": {
+    "path": "output/imagegen/scene-survey-20261117/service-hall.png",
+    "sha256": "f06b449f0513f2653dac9a43e6a136a7e90385f619ea058affcec4937d6489c0",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/01-entry.png",
+      "source_sha256": "c196137c3bc5eb9dc41b6ff8db79cd6ba0b076d7f0e230d00d201ed30b386100",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "cross-c-window": {
+    "path": "output/imagegen/scene-survey-20261117/cross-c-window.png",
+    "sha256": "39e65c6e377323a96bb56df1eed205dbf90eb10b091533c0ec1e8a3fa0d93ea7",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/01-entry.png",
+      "source_sha256": "e727deee94f489ed2ef7a104f299962fecb4646b9e1aeb450c6850692ecbf38a",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "cross-d-pressure": {
+    "path": "output/imagegen/scene-survey-20261117/cross-d-pressure.png",
+    "sha256": "6301ec66f45e123a43852962c3885c66b6baab50836e36ebc79262dd9cc9c727",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/01-entry.png",
+      "source_sha256": "6545cb9d7a154d1fd04473b118c0c6ed07d6a4fe656f66fa82346cc5bdc3fd84",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "cross-central": {
+    "path": "output/imagegen/scene-survey-20261117/cross-central.png",
+    "sha256": "410bd4323ff4d7a315b5897523bee0ff800564898c74843ac57ab6c1f9d2c653",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/01-entry.png",
+      "source_sha256": "7f0522961a8426553dff1257f7c976ed0eb6e33dd6dbc7cee82587e478c44e9a",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "shaft-north-stair": {
+    "path": "output/imagegen/scene-survey-20261117/shaft-north-stair.png",
+    "sha256": "20b02a28a2ca2db4a297e7f4836869ff48ec625a2266d57676b0eaa39c3b6604",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png",
+      "source_sha256": "81c6bd11ee544acc987b649ea6b2ff185041e9613a948a43dec00d70d75767f2",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "shaft-four-anchors": {
+    "path": "output/imagegen/scene-survey-20261117/shaft-four-anchors.png",
+    "sha256": "6dff2183d004f0fb6625d91eedb5450a8f7587610dd65cd15bc6d318b7c1c219",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/01-entry.png",
+      "source_sha256": "609aeb7264492e077b8916fd6b41e9f8ec1f209326fbba122cc7a2820ffeefd1",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "shaft-question": {
+    "path": "output/imagegen/scene-survey-20261117/shaft-question.png",
+    "sha256": "8019b13a6e87577ba6131a2f266ab31f0b69b324f4c9c598168b5f92c70a6fa3",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/01-entry.png",
+      "source_sha256": "4dc3317950328ce59d639812b9cf4c674d2061e834b506361ecb41d85afb8c46",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "poem-stakeout": {
+    "path": "output/imagegen/scene-survey-20261117/poem-stakeout.png",
+    "sha256": "504f3eed88d175b3f10c74b84cdc3a7cb100005fbacb9db2a11e0c33b7b8b623",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/01-entry.png",
+      "source_sha256": "8709cb5017f85ff985a3bb722e5489ba1beafac30b896f2b28b335ebc6d2727c",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "poem-expose": {
+    "path": "output/imagegen/scene-survey-20261117/poem-expose.png",
+    "sha256": "87a0b6e32bcb7e6254eb211a843e63a6d4f07f3f565673affe0c6b40b5aadcc0",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/01-entry.png",
+      "source_sha256": "0ecb91df657973cddb313f4b4656d545fbd12b32899984320b7595b308d47ded",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "poem-indulge": {
+    "path": "output/imagegen/scene-survey-20261117/poem-indulge.png",
+    "sha256": "146707ef66370e8d36cd677fac74b9cc11f57de37aae7c40ca031dbf70a247ba",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/01-entry.png",
+      "source_sha256": "58044059a6c6a3d986bcbd223238f384d2218caf02fb4db342d3825d547f6564",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "institutes-corridor": {
+    "path": "output/imagegen/scene-survey-20261117/institutes-corridor.png",
+    "sha256": "af6cf0791ec5608d69b3ccd69c2d950e3c565733ec06e3d6c866cba6bd1e0d8f",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/01-entry.png",
+      "source_sha256": "8e757975e1d37016d224502b02098478aa4dbde063bd79d5b5c853e38f1cf17a",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "institute-w-102": {
+    "path": "output/imagegen/scene-survey-20261117/institute-w-102.png",
+    "sha256": "0814d5f3f0622cc3ecea3a097ebdeb646aaa051a31aca2a903077f1d45fedf83",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/01-entry.png",
+      "source_sha256": "ef131707e99014038194eae4c76425af128182e9268c6d4c3a69ead2b9ee9de9",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "institute-s-102": {
+    "path": "output/imagegen/scene-survey-20261117/institute-s-102.png",
+    "sha256": "c1a18d10647146d43052f74ba95edd99502d569a7f6c64f9761267dfa1e34ee7",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/01-entry.png",
+      "source_sha256": "324e4c87053642c7e5b01555502151991a8f88a1d42cbc73891e7e7668d78ebe",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "institute-b-102": {
+    "path": "output/imagegen/scene-survey-20261117/institute-b-102.png",
+    "sha256": "9ef4f0fbfe6a734862c3a788df6408bea0af356c85a59f16db359f1e30808257",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/01-entry.png",
+      "source_sha256": "38ac1893a5a40c89a54b137381c8f116bedc43e8c270cbdbdb0e2dbcafdbb450",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "institute-f-104": {
+    "path": "output/imagegen/scene-survey-20261117/institute-f-104.png",
+    "sha256": "f48931a74a9fae0899c6a3393162e7842452e89ae6aaa96c6795463d67cdbdb4",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/01-entry.png",
+      "source_sha256": "c0d890fb06be724a755537ccc697379e8f69ece17708b9907c0f1aeab03c2398",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "dinner-dumpling": {
+    "path": "output/imagegen/scene-survey-20261117/dinner-dumpling.png",
+    "sha256": "8904965f99e94e3f6bac0b6a03ed75216e5340bdedae2462bc31596cda99041a",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/01-entry.png",
+      "source_sha256": "1605923a9b4739648a74cde45a1fc41907d5853d9b569fb7f6e54b693b11ae97",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "dinner-medical": {
+    "path": "output/imagegen/scene-survey-20261117/dinner-medical.png",
+    "sha256": "2b9fb88ef209a2bae0312d2436213ce81db08d62b331899f788ad80d07aa3dc7",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/01-entry.png",
+      "source_sha256": "bccc7e72a4bd51807dd83ba4944cfb686fd152249a39db1c6bc75245e65fb047",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "dinner-plan": {
+    "path": "output/imagegen/scene-survey-20261117/dinner-plan.png",
+    "sha256": "de470d20e2994f63c1d06a7986755e2d2e0d7241175d36af53b3046153d308b0",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/01-entry.png",
+      "source_sha256": "12d3ca7fa2d3aebfcb20c3abfd56c2c2bc5de14210fe777ecc75927b40b13c42",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/01-entry.png.json",
+      "scope": "same-project screenshot composition, lighting/material comparison; generated text and fine geometry may differ"
+    }
+  },
+  "chapter-night": {
+    "path": "output/imagegen/scene-survey-20261117/chapter-night.png",
+    "sha256": "96171d5dc9e46b4bc04afc8afcce44e742974b3b79f6022fb0f3943761452307",
+    "provenance": {
+      "type": "imagegen_edit",
+      "model": "gpt-image-2.6-sunburst",
+      "tool": "bundled image_gen.py edit",
+      "source_run": "eval-20261117t174600-514af9d1",
+      "source_revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
+      "source_image": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/01-entry.png",
+      "source_sha256": "830a9e17e4c8594a4e03cb7f16cbaf9d6ca2af4e473a772fa37c7b07992dd93f",
+      "source_sidecar": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/01-entry.png.json",
+      "scope": "chapter completion overlay captured at night; underlying room and text partially obscured"
+    }
+  }
+}

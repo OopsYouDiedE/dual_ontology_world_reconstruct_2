@@ -30359,3 +30359,36 @@ events:
       aesthetic_similarity: 'Missing measurements: chapter-night'
       narrative_flow: 'Missing measurements: chapter-night'
   test_request_sha256: aa12b9ecbc77736ef6821ac18539a28e136965b8cac3c300e378394bc7b23075
+- work_id: synchronous-seven-channel-preparation
+  segment_id: wake
+  kind: change
+  summary: Prepare same-run seven-category collection before launching tests
+  result: Added launch readiness validation, 60 FPS cap, per-frame visible text, isolated
+    background audio with scene-local route accounting, and real-time dynamic capture.
+    Engine launch is pending committed snapshot and complete reference manifest.
+  revision: 4e37aa9
+  event_id: event-1e71cf5a0f66fbcc9307de39cb46da36
+  at: '2026-11-17T19:17:37.011457+08:00'
+  evidence:
+  - mcp/game/assessment_plan.py
+  - scenes/components/testing/RealtimeCapture.gd
+  - scenes/components/testing/RuntimeMonitor.gd
+  - tools/testing/mainline_metrics.py
+  evidence_sha256:
+  - path: mcp/game/assessment_plan.py
+    sha256: d76041517999937c923e66231c3cabc7a3e35ea656bab360b42bd7478e265d2c
+  - path: scenes/components/testing/RealtimeCapture.gd
+    sha256: 2509584b9dee01faacb07aae3c22de4b9e065222ce0f95f956605ca681af6762
+  - path: scenes/components/testing/RuntimeMonitor.gd
+    sha256: d6c4887a597f504fc90f539e09db85746e1779687bcd4140e2c0aeb4302f773e
+  - path: tools/testing/mainline_metrics.py
+    sha256: caed7f6767392ba0eff6ca5d93790fbd7a6d4a227494a52ef6068bc7c10342dd
+  related_event_ids: []
+  request_sha256: 1e71cf5a0f66fbcc9307de39cb46da3660f53bb532449743dde4a9fcf9073692
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\server.py
+    server_pid: 37064
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe

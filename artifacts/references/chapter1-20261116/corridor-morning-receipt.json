@@ -1,0 +1,64 @@
+{
+  "tool": "original bundled image_gen.py edit",
+  "model": "gpt-image-2.6-sunburst",
+  "mode": "authorized CLI/API fallback",
+  "quality": "high",
+  "size": "auto",
+  "command_argv": [
+    "python",
+    "C:\\Users\\iii\\.codex\\skills\\.system\\imagegen\\scripts\\image_gen.py",
+    "edit",
+    "--model",
+    "gpt-image-2.6-sunburst",
+    "--image",
+    ".runtime/input-client/1967555f46fd1e2c/000017-0.png",
+    "--image",
+    "assets/data/test_scenarios/user_reference/formal_game_ui.png",
+    "--prompt-file",
+    "artifacts/references/chapter1-20261116/corridor-morning-prompt.txt",
+    "--quality",
+    "high",
+    "--size",
+    "auto",
+    "--out",
+    "output/imagegen/chapter1/corridor-morning-v1.png",
+    "--no-augment"
+  ],
+  "started_at": "2026-11-16T05:53:21.5542396+08:00",
+  "completed_at": "2026-11-16T05:54:08.6900479+08:00",
+  "elapsed_seconds": 47.108,
+  "exit_code": 0,
+  "environment_policy": "Configured credentials and endpoint read into process environment only; omitted from receipts and sanitized logs",
+  "cli_sha256": "3666b807de3f0a1d0a4a767b886d612c0b8f71025c500bba6693d1c6995a0873",
+  "source_verification": "artifacts/references/chapter1-20261116/mainline-room-source-verification.json",
+  "output_path": "output/imagegen/chapter1/corridor-morning-v1.png",
+  "output_exists": true,
+  "prompt_file": "artifacts/references/chapter1-20261116/corridor-morning-prompt.txt",
+  "status": "ready_for_comparison_material_and_lighting_only",
+  "accepted": false,
+  "reference_is_acceptance_evidence": false,
+  "output_sha256": "35f3012cc196ffb38b90648a246d9227881372dc3915110b7356d28152a76eab",
+  "width": 1586,
+  "height": 992,
+  "visually_reviewed": true,
+  "prompt_sha256": "f0d9f99a538069550a1eacb986c522247af5d3c2b063a4f67f5d911661637202",
+  "visual_review": {
+    "retained": [
+      "Full corridor viewport, original perspective and white exterior background",
+      "Four visible characters in original relative positions and poses",
+      "R07/R08 doors and labels, bench, potted plant and red/gold carpet",
+      "Gold and coral markers remain readable"
+    ],
+    "improvements": [
+      "Readable subtle wood grain, woven carpet and plaster roughness",
+      "Warm morning light from right-end opening; clear interior air",
+      "Condensation confined to existing pane surfaces"
+    ],
+    "comparison_checks": [
+      "Generated pane edge highlights/rims and carpet thickness differ slightly; keep production mesh dimensions.",
+      "Use actual source opening dimensions and occlusion for implementation; source screenshot supplies the layout.",
+      "Exact lighting/render equivalence and continuous playable route require runtime verification."
+    ],
+    "missing_requested_assets": []
+  }
+}

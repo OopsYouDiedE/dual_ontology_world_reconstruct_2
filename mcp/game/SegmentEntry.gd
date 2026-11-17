@@ -14,3 +14,13 @@ func _ready() -> void:
 		if not checkpoints.restore_file(saved):
 			fixture_error = checkpoints.error
 			push_error(fixture_error)
+
+var _received_input := false
+
+func begin_segment_input() -> void:
+	if _received_input or eng == null or not fixture_error.is_empty(): return
+	_received_input = true
+	# Survey fixtures start paused for reproducible stills. A playable segment
+	# preserves its initial observation, then resumes ordinary production time.
+	if fixture.configuration.get("entry", "exploration") != "wake" and (gathering == null or not gathering.active) and (kitchen == null or not kitchen.active) and (opening == null or not opening.active):
+		eng.s.playing = true

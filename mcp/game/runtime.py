@@ -403,13 +403,20 @@ def start(arguments, deadline=None):
                         raise RuntimeError("Godot bridge did not start: " + "\n".join(endpoint.logs)[-4000:])
                     time.sleep(.1)
             endpoint.stream = endpoint.connection.makefile("rb")
-            observation = endpoint.request({"type": "observe", "wait_ms": 300})
             if endpoint.scenario_path is not None:
                 ready_deadline = time.monotonic() + remaining(deadline, 20)
-                while not _scenario_start_ready(endpoint, observation):
-                    if time.monotonic() >= ready_deadline:
+                while True:
+                    budget = ready_deadline - time.monotonic()
+                    if budget <= 0:
                         raise RuntimeError("Scenario host, assessment ID or metrics recorder did not become ready")
-                    observation = endpoint.request({"type": "observe", "wait_ms": 100}, timeout=min(5, max(.1, ready_deadline - time.monotonic())))
+                    readiness = endpoint.request({"type": "observe", "wait_ms": 0, "capture_image": False},
+                                                 timeout=min(5, budget))
+                    if _scenario_start_ready(endpoint, readiness):
+                        break
+                    time.sleep(.05)
+                observation = endpoint.request({"type": "observe", "wait_ms": 0})
+            else:
+                observation = endpoint.request({"type": "observe", "wait_ms": 300})
             if snapshot_path is not None and not observation.get("checkpoint_restored", False):
                 detail = observation.get("checkpoint_error") or " ".join(observation.get("host_errors", []))
                 raise RuntimeError("Snapshot restoration failed: " + (detail or "restored host did not report success"))

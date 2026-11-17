@@ -102,3 +102,15 @@ For rendered evaluations, MCP uses the native Windows display or a reachable Lin
 `evaluation_start` accepts `segments` for `scene_survey`, for example `{"profile":"scene_survey","rendered":true,"segments":["wake"]}`. The server rejects unknown segment IDs before launching a worker. The job plan records the selection, and corridor jobs record the selected validated fixture path. The survey currently starts a separate host for each case; filtering alone does not create a continuous multi-case segment session.
 
 The `scene_survey_scores.py` collector accepts a project-local `--assessments` JSON whose run ID, source revision, case IDs, scores, reasons and evidence are checked. A numerical human score must include evidence from its own case; reference images and other project-local comparison inputs may accompany it. A null score may carry a reason without evidence. This collector does not itself start an observer or establish simultaneous observation; the test coordinator must establish and document those conditions at launch.
+
+## Mainline segment preflight
+
+`mcp/game/segment_plan.py` generates one revision-bound plan for one of the 11 story segments, with the cases in `mainline_survey.json` order. Use a new test ID for each run. Example (PowerShell):
+
+```powershell
+.runtime/python/Scripts/python.exe mcp/game/segment_plan.py cross_zone observer-b cross-zone-retest-01 --skip-audio
+```
+
+Omit `--skip-audio` when audio is required. The command returns paths for `on` and the assigned observer's readiness receipt. The observer records readiness only after confirming isolation and available inputs. Pass the returned `scenario_path` and `assessment_plan` to `on`; use `next_case` in the same session. The first observation retains the checkpoint state. In ordinary rooms, the first gameplay input resumes story time; the opening, corridor, and kitchen controllers retain their own timing. Shut down with `close` and poll `metrics_status` before disconnecting.
+
+Focused scenario/room/input probes remain visible in the live progress log with their raw results. They leave the segment score tiles to same-session evaluations that actually attempted the seven categories. Unchanged interactive Godot runs share verified prerequisite preparation across MCP clients and reuse the resource import and build output.

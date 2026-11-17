@@ -753,6 +753,14 @@ class Evaluation:
         return verdict == "passed"
 
     def publish_test_results(self):
+        if self.state.get("profile") in {"room_fast", "kitchen_click", "scenario"}:
+            # Focused probes publish their raw result through the progress ledger.
+            # A geometry or input check cannot become a new seven-score segment run.
+            with self.lock:
+                self.state["test_results"] = {}
+                self.state["report_update"] = "probe evidence published in live progress"
+                self._publish()
+            return
         source_changed = self.state["source_changed_during_run"]
         current = c.revision_state()
         source_changed = source_changed or current["revision"] != self.state["revision"] or c.source_fingerprint() != self.state["source_fingerprint_after"]

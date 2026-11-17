@@ -123,7 +123,7 @@ func _tag_monitor() -> void:
 	var book: Control = null if direct_story else main.get("book_ui")
 	if is_instance_valid(title) and title.is_visible_in_tree(): exempt = true
 	if is_instance_valid(book) and book.is_open: exempt = book.page_id() == "settings"
-	if is_instance_valid(story):
+	if is_instance_valid(story) and story.eng != null:
 		exempt = false
 		room = str(story.eng.s.room)
 		clock = str(story.eng.clock().text)
@@ -142,7 +142,7 @@ func _tag_monitor() -> void:
 		if story.gathering != null and story.gathering.active: segment = "corridor"
 		var scene_root: Node = story.lowpoly._root if story._lowpoly_ok else story.room_mesh
 		if story.gathering != null and story.gathering.active and is_instance_valid(story.gathering._root): scene_root = story.gathering._root
-		monitor.tag_scene(str(scene_root.get_instance_id()) + "/" + story._room_loaded)
+		if is_instance_valid(scene_root): monitor.tag_scene(str(scene_root.get_instance_id()) + "/" + story._room_loaded)
 	else: monitor.tag_scene("title")
 	if not assessment_segment_id.is_empty(): segment = assessment_segment_id
 	monitor.node_id = segment + "/" + room
@@ -196,7 +196,10 @@ func _reply(identity, result: Dictionary, error := "") -> void:
 func _handle(request: Dictionary) -> void:
 	var identity = request.get("id")
 	var main := get_tree().current_scene
-	match str(request.get("type", "observe")):
+	var operation := str(request.get("type", "observe"))
+	if operation in ["click", "drag", "input_action"] and is_instance_valid(main) and main.has_method("begin_segment_input"):
+		main.begin_segment_input()
+	match operation:
 		"next_case":
 			if scenario_path.is_empty() or assessment_case_index + 1 >= assessment_cases.size():
 				_reply(identity, {}, "No next case in this segment")
@@ -205,14 +208,19 @@ func _handle(request: Dictionary) -> void:
 			if FileAccess.get_sha256(str(next.scenario_path)) != str(next.scenario_sha256):
 				_reply(identity, {}, "Scenario changed after assessment launch")
 				return
-			assessment_case_index += 1
-			scenario_path = str(next.scenario_path)
-			if monitor != null: monitor._owner = null
 			var changed := get_tree().change_scene_to_file("res://mcp/game/SegmentEntry.tscn")
 			if changed != OK:
 				_reply(identity, {}, "Scenario transition failed: " + error_string(changed))
 				return
-			await get_tree().process_frame
+			assessment_case_index += 1
+			scenario_path = str(next.scenario_path)
+			if monitor != null: monitor._owner = null
+			await get_tree().scene_changed
+			var entry := get_tree().current_scene
+			var failure := str(entry.get("fixture_error"))
+			if not failure.is_empty():
+				_reply(identity, {}, "Scenario entry failed: " + failure)
+				return
 		"close":
 			_reply(identity, {"closed": true, "source_identity": preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)})
 			await preload("res://scenes/components/shared/HostLifecycle.gd").quit(get_tree())
@@ -222,25 +230,29 @@ func _handle(request: Dictionary) -> void:
 			main.open_dual_world()
 		"click":
 			var point := Vector2(float(request.get("x", -1)), float(request.get("y", -1)))
-			if not get_viewport().get_visible_rect().has_point(point): _reply(identity, {}, "点击越界"); return
+			if not get_viewport().get_visible_rect().has_point(point): _reply(identity, {}, "Click is outside the viewport"); return
 			var motion := InputEventMouseMotion.new()
 			motion.position = point
+			motion.global_position = point
 			Input.parse_input_event(motion)
 			await get_tree().process_frame
 			var event := InputEventMouseButton.new()
 			event.position = point
+			event.global_position = point
+			event.button_mask = MOUSE_BUTTON_MASK_LEFT
 			event.button_index = MOUSE_BUTTON_LEFT
 			event.pressed = true
 			Input.parse_input_event(event)
 			await get_tree().process_frame
 			event.pressed = false
+			event.button_mask = 0
 			Input.parse_input_event(event)
 		"observe": pass
 		"drag":
 			var from := Vector2(float(request.get("x", -1)), float(request.get("y", -1)))
 			var to := Vector2(float(request.get("to_x", -1)), float(request.get("to_y", -1)))
 			var bounds := get_viewport().get_visible_rect()
-			if not bounds.has_point(from) or not bounds.has_point(to): _reply(identity, {}, "拖动越界"); return
+			if not bounds.has_point(from) or not bounds.has_point(to): _reply(identity, {}, "Drag is outside the viewport"); return
 			var motion := InputEventMouseMotion.new()
 			motion.position = from
 			Input.parse_input_event(motion)
@@ -266,12 +278,17 @@ func _handle(request: Dictionary) -> void:
 			Input.parse_input_event(button)
 		"input_action":
 			var action := str(request.get("action", ""))
-			if not InputMap.has_action(action): _reply(identity, {}, "未知输入动作"); return
+			if not InputMap.has_action(action): _reply(identity, {}, "Unknown input action"); return
 			var event := InputEventAction.new()
 			event.action = action
 			event.pressed = true
 			Input.parse_input_event(event)
+			# Movement polls Input.get_vector every frame. Keep the injected action
+			# down independently of the one-shot scene-tree event.
+			var held := action in ["move_up", "move_down", "move_left", "move_right"]
+			if held: Input.action_press(action)
 			for frame in range(clampi(int(request.get("frames", 1)), 1, 120)): await get_tree().process_frame
+			if held: Input.action_release(action)
 			event.pressed = false
 			Input.parse_input_event(event)
 		_: _reply(identity, {}, "不支持的游戏命令"); return

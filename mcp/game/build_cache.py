@@ -57,12 +57,12 @@ def record(backend, output, log, expected, configuration):
     return receipt
 
 
-def reuse(backend, destination=None):
+def reuse(backend, destination=None, *, fingerprint_value=None):
     path = CACHE / (backend + ".json")
     if not path.is_file():
         return None
     receipt = json.loads(path.read_text(encoding="utf-8"))
-    if receipt["source_fingerprint"] != fingerprint(backend):
+    if receipt["source_fingerprint"] != (fingerprint_value or fingerprint(backend)):
         return None
     output = Path(receipt["directory"])
     for name, expected in receipt["artifacts"].items():

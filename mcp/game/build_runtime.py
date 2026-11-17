@@ -1,5 +1,6 @@
 """Build and resource preparation for production game hosts."""
 from contextlib import contextmanager
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -38,9 +39,87 @@ def _build_gate(deadline):
         remaining(deadline, 1)
         raise RuntimeError("Build lock timed out")
     try:
-        yield
+        lock = ROOT / ".runtime/engine-prepare.lock"
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        with lock.open("a+b") as stream:
+            end = time.monotonic() + remaining(deadline, 180)
+            while True:
+                stream.seek(0)
+                try:
+                    if os.name == "nt":
+                        import msvcrt
+                        msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                    else:
+                        import fcntl
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= end:
+                        raise DeadlineReached("Timed out waiting for shared workspace preparation")
+                    time.sleep(min(.1, remaining(deadline, .1)))
+                except OSError as error:
+                    # Windows reports byte-range contention as EACCES.
+                    if os.name != "nt" or error.errno != 13:
+                        raise
+                    if time.monotonic() >= end:
+                        raise DeadlineReached("Timed out waiting for shared workspace preparation") from error
+                    time.sleep(min(.1, remaining(deadline, .1)))
+            yield  # Closing the file releases its advisory lock on both platforms.
     finally:
         BUILD_LOCK.release()
+
+
+_IMPORT_INPUTS = {".import", ".gd", ".gdshader", ".cs", ".tscn", ".tres", ".res",
+                  ".uid", ".godot", ".glb", ".gltf", ".fbx", ".obj", ".png", ".webp",
+                  ".jpg", ".jpeg", ".svg", ".wav", ".ogg", ".mp3", ".ttf", ".otf",
+                  ".po", ".csv", ".blend", ".gdignore"}
+
+
+def _import_stamp(godot, deadline):
+    # Git supplies the workspace resource inventory, including untracked source
+    # edits, while excluding runtime captures and Godot's generated cache.
+    result = subprocess.run(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+                            cwd=ROOT, capture_output=True, timeout=remaining(deadline, 10), check=True)
+    paths = {Path(os.fsdecode(part)) for part in result.stdout.split(b"\0") if part}
+    if asset_bundle.MANIFEST.is_file():
+        paths.update(Path(item["path"]) for item in json.loads(asset_bundle.MANIFEST.read_text(encoding="utf-8"))["files"])
+    digest = hashlib.sha256()
+    eligible = (path for path in paths if path.suffix in _IMPORT_INPUTS or path.name == ".gdignore")
+    cache_files = sorted((ROOT / ".godot/editor").glob("filesystem_cache[0-9]*"))
+    for path in [Path(godot), *sorted(eligible), Path(".godot/imported"), *cache_files]:
+        try:
+            data = (ROOT / path).stat()
+            stamp = (data.st_size, data.st_mtime_ns)
+        except FileNotFoundError:
+            stamp = None
+        digest.update(repr((str(path), stamp)).encode())
+    return digest.hexdigest()
+
+
+def _prepare_resources(godot, deadline):
+    cache = ROOT / ".runtime/godot-resource-import.json"
+    stamp = _import_stamp(godot, deadline)
+    if (cache.is_file() and any((ROOT / ".godot/editor").glob("filesystem_cache[0-9]*"))
+            and (ROOT / ".godot/imported").is_dir()
+            and cache.read_text(encoding="utf-8") == stamp):
+        return
+    cache.unlink(missing_ok=True)
+    asset_bundle.ensure()
+    # This is the editor importer, not the rendered gameplay process.
+    command = [godot, "--headless", "--path", ROOT, "--editor", "--import", "--audio-driver", "Dummy"]
+    process = spawn(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    log = ROOT / ".runtime/godot-resource-import.log"
+    try:
+        output, _ = process.communicate(timeout=remaining(deadline, 180))
+    except subprocess.TimeoutExpired:
+        terminate(process)
+        output, _ = process.communicate()
+        log.write_text(output, encoding="utf-8")
+        raise RuntimeError("Godot resource import timed out before the live game started")
+    log.write_text(output, encoding="utf-8")
+    if process.returncode:
+        raise RuntimeError("Godot resource import failed:\n" + output[-6000:])
+    cache.write_text(_import_stamp(godot, deadline), encoding="utf-8")
 
 
 def build(backend, deadline=None):
@@ -61,7 +140,8 @@ def build(backend, deadline=None):
                    if msbuild else [dotnet, "build", project, "--nologo"])
         command += ["-p:UseSharedCompilation=true", "-nodeReuse:true"]
         if backend == "godot":
-            bundled_packages = Path(resolve_godot(deadline=deadline)).parent / "GodotSharp/Tools/nupkgs"
+            godot = resolve_godot(deadline=deadline)
+            bundled_packages = Path(godot).parent / "GodotSharp/Tools/nupkgs"
             if not bundled_packages.is_dir():
                 raise RuntimeError("The Godot .NET distribution is missing its bundled SDK packages")
             configuration = Xml.Element("configuration")
@@ -82,7 +162,9 @@ def build(backend, deadline=None):
             command += (["-p:Configuration=Release", "-p:OutputPath=" + str(output_directory)]
                         if msbuild else ["--configuration", "Release", "--output", output_directory])
             command += ["-p:DvIntermediateRoot=" + str(output_directory / ".intermediate")]
-        cached = build_cache.reuse(backend, output_directory)
+        # The Godot Debug output is a shared, verified workspace artifact.
+        godot_output = ROOT / ".godot/mono/temp/bin/Debug"
+        cached = build_cache.reuse(backend, output_directory, fingerprint_value=expected_fingerprint)
         exit_code = 0
         if not cached:
             process = spawn(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -129,18 +211,7 @@ def build(backend, deadline=None):
                 key + ": " + json.dumps(value, ensure_ascii=False) + "\n"
                 for key, value in build_receipt.items()), encoding="utf-8")
         if backend == "godot":
-            asset_bundle.ensure()
-            import_command = [resolve_godot(deadline=deadline), "--headless", "--path", ROOT,
-                              "--editor", "--import", "--audio-driver", "Dummy"]
-            process = spawn(import_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            try:
-                import_output, _ = process.communicate(timeout=remaining(deadline, 240))
-            except subprocess.TimeoutExpired:
-                terminate(process)
-                import_output, _ = process.communicate()
-                (ROOT / ".runtime/godot-resource-import.log").write_text(import_output, encoding="utf-8")
-                raise RuntimeError("Godot resource import timed out before the live game started")
-            (ROOT / ".runtime/godot-resource-import.log").write_text(import_output, encoding="utf-8")
-            if process.returncode:
-                raise RuntimeError("Godot resource import failed:\n" + import_output[-6000:])
+            if not cached:
+                build_cache.record(backend, godot_output, original_build_log, expected_fingerprint, "Debug")
+            _prepare_resources(godot, deadline)
         return output_directory

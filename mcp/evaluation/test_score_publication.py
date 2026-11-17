@@ -39,6 +39,14 @@ class EvaluationReportTest(unittest.TestCase):
         self.assertTrue(all(result['wake']['reasons'].values()))
         self.assertEqual(len(result['wake']['evidence']), 1)
 
+    def test_room_probe_preserves_latest_segment_scores_and_uses_live_progress(self):
+        self.state["profile"] = "room_fast"
+        self.e.publish_test_results()
+        self.e.store.add_scores.assert_not_called()
+        self.e.store.flush.assert_not_called()
+        self.assertEqual(self.state["test_results"], {})
+        self.assertIn("live progress", self.state["report_update"])
+
     @patch.object(worker.c, 'source_fingerprint', return_value='same')
     @patch.object(worker.c, 'revision_state', return_value={'revision': 'a' * 40})
     def test_publish_all_segments_and_capture_render_error(self, revision, fingerprint):

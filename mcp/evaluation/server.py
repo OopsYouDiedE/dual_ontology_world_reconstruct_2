@@ -83,13 +83,16 @@ def _same_recorded_root(recorded):
 
 
 def _goal():
-    """Use the earliest documented/persisted cutoff, never a fresh 8-hour timer."""
+    """Clamp each explicitly authorized window to its own persisted receipt."""
     import math
     from datetime import timezone
     c.assert_project()
     document = c.documented_goal()
     c.STATE.mkdir(parents=True, exist_ok=True)
-    path = c.project_path(c.STATE / "active-goal.json")
+    window_id = document.get("window_id")
+    path = c.project_path(c.STATE / (f"goal-window-{window_id}.json" if window_id else "active-goal.json"))
+    if time.time() < document["started_epoch"]:
+        raise RuntimeError("The documented goal window has not opened yet")
     if not path.exists():
         payload = {"schema_version": 1, "project_root": str(c.ROOT), **document,
                    "source": "goal.md existing goal"}
@@ -101,7 +104,8 @@ def _goal():
         except FileExistsError:
             pass
     value = c.read_json(path)
-    if not _same_recorded_root(value.get("project_root")) or value.get("schema_version") != 1:
+    if (not _same_recorded_root(value.get("project_root")) or value.get("schema_version") != 1
+            or value.get("window_id") != window_id):
         raise ValueError("Eight-hour goal receipt has the wrong project identity")
     recorded_start, recorded_deadline = float(value["started_epoch"]), float(value["deadline_epoch"])
     if not math.isfinite(recorded_start) or not math.isfinite(recorded_deadline) or recorded_deadline <= recorded_start:

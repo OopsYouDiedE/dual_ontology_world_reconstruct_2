@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+import threading
 from unittest.mock import patch
 
 import focused
@@ -112,6 +113,23 @@ class FocusedTests(unittest.TestCase):
         run["route_interrupted"] = True
         with self.assertRaisesRegex(ValueError, "route has ended"):
             focused.step_run(run, {"operation": {"type": "click", "x": 20, "y": 20}})
+
+    def test_close_retains_unscored_observations_and_is_idempotent(self):
+        run = dict(self.run, _lock=threading.Lock(), _session="owned-host")
+        def close(owned):
+            self.assertIs(owned, run)
+            owned["_session"] = None
+            return True
+        with patch.dict(focused.RUNS, {"owned": run}), patch.object(focused, "close_host", side_effect=close) as release, patch.object(focused, "publish") as publish:
+            first = server.execute("input", "close", {"session_id": "owned"})
+            self.assertEqual(first, server.execute("input", "close", {"session_id": "owned"}))
+            self.assertTrue(first["closed"])
+            self.assertEqual(first["status"], "observed")
+            self.assertNotIn("verdicts", run)
+            with self.assertRaisesRegex(ValueError, "observation-only"):
+                focused.finish_run(run, self.verdicts)
+            release.assert_called_once()
+            publish.assert_called_once_with(run)
 
     def test_legacy_input_cannot_address_focused_ownership_token(self):
         with self.assertRaisesRegex(ValueError, "Unknown focused session"):

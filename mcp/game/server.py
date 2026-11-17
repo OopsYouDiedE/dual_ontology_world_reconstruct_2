@@ -101,7 +101,7 @@ TOOLS = {
                    inputSchema=schema({"session_id": SESSION, "text": {"type": "string", "minLength": 1, "maxLength": 4096}}, ["session_id", "text"])),
         types.Tool(name="review_visible_text", description="Classify a currently visible text string and verify whether it is English.",
                    inputSchema=schema({"session_id": SESSION, "path": {"type":"string", "minLength":1}, "text": {"type":"string", "minLength":1}, "category": {"type":"string", "enum":["dialogue", "spoken_dialogue", "speech", "prompt", "interaction_prompt", "nameplate", "single_key_icon", "action_key_icon", "hud", "menu", "other_ui"]}, "english_verified": {"type":"boolean"}}, ["session_id", "path", "text", "category", "english_verified"])),
-        types.Tool(name="close", description="Close this session and release its actual host process.",
+        types.Tool(name="close", description="Close an owned session and release its host. Focused observations are retained without verdicts.",
                    inputSchema=schema({"session_id": SESSION}, ["session_id"])),
         types.Tool(name="metrics_status", description="Poll same-session telemetry analysis after close; keep this MCP connection open until complete or error.",
                    inputSchema=schema({"session_id": SESSION}, ["session_id"])),
@@ -126,6 +126,11 @@ def execute(service, name, arguments):
     if name.startswith("focus_"):
         import focused
         return focused.execute(name, arguments)
+    if name == "close":
+        import focused
+        observation = focused.close_observation(arguments["session_id"])
+        if observation is not None:
+            return observation
     if name == "on":
         backend = arguments.get("backend", "cli")
         options = dict(arguments, mode="cli_ai" if backend == "cli" else "godot_manual", controller="player")

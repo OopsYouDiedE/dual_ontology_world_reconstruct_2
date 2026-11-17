@@ -334,6 +334,8 @@ def validate_verdicts(run, verdicts):
 
 
 def finish_run(run, verdicts):
+    if run["status"] == "observed":
+        raise ValueError("This observation-only session is closed; open a scored retest")
     validate_verdicts(run, verdicts)
     if "verdicts" in run:
         if run["verdicts"] != verdicts:
@@ -352,6 +354,24 @@ def finish_run(run, verdicts):
             run["error"] = close_error
     publish(run)
     return {key: run[key] for key in ("test_id", "tester", "status", "verdicts", "graceful_exit", "acceptance_eligible")}
+
+
+def close_observation(identity):
+    """Close only this connection's focused host and retain its unscored observations."""
+    run = RUNS.get(identity)
+    if run is None:
+        return None
+    with run["_lock"]:
+        if run["status"] == "running":
+            try:
+                graceful = close_host(run)
+            except Exception as error:
+                run["error"] = str(error)
+                graceful = False
+            run.update(status="observed", graceful_exit=graceful, finished_at=now())
+            publish(run)
+        return {"session_id": identity, "test_id": run["test_id"], "closed": run["_session"] is None,
+                "status": run["status"], "graceful_exit": run.get("graceful_exit")}
 
 
 def execute(name, args):

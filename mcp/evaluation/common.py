@@ -60,8 +60,14 @@ def parse_goal_window(text):
     seconds = deadline.timestamp() - started.timestamp()
     if started.tzinfo is None or deadline.tzinfo is None or not 0 < seconds <= 8 * 3600:
         raise ValueError("Goal window must be positive, timezone-aware and at most eight hours")
-    return {"started_at": started.isoformat(), "started_epoch": started.timestamp(),
-            "deadline_at": deadline.isoformat(), "deadline_epoch": deadline.timestamp()}
+    result = {"started_at": started.isoformat(), "started_epoch": started.timestamp(),
+              "deadline_at": deadline.isoformat(), "deadline_epoch": deadline.timestamp()}
+    window_ids = re.findall(r"^评估窗口 ID[：:]\s*([^\r\n]*)$", text, re.MULTILINE)
+    if window_ids:
+        if len(window_ids) != 1 or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", window_ids[0].strip()):
+            raise ValueError("Invalid or duplicate documented evaluation window ID")
+        result["window_id"] = window_ids[0].strip()
+    return result
 
 
 def documented_goal():

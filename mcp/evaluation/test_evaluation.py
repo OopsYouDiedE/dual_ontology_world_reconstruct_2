@@ -255,6 +255,9 @@ class BudgetTests(ProjectFixture):
     def setUp(self):
         super().setUp()
         self.window = c.documented_goal()
+        window_id = self.window.get("window_id")
+        self.receipt = self.directory / "state" / (f"goal-window-{window_id}.json" if window_id else "active-goal.json")
+        self.receipt_fields = {"window_id": window_id} if window_id else {}
         patcher = patch.object(c, "STATE", self.directory / "state")
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -278,14 +281,14 @@ class BudgetTests(ProjectFixture):
 
     def test_existing_earlier_start_cannot_be_extended(self):
         earlier = self.window["started_epoch"] - 120
-        c.write_json(c.STATE / "active-goal.json", {"schema_version": 1, "project_root": str(c.ROOT),
+        c.write_json(self.receipt, {**self.receipt_fields, "schema_version": 1, "project_root": str(c.ROOT),
                      "started_epoch": earlier, "deadline_epoch": self.window["deadline_epoch"] + 3600})
         goal, _ = server._goal()
         self.assertEqual(goal["started_epoch"], earlier)
         self.assertEqual(goal["deadline_epoch"], earlier + 8 * 3600)
 
     def test_later_receipt_is_clamped_to_documented_window(self):
-        c.write_json(c.STATE / "active-goal.json", {"schema_version": 1, "project_root": str(c.ROOT),
+        c.write_json(self.receipt, {**self.receipt_fields, "schema_version": 1, "project_root": str(c.ROOT),
                      "started_epoch": self.window["started_epoch"] + 3600,
                      "deadline_epoch": self.window["deadline_epoch"] + 3600})
         goal, _ = server._goal()
@@ -297,10 +300,23 @@ class BudgetTests(ProjectFixture):
             with self.assertRaisesRegex(RuntimeError, "limit reached"):
                 server._goal()
 
+    def test_explicit_new_window_preserves_old_receipt_and_cannot_be_reset(self):
+        original, _ = server._goal()
+        later = dict(self.window, window_id="next-authorized-window",
+                     started_epoch=self.window["deadline_epoch"], deadline_epoch=self.window["deadline_epoch"] + 28800)
+        with patch.object(c, "documented_goal", return_value=later), patch.object(server.time, "time", return_value=later["started_epoch"] + 10):
+            goal, remaining = server._goal()
+            self.assertEqual(remaining, 28790)
+            self.assertEqual(goal["window_id"], later["window_id"])
+        self.assertEqual(c.read_json(self.receipt), original)
+        edited = dict(later, started_epoch=later["started_epoch"] + 3600, deadline_epoch=later["deadline_epoch"] + 3600)
+        with patch.object(c, "documented_goal", return_value=edited), patch.object(server.time, "time", return_value=edited["started_epoch"]):
+            self.assertEqual(server._goal()[0]["deadline_epoch"], later["deadline_epoch"])
+
     def test_malformed_or_wrong_project_receipt_fails_closed(self):
         for record in ({"schema_version": 1, "project_root": str(self.directory), "started_epoch": 1, "deadline_epoch": 2},
                        {"schema_version": 1, "project_root": str(c.ROOT), "started_epoch": 2, "deadline_epoch": 1}):
-            c.write_json(c.STATE / "active-goal.json", record)
+            c.write_json(self.receipt, record)
             with self.assertRaises(ValueError):
                 server._goal()
 

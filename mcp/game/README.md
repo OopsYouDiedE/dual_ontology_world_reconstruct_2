@@ -20,6 +20,7 @@
 2. `focus_open {"scope":"room","target":"B-P","tester":"Your Name"}`：启动并返回 `session_id`、当前房间、界面控件和判项。默认无截图、无录音。需要听取直达游戏入口的音效时，启动时加 `"audio":true`。
 3. `focus_step`：传 `session_id`，可选择 `operation`（`observe`、`start`、`click`、`drag`、`input_action`、`diagnostic`）、`note`、`wait_ms`。观测和输入默认只返回状态，截图用于核对实际画面。音效检查按需加 `capture_audio:true`（最多最近三秒，页面保留可回放 WAV；音频准备中会返回原因）。
 4. `focus_finish`：关闭同一实机并一次提交该测试者的全部 `verdicts`。例如 `"layout":{"outcome":"pass","reason":"道具与侦探间有足够通行距离，桌角未发生穿模。","steps":["step-0001"]}`。填齐 `focus_open.checks` 的所有键。相同提交可以重试；改分需创建新测试。
+5. 并行取证者用 `close` 结束自己打开的定点会话，HTML 标记「已观察 · 未评分」。判定由单一测试者在其自己的复现会话中提交。
 
 静态布局、选项边界或某个状态用 `still:true` 和一句具体的取证目的；走位、触碰、操作物品或表情过渡用同一次输入的 `motion_frames:[8,22,45]`。它会采集动作前及指定的 2–3 个实际渲染帧，按帧序与实测毫秒分别保存。例如：
 

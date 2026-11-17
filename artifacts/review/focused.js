@@ -4,7 +4,7 @@
   const state = document.querySelector('#state');
   const labels = {room: '单房间', interaction: '物品／人物交互', ui: 'UI', design: '可视化设计工具', story: '剧情节点',
     starting: '启动中', running: '测试中', passed: '通过', failed: '失败', incomplete: '未完成', blocked: '受阻',
-    abandoned: '会话中断', pass: '通过', fail: '失败', not_applicable: '不适用'};
+    observed: '已观察 · 未评分', abandoned: '会话中断', pass: '通过', fail: '失败', not_applicable: '不适用'};
   const fmt = t => new Date(t).toLocaleString('zh-TW', {timeZone: 'Asia/Taipei', hour12: false});
   const el = (tag, text, parent) => {
     const node = document.createElement(tag);

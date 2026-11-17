@@ -64,6 +64,7 @@ func _ready() -> void:
 	_load_fixture(config_path)
 	if error != "": return
 	fixture_ready.emit()
+	if _argument("--capture-entry") == "true": _capture.call_deferred("entry")
 	if suite != "": _run_suite.call_deferred()
 
 func _files_dropped(paths: PackedStringArray) -> void:
@@ -124,7 +125,20 @@ func _build_story() -> void:
 	subject = story
 	content.add_child(story)
 	if story.fixture_error != "": _fail(story.fixture_error); return
-	_write_json("initial-state.json", {"mock": true, "configured_scene": path, "production_script": "res://scenes/dual_world/DualWorldMain.gd", "state": story.fixture_initial_state})
+	var actors := {"detective": story.det.position}
+	for id in story.figures:
+		actors[id] = story.figures[id].position
+	var actor_ids := actors.keys()
+	var overlapping: Array = []
+	for i in actor_ids.size():
+		for j in range(i + 1, actor_ids.size()):
+			var a: Vector3 = actors[actor_ids[i]]
+			var b: Vector3 = actors[actor_ids[j]]
+			var distance := Vector2(a.x, a.z).distance_to(Vector2(b.x, b.z))
+			if distance + 0.001 < story.ACTOR_TOUCH_DISTANCE:
+				overlapping.append({"a": actor_ids[i], "b": actor_ids[j], "distance": distance})
+	_write_json("initial-state.json", {"mock": true, "configured_scene": path, "production_script": "res://scenes/dual_world/DualWorldMain.gd", "state": story.fixture_initial_state,
+		"actor_positions":actors,"overlapping_actors":overlapping})
 	story.eng.changed.connect(func(reason: String): _event({"phase": "engine", "reason": reason, "snapshot": story.test_snapshot()}))
 	story.interactions.event_recorded.connect(_event)
 	story.reconstruction_observed.connect(_event)

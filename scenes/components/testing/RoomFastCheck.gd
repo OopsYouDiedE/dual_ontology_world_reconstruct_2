@@ -294,9 +294,13 @@ func _items() -> Array:
 func _stand(item: Dictionary, start: Vector2) -> Dictionary:
 	var raw = item.get("pos",Vector2.ZERO)
 	var point := Vector2(raw.x,raw.z) if raw is Vector3 else Vector2(raw)
+	var approach: Dictionary = {}
 	if is_instance_valid(host.kitchen) and host.kitchen.active:
 		var kind: String = host.interactions.kind_for(str(item.id))
-		var approach := preload("res://scenes/components/interaction/InteractionApproach.gd").plan(host, point, kind, start)
+		approach = preload("res://scenes/components/interaction/InteractionApproach.gd").plan(host, point, kind, start)
+	elif is_instance_valid(host.opening) and host.opening.active:
+		approach = host.opening.plan_approach(item, start)
+	if not approach.is_empty():
 		return {"point":point,"desired":approach.stand,"cell":host._cell_of(approach.stand),"stand":approach.stand,
 			"already_near":approach.already_near,"approach_ok":approach.ok,
 			"approach_reason":str(approach.get("reason", "")),"planned_path":approach.path}
@@ -471,7 +475,7 @@ func run() -> Dictionary:
 		var stand := _stand(item,start)
 		var requested: Vector2 = stand.stand
 		var approach_ok: bool = bool(stand.get("approach_ok", true))
-		# Kitchen's real click handler executes the plan's returned path, not a
+		# The click handler executes the plan's returned path, not a
 		# second _route() to the fallback stand. Preserve an empty rejected plan.
 		var production := production_plan_path(stand, start, Callable(host, "_route"))
 		var end: Vector2 = production.back() if not production.is_empty() else start

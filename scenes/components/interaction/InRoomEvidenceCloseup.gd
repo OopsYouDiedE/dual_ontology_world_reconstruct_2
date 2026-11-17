@@ -126,7 +126,8 @@ func _ready() -> void:
 			node.visible = true
 	_close_button = Button.new()
 	_close_button.name = "ReturnFromEvidence"
-	_close_button.text = "✓" if _has_result else "×"
+	_close_button.text = tr("返回场景")
+	_close_button.set_meta("text_category", "prompt")
 	_close_button.position = Vector2(18, 18)
 	_close_button.custom_minimum_size = Vector2(44, 44)
 	_close_button.pressed.connect(close)
@@ -197,7 +198,6 @@ func _event(phase: String) -> Dictionary:
 
 func _on_sampled() -> void:
 	_has_result = true
-	if is_instance_valid(_close_button): _close_button.text = "✓"
 	if is_instance_valid(_gesture_hint): _gesture_hint.text = "Collected"
 	observed.emit(_event("result"))
 

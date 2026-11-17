@@ -1263,7 +1263,7 @@ func _fit_camera() -> void:
 		room_mesh.refresh_walls(az)
 
 
-func _free_slots(n: int) -> Array:
+func _free_slots(n: int, reserved := Vector2.INF) -> Array:
 	var ds: Dictionary = room_mesh.design
 	var out: Array = []
 	var cands: Array = []
@@ -1309,8 +1309,9 @@ func _free_slots(n: int) -> Array:
 	cands.sort_custom(func(a: Vector2, b: Vector2): return a.distance_squared_to(player_target) < b.distance_squared_to(player_target))
 	# A central first slot can consume the only usable floor between furniture.
 	# Try alternate player slots before reducing the preferred actor spacing.
+	var seeds: Array = cands if reserved == Vector2.INF else [reserved]
 	for minimum_distance in [ACTOR_MIN_DISTANCE, ACTOR_TOUCH_DISTANCE]:
-		for seed in cands:
+		for seed in seeds:
 			var trial: Array = [seed]
 			while trial.size() < n:
 				var best := Vector2.INF
@@ -1385,16 +1386,25 @@ func _kitchen_huo_slot(fallback: Vector2, slots: Array, slot_index: int, rebuild
 	return candidate
 
 
+var _room_player_slot := Vector2.INF
+
+
 func _sync_figures(force := false) -> void:
 	if room_mesh.design.is_empty(): return
 	if _transit_active() and not force: return
 	var list: Array = eng.actors_in_room(_room_loaded).filter(func(i): return str(i) != "detective")
 	var key := ",".join(list.map(func(i): return str(i))) + "@" + _room_loaded
 	if key == _occ_key: return
-	var slots := _free_slots(list.size() + 1)  # 第 0 个空位留给侦探
+	# The cast and detective must share one spawn plan. Reusing the actual
+	# detective position during a live cast update also protects a moving player.
+	var slots := _free_slots(list.size() + 1, Vector2.INF if force else det_pos)
+	if force: _room_player_slot = slots[0] if not slots.is_empty() else Vector2.INF
 	_occ_key = key
 	if slots.size() < list.size() + 1:
-		push_error("角色落点不足：%s 需要 %d，得到 %d" % [_room_loaded, list.size() + 1, slots.size()])
+		if force:
+			for c in figures_root.get_children(): c.queue_free()
+			figures.clear()
+		push_error("Not enough actor slots in %s: need %d, found %d" % [_room_loaded, list.size() + 1, slots.size()])
 		return
 	for c in figures_root.get_children(): c.queue_free()
 	figures.clear()
@@ -1467,6 +1477,7 @@ func _spawn_detective() -> void:
 
 
 func _home_spot() -> Vector2:
+	if _room_player_slot != Vector2.INF: return _room_player_slot
 	var slots := _free_slots(1)
 	if not slots.is_empty(): return slots[0]
 	var mid := Vector2(room_mesh.design.w * 0.5, room_mesh.design.d * 0.5)

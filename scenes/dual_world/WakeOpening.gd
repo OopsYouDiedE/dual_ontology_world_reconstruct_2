@@ -386,18 +386,23 @@ func interact(i: int) -> void:
 	if phase != "free" or _busy_item >= 0 or _pending_exit != "": return
 	if host._cine or host.subtitle.visible or not host._sub_queue.is_empty(): return
 	var it: Dictionary = _items[i]
-	var p: Vector3 = it.pos
-	var target := Vector2(p.x, p.z)
-	var from: Vector2 = host.det_pos
-	if from.distance_to(target) <= 1.3:
+	var approach := plan_approach(it, host.det_pos)
+	if not approach.ok:
+		host._toast(tr("无法靠近检查目标"))
+		return
+	if approach.already_near:
 		_arrive(i)
 		return
 	_busy_item = i
-	var away := (from - target).normalized()
-	var stand := target + away * 0.8
-	var cell: Vector2i = host._nearest_free(host._cell_of(stand))
-	stand = Vector2((cell.x + 0.5) * host.CELL, (cell.y + 0.5) * host.CELL)
-	host._go(host._route(from, stand), func(): _arrive(i))
+	host._go(approach.path, func(): _arrive(i))
+
+
+func plan_approach(item: Dictionary, from: Vector2) -> Dictionary:
+	var p: Vector3 = item.pos
+	var target := Vector2(p.x, p.z)
+	if from.distance_to(target) <= 1.3:
+		return {"ok": true, "stand": from, "path": [], "already_near": true}
+	return preload("res://scenes/components/interaction/InteractionApproach.gd").plan(host, target, str(item.id), from)
 
 
 func cancel_walk() -> void:

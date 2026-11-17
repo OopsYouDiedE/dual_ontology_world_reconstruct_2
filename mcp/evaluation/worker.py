@@ -396,8 +396,10 @@ class Evaluation:
             if not scenario.is_file() or scenario.suffix.lower() not in (".yaml", ".yml", ".json"):
                 raise ValueError("Scenario must be an existing project-local YAML/JSON file")
             user += ["--scenario=" + str(scenario), "--test-output=" + str(directory),
-                     "--test-duration=4", "--test-auto-quit=true",
+                     "--test-duration=4", "--test-auto-quit=true", "--dv-no-audio-capture",
                      "--monitor-visible=" + ("true" if self.launch.get("monitor_visible", False) else "false")]
+            if not headless:
+                user.append("--capture-entry=true")
             output = directory / "timeline.yaml"
             timeout = 90
         else:
@@ -405,7 +407,7 @@ class Evaluation:
         command = [str(self.godot), "--path", str(self.root), "--language", "en"]
         if headless:
             command += ["--audio-driver", "Dummy"]
-        if job.startswith("survey-"):
+        if not headless:
             command += ["--max-fps", "60"]
         if headless:
             command += ["--headless", "--fixed-fps", "60"]
@@ -521,8 +523,15 @@ class Evaluation:
             if meta.get("mock") is not True:
                 raise ValueError("Scenario recording is not explicitly identified as mock")
             detail = {"mock": True, "monitor_visible": meta.get("monitor_visible"),
-                      "audio_capture_buffer_s": meta.get("audio_capture_buffer_s"),
+                      "audio_capture_enabled": meta.get("audio_capture_enabled"),
                       "samples": len(data.get("timeline", []))}
+            entry = (self.directory / job) / "initial-state.json"
+            if entry.is_file():
+                state = c.read_json(entry)
+                detail["actor_count"] = len(state.get("actor_positions", {}))
+                detail["overlapping_actors"] = state.get("overlapping_actors", [])
+                if detail["overlapping_actors"]:
+                    raise ValueError("Scenario entry has overlapping actors: " + json.dumps(detail["overlapping_actors"]))
         images = []
         for image in sorted((self.directory / job).rglob("*.png")):
             verified = c.provenance.verify_image(image, self.root, allow_fixture=True)

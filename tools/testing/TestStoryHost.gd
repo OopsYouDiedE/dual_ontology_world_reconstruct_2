@@ -35,7 +35,7 @@ func _start_opening() -> void:
 		if opening == null: fixture_error = "Wake entry requires the initial R05 bed state"
 	elif str(eng.s.room) == "B-P":
 		start_kitchen_exploration()
-	elif str(eng.s.room) == "R05":
+	elif str(eng.s.room) == "R05" and int(eng.s.beat_cursor) <= 1 and not bool(eng.s.chapter_complete):
 		# Enter the very same free-exploration presentation without replaying the opening.
 		var position_before := det.position
 		det.set_pose("lie")

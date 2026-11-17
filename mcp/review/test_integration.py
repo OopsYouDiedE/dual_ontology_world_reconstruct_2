@@ -37,7 +37,7 @@ async def run():
                 init = await session.initialize()
                 listing = await session.list_tools()
                 metadata.update(protocol_version=init.protocolVersion, server=init.serverInfo.model_dump(), tools=[t.name for t in listing.tools])
-                assert set(metadata["tools"]) == {"progress_append", "review_append", "semantic_append", "flush", "render"}
+                assert set(metadata["tools"]) == {"progress_append", "review_append", "semantic_append", "add_score", "add_scores", "see_score", "flush", "render"}
                 yield session
 
     async def call(session, name, args, *, error=False, label):
@@ -86,7 +86,8 @@ async def run():
         atomic_write(store.live, "broken projection")
         await call(session, "flush", {}, label="flush repairs projection")
         data = yaml.safe_load(store.progress.read_text(encoding="utf-8"))
-        assert json.loads(store.live.read_text(encoding="utf-8").split("=", 1)[1].rstrip(";\n")) == data
+        projected = json.loads(store.live.read_text(encoding="utf-8").split("=", 1)[1].rstrip(";\n"))
+        assert projected == dict(data, events=[e for e in data['events'] if e.get('test_result') or e.get('development_score')])
         assert hashlib.sha256(store.progress.read_bytes()).hexdigest() == before
         await call(session, "render", {}, error=True, label="test full render isolated from production")
 

@@ -39,7 +39,25 @@ def frame_statistics(values: list[float]) -> dict:
                 spikes_over_33_3_ms=sum(value > 33.3 for value in frames))
 
 
-def summarize(directory: Path, *, incomplete: bool = False) -> dict:
+def audio_score(audio: dict) -> tuple[int | None, str]:
+    """Score only evidence that supports the documented loudness thresholds."""
+    if audio.get("status") != "complete" or not audio.get("signal_present"):
+        return None, "Segment audio is incomplete or contains no verified signal"
+    loudness, peak = audio.get("integrated_lufs"), audio.get("true_peak_dbtp")
+    peak_valid = isinstance(peak, (int, float)) and not isinstance(peak, bool) and math.isfinite(peak)
+    if peak_valid and peak >= 0:
+        return 6, "Digital true-peak clipping"
+    loudness_valid = isinstance(loudness, (int, float)) and not isinstance(loudness, bool) and math.isfinite(loudness)
+    if not peak_valid or not loudness_valid:
+        return None, "Integrated loudness and true peak are both required"
+    if loudness >= -20:
+        return 6, "Integrated loudness is not below -20 LUFS"
+    if peak < -20:
+        return 8, "Integrated loudness and the entire mix peak are below -20"
+    return None, "Ambient-only peak is not isolated from dialogue or effects"
+
+
+def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path | None = None) -> dict:
     provenance.assert_runtime_root(ROOT)
     directory = provenance.project_path(directory, ROOT)
     timeline = directory / "timeline.yaml"
@@ -67,8 +85,17 @@ def summarize(directory: Path, *, incomplete: bool = False) -> dict:
     provenance.validate_source(source, provenance.project_identity(ROOT))
     if not isinstance(source.get("process_id"), int) or source["process_id"] <= 0:
         raise ValueError("Recorded actual host PID is required")
-    if metadata.get("mock") is not False or metadata.get("entry") != "production_title":
-        raise ValueError("Only production title/new-game capture enters mainline metrics")
+    if snapshot_path is None:
+        if metadata.get("mock") is not False or metadata.get("entry") != "production_title" or metadata.get("acceptance_eligible") is False:
+            raise ValueError("Only production title/new-game capture enters mainline metrics")
+    else:
+        snapshot_path = provenance.project_path(snapshot_path, ROOT)
+        recorded_snapshot = metadata.get("snapshot_path")
+        if (metadata.get("mock") is not True or metadata.get("entry") != "snapshot"
+                or metadata.get("acceptance_eligible") is not False
+                or not isinstance(recorded_snapshot, str) or not recorded_snapshot
+                or provenance.project_path(recorded_snapshot, ROOT) != snapshot_path):
+            raise ValueError("Snapshot metadata does not match the development session")
     if metadata.get("measurement_context") != "rendered_runtime":
         raise ValueError("A rendered real-time session is required")
     segments = {}
@@ -117,17 +144,20 @@ def summarize(directory: Path, *, incomplete: bool = False) -> dict:
                        text_visibility_policy=metadata.get("content_text_policy", "legacy_visibility_requires_screenshot_audit"))
         # Threshold scores describe observed data. Subjective and missing items stay pending.
         segment["measured_scores"] = [6 if spikes else 8 if finalized and steady["frame_samples"] else None, None, None, None, None, None, None]
-        if text and metadata.get("content_text_policy") == "visible_active_viewports":
-            segment["measured_scores"][1] = 6 if max(text) > 25 else 10 if max(text) == 0 else 8 if finalized else None
+        # The old count includes nameplates, controls and the monitor, and has
+        # neither word count nor English checks. Retain it as evidence, but do
+        # not convert it to the dialogue/prompt score.
+        segment["text_score_reason"] = "Visible aggregate lacks prompt classification, word count and English coverage"
         segment["audio"] = {"status": "pending", "reason": "Final complete audio and FFmpeg are required"}
         if ffmpeg and name not in ("boot", "title"):
             segment["audio"] = analyze_audio(directory, name, segment["intervals_s"], int(audio["sample_rate"]), ffmpeg)
-            loudness = segment["audio"].get("integrated_lufs")
-            peak = segment["audio"].get("true_peak_dbtp")
-            if loudness is not None and peak is not None:
-                segment["measured_scores"][3] = 8 if loudness <= -20 and peak < 0 else 6
+            segment["measured_scores"][3], segment["audio_score_reason"] = audio_score(segment["audio"])
     return {"schema_version": 1, "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
             "finalized": finalized, "source_directory": str(directory), "source_identity": metadata.get("source_identity"),
+            "entry": metadata.get("entry"), "measurement_context": metadata.get("measurement_context"),
+            "snapshot_path": str(snapshot_path) if snapshot_path is not None else None,
+            "acceptance_eligible": False if snapshot_path is not None else metadata.get("acceptance_eligible", True),
+            "acceptance_scored": False,
             "frame_clock": metadata.get("frame_clock"), "audio_alignment": "PCM sample time from recording start; contiguous frame segment intervals; capture loss makes audio pending",
             "source_sha256": {path.name: file_hash(path) for path in [timeline, directory / "frames.csv"]},
             "segments": segments}

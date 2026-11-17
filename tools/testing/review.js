@@ -65,6 +65,44 @@
   function update() {
     const events = window.MAINLINE_PROGRESS?.events;
     if (!Array.isArray(events)) return;
+    // Recompute latest development values in ledger order; formal cards remain untouched.
+    const latestScores = new Map();
+    for (const e of events) {
+      const score = e.development_score;
+      if (!score || score.acceptance_eligible !== false || typeof score.score !== 'number' ||
+          !Number.isFinite(score.score) || score.score < 0 || score.score > 10) continue;
+      latestScores.set(e.segment_id + '\0' + score.category, e);
+    }
+    document.querySelectorAll('.segment[data-segment]').forEach(segment => {
+      segment.querySelectorAll('[data-score-category]').forEach(card => {
+        const e = latestScores.get(segment.dataset.segment + '\0' + card.dataset.scoreCategory);
+        if (!e) return;
+        const score = e.development_score;
+        const dimension = card.closest('.dimension');
+        if (dimension && dimension.dataset.formalScored === 'false') {
+          dimension.querySelector('.primary-score').textContent = `${score.score}/10`;
+          dimension.querySelector('.primary-score-label').textContent = '开发测试分数';
+          dimension.classList.remove('pending', 'pass', 'fail');
+          dimension.classList.add(score.score >= 8 ? 'pass' : 'fail');
+        }
+        card.querySelector('.development-score-value').textContent =
+          `${score.score}/10 · ${score.rationale || 'No rationale supplied'} · ${e.at} · HEAD ${e.revision} · event ${e.event_id} · server PID ${e.server_identity?.server_pid ?? 'unknown'} · evidence ${(e.evidence || []).join(', ') || 'none supplied'}`;
+      });
+    });
+    const counts = {formal: 0, development: 0, historical: 0, pending: 0};
+    document.querySelectorAll('[data-coverage-segment]').forEach(row => {
+      row.querySelectorAll('[data-coverage-category]').forEach(cell => {
+        const event = latestScores.get(row.dataset.coverageSegment + '\0' + cell.dataset.coverageCategory);
+        if (cell.dataset.formalScored !== 'true' && event) {
+          cell.textContent = `${event.development_score.score} · 开发`;
+          cell.dataset.scoreSource = 'development';
+          cell.removeAttribute('title');
+        }
+        counts[cell.dataset.scoreSource]++;
+      });
+    });
+    const coverageSummary = document.querySelector('[data-coverage-summary]');
+    if (coverageSummary) coverageSummary.textContent = `正式 ${counts.formal} 项 · 开发 ${counts.development} 项 · 仅历史 ${counts.historical} 项 · 待评 ${counts.pending} 项`;
     for (const e of events) {
       if (seen.has(e.event_id)) continue;
       const row = document.createElement('li'); row.dataset.eventId = e.event_id;
@@ -93,5 +131,5 @@
     script.onerror = () => { script.remove(); loading = false; };
     document.body.append(script);
   }
-  update(); refresh(); setInterval(refresh, 5000);
+  update(); refresh(); setInterval(refresh, 1000);
 })();

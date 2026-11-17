@@ -65,6 +65,20 @@ DESCRIPTIONS = {
 }
 
 
+def _same_recorded_root(recorded):
+    """Accept the Windows spelling of the same checkout when running in WSL."""
+    if recorded == str(c.ROOT):
+        return True
+    if os.name == "nt" or not os.environ.get("WSL_DISTRO_NAME") or not isinstance(recorded, str):
+        return False
+    try:
+        converted = subprocess.run(["wslpath", "-u", recorded], capture_output=True,
+                                   text=True, timeout=5, check=True).stdout.strip()
+        return bool(converted) and Path(converted).resolve() == c.ROOT
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 def _goal():
     """Use the earliest documented/persisted cutoff, never a fresh 8-hour timer."""
     import math
@@ -84,7 +98,7 @@ def _goal():
         except FileExistsError:
             pass
     value = c.read_json(path)
-    if value.get("project_root") != str(c.ROOT) or value.get("schema_version") != 1:
+    if not _same_recorded_root(value.get("project_root")) or value.get("schema_version") != 1:
         raise ValueError("Eight-hour goal receipt has the wrong project identity")
     recorded_start, recorded_deadline = float(value["started_epoch"]), float(value["deadline_epoch"])
     if not math.isfinite(recorded_start) or not math.isfinite(recorded_deadline) or recorded_deadline <= recorded_start:
@@ -106,7 +120,7 @@ def _goal():
 def _verify_worker(launch):
     return c.inspect_process(launch["worker_pid"], expected_exe=launch["worker_executable"],
                              required=[str(Path(__file__).with_name("worker.py").resolve()), launch["run_id"]],
-                             created=launch["worker_create_time"])
+                             created=launch["worker_create_time"], process_token=launch.get("worker_process_token"))
 
 
 def start(args):
@@ -160,7 +174,8 @@ def start(args):
     try:
         identity = worker_identity(process, [str(worker), run_id])
         launch = {"schema_version": 1, "run_id": run_id, "worker_pid": identity["pid"],
-                  "worker_create_time": identity["create_time"], "worker_executable": identity["executable"],
+                  "worker_create_time": identity["create_time"], "worker_process_token": identity.get("process_token"),
+                  "worker_executable": identity["executable"],
                   "worker_command": identity["command"], "project_root": str(c.ROOT),
                   "profile": profile, "rendered": args.get("rendered", False),
                   "monitor_visible": args.get("monitor_visible", False),

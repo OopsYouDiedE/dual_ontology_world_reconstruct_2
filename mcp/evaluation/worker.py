@@ -1,4 +1,4 @@
-"""Owned, bounded Godot development checks. Never issues acceptance scores."""
+"""Owned, bounded Godot evaluation runs with seven-dimension reports."""
 from __future__ import annotations
 
 import argparse
@@ -23,6 +23,109 @@ sys.path.insert(0, str(c.ROOT / "mcp/review"))
 from core import Store  # noqa: E402
 
 
+def planned_jobs(profile, rendered):
+    """Enumerate only lanes scheduled by this profile."""
+    singles = {"room_fast": ("room-fast", "project"),
+               "kitchen_click": ("kitchen-click", "kitchen_evidence"),
+               "scenario": ("scenario", "project"),
+               "chapter1_flow": ("chapter1-flow", "project")}
+    if profile in singles:
+        return [singles[profile]]
+    if profile != "chapter1_ui":
+        raise ValueError("Unknown profile")
+    lanes = [("chapter1-flow", "project"), ("fixtures", "project")]
+    if rendered:
+        lanes.append(("story-visual", "wake"))
+    return lanes + [("special-ui", "project"), ("bedroom-fast", "wake"),
+                    ("corridor-fast", "corridor"), ("kitchen-fast", "kitchen_evidence")]
+
+
+def observe_concurrency(observed, processes):
+    """Snapshot concurrently alive owned hosts, not queued executor tasks."""
+    live = sorted((name, host.pid) for name, host in processes.items() if host.poll() is None)
+    if len(live) > observed["peak_live_hosts"]:
+        observed.update(peak_live_hosts=len(live),
+                        witness=[{"job": name, "pid": pid} for name, pid in live],
+                        observed_at=c.now())
+
+
+def mark_unstarted(jobs):
+    for row in jobs.values():
+        if row.get("state") == "planned":
+            row.update(state="blocked", detail={"reason": "lane was not started"})
+
+
+def display_available(driver, env):
+    """Probe a display connection in a bounded child, using the job environment."""
+    variable = "WAYLAND_DISPLAY" if driver == "wayland" else "DISPLAY"
+    if not env.get(variable):
+        return False
+    # A separate process keeps a broken display server from blocking the worker.
+    probe = """import ctypes, ctypes.util, os, sys
+name = sys.argv[1]
+lib = ctypes.CDLL(ctypes.util.find_library('wayland-client' if name == 'wayland' else 'X11'))
+open_name, close_name = (('wl_display_connect', 'wl_display_disconnect') if name == 'wayland' else ('XOpenDisplay', 'XCloseDisplay'))
+connect = getattr(lib, open_name)
+connect.argtypes = [ctypes.c_char_p]
+connect.restype = ctypes.c_void_p
+close = getattr(lib, close_name)
+close.argtypes = [ctypes.c_void_p]
+address = os.environ['WAYLAND_DISPLAY' if name == 'wayland' else 'DISPLAY'].encode()
+handle = connect(address)
+if not handle:
+    sys.exit(1)
+close(handle)
+"""
+    try:
+        return subprocess.run([sys.executable, "-c", probe, driver], env=env,
+                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL, timeout=5, check=False).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+SCORE_REASONS = {
+    "fluidity": "No steady-state frame-time samples were collected for this segment.",
+    "text_density": "Visible dialogue and prompts were not counted and checked for English.",
+    "action_sfx_integrity": "A complete animation, decal, sound and occlusion assessment was not collected.",
+    "audio_loudness": "Integrated loudness and true peak were not measured for this segment.",
+    "blind_narrative_match": "A blind player narrative comparison was not collected.",
+    "aesthetic_similarity": "A reference image similarity assessment was not collected.",
+    "narrative_flow": "An end-to-end player pacing assessment was not collected.",
+}
+
+
+def segment_for_job(job, row):
+    segment = {"bedroom-fast": "wake", "story-visual": "wake", "corridor-fast": "corridor",
+               "kitchen-fast": "kitchen_evidence", "kitchen-click": "kitchen_evidence"}.get(job)
+    if job == "room-fast":
+        detail = row.get("detail") or {}
+        room = detail.get("room")
+        if detail.get("controller") == "gathering":
+            return "corridor"
+        segment = {"R05": "wake", "B-P": "kitchen_evidence", "bedroom": "wake",
+                   "corridor": "corridor", "kitchen": "kitchen_evidence"}.get(room)
+    return segment
+
+
+def build_test_results(state, directory, root):
+    """Group observations from this run; absent measurements remain pending."""
+    results = {}
+    for job, row in state.get("jobs", {}).items():
+        segment = segment_for_job(job, row)
+        if not segment or row.get("state") in ("planned", "running") or not row.get("host_pid"):
+            continue
+        result = results.setdefault(segment, {"test_id": state["run_id"] + "-" + segment,
+            "scores": {key: None for key in SCORE_REASONS}, "reasons": dict(SCORE_REASONS),
+            "jobs": [], "evidence": []})
+        result["jobs"].append(job)
+        for name in ("godot.log", "launch.json", "result.json", "survey.json", "timeline.yaml"):
+            path = directory / job / name
+            if path.is_file() and path.resolve().is_relative_to(root.resolve()):
+                result["evidence"].append(path.resolve().relative_to(root.resolve()).as_posix())
+    return results
+
+
 class EvaluationBlocked(Exception):
     """The test lacks prerequisites/coverage; never misreport this as a game failure."""
 
@@ -37,7 +140,7 @@ class Evaluation:
             raise ValueError("Worker PID/run does not match launch receipt")
         c.inspect_process(os.getpid(), expected_exe=self.launch["worker_executable"],
                           required=[str(Path(__file__).resolve()), run_id],
-                          created=self.launch["worker_create_time"])
+                          created=self.launch["worker_create_time"], process_token=self.launch.get("worker_process_token"))
         self.godot = c.executable(self.launch["godot"])
         self.env = c.isolated_environment(self.directory)
         self.stop = threading.Event()
@@ -60,8 +163,10 @@ class Evaluation:
                       "source_fingerprint_before": c.source_fingerprint(),
                       "godot": str(self.godot), "godot_sha256": c.sha256(self.godot),
                       "acceptance_eligible": False, "acceptance_scored": False,
-                      "notice": "开发诊断；不是独立 Terra 从标题开始的完整盲测或正式验收。",
-                      "jobs": {}, "errors": []}
+                      "notice": "测试结果记录测量范围、证据与七项评分。",
+                      "jobs": {job: {"state": "planned", "segment_id": segment}
+                               for job, segment in planned_jobs(self.launch["profile"], self.launch["rendered"])},
+                      "observed_concurrency": {"peak_live_hosts": 0, "witness": []}, "errors": []}
         self._publish()
 
     def _wait_for_launch(self):
@@ -86,14 +191,14 @@ class Evaluation:
         work = self.run_id + "-" + job
         event = work + "-" + phase
         return self.store.progress_append(event_id=event, work_id=work, segment_id=segment,
-            kind="check", summary=("启动" if phase == "start" else "完成") + "开发检查：" + job,
+            kind="check", summary=("启动" if phase == "start" else "完成") + "测试：" + job,
             result=result, revision=self.state["revision"], evidence=list(evidence))
 
     def confirm(self, job, segment):
         work = self.run_id + "-" + job
         self.store.progress_append(event_id=work + "-complete", work_id=work, segment_id=segment,
-            kind="complete", summary="完成开发检查记录：" + job,
-            result="执行结束；检查结果和正式验收是不同概念。",
+            kind="complete", summary="完成测试记录：" + job,
+            result="测试已结束；结果和证据已记录。",
             revision=self.state["revision"], evidence=[],
             related_event_ids=[work + "-start", work + "-end"])
 
@@ -104,11 +209,26 @@ class Evaluation:
     def display(self):
         if not self.launch["rendered"]:
             return
-        if os.name == "nt" or self.env.get("DISPLAY"):
+        if os.name == "nt":
+            self.state["display"] = {"driver": "Windows", "owned": False,
+                                     "software_rendering": self.env.get("LIBGL_ALWAYS_SOFTWARE") == "1"}
+            self._publish()
             return
+        if sys.platform != "linux":
+            raise RuntimeError("Rendered evaluation supports Windows and Linux")
+        for driver, variable in (("wayland", "WAYLAND_DISPLAY"), ("x11", "DISPLAY")):
+            if display_available(driver, self.env):
+                self.state["display"] = {"driver": driver, "display": self.env[variable],
+                                         "owned": False, "probe": "display connection",
+                                         "software_rendering": self.env.get("LIBGL_ALWAYS_SOFTWARE") == "1"}
+                self._publish()
+                return
+            # A stale Wayland address must not override a working X11 display.
+            if driver == "wayland":
+                self.env.pop("WAYLAND_DISPLAY", None)
         executable = shutil.which("Xvfb")
         if not executable:
-            raise RuntimeError("Rendered tests need DISPLAY or Xvfb; headless checks do not produce screenshots")
+            raise RuntimeError("Rendered evaluation requires a working display or Xvfb")
         read_fd, write_fd = os.pipe()
         log = (self.directory / "xvfb.log").open("wb")
         try:
@@ -128,7 +248,7 @@ class Evaluation:
             self.env["DISPLAY"] = ":" + display
             # Software rendering is a development fallback, never a real-GPU benchmark.
             self.env.setdefault("LIBGL_ALWAYS_SOFTWARE", "1")
-            self.state["display"] = {"driver": "Xvfb", "display": self.env["DISPLAY"],
+            self.state["display"] = {"driver": "Xvfb", "display": self.env["DISPLAY"], "owned": True,
                                      "software_rendering": self.env.get("LIBGL_ALWAYS_SOFTWARE") == "1"}
             self._publish()
         finally:
@@ -141,7 +261,9 @@ class Evaluation:
         directory = self.directory / job
         fixture = self.directory / "fixtures" / "fixtures"
         user = ["--dv-checkpoint-auto=false", "--dv-save-slot=" + self.run_id + "-" + job]
-        headless = True
+        # Rendered batches must keep every Godot job on the real display driver,
+        # including fixture and flow jobs; a mixed batch silently used Dummy.
+        headless = not self.launch.get("rendered", False)
         timeout = 180
         output = None
         if job == "chapter1-flow":
@@ -209,7 +331,7 @@ class Evaluation:
             timeout = 90
         else:
             raise ValueError("Unknown evaluation job")
-        command = [str(self.godot), "--path", str(self.root), "--audio-driver", "Dummy"]
+        command = [str(self.godot), "--path", str(self.root), "--language", "en", "--audio-driver", "Dummy"]
         if headless:
             command += ["--headless", "--fixed-fps", "60"]
         if script:
@@ -250,7 +372,7 @@ class Evaluation:
             text = (self.directory / job / "godot.log").read_text(encoding="utf-8", errors="replace")
             if "RESULT fails=0" not in text:
                 raise ValueError("Chapter diagnostic did not emit its successful terminal marker")
-            detail["scope"] = "开发加速/直接补证并提交答案；不代表自然游玩通关"
+            detail["scope"] = "加速流程，使用直接补证和答案提交"
             detail.update(self._chapter_snapshot_evidence(pid))
         elif job == "fixtures":
             for name in ("opening-free.json", "corridor-free.json", "kitchen-free.json"):
@@ -263,7 +385,7 @@ class Evaluation:
             data = c.read_json(output)
             c.provenance.validate_source(data.get("project"), c.provenance.project_identity(self.root),
                                          pid=pid, executable=self.godot)
-            detail = {"room": data.get("room"), "total_elapsed_ms": data.get("total_elapsed_ms"),
+            detail = {"room": data.get("room"), "controller": data.get("controller"), "total_elapsed_ms": data.get("total_elapsed_ms"),
                       "under_5_seconds": data.get("under_5_seconds"), "path_pass": data.get("path_pass"),
                       "ray_pass": data.get("ray_pass"), "interaction_count": len(data.get("interactions", [])),
                       "reported_pass": data.get("pass"), "errors": data.get("errors", [])}
@@ -429,7 +551,7 @@ class Evaluation:
         tick = time.monotonic()
         self.update(job, state="starting", segment_id=segment, started_at=c.now())
         try:
-            self.progress(job, segment, "start", "进行中；开发诊断，不进入正式评分。")
+            self.progress(job, segment, "start", "测试进行中。")
             start_event = True
             if self.cancelled():
                 raise InterruptedError("Evaluation cancelled or eight-hour deadline reached")
@@ -440,7 +562,8 @@ class Evaluation:
                 identity = c.inspect_process(process.pid, expected_exe=self.godot,
                                              required=["--path", str(self.root)])
                 with self.lock:
-                    self.procs[job] = process.pid
+                    self.procs[job] = process
+                    observe_concurrency(self.state["observed_concurrency"], self.procs)
                 self.update(job, state="running", host_pid=process.pid, process=identity,
                             command=command, headless=headless, timeout_seconds=timeout)
                 c.write_json(directory / "launch.json", {"source_identity": c.provenance.project_identity(self.root),
@@ -478,7 +601,7 @@ class Evaluation:
                 raise RuntimeError("Godot exit=%s, errors=%s" % (code, errors[:12]))
             detail = self._validate_output(job, output, process.pid, not headless)
             verdict = "passed"
-            message = "开发检查通过；非正式验收"
+            message = "测试通过。"
         except (Exception, KeyboardInterrupt) as error:
             if process is not None and process.poll() is None:
                 self._terminate(process, children)
@@ -512,6 +635,34 @@ class Evaluation:
                 self.update(job, ledger_error=str(error))
         return verdict == "passed"
 
+    def publish_test_results(self):
+        results = build_test_results(self.state, self.directory, self.root)
+        with self.lock:
+            self.state["test_results"] = results
+            self._publish()
+        source_changed = self.state["source_changed_during_run"]
+        current = c.revision_state()
+        source_changed = source_changed or current["revision"] != self.state["revision"] or c.source_fingerprint() != self.state["source_fingerprint_after"]
+        if source_changed:
+            with self.lock:
+                self.state["test_results_publication_error"] = "Source changed during or after the run; scores retain their original run provenance."
+                self._publish()
+        else:
+            for segment, result in results.items():
+                try:
+                    self.store.add_scores(trajectory_id=segment, test_id=result["test_id"],
+                                          scores=result["scores"], reasons=result["reasons"], evidence=result["evidence"])
+                except Exception as error:
+                    with self.lock:
+                        result["publication_error"] = type(error).__name__ + ": " + str(error)
+                        self._publish()
+        try:
+            self.store.flush(full_render=True)
+        except Exception as error:
+            with self.lock:
+                self.state["report_error"] = type(error).__name__ + ": " + str(error)
+                self._publish()
+
     def run(self):
         with c.exclusive_run_lock():
             try:
@@ -544,7 +695,7 @@ class Evaluation:
                             for future in as_completed(work):
                                 future.result()
                         else:
-                            for job in ("special-ui", "bedroom-fast", "corridor-fast", "kitchen-fast"):
+                            for job, _ in planned_jobs("chapter1_ui", self.launch["rendered"])[2:]:
                                 self.update(job, state="blocked", detail={"reason": "fixture generation failed or was cancelled"})
                         story.result()
                 else:
@@ -566,11 +717,18 @@ class Evaluation:
                         or git_after["working_tree_changes"] != self.state["working_tree_changes"])
                     self.state["ended_at"] = c.now()
                     self.state["wall_seconds"] = round(time.monotonic() - self.started, 3)
+                    mark_unstarted(self.state["jobs"])
                     states = [row.get("state") for row in self.state["jobs"].values()]
                     self.state["state"] = "completed" if states and all(x == "passed" for x in states) and not self.state["source_changed_during_run"] else "blocked"
                     self.state["acceptance_eligible"] = False
                     self.state["acceptance_scored"] = False
                     self._publish()
+                try:
+                    self.publish_test_results()
+                except Exception as error:
+                    with self.lock:
+                        self.state["report_error"] = type(error).__name__ + ": " + str(error)
+                        self._publish()
 
 
 def main():

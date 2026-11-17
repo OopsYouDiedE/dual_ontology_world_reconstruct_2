@@ -1,4 +1,4 @@
-"""Build a compact, portable snapshot of the generated Chapter 1 review."""
+"""Explicitly export a portable copy of the current seven-dimension report."""
 from __future__ import annotations
 
 import argparse
@@ -9,6 +9,7 @@ import shutil
 from urllib.parse import unquote, urlsplit
 
 import export_review_site as review
+import test_results
 
 
 def select_frames(images):
@@ -17,22 +18,30 @@ def select_frames(images):
     return [images[0], images[len(images) // 2], images[-1]]
 
 
-def frame_strip(entry, output):
-    images = entry.get('development_images', [])
-    if not images:
-        return '<p class="muted">开发截图待采集。</p>'
+def copy_evidence(path, output):
+    """Copy a project-local evidence file under a stable content-addressed name."""
+    path = review.project_file(path)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    name = digest + path.suffix.lower()
+    destination = output / 'images' / name
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if not destination.exists() or hashlib.sha256(destination.read_bytes()).hexdigest() != digest:
+        shutil.copyfile(path, destination)
+    return 'images/' + name
+
+
+def frame_strip(images, output):
     rendered = []
     for image in select_frames(images):
         path = review.project_file(image['path'])
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        name = digest + path.suffix.lower()
-        destination = output / 'images' / name
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        if not destination.exists() or hashlib.sha256(destination.read_bytes()).hexdigest() != digest:
-            shutil.copyfile(path, destination)
+        expected = image.get('sha256')
+        if expected and hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise ValueError('Screenshot hash mismatch: ' + str(image['path']))
+        url = escape(copy_evidence(path, output), quote=True)
         caption = escape(image.get('caption', path.stem))
-        rendered.append('<figure><a class="zoom" href="images/' + name + '"><img loading="lazy" src="images/' + name + '" alt="' + caption + '"></a><figcaption>' + caption + '</figcaption></figure>')
-    return '<div class="trajectory">' + ''.join(rendered) + '</div>'
+        rendered.append('<figure><a href="' + url + '"><img loading="lazy" src="' + url
+                        + '" alt="' + caption + '"></a><figcaption>' + caption + '</figcaption></figure>')
+    return '<div class="trajectory">' + ''.join(rendered) + '</div>' if rendered else ''
 
 
 def validate(output):
@@ -60,50 +69,60 @@ def publish(source, output):
     source = review.provenance.project_path(source, review.ROOT)
     output = review.provenance.project_path(output, review.ROOT)
     allowed_root = (review.ROOT / '.runtime').resolve()
-    published_root = (review.OUT / 'published').resolve()
-    if output != published_root and not output.is_relative_to(allowed_root):
-        raise ValueError('Snapshot output must be the published directory or a runtime sandbox')
-    if output == allowed_root or source.is_relative_to(output):
-        raise ValueError('Snapshot output must be separate from the source')
+    if output == allowed_root or not output.is_relative_to(allowed_root) or source.is_relative_to(output):
+        raise ValueError('Snapshot output must be a separate directory inside .runtime')
     data = review.read_json(source)
-    if not isinstance(data, dict) or len(data.get('dimensions', [])) != 7:
-        raise ValueError('A generated seven-category score record is required')
-    entries = data.get('gameplay_scenes', [])
-    if not entries or any(len(entry.get('scores', [])) != 7 for entry in entries):
+    if not isinstance(data, dict) or data.get('schema_version') != 3 or len(data.get('dimensions', [])) != 7:
+        raise ValueError('A schema 3 seven-category score record is required')
+    scenes = data.get('gameplay_scenes', [])
+    if not scenes or any(len(entry.get('scores', [])) != 7 for entry in scenes):
         raise ValueError('Each chapter segment must contain seven score values')
+    latest = {}
+    for entry in scenes:
+        result = entry.get('test')
+        if result is None:
+            if any(value is not None for value in entry['scores']):
+                raise ValueError('Scores require a test record')
+            continue
+        if (not isinstance(result, dict) or result.get('segment_id') != entry.get('id')
+                or result.get('scores') != entry['scores'] or len(result.get('reasons', [])) != 7):
+            raise ValueError('Each score must belong to its displayed test')
+        test_results.normalize(result['id'], result['segment_id'], result['revision'], result['at'],
+                               result['scores'], result['reasons'])
+        latest[entry['id']] = result
     output.mkdir(parents=True, exist_ok=True)
-    image_directory = output / 'images'
-    for name in ('review.css', 'review.js'):
-        shutil.copyfile(Path(__file__).parent / name, output / name)
-    audit = data.get('history_evidence', {})
-    status = '完整' if audit.get('complete') else '不完整 · 正式验收待评'
-    counts = audit.get('counts', {})
-    body = '<aside class="evidence-banner"><b>历史证据：' + status + '</b><p>' + escape(str(counts)) + '</p><p>本页为便携评分快照；完整轨迹、修订记录及证据请在原工程内生成完整报告。</p></aside>'
-    for index, entry in enumerate(entries, 1):
-        record = entry.get('current') or {}
-        body += '<article class="segment" id="trajectory-' + escape(entry['id'], quote=True) + '"><h2>' + str(index).zfill(2) + ' · ' + escape(entry['label']) + '</h2>'
-        body += '<p>开发截图 · 精选帧；正式验收以独立评审记录为准。</p>' + frame_strip(entry, output)
-        body += '<h3>七项正式评分</h3>' + review.dimension_scores(record) + review.score_editor(record) + review.semantic_score_summary(entry.get('semantic')) + '</article>'
-    html = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>第一章 · 评分便携快照</title><link rel="stylesheet" href="review.css"></head><body><header><div class="brand">DUAL ONTOLOGY · CHAPTER 01</div><h1>第一章 · 评分便携快照</h1><p>报告版本 ' + escape(data.get('revision', '')) + ' · 生成时间 ' + escape(data.get('generated_at', '')) + '</p><p><a href="index.html">评分总览</a> · <a href="gameplay.html">游戏场景评分</a> · <a href="scoring_overview.md">Markdown 总览</a></p></header><main>' + body + '</main><dialog id="image-view"><button aria-label="关闭原图">关闭 · Esc</button><img alt="实机截图"></dialog><script src="review.js"></script></body></html>')
+    shutil.copyfile(Path(__file__).parent / 'review.css', output / 'review.css')
+
+    def portable_link(path, label, page):
+        url = escape(copy_evidence(path, output), quote=True)
+        return '<a href="' + url + '">' + escape(str(label)) + '</a>'
+
+    def portable_trajectory(images, page):
+        return frame_strip(images, output)
+
+    body = test_results.matrix(scenes, latest)
+    body += ''.join(test_results.card(scene, latest.get(scene['id']), output / 'index.html',
+                                     portable_link, review.project_file, portable_trajectory)
+                    for scene in scenes)
+    html = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
+            '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            '<title>第一章 · 测试评分</title><link rel="stylesheet" href="review.css"></head>'
+            '<body><header><div class="brand">DUAL ONTOLOGY · CHAPTER 01</div>'
+            '<h1>第一章 · 测试评分</h1><p>报告版本 ' + escape(data.get('revision', ''))
+            + ' · 生成时间 ' + escape(data.get('generated_at', ''))
+            + '</p><p><a href="index.html">评分总览</a> · <a href="gameplay.html">游戏场景评分</a>'
+            + ' · <a href="scoring_overview.md">Markdown 总览</a></p></header><main>' + body + '</main></body></html>')
     for name in ('index.html', 'gameplay.html'):
         (output / name).write_text(html, encoding='utf-8')
-    lines = ['# Chapter 1 scoring snapshot', '', 'Revision: ' + data.get('revision', ''), '', 'Historical evidence: ' + status, '']
-    for entry in entries:
-        record = entry.get('current') or {}
-        scores = record.get('scores', [None] * 7)
-        reasons = record.get('score_reasons', [None] * 7)
-        lines += ['## ' + entry['label'], '']
-        for label, score, reason in zip(data['dimensions'], scores, reasons):
-            lines.append('- ' + label + ': ' + ('待评' if score is None else str(score) + '/10') + ' — ' + str(reason or '等待独立实机评审'))
-        lines.append('')
-    (output / 'scoring_overview.md').write_text('\n'.join(lines), encoding='utf-8')
+    (output / 'scoring_overview.md').write_text(
+        test_results.markdown(scenes, latest, data.get('revision', '')), encoding='utf-8')
     return validate(output)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, default=review.OUT / 'score_records.json')
-    parser.add_argument('--output', type=Path, default=review.OUT / 'published')
+    parser.add_argument('--output', type=Path, default=review.ROOT / '.runtime/review-export/portable')
     args = parser.parse_args()
     review.provenance.assert_runtime_root(review.ROOT)
     print('Snapshot local links checked:', publish(args.source, args.output))

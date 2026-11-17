@@ -1,0 +1,24 @@
+{
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "res://scenes/main/Main.tscn",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "res://scenes/main/Boot.tscn",
+    "process_id": 42528,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "server_identity": {
+    "project_root": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec",
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "server_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\mcp\\game\\server.py",
+    "server_pid": 42144,
+    "python_executable": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\python\\Scripts\\python.exe"
+  },
+  "session_id": "2f718bccfe104459",
+  "scene": "res://scenes/main/Main.tscn",
+  "image_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\input-client\\6a463445932c4da0\\000003-0.png",
+  "image_sha256": "e83ae34b42d348a23f2df2b77920eb755474233af799dded18e859ed27f697fb",
+  "captured_epoch": 1794884341.9028537
+}

@@ -7,6 +7,7 @@ import hashlib
 from html import escape
 from html.parser import HTMLParser
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -17,11 +18,13 @@ import yaml
 from mainline_reviews import load_reviews, capture_time
 import visual_semantic_reviews
 import mainline_recordings
+import test_results
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'mcp'))
 import capture_provenance as provenance
 OUT = ROOT / 'artifacts/review'
+SCORE_CATEGORIES = ['fluidity', 'text_density', 'action_sfx_integrity', 'audio_loudness', 'blind_narrative_match', 'aesthetic_similarity', 'narrative_flow']
 DIMENSIONS = ['游玩流畅度', '界面字数', '动作与音效', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性']
 PLAN = ROOT / 'assets/data/test_scenarios/gameplay_review_plan.json'
 
@@ -120,7 +123,9 @@ def progress_evidence(event, page, audit=None):
 
 def overall_passed(entries, audit):
     # A complete current review cannot hide an incomplete historical audit.
-    return bool(entries) and bool(audit.get('complete')) and all(e['status'] == '合格' for e in entries)
+    return bool(entries) and bool(audit.get('complete')) and all(
+        e['status'] == '合格' and ('test' not in e or bool((e.get('test') or {}).get('independent_review')))
+        for e in entries)
 
 
 def evidence_banner(audit, page):
@@ -238,15 +243,196 @@ def badge(result):
     return f'<strong class="verdict {cls}">{result}</strong>'
 
 
-def dimension_scores(record, previous=None):
+# Matching is limited to explicit check descriptions; each displayed excerpt keeps
+# its original provenance and is never interpreted as a seven-point score.
+DIMENSION_CHECK_TERMS = [
+    ('fps', 'frame time', 'frame pacing', '帧率', '帧时间', '卡顿', '性能', '稳态超线'),
+    ('text density', 'word count', 'character count', 'localization', '字幕', '字数', '英文', '本地化'),
+    ('animation', 'skeletal', 'ik ', 'decal', 'occlusion', 'clipping', 'sfx', '动作', '动画', '遮挡', '穿模', '音效', '贴花'),
+    ('lufs', 'dbtp', 'loudness', '响度', '真峰值'),
+    ('blind narrative', 'blind read', 'semantic', '盲读', '叙事理解', '剧情替代'),
+    ('ssim', 'lpips', 'aesthetic', 'reference image', '参考图', '相似度', '视觉对照'),
+    ('narrative flow', 'pacing', 'walkthrough', '剧情流畅', '剧情节奏', '主线流程', '主线遍历'),
+]
+DIMENSION_MISSING = [
+    'No audited frame-rate or frame-time check found for this segment.',
+    'No audited visible-text density or English-language check found for this segment.',
+    'No audited action, decal, occlusion, or sound check found for this segment.',
+    'No audited LUFS or dBTP measurement found for this segment.',
+    'No audited blind-reading or narrative comprehension check found for this segment.',
+    'No audited reference-image similarity comparison found for this segment.',
+    'No audited narrative pacing or walkthrough check found for this segment.',
+]
+
+
+def structured_development_metrics(event, evidence):
+    """Read segment-specific measurements only from an unchanged audited file."""
+    if Path(evidence['path']).name != 'segment-metrics.json' or evidence.get('status') != 'valid':
+        return {}
+    digest = evidence.get('expected_sha256')
+    if not isinstance(digest, str) or not re.fullmatch(r'[0-9a-f]{64}', digest):
+        return {}
+    try:
+        data = project_file(evidence['path']).read_bytes()
+        if hashlib.sha256(data).hexdigest() != digest:
+            return {}
+        document = json.loads(data.decode('utf-8-sig'))
+        if not isinstance(document, dict) or document.get('schema_version') != 1:
+            return {}
+        segments = document.get('segments')
+        segment = segments.get(event.get('segment_id')) if isinstance(segments, dict) else None
+        if not isinstance(segment, dict):
+            return {}
+    except (OSError, ValueError, UnicodeError):
+        return {}
+
+    def fields(source, specifications):
+        if not isinstance(source, dict):
+            return []
+        return [label + ' ' + format(value, '.6g') + unit
+                for key, label, unit in specifications
+                if isinstance((value := source.get(key)), (int, float))
+                and not isinstance(value, bool) and math.isfinite(value)]
+
+    steady = segment.get('steady')
+    samples = steady.get('frame_samples') if isinstance(steady, dict) else None
+    frame = fields(steady, [
+        ('frame_samples', 'samples', ''), ('avg_fps', 'Avg FPS', ''),
+        ('low_5_fps', '5% Low FPS', ''), ('low_1_fps', '1% Low FPS', ''),
+        ('frame_p95_ms', 'P95', ' ms'), ('frame_p99_ms', 'P99', ' ms'),
+        ('max_frame_ms', 'max', ' ms'), ('spikes_over_33_3_ms', 'spikes >33.3 ms', ''),
+    ]) if isinstance(samples, (int, float)) and not isinstance(samples, bool) and math.isfinite(samples) and samples > 0 else []
+    audio = segment.get('audio')
+    loudness = fields(audio, [
+        ('integrated_lufs', 'Integrated', ' LUFS'),
+        ('short_term_lufs', 'Short-term', ' LUFS'),
+        ('true_peak_dbtp', 'True peak', ' dBTP'),
+    ]) if isinstance(audio, dict) and audio.get('status') == 'complete' and audio.get('signal_present') is True else []
+    result = {}
+    if frame:
+        result[0] = 'Steady-state frame pacing: ' + '; '.join(frame)
+    if loudness:
+        result[3] = 'Measured loudness: ' + '; '.join(loudness)
+    return result
+
+
+def development_dimensions(events, audit, semantic=None):
+    """Collect segment-local, audited check excerpts without inferring scores."""
+    dimensions = [[] for _ in DIMENSIONS]
+    for event in events:
+        if event.get('kind') != 'check':
+            continue
+        valid = [item['path'] for item in audit['events'].get(event['event_id'], [])
+                 if item['status'] == 'valid']
+        if not valid:
+            continue
+        text = str(event.get('summary', '')) + ' · ' + str(event.get('result', ''))
+        for evidence in audit['events'].get(event['event_id'], []):
+            for index, measurement in structured_development_metrics(event, evidence).items():
+                dimensions[index].append(dict(text=measurement, revision=str(event.get('revision', '')),
+                                              event_id=event['event_id'], paths=[evidence['path']], structured=True,
+                                              evidence_sha256=evidence.get('expected_sha256')))
+        for i, terms in enumerate(DIMENSION_CHECK_TERMS):
+            if any(term in text.casefold() for term in terms):
+                dimensions[i].append(dict(text=text, revision=str(event.get('revision', '')),
+                                          event_id=event['event_id'], paths=valid))
+    # Several ledger events may cite the same measured file. Merge only exact
+    # duplicates; separate captures and distinct findings remain independently visible.
+    unique_dimensions = []
+    for items in dimensions:
+        distinct = {}
+        for item in items:
+            key = (('measurement', item.get('evidence_sha256'), item['text']) if item.get('structured')
+                   else ('finding', tuple(item['paths']), item['text']))
+            distinct[key] = item
+        unique_dimensions.append(sorted(distinct.values(), key=lambda item: item.get('structured', False))[-2:])
+    dimensions = unique_dimensions
+    if semantic:
+        dimensions[4].append(dict(
+            text='图片盲读：动作一致度 ' + str(semantic['action_score']) + '/10；意图一致度 '
+                 + str(semantic['intent_score']) + '/10；模式 ' + str(semantic['modality']),
+            revision=str(semantic.get('revision', '')), event_id=str(semantic.get('id', '')),
+            paths=[semantic['record_path']]))
+    return dimensions
+
+
+def development_missing_reasons(events, audit, dimensions):
+    """Explain absent or unauditable matching checks without treating them as scores."""
+    reasons = [[] for _ in DIMENSIONS]
+    labels = {'missing': 'file missing', 'changed': 'hash changed',
+              'unverified': 'hash missing or file changed during audit'}
+    for event in events:
+        if event.get('kind') != 'check':
+            continue
+        text = (str(event.get('summary', '')) + ' · ' + str(event.get('result', ''))).casefold()
+        evidence = audit['events'].get(event['event_id'], [])
+        for i, terms in enumerate(DIMENSION_CHECK_TERMS):
+            if not any(term in text for term in terms):
+                continue
+            if not evidence:
+                reasons[i].append('Check ' + event['event_id'] + ': no evidence attached')
+            for item in evidence:
+                if item['status'] in labels:
+                    reasons[i].append('Check ' + event['event_id'] + ': ' + item['path']
+                                      + ' (' + labels[item['status']] + ')')
+    for i, items in enumerate(dimensions):
+        if not items and not reasons[i]:
+            reasons[i].append(DIMENSION_MISSING[i])
+    return reasons
+
+
+def development_dimension_html(items, index, page, missing=None):
+    missing = missing if missing is not None else ([] if items else [DIMENSION_MISSING[index]])
+    rows = []
+    for item in items:
+        sources = ' '.join(link(project_file(path), Path(path).name, page) for path in item['paths'])
+        rows.append('<li>' + escape(item['text']) + ' <small>' + escape(item['revision']) + ' · '
+                    + escape(item['event_id']) + '</small> ' + sources + '</li>')
+    gaps = ''.join('<li>' + escape(reason) + '</li>' for reason in missing)
+    if not rows and not gaps:
+        return ''
+    return ('<details class="development-dimension"><summary>查看测试依据</summary>'
+            + ('<ul>' + ''.join(rows) + '</ul>' if rows else '')
+            + ('<p>待补证据：</p><ul>' + gaps + '</ul>' if gaps else '') + '</details>')
+
+
+def development_score_events(events):
+    latest = {}
+    for event in events:
+        value = event.get('development_score')
+        if (isinstance(value, dict) and value.get('category') in SCORE_CATEGORIES
+                and value.get('acceptance_eligible') is False
+                and isinstance(value.get('score'), (int, float)) and not isinstance(value['score'], bool)
+                and math.isfinite(value['score']) and 0 <= value['score'] <= 10):
+            latest[value['category']] = event
+    return latest
+
+
+def dimension_scores(record, previous=None, development=None, page=None, missing=None, development_scores=None):
     cards = []
     for i, (name, score, reason) in enumerate(zip(DIMENSIONS, record.get('scores', [None] * 7), record.get('score_reasons', [None] * 7))):
-        value = '待评' if score is None else f'{score:g}<small>/10</small>'
+        development_score = (development_scores or {}).get(SCORE_CATEGORIES[i])
+        primary_score = score if score is not None else (development_score['development_score']['score'] if development_score else None)
+        value = '待评' if primary_score is None else f'{primary_score:g}<small>/10</small>'
+        primary_label = '正式验收分数' if score is not None else ('开发测试分数' if development_score else '等待评分')
         delta = ''
         if previous and score is not None and previous['scores'][i] is not None:
             delta = f'<small>较上轮 {score - previous["scores"][i]:+g}</small>'
-        cls = 'pending' if score is None else 'pass' if score >= 8 else 'fail'
-        cards.append(f'<div class="dimension {cls}"><span>{name}</span><b>{value}</b>{delta}<p>{escape(str(reason or "等待独立实机评审"))}</p></div>')
+        cls = 'pending' if primary_score is None else 'pass' if primary_score >= 8 else 'fail'
+        detail = development_dimension_html(development[i], i, page, missing[i] if missing is not None else None) if development is not None else ''
+        development_text = 'No development score recorded'
+        if development_score:
+            data = development_score['development_score']
+            development_text = (f"{data['score']:g}/10 · {data.get('rationale') or 'No rationale supplied'} · "
+                                f"{development_score['at']} · HEAD {development_score['revision']} · event {development_score['event_id']} · "
+                                f"server PID {development_score.get('server_identity', {}).get('server_pid', 'unknown')} · "
+                                f"evidence {', '.join(development_score.get('evidence', [])) or 'none supplied'}")
+        development_html = (f'<details class="development-score" data-score-category="{SCORE_CATEGORIES[i]}">'
+                            '<summary>评分来源 · 非正式验收</summary><p class="development-score-value">'
+                            + escape(development_text) + '</p></details>') if development_scores is not None else ''
+        formal_status = ('正式验收：待评' if score is None else '正式验收：' + str(reason or '已记录'))
+        formal_flag = 'true' if score is not None else 'false'
+        cards.append(f'<div class="dimension {cls}" data-formal-scored="{formal_flag}"><span>{name}</span><b class="primary-score">{value}</b><small class="primary-score-label">{primary_label}</small>{delta}<p class="formal-score-status">{escape(formal_status)}</p>{development_html}{detail}</div>')
     return '<div class="dimensions">' + ''.join(cards) + '</div>'
 
 
@@ -285,9 +471,9 @@ def review_details(record, page):
 
 
 def repair_feedback(changes, events, page, audit):
-    body = '<div class="feedback"><h3>本段反馈与修正</h3>'
+    body = '<details class="feedback"><summary>本段反馈与修正</summary>'
     if not changes and not events:
-        return body + '<p class="muted">等待本段主线游玩反馈。</p></div>'
+        return body + '<p class="muted">等待本段主线游玩反馈。</p></details>'
     body += '<ol class="repairs">'
     for row in changes:
         body += '<li><b>' + escape(row['reason']) + '</b><p>反馈：' + escape(row['before']) + '</p><p>修正：' + escape(row['after']) + '</p>'
@@ -300,7 +486,7 @@ def repair_feedback(changes, events, page, audit):
         body += '<li><b>' + escape({'change': '修正', 'check': '检查', 'complete': '完成确认'}[e['kind']] + ' · ' + e['summary']) + '</b><p>' + escape(str(e['result'])) + '</p>'
         body += '<p class="evidence-links">' + progress_evidence(e, page, audit) + '</p>'
         body += '<small>' + escape(e['at'] + ' · ' + e['work_id']) + '</small></li>'
-    return body + '</ol></div>'
+    return body + '</ol></details>'
 
 
 def build_segments(reviews, changes, progress, revision, audit=None):
@@ -331,16 +517,22 @@ def build_segments(reviews, changes, progress, revision, audit=None):
                 path = project_file(evidence['path'])
                 if path.suffix.lower() not in ('.png', '.jpg', '.jpeg') or path in seen_images:
                     continue
-                provenance.verify_image(path, ROOT, allow_fixture=True)
-                development_images.append({'path': evidence['path'], 'caption': event['summary'] + ' · ' + path.stem})
+                origin = development_image_origin(path)
+                caption = event['summary'] + ' · ' + path.stem
+                if origin == 'historical-other-host-unverified':
+                    caption += ' · Cross-host historical image: original PID cannot be verified; development evidence only'
+                development_images.append({'path': evidence['path'], 'caption': caption, 'archive_origin': origin})
                 seen_images.add(path)
         semantic_history = [r for r in semantic_reviews if r['segment_id'] == scene['id']]
         semantic = semantic_history[-1] if semantic_history else None
+        diagnostics = development_dimensions(events, audit, semantic)
+        missing = development_missing_reasons(events, audit, diagnostics)
         entries.append(dict(scene, current=current, history=history, changes=repairs, events=events,
                             recordings=recordings.get(scene['id'],[]),
                             semantic=semantic, semantic_history=semantic_history,
                             modification_count=len(repairs) + sum(e['kind'] == 'change' for e in events),
                             development_images=development_images,
+                            development_dimensions=diagnostics, development_missing=missing,
                             scores=current.get('scores', [None] * 7), status=review_result(current)))
     return entries
 
@@ -425,8 +617,8 @@ def segment_card(entry, number, page, audit):
         conclusion_label = '图片盲读'
     body += f'<div class="segment-heading"><div><small>第一章 · {number:02d} / 11</small><h2>{escape(entry["label"])}</h2></div><div class="conclusion"><span>{conclusion_label}</span>{badge(conclusion)}<span>修改 <b>{entry["modification_count"]}</b> 次</span></div></div>'
     body += '<p class="meta">' + escape(' / '.join(entry['rooms'])) + ' · 当前版本 ' + ('独立评审已记录' if current else '待独立实机评审') + '</p>'
-    body += '<div class="acceptance-dimensions"><h3>完整实机七项验收 · ' + entry['status'] + '</h3>'
-    body += '<p class="meta">当前版本独立实机评分；缺少评审的分项显示待评。</p>' + dimension_scores(current) + '</div>'
+    body += '<div class="acceptance-dimensions"><h3>七项评分与正式验收 · ' + entry['status'] + '</h3>'
+    body += '<p class="meta">卡片优先显示正式验收分数；正式验收待评时，醒目显示已有开发测试分数并单独标注。</p>' + dimension_scores(current, development=entry['development_dimensions'], page=page, missing=entry.get('development_missing'), development_scores=development_score_events(entry['events'])) + '</div>'
     body += score_editor(current)
     body += semantic_score_summary(entry.get('semantic'))
     if entry.get('recordings'):
@@ -434,7 +626,7 @@ def segment_card(entry, number, page, audit):
     if entry.get('semantic'):
         if entry.get('recordings') and entry['semantic']['modality']!='original_subtitled_stills':
             body += '<p class="meta">下方保留上一轮抽帧评审，评分对应其原始素材；本轮完整录制评审随后追加。</p>'
-        body += semantic_details(entry['semantic'],page)
+        body += '<details><summary>图片盲读详情</summary>' + semantic_details(entry['semantic'],page) + '</details>'
     else:
         body += '<p class="muted">图片动作／意图盲读：等待独立测试者记录。</p>'
     if current:
@@ -466,7 +658,38 @@ def progress_section(progress, page, audit=None):
             row += '<small>确认事件：' + escape('、'.join(e['related_event_ids'])) + '</small>'
         rows.append(row + '</li>')
     data = json.dumps(progress, ensure_ascii=False).replace('<', '\\u003c').replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
-    return '<section id="live-progress" class="live-progress"><h2>实时进展</h2><p class="muted">每次修改、检测追加一行；工作完成后另行确认。每 5 秒更新。</p><ol id="progress-events">' + ''.join(rows) + '</ol><p id="progress-empty"' + (' hidden' if rows else '') + '>等待首条记录。</p></section><script>window.MAINLINE_PROGRESS=' + data + ';</script>'
+    return '<section id="live-progress" class="live-progress"><details><summary>实时进展与完整记录</summary><ol id="progress-events">' + ''.join(rows) + '</ol><p id="progress-empty"' + (' hidden' if rows else '') + '>等待首条记录。</p></details></section><script>window.MAINLINE_PROGRESS=' + data + ';</script>'
+
+
+def scoring_coverage(entries):
+    """Compact chapter matrix; historical scores stay attached to their revision."""
+    rows = []
+    counts = {'formal': 0, 'development': 0, 'historical': 0, 'pending': 0}
+    for entry in entries:
+        events = development_score_events(entry.get('events', []))
+        history = entry.get('history', [])
+        superseded = {r['supersedes'] for r in history if r.get('supersedes')}
+        cells = []
+        for i, category in enumerate(SCORE_CATEGORIES):
+            score = entry.get('scores', [None] * 7)[i]
+            old = next((r for r in reversed(history) if r.get('id') not in superseded
+                        and len(r.get('scores', [])) > i and r['scores'][i] is not None), None)
+            source = 'formal' if score is not None else ('development' if category in events else ('historical' if old else 'pending'))
+            counts[source] += 1
+            title = ''
+            if source == 'development':
+                score = events[category]['development_score']['score']
+            elif source == 'historical':
+                score = old['scores'][i]
+                title = f' title="历史版本 {escape(str(old.get("revision", ""))[:8], quote=True)}；当前版本待评"'
+            text = '待评' if score is None else f'{score:g} · ' + {'formal': '正式', 'development': '开发', 'historical': '历史'}[source]
+            cells.append(f'<td data-coverage-category="{category}" data-formal-scored="{str(source == "formal").lower()}" data-score-source="{source}"{title}>{escape(text)}</td>')
+        rows.append(f'<tr data-coverage-segment="{escape(entry["id"], quote=True)}"><th><a href="#trajectory-{escape(entry["id"], quote=True)}">{escape(entry["label"])}</a></th>' + ''.join(cells) + '</tr>')
+    header = ''.join('<th>' + escape(name) + '</th>' for name in DIMENSIONS)
+    summary = f"正式 {counts['formal']} 项 · 开发 {counts['development']} 项 · 仅历史 {counts['historical']} 项 · 待评 {counts['pending']} 项"
+    return (f'<section class="score-coverage"><h2>第一章评分统计</h2><p data-coverage-summary>{summary}</p>'
+            '<div class="coverage-scroll"><table><thead><tr><th>剧情片段</th>' + header + '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>'
+            '<p class="meta">历史分数来自旧版本，当前版本仍待评；图片盲读分项单独保留。</p></section>')
 
 
 def wrap(title, body, page, revision, navigation=''):
@@ -488,9 +711,6 @@ def markdown(entries, revision, progress, audit):
             recording=entry['recordings'][-1]
             lines += ['完整过程已录制，保留原速与原字幕；本段对白显示片段 '+str(len(recording['subtitles']))+' 个。', '',
                       '[本段连续视频](<'+markdown_href(project_file(recording['video']), page)+'>) · [覆盖清单](<'+markdown_href(project_file(recording['coverage']), page)+'>) · [第一二段完整视频](<'+markdown_href(project_file(recording['full_video']), page)+'>)', '']
-        if entry.get('recordings'):
-            capture = entry['recordings'][-1]
-            lines += ['完整原速录制、原字幕对白覆盖：完整。', '', '[本段视频](<'+markdown_href(project_file(capture['video']), page)+'>) · [覆盖清单](<'+markdown_href(project_file(capture['coverage']), page)+'>)', '']
         semantic = entry.get('semantic')
         if semantic:
             observation = semantic['observation']
@@ -504,6 +724,17 @@ def markdown(entries, revision, progress, audit):
         lines += ['| 实机验收分项 | 分数 | 原因 |', '| --- | --- | --- |']
         for name, score, reason in zip(DIMENSIONS, entry['scores'], entry['current'].get('score_reasons', [None] * 7)):
             lines.append('| ' + name + ' | ' + ('待评' if score is None else str(score)) + ' | ' + str(reason or '等待独立实机评审').replace('|', '／').replace('\n', ' ') + ' |')
+        lines += ['', '开发期证据（与正式验收分开）：', '']
+        for dimension_index, items in enumerate(entry['development_dimensions']):
+            lines.append('- **' + DIMENSIONS[dimension_index] + '**：' + (
+                '；'.join(str(item['text']).replace('\n', ' ') + '（版本 ' + item['revision']
+                         + '，事件 ' + item['event_id'] + '；' + '、'.join(
+                             '[' + Path(path).name.replace(']', '') + '](<' + markdown_href(project_file(path), page) + '>)'
+                             for path in item['paths']) + '）' for item in items)
+                if items else DIMENSION_MISSING[dimension_index]))
+            for reason in entry.get('development_missing', [[] for _ in DIMENSIONS])[dimension_index]:
+                lines.append('  - Missing evidence: ' + reason.replace('|', '／').replace('\n', ' '))
+
         lines += ['', '### 本段反馈与修正', '']
         for row in entry['changes']:
             lines += ['- ' + row['reason'] + '（' + row['revision'][:8] + '）：' + row['before'] + ' → ' + row['after']]
@@ -617,31 +848,53 @@ def render():
     OUT.mkdir(parents=True, exist_ok=True)
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, stdin=subprocess.DEVNULL, text=True).strip()
     progress, reviews = load_progress(), load_reviews(ROOT)
-    audit = audit_progress(progress)
-    audit_document = dict(generated_at=datetime.now().astimezone().isoformat(timespec='seconds'),
-                          complete=audit['complete'], counts=audit['counts'], issues=audit['issues'])
-    atomic_write(OUT / 'evidence-audit.json', json.dumps(audit_document, ensure_ascii=False, indent=2) + '\n')
-    entries = build_segments(reviews, load_changes(), progress, revision, audit)
-    previous = read_json(OUT / 'score_records.json', {})
-    if previous.get('runs') and not (OUT / 'archive-score-records.json').exists():
-        atomic_write(OUT / 'archive-score-records.json', json.dumps(previous, ensure_ascii=False, indent=2) + '\n')
-    if not (OUT / 'archive-score-records.json').exists():
-        atomic_write(OUT / 'archive-score-records.json', '{}\n')
-    for name in ('review.css', 'review.js'):
+    results = test_results.collect(reviews, progress['events'])
+    latest = test_results.latest_by_segment(results)
+    current_events = {r['event_id'] for r in latest.values() if r.get('event_id')}
+    audit = audit_progress({'events': [e for e in progress['events'] if e['event_id'] in current_events]})
+    for result in latest.values():
+        if not result.get('event_id'):
+            continue
+        evidence = audit['events'][result['event_id']]
+        result['evidence'] = [e['path'] for e in evidence if e['status'] == 'valid']
+        result['evidence_issues'] = [e['status'] + ': ' + e['path'] for e in evidence if e['status'] != 'valid']
+        if not evidence:
+            result['evidence_issues'] = ['This test did not attach measurement evidence.']
+            audit['complete'] = False
+        if result['evidence_issues'] and result['status'] == '合格':
+            result['status'] = '待补测'
+        for value in result['evidence']:
+            path = project_file(value)
+            if path.suffix.lower() in ('.png', '.jpg', '.jpeg'):
+                try:
+                    provenance.verify_image(path, ROOT, allow_fixture=True)
+                except ValueError:
+                    continue
+                result['images'].append({'path': value, 'caption': path.stem})
+    scenes = read_json(PLAN)['scenes']
+    for name in ('review.css', 'run-report.js'):
         atomic_write(OUT / name, (Path(__file__).parent / name).read_text(encoding='utf-8'))
     for filename in ('index.html', 'gameplay.html'):
         page = OUT / filename
-        nav = '<nav class="chapter-nav" aria-label="主线剧情顺序">' + ''.join(f'<a href="#trajectory-{e["id"]}"><span>{i:02d}</span>{escape(e["label"])}</a>' for i, e in enumerate(entries, 1)) + '</nav>'
-        body = evidence_banner(audit, page) + ''.join(segment_card(e, i, page, audit) for i, e in enumerate(entries, 1)) + progress_section(progress, page, audit)
-        atomic_write(page, wrap('第一章 · 主线评分与修正', body, page, revision, nav))
-    archive_page(reviews, revision)
-    for name in ('评分总览.md', '游戏场景评分.md'):
-        atomic_write(OUT / name, markdown(entries, revision, progress, audit))
-    integrity = dict(complete=audit['complete'], counts=audit['counts'], audit='evidence-audit.json')
-    data = dict(schema_version=2, generated_at=datetime.now().astimezone().isoformat(timespec='seconds'), revision=revision, dimensions=DIMENSIONS, history_evidence=integrity, overall_passed=overall_passed(entries, integrity), gameplay_scenes=entries)
+        body = test_results.matrix(scenes, latest)
+        body += ''.join(test_results.card(scene, latest.get(scene['id']), page, link, project_file, trajectory) for scene in scenes)
+        document = wrap('第一章 · 测试评分', body, page, revision)
+        document = document.replace(link(OUT / 'archive.html', '历史与辅助资料', page), '')
+        document = document.replace('review.js', 'run-report.js')
+        atomic_write(page, document)
+    for name in ('评分总览.md', 'scoring_overview.md'):
+        atomic_write(OUT / name, test_results.markdown(scenes, latest, revision))
+    entries = [dict(scene, scores=latest.get(scene['id'], {}).get('scores', [None] * 7),
+                    status=latest.get(scene['id'], {}).get('status', '待补测'),
+                    test=latest.get(scene['id'])) for scene in scenes]
+    # Each result is evaluated against its own evidence and revision.
+    integrity = dict(complete=audit['complete'], counts=audit['counts'])
+    data = dict(schema_version=3, generated_at=datetime.now().astimezone().isoformat(timespec='seconds'),
+                revision=revision, dimensions=DIMENSIONS, history_evidence=integrity,
+                overall_passed=overall_passed(entries, integrity), gameplay_scenes=entries)
     atomic_write(OUT / 'score_records.json', json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-    if not (OUT / 'live-progress.js').exists():
-        atomic_write(OUT / 'live-progress.js', 'window.MAINLINE_PROGRESS=' + json.dumps(progress, ensure_ascii=False).replace('<', '\\u003c') + ';\n')
+    live = {'events': [e for e in progress['events'] if e.get('test_result')]}
+    atomic_write(OUT / 'live-progress.js', 'window.MAINLINE_PROGRESS=' + json.dumps(live, ensure_ascii=False).replace('<', '\\u003c') + ';\n')
     return validate_export()
 
 

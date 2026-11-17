@@ -32,7 +32,7 @@ async def invoke(tool=None, arguments=None, *, test_sandbox=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("tool", nargs="?", choices=["progress_append", "review_append", "semantic_append", "flush", "render"])
+    parser.add_argument("tool", nargs="?", choices=["progress_append", "review_append", "semantic_append", "add_score", "add_scores", "see_score", "flush", "render"])
     parser.add_argument("--arguments", default="{}", help="JSON object, or @project-local JSON file")
     parser.add_argument("--test-sandbox")
     options = parser.parse_args()

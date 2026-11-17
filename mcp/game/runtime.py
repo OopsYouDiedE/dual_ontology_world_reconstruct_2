@@ -55,6 +55,7 @@ class Endpoint:
         self.snapshot_path = None
         self.checkpoint_path = None
         self.checkpoint_stop_path = None
+        self.metrics_directory = None
 
     def attach(self, process):
         self.process = process
@@ -94,6 +95,7 @@ class Endpoint:
                     metrics = provenance.project_path(payload["metrics_directory"], ROOT)
                     if not metrics.name.endswith("-" + str(self.process.pid)):
                         raise ValueError("Monitor directory PID mismatch")
+                    self.metrics_directory = metrics
         except (queue.Empty, TimeoutError, OSError, ValueError, RuntimeError) as error:
             self.stop()
             raise RuntimeError("Host request failed; session closed to prevent duplicate actions. " + str(error)) from error
@@ -125,6 +127,53 @@ class Endpoint:
             if self.process:
                 for stream in (self.process.stdin, self.process.stdout, self.process.stderr):
                     if stream: stream.close()
+
+
+
+def finalize_metrics(endpoint, graceful):
+    """Summarize one completed live run after its render host has stopped."""
+    if endpoint.backend != "godot":
+        return {"metrics_status": "not_applicable"}
+    development = endpoint.snapshot_path is not None
+    development_flags = {"acceptance_eligible": False, "acceptance_scored": False,
+                         "snapshot_path": str(endpoint.snapshot_path)} if development else {}
+    if endpoint.movie_path is not None:
+        return dict(development_flags, metrics_status="not_eligible", metrics_error="Fixed-step movie runs are development captures")
+    if not graceful or endpoint.metrics_directory is None:
+        return dict(development_flags, metrics_status="incomplete", metrics_error="A gracefully closed monitored session is required")
+    directory = provenance.project_path(endpoint.metrics_directory, ROOT)
+    if not directory.name.endswith("-" + str(endpoint.process.pid)):
+        return dict(development_flags, metrics_status="error", metrics_error="Monitor directory PID mismatch")
+    output = directory / ("segment-metrics-development.json" if development else "segment-metrics.json")
+    try:
+        # MCP requests already run off the server event loop; the Godot render
+        # process is stopped before this potentially expensive analysis.
+        import importlib
+        testing_path = str(ROOT / "tools/testing")
+        if testing_path not in sys.path:
+            sys.path.insert(0, testing_path)
+        metrics = importlib.import_module("mainline_metrics")
+        data = (metrics.summarize(directory, snapshot_path=endpoint.snapshot_path)
+                if development else metrics.summarize(directory))
+        if development and (data.get("acceptance_eligible") is not False
+                            or data.get("snapshot_path") != str(provenance.project_path(endpoint.snapshot_path, ROOT))):
+            raise ValueError("Development metrics provenance mismatch")
+        provenance.validate_source(data.get("source_identity"), endpoint.expected_source, pid=endpoint.process.pid)
+        temporary = output.with_name(output.name + ".tmp")
+        try:
+            temporary.write_text(json.dumps(data, ensure_ascii=False, allow_nan=False, indent=2) + "\n", encoding="utf-8")
+            os.replace(temporary, output)
+        finally:
+            if temporary.exists():
+                temporary.unlink()
+        result = {"metrics_status": "complete", "metrics_summary_path": str(output),
+                  "metrics_segments": list(data.get("segments", {})), "acceptance_scored": False}
+        if development:
+            result.update(acceptance_eligible=False, snapshot_path=data["snapshot_path"])
+        return result
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
+        return dict(development_flags, metrics_status="error", metrics_error=str(error))
+
 
 
 def _movie_hash(path):
@@ -305,6 +354,7 @@ def execute(name, arguments):
                     result["checkpoint_saved"] = True
                 except (OSError, ValueError, TypeError, KeyError) as error:
                     result["checkpoint_error"] = str(error)
+            result.update(finalize_metrics(endpoint, graceful))
             if endpoint.movie_path:
                 result.update(movie_path=str(endpoint.movie_path),
                               movie_finalized=graceful and endpoint.movie_path.is_file() and endpoint.movie_path.stat().st_size > 0,

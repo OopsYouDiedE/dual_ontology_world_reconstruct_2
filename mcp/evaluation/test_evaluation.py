@@ -10,7 +10,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+from types import SimpleNamespace
 
 import psutil
 
@@ -26,6 +27,206 @@ class ProjectFixture(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(dir=parent)
         self.directory = Path(self.temp.name)
         self.addCleanup(self.temp.cleanup)
+
+
+class DisplayAdaptationTests(ProjectFixture):
+    def evaluation(self, rendered=True):
+        from worker import Evaluation
+        instance = Evaluation.__new__(Evaluation)
+        instance.launch = {"rendered": rendered}
+        instance.env = {"DISPLAY": ":7", "WAYLAND_DISPLAY": "wayland-7"}
+        instance.state = {}
+        instance.root = c.ROOT
+        instance.directory = self.directory
+        instance.xvfb = None
+        instance._publish = Mock()
+        return instance
+
+    def test_unrendered_does_not_touch_display(self):
+        import worker
+        instance = self.evaluation(False)
+        with patch.object(worker, "display_available") as probe:
+            instance.display()
+        probe.assert_not_called()
+        self.assertEqual(instance.state, {})
+
+    def test_windows_uses_native_display_without_forcing_software(self):
+        import worker
+        instance = self.evaluation()
+        with patch.object(worker, "os", SimpleNamespace(name="nt")), \
+             patch.object(worker.shutil, "which") as which:
+            instance.display()
+        which.assert_not_called()
+        self.assertEqual(instance.state["display"]["driver"], "Windows")
+        self.assertFalse(instance.state["display"]["owned"])
+        self.assertNotIn("LIBGL_ALWAYS_SOFTWARE", instance.env)
+        instance._publish.assert_called_once()
+
+    def test_linux_native_display_and_stale_wayland(self):
+        import worker
+        instance = self.evaluation()
+        with patch.object(worker, "os", SimpleNamespace(name="posix")), \
+             patch.object(worker.sys, "platform", "linux"), \
+             patch.object(worker, "display_available", side_effect=[False, True]) as probe, \
+             patch.object(worker.shutil, "which") as which:
+            instance.display()
+        self.assertEqual(probe.call_count, 2)
+        which.assert_not_called()
+        self.assertNotIn("WAYLAND_DISPLAY", instance.env)
+        self.assertNotIn("LIBGL_ALWAYS_SOFTWARE", instance.env)
+        self.assertEqual(instance.state["display"]["driver"], "x11")
+        self.assertFalse(instance.state["display"]["owned"])
+
+    def test_linux_wayland_is_preferred(self):
+        import worker
+        instance = self.evaluation()
+        instance.env["LIBGL_ALWAYS_SOFTWARE"] = "0"
+        with patch.object(worker, "os", SimpleNamespace(name="posix")), \
+             patch.object(worker.sys, "platform", "linux"), \
+             patch.object(worker, "display_available", return_value=True):
+            instance.display()
+        self.assertEqual(instance.state["display"]["driver"], "wayland")
+        self.assertEqual(instance.env["LIBGL_ALWAYS_SOFTWARE"], "0")
+
+    def test_linux_fallback_tracks_owned_xvfb_and_environment(self):
+        import worker
+        instance = self.evaluation()
+        fake_os = SimpleNamespace(name="posix", pipe=os.pipe, close=os.close, read=os.read)
+        host = Mock(pid=123)
+        def start(command, **kwargs):
+            os.write(kwargs["pass_fds"][0], b"42\n")
+            return host
+        with patch.object(worker, "os", fake_os), \
+             patch.object(worker.sys, "platform", "linux"), \
+             patch.object(worker, "display_available", return_value=False), \
+             patch.object(worker.shutil, "which", return_value="Xvfb"), \
+             patch.object(worker.subprocess, "Popen", side_effect=start), \
+             patch.object(worker.select, "select", return_value=([1], [], [])), \
+             patch.object(c, "inspect_process", return_value={"pid": 123}):
+            instance.display()
+        self.assertIs(instance.xvfb, host)
+        self.assertEqual(instance.state["display_process"]["pid"], 123)
+        self.assertEqual(instance.env["DISPLAY"], ":42")
+        self.assertNotIn("WAYLAND_DISPLAY", instance.env)
+        self.assertEqual(instance.env["LIBGL_ALWAYS_SOFTWARE"], "1")
+        self.assertTrue(instance.state["display"]["owned"])
+
+    def test_missing_xvfb_reports_blocker(self):
+        import worker
+        instance = self.evaluation()
+        with patch.object(worker, "os", SimpleNamespace(name="posix")), \
+             patch.object(worker.sys, "platform", "linux"), \
+             patch.object(worker, "display_available", return_value=False), \
+             patch.object(worker.shutil, "which", return_value=None):
+            with self.assertRaisesRegex(RuntimeError, "working display or Xvfb"):
+                instance.display()
+        self.assertIsNone(instance.xvfb)
+
+    def test_failed_display_setup_cleans_up_owned_xvfb(self):
+        import threading
+        import time
+        import worker
+        from contextlib import nullcontext
+        instance = self.evaluation()
+        host = Mock()
+        host.poll.return_value = None
+        instance.xvfb = host
+        instance.display = Mock(side_effect=RuntimeError("display failed"))
+        instance.stop = threading.Event()
+        instance.lock = threading.Lock()
+        instance.started = time.monotonic()
+        instance.state.update(source_fingerprint_before="fingerprint", revision="rev",
+                              working_tree_changes=[], jobs={})
+        with patch.object(c, "exclusive_run_lock", return_value=nullcontext()), \
+             patch.object(c, "source_fingerprint", return_value="fingerprint"), \
+             patch.object(c, "revision_state", return_value={"revision": "rev", "working_tree_changes": []}):
+            with self.assertRaisesRegex(RuntimeError, "display failed"):
+                instance.run()
+        host.terminate.assert_called_once()
+        host.wait.assert_called_once_with(timeout=5)
+        self.assertEqual(instance.state["state"], "blocked")
+
+    def test_display_probe_handles_missing_variable_and_timeout(self):
+        import worker
+        self.assertFalse(worker.display_available("x11", {}))
+        with patch.object(worker.subprocess, "run", side_effect=subprocess.TimeoutExpired("probe", 5)):
+            self.assertFalse(worker.display_available("x11", {"DISPLAY": ":9"}))
+
+
+class SourceFingerprintTests(ProjectFixture):
+    def test_localization_edits_and_new_files_change_fingerprint(self):
+        # Isolate the fixture: changing the real catalog would interfere with
+        # concurrent development and Git status may already list it as dirty.
+        (self.directory / "project.godot").write_text("config", encoding="utf-8")
+        (self.directory / "goal.md").write_text("goal", encoding="utf-8")
+        locale = self.directory / "localization"
+        locale.mkdir()
+        catalog = locale / "translations.csv"
+        catalog.write_text("key,en\nhello,Hello\n", encoding="utf-8")
+        with patch.object(c, "ROOT", self.directory), patch.object(c, "assert_project"):
+            original = c.source_fingerprint()
+            catalog.write_text("key,en\nhello,Hi\n", encoding="utf-8")
+            edited = c.source_fingerprint()
+            self.assertNotEqual(original, edited)
+            (locale / "translations.en.translation").write_bytes(b"compiled")
+            self.assertNotEqual(edited, c.source_fingerprint())
+
+
+class CoverageTests(unittest.TestCase):
+    def test_profile_plans_match_scheduled_lanes(self):
+        from worker import planned_jobs
+        plain = dict(planned_jobs("chapter1_ui", False))
+        visual = dict(planned_jobs("chapter1_ui", True))
+        self.assertEqual(set(plain), {"chapter1-flow", "fixtures", "special-ui", "bedroom-fast", "corridor-fast", "kitchen-fast"})
+        self.assertEqual(set(visual) - set(plain), {"story-visual"})
+        self.assertEqual(planned_jobs("scenario", False), [("scenario", "project")])
+        with self.assertRaises(ValueError):
+            planned_jobs("unknown", False)
+
+    def test_unstarted_lanes_are_explicit_without_changing_results(self):
+        from worker import mark_unstarted
+        jobs = {"fixture": {"state": "failed", "detail": {"error": "bad"}},
+                "visual": {"state": "planned", "segment_id": "wake"}}
+        mark_unstarted(jobs)
+        self.assertEqual(jobs["fixture"]["detail"]["error"], "bad")
+        self.assertEqual(jobs["visual"]["state"], "blocked")
+        self.assertEqual(jobs["visual"]["segment_id"], "wake")
+
+    def test_peak_counts_live_hosts_not_queued_or_exited(self):
+        from worker import observe_concurrency
+        class Host:
+            def __init__(self, pid, alive):
+                self.pid, self.alive = pid, alive
+            def poll(self):
+                return None if self.alive else 0
+        observed = {"peak_live_hosts": 0, "witness": []}
+        hosts = {"story": Host(10, True), "fixture": Host(11, True), "old": Host(12, False)}
+        observe_concurrency(observed, hosts)
+        self.assertEqual(observed["peak_live_hosts"], 2)
+        self.assertEqual({entry["pid"] for entry in observed["witness"]}, {10, 11})
+        hosts["story"].alive = False
+        observe_concurrency(observed, hosts)
+        self.assertEqual(observed["peak_live_hosts"], 2)
+
+    def test_two_real_owned_processes_produce_a_witness(self):
+        from worker import observe_concurrency
+        processes = {}
+        try:
+            for name in ("story", "fixture"):
+                processes[name] = subprocess.Popen(
+                    [sys.executable, "-c", "import time; time.sleep(15)"],
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            observed = {"peak_live_hosts": 0, "witness": []}
+            observe_concurrency(observed, processes)
+            self.assertEqual(observed["peak_live_hosts"], 2)
+            self.assertEqual({item["pid"] for item in observed["witness"]},
+                             {process.pid for process in processes.values()})
+        finally:
+            for process in processes.values():
+                if process.poll() is None:
+                    process.terminate()
+                process.wait(timeout=5)
 
 
 class WorkerLaunchTests(ProjectFixture):
@@ -236,6 +437,33 @@ class ProfileTests(ProjectFixture):
         c.write_json(output, data)
         with self.assertRaisesRegex(ValueError, "development-only"):
             worker._validate_output("kitchen-click", output, os.getpid(), False)
+
+    @unittest.skipIf(os.name == "nt", "Linux /proc identity")
+    def test_linux_process_token_rejects_pid_reuse(self):
+        import psutil
+        process = psutil.Process(os.getpid())
+        token = c.linux_process_token(os.getpid())
+        self.assertIsNotNone(token)
+        observed = c.inspect_process(os.getpid(), expected_exe=process.exe(), process_token=token,
+                                     created=process.create_time() - 100)
+        self.assertEqual(observed["process_token"], token)
+        forged = dict(token, start_ticks=token["start_ticks"] + 1)
+        with self.assertRaisesRegex(ValueError, "kernel start identity"):
+            c.inspect_process(os.getpid(), expected_exe=process.exe(), process_token=forged)
+
+    def test_rendered_flow_and_fixtures_keep_real_display_driver(self):
+        from worker import Evaluation
+        worker = Evaluation.__new__(Evaluation)
+        worker.directory = self.directory
+        worker.root = c.ROOT
+        worker.godot = self.directory / "synthetic-godot"
+        worker.run_id = "eval-20261116t000000-1234abcd"
+        worker.launch = {"rendered": True}
+        for job in ("chapter1-flow", "fixtures"):
+            command, headless, _, _ = worker._job_spec(job)
+            self.assertFalse(headless)
+            self.assertNotIn("--headless", command)
+            self.assertEqual(command[command.index("--language") + 1], "en")
 
     def test_worker_passes_motion_cap_only_when_requested(self):
         from worker import Evaluation

@@ -122,6 +122,13 @@ func _target(index: int) -> Dictionary:
 	if id == "window":
 		var found := _boxes(Vector3(0.9, 0.9, 0.06), Vector3(point.x, 1.7, 0.03))
 		return _unique(found, null, found, "original corridor window box")
+	if id == "gate":
+		var found := _boxes(Vector3(0.12, 2.2, 1.45), Vector3(-0.06, 1.1, 1.7))
+		return _unique(found, null, found, "original west gate leaf")
+	if id == "kitchen":
+		var found := _boxes(Vector3(0.1, 2.2, float(corridor.DEPTH) - 0.9),
+			Vector3(float(corridor.LEN) + 0.55, 1.1, float(corridor.DEPTH) * 0.5))
+		return _unique(found, null, found, "original kitchen opening")
 	if id == "bench":
 		var seat := _boxes(Vector3(1.5, 0.12, 0.42), Vector3(point.x, 0.28, 0.45))
 		var group := seat.duplicate()
@@ -143,29 +150,30 @@ func _target(index: int) -> Dictionary:
 		var meshes := character.find_children("*", "MeshInstance3D", true, false).filter(
 			func(mesh): return mesh.mesh != null and mesh.is_visible_in_tree())
 		return _unique(meshes, character, [], "original character mesh")
-	# In the production stage the west end is a wall, not an identifiable gate
-	# model, and the kitchen destination is an opening/light, not an object.
-	# Do not invent a target, reinterpret a wall as a gate, or raycast a marker.
 	return {"status": "original_interaction_object_not_identifiable", "id": id}
 
-func probe(index: int, stand: Vector2) -> Dictionary:
+func probe(index: int, stand: Vector2, snapshot_camera := false) -> Dictionary:
 	if not errors.is_empty() or not is_instance_valid(physics_root):
 		return {"status": "ray_setup_failed", "applicable": false, "pass": null, "errors": errors}
 	var target := _target(index)
 	if target.status != "selected":
 		return {"status": target.status, "applicable": false, "pass": null, "selection": target}
 	var item: Dictionary = corridor._items[index]
-	host.det_pos = stand
-	host.det.position = Vector3(stand.x, 0.0, stand.y)
-	var facing: Vector2 = corridor._item_pos(index) - stand
-	if facing.length() > 0.05: host.det.rotation.y = atan2(facing.x, facing.y)
-	host.det.set_pose("stand")
-	for player: AnimationPlayer in host.det.find_children("*", "AnimationPlayer", true, false):
-		player.advance(0.0)
-		player.pause()
-	# Ask the real controller to settle its follow camera, not a separate camera
-	# or invented close-up. Report explicitly that this is an accelerated probe.
-	corridor._camera_drive(60.0)
+	if not snapshot_camera:
+		host.det_pos = stand
+		host.det.position = Vector3(stand.x, 0.0, stand.y)
+		var facing: Vector2 = corridor._item_pos(index) - stand
+		if facing.length() > 0.05: host.det.rotation.y = atan2(facing.x, facing.y)
+		host.det.set_pose("stand")
+		for player: AnimationPlayer in host.det.find_children("*", "AnimationPlayer", true, false):
+			player.advance(0.0)
+			player.pause()
+		# Settle the production follow camera at the interaction stand.
+		corridor._camera_drive(60.0)
+	else:
+		# The caller restores the snapshot actor pose and position before this
+		# probe. Use the actual restored camera, without settling or aiming it.
+		host.cam.global_transform = saved_camera
 	_sync()
 	await host.get_tree().physics_frame
 	var camera: Camera3D = host.cam
@@ -189,7 +197,7 @@ func probe(index: int, stand: Vector2) -> Dictionary:
 	for member in target.group: group_paths.append(str(member.get_path()))
 	return {"status": "test_proxy_ray_hit" if is_instance_valid(original) else "test_proxy_ray_no_hit",
 		"applicable": true, "pass": in_group, "id": str(item.id), "selection": target.selection,
-		"camera_mode": "original_corridor_follow_camera_settled_not_macro",
+		"camera_mode": "restored_snapshot_camera" if snapshot_camera else "original_corridor_follow_camera_settled_not_macro",
 		"camera_path": str(camera.get_path()), "camera_position": xyz(origin),
 		"target_path": str(mesh.get_path()), "target_root": str(target_root.get_path()) if is_instance_valid(target_root) else "",
 		"target_group": group_paths, "target_aabb_center": xyz(center),

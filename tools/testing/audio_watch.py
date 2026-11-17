@@ -69,17 +69,17 @@ def update_metadata(state: dict, line: str) -> bool:
     elif name == "M":
         state["momentary_lufs"] = value if value > -120 else None
         if value > -120:
-            state["max_momentary_lufs"] = max(value, state.get("max_momentary_lufs") or -160)
+            state["max_momentary_lufs"] = max(value, state["max_momentary_lufs"]) if state.get("max_momentary_lufs") is not None else value
     elif name == "S":
         state["short_term_lufs"] = value if value > -120 else None
     elif name == "true_peak":
         peak = 20 * math.log10(value) if value > 0 else None
         if peak is not None:
-            state["true_peak_dbtp"] = max(peak, state.get("true_peak_dbtp") or -160)
+            state["true_peak_dbtp"] = max(peak, state["true_peak_dbtp"]) if state.get("true_peak_dbtp") is not None else peak
     elif name == "sample_peak":
         peak = 20 * math.log10(value) if value > 0 else None
         if peak is not None:
-            state["sample_peak_dbfs"] = max(peak, state.get("sample_peak_dbfs") or -160)
+            state["sample_peak_dbfs"] = max(peak, state["sample_peak_dbfs"]) if state.get("sample_peak_dbfs") is not None else peak
     state["signal_present"] = state.get("sample_peak_dbfs") is not None
     return True
 

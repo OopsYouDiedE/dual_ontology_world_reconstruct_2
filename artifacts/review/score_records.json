@@ -1,0 +1,370 @@
+{
+  "schema_version": 3,
+  "generated_at": "2026-11-17T15:45:13+08:00",
+  "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
+  "dimensions": [
+    "游玩流畅度",
+    "界面字数",
+    "动作与音效",
+    "音频响度",
+    "视听剧情替代",
+    "参考图相似度",
+    "剧情流畅性"
+  ],
+  "history_evidence": {
+    "complete": true,
+    "counts": {
+      "valid": 8,
+      "missing": 0,
+      "changed": 0,
+      "unverified": 0
+    }
+  },
+  "overall_passed": false,
+  "gameplay_scenes": [
+    {
+      "id": "wake",
+      "label": "起床与卧室探索",
+      "rooms": [
+        "R05"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        8,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": {
+        "id": "event-b3e2380cbedc6b026f54b1db97b15e49",
+        "segment_id": "wake",
+        "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
+        "at": "2026-11-17T13:43:19.320610+08:00",
+        "scores": [
+          null,
+          null,
+          null,
+          8,
+          null,
+          null,
+          null
+        ],
+        "reasons": [
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "Rendered development run: integrated -54.787 LUFS and entire mix true peak -28.636 dBTP. Audio segment had verified signal; partial opening sample.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension."
+        ],
+        "status": "待补测",
+        "images": [],
+        "evidence": [
+          "artifacts/evaluation/multidimension-20261117-124938/segment-metrics.json",
+          "artifacts/evaluation/multidimension-20261117-124938/frames.csv"
+        ],
+        "event_id": "event-b3e2380cbedc6b026f54b1db97b15e49",
+        "independent_review": false,
+        "evidence_issues": []
+      }
+    },
+    {
+      "id": "corridor",
+      "label": "出门与走廊会合",
+      "rooms": [
+        "R05",
+        "B-P"
+      ],
+      "scores": [
+        6,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "不合格",
+      "test": {
+        "id": "event-f4c7e8994de63d919c7ac6b344b8f991",
+        "segment_id": "corridor",
+        "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
+        "at": "2026-11-17T13:43:24.230622+08:00",
+        "scores": [
+          6,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "reasons": [
+          "Rendered development run: one of 26,357 steady-state frames reached 34.250 ms, exceeding the 33.3 ms veto; 0.187 s after warmup ended.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension."
+        ],
+        "status": "不合格",
+        "images": [],
+        "evidence": [
+          "artifacts/evaluation/multidimension-20261117-124938/segment-metrics.json",
+          "artifacts/evaluation/multidimension-20261117-124938/frames.csv"
+        ],
+        "event_id": "event-f4c7e8994de63d919c7ac6b344b8f991",
+        "independent_review": false,
+        "evidence_issues": []
+      }
+    },
+    {
+      "id": "kitchen_evidence",
+      "label": "厨房七证物与原房间镜头",
+      "rooms": [
+        "B-P"
+      ],
+      "fragment_run": "terra-integrated-20261116/kitchen",
+      "scores": [
+        8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": {
+        "id": "event-1587a0a6842e98520fc857c3fd1351be",
+        "segment_id": "kitchen_evidence",
+        "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
+        "at": "2026-11-17T13:43:29.049202+08:00",
+        "scores": [
+          8,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "reasons": [
+          "Rendered development run: 17,454 steady-state frames, zero over 33.3 ms; average 123.57 FPS. Sample includes only the initial kitchen exploration.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension."
+        ],
+        "status": "待补测",
+        "images": [],
+        "evidence": [
+          "artifacts/evaluation/multidimension-20261117-124938/segment-metrics.json",
+          "artifacts/evaluation/multidimension-20261117-124938/frames.csv"
+        ],
+        "event_id": "event-1587a0a6842e98520fc857c3fd1351be",
+        "independent_review": false,
+        "evidence_issues": []
+      }
+    },
+    {
+      "id": "kitchen_reconstruction",
+      "label": "厨房三段脑内推演",
+      "rooms": [
+        "B-P"
+      ],
+      "fragment_run": "terra-reconstruction-expression-20261116/reconstruction",
+      "scores": [
+        null,
+        null,
+        6,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "不合格",
+      "test": {
+        "id": "event-bd00522941736580e272f27c1453f273",
+        "segment_id": "kitchen_reconstruction",
+        "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
+        "at": "2026-11-17T13:43:34.922735+08:00",
+        "scores": [
+          null,
+          null,
+          6,
+          null,
+          null,
+          null,
+          null
+        ],
+        "reasons": [
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "Restored-checkpoint development observation: close reconstruction camera is obstructed by overlapping character silhouettes, obscuring the action; visual occlusion triggers the rubric fail threshold. Other action and audio components remain unassessed.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension.",
+          "This test did not collect this dimension."
+        ],
+        "status": "不合格",
+        "images": [
+          {
+            "path": "artifacts/evaluation/mainline-kitchen-20261117/replay-camera.png",
+            "caption": "replay-camera"
+          }
+        ],
+        "evidence": [
+          "artifacts/evaluation/mainline-kitchen-20261117/replay-camera.png",
+          "artifacts/evaluation/mainline-kitchen-20261117/replay-camera-observation.json"
+        ],
+        "event_id": "event-bd00522941736580e272f27c1453f273",
+        "independent_review": false,
+        "evidence_issues": []
+      }
+    },
+    {
+      "id": "service_route",
+      "label": "手铐、检修与暗井路线",
+      "rooms": [
+        "A-P",
+        "service_stair_M",
+        "F01"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": null
+    },
+    {
+      "id": "cross_zone",
+      "label": "跨区调查与中央对账",
+      "rooms": [
+        "C-P",
+        "D-P",
+        "2F-cross-M"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": null
+    },
+    {
+      "id": "shaft",
+      "label": "传声管与四锚调查",
+      "rooms": [
+        "2F-North-Stair",
+        "1F-Shaft-Monitor"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": null
+    },
+    {
+      "id": "poem",
+      "label": "黑板诗与三分支",
+      "rooms": [
+        "T01"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": null
+    },
+    {
+      "id": "institutes",
+      "label": "四院知识与复核",
+      "rooms": [
+        "Wind-Corridor",
+        "W-102",
+        "S-102",
+        "B-102",
+        "F-104"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": null
+    },
+    {
+      "id": "dinner",
+      "label": "包饺子、借物与晚间分工",
+      "rooms": [
+        "F03",
+        "F05"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": null
+    },
+    {
+      "id": "chapter_end",
+      "label": "夜间返回、休息与章节存档",
+      "rooms": [
+        "R05"
+      ],
+      "scores": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "status": "待补测",
+      "test": null
+    }
+  ]
+}

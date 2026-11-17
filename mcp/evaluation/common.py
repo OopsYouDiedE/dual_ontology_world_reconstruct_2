@@ -136,10 +136,10 @@ def source_fingerprint():
     assert_project()
     digest = hashlib.sha256()
     paths = [ROOT / "project.godot", ROOT / "goal.md"]
-    for name in ("scenes", "assets", "tools/test", "tools/testing", "mcp"):
+    for name in ("scenes", "assets", "localization", "tools/test", "tools/testing", "mcp"):
         directory = ROOT / name
         paths.extend(p for p in directory.rglob("*") if p.is_file() and
-                     (name == "assets" or p.suffix.lower() in
+                     (name in ("assets", "localization") or p.suffix.lower() in
                       {".gd", ".gdshader", ".tscn", ".tres", ".cs", ".py", ".json", ".yaml", ".yml", ".uid"})
                      and "__pycache__" not in p.parts and "examples" not in p.parts)
     for path in sorted(paths):
@@ -162,13 +162,30 @@ def executable(value=None):
     raise ValueError("Godot 4.7.2 executable must be installed inside this project; see mcp/evaluation/README.md")
 
 
-def inspect_process(pid, *, expected_exe, required=(), created=None):
+def linux_process_token(pid):
+    """Kernel boot ID and process start tick avoid WSL wall-clock drift."""
+    if os.name == "nt":
+        return None
+    try:
+        stat = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+        fields = stat[stat.rfind(")") + 2:].split()
+        return {"boot_id": Path("/proc/sys/kernel/random/boot_id").read_text(encoding="ascii").strip(),
+                "start_ticks": int(fields[19])}
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def inspect_process(pid, *, expected_exe, required=(), created=None, process_token=None):
     """Check the actual live PID, executable, command line and cwd; reject PID reuse."""
     if isinstance(pid, bool) or not isinstance(pid, int) or pid <= 0:
         raise ValueError("A positive owned PID is required")
     try:
         process = psutil.Process(pid)
-        if created is not None and abs(process.create_time() - float(created)) > 0.1:
+        token = linux_process_token(pid)
+        if process_token is not None:
+            if token is None or token != process_token:
+                raise ValueError("PID kernel start identity differs from the launch receipt")
+        elif created is not None and abs(process.create_time() - float(created)) > 0.1:
             raise ValueError("PID creation time differs from the launch receipt")
         actual_exe = Path(process.exe()).resolve()
         if actual_exe != Path(expected_exe).resolve():
@@ -186,7 +203,7 @@ def inspect_process(pid, *, expected_exe, required=(), created=None):
         if Path(process.cwd()).resolve() != ROOT:
             raise ValueError("PID working directory differs from this project")
         return {"pid": pid, "executable": str(actual_exe), "command": command,
-                "cwd": str(ROOT), "create_time": process.create_time()}
+                "cwd": str(ROOT), "create_time": process.create_time(), "process_token": token}
     except (psutil.NoSuchProcess, psutil.ZombieProcess) as error:
         raise ValueError("Owned process has already exited") from error
 

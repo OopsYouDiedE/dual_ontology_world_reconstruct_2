@@ -4,3 +4,10 @@ args = ['C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\serve
 cwd = 'C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2'
 startup_timeout_sec = 20
 tool_timeout_sec = 240
+
+[mcp_servers.dual-ontology-evaluation]
+command = 'C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe'
+args = ['C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\server.py', '--expected-project-root', 'C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2']
+cwd = 'C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2'
+startup_timeout_sec = 20
+tool_timeout_sec = 240

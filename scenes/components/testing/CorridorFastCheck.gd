@@ -43,7 +43,7 @@ func _simulate(start: Vector2, index: int) -> Dictionary:
 	while host.det_pos.distance_to(stand) > 0.12 and steps < MAX_STEPS:
 		var before: Vector2 = host.det_pos
 		corridor._walk_to(stand, STEP)
-		host.det_pos = corridor._push_out(host.det_pos)
+		host.det_pos = corridor._push_out(host.det_pos, before)
 		host.det.position = Vector3(host.det_pos.x, 0.0, host.det_pos.y)
 		steps += 1
 		if steps % 10 == 0: path.append(xy(host.det_pos))
@@ -63,12 +63,34 @@ func _simulate(start: Vector2, index: int) -> Dictionary:
 		"min_actor_distance": null if is_inf(min_distance) else min_distance,
 		"reached": reached, "pass": reached and in_bounds and actors_clear}
 
+func _separation_probes(previous: Vector2) -> Dictionary:
+	# Exercise boundary and overlapping-neighbour corrections in the production
+	# movement helper, using a known-clear entry point as the fallback.
+	var candidates := [bounds.position - Vector2.ONE, bounds.end + Vector2.ONE]
+	var positions: Array[Vector2] = []
+	for npc in corridor._npc.values():
+		if is_instance_valid(npc):
+			var point := Vector2(npc.position.x, npc.position.z)
+			positions.append(point)
+			candidates.append(point)
+	for i in range(positions.size() - 1):
+		candidates.append((positions[i] + positions[i + 1]) * 0.5)
+	var results := []
+	var passed := _inside(previous) and _actor_distance(previous) + 0.001 >= actor_min
+	for candidate: Vector2 in candidates:
+		var corrected: Vector2 = corridor._push_out(candidate, previous)
+		var clear := _inside(corrected) and _actor_distance(corrected) + 0.001 >= actor_min
+		results.append({"candidate": xy(candidate), "corrected": xy(corrected), "pass": clear})
+		passed = passed and clear
+	return {"pass": passed, "samples": results}
+
 func run(h: Control, restored: Dictionary) -> Dictionary:
 	host = h
 	corridor = host.gathering
 	bounds = corridor.FREE_BOUNDS
 	actor_min = float(host.ACTOR_MIN_DISTANCE)
 	var entry := Vector2(float(corridor.DOORS[0][2]), 1.95) # controller's post-exit waypoint
+	var separation := _separation_probes(entry)
 	var saved_position: Vector2 = host.det_pos
 	var saved_transform: Transform3D = host.det.transform
 	var saved_pose := str(host.det.pose)
@@ -90,6 +112,13 @@ func run(h: Control, restored: Dictionary) -> Dictionary:
 		var independent: Dictionary = await navigation.probe(entry, stand)
 		var end := Vector2(float(movement.end[0]), float(movement.end[1]))
 		var ray: Dictionary = await rays.probe(index, end)
+		# Restore the checkpoint actor before testing its original camera. These
+		# long-range observations are diagnostic; occlusion from a distant spawn
+		# is not the interaction-stand ray verdict.
+		host.det_pos = saved_position
+		host.det.transform = saved_transform
+		host.det.set_pose(saved_pose)
+		var snapshot_ray: Dictionary = await rays.probe(index, saved_position, true)
 		if not bool(movement.pass): all_paths = false
 		if not bool(independent.pass): all_navigation = false
 		if bool(ray.get("applicable", false)):
@@ -99,7 +128,7 @@ func run(h: Control, restored: Dictionary) -> Dictionary:
 		else: ray_unresolved += 1
 		results.append({"id": str(item.id), "path_pass": movement.pass, "movement": movement,
 			"independent_navigation": independent, "ray": ray,
-			"snapshot_interaction": {"ray": {"status": "snapshot_origin_not_tested", "applicable": false, "pass": null}}})
+			"snapshot_interaction": {"ray": snapshot_ray}})
 	var navigation_summary := navigation.summary()
 	var ray_summary := rays.summary()
 	var check_errors := []
@@ -121,12 +150,13 @@ func run(h: Control, restored: Dictionary) -> Dictionary:
 		"restored_state": restored, "room": str(host.eng.s.room), "controller": "gathering",
 		"stage": "CorridorStage", "entry": {"position": xy(entry), "source": "production_post_exit_waypoint"},
 		"bounds": {"position": xy(bounds.position), "size": xy(bounds.size)}, "actors": actors,
-		"minimum_actor_distance": actor_min, "interactions": results, "path_pass": all_paths,
+		"minimum_actor_distance": actor_min, "separation_probes": separation,
+		"interactions": results, "path_pass": all_paths and separation.pass,
 		"navigation_agent_pass": all_navigation, "independent_navigation": navigation_summary,
 		"ray_pass": false if ray_failed > 0 else (true if ray_checked > 0 and ray_unresolved == 0 else null),
 		"ray_diagnostics": {"checked": ray_checked, "passed": ray_passed, "failed": ray_failed,
 			"unresolved": ray_unresolved, "details": ray_summary}, "pass": false,
 		"blocking_reasons": ["走廊使用独立 CorridorStage 和直接步进，R05 网格不可用于该阶段。",
 			"独立导航使用保守可见几何代理，仅供诊断，不等于实际碰撞体或生产角色路径。",
-			"射线仅采样原跟随相机而非微距相机；不可识别对象和快照起点射线未覆盖，不能宣称目标房间快检通过。"],
+			"射线采样原跟随相机及快照相机；微距相机检查尚未覆盖。"],
 		"errors": check_errors, "acceptance_eligible": false}

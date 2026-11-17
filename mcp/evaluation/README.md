@@ -42,6 +42,10 @@ Windows 项目已在 `.codex/config.toml` 注册本服务。常驻 MCP 的 `eval
 
 批次首先执行第一章诊断与测试快照，再安排起床/走廊/厨房快检、标题/探索/书本 UI 契约以及可选实机截图。仅排查主线时可使用 `evaluation_start` 的 `{"profile":"chapter1_flow","rendered":false}`；该单项批次缺少房间快检，不能放行慢环。可选参数 `motion_time_scale:1.0` 仅在开发探针的行走／过门期间降低时间缩放，避免 120 倍加速产生超大步长；其他阶段仍加速，结果不是自然游玩或性能采样。`chapter1_flow.gd` 的后段**主动补证并输入已知答案**，仅检查逻辑连通，不是自然游玩，也不是从标题开始的盲测；30 秒状态无进展会记录路径、NPC 距离与切换状态并结束探针，不能单凭停滞认定游戏失败。针对已定位的 `2F-cross-M` 开发过门诊断，默认目标为 `1F-Shaft-Monitor`；可设 `pretransit_to:"T01"` 追查下一处讲堂过门。探针会在下一帧前主动调用生产换房 watcher，再验证侦探、原相机和规则状态未变，保存出门阶段的首步前快照；此调用是人为介入，不是自然流程记录。worker 核对日志标记、路径、所选房间、宿主 PID、开发标志与快照载荷哈希后才将其写入证据账本；后续仍须在 Godot 内恢复并核实快照内容。UI 测试恢复快照，同样不具备验收资格。书本动画测试分别记录各步墙钟耗时及旧 3 秒阈值，软件渲染下最多等待 15 秒检查功能；超时后不执行依赖步骤，避免连锁误报，亦不能据此认定目标硬件性能合格。`rendered=false` 使用无头固定步长，不产生视觉证据。
 
+`status.json` / `report.yaml` 的 `jobs` 在开始时列出本 profile 计划的检查；依赖失败、取消或启动前中断导致的未执行项保留为 `blocked`，不会遗漏可选视觉检查。`observed_concurrency.peak_live_hosts` 在成功校验新宿主时记录同时存活的本批次 Godot 进程数，`witness` 给出对应 job 和 PID；这是一组观测下界，而非系统范围进程总数、FPS 或验收评分。各 job 的原有路径、射线、耗时、场景采样等客观结果仍位于对应 `detail` 和原始证据文件中。该批次覆盖第一章诊断与 UI/房间快检，生活模拟、CLI 和独立盲测各有其他入口，不能由此批次推定覆盖。
+
+For rendered evaluations, MCP uses the native Windows display or a reachable Linux Wayland/X11 display. On Linux without a usable native display, the worker starts and owns an isolated Xvfb server and records its display and PID; it cleans up that server after the batch. Xvfb must be installed or provisioned on the host. Native rendering and software-rendered fallback are recorded separately, so benchmark results retain their execution context.
+
 两条测试工作流最多同时运行两个 Godot 进程；可用内存低于 3500 MiB 时自动限制为一个，避免渲染进程争抢内存而污染帧率、快检时间甚至触发 OOM。`workers:1` 可主动收紧；结果中记录实际资源策略。需要精确帧时间时应停止其他重负载任务，在目标硬件上单独采集。
 
 卧室与厨房快检读取固定快照，执行入口占位、角色间距、可达路径、`NavigationAgent3D` 与原相机到证物的物理射线；**整个目标房间快检实际耗时必须小于 5 秒**，失败即阻塞，而不是按内部某一子函数耗时掩盖超时。卧室 7 个目标和厨房 7 个证物必须完整、唯一；除卧室出口门之外必须有实际适用的证物射线。缺少目标、重复目标、缺少原物或射线、活动过门快照，以及尚未适配的普通房间均不会因空列表或 `not_applicable` 而放行。导航服务器异步发布时，检查实际空闲格投影及区域所有权，不能只看地图旧迭代计数；有界等待仍未就绪则记为 blocked，等待时间计入 5 秒。厨房按生产 `InteractionApproach` 的实际路径和 `ok/reason` 记录；计划拒绝后返回的起点只是 fallback，导航到该点不能标为到达证物，强制视觉射线也不是已完成的互动。

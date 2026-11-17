@@ -252,11 +252,18 @@ func _build_corridor() -> void:
 	# 北墙（带门）、西端墙、东端拱门、南侧矮墙（剖面，镜头一侧）
 	_box(Vector3(LEN * 0.5, 1.5, -0.12), Vector3(LEN + 0.4, 3.0, 0.24), Color("#8f785a"))
 	_box(Vector3(LEN * 0.5, 0.14, 0.02), Vector3(LEN, 0.28, 0.06), Color("#4a3426"))        # 踢脚线
-	_box(Vector3(-0.12, 1.5, DEPTH * 0.5), Vector3(0.24, 3.0, DEPTH + 0.4), Color("#85704f"))
+	_box(Vector3(-0.12, 1.5, 0.35), Vector3(0.24, 3.0, 1.1), Color("#85704f"))
+	_box(Vector3(-0.12, 1.5, DEPTH - 0.35), Vector3(0.24, 3.0, 1.1), Color("#85704f"))
+	_box(Vector3(-0.12, 2.65, DEPTH * 0.5), Vector3(0.24, 0.7, DEPTH), Color("#85704f"))
+	var gate := _box(Vector3(-0.06, 1.1, DEPTH * 0.5), Vector3(0.12, 2.2, 1.45), Color("#5f4229"))
+	gate.name = "WestGate"
+	var lock := _box(Vector3(0.02, 1.02, DEPTH * 0.5 + 0.42), Vector3(0.04, 0.15, 0.12), Color("#b49a67"), 0.15)
+	lock.name = "WestGateLock"
 	_box(Vector3(LEN + 0.12, 1.5, 0.45), Vector3(0.24, 3.0, 0.9), Color("#85704f"))
 	_box(Vector3(LEN + 0.12, 1.5, DEPTH - 0.45), Vector3(0.24, 3.0, 0.9), Color("#85704f"))
 	_box(Vector3(LEN + 0.12, 2.65, DEPTH * 0.5), Vector3(0.24, 0.7, DEPTH), Color("#85704f"))
-	_box(Vector3(LEN + 0.55, 1.1, DEPTH * 0.5), Vector3(0.1, 2.2, DEPTH - 0.9), Color("#ffb347"), 1.5)  # 厨房暖光
+	var opening := _box(Vector3(LEN + 0.55, 1.1, DEPTH * 0.5), Vector3(0.1, 2.2, DEPTH - 0.9), Color("#ffb347"), 1.5)
+	opening.name = "KitchenOpening"
 	_box(Vector3(LEN * 0.5, 0.22, DEPTH + 0.14), Vector3(LEN + 0.4, 0.44, 0.2), Color("#6b5238"))
 	# 区域路标不再用 3D 悬浮大字（贴在画面边缘会被斜着截断），改写进左下角 HUD 提示
 	# 寝室门：深色门框 + 门扇。每个房间的门都带锁：只有侦探自己的 R05 能打开（刚被他推开），
@@ -764,8 +771,9 @@ func _step_free(delta: float) -> void:
 	elif _busy_item >= 0:
 		var stand := _item_stand(_busy_item)
 		if host.det_pos.distance_to(stand) > 0.12:
+			var previous: Vector2 = host.det_pos
 			_walk_to(stand, delta)
-			host.det_pos = _push_out(host.det_pos)
+			host.det_pos = _push_out(host.det_pos, previous)
 			det.position = Vector3(host.det_pos.x, 0.0, host.det_pos.y)
 		else:
 			_arrive(_busy_item)
@@ -789,18 +797,28 @@ func _move_det(step: Vector2, vec: Vector2) -> void:
 	var cand: Vector2 = host.det_pos + step
 	cand.x = clampf(cand.x, FREE_BOUNDS.position.x, FREE_BOUNDS.end.x)
 	cand.y = clampf(cand.y, FREE_BOUNDS.position.y, FREE_BOUNDS.end.y)
-	cand = _push_out(cand)
+	cand = _push_out(cand, host.det_pos)
 	host.det_pos = cand
 	host.det.position = Vector3(cand.x, 0.0, cand.y)
 	host.det.rotation.y = lerp_angle(host.det.rotation.y, atan2(vec.x, vec.y), 0.35)
 	host.det.set_pose("walk")
 
 
-func _push_out(p: Vector2) -> Vector2:
-	for id in _npc:
-		var n: Node3D = _npc[id]
-		var np := Vector2(n.position.x, n.position.z)
-		var d := p - np
-		if d.length() < host.ACTOR_MIN_DISTANCE:
-			p = np + (d.normalized() if d.length() > 0.001 else Vector2(0.0, 1.0)) * host.ACTOR_MIN_DISTANCE
-	return p
+func _push_out(p: Vector2, previous: Vector2) -> Vector2:
+	# A correction for one person can cross the corridor boundary or enter a
+	# second person's exclusion circle. Resolve both constraints together and
+	# retain the previous position when a crowded corner has no local solution.
+	for attempt in 12:
+		p.x = clampf(p.x, FREE_BOUNDS.position.x, FREE_BOUNDS.end.x)
+		p.y = clampf(p.y, FREE_BOUNDS.position.y, FREE_BOUNDS.end.y)
+		var clear := true
+		for id in _npc:
+			var n: Node3D = _npc[id]
+			if not is_instance_valid(n): continue
+			var np := Vector2(n.position.x, n.position.z)
+			var d := p - np
+			if d.length() < host.ACTOR_MIN_DISTANCE - 0.0001:
+				clear = false
+				p = np + (d.normalized() if d.length() > 0.001 else Vector2(0.0, 1.0)) * host.ACTOR_MIN_DISTANCE
+		if clear: return p
+	return previous

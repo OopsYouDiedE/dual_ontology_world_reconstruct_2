@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from datetime import datetime
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -24,6 +25,8 @@ import mainline_reviews
 import visual_semantic_reviews
 
 ID = r"[a-z0-9][a-z0-9_-]{1,119}"
+SCORE_CATEGORIES = ("fluidity", "text_density", "action_sfx_integrity", "audio_loudness",
+                    "blind_narrative_match", "aesthetic_similarity", "narrative_flow")
 _THREAD_LOCK = threading.Lock()
 _RENDER_THREAD_LOCK = threading.Lock()
 
@@ -148,7 +151,8 @@ class Store:
         if source:
             atomic_write(self.progress, yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
         # Script loading works for file:// without fetch/CORS and scans no report links.
-        payload = json.dumps(data, ensure_ascii=False).replace("<", "\\u003c").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+        live_data = dict(data, events=[e for e in data["events"] if e.get("test_result") or e.get("development_score")])
+        payload = json.dumps(live_data, ensure_ascii=False).replace("<", "\\u003c").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
         atomic_write(self.live, "window.MAINLINE_PROGRESS=" + payload + ";\n")
 
     def _progress(self, args, data, *, persist=True):
@@ -197,6 +201,87 @@ class Store:
         self.project(args)
         with self.locked():
             return self._progress(args, self.load())
+
+    def add_score(self, trajectory_id, category, score, rationale="", evidence=None, expected_project_root=None):
+        """Append a development score to the same live, project-bound event ledger."""
+        self.project({"expected_project_root": expected_project_root})
+        plan = json.loads((self.root / "assets/data/test_scenarios/gameplay_review_plan.json").read_text(encoding="utf-8-sig"))
+        if trajectory_id not in {scene["id"] for scene in plan["scenes"]}:
+            raise ValueError("Unknown mainline score trajectory")
+        if category not in SCORE_CATEGORIES:
+            raise ValueError("Unknown score category")
+        if isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(score) or not 0 <= score <= 10:
+            raise ValueError("Score must be a finite number from 0 to 10")
+        if not isinstance(rationale, str) or len(rationale) > 8000:
+            raise ValueError("Invalid score rationale")
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.root,
+                                           stdin=subprocess.DEVNULL, text=True, timeout=10).strip()
+        request = dict(trajectory_id=trajectory_id, category=category, score=score, rationale=rationale, evidence=evidence or [], revision=revision)
+        event_args = dict(work_id="score-" + digest(request)[:32], segment_id=trajectory_id,
+                          kind="check", summary="Development score: " + category,
+                          result=rationale or "No rationale supplied", revision=revision, evidence=evidence or [])
+        with self.locked():
+            data = self.load()
+            result = self._progress(event_args, data, persist=False)
+            if not result["duplicate"]:
+                result["event"]["development_score"] = dict(category=category, score=score,
+                                                               rationale=rationale, acceptance_eligible=False)
+            self.publish(data)
+            return result
+
+    def add_scores(self, trajectory_id, test_id, scores, reasons, evidence, expected_project_root=None):
+        """Record all seven dimensions of one test in a single immutable event."""
+        self.project({"expected_project_root": expected_project_root})
+        plan = json.loads((self.root / "assets/data/test_scenarios/gameplay_review_plan.json").read_text(encoding="utf-8-sig"))
+        if trajectory_id not in {scene["id"] for scene in plan["scenes"]}:
+            raise ValueError("Unknown mainline score trajectory")
+        if not isinstance(test_id, str) or not re.fullmatch(ID, test_id):
+            raise ValueError("Invalid test_id")
+        if not isinstance(scores, dict) or set(scores) != set(SCORE_CATEGORIES):
+            raise ValueError("Scores must include exactly the seven categories")
+        if not isinstance(reasons, dict) or set(reasons) != set(SCORE_CATEGORIES):
+            raise ValueError("Reasons must include exactly the seven categories")
+        for category in SCORE_CATEGORIES:
+            value, reason = scores[category], reasons[category]
+            if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 10):
+                raise ValueError("Scores must be finite numbers from 0 to 10 or null")
+            if not isinstance(reason, str) or not reason.strip() or len(reason) > 8000:
+                raise ValueError("Each score or missing measurement requires a reason")
+        if not isinstance(evidence, list) or any(not isinstance(item, str) for item in evidence) or len(evidence) != len(set(evidence)):
+            raise ValueError("Evidence must be a list of unique paths")
+        request = dict(trajectory_id=trajectory_id, test_id=test_id, scores=scores, reasons=reasons, evidence=evidence)
+        fingerprint = digest(request)
+        with self.locked():
+            data = self.load()
+            previous = next((event for event in data["events"] if event.get("test_result", {}).get("test_id") == test_id), None)
+            if previous:
+                if previous.get("test_request_sha256") != fingerprint:
+                    raise ValueError("Test ID already has different content")
+                self.publish(data, source=False)
+                return {"event": previous, "duplicate": True, "event_count": len(data["events"])}
+            revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.root,
+                                               stdin=subprocess.DEVNULL, text=True, timeout=10).strip()
+            event_args = dict(work_id="test-" + digest(test_id)[:32], segment_id=trajectory_id,
+                              kind="check", summary="Test scores: " + test_id,
+                              result="Seven dimensions recorded", revision=revision, evidence=evidence)
+            result = self._progress(event_args, data, persist=False)
+            result["event"]["test_result"] = dict(test_id=test_id, scores=scores, reasons=reasons)
+            result["event"]["test_request_sha256"] = fingerprint
+            self.publish(data)
+            return result
+
+    def see_score(self, trajectory_id, expected_project_root=None):
+        self.project({"expected_project_root": expected_project_root})
+        if not re.fullmatch(ID, trajectory_id):
+            raise ValueError("Invalid trajectory_id")
+        with self.locked():
+            events = self.load()["events"]
+            scores = {e["development_score"]["category"]: e for e in events
+                      if e.get("segment_id") == trajectory_id and isinstance(e.get("development_score"), dict)}
+            latest = next((e for e in reversed(events) if e.get("segment_id") == trajectory_id
+                           and isinstance(e.get("test_result"), dict)), None)
+        return {"trajectory_id": trajectory_id, "acceptance_eligible": False, "scores": scores,
+                "latest_test": latest}
 
     def review_append(self, **args):
         self.project(args)

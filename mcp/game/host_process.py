@@ -63,10 +63,16 @@ def spawn(command, **kwargs):
     environment.setdefault("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1")
     environment.setdefault("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
     environment.setdefault("DOTNET_EnableDiagnostics", "0")
-    local_dotnet = ROOT / ".runtime/dotnet"
-    if local_dotnet.is_dir():
-        environment["DOTNET_ROOT"] = str(local_dotnet)
-        environment["PATH"] = str(local_dotnet) + os.pathsep + environment.get("PATH", "")
+    # The checkout may be shared by Windows and WSL. A dotnet directory
+    # belonging to the other OS cannot supply this Godot host's hostfxr.
+    import environment as game_environment
+    dotnet = game_environment.resolve_dotnet(required=False)
+    if dotnet:
+        dotnet_root = str(Path(dotnet).parent)
+        environment["DOTNET_ROOT"] = dotnet_root
+        environment["PATH"] = dotnet_root + os.pathsep + environment.get("PATH", "")
+    else:
+        environment.pop("DOTNET_ROOT", None)
     if "godot" in Path(str(command[0])).name.lower() and "--headless" not in command:
         environment = linux_display.environment(environment)
         if environment.get("DV_CLOUD_DISPLAY") == "1" and "--audio-driver" not in command:

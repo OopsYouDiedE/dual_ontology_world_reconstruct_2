@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-17T13:02:37+08:00",
+  "finalized": true,
+  "source_directory": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mainline-runs\\2026-11-17T12-49-38-39696",
+  "source_identity": {
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec",
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "res://scenes/main/Main.tscn",
+    "launch_scene": "res://scenes/main/Boot.tscn",
+    "process_id": 39696,
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe"
+  },
+  "frame_clock": "Time.get_ticks_usec, unscaled, includes loading and capture overhead",
+  "audio_alignment": "PCM sample time from recording start; contiguous frame segment intervals; capture loss makes audio pending",
+  "source_sha256": {
+    "timeline.yaml": "24ec99977500d8ed0b68a84b824cc237740d9783244fe1ac4bfaf1ced8ba7cda",
+    "frames.csv": "c7b1dbd8aa1a98c2664e283a1ad323f96b330b8e946b918a8a5ec4990fb7e12e"
+  },
+  "segments": {
+    "title": {
+      "intervals_s": [
+        [
+          0.0,
+          24.56662
+        ]
+      ],
+      "frame_samples": 3523,
+      "avg_fps": 143.40597119180418,
+      "low_5_fps": 106.59568317594915,
+      "low_1_fps": 67.83250646764107,
+      "frame_p95_ms": 7.366,
+      "frame_p99_ms": 9.867,
+      "max_frame_ms": 73.066,
+      "spikes_over_33_3_ms": 0,
+      "steady": {
+        "frame_samples": 3320,
+        "avg_fps": 143.91669546806747,
+        "low_5_fps": 113.40207594113477,
+        "low_1_fps": 81.5453320094209,
+        "frame_p95_ms": 7.358,
+        "frame_p99_ms": 9.488,
+        "max_frame_ms": 15.905,
+        "spikes_over_33_3_ms": 0
+      },
+      "loading_warmup": {
+        "frame_samples": 203,
+        "avg_fps": 135.53944364730634,
+        "low_5_fps": 56.05895363414907,
+        "low_1_fps": 26.68208298127807,
+        "frame_p95_ms": 8.524,
+        "frame_p99_ms": 18.685,
+        "max_frame_ms": 73.066,
+        "spikes_over_33_3_ms": 1
+      },
+      "raw_spikes_over_33_3_ms": 1,
+      "max_recorded_visible_characters": null,
+      "text_visibility_policy": "visible_active_viewports",
+      "measured_scores": [
+        8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "text_score_reason": "Visible aggregate lacks prompt classification, word count and English coverage",
+      "audio": {
+        "status": "pending",
+        "reason": "Final complete audio and FFmpeg are required"
+      }
+    },
+    "wake": {
+      "intervals_s": [
+        [
+          24.56662,
+          188.224148
+        ]
+      ],
+      "frame_samples": 20942,
+      "avg_fps": 127.96233852438445,
+      "low_5_fps": 76.49110207036884,
+      "low_1_fps": 57.36165870250113,
+      "frame_p95_ms": 10.975,
+      "frame_p99_ms": 13.714,
+      "max_frame_ms": 578.442,
+      "spikes_over_33_3_ms": 0,
+      "steady": {
+        "frame_samples": 20761,
+        "avg_fps": 128.48655151917353,
+        "low_5_fps": 80.20574046148015,
+        "low_1_fps": 69.1494649061479,
+        "frame_p95_ms": 10.971,
+        "frame_p99_ms": 13.696,
+        "max_frame_ms": 22.468,
+        "spikes_over_33_3_ms": 0
+      },
+      "loading_warmup": {
+        "frame_samples": 181,
+        "avg_fps": 87.16947238389237,
+        "low_5_fps": 13.214403700033037,
+        "low_1_fps": 3.1182227377683818,
+        "frame_p95_ms": 11.515,
+        "frame_p99_ms": 62.949,
+        "max_frame_ms": 578.442,
+        "spikes_over_33_3_ms": 2
+      },
+      "raw_spikes_over_33_3_ms": 2,
+      "max_recorded_visible_characters": 70,
+      "text_visibility_policy": "visible_active_viewports",
+      "measured_scores": [
+        8,
+        null,
+        null,
+        8,
+        null,
+        null,
+        null
+      ],
+      "text_score_reason": "Visible aggregate lacks prompt classification, word count and English coverage",
+      "audio": {
+        "status": "complete",
+        "ffmpeg_exit_code": 0,
+        "method": "FFmpeg EBU R128 / ITU BS.1770 on this segment only",
+        "intervals_s": [
+          [
+            24.56662,
+            188.224148
+          ]
+        ],
+        "momentary_lufs": null,
+        "signal_present": true,
+        "short_term_lufs": null,
+        "integrated_lufs": -54.787,
+        "sample_peak_dbfs": -28.6359655186601,
+        "true_peak_dbtp": -28.6359655186601,
+        "max_momentary_lufs": -48.491
+      },
+      "audio_score_reason": "Integrated loudness and the entire mix peak are below -20"
+    },
+    "corridor": {
+      "intervals_s": [
+        [
+          188.224148,
+          373.702143
+        ]
+      ],
+      "frame_samples": 26574,
+      "avg_fps": 143.27306050510066,
+      "low_5_fps": 117.61329439085466,
+      "low_1_fps": 77.8794993343645,
+      "frame_p95_ms": 7.229,
+      "frame_p99_ms": 7.851,
+      "max_frame_ms": 791.59,
+      "spikes_over_33_3_ms": 1,
+      "steady": {
+        "frame_samples": 26357,
+        "avg_fps": 143.8777760012383,
+        "low_5_fps": 126.36351312042508,
+        "low_1_fps": 100.95868686401283,
+        "frame_p95_ms": 7.229,
+        "frame_p99_ms": 7.851,
+        "max_frame_ms": 34.25,
+        "spikes_over_33_3_ms": 1
+      },
+      "loading_warmup": {
+        "frame_samples": 217,
+        "avg_fps": 94.85157040543584,
+        "low_5_fps": 12.65694613203726,
+        "low_1_fps": 3.7107908561165583,
+        "frame_p95_ms": 7.397,
+        "frame_p99_ms": 7.989,
+        "max_frame_ms": 791.59,
+        "spikes_over_33_3_ms": 1
+      },
+      "raw_spikes_over_33_3_ms": 2,
+      "max_recorded_visible_characters": 55,
+      "text_visibility_policy": "visible_active_viewports",
+      "measured_scores": [
+        6,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "text_score_reason": "Visible aggregate lacks prompt classification, word count and English coverage",
+      "audio": {
+        "status": "complete",
+        "ffmpeg_exit_code": 0,
+        "method": "FFmpeg EBU R128 / ITU BS.1770 on this segment only",
+        "intervals_s": [
+          [
+            188.224148,
+            373.702143
+          ]
+        ],
+        "momentary_lufs": null,
+        "signal_present": false,
+        "short_term_lufs": null,
+        "integrated_lufs": null
+      },
+      "audio_score_reason": "Segment audio is incomplete or contains no verified signal"
+    },
+    "kitchen_evidence": {
+      "intervals_s": [
+        [
+          373.702143,
+          517.141972
+        ]
+      ],
+      "frame_samples": 17626,
+      "avg_fps": 122.88079345102857,
+      "low_5_fps": 66.55701612068287,
+      "low_1_fps": 47.51223775660637,
+      "frame_p95_ms": 12.537,
+      "frame_p99_ms": 15.154,
+      "max_frame_ms": 697.251,
+      "spikes_over_33_3_ms": 0,
+      "steady": {
+        "frame_samples": 17454,
+        "avg_fps": 123.57376780814604,
+        "low_5_fps": 70.59079237315416,
+        "low_1_fps": 59.49082651455148,
+        "frame_p95_ms": 12.537,
+        "frame_p99_ms": 15.08,
+        "max_frame_ms": 28.431,
+        "spikes_over_33_3_ms": 0
+      },
+      "loading_warmup": {
+        "frame_samples": 172,
+        "avg_fps": 78.31495360294318,
+        "low_5_fps": 10.178427840035829,
+        "low_1_fps": 2.6714574804148774,
+        "frame_p95_ms": 12.016,
+        "frame_p99_ms": 51.404,
+        "max_frame_ms": 697.251,
+        "spikes_over_33_3_ms": 2
+      },
+      "raw_spikes_over_33_3_ms": 2,
+      "max_recorded_visible_characters": 54,
+      "text_visibility_policy": "visible_active_viewports",
+      "measured_scores": [
+        8,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "text_score_reason": "Visible aggregate lacks prompt classification, word count and English coverage",
+      "audio": {
+        "status": "complete",
+        "ffmpeg_exit_code": 0,
+        "method": "FFmpeg EBU R128 / ITU BS.1770 on this segment only",
+        "intervals_s": [
+          [
+            373.702143,
+            517.141972
+          ]
+        ],
+        "momentary_lufs": -39.635,
+        "signal_present": true,
+        "short_term_lufs": -36.622,
+        "integrated_lufs": -35.744,
+        "max_momentary_lufs": -28.915,
+        "sample_peak_dbfs": -16.893279250698765,
+        "true_peak_dbtp": -16.893279250698765
+      },
+      "audio_score_reason": "Ambient-only peak is not isolated from dialogue or effects"
+    }
+  }
+}

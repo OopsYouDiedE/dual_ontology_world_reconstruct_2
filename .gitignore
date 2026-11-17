@@ -13,3 +13,6 @@ artifacts/
 .env.*
 !.env.example
 tools/building_construction/candidates/life-*.dv
+
+# Local transcription outputs
+outputs/subtitles/

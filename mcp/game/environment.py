@@ -51,8 +51,9 @@ def resolve_dotnet(required=True, deadline=None):
 def godot_candidates():
     base = LOCAL / "godot" / VERSION
     if base.exists():
-        yield from base.rglob("*_console.exe")
-        yield from base.rglob("Godot*_linux.x86_64")
+        # WSL and Windows may share this checkout. Never select a binary for
+        # the other OS merely because it appears first in the shared folder.
+        yield from base.rglob("*_console.exe" if os.name == "nt" else "Godot*_linux.x86_64")
     yield os.environ.get("DV_GODOT")
     yield shutil.which(f"Godot_v{VERSION}-stable_mono_win64_console.exe")
     yield shutil.which("godot")
@@ -174,7 +175,10 @@ def prepare(local_copy=False, with_blender=False):
                 stage.rmdir()
             dotnet = resolve_dotnet()
             actions.append("installed-official-dotnet-8-sdk")
-        target = LOCAL / "godot" / VERSION
+        base = LOCAL / "godot" / VERSION
+        # Keep a Linux distribution alongside a Windows one in shared WSL
+        # workspaces without replacing the existing installation.
+        target = base if os.name == "nt" or not base.exists() else base / "linux"
         needs_copy = local_copy and godot and not Path(godot).is_relative_to(LOCAL)
         if not godot or needs_copy:
             if target.exists():

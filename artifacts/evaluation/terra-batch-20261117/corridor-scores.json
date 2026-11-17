@@ -1,0 +1,29 @@
+{
+  "expected_project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+  "trajectory_id": "corridor",
+  "test_id": "terra-batch-20261117-corridor",
+  "scores": {
+    "fluidity": 6,
+    "text_density": 8,
+    "action_sfx_integrity": null,
+    "audio_loudness": null,
+    "blind_narrative_match": null,
+    "aesthetic_similarity": null,
+    "narrative_flow": 8
+  },
+  "reasons": {
+    "fluidity": "Corridor telemetry recorded two steady-state spikes over 33.3 ms after live interaction.",
+    "text_density": "Visible English lines and interaction labels were concise; no untranslated text was observed.",
+    "action_sfx_integrity": "The run covered character selection and dialogue, without a complete skeletal-and-SFX measurement.",
+    "audio_loudness": "Final FFmpeg audio postprocess timed out; retained live telemetry is not a final audio measurement.",
+    "blind_narrative_match": "No canonical-plot comparison was supplied to the blind tester.",
+    "aesthetic_similarity": "No Astra target image was supplied for visual comparison.",
+    "narrative_flow": "Selectable group dialogue communicated clues and directed the player to the Kitchen."
+  },
+  "evidence": [
+    "artifacts/evaluation/terra-batch-20261117/observations.md",
+    "artifacts/evaluation/terra-batch-20261117/receipt.json",
+    "artifacts/evaluation/terra-batch-20261117/timeline.yaml",
+    "artifacts/evaluation/terra-batch-20261117/frames.csv"
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-17T15:45:13+08:00",
-  "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
+  "generated_at": "2026-11-17T16:18:53+08:00",
+  "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
   "dimensions": [
     "游玩流畅度",
     "界面字数",
@@ -14,7 +14,7 @@
   "history_evidence": {
     "complete": true,
     "counts": {
-      "valid": 8,
+      "valid": 14,
       "missing": 0,
       "changed": 0,
       "unverified": 0
@@ -29,45 +29,47 @@
         "R05"
       ],
       "scores": [
-        null,
-        null,
-        null,
+        8,
         8,
         null,
         null,
-        null
+        null,
+        null,
+        8
       ],
       "status": "待补测",
       "test": {
-        "id": "event-b3e2380cbedc6b026f54b1db97b15e49",
+        "id": "terra-batch-20261117-wake",
         "segment_id": "wake",
-        "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
-        "at": "2026-11-17T13:43:19.320610+08:00",
+        "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
+        "at": "2026-11-17T16:17:32.425634+08:00",
         "scores": [
-          null,
-          null,
-          null,
+          8,
           8,
           null,
           null,
-          null
+          null,
+          null,
+          8
         ],
         "reasons": [
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "Rendered development run: integrated -54.787 LUFS and entire mix true peak -28.636 dBTP. Audio segment had verified signal; partial opening sample.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension."
+          "Steady wake telemetry recorded P95 9.507 ms, P99 13.319 ms, and zero steady spikes over 33.3 ms.",
+          "Visible English dialogue and prompts met the observed concise-text rule.",
+          "A stand-up phase and bed camera move were observed, without a complete skeletal-and-SFX measurement.",
+          "Final FFmpeg audio postprocess timed out; retained live telemetry is not a final audio measurement.",
+          "No canonical-plot comparison was supplied to the blind tester.",
+          "No Astra target image was supplied for visual comparison.",
+          "Wake-up, bed inspection, and door transition formed a clear short progression."
         ],
         "status": "待补测",
         "images": [],
         "evidence": [
-          "artifacts/evaluation/multidimension-20261117-124938/segment-metrics.json",
-          "artifacts/evaluation/multidimension-20261117-124938/frames.csv"
+          "artifacts/evaluation/terra-batch-20261117/observations.md",
+          "artifacts/evaluation/terra-batch-20261117/receipt.json",
+          "artifacts/evaluation/terra-batch-20261117/timeline.yaml",
+          "artifacts/evaluation/terra-batch-20261117/frames.csv"
         ],
-        "event_id": "event-b3e2380cbedc6b026f54b1db97b15e49",
+        "event_id": "event-932c92c342b91c68f8ee982e78ae7897",
         "independent_review": false,
         "evidence_issues": []
       }
@@ -81,44 +83,46 @@
       ],
       "scores": [
         6,
+        8,
         null,
         null,
         null,
         null,
-        null,
-        null
+        8
       ],
       "status": "不合格",
       "test": {
-        "id": "event-f4c7e8994de63d919c7ac6b344b8f991",
+        "id": "terra-batch-20261117-corridor",
         "segment_id": "corridor",
-        "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
-        "at": "2026-11-17T13:43:24.230622+08:00",
+        "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
+        "at": "2026-11-17T16:17:36.899698+08:00",
         "scores": [
           6,
+          8,
           null,
           null,
           null,
           null,
-          null,
-          null
+          8
         ],
         "reasons": [
-          "Rendered development run: one of 26,357 steady-state frames reached 34.250 ms, exceeding the 33.3 ms veto; 0.187 s after warmup ended.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension."
+          "Corridor telemetry recorded two steady-state spikes over 33.3 ms after live interaction.",
+          "Visible English lines and interaction labels were concise; no untranslated text was observed.",
+          "The run covered character selection and dialogue, without a complete skeletal-and-SFX measurement.",
+          "Final FFmpeg audio postprocess timed out; retained live telemetry is not a final audio measurement.",
+          "No canonical-plot comparison was supplied to the blind tester.",
+          "No Astra target image was supplied for visual comparison.",
+          "Selectable group dialogue communicated clues and directed the player to the Kitchen."
         ],
         "status": "不合格",
         "images": [],
         "evidence": [
-          "artifacts/evaluation/multidimension-20261117-124938/segment-metrics.json",
-          "artifacts/evaluation/multidimension-20261117-124938/frames.csv"
+          "artifacts/evaluation/terra-batch-20261117/observations.md",
+          "artifacts/evaluation/terra-batch-20261117/receipt.json",
+          "artifacts/evaluation/terra-batch-20261117/timeline.yaml",
+          "artifacts/evaluation/terra-batch-20261117/frames.csv"
         ],
-        "event_id": "event-f4c7e8994de63d919c7ac6b344b8f991",
+        "event_id": "event-23765bb92e166112d982908048db4876",
         "independent_review": false,
         "evidence_issues": []
       }
@@ -131,45 +135,47 @@
       ],
       "fragment_run": "terra-integrated-20261116/kitchen",
       "scores": [
+        6,
         8,
+        6,
         null,
         null,
         null,
-        null,
-        null,
-        null
+        8
       ],
-      "status": "待补测",
+      "status": "不合格",
       "test": {
-        "id": "event-1587a0a6842e98520fc857c3fd1351be",
+        "id": "terra-batch-20261117-kitchen_evidence",
         "segment_id": "kitchen_evidence",
-        "revision": "34a6d483d6946da6c4e3639570917f109942bd77",
-        "at": "2026-11-17T13:43:29.049202+08:00",
+        "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
+        "at": "2026-11-17T16:17:41.153996+08:00",
         "scores": [
+          6,
           8,
+          6,
           null,
           null,
           null,
-          null,
-          null,
-          null
+          8
         ],
         "reasons": [
-          "Rendered development run: 17,454 steady-state frames, zero over 33.3 ms; average 123.57 FPS. Sample includes only the initial kitchen exploration.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension.",
-          "This test did not collect this dimension."
+          "Kitchen telemetry recorded three steady-state spikes over 33.3 ms during the live evidence segment.",
+          "Only concise English prompts and a 0/7 then 2/7 clue counter were visible.",
+          "The heel-mark macro frame visibly placed part of the detective mesh in the lower-left evidence view.",
+          "Final FFmpeg audio postprocess timed out; retained live telemetry is not a final audio measurement.",
+          "No canonical-plot comparison was supplied to the blind tester.",
+          "No Astra target image was supplied for visual comparison.",
+          "Two direct in-room sampling interactions completed and advanced the counter from 0/7 to 2/7."
         ],
-        "status": "待补测",
+        "status": "不合格",
         "images": [],
         "evidence": [
-          "artifacts/evaluation/multidimension-20261117-124938/segment-metrics.json",
-          "artifacts/evaluation/multidimension-20261117-124938/frames.csv"
+          "artifacts/evaluation/terra-batch-20261117/observations.md",
+          "artifacts/evaluation/terra-batch-20261117/receipt.json",
+          "artifacts/evaluation/terra-batch-20261117/timeline.yaml",
+          "artifacts/evaluation/terra-batch-20261117/frames.csv"
         ],
-        "event_id": "event-1587a0a6842e98520fc857c3fd1351be",
+        "event_id": "event-95d5f21618fe8efb844c5985570a6057",
         "independent_review": false,
         "evidence_issues": []
       }

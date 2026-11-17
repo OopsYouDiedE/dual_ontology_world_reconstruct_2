@@ -1,0 +1,21 @@
+{
+  "reviewer": "Terra",
+  "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
+  "session_id": "b6148b29db7c0ec6",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "launch_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "res://scenes/main/Main.tscn",
+    "process_id": 12700,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2"
+  },
+  "route": ["title", "wake", "corridor", "kitchen_evidence"],
+  "kitchen_clues_collected": 2,
+  "metrics_directory": ".runtime/mainline-runs/2026-11-17T15-47-47-12700",
+  "copied_receipts": ["timeline.yaml", "frames.csv", "audio-live.json"],
+  "close": {
+    "graceful_exit": true,
+    "metrics_status": "error",
+    "metrics_error": "final FFmpeg audio postprocess timed out after 180 seconds"
+  }
+}

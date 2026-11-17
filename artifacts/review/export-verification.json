@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-11-17T15:45:13+08:00",
+  "generated_at": "2026-11-17T16:18:53+08:00",
   "html_files": 2,
   "markdown_files": 3,
-  "local_links_checked": 50,
+  "local_links_checked": 62,
   "broken_links": [],
   "mainline_segments": 11,
   "history_evidence_complete": true,
   "history_evidence_counts": {
-    "valid": 8,
+    "valid": 14,
     "missing": 0,
     "changed": 0,
     "unverified": 0

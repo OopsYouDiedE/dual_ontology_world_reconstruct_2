@@ -872,11 +872,18 @@ def render():
                     continue
                 result['images'].append({'path': value, 'caption': path.stem})
     scenes = read_json(PLAN)['scenes']
-    for name in ('review.css', 'run-report.js'):
+    survey = test_results.latest_scene_survey(ROOT)
+    survey_payload = test_results.scene_survey_payload(ROOT, survey)
+    survey_json = json.dumps(survey_payload, ensure_ascii=False, allow_nan=False).replace('<', '\\u003c').replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
+    atomic_write(OUT / 'scene-survey.js', 'window.SCENE_SURVEY=' + survey_json + ';\n')
+    for name in ('review.css', 'run-report.js', 'scene-live.js'):
         atomic_write(OUT / name, (Path(__file__).parent / name).read_text(encoding='utf-8'))
-    for filename in ('index.html', 'gameplay.html'):
+    obsolete = OUT / 'gameplay.html'
+    if obsolete.is_file(): obsolete.unlink()
+    for filename in ('index.html',):
         page = OUT / filename
-        body = test_results.matrix(scenes, latest)
+        body = test_results.scene_survey_table(survey, page, link)
+        body += test_results.matrix(scenes, latest)
         body += ''.join(test_results.card(scene, latest.get(scene['id']), page, link, project_file, trajectory) for scene in scenes)
         document = wrap('第一章 · 测试评分', body, page, revision)
         document = document.replace(link(OUT / 'archive.html', '历史与辅助资料', page), '')
@@ -894,7 +901,7 @@ def render():
                 overall_passed=overall_passed(entries, integrity), gameplay_scenes=entries)
     atomic_write(OUT / 'score_records.json', json.dumps(data, ensure_ascii=False, indent=2) + '\n')
     live = {'events': [e for e in progress['events'] if e.get('test_result')]}
-    atomic_write(OUT / 'live-progress.js', 'window.MAINLINE_PROGRESS=' + json.dumps(live, ensure_ascii=False).replace('<', '\\u003c') + ';\n')
+    atomic_write(OUT / 'live-progress.js', 'window.MAINLINE_PROGRESS=' + json.dumps(live, ensure_ascii=False).replace('<', '\\u003c') + ';\n' + test_results.SCENE_LIVE_BOOTSTRAP)
     return validate_export()
 
 

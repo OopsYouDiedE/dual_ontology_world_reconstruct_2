@@ -110,10 +110,11 @@ def publish(source, output):
             '<body><header><div class="brand">DUAL ONTOLOGY · CHAPTER 01</div>'
             '<h1>第一章 · 测试评分</h1><p>报告版本 ' + escape(data.get('revision', ''))
             + ' · 生成时间 ' + escape(data.get('generated_at', ''))
-            + '</p><p><a href="index.html">评分总览</a> · <a href="gameplay.html">游戏场景评分</a>'
+            + '</p><p><a href="index.html">评分总览</a>'
             + ' · <a href="scoring_overview.md">Markdown 总览</a></p></header><main>' + body + '</main></body></html>')
-    for name in ('index.html', 'gameplay.html'):
-        (output / name).write_text(html, encoding='utf-8')
+    (output / 'index.html').write_text(html, encoding='utf-8')
+    obsolete = output / 'gameplay.html'
+    if obsolete.is_file(): obsolete.unlink()
     (output / 'scoring_overview.md').write_text(
         test_results.markdown(scenes, latest, data.get('revision', '')), encoding='utf-8')
     return validate(output)

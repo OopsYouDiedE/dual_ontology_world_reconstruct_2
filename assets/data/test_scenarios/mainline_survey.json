@@ -44,8 +44,93 @@
         }
       }
     },
-    "snapshot": "res://.runtime/checkpoints/fixtures/corridor-free.json",
+    "snapshot": "res://artifacts/evaluation/runs/eval-20261117t170218-ded02f19/fixtures/fixtures/corridor-free.json",
     "controller": "corridor"
+  },
+  {
+    "id": "kitchen-evidence",
+    "segment_id": "kitchen_evidence",
+    "fixture": {
+      "schema_version": 1,
+      "mode": "story",
+      "room": "B-P",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 8,
+        "minute": 0
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 2,
+        "flags": {
+          "service_map": true
+        }
+      },
+      "id": "kitchen-evidence"
+    },
+    "controller": "kitchen"
+  },
+  {
+    "id": "kitchen-reconstruction",
+    "segment_id": "kitchen_reconstruction",
+    "fixture": {
+      "schema_version": 1,
+      "mode": "story",
+      "room": "B-P",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 8,
+        "minute": 0
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 2,
+        "flags": {
+          "service_map": true
+        },
+        "evidence": {
+          "e_b_sleeve": {
+            "at": 480.0,
+            "room": "B-P",
+            "correct": true
+          },
+          "e_b_drag": {
+            "at": 480.0,
+            "room": "B-P",
+            "correct": true
+          },
+          "e_b_water": {
+            "at": 480.0,
+            "room": "B-P",
+            "correct": true
+          },
+          "e_b_cloth": {
+            "at": 480.0,
+            "room": "B-P",
+            "correct": true
+          },
+          "e_b_ratchet": {
+            "at": 480.0,
+            "room": "B-P",
+            "correct": true
+          },
+          "e_b_boots": {
+            "at": 480.0,
+            "room": "B-P",
+            "correct": true
+          },
+          "e_b_seal": {
+            "at": 480.0,
+            "room": "B-P",
+            "correct": true
+          }
+        }
+      },
+      "id": "kitchen-reconstruction"
+    },
+    "controller": "kitchen_reconstruction"
   },
   {
     "id": "service-stair",

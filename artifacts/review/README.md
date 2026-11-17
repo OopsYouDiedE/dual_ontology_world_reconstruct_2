@@ -1,6 +1,6 @@
 # 测试评分
 
-打开 `index.html` 查看每个片段最近一次测试的七项评分、依据和版本。`gameplay.html` 是兼容入口，`scoring_overview.md` 提供 Markdown 总览，`score_records.json` 提供结构化数据。
+打开 `index.html` 查看每个片段最近一次测试的七项评分、依据和版本。`scoring_overview.md` 提供 Markdown 总览，`score_records.json` 提供结构化数据。
 
 所有测试统一记录。七项结果属于同一测试 ID；缺测项目显示原因。旧测试页面和重复历史报告已删除。
 

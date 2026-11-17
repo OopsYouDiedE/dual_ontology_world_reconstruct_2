@@ -33,14 +33,14 @@ TEXT = {"type": "string", "minLength": 1, "maxLength": 8000}
 ID = {"type": "string", "pattern": r"^[a-z0-9][a-z0-9_-]{1,119}$"}
 SCHEMAS = {
     "evaluation_start": schema({**ROOT_FIELD,
-        "profile": {"enum": ["chapter1_ui", "chapter1_flow", "room_fast", "kitchen_click", "scenario"], "default": "chapter1_ui"},
+        "profile": {"enum": ["chapter1_ui", "chapter1_flow", "room_fast", "kitchen_click", "scenario", "scene_survey"], "default": "chapter1_ui"},
         "rendered": {"type": "boolean", "default": False},
         "godot": {"type": "string", "description": "Optional project-local 4.7.2 executable."},
         "snapshot_path": {"type": "string", "description": "Project-local checkpoint for room_fast or kitchen_click."},
         "interaction_id": {"type": "string", "pattern": "^[a-z0-9_]{1,64}$", "description": "Optional kitchen item ID for the direct-handler diagnostic."},
         "scenario_path": {"type": "string", "description": "Project-local YAML/JSON configuration for scenario."},
         "monitor_visible": {"type": "boolean", "default": False, "description": "Opt in to the scenario overlay; metrics are collected either way."},
-        "workers": {"type": "integer", "minimum": 1, "maximum": 2, "description": "Optional concurrency cap; reduced automatically on low-memory hosts."},
+        "workers": {"type": "integer", "minimum": 1, "maximum": 3, "description": "Optional concurrency cap; reduced automatically on low-memory hosts."},
         "motion_time_scale": {"type": "number", "exclusiveMinimum": 0, "maximum": 120, "description": "Optional development-only walking/transit time-scale cap for chapter-one probes."},
         "pretransit_to": {"enum": list(c.FLOW_PRETRANSIT_TARGETS), "description": "Optional investigated destination for a first-step development checkpoint from 2F-cross-M."},
         "max_seconds": {"type": "integer", "minimum": 10, "maximum": 28800, "default": 600}}),
@@ -61,7 +61,7 @@ DESCRIPTIONS = {
     "evaluation_cancel": "Request cancellation only after verifying the actual owned worker PID, executable, cwd and creation time. The worker cleans up its own child hosts.",
     "evaluation_gate": "Check whether the present committed revision and each room fast check permit a separate blind slow run. Formal verdict remains pending unless independently validated Terra evidence exists.",
     "progress_append": "Append one immutable review progress event; update live-progress.js atomically without expensive full rendering. Complete must reference the work's prior events.",
-    "render_report": "At a milestone render index.html, gameplay.html and illustrated Markdown, then verify every local link.",
+    "render_report": "At a milestone render index.html and illustrated Markdown, then verify every local link.",
 }
 
 
@@ -150,7 +150,15 @@ def start(args):
         pass
     goal, remaining = _goal()
     resources = c.recommended_workers()
-    resources["workers"] = min(resources["workers"], int(args.get("workers", resources["workers"])))
+    if profile == "scene_survey":
+        if not args.get("rendered", False):
+            raise ValueError("scene_survey requires rendered=true")
+        # User-authorized three-instance window, still serialize on low memory.
+        memory_cap = 1 if resources["memory_limit_mb"] < 3500 else 3
+        resources["workers"] = min(memory_cap, int(args.get("workers", 3)))
+        resources["reason"] = "scene survey: up to three 60 FPS rendered hosts"
+    else:
+        resources["workers"] = min(resources["workers"], int(args.get("workers", resources["workers"])))
     maximum = min(float(args.get("max_seconds", 600)), remaining)
     if maximum < 1:
         raise RuntimeError("Insufficient remaining goal time")
@@ -227,15 +235,13 @@ def status(run_id):
     if launch.get("project_root") != str(c.ROOT) or launch.get("run_id") != run_id:
         raise ValueError("Run launch identity mismatch")
     c.provenance.validate_source(data.get("source_identity"), c.provenance.project_identity(c.ROOT))
-    if data.get("state") in ("starting", "running"):
-        try:
-            data["worker_alive"] = bool(_verify_worker(launch))
-        except ValueError:
-            data["worker_alive"] = False
+    try:
+        data["worker_alive"] = bool(_verify_worker(launch))
+    except (ValueError, KeyError):
+        data["worker_alive"] = False
+        if data.get("state") in ("starting", "running"):
             data["state"] = "interrupted"
             data["notice"] = "Worker exited before publishing a terminal status; inspect worker.log."
-    else:
-        data["worker_alive"] = False
     return data
 
 
@@ -243,7 +249,38 @@ def cancel(run_id):
     directory = c.run_dir(run_id)
     data = status(run_id)
     if not data.get("worker_alive"):
-        return {"run_id": run_id, "cancel_requested": False, "state": data.get("state")}
+        stopped = []
+        errors = []
+        # A disconnected Windows MCP client can leave hosts after its worker
+        # exits. Reclaim only PIDs whose full launch identity still matches.
+        for name, job in data.get("jobs", {}).items():
+            identity = job.get("process") or {}
+            if job.get("state") not in ("starting", "running") or not identity.get("pid"):
+                continue
+            try:
+                c.inspect_process(identity["pid"], expected_exe=identity["executable"],
+                                  created=identity["create_time"],
+                                  required=["--path", str(c.ROOT), "--dv-save-slot=" + run_id + "-" + name])
+                process = c.psutil.Process(identity["pid"])
+                children = process.children(recursive=True)
+                process.terminate()
+                for child in children:
+                    try: child.terminate()
+                    except c.psutil.NoSuchProcess: pass
+                _, alive = c.psutil.wait_procs([process, *children], timeout=3)
+                for child in alive: child.kill()
+                c.psutil.wait_procs(alive, timeout=3)
+                stopped.append(identity["pid"])
+                job.update(state="cancelled", ended_at=c.now())
+            except (ValueError, c.psutil.NoSuchProcess):
+                job.update(state="interrupted", ended_at=c.now())
+            except (OSError, c.psutil.Error) as error:
+                errors.append(str(error))
+        if stopped:
+            data.update(state="interrupted", ended_at=c.now())
+            c.write_json(directory / "status.json", data)
+        return {"run_id": run_id, "cancel_requested": False, "state": data.get("state"),
+                "reclaimed_host_pids": stopped, "cleanup_errors": errors}
     launch = c.read_json(directory / "launch.json")
     _verify_worker(launch)
     c.atomic_text(directory / "cancel.request", str(launch["worker_pid"]) + "\n")

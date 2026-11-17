@@ -78,7 +78,13 @@ def atomic_text(path, text):
             stream.write(text)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temp, path)
+        for attempt in range(20):
+            try:
+                os.replace(temp, path)
+                break
+            except PermissionError:
+                if attempt == 19: raise
+                time.sleep(0.025)
     finally:
         if os.path.exists(temp):
             os.unlink(temp)
@@ -93,7 +99,13 @@ def write_yaml(path, value):
 
 
 def read_json(path):
-    return json.loads(project_path(path).read_text(encoding="utf-8-sig"))
+    target = project_path(path)
+    for attempt in range(20):
+        try:
+            return json.loads(target.read_text(encoding="utf-8-sig"))
+        except PermissionError:
+            if attempt == 19: raise
+            time.sleep(0.025)
 
 
 def sha256(path):

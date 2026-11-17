@@ -55,7 +55,7 @@ class PortableReviewTest(unittest.TestCase):
             self.assertGreater(snapshot.publish(source, output), 0)
             html = (output / 'index.html').read_text(encoding='utf-8')
             md = (output / 'scoring_overview.md').read_text(encoding='utf-8')
-            self.assertEqual(html, (output / 'gameplay.html').read_text(encoding='utf-8'))
+            self.assertFalse((output / 'gameplay.html').exists())
             self.assertIn('run-1', html)
             self.assertIn('9/10', html)
             self.assertIn('未测', html)

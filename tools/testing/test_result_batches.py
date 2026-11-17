@@ -53,7 +53,7 @@ class ResultBatches(unittest.TestCase):
 
     def test_shipped_pages_have_no_archive_or_test_hierarchy(self):
         root = Path(__file__).resolve().parents[2] / 'artifacts/review'
-        for name in ('index.html', 'gameplay.html'):
+        for name in ('index.html',):
             html = (root / name).read_text(encoding='utf-8')
             for phrase in ('archive.html', '非正式', '开发测试', '正式验收', 'live-progress"', '修改记录'):
                 self.assertNotIn(phrase, html)

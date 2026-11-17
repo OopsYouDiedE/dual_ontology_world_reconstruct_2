@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import math
 import os
+import re
 from pathlib import Path
 import select
 import shutil
@@ -19,11 +20,30 @@ import psutil
 
 import common as c
 
+sys.path.insert(0, str(c.ROOT / "tools/testing"))
+import test_results  # noqa: E402
+
 sys.path.insert(0, str(c.ROOT / "mcp/game"))
 from concurrency_observer import ConcurrencyObserver  # noqa: E402
 
 sys.path.insert(0, str(c.ROOT / "mcp/review"))
 from core import Store  # noqa: E402
+
+
+def survey_cases(root):
+    cases = c.read_json(root / "assets/data/test_scenarios/mainline_survey.json")
+    if not isinstance(cases, list) or not cases:
+        raise ValueError("Scene survey plan must contain cases")
+    seen = set()
+    for row in cases:
+        if not isinstance(row, dict) or not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", str(row.get("id", ""))):
+            raise ValueError("Invalid scene survey case id")
+        if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", str(row.get("segment_id", ""))):
+            raise ValueError("Invalid scene survey segment id")
+        if row["id"] in seen or not isinstance(row.get("fixture"), dict):
+            raise ValueError("Duplicate or malformed scene survey case")
+        seen.add(row["id"])
+    return cases
 
 
 def planned_jobs(profile, rendered):
@@ -32,6 +52,10 @@ def planned_jobs(profile, rendered):
                "kitchen_click": ("kitchen-click", "kitchen_evidence"),
                "scenario": ("scenario", "project"),
                "chapter1_flow": ("chapter1-flow", "project")}
+    if profile == "scene_survey":
+        if not rendered:
+            raise ValueError("Scene survey requires a rendered display")
+        return [("survey-" + row["id"], row["segment_id"]) for row in survey_cases(c.ROOT)]
     if profile in singles:
         return [singles[profile]]
     if profile != "chapter1_ui":
@@ -101,6 +125,8 @@ SCORE_REASONS = {
 def segment_for_job(job, row):
     segment = {"bedroom-fast": "wake", "story-visual": "wake", "corridor-fast": "corridor",
                "kitchen-fast": "kitchen_evidence", "kitchen-click": "kitchen_evidence"}.get(job)
+    if job.startswith("survey-"):
+        return row.get("segment_id")
     if job == "room-fast":
         detail = row.get("detail") or {}
         room = detail.get("room")
@@ -156,6 +182,7 @@ class Evaluation:
         self.deadline = self.started + min(float(self.launch["deadline_seconds"]), remaining, 28800.0)
         self.store = Store(self.root, server_script=__file__)
         state = c.revision_state()
+        self.survey_cases = {"survey-" + row["id"]: row for row in survey_cases(self.root)} if self.launch["profile"] == "scene_survey" else {}
         self.state = {"schema_version": 1, "run_id": run_id, "state": "running",
                       "profile": self.launch["profile"], "rendered": self.launch["rendered"],
                       "resource_policy": self.launch["resource_policy"],
@@ -184,6 +211,12 @@ class Evaluation:
     def _publish(self):
         c.write_json(self.directory / "status.json", self.state)
         c.write_yaml(self.directory / "report.yaml", self.state)
+        if self.state.get("profile") == "scene_survey":
+            survey = test_results.latest_scene_survey(self.root)
+            if survey and survey["id"] == self.run_id:
+                payload = test_results.scene_survey_payload(self.root, survey)
+                encoded = json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+                c.atomic_text(self.root / "artifacts/review/scene-survey.js", "window.SCENE_SURVEY=" + encoded + ";\n")
 
     def update(self, job, **values):
         with self.lock:
@@ -309,6 +342,19 @@ class Evaluation:
             user += ["--dv-snapshot=" + str(snapshot), "--dv-ui-output=" + str(output),
                      "--dv-ui-capture=" + ("true" if not headless else "false")]
             timeout = 150
+        elif job.startswith("survey-"):
+            script = "res://tools/test/mainline_survey.gd"
+            headless = False
+            case = dict(self.survey_cases[job])
+            if case.get("controller") == "corridor" and case.get("snapshot"):
+                snapshot = self.root / "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/fixtures/fixtures/corridor-free.json"
+                c.validate_snapshot(snapshot)
+                case["snapshot"] = str(snapshot)
+            plan = directory / "plan.json"
+            c.write_json(plan, [case])
+            user += ["--survey-plan=" + str(plan), "--survey-output=" + str(directory)]
+            output = directory / "survey.json"
+            timeout = 150
         elif job == "story-visual":
             script = "res://tools/test/mainline_survey.gd"
             headless = False
@@ -335,6 +381,8 @@ class Evaluation:
         else:
             raise ValueError("Unknown evaluation job")
         command = [str(self.godot), "--path", str(self.root), "--language", "en", "--audio-driver", "Dummy"]
+        if job.startswith("survey-"):
+            command += ["--max-fps", "60"]
         if headless:
             command += ["--headless", "--fixed-fps", "60"]
         if script:
@@ -418,6 +466,20 @@ class Evaluation:
                       "blocked_at": data.get("blocked_at", "")}
             if not data.get("pass"):
                 raise ValueError("UI contract failed: " + json.dumps(detail, ensure_ascii=False))
+        elif job.startswith("survey-"):
+            data = c.read_json(output)
+            c.provenance.validate_source(data.get("source_identity"), c.provenance.project_identity(self.root),
+                                         pid=pid, executable=self.godot)
+            cases = data.get("cases", [])
+            expected = self.survey_cases[job]
+            if len(cases) != 1 or cases[0].get("id") != expected["id"]:
+                raise ValueError("Scene result does not match requested case")
+            row = cases[0]
+            detail = {"case_id": row["id"], "segment_id": row["segment_id"],
+                      "room": row.get("initial", {}).get("room"), "reached_phase": "completed",
+                      "issues": row.get("issues", []), "actions": row.get("actions", []),
+                      "initial": row.get("initial"), "final": row.get("final"),
+                      "snapshot_restored": row.get("snapshot_restored")}
         elif job == "story-visual":
             data = c.read_json(output)
             c.provenance.validate_source(data.get("source_identity"), c.provenance.project_identity(self.root),
@@ -443,7 +505,7 @@ class Evaluation:
             c.provenance.validate_source(verified["source_identity"], c.provenance.project_identity(self.root),
                                          pid=pid, executable=self.godot)
             images.append(str(image.relative_to(self.root)))
-        if rendered and job in ("story-visual", "special-ui") and not images:
+        if rendered and (job in ("story-visual", "special-ui") or job.startswith("survey-")) and not images:
             raise ValueError("Rendered capture produced no provenance-verified images")
         detail["images"] = images
         return detail
@@ -606,14 +668,34 @@ class Evaluation:
             if code != 0 or errors:
                 raise RuntimeError("Godot exit=%s, errors=%s" % (code, errors[:12]))
             detail = self._validate_output(job, output, process.pid, not headless)
-            verdict = "passed"
-            message = "测试通过。"
+            if job.startswith("survey-") and detail.get("issues"):
+                verdict = "failed"
+                message = "Scene survey reported incomplete interactions."
+            else:
+                verdict = "passed"
+                message = "测试通过。"
         except (Exception, KeyboardInterrupt) as error:
             if process is not None and process.poll() is None:
                 self._terminate(process, children)
             verdict = "cancelled" if self.cancelled() else ("blocked" if isinstance(error, EvaluationBlocked) else "failed")
             message = type(error).__name__ + ": " + str(error)
             detail = {"error": message}
+            if job.startswith("survey-"):
+                case = self.survey_cases[job]
+                detail.update(case_id=case["id"], segment_id=case["segment_id"],
+                              room=case["fixture"].get("room"), reached_phase="startup",
+                              stalled=isinstance(error, TimeoutError))
+                # The incremental marker survives a killed host and identifies
+                # the precise last observed operation when the script provides it.
+                marker = directory / case["id"] / "progress.json"
+                if marker.is_file():
+                    try:
+                        progress = c.read_json(marker)
+                        if isinstance(progress, dict):
+                            detail["progress"] = progress
+                            detail["reached_phase"] = progress.get("phase", "unknown")
+                    except (OSError, ValueError):
+                        detail["progress_error"] = "Unreadable incremental progress marker"
             if process is not None:
                 try:
                     detail.update(self._failure_evidence(job, process.pid))
@@ -647,26 +729,56 @@ class Evaluation:
         return verdict == "passed"
 
     def publish_test_results(self):
-        results = build_test_results(self.state, self.directory, self.root)
-        with self.lock:
-            self.state["test_results"] = results
-            self._publish()
         source_changed = self.state["source_changed_during_run"]
         current = c.revision_state()
         source_changed = source_changed or current["revision"] != self.state["revision"] or c.source_fingerprint() != self.state["source_fingerprint_after"]
+        results = {}
         if source_changed:
             with self.lock:
                 self.state["test_results_publication_error"] = "Source changed during or after the run; scores retain their original run provenance."
                 self._publish()
         else:
-            for segment, result in results.items():
-                try:
-                    self.store.add_scores(trajectory_id=segment, test_id=result["test_id"],
-                                          scores=result["scores"], reasons=result["reasons"], evidence=result["evidence"])
-                except Exception as error:
-                    with self.lock:
-                        result["publication_error"] = type(error).__name__ + ": " + str(error)
-                        self._publish()
+            try:
+                if self.state.get("profile") == "scene_survey":
+                    # The collector reads this already-finalized status and uses only
+                    # this run's validated frame/audio data and source identities.
+                    testing_dir = str(self.root / "tools/testing")
+                    if testing_dir not in sys.path:
+                        sys.path.insert(0, testing_dir)
+                    from scene_survey_scores import collect
+                    collected = collect(self.directory)
+                    if collected["source_revision"] != self.state["revision"] or collected["run_id"] != self.state["run_id"]:
+                        raise ValueError("Scene score source revision or run does not match evaluation")
+                    score_file = self.directory / "scene-scores.json"
+                    c.write_json(score_file, collected)
+                    score_evidence = score_file.relative_to(self.root).as_posix()
+                    mutable_status = (self.directory / "status.json").relative_to(self.root).as_posix()
+                    for segment, group in collected["segments"].items():
+                        # Status is rewritten while publishing; hash immutable scene
+                        # scores and source evidence instead of the mutable status.
+                        evidence = [item for item in group["evidence"] if item != mutable_status]
+                        evidence = list(dict.fromkeys([score_evidence, *evidence]))
+                        results[segment] = {"test_id": self.state["run_id"] + "-" + segment,
+                                            "scores": group["scores"], "reasons": group["reasons"],
+                                            "jobs": ["survey-" + item for item in group["case_ids"]],
+                                            "evidence": evidence}
+                else:
+                    results = build_test_results(self.state, self.directory, self.root)
+                with self.lock:
+                    self.state["test_results"] = results
+                    self._publish()
+                for segment, result in results.items():
+                    try:
+                        self.store.add_scores(trajectory_id=segment, test_id=result["test_id"],
+                                              scores=result["scores"], reasons=result["reasons"], evidence=result["evidence"])
+                    except Exception as error:
+                        with self.lock:
+                            result["publication_error"] = type(error).__name__ + ": " + str(error)
+                            self._publish()
+            except Exception as error:
+                with self.lock:
+                    self.state["test_results_publication_error"] = type(error).__name__ + ": " + str(error)
+                    self._publish()
         try:
             self.store.flush(full_render=True)
         except Exception as error:
@@ -688,6 +800,11 @@ class Evaluation:
                 elif profile == "chapter1_flow":
                     # This focused lane is never sufficient for the slow-run gate.
                     self.run_job("chapter1-flow", "project")
+                elif profile == "scene_survey":
+                    with ThreadPoolExecutor(max_workers=min(3, self.launch["resource_policy"]["workers"]), thread_name_prefix="scene-survey") as pool:
+                        futures = [pool.submit(self.run_job, job, segment) for job, segment in planned_jobs(profile, True)]
+                        for future in as_completed(futures):
+                            future.result()
                 elif profile == "chapter1_ui":
                     # Mainline starts first. Queue UI in parallel on capable hosts;
                     # serialize the same lanes on a low-memory host to avoid swap.
@@ -723,9 +840,11 @@ class Evaluation:
                     self.state["source_fingerprint_after"] = after
                     self.state["revision_after"] = git_after["revision"]
                     self.state["working_tree_changes_after"] = git_after["working_tree_changes"]
+                    # Live reports are tracked generated outputs and change during
+                    # every run. The source fingerprint covers executable inputs;
+                    # retain full git status separately for audit.
                     self.state["source_changed_during_run"] = (after != self.state["source_fingerprint_before"]
-                        or git_after["revision"] != self.state["revision"]
-                        or git_after["working_tree_changes"] != self.state["working_tree_changes"])
+                        or git_after["revision"] != self.state["revision"])
                     self.state["ended_at"] = c.now()
                     self.state["wall_seconds"] = round(time.monotonic() - self.started, 3)
                     mark_unstarted(self.state["jobs"])

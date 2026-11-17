@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "tools/testing"))
 import capture_provenance as provenance
 import mainline_reviews
 import visual_semantic_reviews
+import test_results
 
 ID = r"[a-z0-9][a-z0-9_-]{1,119}"
 SCORE_CATEGORIES = ("fluidity", "text_density", "action_sfx_integrity", "audio_loudness",
@@ -153,7 +154,7 @@ class Store:
         # Script loading works for file:// without fetch/CORS and scans no report links.
         live_data = dict(data, events=[e for e in data["events"] if e.get("test_result") or e.get("development_score")])
         payload = json.dumps(live_data, ensure_ascii=False).replace("<", "\\u003c").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
-        atomic_write(self.live, "window.MAINLINE_PROGRESS=" + payload + ";\n")
+        atomic_write(self.live, "window.MAINLINE_PROGRESS=" + payload + ";\n" + test_results.SCENE_LIVE_BOOTSTRAP)
 
     def _progress(self, args, data, *, persist=True):
         request = dict(args)

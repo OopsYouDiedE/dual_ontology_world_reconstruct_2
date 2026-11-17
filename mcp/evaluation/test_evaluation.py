@@ -601,6 +601,13 @@ class GateTests(ProjectFixture):
         c.write_json(self.run / "status.json", self.data)
         return server.gate(self.run_id)
 
+    def test_terminal_state_keeps_worker_alive_during_report_publication(self):
+        c.write_json(self.run / "status.json", self.data)
+        with patch.object(server, "_verify_worker", return_value={"pid": 123}):
+            result = server.status(self.run_id)
+        self.assertEqual(result["state"], "completed")
+        self.assertTrue(result["worker_alive"])
+
     def test_clean_complete_fast_run_is_only_slow_run_ready(self):
         result = self.gate()
         self.assertTrue(result["ready_for_independent_slow_run"])
@@ -631,5 +638,73 @@ class GateTests(ProjectFixture):
         self.assertFalse(self.gate()["ready_for_independent_slow_run"])
 
 
+
+class LiveSurveyPublicationTests(ProjectFixture):
+    def test_update_publishes_escaped_scene_payload(self):
+        from worker import Evaluation
+        instance = Evaluation.__new__(Evaluation)
+        instance.root = c.ROOT
+        instance.directory = self.directory
+        instance.run_id = "test-survey"
+        instance.state = {"profile": "scene_survey", "jobs": {}}
+        report = {"id": instance.run_id, "revision": "abc1234", "state": "running",
+                  "status_path": self.directory / "status.json", "rows": [
+                      {"id": "room-1", "room": "R1", "state": "blocked", "phase": "inspect",
+                       "reason": "<timeout>", "evidence": None, "progress": None, "images": []}]}
+        with patch("worker.c.write_json"), patch("worker.c.write_yaml"), \
+             patch("worker.test_results.latest_scene_survey", return_value=report), \
+             patch("worker.c.atomic_text") as write:
+            instance._publish()
+        self.assertEqual(write.call_count, 1)
+        path, text = write.call_args.args
+        self.assertEqual(path, c.ROOT / "artifacts/review/scene-survey.js")
+        self.assertIn("\\u003ctimeout>", text)
+        self.assertNotIn("<timeout>", text)
+        self.assertEqual(json.loads(text.split("=", 1)[1].rstrip(";\n"))["rows"][0]["state"], "blocked")
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+class SceneSurveyTests(ProjectFixture):
+    def test_plan_covers_each_distinct_case_and_rejects_nonrendered(self):
+        import worker
+        cases = worker.survey_cases(c.ROOT)
+        jobs = worker.planned_jobs("scene_survey", True)
+        self.assertEqual(jobs, [("survey-" + row["id"], row["segment_id"]) for row in cases])
+        self.assertEqual(len(jobs), len({job for job, _ in jobs}))
+        with self.assertRaises(ValueError):
+            worker.planned_jobs("scene_survey", False)
+
+    def test_scene_command_is_rendered_and_limited_to_sixty(self):
+        from worker import Evaluation, survey_cases
+        case = survey_cases(c.ROOT)[0]
+        instance = Evaluation.__new__(Evaluation)
+        instance.root = c.ROOT
+        instance.directory = self.directory
+        instance.run_id = "eval-unit"
+        instance.godot = Path("godot")
+        instance.launch = {"rendered": True}
+        job = "survey-" + case["id"]
+        instance.survey_cases = {job: case}
+        (self.directory / job).mkdir()
+        command, headless, timeout, output = instance._job_spec(job)
+        self.assertFalse(headless)
+        self.assertNotIn("--headless", command)
+        self.assertEqual(command[command.index("--max-fps") + 1], "60")
+        self.assertEqual(timeout, 150)
+        self.assertEqual(json.loads((self.directory / job / "plan.json").read_text()), [case])
+        self.assertEqual(output, self.directory / job / "survey.json")
+
+    def test_survey_scores_are_grouped_by_segment_with_missing_values(self):
+        import worker
+        state = {"run_id": "eval-test", "jobs": {"survey-foo": {"segment_id": "wake", "state": "failed", "host_pid": 4}}}
+        result = worker.build_test_results(state, self.directory, c.ROOT)
+        self.assertEqual(result["wake"]["jobs"], ["survey-foo"])
+        self.assertEqual(len(result["wake"]["scores"]), 7)
+        self.assertTrue(all(score is None for score in result["wake"]["scores"].values()))
+
+    def test_server_exposes_three_workers(self):
+        from jsonschema import Draft202012Validator
+        validator = Draft202012Validator(server.SCHEMAS["evaluation_start"])
+        validator.validate({"profile": "scene_survey", "rendered": True, "workers": 3})
+        self.assertTrue(list(validator.iter_errors({"profile": "scene_survey", "workers": 4})))

@@ -30,13 +30,23 @@ async def invoke(tool=None, arguments=None, *, wait=False):
                 if (os.name == "nt" or wait) and tool == "evaluation_start" and not response.isError:
                     run_id = response.structuredContent["run_id"]
                     print("Started " + run_id + "; keeping the MCP session open until the worker finishes.", file=sys.stderr, flush=True)
+                    transient_errors = 0
                     while True:
                         await asyncio.sleep(1)
                         state = await session.call_tool("evaluation_status", {"run_id": run_id})
                         if state.isError:
+                            detail = " ".join(block.text for block in state.content if hasattr(block, "text"))
+                            if "PermissionError" in detail and transient_errors < 10:
+                                transient_errors += 1
+                                continue
                             output["status"] = state.model_dump(mode="json", by_alias=True)
                             break
-                        if state.structuredContent.get("state") not in ("starting", "running"):
+                        transient_errors = 0
+                        # Terminal gameplay status precedes score publication and
+                        # report rendering. Keep Windows' owning MCP process alive
+                        # until the worker has completed those writes and exited.
+                        if (state.structuredContent.get("state") not in ("starting", "running")
+                                and not state.structuredContent.get("worker_alive", False)):
                             output["status"] = state.model_dump(mode="json", by_alias=True)
                             break
             return output

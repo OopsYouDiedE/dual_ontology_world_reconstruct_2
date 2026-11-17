@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-17T17:04:36+08:00",
-  "revision": "aa221296da6847c31e6c15928b509dea33a42790",
+  "generated_at": "2026-11-17T17:45:27+08:00",
+  "revision": "6d78d730b2ad1918aec1e8a341ac04a1310f56aa",
   "dimensions": [
     "游玩流畅度",
     "界面字数",

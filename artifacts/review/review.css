@@ -10,3 +10,5 @@
 .score-coverage .coverage-scroll{overflow-x:auto}.score-coverage table{width:100%;min-width:820px;border-collapse:collapse;font-size:12px}.score-coverage th,.score-coverage td{padding:8px;border-bottom:1px solid #d5dacc;text-align:left}.score-coverage th:first-child{min-width:140px}.development-dimension summary,.development-score summary{font-size:11px;color:#566e5f;cursor:pointer}.feedback>summary,.live-progress summary{font-weight:600;cursor:pointer}
 
 .test-result .dimensions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.test-result .dimension p{overflow-wrap:anywhere;font-size:13px}.score-coverage td[data-test-id]{max-width:210px;overflow-wrap:anywhere}
+
+.scene-survey table{min-width:2100px}.scene-survey .survey-score{min-width:170px;vertical-align:top}.scene-survey .survey-score strong,.scene-survey .survey-score small{display:block}.scene-survey .survey-score small{white-space:normal;overflow-wrap:anywhere;color:#566e5f;margin-top:4px}

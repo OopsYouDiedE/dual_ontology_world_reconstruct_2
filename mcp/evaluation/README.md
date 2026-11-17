@@ -81,7 +81,7 @@ For rendered evaluations, MCP uses the native Windows display or a reachable Lin
 
 1. 测试开始、结束时原子追加进度 YAML，同时刷新 `artifacts/review/live-progress.js`；已打开报告每 5 秒读取一次。普通事件不重扫所有文件。
 2. `progress_append` 可记录其他工作，参数与 `mcp/review/README.md` 一致。每项工作的完成确认须引用同一工作全部 change/check 事件 ID。
-3. 房间/章节闭环或停机时调用 `render_report`，批量生成 `artifacts/review/index.html`、`gameplay.html`、`评分总览.md`，并检查 HTML 和 Markdown 的本地链接。导出时按不可变进度账本的 SHA-256 审计历史证据；丢失、内容变化或缺少哈希的证据会保留原路径与记录哈希、显示警告，不生成失效链接，也不进入开发图片轨迹。清单写入 `artifacts/review/evidence-audit.json`；只要历史证据不完整，总体验收保持未通过。跨主机的既有历史开发图会保留并标注「原 PID 不可复核」，不会进入正式验收。
+3. 房间/章节闭环或停机时调用 `render_report`，批量生成 `artifacts/review/index.html`、`评分总览.md`，并检查 HTML 和 Markdown 的本地链接。导出时按不可变进度账本的 SHA-256 审计历史证据；丢失、内容变化或缺少哈希的证据会保留原路径与记录哈希、显示警告，不生成失效链接，也不进入开发图片轨迹。清单写入 `artifacts/review/evidence-audit.json`；只要历史证据不完整，总体验收保持未通过。跨主机的既有历史开发图会保留并标注「原 PID 不可复核」，不会进入正式验收。
 4. 实时增量事件中的证据先显示为「待批量核验」的纯文本；下次导出确认存在且哈希一致后才显示链接，避免为了实时刷新扫描所有历史文件。可启动项目内报告服务查看自动更新；如果只是离线查看，请打开 `examples/` 内的自包含 HTML。浏览器/系统隔离可能限制 `file://` 脚本刷新，此时使用本地报告服务。
 
 `evaluation_cancel` 先核验实际 worker PID、启动时间、命令及工程目录，再发送取消请求；worker 只关闭自己启动的进程。每批从 `goal.md` 解析**既有、含时区的起止时间**，与 `.runtime/evaluation/active-goal.json` 中已记录的更早截止取最严格值，缺失或非法则拒绝启动；不会从服务首次启动时重新计算八小时。上一 Goal 于 **2026-11-16 10:51:07 UTC** 结束；用户明确授权的新 Goal 截止 **2026-11-16 19:14:33 UTC（2026-11-17 03:14:33 +08:00）**，过渡凭证保存在 `artifacts/evaluation/renewal-20261116/`。截止后拒绝新批次并停止当前测试；最终导出与版本提交须由操作者核对。不得通过删除预算记录、重启进程或修改本轮时间绕过截止；未来新任务须由用户明确建立新 Goal。
@@ -89,3 +89,9 @@ For rendered evaluations, MCP uses the native Windows display or a reachable Lin
 ## 验收与音频限制
 
 房间快检不证明动作、音效、美学、剧情替代或全章顺畅。独立 Terra 全程录制、原始盲测观察、七项评分原因及参考图对照均未提供时，结果必须显示“待评”。采集使用现有监控的 15 秒音频环形缓冲与后台 PCM/FFmpeg 处理；只有音频完整、无丢帧且真实有信号时才能评价 LUFS/真峰值。数字信号没有校准声压参考时 dBA 记为不可用。冷启动/换房 1.5 秒单独记录，不豁免稳态 33.3 ms 红线。
+
+## 全天分场景并发测试
+
+通过本项目 MCP 的 `evaluation_start` 调用 `{"profile":"scene_survey","rendered":true,"workers":3,"max_seconds":1800}`。此配置从 `assets/data/test_scenarios/mainline_survey.json` 为每个场景创建独立任务，最多同时运行三个 Godot 进程，每个进程使用 `--max-fps 60`，并分别保存画面、回执、输出、并发观测及失败详情。单场景最长运行 150 秒；超时或其他错误记入该场景结果，其他场景继续执行。状态文件和 `report.yaml` 按场景列出房间、阶段、具体动作与未完成项，七维暂缺数据保留空值。
+
+由并行负载采得的帧时间携带并发上下文，供该次场景测试解释；单实例基准可另行采集。场景通过快照或预设状态切入，连续玩家通关进度由实际游玩记录呈现。

@@ -4,7 +4,7 @@ https://github.com/OopsYouDiedE/dual_ontology_world_reconstruct_2
 
 Your primary objectives are:
 1. Provision the required Godot Engine environment and execute automated offscreen tests.
-2. Build the **Story Loader**, **Automated Scene Tester**, and **MCP Evaluation Server** with real-time HTML reporting (`artifacts/review/index.html` and `artifacts/review/gameplay.html`), outputting code changes as clean commits/patches on the single main branch and embedding evaluation reports as required.
+2. Build the **Story Loader**, **Automated Scene Tester**, and **MCP Evaluation Server** with real-time HTML reporting (`artifacts/review/index.html`), outputting code changes as clean commits/patches on the single main branch and embedding evaluation reports as required.
 3. Implement **English Localization (`en`)** across the entire project and enforce an **Action-Over-Words Narrative Standard** (replacing descriptive text with real skeletal animations, IK, and PBR `Decal` surface traces, retaining only essential spoken English dialogue).
 4. Establish an **Iterative Scene-to-Image (`obs()` -> `Astra` Img2Img -> Engine Parameter Alignment) Loop** to overcome LLM visual tuning limitations.
 5. Refactor the **In-Situ Macro Interaction System**, **Art/Design Visual Assist Scene (`InteractionTest`)**, **Motion/Facial Alignment Pipeline**, and **Three-Stage Mind Deduction System**, prioritizing the **Main Storyline (Chapter 1 full walkthrough)** while testing specialized UI and assist scenes in parallel.
@@ -48,7 +48,7 @@ You are authorized to dispatch and coordinate the following specialized SubAgent
      - *Macro Camera Raycast Occlusion Pre-check*: When zooming `Camera3D` toward any interactable or evidence decal/node, cast a physics ray (`PhysicsRayQueryParameters3D`) from `Camera3D.GlobalPosition` to the target's `Aabb` center. If the ray hits a wall, door panel, or unrelated furniture first, programmatically adjust the camera offset or reparent the evidence node under its proper host mesh until the ray achieves a 100% unoccluded hit.
    - **Slow Loop Acceptance**: Only after all interactables and state transitions in a room pass the Fast Loop may you spawn a **fresh, context-isolated `Terra` instance** (provided ONLY with control rules, zero story spoilers) to perform a blind English playthrough from the Title Screen.
 5. **Automated HTML Report Generation & Throttling**:
-   - All scoring trajectories, before/after comparison screenshots, and diagnostic rationales must be batch-compiled into browsable HTML dashboards (`artifacts/review/index.html` and `artifacts/review/gameplay.html`) and Markdown (`artifacts/review/scoring_overview.md`) with zero broken local asset links.
+   - All scoring trajectories, before/after comparison screenshots, and diagnostic rationales must be batch-compiled into browsable HTML dashboards (`artifacts/review/index.html`) and Markdown (`artifacts/review/scoring_overview.md`) with zero broken local asset links.
    - **Throttling Rule**: During Fast Loop iterations, append only lightweight `.yaml` telemetry logs. Trigger full HTML rendering and link validation ONLY upon completing a room/chapter milestone or immediately prior to termination.
 6. **8-Hour Circuit Breaker**:
    - Total cumulative execution time is capped at **8 hours**. Upon reaching the 8-hour boundary, immediately halt new feature edits, purge all temporary files, terminate all child Godot/Xvfb processes, export the final HTML evaluation report, commit all changes to the main branch, and output a structured handover manifest.
@@ -199,3 +199,10 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 - Concurrent functional runs must retain their concurrency observations with their scores. Performance reports identify overlap explicitly. No numeric safe instance limit has been measured yet.
 - To calibrate a limit, repeat the same committed revision, renderer, resolution, seed, scene and action trace with 1, 2 and 3 instances. Alternate single-instance controls between trials, exclude the same 1.5-second warmup windows, and compare per-instance P95/P99, low FPS and steady frames above 33.3 ms. Keep each trial's raw metrics; do not combine independent sessions into a baseline.
 - After the optimization checks and commit, hand gameplay testing to a fresh isolated Terra. Terra owns its MCP sessions, observations, complete score batches and shutdown. Keep the committed source fixed for the duration of its test.
+
+## Latest user scheduling and report update — 2026-11-17
+
+- This scene batch permits up to three concurrent test-owned rendered instances, each capped at 60 FPS. Record concurrent load alongside performance scores. This supersedes single-instance scheduling for this batch.
+- Run every planned scene, record exact failed or stalled phases, and publish all seven score fields together with evidence or explicit missing-measurement reasons.
+- Keep only `artifacts/review/index.html`; delete `gameplay.html`. Update the already-open local report automatically when scene states or scores change.
+- The user stopped the GPT-5.6 Terra tester. Do not resume or recreate that model for this task.

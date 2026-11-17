@@ -51,7 +51,7 @@ def run():
 
     expected = [e['id'] for e in site.read_json(site.PLAN)['scenes']]
     data = site.read_json(site.OUT / 'score_records.json')
-    for name in ('index.html', 'gameplay.html'):
+    for name in ('index.html',):
         text = (site.OUT / name).read_text(encoding='utf-8')
         doc = Document(text).root
         cards = doc.find(lambda e: e.attrs.get('class') == 'segment')

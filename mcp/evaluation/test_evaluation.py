@@ -463,7 +463,12 @@ class ProfileTests(ProjectFixture):
             command, headless, _, _ = worker._job_spec(job)
             self.assertFalse(headless)
             self.assertNotIn("--headless", command)
+            self.assertNotIn("--audio-driver", command)
             self.assertEqual(command[command.index("--language") + 1], "en")
+        worker.launch = {"rendered": False}
+        command, headless, _, _ = worker._job_spec("fixtures")
+        self.assertTrue(headless)
+        self.assertEqual(command[command.index("--audio-driver") + 1], "Dummy")
 
     def test_worker_passes_motion_cap_only_when_requested(self):
         from worker import Evaluation

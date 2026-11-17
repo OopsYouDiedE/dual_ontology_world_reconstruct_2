@@ -14,6 +14,7 @@ import sys
 import yaml
 
 from mainline_metrics import audio_score, frame_statistics
+from visible_text_metrics import analyze_visible_text
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "mcp"))
@@ -21,12 +22,12 @@ import capture_provenance as provenance  # noqa: E402
 
 CATEGORIES = ("fluidity", "text_density", "action_sfx_integrity", "audio_loudness",
               "blind_narrative_match", "aesthetic_similarity", "narrative_flow")
-HUMAN_CATEGORIES = {"text_density", "action_sfx_integrity", "blind_narrative_match",
+HUMAN_CATEGORIES = {"action_sfx_integrity", "blind_narrative_match",
                     "aesthetic_similarity", "narrative_flow"}
 DEFAULT_REASONS = {
     "fluidity": "No validated, finalized steady-state frame data for this case.",
-    "text_density": "Visible text captures lack dialogue/prompt classification and English coverage.",
-    "action_sfx_integrity": "No complete independent action, decal, camera and sound review was supplied.",
+    "text_density": "Complete visible-text capture was not available.",
+    "action_sfx_integrity": "No complete independent physical action review was supplied.",
     "audio_loudness": "No complete, loss-free audio measurement with verified signal was supplied.",
     "blind_narrative_match": "No independent blind observation and canonical comparison was supplied.",
     "aesthetic_similarity": "No independently assessed reference-image comparison was supplied.",
@@ -125,6 +126,21 @@ def score_case(run_dir: Path, job: str, job_row: dict, revision: str, assessment
                 result["reasons"]["fluidity"] = "No spike observed in partial scene; the complete scene was not captured."
         except (OSError, ValueError, TypeError, KeyError, csv.Error) as exc:
             result["reasons"]["fluidity"] = "Frame data unavailable or invalid: " + str(exc)
+
+    if source_ok:
+        summary = document["summary"]
+        coverage = summary.get("visible_text_collection", {})
+        complete = (job_row.get("state") == "passed" and isinstance(coverage, dict)
+                    and coverage.get("complete") is True and coverage.get("write_errors") == 0
+                    and isinstance(summary.get("frames"), int) and summary["frames"] > 0
+                    and coverage.get("checked_frames") == summary["frames"])
+        text_path = metrics / "visible-text-changes.jsonl"
+        text = analyze_visible_text(text_path, segment_id=str(job_row.get("segment_id", "")),
+                                    collection_complete=complete)
+        result["scores"]["text_density"] = text["score"]
+        result["reasons"]["text_density"] = text["reason"]
+        result["metrics"]["visible_text"] = text
+        add(text_path)
 
     audio_path = metrics / "audio.json"
     if source_ok:

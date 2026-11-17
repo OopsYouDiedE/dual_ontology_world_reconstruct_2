@@ -69,8 +69,8 @@ class VisibleTextMetricsTests(unittest.TestCase):
     def test_ambiguous_single_character_is_not_automatically_an_icon(self):
         self.write([self.entry('E', 'single_key_or_text')])
         result = self.analyze()
-        self.assertIsNone(result['score'])
-        self.assertIn('classification', result['reason'])
+        self.assertEqual(result['score'], 8)
+        self.assertIn('counted conservatively', result['reason'])
         review = {('/root/Prompt', 'E'): {'category': 'single_key_icon', 'english_verified': True}}
         self.assertEqual(self.analyze(reviews=review)['score'], 10)
 
@@ -80,8 +80,9 @@ class VisibleTextMetricsTests(unittest.TestCase):
 
     def test_english_cannot_be_inferred_solely_from_latin_letters(self):
         self.write([self.entry('Wait', english_verified=False)])
-        self.assertIsNone(self.analyze()['score'])
-        self.assertFalse(self.analyze()['complete'])
+        self.assertEqual(self.analyze()['score'], 8)
+        self.assertTrue(self.analyze()['complete'])
+        self.assertIn('script only', self.analyze()['reason'])
         review = {('/root/Prompt', 'Wait'): {'category': 'prompt', 'english_verified': True}}
         self.assertEqual(self.analyze(reviews=review)['score'], 8)
 

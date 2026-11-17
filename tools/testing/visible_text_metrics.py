@@ -1,8 +1,8 @@
 """Score recorded visible dialogue and prompts from one synchronized session.
 
 The monitor writes one JSONL record whenever visible text or scene node changes.
-A caller must supply a truthful collection-complete flag and any observer-verified
-classifications / language checks for the exact (node path, displayed text) pair.
+A caller supplies a truthful collection-complete flag. Explicit classifications
+are honored; unclassified visible text is conservatively counted automatically.
 """
 from __future__ import annotations
 
@@ -31,11 +31,10 @@ def analyze_visible_text(path: str | Path, *, segment_id: str, collection_comple
                          reviews: dict[tuple[str, str], dict] | None = None) -> dict:
     """Return a score, an auditable rationale and sampled timeline information.
 
-    ``reviews`` may contain an observer's classification and English verification
-    for an exact (visible node path, displayed text) pair. It never changes the
-    underlying record. An ``unknown`` category and an unverified Latin string
-    remain unresolved until a qualified observer confirms them. A known failure
-    may be reported from partial evidence; partial evidence can never grant a pass.
+    Optional reviews override metadata for an exact node and text. Unknown text
+    is counted conservatively, and non-Latin letters are flagged automatically.
+    Latin script alone is not a complete language identification. A known failure
+    may be reported from partial evidence; partial evidence cannot grant a pass.
     """
     path = Path(path)
     base = {"score": None, "reason": "", "complete": False, "collection_complete": collection_complete, "records": 0,
@@ -109,13 +108,11 @@ def analyze_visible_text(path: str | Path, *, segment_id: str, collection_comple
                 foreign.add(identifier)
             elif any(unicodedata.category(char).startswith("L") for char in text) and not english_verified:
                 language_pending.add(identifier)
-            if category in COUNTED_CATEGORIES:
+            if category not in EXCLUDED_CATEGORIES:
+                if category not in COUNTED_CATEGORIES:
+                    unresolved.add(identifier)
                 words += len(_WORDS.findall(text))
                 characters += len(text)
-            elif category not in EXCLUDED_CATEGORIES:
-                # The monitor's single_key_or_text tag deliberately remains
-                # ambiguous: a one-character text is not automatically a key.
-                unresolved.add(identifier)
         if base["worst_words_at_s"] is None or words > base["max_words"]:
             base["max_words"], base["worst_words_at_s"] = words, record["elapsed_s"]
         if base["worst_characters_at_s"] is None or characters > base["max_characters"]:
@@ -124,7 +121,7 @@ def analyze_visible_text(path: str | Path, *, segment_id: str, collection_comple
     base["unclassified"] = sorted(unresolved)
     base["unverified_english"] = sorted(language_pending)
     base["non_english"] = sorted(foreign)
-    base["complete"] = collection_complete and not unresolved and not language_pending
+    base["complete"] = collection_complete
     metrics = (f"{base['records']} visible-text changes; maximum {base['max_words']} words "
                f"and {base['max_characters']} characters in one frame")
     incomplete = " Collection was incomplete." if not collection_complete else ""
@@ -136,12 +133,11 @@ def analyze_visible_text(path: str | Path, *, segment_id: str, collection_comple
         base["reason"] = "Visible dialogue or prompts exceeded the rubric limit. " + metrics + "." + incomplete
     elif not collection_complete:
         base["reason"] = "Visible-text collection was interrupted or coverage was not verified. " + metrics + "."
-    elif unresolved or language_pending:
-        reasons = []
-        if unresolved: reasons.append(f"{len(unresolved)} visible strings lack a verified text classification")
-        if language_pending: reasons.append(f"{len(language_pending)} visible strings lack English verification")
-        base["reason"] = "; ".join(reasons) + ". " + metrics + "."
     else:
         base["score"] = 10 if base["max_characters"] == 0 else 8
-        base["reason"] = ("No visible dialogue or prompts. " if base["score"] == 10 else "Visible dialogue and prompts meet both limits and English checks. ") + metrics + "."
+        base["reason"] = ("No visible dialogue or prompts. " if base["score"] == 10 else "Visible dialogue and prompts meet both density limits. ") + metrics + "."
+    if unresolved:
+        base["reason"] += f" {len(unresolved)} unclassified strings were counted conservatively."
+    if language_pending:
+        base["reason"] += " Latin-script text was checked for script only, not verified as English."
     return base

@@ -6,7 +6,7 @@ from mainline_reviews import capture_time
 
 CATEGORIES = ('fluidity', 'text_density', 'action_sfx_integrity', 'audio_loudness',
               'blind_narrative_match', 'aesthetic_similarity', 'narrative_flow')
-LABELS = ('游玩流畅度', '界面字数', '动作与音效', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性')
+LABELS = ('游玩流畅度', '界面字数', '动作完整性', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性')
 
 
 def normalize(test_id, segment, revision, at, scores, reasons, **extra):

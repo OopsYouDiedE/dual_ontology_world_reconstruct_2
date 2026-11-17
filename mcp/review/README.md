@@ -25,3 +25,5 @@
 已启动会话加载旧工具表时，可使用 `.runtime/python/Scripts/python.exe mcp/review/client.py add_scores --arguments @<项目内JSON文件>`，该客户端使用相同 stdio MCP 协议。`--test-sandbox` 将测试记录限制在 `.runtime/review-tests/`，隔离测试数据。
 
 回归入口：`mcp/review/test_batch_scores.py`、`mcp/review/test_integration.py`、`tools/testing/test_result_batches.py`。
+
+The `action_sfx_integrity` identifier is retained for compatibility. Current assessments score visible physical action; historical scores retain their original rubric and reasons.

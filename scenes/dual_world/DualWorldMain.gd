@@ -315,10 +315,13 @@ func _stop_opening() -> void:
 	fade_rect.modulate.a = 0.0
 
 
+func _input(event: InputEvent) -> void:
+	# Start audio on a player gesture, including actions submitted through MCP.
+	if event is InputEventMouseButton or event is InputEventKey or event is InputEventAction:
+		if event.is_pressed() and score != null and not score._started and score.enabled: score.start()
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	# 浏览器与桌面端都要求用户手势后才能出声：首次点击或按键时启动合成器
-	if event is InputEventMouseButton or event is InputEventKey:
-		if score != null and not score._started and score.enabled: score.start()
 	if not event.is_echo() and (event.is_action_pressed("notebook") or event.is_action_pressed("settings") or ((event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel")) and not modal.visible)):
 		var page := "settings" if event.is_action_pressed("settings") else "journal"
 		if _open_exploration_book(page):
@@ -626,6 +629,7 @@ func _build_ui() -> void:
 	_apply_author_tabs()
 	# ── 底部：台词字幕 + 操作提示 ──
 	room_hint = Label.new()
+	room_hint.set_meta("text_category", "prompt")
 	room_hint.text = "Click to inspect · WASD to move"
 	room_hint.add_theme_font_size_override("font_size", 14)
 	room_hint.add_theme_color_override("font_color", Color("#d8c9a8", 0.95))
@@ -637,6 +641,7 @@ func _build_ui() -> void:
 	room_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	center.add_child(room_hint)
 	subtitle = Label.new()
+	subtitle.set_meta("text_category", "dialogue")
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	subtitle.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -664,6 +669,7 @@ func _build_ui() -> void:
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT: _sub_until = 0.0)
 	# 说话人铭牌（压在对话框左上沿）与「继续」小三角
 	sub_name = Label.new()
+	sub_name.set_meta("text_category", "nameplate")
 	sub_name.add_theme_font_override("font", SERIF_FONT)
 	sub_name.add_theme_font_size_override("font_size", 18)
 	sub_name.add_theme_stylebox_override("normal", _style(Color(0.16, 0.11, 0.06, 0.98), BRASS, 5, 6))
@@ -672,6 +678,7 @@ func _build_ui() -> void:
 	sub_name.visible = false
 	subtitle.add_child(sub_name)
 	sub_next = Label.new()
+	sub_next.set_meta("text_category", "single_key_icon")
 	sub_next.text = "▼"
 	sub_next.add_theme_font_size_override("font_size", 16)
 	sub_next.add_theme_color_override("font_color", Color("#e9c98a"))
@@ -762,6 +769,7 @@ func _build_center() -> void:
 	room_container.gui_input.connect(_on_3d_input)
 	center.add_child(room_container)
 	room_vp = SubViewport.new()
+	room_vp.audio_listener_enable_3d = true
 	room_vp.msaa_3d = Viewport.MSAA_4X
 	room_vp.handle_input_locally = false
 	room_container.add_child(room_vp)

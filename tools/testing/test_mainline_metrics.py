@@ -149,8 +149,8 @@ class MainlineMetricsTests(unittest.TestCase):
         entry["text"] = "Hello"
         entry["category"] = "unknown"
         result = self.measure([(16, "steady")], text_records=[record], text_summary=complete)
-        self.assertIsNone(result["measured_scores"][1])
-        self.assertIn("classification", result["text_score_reason"])
+        self.assertEqual(result["measured_scores"][1], 8)
+        self.assertIn("counted conservatively", result["text_score_reason"])
 
     def test_settlement_automatically_uses_live_session_review(self):
         complete = {"frames": 1, "visible_text_collection": {"complete": True, "checked_frames": 1, "write_errors": 0}}

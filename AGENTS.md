@@ -217,3 +217,8 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 
 - Collectors calculate fluidity, text density, and loudness; observers classify text as needed and score action/SFX, aesthetic similarity, and narrative flow. After the segment, the main agent compares the blind observer's account with the canonical story, scores narrative match, and publishes the results. Keep evidence in the same test; do not repeat other reviewers' assessments.
 - Always publish all seven numeric scores together for each test ID, with reasons, evidence links, and any problems annotated beside the affected scores. Score observed failures according to the rubric. If evidence for a score is unavailable, record 0 as a clearly labeled provisional missing-evidence penalty, state the cause and mark the test incomplete; do not present that value as a measured game-quality result or invent evidence. Repeat the affected test when the collection is repaired. This rule supersedes earlier instructions to leave scores blank or pending.
+
+## Scoring clarification — 2026-11-17
+
+- Compute text density from visible on-screen text automatically; exclude nameplates and single-key icons. Count unclassified visible text conservatively. Flag script issues without requiring per-string observer confirmation.
+- Score `action_sfx_integrity` on visible physical action only; retain the field name for compatibility. Capture sound separately for audio evidence and loudness. These rules supersede earlier text-classification and action/SFX requirements.

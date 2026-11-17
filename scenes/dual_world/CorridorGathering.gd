@@ -604,6 +604,7 @@ func _enter_free() -> void:
 
 func _build_overlay() -> void:
 	_prompt = Label.new()
+	_prompt.set_meta("text_category", "prompt")
 	_prompt.add_theme_font_size_override("font_size", 18)
 	_prompt.add_theme_color_override("font_color", Color("#ffe3a3"))
 	_prompt.add_theme_stylebox_override("normal", host._style(Color(0.06, 0.05, 0.04, 0.82), host.BRASS, 18, 8))
@@ -616,6 +617,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
+	_hint.set_meta("text_category", "prompt")
 	_hint.text = "Click to inspect"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))

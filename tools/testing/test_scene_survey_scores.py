@@ -45,6 +45,15 @@ class SceneSurveyScoresTests(unittest.TestCase):
         self.assertEqual(result["metrics"]["steady_frames"]["frame_samples"], 2)
         self.assertEqual(len(result["scores"]), 7)
 
+    def test_visible_text_is_scored_without_manual_reviews(self):
+        self.doc["summary"].update(frames=1, visible_text_collection={"complete": True, "checked_frames": 1, "write_errors": 0})
+        self.save_timeline()
+        record = {"frame": 0, "elapsed_s": 0, "scene_node": "wake", "entries": [{"path": "/dialogue", "text": "Wake up", "category": "dialogue"}]}
+        (self.metrics / "visible-text-changes.jsonl").write_text(json.dumps(record) + "\n", encoding="utf-8")
+        result = self.score()
+        self.assertEqual(result["scores"]["text_density"], 8)
+        self.assertIn("2 words", result["reasons"]["text_density"])
+
     def test_steady_spike_fails_even_when_case_incomplete(self):
         (self.metrics / "frames.csv").write_text("frame_ms,measurement_phase\n40,steady\n", encoding="utf-8")
         self.row["state"] = "failed"

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const categories = ['fluidity', 'text_density', 'action_sfx_integrity', 'audio_loudness', 'blind_narrative_match', 'aesthetic_similarity', 'narrative_flow'];
-  const labels = ['游玩流畅度', '界面字数', '动作与音效', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性'];
+  const labels = ['游玩流畅度', '界面字数', '动作完整性', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性'];
   const scoreText = value => value === null ? '评分缺项' : `${value}/10`;
   const element = (tag, text) => { const node = document.createElement(tag); node.textContent = text; return node; };
   const valid = batch => categories.every(key => Object.hasOwn(batch.scores || {}, key)

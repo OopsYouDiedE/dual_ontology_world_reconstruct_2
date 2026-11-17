@@ -55,7 +55,7 @@ static func _append(node: Node, rect: Rect2, output: Array) -> void:
 	if text.is_empty(): return
 	var category := str(node.get_meta("text_category", "unknown"))
 	if node is Label3D: category = "nameplate"
-	elif text.strip_edges().length() == 1: category = "single_key_or_text"
+	elif category == "unknown" and text.strip_edges().length() == 1: category = "single_key_or_text"
 	var english_characters_only := true
 	for index in text.length():
 		if text.unicode_at(index) > 127: english_characters_only = false

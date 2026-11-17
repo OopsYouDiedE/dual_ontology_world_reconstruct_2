@@ -137,7 +137,7 @@ close(handle)
 SCORE_REASONS = {
     "fluidity": "No steady-state frame-time samples were collected for this segment.",
     "text_density": "Visible dialogue and prompts were not counted and checked for English.",
-    "action_sfx_integrity": "A complete animation, decal, sound and occlusion assessment was not collected.",
+    "action_sfx_integrity": "A complete same-session physical action assessment was not collected.",
     "audio_loudness": "Integrated loudness and true peak were not measured for this segment.",
     "blind_narrative_match": "A blind player narrative comparison was not collected.",
     "aesthetic_similarity": "A reference image similarity assessment was not collected.",
@@ -402,7 +402,9 @@ class Evaluation:
             timeout = 90
         else:
             raise ValueError("Unknown evaluation job")
-        command = [str(self.godot), "--path", str(self.root), "--language", "en", "--audio-driver", "Dummy"]
+        command = [str(self.godot), "--path", str(self.root), "--language", "en"]
+        if headless:
+            command += ["--audio-driver", "Dummy"]
         if job.startswith("survey-"):
             command += ["--max-fps", "60"]
         if headless:

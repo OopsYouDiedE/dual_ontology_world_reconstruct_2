@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT / 'mcp'))
 import capture_provenance as provenance
 OUT = ROOT / 'artifacts/review'
 SCORE_CATEGORIES = ['fluidity', 'text_density', 'action_sfx_integrity', 'audio_loudness', 'blind_narrative_match', 'aesthetic_similarity', 'narrative_flow']
-DIMENSIONS = ['游玩流畅度', '界面字数', '动作与音效', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性']
+DIMENSIONS = ['游玩流畅度', '界面字数', '动作完整性', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性']
 PLAN = ROOT / 'assets/data/test_scenarios/gameplay_review_plan.json'
 
 

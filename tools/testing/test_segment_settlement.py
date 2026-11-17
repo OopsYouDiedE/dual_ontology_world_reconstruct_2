@@ -95,7 +95,6 @@ class SegmentSettlementTests(unittest.TestCase):
                            'case_outcomes':{'case-a':{'status':'completed', 'reason':'Reached the next scene.', 'start_s':0, 'end_s':9}},
                            'reviews':{c:{'assessor':'blind-player', 'score':8, 'reason':'Observed and reviewed.',
                                           'case_evidence':{'case-a':[str(self.notes)]}} for c in settlement.SUBJECTIVE}}
-        self.assessment['reviews']['action_sfx_integrity']['case_evidence']['case-a'].append(str(self.directory/'mix.f32le'))
         self.assessment['reviews']['aesthetic_similarity']['case_evidence']['case-a'] = [str(self.image), str(self.ref)]
         self._json(self.assessment_path, self.assessment)
 
@@ -314,11 +313,11 @@ class SegmentSettlementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Audio capture was incomplete'):
             self.prepare()
 
-    def test_action_pass_requires_same_session_audio(self):
+    def test_action_pass_uses_timed_observation_without_audio_evidence(self):
         self.assessment['reviews']['action_sfx_integrity']['case_evidence']['case-a'] = [str(self.notes)]
         self._json(self.assessment_path, self.assessment)
-        with self.assertRaisesRegex(ValueError, 'same-session audio'):
-            self.prepare()
+        result = self.prepare()
+        self.assertEqual(result['scores']['action_sfx_integrity'], 8)
 
     def test_wrong_assessor_is_rejected(self):
         self.assessment['reviews']['narrative_flow']['assessor'] = 'other'

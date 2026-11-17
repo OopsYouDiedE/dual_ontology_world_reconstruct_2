@@ -420,10 +420,6 @@ def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT,
         if category in ('blind_narrative_match', 'narrative_flow') and score is not None:
             if any(not any(row['case_id'] == case for row in notes) for case in supported):
                 raise ValueError('Blind narrative and pacing scores require live blind notes for each supporting case')
-        if category == 'action_sfx_integrity' and score is not None and score >= 8:
-            pcm = directory / 'mix.f32le'
-            if not pcm.is_file() or any(pcm not in [_local(root, p) for p in by_case[case]] for case in supported):
-                raise ValueError('A passing action/SFX assessment requires the same-session audio for every supporting case')
         if category == 'aesthetic_similarity' and score is not None:
             for case in supported:
                 paths = [_local(root, p) for p in by_case[case]]

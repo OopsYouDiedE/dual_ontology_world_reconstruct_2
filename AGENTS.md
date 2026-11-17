@@ -222,3 +222,9 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 
 - Compute text density from visible on-screen text automatically; exclude nameplates and single-key icons. Count unclassified visible text conservatively. Flag script issues without requiring per-string observer confirmation.
 - Score `action_sfx_integrity` on visible physical action only; retain the field name for compatibility. Capture sound separately for audio evidence and loudness. These rules supersede earlier text-classification and action/SFX requirements.
+
+- Use one gameplay observer for blind interpretation, physical action, narrative flow, and visual similarity. Record the blind interpretation before viewing story-revealing references; assess visual similarity against frames from the same session.
+
+## Standard blind test flow — 2026-11-17
+
+- One test agent plays and records its own English interpretation from the observed visuals and gameplay, including uncertainty, without access to the canonical plot. After the agent completes its account, it evaluates the same session against the visual reference. At the end, the main agent compares the recorded blind account with the true plot and scores narrative match. Keep all assessments tied to the same test ID and session.

@@ -54,7 +54,9 @@ func begin(h: Control) -> void:
 	_threshold.y = 0
 	_inward = (host.room_mesh.center()-_threshold)*Vector3(1,0,1)
 	_inward = _inward.normalized() if _inward.length()>0.1 else Vector3.FORWARD
-	host.az = atan2(_inward.x,_inward.z)+1.05
+	# Shoot from the clear side of the aisle, inside the kitchen. The old
+	# grazing angle placed the cloth rack between the lens and both hands.
+	host.az = atan2(_inward.x, _inward.z) - 0.45
 	var side := _inward.cross(Vector3.UP).normalized()
 	for id in ["su","detective","shen","huo"]:
 		var actor: Node3D = Figure.new()
@@ -193,9 +195,10 @@ func _enter_phase(next: int) -> void:
 		16: _sound.play_sound("cloth")
 	_phase_start = _scene_state()
 
-func _blend_camera(point: Vector3, distance: float, camera_pitch: float, t: float) -> void:
+func _blend_camera(point: Vector3, distance: float, camera_pitch: float, t: float, yaw_offset := -0.45) -> void:
 	var camera: Dictionary = _phase_start.camera
 	host.kitchen.focus = _vec(camera.focus).lerp(point,t)
+	host.az = lerp_angle(float(camera.az), atan2(_inward.x, _inward.z) + yaw_offset, t)
 	host.dist = lerpf(float(camera.dist),distance,t)
 	host.pitch = lerpf(float(camera.pitch),camera_pitch,t)
 
@@ -218,10 +221,10 @@ func _apply_phase(value: float) -> void:
 			drivers.shen.pelvis_offset_world = _vec(d.shen.pelvis).lerp(-Vector3.UP*SHEN_CROUCH_DROP,t)
 			drivers.shen.torso_pitch = lerpf(float(d.shen.torso_pitch),SHEN_CROUCH_PITCH,t)
 			drivers.shen.reach_weight = lerpf(float(d.shen.reach),1.0,t)
-			_blend_camera(_threshold+Vector3.UP*0.30,2.1,0.45,t)
+			_blend_camera(_cloth_target.global_position + Vector3.UP * 0.45,2.3,0.60,t,0.18)
 		13:
 			drivers.huo.reach_weight = lerpf(float(d.huo.reach),1.0,minf(_phase_time/0.45,1.0))
-			_blend_camera(_target.global_position,1.9,0.30,t)
+			_blend_camera(_ratchet.global_position.lerp(actors.huo.global_position + Vector3.UP * 0.95, 0.22),2.3,0.48,t,0.42)
 		14:
 			var angles := [0.0,0.07,-0.035,0.05,0.0]
 			var key := minf(_phase_time/0.055,4.0)

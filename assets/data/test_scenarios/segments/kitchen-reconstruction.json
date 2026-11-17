@@ -11,6 +11,8 @@
   "playing": false,
   "mock": {
     "beat_cursor": 2,
+    "waiting": true,
+    "pending_deduction": {"id": "ded_drag", "next": ""},
     "flags": {
       "service_map": true
     },

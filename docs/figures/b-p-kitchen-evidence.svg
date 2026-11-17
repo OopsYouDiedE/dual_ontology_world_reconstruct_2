@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="780" viewBox="0 0 1280 780" role="img" aria-labelledby="title desc">
+<title id="title">B-P kitchen: evidence layers and exit handoff</title>
+<desc id="desc">A schematic, not a floor plan. Floor marks are close to the threshold tiles; the ratchet, sleeve, cloth and seal stay on their source objects. The right panel distinguishes the B Wing gate from the A Wing inspection room.</desc>
+<defs>
+  <linearGradient id="bg"><stop stop-color="#222a2a"/><stop offset="1" stop-color="#12191b"/></linearGradient>
+  <pattern id="tile" width="72" height="72" patternUnits="userSpaceOnUse"><rect width="72" height="72" fill="#968068"/><path d="M0 0H72V72" fill="none" stroke="#6d594a" stroke-width="3"/><path d="M0 0h13L0 13zM72 72H59l13-13z" fill="#50453a"/></pattern>
+  <marker id="arrow" orient="auto" markerWidth="9" markerHeight="9" refX="7" refY="4"><path d="m0 0 8 4-8 4" fill="none" stroke="#e9bd6f" stroke-width="1.5"/></marker>
+  <style>text{font-family:Segoe UI,Arial,sans-serif;fill:#f4e6cb}.small{font-size:16px;fill:#d3c3a9}.kicker{font-size:14px;letter-spacing:3px;fill:#e9bd6f}.label{font-size:17px;font-weight:600}.box{fill:#222b2c;stroke:#5d645d;stroke-width:1}.gem{fill:#ffe293;stroke:#a56427;stroke-width:2}.leader{fill:none;stroke:#2b231f;stroke-width:1.8}</style>
+</defs>
+<rect width="1280" height="780" fill="url(#bg)"/>
+<text x="42" y="42" class="kicker">DAY ONE / FIELD REFERENCE 01</text><text x="42" y="89" font-size="42" font-weight="700">The kitchen threshold</text>
+<text x="43" y="122" class="small">Presentation study · spatial relationships only · no change to clue IDs or door rules</text>
+<rect x="40" y="150" width="745" height="570" rx="18" class="box"/>
+<text x="64" y="185" class="kicker">B-P / EVIDENCE STAGING</text>
+<rect x="67" y="210" width="692" height="438" rx="12" fill="url(#tile)"/>
+<path d="M68 221H340m152 0H758M73 222V648m682-426V648" fill="none" stroke="#57402f" stroke-width="17"/>
+<rect x="340" y="211" width="152" height="40" rx="4" fill="#45332a" stroke="#be9366" stroke-width="3"/>
+<text x="365" y="237" class="label">B Wing gate</text>
+<path d="M380 254q-10 26 25 42t-6 45-2 77" stroke="#443229" stroke-linecap="round" stroke-width="19" opacity=".58" fill="none"/>
+<path d="M341 264q80-19 147 6" stroke="#89bdba" stroke-width="9" opacity=".86" fill="none"/>
+<g fill="#5d4737" transform="rotate(-16 454 394)"><rect x="450" y="372" width="12" height="29" rx="4"/><rect x="469" y="422" width="12" height="29" rx="4"/></g>
+<g class="gem"><path d="m365 270 7 8-7 8-7-8z"/><path d="m401 349 7 8-7 8-7-8z"/><path d="m472 426 7 8-7 8-7-8z"/><path d="m484 242 8 9-8 9-8-9z"/><path d="m665 305 8 9-8 9-8-9z"/><path d="m143 424 8 9-8 9-8-9z"/><path d="m597 487 8 9-8 9-8-9z"/></g>
+<g class="leader"><path d="M262 280h95M269 357h122M471 433h61M493 252h62M663 314h-61M151 433h59M606 495h62"/></g>
+<g fill="#2b2925"><rect x="105" y="258" width="158" height="40" rx="7"/><rect x="105" y="337" width="165" height="40" rx="7"/><rect x="531" y="414" width="135" height="40" rx="7"/><rect x="554" y="231" width="145" height="40" rx="7"/><rect x="470" y="293" width="133" height="40" rx="7"/><rect x="213" y="412" width="158" height="40" rx="7"/><rect x="613" y="477" width="128" height="40" rx="7"/></g>
+<g class="label"><text x="121" y="283">Water at sill</text><text x="121" y="362">Heel drag</text><text x="547" y="439">Bootprints</text><text x="570" y="256">Door ratchet</text><text x="485" y="318">Window seal</text><text x="229" y="437">Wet cloth rack</text><text x="629" y="502">Su’s cuff</text></g>
+<path d="M369 608Q337 533 372 451" fill="none" stroke="#f8d998" stroke-width="2" stroke-dasharray="5 7" marker-end="url(#arrow)"/>
+<text x="226" y="609" class="label" style="fill:#232321">Bedroom-side entry</text>
+<text x="65" y="682" class="small">Keep trace markers low; place hardware and personal clues at their source heights.</text>
+<rect x="806" y="150" width="434" height="570" rx="18" class="box"/>
+<text x="830" y="185" class="kicker">PLAYER HANDOFF</text>
+<g class="label"><text x="832" y="235">01  Inspect this threshold</text><text x="832" y="343">02  Reconstruct and cross-check</text><text x="832" y="459">03  Wait for the corridor bolts</text><text x="832" y="575">04  Continue to A-P</text></g>
+<g class="small"><text x="866" y="263">Start with the marks at the kitchen gate.</text><text x="866" y="286">Esc, E, or right-click to leave a close-up.</text><text x="866" y="371">First: door actions and the argument.</text><text x="866" y="394">Next: wet cloth, sill, bootprints, seal.</text><text x="866" y="487">Que reaches the service stair; Lucian</text><text x="866" y="510">unlatches the corridor gates.</text><text x="866" y="603">B wing gate → central hall → A wing.</text><text x="866" y="626">Investigate the cuffs, key and grate.</text></g>
+<g stroke="#e9bd6f" stroke-width="1.4" marker-end="url(#arrow)"><path d="M849 268v45"/><path d="M849 376v51"/><path d="M849 491v51"/></g>
+<text x="43" y="754" class="small">Design intent: the same door serves as the first crime-scene reference and, later, as the way out.</text>
+</svg>

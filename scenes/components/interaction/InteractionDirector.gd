@@ -73,6 +73,15 @@ func begin_gameplay(host: Control, kind: String, callback := Callable()) -> bool
 		host._cine = was_cinematic
 	return started
 
+func handle_return_input(event: InputEvent) -> bool:
+	if not is_instance_valid(active) or event.is_echo(): return false
+	var right_click: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed
+	if not (right_click or event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel") or event.is_action_pressed("interact")):
+		return false
+	# close() eases the camera back and preserves a completed sample.
+	active.close()
+	return true
+
 func cancel() -> void:
 	finish(false)
 

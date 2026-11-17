@@ -1035,7 +1035,8 @@ func room_occupants() -> Dictionary:
 	# 场景人物在短暂交谈后回到自己的日常位置，不会在错误房间滞留数小时。
 	if not last.is_empty() and s.t - float(last["at"]) < float(last.get("duration", 25)):
 		for id in _beat_speakers(last):
-			if busy.has(id): continue
+			# A voice from behind a door participates in dialogue from its own room.
+			if busy.has(id) or id in last.get("offstage", []): continue
 			busy[id] = true
 			put.call(id, str(last.get("room", "")))
 		if last.get("demon", false): busy["demon"] = true

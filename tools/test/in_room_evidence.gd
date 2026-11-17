@@ -58,6 +58,26 @@ func run() -> void:
 		check(int(result.calls) == 1 and bool(result.success), kind + " 完成回调仅一次")
 		check(game.cam.global_transform.is_equal_approx(saved) and bool(game.eng.s.playing) and not game._cine, kind + " 相机与游玩状态恢复")
 		check(is_instance_valid(game.evidence_presentations[kind]) and game.evidence_presentations[kind].get_instance_id() == detail_id, kind + " 调查后证物仍留在现场")
+	# Session input has priority over the journal and never records an unfinished sample.
+	for kind in ["drag", "water"]:
+		game.evidence_presentations[kind].progress = 0.0
+		game.evidence_presentations[kind].completed = false
+	var returns: Array[bool] = []
+	check(game.interactions.begin_gameplay(game, "drag", func(success: bool): returns.append(success)), "再次查看可在推近期间退出")
+	var escape := InputEventAction.new()
+	escape.action = "cancel"
+	escape.pressed = true
+	game._input(escape)
+	game._input(escape)
+	await create_timer(0.85).timeout
+	check(returns == [false] and game.interactions.active == null and not game.modal.visible, "Esc 只关闭特写、不记入未完成证物、不打开案卷")
+	check(game.interactions.begin_gameplay(game, "water", func(success: bool): returns.append(success)), "右键退出路径可用")
+	var right_click := InputEventMouseButton.new()
+	right_click.button_index = MOUSE_BUTTON_RIGHT
+	right_click.pressed = true
+	game._input(right_click)
+	await create_timer(0.85).timeout
+	check(returns == [false, false] and game.interactions.active == null and not game._cine, "右键退出后恢复探索，每次只结算一次")
 	# 推近中取消后马上换房，不允许旧相机下一帧覆盖新房镜头。
 	game.interactions.begin_gameplay(game, "water")
 	await create_timer(0.2).timeout
@@ -80,7 +100,7 @@ func run() -> void:
 	check(FileAccess.file_exists(game.chapter_save_path(1)), "章节完成检查点已写入")
 	var next_button: Button
 	for button in game.modal.find_children("*", "Button", true, false):
-		if button.text == "第二章": next_button = button
+		if button.text == "Chapter 2": next_button = button
 	check(next_button != null, "章节卡提供明确继续入口")
 	if next_button != null:
 		next_button.pressed.emit()

@@ -316,6 +316,10 @@ func _stop_opening() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	# Give the close-up first refusal before global cancel opens the notebook.
+	if interactions != null and interactions.handle_return_input(event):
+		get_viewport().set_input_as_handled()
+		return
 	# Start audio on a player gesture, including actions submitted through MCP.
 	if event is InputEventMouseButton or event is InputEventKey or event is InputEventAction:
 		if event.is_pressed() and score != null and not score._started and score.enabled: score.start()

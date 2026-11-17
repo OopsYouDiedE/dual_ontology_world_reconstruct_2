@@ -22,7 +22,10 @@ const ENTER_PITCH := 1.0
 const ENTER_DIST := 7.4
 const FOLLOW_PITCH := 0.95
 const NEAR := 1.5            # E 键判定半径
-const GEM_Y := 1.05
+# Keep floor traces close to the tiles and hand-level clues above their actual hardware.
+const MARKER_LIFT := {"drag": 0.30, "water": 0.23, "boots": 0.25, "ratchet": 0.24,
+	"sleeve": 0.23, "cloth": 0.22, "seal": 0.22}
+const THRESHOLD_TRACES := ["e_b_drag", "e_b_water", "e_b_boots"]
 const SHORT_LABELS := {"e_b_sleeve":"袖口","e_b_drag":"鞋跟痕","e_b_water":"门缝","e_b_cloth":"湿布","e_b_ratchet":"棘轮","e_b_boots":"靴印","e_b_seal":"铅封"}
 
 var host: Control
@@ -118,7 +121,9 @@ func _step_free(delta: float) -> void:
 	for item in _items:
 		var kind: String = host.interactions.kind_for(str(item.id))
 		var detail: Node3D = host.evidence_presentations.get(kind)
-		if is_instance_valid(detail): item.pos = Vector3(detail.global_position.x, 0.0, detail.global_position.z)
+		if is_instance_valid(detail):
+			item.pos = Vector3(detail.global_position.x, 0.0, detail.global_position.z)
+			item.marker_y = detail.global_position.y + float(MARKER_LIFT.get(kind, 0.25))
 	var sub_up: bool = host.subtitle.visible or not host._sub_queue.is_empty()
 	var near := _nearest_item(NEAR)
 	var show_prompt: bool = near >= 0 and not sub_up and _busy_item < 0 and not host.modal.visible and not host._cine
@@ -132,7 +137,7 @@ func _step_free(delta: float) -> void:
 		var seen_count := 0
 		for item in _items:
 			if _seen(item): seen_count += 1
-		_hint.text = "Clues %d/7" % seen_count
+		_hint.text = "Start at the kitchen threshold  |  Clues 0/7" if seen_count == 0 else "Clues %d/7" % seen_count
 	_maybe_finish()
 
 
@@ -237,8 +242,8 @@ func _build_markers() -> void:
 		var gem: MeshInstance3D = parts["gem"]
 		var mat: StandardMaterial3D = parts["mat"]
 		var tag: Label3D = parts["tag"]
-		marker.position = Vector3(pos.x, GEM_Y, pos.z)
-		_items.append({"id": eid, "label": label, "pos": pos, "marker": marker, "gem": gem, "mat": mat, "tag": tag})
+		marker.position = Vector3(pos.x, 0.6, pos.z)
+		_items.append({"id": eid, "label": label, "pos": pos, "marker_y": 0.6, "marker": marker, "gem": gem, "mat": mat, "tag": tag})
 
 
 func _seen(it: Dictionary) -> bool:
@@ -253,11 +258,12 @@ func _animate_markers() -> void:
 		marker.visible = show_now
 		if not show_now: continue
 		var p: Vector3 = it.pos
-		marker.position = Vector3(p.x, GEM_Y + sin(_clock * 2.0 + float(i)) * 0.04, p.z)
+		marker.position = Vector3(p.x, float(it.marker_y) + sin(_clock * 2.0 + float(i)) * 0.025, p.z)
 		var gem: MeshInstance3D = it.gem
 		gem.rotation.y = _clock * 1.4
 		var seen := _seen(it)
-		gem.scale = gem.scale.lerp(Vector3.ONE * (0.62 if seen else (1.15 if i == _hover else 1.0)), 0.2)
+		var base := 0.82 if it.id in THRESHOLD_TRACES else 1.0
+		gem.scale = gem.scale.lerp(Vector3.ONE * base * (0.62 if seen else (1.15 if i == _hover else 1.0)), 0.2)
 		var mat: StandardMaterial3D = it.mat
 		mat.emission_energy_multiplier = 0.5 if seen else 1.6
 		mat.albedo_color = Color("#8a7a5a") if seen else Color("#ffa51f")

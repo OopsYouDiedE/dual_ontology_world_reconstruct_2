@@ -128,12 +128,14 @@ func _ready() -> void:
 	_close_button = Button.new()
 	_close_button.name = "ReturnFromEvidence"
 	_close_button.text = "Return to room"
+	_close_button.tooltip_text = "Esc, E, or right-click"
 	_close_button.set_meta("text_category", "prompt")
 	_close_button.position = Vector2(18, 18)
 	_close_button.custom_minimum_size = Vector2(44, 44)
 	_close_button.pressed.connect(close)
 	add_child(_close_button)
 	_build_gesture_hint()
+	_build_return_hint()
 	gui_input.connect(_on_input)
 	prop.sampled.connect(_on_sampled)
 	camera.near = 0.015
@@ -199,6 +201,20 @@ func _build_gesture_hint() -> void:
 	_gesture_hint.add_theme_color_override("font_outline_color", Color("#21180f"))
 	_gesture_hint.add_theme_constant_override("outline_size", 6)
 	add_child(_gesture_hint)
+
+func _build_return_hint() -> void:
+	var hint := Label.new()
+	hint.text = "Esc / E / Right-click to return"
+	hint.set_meta("text_category", "prompt")
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	hint.offset_top = -38
+	hint.offset_bottom = -10
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint.add_theme_color_override("font_color", Color("#ffe3a3"))
+	hint.add_theme_color_override("font_outline_color", Color("#21180f"))
+	hint.add_theme_constant_override("outline_size", 6)
+	add_child(hint)
 
 func _hide(node: Node) -> void:
 	if not is_instance_valid(node): return

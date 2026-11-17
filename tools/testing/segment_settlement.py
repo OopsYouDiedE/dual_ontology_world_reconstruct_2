@@ -15,6 +15,9 @@ paths. Use live blind-observations.jsonl for narrative and pacing; for aesthetic
 comparison supply that case's configured reference and a timed image listed in
 the session's dynamic/frames.jsonl. Scores may be null with a specific reason.
 Objective values are read from the same session's finalized metrics summary.
+For a graceful close whose FFmpeg analysis timed out, --recovered-metrics
+explicitly selects a provenance-checked postprocessed summary; the original
+close receipt is retained, and the test remains incomplete.
 
 Command example::
 
@@ -38,7 +41,7 @@ sys.path.insert(0, str(ROOT / 'mcp'))
 sys.path.insert(0, str(ROOT / 'mcp/game'))
 import capture_provenance as provenance
 from assessment_plan import CATEGORIES, validate as validate_plan
-from mainline_metrics import audio_score
+from mainline_metrics import audio_score, summarize
 
 SUBJECTIVE = ('action_sfx_integrity', 'blind_narrative_match', 'aesthetic_similarity', 'narrative_flow')
 
@@ -99,7 +102,7 @@ def _case_windows(value, plan, intervals):
     return incomplete
 
 
-def _blind_rows(path, plan, session_id, pid, windows):
+def _blind_rows(path, plan, session_id, pid, windows, session_intervals):
     if not path.is_file():
         return []
     rows = []
@@ -118,11 +121,15 @@ def _blind_rows(path, plan, session_id, pid, windows):
                 or row.get('case_index') != next((i for i, c in enumerate(plan['cases']) if c['id'] == case), None)
                 or not _number(t) or not _number(windows[case].get('start_s'))
                 or not _number(windows[case].get('end_s'))
-                or not windows[case]['start_s'] <= t <= windows[case]['end_s']
+                or not any(start <= t <= end for start, end in session_intervals)
                 or row.get('kind') not in ('event', 'character')
                 or not isinstance(row.get('text'), str) or not row['text'].strip()):
             raise ValueError('Blind observation does not belong to this session, case, or timeline')
-        rows.append(row)
+        # Observers may file a retrospective note after the case transition.
+        # Keep the original log, but only count notes inside the case window
+        # as time-specific evidence for a case score.
+        if windows[case]['start_s'] <= t <= windows[case]['end_s']:
+            rows.append(row)
     return rows
 
 
@@ -156,7 +163,7 @@ def _dynamic_frames(root, directory, windows):
     return frames, summary
 
 
-def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT, revision=None):
+def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT, revision=None, recovered_metrics=None):
     root = Path(root).resolve()
     plan_file, on_receipt, close_receipt = (_local(root, p) for p in (plan_file, on_receipt, close_receipt))
     revision = revision or subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
@@ -175,8 +182,7 @@ def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT,
             or on.get('scene') != 'res://mcp/game/SegmentEntry.tscn'
             or on.get('assessment_case_index') != 0 or on.get('assessment_case_count') != len(plan['cases'])
             or close.get('session_id') != session_id
-            or close.get('closed') is not True or close.get('graceful_exit') is not True
-            or close.get('metrics_status') != 'complete'):
+            or close.get('closed') is not True or close.get('graceful_exit') is not True):
         raise ValueError('On/close receipts do not identify one gracefully closed test')
     provenance.validate_source(on.get('server_identity'), expected)
     provenance.validate_source(close.get('server_identity'), expected)
@@ -190,10 +196,53 @@ def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT,
     directory = provenance.project_path(on.get('metrics_directory', ''), root)
     if not directory.is_dir() or not directory.name.endswith('-' + str(pid)):
         raise ValueError('Session metrics directory and host PID do not match')
-    metrics_path = _local(root, close.get('metrics_summary_path', ''))
-    if metrics_path != directory / 'segment-metrics.json':
-        raise ValueError('Metrics summary belongs to a different session')
-    metrics = _read(metrics_path)
+    recovery_issue = None
+    recovery_evidence = []
+    if recovered_metrics is None:
+        if close.get('metrics_status') != 'complete':
+            raise ValueError('On/close receipts do not identify one gracefully closed test with complete metrics')
+        metrics_path = _local(root, close.get('metrics_summary_path', ''))
+        if metrics_path != directory / 'segment-metrics.json':
+            raise ValueError('Metrics summary belongs to a different session')
+        metrics = _read(metrics_path)
+    else:
+        error = close.get('metrics_error')
+        if (close.get('metrics_status') != 'error' or not isinstance(error, str)
+                or 'ffmpeg' not in error.lower() or 'timed out' not in error.lower()):
+            raise ValueError('Recovery requires the original graceful FFmpeg timeout receipt')
+        metrics_path = _local(root, recovered_metrics)
+        if metrics_path != directory / 'segment-metrics-recovered.json':
+            raise ValueError('Recovered metrics belong to a different session')
+        metrics = _read(metrics_path)
+        recovery = metrics.get('recovery') if isinstance(metrics, dict) else None
+        if (not isinstance(recovery, dict)
+                or _local(root, recovery.get('original_close_receipt', '')) != close_receipt
+                or recovery.get('original_close_receipt_sha256') != _hash(close_receipt)):
+            raise ValueError('Recovery does not match the original close receipt')
+        script = _local(root, 'tools/testing/mainline_metrics.py')
+        if recovery.get('analysis_script_sha256') != _hash(script):
+            raise ValueError('Recovery analysis script hash does not match')
+        try:
+            resolved = subprocess.check_output(['git', 'rev-parse', '--verify', revision + '^{commit}'],
+                                               cwd=root, text=True, stderr=subprocess.DEVNULL).strip()
+            ancestor = subprocess.run(['git', 'merge-base', '--is-ancestor', revision, 'HEAD'],
+                                      cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise ValueError('Recovery source revision is not a committed ancestor') from exc
+        if resolved != revision or ancestor != 0:
+            raise ValueError('Recovery source revision is not a committed ancestor')
+        expected_names = {'mix.f32le', 'background-music.f32le', 'audio.json',
+                          'background-music.json', 'concurrency-observation.json'}
+        captured = recovery.get('source_sha256')
+        if not isinstance(captured, dict) or set(captured) != expected_names:
+            raise ValueError('Recovery must hash the same-session audio and concurrency sources')
+        for name, recorded in captured.items():
+            source = _local(root, directory / name)
+            if _hash(source) != recorded:
+                raise ValueError('Recovery source hash does not match: ' + name)
+            recovery_evidence.append(source)
+        recovery_evidence.append(script)
+        recovery_issue = 'Original close reported audio postprocessing failure: ' + error
     timeline = _local(root, directory / 'timeline.yaml')
     timeline_data = yaml.safe_load(timeline.read_text(encoding='utf-8-sig'))
     if not isinstance(timeline_data, dict) or not isinstance(timeline_data.get('summary'), dict):
@@ -220,6 +269,17 @@ def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT,
             raise ValueError('Unexpected metrics source hash')
         if _hash(_local(root, directory / name)) != digest:
             raise ValueError('Metrics source changed after settlement: ' + name)
+    if recovery_issue:
+        # Hashes establish which inputs were used. Recompute with the verified
+        # analysis script so a hand-edited recovery result cannot become a score.
+        try:
+            verified = summarize(directory, scenario_path=provenance.project_path(plan['cases'][0]['scenario_path'], root))
+        except (OSError, ValueError, TypeError, subprocess.SubprocessError) as exc:
+            raise ValueError('Recovery reanalysis failed: ' + str(exc)) from exc
+        for field in ('finalized', 'source_directory', 'source_identity', 'entry', 'measurement_context',
+                      'scenario_path', 'test_id', 'assessment_revision', 'source_sha256', 'segments'):
+            if json.dumps(verified.get(field), sort_keys=True, allow_nan=False) != json.dumps(metrics.get(field), sort_keys=True, allow_nan=False):
+                raise ValueError('Recovery metrics do not match reanalysis: ' + field)
     assessment_path = _local(root, assessment_file)
     if assessment_path.parent != directory:
         raise ValueError('Assessment must be retained inside its own session directory')
@@ -239,13 +299,13 @@ def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT,
     windows = assessment.get('case_outcomes')
     incomplete = _case_windows(windows, plan, intervals)
     notes_path = directory / 'blind-observations.jsonl'
-    notes = _blind_rows(notes_path, plan, session_id, pid, windows)
+    notes = _blind_rows(notes_path, plan, session_id, pid, windows, intervals)
     frames, frame_summary = _dynamic_frames(root, directory, windows)
     if frame_summary is None:
         incomplete.append('Dynamic scene capture did not finalize')
     elif frame_summary.get('frames', 0) <= 0 or frame_summary.get('skipped_samples', 0) or frame_summary.get('write_failures', 0):
         incomplete.append('Dynamic scene capture reported skipped samples or write failures')
-    evidence = [plan_file, on_receipt, close_receipt, metrics_path, timeline, directory / 'frames.csv', assessment_path]
+    evidence = [plan_file, on_receipt, close_receipt, metrics_path, timeline, directory / 'frames.csv', assessment_path, *recovery_evidence]
     scores, reasons = {}, {}
     partial = '; '.join(incomplete)
     concurrency = metrics.get('concurrency_observation', {})
@@ -371,11 +431,13 @@ def prepare(plan_file, on_receipt, close_receipt, assessment_file, *, root=ROOT,
                 if reference not in paths or not any(frames.get(path, (None,))[0] == case for path in paths):
                     raise ValueError('Aesthetic scoring requires the case reference and a timed capture for each supporting case')
         scores[category], reasons[category] = score, reason.strip()
+    if recovery_issue:
+        reasons['audio_loudness'] += ' ' + recovery_issue
     if notes: evidence.append(notes_path)
     if frame_summary is not None: evidence.append(directory / 'dynamic/frames.jsonl')
     if concurrency_ok: evidence.append(concurrency_path)
     return {'trajectory_id': plan['segment_id'], 'test_id': plan['test_id'],
-            'status': 'incomplete' if incomplete or any(value is None for value in scores.values()) else 'complete',
+            'status': 'incomplete' if recovery_issue or incomplete or any(value is None for value in scores.values()) else 'complete',
             'scores': {key: scores[key] for key in CATEGORIES}, 'reasons': {key: reasons[key] for key in CATEGORIES},
             'evidence': list(dict.fromkeys(path.relative_to(root).as_posix() for path in evidence))}
 
@@ -386,8 +448,10 @@ def main():
     parser.add_argument('--on-receipt', required=True)
     parser.add_argument('--close-receipt', required=True)
     parser.add_argument('--assessment', required=True)
+    parser.add_argument('--revision', help='Committed source revision of the test; defaults to HEAD')
+    parser.add_argument('--recovered-metrics', help='Explicit same-session recovery summary after an FFmpeg timeout')
     args = parser.parse_args()
-    print(json.dumps(prepare(args.plan, args.on_receipt, args.close_receipt, args.assessment), ensure_ascii=False, indent=2, allow_nan=False))
+    print(json.dumps(prepare(args.plan, args.on_receipt, args.close_receipt, args.assessment, revision=args.revision, recovered_metrics=args.recovered_metrics), ensure_ascii=False, indent=2, allow_nan=False))
 
 
 if __name__ == '__main__':

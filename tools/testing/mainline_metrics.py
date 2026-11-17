@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import subprocess
+import tempfile
 import sys
 
 import yaml
@@ -43,7 +44,7 @@ def frame_statistics(values: list[float]) -> dict:
 def audio_score(audio: dict, background: dict | None = None) -> tuple[int | None, str]:
     """Score only evidence that supports the documented loudness thresholds."""
     if audio.get("status") != "complete" or not audio.get("signal_present"):
-        return None, "Segment audio is incomplete or contains no verified signal"
+        return None, audio.get("reason") or "Segment audio is incomplete or contains no verified signal"
     loudness, peak = audio.get("integrated_lufs"), audio.get("true_peak_dbtp")
     peak_valid = isinstance(peak, (int, float)) and not isinstance(peak, bool) and math.isfinite(peak)
     if peak_valid and peak >= 0:
@@ -286,7 +287,10 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
                 segment["audio_score_reason"] = "Master capture time offset is unavailable"
                 continue
             master_intervals = shift_intervals(segment["intervals_s"], master_offset)
-            segment["audio"] = analyze_audio(directory, name, master_intervals, int(audio["sample_rate"]), ffmpeg, gain_db=master["volume_db"])
+            try:
+                segment["audio"] = analyze_audio(directory, name, master_intervals, int(audio["sample_rate"]), ffmpeg, gain_db=master["volume_db"])
+            except (OSError, ValueError, TypeError) as error:
+                segment["audio"] = {"status": "error", "reason": "Audio postprocessing failed: " + str(error)}
             background = analyze_background(directory, name, segment["intervals_s"], int(audio["sample_rate"]), ffmpeg, metadata, dict(summary, audio_route=segment_route))
             segment["background_audio"] = background
             segment["measured_scores"][3], segment["audio_score_reason"] = audio_score(segment["audio"], background)
@@ -436,15 +440,38 @@ def analyze_audio(directory: Path, name: str, intervals: list, rate: int, ffmpeg
         inputs = "".join("[%d:a]" % i for i in range(len(ranges)))
         command.extend(["-filter_complex", inputs + "concat=n=" + str(len(ranges)) + ":v=0:a=1," + filters])
     command.extend(["-f", "null", "-"])
-    result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                            timeout=180, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-    state = {"status": "complete" if result.returncode == 0 else "error", "ffmpeg_exit_code": result.returncode,
+    # Use disk-backed streams so FFmpeg output is not dependent on pipe-reader
+    # scheduling. A failed analysis remains local to this audio dimension.
+    timeout_seconds = 180
+    error = None
+    with tempfile.TemporaryFile(dir=directory) as metadata_stream, tempfile.TemporaryFile(dir=directory) as error_stream:
+        try:
+            result = subprocess.run(command, stdout=metadata_stream, stderr=error_stream,
+                                    timeout=timeout_seconds, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            exit_code = result.returncode
+        except subprocess.TimeoutExpired:
+            exit_code = None
+            error = f"FFmpeg audio analysis timed out after {timeout_seconds} seconds"
+        except OSError as exc:
+            exit_code = None
+            error = "FFmpeg audio analysis could not start: " + str(exc)
+        metadata_stream.seek(0)
+        error_stream.seek(0)
+        metadata_output = metadata_stream.read().decode("utf-8", errors="replace")
+        error_output = error_stream.read().decode("utf-8", errors="replace")
+    if error is None and exit_code != 0:
+        error = f"FFmpeg audio analysis exited with code {exit_code}"
+    state = {"status": "complete" if error is None else "error", "ffmpeg_exit_code": exit_code,
              "method": "FFmpeg EBU R128 / ITU BS.1770 on selected PCM intervals", "intervals_s": intervals,
              "analyzed_intervals_s": ranges, "capture_tail_clipped_s": max(0.0, intervals[-1][1] - duration)}
-    for line in result.stdout.splitlines():
-        update_metadata(state, line)
+    if error is None:
+        for line in metadata_output.splitlines():
+            update_metadata(state, line)
+    else:
+        state["reason"] = error
     log = directory / ("segment-" + name + "-" + stem + "-audio.log")
-    log.write_text("COMMAND " + json.dumps(command, ensure_ascii=False) + "\n" + result.stderr, encoding="utf-8")
+    log.write_text("COMMAND " + json.dumps(command, ensure_ascii=False) + "\n" + (error or "") + "\n" + error_output, encoding="utf-8")
+
     return state
 
 

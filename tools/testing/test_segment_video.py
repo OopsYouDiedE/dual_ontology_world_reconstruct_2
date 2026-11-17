@@ -61,13 +61,19 @@ class SegmentVideoTests(unittest.TestCase):
         self.assertEqual([f['elapsed_s'] for f in data['frames']], [.2, .38, .93])
         self.assertIn('performance telemetry', data['sampling']['scope'])
 
-    def test_rejects_capture_loss_and_changed_frame(self):
+    def test_preserves_recorded_sample_gaps_and_rejects_inconsistent_counts(self):
+        self.rows.insert(2, {'type': 'missed_sample', 'elapsed_s': .3, 'reason': 'encoder_busy'})
         self.rows[-1]['skipped_samples'] = 1
         self.write_manifest()
-        with self.assertRaisesRegex(ValueError, 'missing samples'):
-            video.inspect_recording(self.run, 'wake')
+        data = video.inspect_recording(self.run, 'wake')
+        self.assertEqual(data['sampling']['skipped_samples'], 1)
+        self.assertEqual(data['sampling']['missed_sample_times_s'], [.3])
         self.rows[-1]['skipped_samples'] = 0
         self.write_manifest()
+        with self.assertRaisesRegex(ValueError, 'inconsistent gaps'):
+            video.inspect_recording(self.run, 'wake')
+
+    def test_rejects_changed_frame(self):
         (self.dynamic / '0000001.png').write_bytes(b'changed')
         with self.assertRaisesRegex(ValueError, 'frame'):
             video.inspect_recording(self.run, 'wake')

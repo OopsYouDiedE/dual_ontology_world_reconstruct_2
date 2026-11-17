@@ -30392,3 +30392,154 @@ events:
     server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\server.py
     server_pid: 37064
     python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: test-c1dd77182e9c3c264170d4d988adee1a
+  segment_id: wake
+  kind: check
+  summary: 'Test scores: wake-20261117-a4aa317'
+  result: Seven dimensions recorded
+  revision: a4aa317fe7efbfd4afc4a63b04ac6e33ba4e3816
+  event_id: event-bd26fe7449ac1af2a5182c4cd76f1f9a
+  at: '2026-11-17T23:17:43.606670+08:00'
+  evidence:
+  - .runtime/wake-20261117-a4aa317/plan.json
+  - .runtime/input-client/db7c69aaa69a044c/000001.json
+  - .runtime/input-client/db7c69aaa69a044c/000015.json
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/segment-metrics-recovered.json
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/timeline.yaml
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/frames.csv
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/assessment-combined.json
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/mix.f32le
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/background-music.f32le
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/audio.json
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/background-music.json
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/concurrency-observation.json
+  - tools/testing/mainline_metrics.py
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/visible-text-changes.jsonl
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/visible-text-reviews.jsonl
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/blind-observations.jsonl
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/narrative-comparison.json
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/dynamic/0000355.png
+  - artifacts/references/chapter1-20261116/R05-morning-receipt.json
+  - output/imagegen/chapter1/R05-morning-v1.png
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/visual-review.json
+  - .runtime/mainline-runs/2026-11-17T22-51-34-21328/dynamic/frames.jsonl
+  - artifacts/evaluation/runs/wake-20261117-a4aa317/wake-review.mp4
+  - artifacts/evaluation/runs/wake-20261117-a4aa317/wake-review.mp4.json
+  - artifacts/evaluation/runs/wake-20261117-a4aa317/visual-review.json
+  evidence_sha256:
+  - path: .runtime/wake-20261117-a4aa317/plan.json
+    sha256: 697f45efb8ab2b6d2684ce862adc1607c57cde884a8fac18625e4a0a2f826ed5
+  - path: .runtime/input-client/db7c69aaa69a044c/000001.json
+    sha256: 416ad6dd08297da2abd597327aa1b3bf4ef46479d06b79e42c651295ecbd5b1d
+  - path: .runtime/input-client/db7c69aaa69a044c/000015.json
+    sha256: 393664d2cbb47186782784c854683fab8eaf766ec095b822bc6245eeb3c2ae71
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/segment-metrics-recovered.json
+    sha256: 5b5906cb95cf6fc9f12ee8c7cb005597c2d33fe9784c554510ab1797211020eb
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/timeline.yaml
+    sha256: ac87201eafb173d4d43345d3c317d699064ff2660ebb195e32cdddac47cfce79
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/frames.csv
+    sha256: b6bce491b0529e53a6432fc493ef97bbb4f7fb8cf4b1b47b604467a2095c3938
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/assessment-combined.json
+    sha256: f15b572c84d74adfaeabbd6b7a4307e8a2db573783a0746b8cff5a8f5618e722
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/mix.f32le
+    sha256: b46f0a3561c1783f808ae9cacf465e6a71e95dfd68cfd0cda98a5f6d05087cb2
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/background-music.f32le
+    sha256: 13a1089d856be440e26bf0208c79e554e150c078a7cad91fa0fa2f2b0d9304bf
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/audio.json
+    sha256: e83a4b6761084455f700d42e11fd5aaed2fa73bd7f133907a9e760157cb27aa7
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/background-music.json
+    sha256: 5a97f68bd4c5e05f358e5b891387c0952ce483df415b7dee804d48bb5ff74f3f
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/concurrency-observation.json
+    sha256: 02445c7e99925ab8f9c0d2127bb183129a54fbd91419882202ac436b197d00f4
+  - path: tools/testing/mainline_metrics.py
+    sha256: 9422daae29d34e0e4d2f8a56992d67c4d5b752781901439cfffbc2024bdfe13e
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/visible-text-changes.jsonl
+    sha256: a0b110f20fb7f4d5ad4b57a36317e0f84c9e7afae147c4012fd325eae9c8510d
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/visible-text-reviews.jsonl
+    sha256: 1d5a09b6b85de652e74e453795d3526c26662e5b37448aebc315ac8bcda42122
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/blind-observations.jsonl
+    sha256: 8dcf4646011b8707b06b0169be8df32395fc3b2e76a8351877183097a97bab53
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/narrative-comparison.json
+    sha256: d27830cce35405d094bbf48945e60276a73674264a1c407343ad5d30b537b12e
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/dynamic/0000355.png
+    sha256: ce2206d837cdf0e597639a7e8caee05fe70a7f1d7c31c3b2682180652a04386c
+  - path: artifacts/references/chapter1-20261116/R05-morning-receipt.json
+    sha256: e8806985991422afb867445fbec5a13606e4259621af2176648737321f70de90
+  - path: output/imagegen/chapter1/R05-morning-v1.png
+    sha256: 0e448ace9780ff195d954855ae5f3e52cc54a41c1f976e84751a25055e82ac10
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/visual-review.json
+    sha256: eb77d1c929c09aa4a38cfae987b8e17371e56e9a71131d3f815a21d06cc7bfd0
+  - path: .runtime/mainline-runs/2026-11-17T22-51-34-21328/dynamic/frames.jsonl
+    sha256: 401669f1513f778de3e9bc8b87267bd969e0510bc41be17cf3edf14979905b12
+  - path: artifacts/evaluation/runs/wake-20261117-a4aa317/wake-review.mp4
+    sha256: 22508bde069350985e56743fa8d82bd2aeafdac18b178153e3372afb965fef0d
+  - path: artifacts/evaluation/runs/wake-20261117-a4aa317/wake-review.mp4.json
+    sha256: 659690ccd4268abc0b9a276d00921b0671bce583b829e6d6d367544bfe319f6d
+  - path: artifacts/evaluation/runs/wake-20261117-a4aa317/visual-review.json
+    sha256: eb77d1c929c09aa4a38cfae987b8e17371e56e9a71131d3f815a21d06cc7bfd0
+  related_event_ids: []
+  request_sha256: bd26fe7449ac1af2a5182c4cd76f1f9a039b5166afcad79acf9c9c603dfb06e8
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 31732
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+  test_result:
+    test_id: wake-20261117-a4aa317
+    scores:
+      fluidity: 6
+      text_density: 0
+      action_sfx_integrity: 0
+      audio_loudness: 0
+      blind_narrative_match: 7.5
+      aesthetic_similarity: 6.5
+      narrative_flow: 7
+    reasons:
+      fluidity: '21292 steady frames, 16 frames above 33.3 ms. Peak observed Godot
+        processes: 3; sampling is periodic. Average FPS 59.99; P95 16.884 ms; P99
+        22.017 ms. Capture ran concurrently, and the recorded interval includes post-transition
+        observation and tool waiting.'
+      text_density: 'Provisional 0: evidence unavailable; test incomplete. 25 visible
+        strings lack a verified text classification; 28 visible strings lack English
+        verification. 47 visible-text changes; maximum 2 words and 5 characters in
+        one frame. The collector needs live per-string purpose and language labels;
+        the observer submitted one classification, so the other visible strings were
+        not verified.'
+      action_sfx_integrity: 'Provisional 0: evidence unavailable; test incomplete.
+        Direct listening unavailable; observed bed macro and door reach, but cannot
+        assess action sound effects. Audio analyzer separately recorded no signal.
+        The observer tools provide frames and WAV files but no direct listening capability;
+        one sound effect was scheduled, while the captured master PCM contains no
+        detected signal.'
+      audio_loudness: 'Provisional 0: evidence unavailable; test incomplete. The same-session
+        master and Music PCM were digitally silent (-infinity peak); one effect was
+        scheduled. Whether playback or capture caused the missing signal remains under
+        investigation. Close-time FFmpeg postprocessing also exceeded its 180-second
+        timeout; original receipt and recovered analysis are retained.'
+      blind_narrative_match: The observer recognized waking in bed, unexplained scratches
+        from on-screen text, and leaving the room; memory loss was not mentioned.
+        Four equally weighted canonical facts score 10, 0, 10 and 10. Audio was not
+        perceived.
+      aesthetic_similarity: The bedroom keeps the reference camera angle, layout,
+        key furniture, warm wood palette, green bed and rug, and gold markers. The
+        exterior surrounding the room is stark white rather than the reference dark
+        backdrop; the bright circular floor illumination differs substantially from
+        the reference diagonal window-light band, the shadows and furnishings appear
+        flatter and darker, and window and wall material treatments differ. These
+        differences are conspicuous despite strong geometry and framing correspondence.
+        This is a subjective visual comparison of representative bedroom views, not
+        a computed similarity metric. Frame sampling missed 974 scheduled samples;
+        the comparison uses retained timed bedroom frames.
+      narrative_flow: The door led naturally to the corridor, but the opening relied
+        on text to communicate unexplained scratches; the observed bed close-up did
+        not make their cause clear. Audio cues were unavailable to this observer.
+        Elapsed runtime includes observer/tool waiting, so it is not an uninterrupted-player
+        timing measurement.
+    provisional_categories:
+    - text_density
+    - action_sfx_integrity
+    - audio_loudness
+    status: incomplete
+  test_request_sha256: 8e9d324a190c2df756cf1ccd2a7033db9786c18dd6df3ce1c0338e0dbe11b998

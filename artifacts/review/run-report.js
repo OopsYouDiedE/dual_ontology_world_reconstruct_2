@@ -25,16 +25,23 @@
       const event = latest.get(card.dataset.testCard);
       if (!event || (card.dataset.testAt && (Date.parse(event.at) < Date.parse(card.dataset.testAt) ||
           (Date.parse(event.at) === Date.parse(card.dataset.testAt) && event.test_result.test_id <= card.dataset.testId)))) return;
-      const batch = event.test_result;
+      const source = event.test_result;
+      const provisional = new Set(source.provisional_categories || []);
+      for (const key of categories) if (source.scores[key] === null) provisional.add(key);
+      const batch = {...source,
+        scores: Object.fromEntries(categories.map(key => [key, source.scores[key] === null ? 0 : source.scores[key]])),
+        reasons: Object.fromEntries(categories.map(key => [key, provisional.has(key) && !source.reasons[key].startsWith('Provisional 0:')
+          ? 'Provisional 0: evidence unavailable; test incomplete. ' + source.reasons[key] : source.reasons[key]]))};
+      const formatted = key => scoreText(batch.scores[key]) + (provisional.has(key) ? ' (暂定·缺证据)' : '');
       const body = document.createElement('div'); body.dataset.resultBody = '';
       body.append(element('p', `测试 ${batch.test_id} · ${event.at} · 版本 ${event.revision.slice(0, 12)}`));
       const values = categories.map(key => batch.scores[key]);
-      body.append(element('p', values.some(v => v !== null && v < 8) ? '不合格' : values.includes(null) ? '已测 · 评分不全' : '合格'));
+      body.append(element('p', provisional.size || source.status === 'incomplete' ? '已测 · 测试未完成' : values.some(v => v < 8) ? '不合格' : '合格'));
       const grid = document.createElement('div'); grid.className = 'dimensions';
       categories.forEach((key, i) => {
         const value = batch.scores[key], dim = document.createElement('div');
-        dim.className = 'dimension ' + (value === null ? 'pending' : value >= 8 ? 'pass' : 'fail');
-        dim.append(element('span', labels[i]), element('b', scoreText(value)), element('p', batch.reasons[key]));
+        dim.className = 'dimension ' + (provisional.has(key) ? 'pending' : value >= 8 ? 'pass' : 'fail');
+        dim.append(element('span', labels[i]), element('b', formatted(key)), element('p', batch.reasons[key]));
         grid.append(dim);
       });
       body.append(grid);
@@ -58,7 +65,7 @@
       document.querySelectorAll('[data-test-segment]').forEach(row => {
         if (row.dataset.testSegment !== event.segment_id) return;
         row.querySelector('[data-test-id]').textContent = batch.test_id;
-        row.querySelectorAll('[data-batch-score]').forEach(cell => { cell.textContent = scoreText(batch.scores[cell.dataset.batchScore]); });
+        row.querySelectorAll('[data-batch-score]').forEach(cell => { cell.textContent = formatted(cell.dataset.batchScore); });
       });
     });
   }

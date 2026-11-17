@@ -902,7 +902,8 @@ def render():
         document = wrap('第一章 · 测试评分', body, page, revision)
         document = document.replace('<body ', '<body data-report-client-version="3" ', 1)
         document = document.replace(link(OUT / 'archive.html', '历史与辅助资料', page), '')
-        document = document.replace('review.js', 'run-report.js')
+        document = document.replace('<script src="' + href(OUT / 'review.js', page) + '"></script>',
+                                    '<script src="' + href(OUT / 'run-report.js', page) + '"></script>')
         atomic_write(page, document)
     for name in ('评分总览.md', 'scoring_overview.md'):
         atomic_write(OUT / name, test_results.markdown(scenes, latest, revision))

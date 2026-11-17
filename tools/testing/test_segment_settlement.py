@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 import tempfile
 import sys
+import subprocess
 import unittest
+from unittest.mock import patch
 
 import yaml
 import segment_settlement as settlement
@@ -18,7 +20,8 @@ class SegmentSettlementTests(unittest.TestCase):
         self.base = Path(self.temp.name)
         self.directory = self.base / 'run-4321'
         self.directory.mkdir()
-        self.pid, self.sid, self.revision = 4321, 'session-1', 'sample-revision'
+        self.pid, self.sid = 4321, 'session-1'
+        self.revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.root, text=True).strip()
         self.identity = dict(settlement.provenance.project_identity(self.root), process_id=self.pid)
         self.plan_path = self.base / 'plan.json'
         self.ready_path = self.base / 'ready.json'
@@ -103,6 +106,78 @@ class SegmentSettlementTests(unittest.TestCase):
         return settlement.prepare(self.plan_path, self.on_path, self.close_path, self.assessment_path,
                                   root=self.root, revision=self.revision)
 
+    def make_recovery(self):
+        self.close.update(session_id=self.sid, metrics_status='error', metrics_error='FFmpeg analysis timed out after 180 seconds')
+        self.close.pop('metrics_summary_path', None)
+        self._json(self.close_path, {'tool':'close', 'is_error':False, 'data':self.close})
+        (self.directory / 'background-music.f32le').write_bytes(b'background')
+        (self.directory / 'background-music.json').write_text('{}', encoding='utf-8')
+        names = ['mix.f32le', 'background-music.f32le', 'audio.json', 'background-music.json', 'concurrency-observation.json']
+        self.metrics['recovery'] = {'original_close_receipt': str(self.close_path),
+            'original_close_receipt_sha256': settlement._hash(self.close_path),
+            'analysis_script_sha256': settlement._hash(self.root/'tools/testing/mainline_metrics.py'),
+            'source_sha256': {name:settlement._hash(self.directory/name) for name in names}}
+        self.recovered_path = self.directory / 'segment-metrics-recovered.json'
+        self._json(self.recovered_path, self.metrics)
+
+    def recover(self):
+        with patch('segment_settlement.summarize', return_value=self.metrics):
+            return settlement.prepare(self.plan_path, self.on_path, self.close_path, self.assessment_path,
+                                      root=self.root, revision=self.revision, recovered_metrics=self.recovered_path)
+
+    def test_explicit_recovery_preserves_original_error_and_marks_incomplete(self):
+        self.make_recovery()
+        original = self.close_path.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'complete metrics'):
+            self.prepare()
+        result = self.recover()
+        self.assertEqual(result['status'], 'incomplete')
+        self.assertEqual(list(result['scores'].values()), [8] * 7)
+        self.assertIn('timed out after 180 seconds', result['reasons']['audio_loudness'])
+        self.assertEqual(self.close_path.read_bytes(), original)
+        self.assertIn(self.recovered_path.relative_to(self.root).as_posix(), result['evidence'])
+        self.assertIn((self.directory/'mix.f32le').relative_to(self.root).as_posix(), result['evidence'])
+
+    def test_recovery_rejects_changed_receipt_sources_and_analysis_script(self):
+        self.make_recovery()
+        self.close_path.write_text(self.close_path.read_text(encoding='utf-8') + ' ', encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, 'original close receipt'):
+            self.recover()
+        self.make_recovery()
+        (self.directory/'mix.f32le').write_bytes(b'changed')
+        with self.assertRaisesRegex(ValueError, 'Recovery source hash'):
+            self.recover()
+        (self.directory/'mix.f32le').write_bytes(b'audio')
+        self.metrics['recovery']['analysis_script_sha256'] = 'wrong'
+        self._json(self.recovered_path, self.metrics)
+        with self.assertRaisesRegex(ValueError, 'analysis script hash'):
+            self.recover()
+
+    def test_recovery_rejects_edited_metrics_despite_matching_source_hashes(self):
+        self.make_recovery()
+        forged = json.loads(self.recovered_path.read_text(encoding='utf-8'))
+        forged['segments']['wake']['measured_scores'][0] = 10
+        self._json(self.recovered_path, forged)
+        with self.assertRaisesRegex(ValueError, 'do not match reanalysis: segments'):
+            self.recover()
+
+    def test_recovery_requires_timeout_same_session_and_committed_revision(self):
+        self.make_recovery()
+        self.close['session_id'] = 'other-session'
+        self._json(self.close_path, {'tool':'close', 'is_error':False, 'data':self.close})
+        with self.assertRaisesRegex(ValueError, 'receipts'):
+            self.recover()
+        self.make_recovery()
+        self.close['session_id'] = self.sid
+        self.close['metrics_error'] = 'Another postprocessing error'
+        self._json(self.close_path, {'tool':'close', 'is_error':False, 'data':self.close})
+        with self.assertRaisesRegex(ValueError, 'FFmpeg timeout'):
+            self.recover()
+        self.make_recovery()
+        with patch('segment_settlement.subprocess.check_output', side_effect=subprocess.CalledProcessError(1, 'git')):
+            with self.assertRaisesRegex(ValueError, 'committed ancestor'):
+                self.recover()
+
     def test_seven_scores_and_provenance_are_assembled_from_one_session(self):
         result = self.prepare()
         self.assertEqual(list(result['scores']), list(settlement.CATEGORIES))
@@ -172,6 +247,19 @@ class SegmentSettlementTests(unittest.TestCase):
         self.assertIsNone(result['scores']['narrative_flow'])
         self.assertEqual(result['reasons']['narrative_flow'], 'The scene stalled before transition.')
         self.assertIn('Door did not respond', result['reasons']['text_density'])
+
+    def test_late_blind_notes_remain_recorded_but_do_not_count_as_case_observation(self):
+        first = json.loads(self.notes.read_text(encoding='utf-8').strip())
+        late = dict(first, monitor_elapsed_s=9.5, text='Retrospective note after the case ended.')
+        self.notes.write_text(json.dumps(first)+'\n'+json.dumps(late)+'\n', encoding='utf-8')
+        plan = settlement.validate_plan(self.plan_path, self.root, revision=self.revision)
+        rows = settlement._blind_rows(self.notes, plan, self.sid, self.pid, self.assessment['case_outcomes'], [[0,10]])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['monitor_elapsed_s'], 3.0)
+        late['monitor_elapsed_s'] = 11
+        self.notes.write_text(json.dumps(late)+'\n', encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, 'timeline'):
+            settlement._blind_rows(self.notes, plan, self.sid, self.pid, self.assessment['case_outcomes'], [[0,10]])
 
     def test_blind_scores_require_timed_notes(self):
         self.assessment['reviews']['blind_narrative_match']['case_evidence']['case-a'] = [str(self.image)]

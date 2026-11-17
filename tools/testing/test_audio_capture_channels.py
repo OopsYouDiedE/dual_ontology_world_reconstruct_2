@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from audio_watch import find_ffmpeg
 from mainline_metrics import audio_score, analyze_audio, analyze_background
@@ -37,6 +38,19 @@ class AudioChannelTests(unittest.TestCase):
                 analyze_audio(path, 'bad', [[2.9, 3.1]], rate, find_ffmpeg())
             with self.assertRaises(ValueError):
                 analyze_audio(path, 'bad', [[1, 2], [1.5, 2.5]], rate, find_ffmpeg())
+
+    def test_timeout_is_reported_without_partial_audio_score(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / '.runtime') as temporary:
+            path = Path(temporary)
+            (path / 'mix.f32le').write_bytes(bytes(8 * 100))
+            with patch('mainline_metrics.subprocess.run', side_effect=subprocess.TimeoutExpired('ffmpeg', 180)):
+                state = analyze_audio(path, 'timeout', [[0, 1]], 100, 'ffmpeg')
+            self.assertEqual(state['status'], 'error')
+            self.assertIsNone(state['ffmpeg_exit_code'])
+            self.assertIn('timed out', state['reason'])
+            self.assertIsNone(audio_score(state)[0])
+            self.assertIn('timed out', (path / 'segment-timeout-mix-audio.log').read_text())
+            self.assertEqual((path / 'mix.f32le').stat().st_size, 800)
 
     @unittest.skipUnless(find_ffmpeg(), "FFmpeg unavailable")
     def test_parallel_channel_files_and_silence(self):

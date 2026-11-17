@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
+import subprocess
 import os
 import yaml
 
@@ -13,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class MainlineMetricsTests(unittest.TestCase):
-    def measure(self, rows, *, legacy=False, text_count=None, metadata_override=None, snapshot_path=None, scenario_path=None, full=False, text_records=None, text_summary=None, live_review=False):
+    def measure(self, rows, *, legacy=False, text_count=None, metadata_override=None, snapshot_path=None, scenario_path=None, full=False, text_records=None, text_summary=None, live_review=False, audio_fixture=False):
         base = ROOT / ".runtime/metrics-unit-tests"
         base.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=base) as directory:
@@ -35,6 +37,9 @@ class MainlineMetricsTests(unittest.TestCase):
                 metadata["content_text_policy"] = "visible_active_viewports"
             sample = "" if text_count is None else "  - " + json.dumps({"gameplay_segment": "kitchen_evidence", "total_visible_characters": text_count}) + "\n"
             (path / "timeline.yaml").write_text(yaml.safe_dump({"metadata": metadata}) + "timeline:\n" + sample + yaml.safe_dump({"summary": text_summary or {}}), encoding="utf-8")
+            if audio_fixture:
+                (path / "audio.json").write_text(json.dumps({"status": "complete", "sample_rate": 100}), encoding="utf-8")
+                (path / "mix.f32le").write_bytes(bytes(8 * 300))
             if text_records is not None:
                 (path / "visible-text-changes.jsonl").write_text("".join(json.dumps(item, ensure_ascii=False) + "\n" for item in text_records), encoding="utf-8")
             with (path / "frames.csv").open("w", newline="", encoding="utf-8") as stream:
@@ -93,6 +98,19 @@ class MainlineMetricsTests(unittest.TestCase):
         self.assertEqual(result["loading_warmup"]["max_frame_ms"], 200)
         self.assertEqual(result["steady"]["max_frame_ms"], 16)
         self.assertEqual(result["measured_scores"][0], 8)
+
+    def test_audio_timeout_preserves_frame_measurements(self):
+        route = {"stable": True, "snapshot": {"any_solo": False, "buses": {
+            "Master": {"muted": False, "bypass": False, "capture_active": True, "volume_db": 0}}}}
+        summary = {"audio_route": route, "master_start_offset_s": 0}
+        with patch('mainline_metrics.find_ffmpeg', return_value='ffmpeg'), \
+             patch('mainline_metrics.subprocess.run', side_effect=subprocess.TimeoutExpired('ffmpeg', 180)):
+            result = self.measure([(16, "steady"), (35, "steady")], text_summary=summary, audio_fixture=True)
+        self.assertEqual(result['steady']['frame_samples'], 2)
+        self.assertEqual(result['measured_scores'][0], 6)
+        self.assertIsNone(result['measured_scores'][3])
+        self.assertEqual(result['audio']['status'], 'error')
+        self.assertIn('timed out', result['audio_score_reason'])
 
     def test_one_steady_spike_vetoes(self):
         result = self.measure([(200, "loading_warmup"), (33.3, "steady"), (33.31, "steady")])

@@ -82,12 +82,14 @@ def inspect_recording(directory: Path, segment: str) -> dict:
     if not rows or rows[0].get("type") != "configuration" or rows[-1].get("type") != "summary":
         raise ValueError("Frame capture is not finalized")
     config, result = rows[0], rows[-1]
+    missed = [row for row in rows[1:-1] if row.get("type") == "missed_sample"]
     if (config.get("timebase") != "RuntimeMonitor elapsed_s" or config.get("fixed_timestep") is not False
-            or result.get("skipped_samples") != 0 or result.get("write_failures") != 0
-            or any(row.get("type") in ("missed_sample", "capture_error") for row in rows)):
-        raise ValueError("Frame capture has missing samples or unsupported timing")
+            or result.get("write_failures") != 0 or result.get("skipped_samples") != len(missed)
+            or any(not finite_number(row.get("elapsed_s")) for row in missed)
+            or any(row.get("type") not in ("frame", "missed_sample") for row in rows[1:-1])):
+        raise ValueError("Frame capture has inconsistent gaps or unsupported timing")
     frames = [row for row in rows[1:-1] if row.get("type") == "frame"]
-    if len(frames) != result.get("frames") or any(row.get("type") != "frame" for row in rows[1:-1]):
+    if len(frames) != result.get("frames"):
         raise ValueError("Frame manifest count or record type is invalid")
     chosen = []
     for index, row in enumerate(frames):
@@ -134,6 +136,7 @@ def inspect_recording(directory: Path, segment: str) -> dict:
             "source_sha256": {"timeline.yaml": digest(timeline), "frames.jsonl": digest(manifest),
                               "audio.json": digest(audio_metadata), "frames.csv": digest(frame_log), "mix.f32le": digest(pcm), "assessment_plan": digest(plan)},
             "sampling": {"requested_hz": config.get("sample_hz"), "skipped_samples": result["skipped_samples"],
+                         "missed_sample_times_s": [row["elapsed_s"] for row in missed],
                          "frame_holds": "Each captured image is displayed until the next recorded timestamp.",
                          "scope": "First captured segment frame through the next frame or finalized monitor time; the video is not performance telemetry."},
             "pcm_path": str(pcm), "dynamic_directory": str(manifest.parent)}

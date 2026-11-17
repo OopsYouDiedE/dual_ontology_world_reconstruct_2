@@ -1,0 +1,333 @@
+{
+  "acceptance_eligible": false,
+  "cases": [
+    {
+      "acceptance_eligible": false,
+      "actions": [
+        {
+          "action": "process_production_beat",
+          "id": "d1_q1",
+          "state": {
+            "beat": "d1_q1",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 13.0,
+            "det_pos": "(3.45, 4.05)",
+            "evidence": [],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "talk",
+            "room": "1F-Shaft-Monitor",
+            "viewport_size": "(1440, 900)"
+          }
+        }
+      ],
+      "final": {
+        "beat": "d1_q1",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 13.0,
+        "det_pos": "(3.45, 4.05)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "talk",
+        "room": "1F-Shaft-Monitor",
+        "viewport_size": "(1440, 900)"
+      },
+      "fixture": {
+        "entry": "exploration",
+        "id": "shaft-question",
+        "mock": {
+          "beat_cursor": 12.0,
+          "flags": {
+            "service_map": true
+          }
+        },
+        "mode": "story",
+        "playing": false,
+        "room": "1F-Shaft-Monitor",
+        "schema_version": 1.0,
+        "time": {
+          "day": 1.0,
+          "hour": 11.0,
+          "minute": 25.0
+        }
+      },
+      "id": "shaft-question",
+      "images": [
+        {
+          "caption": "shaft-question · 01-entry",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/01-entry.png",
+          "phase": "01-entry",
+          "room": "1F-Shaft-Monitor",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 142.392333984375,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 135.323181152344,
+              "x": 554.595703125,
+              "y": 462.900451660156
+            }
+          ]
+        },
+        {
+          "caption": "shaft-question · 02-beat",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/02-beat.png",
+          "phase": "02-beat",
+          "room": "1F-Shaft-Monitor",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 172.611022949219,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@233/@Label3D@235",
+              "text": "Caretaker",
+              "width": 149.131530761719,
+              "x": 518.272216796875,
+              "y": 160.527496337891
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 85.0115661621094,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@237/@Label3D@239",
+              "text": "Ward",
+              "width": 81.0388793945313,
+              "x": 882.729064941406,
+              "y": 429.782623291016
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 145.867248535156,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@241/@Label3D@243",
+              "text": "Huo Duo",
+              "width": 148.580810546875,
+              "x": 767.217529296875,
+              "y": 623.255004882813
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 105.613739013672,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@245/@Label3D@247",
+              "text": "Su Ling",
+              "width": 98.0919189453125,
+              "x": 469.144226074219,
+              "y": 398.439636230469
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 142.392333984375,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 135.323181152344,
+              "x": 554.595703125,
+              "y": 462.900451660156
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 96.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+              "text": "Caretaker, did someone close the doors for us last night?",
+              "width": 860.0,
+              "x": 290.0,
+              "y": 788.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 39.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+              "text": "Detective",
+              "width": 92.0,
+              "x": 308.0,
+              "y": 770.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 26.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+              "text": "▼",
+              "width": 26.0,
+              "x": 1110.0,
+              "y": 850.0
+            }
+          ]
+        },
+        {
+          "caption": "shaft-question · 03-result",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/03-result.png",
+          "phase": "03-result",
+          "room": "1F-Shaft-Monitor",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 172.611022949219,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@233/@Label3D@235",
+              "text": "Caretaker",
+              "width": 149.131530761719,
+              "x": 518.272216796875,
+              "y": 160.527496337891
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 85.0115661621094,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@237/@Label3D@239",
+              "text": "Ward",
+              "width": 81.0388793945313,
+              "x": 882.729064941406,
+              "y": 429.782623291016
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 145.867248535156,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@241/@Label3D@243",
+              "text": "Huo Duo",
+              "width": 148.580810546875,
+              "x": 767.217529296875,
+              "y": 623.255004882813
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 105.613739013672,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@245/@Label3D@247",
+              "text": "Su Ling",
+              "width": 98.0919189453125,
+              "x": 469.144226074219,
+              "y": 398.439636230469
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 142.392333984375,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 135.323181152344,
+              "x": 554.595703125,
+              "y": 462.900451660156
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 96.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+              "text": "Caretaker, did someone close the doors for us last night?",
+              "width": 860.0,
+              "x": 290.0,
+              "y": 788.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 39.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+              "text": "Detective",
+              "width": 92.0,
+              "x": 308.0,
+              "y": 770.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 26.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+              "text": "▼",
+              "width": 26.0,
+              "x": 1110.0,
+              "y": 850.0
+            }
+          ]
+        }
+      ],
+      "initial": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 12.0,
+        "det_pos": "(3.45, 4.05)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "1F-Shaft-Monitor",
+        "viewport_size": "(1440, 900)"
+      },
+      "issues": [],
+      "max_fps": 60,
+      "metrics": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/metrics/timeline.yaml",
+      "restored": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 12.0,
+        "det_pos": "(3.45, 4.05)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "1F-Shaft-Monitor",
+        "viewport_size": "(1440, 900)"
+      },
+      "segment_id": "shaft",
+      "snapshot": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/entry.snapshot.json",
+      "snapshot_restored": true,
+      "snapshot_saved": true,
+      "source_identity": {
+        "configured_main_scene": "res://scenes/main/Boot.tscn",
+        "current_scene": "",
+        "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+        "launch_scene": "",
+        "process_id": 36412,
+        "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+        "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+      },
+      "stalls": [],
+      "status": "passed"
+    }
+  ],
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 36412,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  }
+}

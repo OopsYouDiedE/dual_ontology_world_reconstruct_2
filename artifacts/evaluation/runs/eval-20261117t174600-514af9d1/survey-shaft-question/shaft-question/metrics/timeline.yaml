@@ -1,0 +1,46 @@
+"schema_version": 1
+"metadata":
+  "mock": true
+  "case_id": "shaft-question"
+  "acceptance_eligible": false
+  "frame_clock": "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+  "warmup_policy": "Cold start and each constructed room/stage: first 1.5 s recorded separately; only explicitly marked steady frames determine the 33.3 ms veto"
+  "content_text_policy": "visible_active_viewports"
+  "source_identity":
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2"
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+    "configured_main_scene": "res://scenes/main/Boot.tscn"
+    "current_scene": ""
+    "launch_scene": ""
+    "process_id": 36412
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe"
+  "fps_window": "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
+  "audio_method": "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
+  "audio_capture_buffer_s": 15.0
+  "audio_dba":
+    "value": null
+    "reason": "digital output has no calibrated acoustic SPL reference; use LUFS"
+  "vram_method": "Godot renderer resource allocation; not driver-wide dedicated GPU residency"
+  "render_backend": "gl_compatibility"
+  "start_local": "2026-11-17 17:48:08"
+  "start_unix": 1794908888.624
+  "measurement_context": "rendered_runtime"
+  "realtime_performance_eligible": true
+timeline:
+  - {"audio":{},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":98304,"error":0},"avg_fps":40.0596086977422,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":586,"elapsed_s":0.249628,"frame":10,"frame_p95_ms":135.326,"frame_p99_ms":135.326,"gpu_resource_mb":143.328127861023,"loading_warmup_frames":10,"low_1_fps":7.38956298124529,"low_5_fps":7.38956298124529,"max_frame_ms":135.326,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":null,"scene_node":"shaft","spikes_over_33_3_ms":1,"static_ram_mb":129.502274513245,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:48:08","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":395.7734375,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908888.91584},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":294912,"error":0},"avg_fps":52.9924856655326,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":586,"elapsed_s":0.754824,"frame":40,"frame_p95_ms":29.826,"frame_p99_ms":135.326,"gpu_resource_mb":143.328127861023,"loading_warmup_frames":40,"low_1_fps":7.38956298124529,"low_5_fps":12.0765654247932,"max_frame_ms":135.326,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":395.7734375,"scene_node":"shaft","spikes_over_33_3_ms":1,"static_ram_mb":129.507885932922,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:48:09","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":395.984375,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908889.79689},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":458752,"error":0},"avg_fps":56.0310743603382,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":586,"elapsed_s":1.267154,"frame":71,"frame_p95_ms":30.191,"frame_p99_ms":135.326,"gpu_resource_mb":143.328127861023,"loading_warmup_frames":71,"low_1_fps":7.38956298124529,"low_5_fps":17.6746364548214,"max_frame_ms":135.326,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":395.984375,"scene_node":"shaft","spikes_over_33_3_ms":1,"static_ram_mb":129.513909339905,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:48:09","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":395.984375,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908889.79689},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":983040,"error":0},"avg_fps":33.5933242202507,"content_text":{"characters":103,"strings":["Caretaker","Ward","Huo Duo","Su Ling","Detective","Caretaker, did someone close the doors for us last night?","Detective","▼"]},"draw_calls":649,"elapsed_s":2.798175,"frame":94,"frame_p95_ms":30.284,"frame_p99_ms":1146.609,"gpu_resource_mb":401.219805717468,"loading_warmup_frames":84,"low_1_fps":0.872136883628159,"low_5_fps":3.63663340844194,"max_frame_ms":1146.609,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":395.984375,"scene_node":"shaft","spikes_over_33_3_ms":2,"static_ram_mb":145.959063529968,"steady_spikes_over_33_3_ms":1,"system_time":"2026-11-17 17:48:11","total_visible_characters":103}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":466.10546875,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908891.46931},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":1146880,"error":0},"avg_fps":37.9519316015108,"content_text":{"characters":103,"strings":["Caretaker","Ward","Huo Duo","Su Ling","Detective","Caretaker, did someone close the doors for us last night?","Detective","▼"]},"draw_calls":649,"elapsed_s":3.29364,"frame":125,"frame_p95_ms":30.069,"frame_p99_ms":135.326,"gpu_resource_mb":401.219805717468,"loading_warmup_frames":84,"low_1_fps":1.56014150483449,"low_5_fps":4.87751174435149,"max_frame_ms":1146.609,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":466.10546875,"scene_node":"shaft","spikes_over_33_3_ms":2,"static_ram_mb":155.525099754334,"steady_spikes_over_33_3_ms":1,"system_time":"2026-11-17 17:48:11","total_visible_characters":103}
+"summary":
+  "frames": 133
+  "max_frame_ms": 1146.609
+  "spikes_over_33_3_ms": 2
+  "steady_spikes_over_33_3_ms": 1
+  "loading_warmup_frames": 84
+  "audio_writer":
+    "bytes_written": 1212416
+    "bytes_queued": 0
+    "error": 0
+  "audio_discarded_frames": 0
+  "acceptance": "pending_independent_evidence_review"

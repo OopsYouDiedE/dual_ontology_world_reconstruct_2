@@ -1,0 +1,578 @@
+{
+  "acceptance_eligible": false,
+  "actions": [
+    {
+      "action": "production_reconstruction",
+      "completed": true,
+      "state": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 2.0,
+        "det_pos": "(3.299999, 4.32)",
+        "evidence": [
+          "e_b_sleeve",
+          "e_b_drag",
+          "e_b_water",
+          "e_b_cloth",
+          "e_b_ratchet",
+          "e_b_boots",
+          "e_b_seal"
+        ],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": true,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "B-P",
+        "viewport_size": "(1440, 900)"
+      }
+    }
+  ],
+  "final": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 2.0,
+    "det_pos": "(3.299999, 4.32)",
+    "evidence": [
+      "e_b_sleeve",
+      "e_b_drag",
+      "e_b_water",
+      "e_b_cloth",
+      "e_b_ratchet",
+      "e_b_boots",
+      "e_b_seal"
+    ],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": true,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "B-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "fixture": {
+    "entry": "exploration",
+    "id": "kitchen-reconstruction",
+    "mock": {
+      "beat_cursor": 2.0,
+      "evidence": {
+        "e_b_boots": {
+          "at": 480.0,
+          "correct": true,
+          "room": "B-P"
+        },
+        "e_b_cloth": {
+          "at": 480.0,
+          "correct": true,
+          "room": "B-P"
+        },
+        "e_b_drag": {
+          "at": 480.0,
+          "correct": true,
+          "room": "B-P"
+        },
+        "e_b_ratchet": {
+          "at": 480.0,
+          "correct": true,
+          "room": "B-P"
+        },
+        "e_b_seal": {
+          "at": 480.0,
+          "correct": true,
+          "room": "B-P"
+        },
+        "e_b_sleeve": {
+          "at": 480.0,
+          "correct": true,
+          "room": "B-P"
+        },
+        "e_b_water": {
+          "at": 480.0,
+          "correct": true,
+          "room": "B-P"
+        }
+      },
+      "flags": {
+        "service_map": true
+      }
+    },
+    "mode": "story",
+    "playing": false,
+    "room": "B-P",
+    "schema_version": 1.0,
+    "time": {
+      "day": 1.0,
+      "hour": 8.0,
+      "minute": 0.0
+    }
+  },
+  "id": "kitchen-reconstruction",
+  "images": [
+    {
+      "caption": "kitchen-reconstruction · 01-entry",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/01-entry.png",
+      "phase": "01-entry",
+      "room": "B-P",
+      "visible_text": [
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 194.187042236328,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@202/@Label3D@204",
+          "text": "Huo Duo",
+          "width": 196.309814453125,
+          "x": 928.285766601563,
+          "y": 144.100708007813
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 222.862670898438,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@206/@Label3D@208",
+          "text": "Shen Ding",
+          "width": 197.673767089844,
+          "x": 741.526184082031,
+          "y": 111.558380126953
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 149.751846313477,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@210/@Label3D@212",
+          "text": "Su Ling",
+          "width": 128.50390625,
+          "x": 559.525512695313,
+          "y": 178.738754272461
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 248.313232421875,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+          "text": "Detective",
+          "width": 220.360473632813,
+          "x": 472.621520996094,
+          "y": 307.055969238281
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 43.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@328",
+          "text": "E Heel Marks",
+          "width": 117.0,
+          "x": 661.5,
+          "y": 745.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 22.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@329",
+          "text": "Clues 7/7",
+          "width": 75.0,
+          "x": 18.0,
+          "y": 870.0
+        }
+      ]
+    },
+    {
+      "caption": "kitchen-reconstruction · 02-reconstruction",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/02-reconstruction.png",
+      "phase": "02-reconstruction",
+      "room": "B-P",
+      "visible_text": [
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@Label@336",
+          "text": "Check",
+          "width": 248.0,
+          "x": 1164.0,
+          "y": 685.0
+        },
+        {
+          "class": "Button",
+          "disabled": true,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@337/@Button@338",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 712.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@337/@Label@339",
+          "text": "Place Cloth",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 715.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@337/@Button@340",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 712.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@341/@Button@342",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 745.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@341/@Label@343",
+          "text": "Open",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 748.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@341/@Button@344",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 745.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@345/@Button@346",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 778.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@345/@Label@347",
+          "text": "Pull Back",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 781.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@345/@Button@348",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 778.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@349/@Button@350",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 811.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@349/@Label@351",
+          "text": "Lock",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 814.0
+        },
+        {
+          "class": "Button",
+          "disabled": true,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@349/@Button@352",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 811.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@353/@Button@354",
+          "text": "Replay",
+          "width": 51.0,
+          "x": 1293.0,
+          "y": 844.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@353/@Button@355",
+          "text": "Confirm",
+          "width": 60.0,
+          "x": 1352.0,
+          "y": 844.0
+        }
+      ]
+    },
+    {
+      "caption": "kitchen-reconstruction · 03-result",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/03-result.png",
+      "phase": "03-result",
+      "room": "B-P",
+      "visible_text": [
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@Label@336",
+          "text": "Check",
+          "width": 248.0,
+          "x": 1164.0,
+          "y": 685.0
+        },
+        {
+          "class": "Button",
+          "disabled": true,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@337/@Button@338",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 712.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@337/@Label@339",
+          "text": "Place Cloth",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 715.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@337/@Button@340",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 712.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@341/@Button@342",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 745.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@341/@Label@343",
+          "text": "Open",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 748.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@341/@Button@344",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 745.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@345/@Button@346",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 778.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@345/@Label@347",
+          "text": "Pull Back",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 781.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@345/@Button@348",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 778.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@349/@Button@350",
+          "text": "↑",
+          "width": 44.0,
+          "x": 1164.0,
+          "y": 811.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 23.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@349/@Label@351",
+          "text": "Lock",
+          "width": 144.0,
+          "x": 1216.0,
+          "y": 814.0
+        },
+        {
+          "class": "Button",
+          "disabled": true,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@349/@Button@352",
+          "text": "↓",
+          "width": 44.0,
+          "x": 1368.0,
+          "y": 811.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@353/@Button@354",
+          "text": "Replay",
+          "width": 51.0,
+          "x": 1293.0,
+          "y": 844.0
+        },
+        {
+          "class": "Button",
+          "disabled": false,
+          "height": 29.0,
+          "path": "/root/@Control@2/@Control@150/@PanelContainer@334/@VBoxContainer@335/@HBoxContainer@353/@Button@355",
+          "text": "Confirm",
+          "width": 60.0,
+          "x": 1352.0,
+          "y": 844.0
+        }
+      ]
+    }
+  ],
+  "initial": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 2.0,
+    "det_pos": "(3.299999, 4.32)",
+    "evidence": [
+      "e_b_sleeve",
+      "e_b_drag",
+      "e_b_water",
+      "e_b_cloth",
+      "e_b_ratchet",
+      "e_b_boots",
+      "e_b_seal"
+    ],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "B-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "issues": [],
+  "max_fps": 60,
+  "metrics": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/metrics/timeline.yaml",
+  "restored": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 2.0,
+    "det_pos": "(3.299999, 4.32)",
+    "evidence": [
+      "e_b_sleeve",
+      "e_b_drag",
+      "e_b_water",
+      "e_b_cloth",
+      "e_b_ratchet",
+      "e_b_boots",
+      "e_b_seal"
+    ],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "B-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "segment_id": "kitchen_reconstruction",
+  "snapshot": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/entry.snapshot.json",
+  "snapshot_restored": true,
+  "snapshot_saved": true,
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 31572,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "stalls": [],
+  "status": "passed"
+}

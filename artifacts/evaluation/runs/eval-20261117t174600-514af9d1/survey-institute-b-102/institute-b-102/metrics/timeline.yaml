@@ -1,0 +1,46 @@
+"schema_version": 1
+"metadata":
+  "mock": true
+  "case_id": "institute-b-102"
+  "acceptance_eligible": false
+  "frame_clock": "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+  "warmup_policy": "Cold start and each constructed room/stage: first 1.5 s recorded separately; only explicitly marked steady frames determine the 33.3 ms veto"
+  "content_text_policy": "visible_active_viewports"
+  "source_identity":
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2"
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+    "configured_main_scene": "res://scenes/main/Boot.tscn"
+    "current_scene": ""
+    "launch_scene": ""
+    "process_id": 14188
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe"
+  "fps_window": "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
+  "audio_method": "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
+  "audio_capture_buffer_s": 15.0
+  "audio_dba":
+    "value": null
+    "reason": "digital output has no calibrated acoustic SPL reference; use LUFS"
+  "vram_method": "Godot renderer resource allocation; not driver-wide dedicated GPU residency"
+  "render_backend": "gl_compatibility"
+  "start_local": "2026-11-17 17:49:13"
+  "start_unix": 1794908953.59
+  "measurement_context": "rendered_runtime"
+  "realtime_performance_eligible": true
+timeline:
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":409.01953125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908953.82677},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":98304,"error":0},"avg_fps":43.1051373486422,"content_text":{"characters":22,"strings":["白塔院 · 配药清洁制备室","Detective"]},"draw_calls":2342,"elapsed_s":0.25519,"frame":11,"frame_p95_ms":120.08,"frame_p99_ms":120.08,"gpu_resource_mb":145.436616897583,"loading_warmup_frames":11,"low_1_fps":8.32778147901399,"low_5_fps":8.32778147901399,"max_frame_ms":120.08,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":409.01953125,"scene_node":"institutes","spikes_over_33_3_ms":1,"static_ram_mb":147.607410430908,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:49:13","total_visible_characters":22}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":409.01953125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908953.82677},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":294912,"error":0},"avg_fps":53.3348596642766,"content_text":{"characters":22,"strings":["白塔院 · 配药清洁制备室","Detective"]},"draw_calls":2342,"elapsed_s":0.768728,"frame":41,"frame_p95_ms":30.004,"frame_p99_ms":120.08,"gpu_resource_mb":145.436616897583,"loading_warmup_frames":41,"low_1_fps":8.32778147901399,"low_5_fps":16.6324776847591,"max_frame_ms":120.08,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":409.01953125,"scene_node":"institutes","spikes_over_33_3_ms":1,"static_ram_mb":147.619552612305,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:49:14","total_visible_characters":22}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":409.2890625,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908954.83421},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":425984,"error":0},"avg_fps":56.2142951391031,"content_text":{"characters":22,"strings":["白塔院 · 配药清洁制备室","Detective"]},"draw_calls":2342,"elapsed_s":1.280813,"frame":72,"frame_p95_ms":30.004,"frame_p99_ms":120.08,"gpu_resource_mb":147.468126296997,"loading_warmup_frames":72,"low_1_fps":8.32778147901399,"low_5_fps":18.9362558288162,"max_frame_ms":120.08,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":409.2890625,"scene_node":"institutes","spikes_over_33_3_ms":1,"static_ram_mb":147.620132446289,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:49:14","total_visible_characters":22}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":422.203125,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908955.33063},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":622592,"error":0},"avg_fps":55.2826695946412,"content_text":{"characters":44,"strings":["白塔院 · 配药清洁制备室","Detective","Knowledge gained: 残影拓印"]},"draw_calls":2183,"elapsed_s":1.826974,"frame":101,"frame_p95_ms":30.96,"frame_p99_ms":43.411,"gpu_resource_mb":152.154485702515,"loading_warmup_frames":85,"low_1_fps":12.2330892832021,"low_5_fps":20.147682512819,"max_frame_ms":120.08,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":422.203125,"scene_node":"institutes","spikes_over_33_3_ms":4,"static_ram_mb":173.697265625,"steady_spikes_over_33_3_ms":3,"system_time":"2026-11-17 17:49:15","total_visible_characters":44}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":-30.729,"max_momentary_lufs":-28.506,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":-28.506,"ram_mb":427.6484375,"sample_peak_dbfs":-16.4204610541366,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":true,"status":"measuring","true_peak_dbtp":-16.4204610541366,"updated_unix":1794908955.82506},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":786432,"error":0},"avg_fps":56.8886804886048,"content_text":{"characters":44,"strings":["白塔院 · 配药清洁制备室","Detective","Knowledge gained: 残影拓印"]},"draw_calls":2342,"elapsed_s":2.320321,"frame":132,"frame_p95_ms":33.416,"frame_p99_ms":43.411,"gpu_resource_mb":152.154485702515,"loading_warmup_frames":85,"low_1_fps":12.2330892832021,"low_5_fps":19.8186312120792,"max_frame_ms":120.08,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":427.6484375,"scene_node":"institutes","spikes_over_33_3_ms":7,"static_ram_mb":168.048961639404,"steady_spikes_over_33_3_ms":6,"system_time":"2026-11-17 17:49:15","total_visible_characters":44}
+"summary":
+  "frames": 137
+  "max_frame_ms": 120.08
+  "spikes_over_33_3_ms": 7
+  "steady_spikes_over_33_3_ms": 6
+  "loading_warmup_frames": 85
+  "audio_writer":
+    "bytes_written": 851968
+    "bytes_queued": 0
+    "error": 0
+  "audio_discarded_frames": 0
+  "acceptance": "pending_independent_evidence_review"

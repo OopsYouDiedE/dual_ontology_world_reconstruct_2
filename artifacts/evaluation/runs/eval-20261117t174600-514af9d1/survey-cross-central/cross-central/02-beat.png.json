@@ -1,0 +1,172 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:47:44",
+  "case_id": "cross-central",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/02-beat.png",
+  "image_sha256": "41e934a54936be4a8b6a0ce85d5d44a4b55131df0f019ab2f72c39454dabc1e0",
+  "phase": "02-beat",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 28120,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 52.6346740722656,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@300/@Label3D@302",
+      "text": "Ward",
+      "width": 47.6369323730469,
+      "x": 505.575836181641,
+      "y": 204.149200439453
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 89.7437744140625,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@304/@Label3D@306",
+      "text": "Huo Duo",
+      "width": 96.0123291015625,
+      "x": 863.138305664063,
+      "y": 712.923828125
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 115.499450683594,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@308/@Label3D@310",
+      "text": "Ruan Qingyue",
+      "width": 111.70751953125,
+      "x": 920.371459960938,
+      "y": 411.182067871094
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 76.189453125,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@312/@Label3D@314",
+      "text": "Margaret",
+      "width": 80.8223571777344,
+      "x": 422.60498046875,
+      "y": 376.869476318359
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 53.0234375,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@316/@Label3D@318",
+      "text": "Lucian",
+      "width": 39.713623046875,
+      "x": 692.816467285156,
+      "y": 264.123077392578
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 137.49853515625,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@320/@Label3D@322",
+      "text": "Gu Pingzhang",
+      "width": 134.961608886719,
+      "x": 774.946105957031,
+      "y": 506.046752929688
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 39.1031188964844,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@324/@Label3D@326",
+      "text": "Que",
+      "width": 35.2691040039063,
+      "x": 797.409118652344,
+      "y": 378.973693847656
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 99.3641967773438,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@328/@Label3D@330",
+      "text": "Shen Ding",
+      "width": 90.312255859375,
+      "x": 557.761108398438,
+      "y": 317.197357177734
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 65.3064880371094,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@332/@Label3D@334",
+      "text": "Su Ling",
+      "width": 61.5912475585938,
+      "x": 530.844665527344,
+      "y": 459.421051025391
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 46.9746704101563,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@336/@Label3D@338",
+      "text": "Selma",
+      "width": 42.0556640625,
+      "x": 691.359313964844,
+      "y": 582.261291503906
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 51.7026062011719,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@340/@Label3D@342",
+      "text": "Elena",
+      "width": 51.9743347167969,
+      "x": 426.356018066406,
+      "y": 288.976379394531
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 82.3764953613281,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+      "text": "Detective",
+      "width": 70.0416259765625,
+      "x": 648.6416015625,
+      "y": 443.863311767578
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 96.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+      "text": "A Wing: open cuffs, missing key, door bolted from outside.",
+      "width": 860.0,
+      "x": 290.0,
+      "y": 788.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 39.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+      "text": "Ward",
+      "width": 58.0,
+      "x": 308.0,
+      "y": 770.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 26.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+      "text": "▼",
+      "width": 26.0,
+      "x": 1110.0,
+      "y": 850.0
+    }
+  ],
+  "write_error": 0
+}

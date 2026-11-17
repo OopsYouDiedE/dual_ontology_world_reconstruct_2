@@ -1,0 +1,46 @@
+"schema_version": 1
+"metadata":
+  "mock": true
+  "case_id": "service-stair"
+  "acceptance_eligible": false
+  "frame_clock": "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+  "warmup_policy": "Cold start and each constructed room/stage: first 1.5 s recorded separately; only explicitly marked steady frames determine the 33.3 ms veto"
+  "content_text_policy": "visible_active_viewports"
+  "source_identity":
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2"
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+    "configured_main_scene": "res://scenes/main/Boot.tscn"
+    "current_scene": ""
+    "launch_scene": ""
+    "process_id": 27912
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe"
+  "fps_window": "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
+  "audio_method": "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
+  "audio_capture_buffer_s": 15.0
+  "audio_dba":
+    "value": null
+    "reason": "digital output has no calibrated acoustic SPL reference; use LUFS"
+  "vram_method": "Godot renderer resource allocation; not driver-wide dedicated GPU residency"
+  "render_backend": "gl_compatibility"
+  "start_local": "2026-11-17 17:46:40"
+  "start_unix": 1794908800.412
+  "measurement_context": "rendered_runtime"
+  "realtime_performance_eligible": true
+timeline:
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":386.9453125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908800.63901},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":98304,"error":0},"avg_fps":51.160557571369,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":927,"elapsed_s":0.254102,"frame":13,"frame_p95_ms":92.746,"frame_p99_ms":92.746,"gpu_resource_mb":143.610401153564,"loading_warmup_frames":13,"low_1_fps":10.7821361568154,"low_5_fps":10.7821361568154,"max_frame_ms":92.746,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":386.9453125,"scene_node":"service_route","spikes_over_33_3_ms":1,"static_ram_mb":140.81713104248,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:46:40","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":386.9453125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908800.63901},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":262144,"error":0},"avg_fps":57.0189687522791,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":927,"elapsed_s":0.754135,"frame":43,"frame_p95_ms":27.495,"frame_p99_ms":92.746,"gpu_resource_mb":143.610401153564,"loading_warmup_frames":43,"low_1_fps":10.7821361568154,"low_5_fps":20.0552187021599,"max_frame_ms":92.746,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":386.9453125,"scene_node":"service_route","spikes_over_33_3_ms":1,"static_ram_mb":140.828483581543,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:46:41","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":387.203125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908801.63663},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":458752,"error":0},"avg_fps":57.7594248743732,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":927,"elapsed_s":1.263863,"frame":73,"frame_p95_ms":29.821,"frame_p99_ms":92.746,"gpu_resource_mb":143.610401153564,"loading_warmup_frames":73,"low_1_fps":10.7821361568154,"low_5_fps":21.7423208840428,"max_frame_ms":92.746,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":387.203125,"scene_node":"service_route","spikes_over_33_3_ms":1,"static_ram_mb":140.828720092773,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:46:41","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":459.86328125,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908802.89912},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":851968,"error":0},"avg_fps":38.9220908144668,"content_text":{"characters":81,"strings":["Que","Lucian","Ward","Detective","The map shows a service passage. I didn't use the front","Que","▼"]},"draw_calls":946,"elapsed_s":2.492158,"frame":97,"frame_p95_ms":30.361,"frame_p99_ms":854.913,"gpu_resource_mb":337.404423713684,"loading_warmup_frames":87,"low_1_fps":1.16970966636371,"low_5_fps":4.81034724934724,"max_frame_ms":854.913,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":459.86328125,"scene_node":"service_route","spikes_over_33_3_ms":2,"static_ram_mb":171.605804443359,"steady_spikes_over_33_3_ms":1,"system_time":"2026-11-17 17:46:42","total_visible_characters":81}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":465.1953125,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908803.40962},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":1048576,"error":0},"avg_fps":42.6809647898713,"content_text":{"characters":81,"strings":["Que","Lucian","Ward","Detective","The map shows a service passage. I didn't use the front","Que","▼"]},"draw_calls":946,"elapsed_s":2.998995,"frame":128,"frame_p95_ms":29.821,"frame_p99_ms":92.746,"gpu_resource_mb":337.404423713684,"loading_warmup_frames":87,"low_1_fps":2.11046378496907,"low_5_fps":6.36302898359702,"max_frame_ms":854.913,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":465.1953125,"scene_node":"service_route","spikes_over_33_3_ms":2,"static_ram_mb":165.70845413208,"steady_spikes_over_33_3_ms":1,"system_time":"2026-11-17 17:46:43","total_visible_characters":81}
+"summary":
+  "frames": 134
+  "max_frame_ms": 854.913
+  "spikes_over_33_3_ms": 3
+  "steady_spikes_over_33_3_ms": 2
+  "loading_warmup_frames": 87
+  "audio_writer":
+    "bytes_written": 1114112
+    "bytes_queued": 0
+    "error": 0
+  "audio_discarded_frames": 0
+  "acceptance": "pending_independent_evidence_review"

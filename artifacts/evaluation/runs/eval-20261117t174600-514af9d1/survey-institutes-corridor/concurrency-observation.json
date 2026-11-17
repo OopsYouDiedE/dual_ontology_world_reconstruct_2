@@ -1,0 +1,91 @@
+{
+  "host_pid": 24320,
+  "started_at": "2026-11-17T09:48:41.346652+00:00",
+  "ended_at": "2026-11-17T09:48:48.096846+00:00",
+  "sample_interval_seconds": 1.0,
+  "sample_count": 7,
+  "sampling_failures": 0,
+  "sampler_stopped": true,
+  "peak_observed_godot_processes": 4,
+  "observed_godot_pids": [
+    1512,
+    22720,
+    24320,
+    30996
+  ],
+  "coverage": "Periodic visible-process observations; short overlaps and GPU load may be missed.",
+  "samples": [
+    {
+      "timestamp": "2026-11-17T09:48:41.351187+00:00",
+      "godot_pids": [
+        1512,
+        22720,
+        24320,
+        30996
+      ],
+      "system_cpu_percent": 0.0,
+      "available_memory_bytes": 11147321344
+    },
+    {
+      "timestamp": "2026-11-17T09:48:42.374706+00:00",
+      "godot_pids": [
+        1512,
+        22720,
+        24320,
+        30996
+      ],
+      "system_cpu_percent": 60.7,
+      "available_memory_bytes": 10987433984
+    },
+    {
+      "timestamp": "2026-11-17T09:48:43.379548+00:00",
+      "godot_pids": [
+        1512,
+        22720,
+        24320,
+        30996
+      ],
+      "system_cpu_percent": 48.3,
+      "available_memory_bytes": 10952400896
+    },
+    {
+      "timestamp": "2026-11-17T09:48:44.396858+00:00",
+      "godot_pids": [
+        1512,
+        24320,
+        30996
+      ],
+      "system_cpu_percent": 39.3,
+      "available_memory_bytes": 11252592640
+    },
+    {
+      "timestamp": "2026-11-17T09:48:45.425247+00:00",
+      "godot_pids": [
+        1512,
+        24320,
+        30996
+      ],
+      "system_cpu_percent": 46.1,
+      "available_memory_bytes": 11268227072
+    },
+    {
+      "timestamp": "2026-11-17T09:48:46.439019+00:00",
+      "godot_pids": [
+        1512,
+        24320,
+        30996
+      ],
+      "system_cpu_percent": 36.4,
+      "available_memory_bytes": 11269238784
+    },
+    {
+      "timestamp": "2026-11-17T09:48:47.456835+00:00",
+      "godot_pids": [
+        1512,
+        30996
+      ],
+      "system_cpu_percent": 49.5,
+      "available_memory_bytes": 11690766336
+    }
+  ]
+}

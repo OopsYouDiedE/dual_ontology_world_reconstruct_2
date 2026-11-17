@@ -1,0 +1,25 @@
+[
+  {
+    "id": "dinner-medical",
+    "segment_id": "dinner",
+    "fixture": {
+      "schema_version": 1,
+      "id": "dinner-medical",
+      "mode": "story",
+      "room": "F05",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 17,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 21,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  }
+]

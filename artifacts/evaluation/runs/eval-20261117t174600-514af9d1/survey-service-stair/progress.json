@@ -1,0 +1,29 @@
+{
+  "action": "",
+  "case_id": "service-stair",
+  "max_fps": 60,
+  "phase": "completed",
+  "process_id": 27912,
+  "reason": "",
+  "state": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 5.0,
+    "det_pos": "(3.15, 3.15)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "service_stair_M",
+    "viewport_size": "(1440, 900)"
+  },
+  "status": "passed",
+  "updated_at": "2026-11-17 17:46:43"
+}

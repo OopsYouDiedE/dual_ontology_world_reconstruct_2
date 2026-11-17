@@ -1,0 +1,3994 @@
+schema_version: 1
+run_id: eval-20261117t174600-514af9d1
+state: blocked
+profile: scene_survey
+rendered: true
+resource_policy:
+  workers: 3
+  memory_limit_mb: 32616
+  reason: 'scene survey: up to three 60 FPS rendered hosts'
+started_at: '2026-11-17T17:46:00+08:00'
+worker_pid: 21484
+source_identity:
+  project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+  project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+  configured_main_scene: res://scenes/main/Boot.tscn
+revision: d341ce8d36422a5c63f409df20ee69a087e8ff32
+working_tree_changes: ''
+source_fingerprint_before: 10ab667f08a30ed99d71a732526bd8f939378640d6eed6bb7685ab36883426ad
+godot: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+godot_sha256: 45336315eb6f1a52a8923bc4f2ce8079a03dc4939dcb7d531047890f1f7cdfab
+acceptance_eligible: false
+acceptance_scored: false
+notice: 测试结果记录测量范围、证据与七项评分。
+jobs:
+  survey-wake-bedroom:
+    state: passed
+    segment_id: wake
+    started_at: '2026-11-17T17:46:03+08:00'
+    host_pid: 31516
+    process:
+      pid: 31516
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-wake-bedroom
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908766.8021958
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-wake-bedroom
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:46:14+08:00'
+    wall_seconds: 10.844
+    detail:
+      case_id: wake-bedroom
+      segment_id: wake
+      room: R05
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: move_right
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 1.0
+          det_pos: (5.327107, 2.339995)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: walk
+          room: R05
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 1.0
+        det_pos: (3.45, 3.45)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: R05
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 1.0
+        det_pos: (5.327107, 2.339995)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: R05
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom\wake-bedroom\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom\wake-bedroom\02-movement.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom\wake-bedroom\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-wake-bedroom\concurrency-observation.json
+    exit_code: 0
+  survey-corridor-meeting:
+    state: passed
+    segment_id: corridor
+    started_at: '2026-11-17T17:46:03+08:00'
+    host_pid: 42288
+    process:
+      pid: 42288
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-corridor-meeting
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908770.3595245
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-corridor-meeting
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:46:22+08:00'
+    wall_seconds: 19.281
+    detail:
+      case_id: corridor-meeting
+      segment_id: corridor
+      room: R05
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: interact
+        id: door_r06
+        state:
+          beat: d1_wake
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 1
+          det_pos: (7.073219, 1.067587)
+          evidence:
+          - e_b_water
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: R05
+          viewport_size: (1440, 900)
+      - action: interact
+        id: npc_shen
+        state:
+          beat: d1_wake
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 1
+          det_pos: (7.073219, 1.067587)
+          evidence:
+          - e_b_water
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: R05
+          viewport_size: (1440, 900)
+      initial:
+        beat: d1_wake
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 1
+        det_pos: (8.3, 2.2)
+        evidence:
+        - e_b_water
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: R05
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_wake
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 1
+        det_pos: (7.073219, 1.067587)
+        evidence:
+        - e_b_water
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: R05
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting\corridor-meeting\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting\corridor-meeting\02-door_r06.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting\corridor-meeting\02-npc_shen.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting\corridor-meeting\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-corridor-meeting\concurrency-observation.json
+    exit_code: 0
+  survey-kitchen-evidence:
+    state: passed
+    segment_id: kitchen_evidence
+    started_at: '2026-11-17T17:46:03+08:00'
+    host_pid: 39076
+    process:
+      pid: 39076
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-kitchen-evidence
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908773.981593
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-kitchen-evidence
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:46:36+08:00'
+    wall_seconds: 32.969
+    detail:
+      case_id: kitchen-evidence
+      segment_id: kitchen_evidence
+      room: B-P
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_sleeve
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (3.45, 3.75)
+          evidence:
+          - e_b_sleeve
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_drag
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (4.05, 3.75)
+          evidence:
+          - e_b_sleeve
+          - e_b_drag
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_water
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (3.75, 4.05)
+          evidence:
+          - e_b_sleeve
+          - e_b_drag
+          - e_b_water
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_cloth
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (3.45, 4.05)
+          evidence:
+          - e_b_sleeve
+          - e_b_drag
+          - e_b_water
+          - e_b_cloth
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_ratchet
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (3.45, 4.05)
+          evidence:
+          - e_b_sleeve
+          - e_b_drag
+          - e_b_water
+          - e_b_cloth
+          - e_b_ratchet
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_boots
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (3.15, 4.05)
+          evidence:
+          - e_b_sleeve
+          - e_b_drag
+          - e_b_water
+          - e_b_cloth
+          - e_b_ratchet
+          - e_b_boots
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_seal
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (8.25, 1.35)
+          evidence:
+          - e_b_sleeve
+          - e_b_drag
+          - e_b_water
+          - e_b_cloth
+          - e_b_ratchet
+          - e_b_boots
+          - e_b_seal
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 2.0
+        det_pos: (3.299999, 4.32)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: B-P
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 2.0
+        det_pos: (8.25, 1.35)
+        evidence:
+        - e_b_sleeve
+        - e_b_drag
+        - e_b_water
+        - e_b_cloth
+        - e_b_ratchet
+        - e_b_boots
+        - e_b_seal
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: B-P
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence\kitchen-evidence\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence\kitchen-evidence\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence\kitchen-evidence\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-evidence\concurrency-observation.json
+    exit_code: 0
+  survey-kitchen-reconstruction:
+    state: passed
+    segment_id: kitchen_reconstruction
+    started_at: '2026-11-17T17:46:22+08:00'
+    host_pid: 31572
+    process:
+      pid: 31572
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-kitchen-reconstruction
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908786.1182404
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-kitchen-reconstruction
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:46:48+08:00'
+    wall_seconds: 25.469
+    detail:
+      case_id: kitchen-reconstruction
+      segment_id: kitchen_reconstruction
+      room: B-P
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_reconstruction
+        completed: true
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 2.0
+          det_pos: (3.299999, 4.32)
+          evidence:
+          - e_b_sleeve
+          - e_b_drag
+          - e_b_water
+          - e_b_cloth
+          - e_b_ratchet
+          - e_b_boots
+          - e_b_seal
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: true
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-P
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 2.0
+        det_pos: (3.299999, 4.32)
+        evidence:
+        - e_b_sleeve
+        - e_b_drag
+        - e_b_water
+        - e_b_cloth
+        - e_b_ratchet
+        - e_b_boots
+        - e_b_seal
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: B-P
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 2.0
+        det_pos: (3.299999, 4.32)
+        evidence:
+        - e_b_sleeve
+        - e_b_drag
+        - e_b_water
+        - e_b_cloth
+        - e_b_ratchet
+        - e_b_boots
+        - e_b_seal
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: true
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: B-P
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction\kitchen-reconstruction\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction\kitchen-reconstruction\02-reconstruction.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction\kitchen-reconstruction\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-kitchen-reconstruction\concurrency-observation.json
+    exit_code: 0
+  survey-service-stair:
+    state: passed
+    segment_id: service_route
+    started_at: '2026-11-17T17:46:34+08:00'
+    host_pid: 27912
+    process:
+      pid: 27912
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-service-stair
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908797.8748448
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-service-stair
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:46:44+08:00'
+    wall_seconds: 10.625
+    detail:
+      case_id: service-stair
+      segment_id: service_route
+      room: service_stair_M
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_route
+        state:
+          beat: d1_route
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 6.0
+          det_pos: (3.15, 3.15)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: service_stair_M
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 5.0
+        det_pos: (3.15, 3.15)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: service_stair_M
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_route
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 6.0
+        det_pos: (3.15, 3.15)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: service_stair_M
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair\service-stair\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair\service-stair\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair\service-stair\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-stair\concurrency-observation.json
+    exit_code: 0
+  survey-service-maintenance:
+    state: passed
+    segment_id: service_route
+    started_at: '2026-11-17T17:46:44+08:00'
+    host_pid: 41084
+    process:
+      pid: 41084
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-service-maintenance
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908807.8587842
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-service-maintenance
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:47:00+08:00'
+    wall_seconds: 16.5
+    detail:
+      case_id: service-maintenance
+      segment_id: service_route
+      room: A-P
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_inspect_walk
+        collected: true
+        id: e_a_basin
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 6.0
+          det_pos: (6.75, 2.55)
+          evidence:
+          - e_a_basin
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: A-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_a_cuffs
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 6.0
+          det_pos: (4.65, 2.55)
+          evidence:
+          - e_a_basin
+          - e_a_cuffs
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: A-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_a_grate
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 6.0
+          det_pos: (4.65, 2.55)
+          evidence:
+          - e_a_basin
+          - e_a_cuffs
+          - e_a_grate
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: A-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_a_sword
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 6.0
+          det_pos: (5.55, 1.95)
+          evidence:
+          - e_a_basin
+          - e_a_cuffs
+          - e_a_grate
+          - e_a_sword
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: A-P
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 6.0
+        det_pos: (5.55, 1.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: A-P
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_deduce_cuffs
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 7.0
+        det_pos: (5.55, 1.95)
+        evidence:
+        - e_a_basin
+        - e_a_cuffs
+        - e_a_grate
+        - e_a_sword
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction:
+          id: ded_cuffs
+          next: ''
+        pose: talk
+        room: A-P
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance\service-maintenance\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance\service-maintenance\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance\service-maintenance\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-maintenance\concurrency-observation.json
+    exit_code: 0
+  survey-service-hall:
+    state: passed
+    segment_id: service_route
+    started_at: '2026-11-17T17:46:54+08:00'
+    host_pid: 2948
+    process:
+      pid: 2948
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-service-hall
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908824.3499577
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-service-hall
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:47:15+08:00'
+    wall_seconds: 20.781
+    detail:
+      case_id: service-hall
+      segment_id: service_route
+      room: F01
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: move_right
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 7.0
+          det_pos: (4.869628, 3.04273)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: walk
+          room: F01
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 7.0
+        det_pos: (3.15, 4.35)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F01
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 7.0
+        det_pos: (4.869628, 3.04273)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F01
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall\service-hall\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall\service-hall\02-movement.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall\service-hall\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-service-hall\concurrency-observation.json
+    exit_code: 0
+  survey-cross-c-window:
+    state: passed
+    segment_id: cross_zone
+    started_at: '2026-11-17T17:47:00+08:00'
+    host_pid: 34232
+    process:
+      pid: 34232
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-cross-c-window
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908827.8770552
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-cross-c-window
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:47:18+08:00'
+    wall_seconds: 17.484
+    detail:
+      case_id: cross-c-window
+      segment_id: cross_zone
+      room: C-P
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_inspect_walk
+        collected: true
+        id: e_c_window
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 8.0
+          det_pos: (6.75, 2.55)
+          evidence:
+          - e_c_window
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: C-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_c_bandage
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 8.0
+          det_pos: (4.35, 2.55)
+          evidence:
+          - e_c_window
+          - e_c_bandage
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: C-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_c_copper
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 8.0
+          det_pos: (4.95, 2.25)
+          evidence:
+          - e_c_window
+          - e_c_bandage
+          - e_c_copper
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: C-P
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 8.0
+        det_pos: (5.55, 1.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: C-P
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_deduce_window
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 9.0
+        det_pos: (4.95, 2.25)
+        evidence:
+        - e_c_window
+        - e_c_bandage
+        - e_c_copper
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction:
+          id: ded_window
+          next: ''
+        pose: talk
+        room: C-P
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window\cross-c-window\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window\cross-c-window\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window\cross-c-window\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-c-window\concurrency-observation.json
+    exit_code: 0
+  survey-cross-d-pressure:
+    state: passed
+    segment_id: cross_zone
+    started_at: '2026-11-17T17:47:14+08:00'
+    host_pid: 18748
+    process:
+      pid: 18748
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-cross-d-pressure
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908838.0477395
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-cross-d-pressure
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:47:31+08:00'
+    wall_seconds: 17.484
+    detail:
+      case_id: cross-d-pressure
+      segment_id: cross_zone
+      room: D-P
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_inspect_walk
+        collected: true
+        id: e_d_gauge
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 10.0
+          det_pos: (6.15, 2.85)
+          evidence:
+          - e_d_gauge
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: D-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_d_chisel
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 10.0
+          det_pos: (4.65, 2.85)
+          evidence:
+          - e_d_gauge
+          - e_d_chisel
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: D-P
+          viewport_size: (1440, 900)
+      - action: production_inspect_walk
+        collected: true
+        id: e_d_acid
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 10.0
+          det_pos: (4.95, 2.25)
+          evidence:
+          - e_d_gauge
+          - e_d_chisel
+          - e_d_acid
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: D-P
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 10.0
+        det_pos: (5.55, 2.85)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: D-P
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 10.0
+        det_pos: (4.95, 2.25)
+        evidence:
+        - e_d_gauge
+        - e_d_chisel
+        - e_d_acid
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: D-P
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure\cross-d-pressure\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure\cross-d-pressure\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure\cross-d-pressure\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-d-pressure\concurrency-observation.json
+    exit_code: 0
+  survey-cross-central:
+    state: passed
+    segment_id: cross_zone
+    started_at: '2026-11-17T17:47:24+08:00'
+    host_pid: 28120
+    process:
+      pid: 28120
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-cross-central
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908854.891302
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-cross-central
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:47:49+08:00'
+    wall_seconds: 24.782
+    detail:
+      case_id: cross-central
+      segment_id: cross_zone
+      room: 2F-cross-M
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_meeting
+        state:
+          beat: d1_meeting
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 11.0
+          det_pos: (7.05, 4.65)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: 2F-cross-M
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 10.0
+        det_pos: (7.05, 4.65)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: 2F-cross-M
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_meeting
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 11.0
+        det_pos: (7.05, 4.65)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: 2F-cross-M
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central\cross-central\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central\cross-central\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central\cross-central\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-cross-central\concurrency-observation.json
+    exit_code: 0
+  survey-shaft-north-stair:
+    state: passed
+    segment_id: shaft
+    started_at: '2026-11-17T17:47:31+08:00'
+    host_pid: 17616
+    process:
+      pid: 17616
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-shaft-north-stair
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908858.6596859
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-shaft-north-stair
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:47:46+08:00'
+    wall_seconds: 14.875
+    detail:
+      case_id: shaft-north-stair
+      segment_id: shaft
+      room: 2F-North-Stair
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: move_right
+        state:
+          beat: d1_q1
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 13.0
+          det_pos: (3.5, 5.433868)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: walk
+          room: 1F-Shaft-Monitor
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 12.0
+        det_pos: (2.25, 4.05)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: 2F-North-Stair
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_q1
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 13.0
+        det_pos: (3.5, 6.9)
+        evidence: []
+        fade_alpha: 0.753723740577698
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: talk
+        room: 1F-Shaft-Monitor
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair\shaft-north-stair\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair\shaft-north-stair\02-movement.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair\shaft-north-stair\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-north-stair\concurrency-observation.json
+    exit_code: 0
+  survey-shaft-four-anchors:
+    state: failed
+    segment_id: shaft
+    started_at: '2026-11-17T17:47:45+08:00'
+    host_pid: 32132
+    process:
+      pid: 32132
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-shaft-four-anchors
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908869.4358163
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-shaft-four-anchors
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:48:02+08:00'
+    wall_seconds: 17.188
+    detail:
+      error: 'RuntimeError: Godot exit=3221225477, errors=[]'
+      case_id: shaft-four-anchors
+      segment_id: shaft
+      room: 1F-Shaft-Monitor
+      reached_phase: completed
+      stalled: false
+      progress:
+        action: ''
+        case_id: shaft-four-anchors
+        max_fps: 60
+        phase: completed
+        process_id: 32132
+        reason: ''
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 12.0
+          det_pos: (3.45, 4.05)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: 1F-Shaft-Monitor
+          viewport_size: (1440, 900)
+        status: passed
+        updated_at: '2026-11-17 17:47:55'
+      failure_lines: []
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors\shaft-four-anchors\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors\shaft-four-anchors\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors\shaft-four-anchors\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-four-anchors\concurrency-observation.json
+    exit_code: 3221225477
+  survey-shaft-question:
+    state: passed
+    segment_id: shaft
+    started_at: '2026-11-17T17:47:55+08:00'
+    host_pid: 36412
+    process:
+      pid: 36412
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-shaft-question
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908886.0125513
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-shaft-question
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:48:17+08:00'
+    wall_seconds: 21.547
+    detail:
+      case_id: shaft-question
+      segment_id: shaft
+      room: 1F-Shaft-Monitor
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_q1
+        state:
+          beat: d1_q1
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 13.0
+          det_pos: (3.45, 4.05)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: talk
+          room: 1F-Shaft-Monitor
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 12.0
+        det_pos: (3.45, 4.05)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: 1F-Shaft-Monitor
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_q1
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 13.0
+        det_pos: (3.45, 4.05)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: talk
+        room: 1F-Shaft-Monitor
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question\shaft-question\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question\shaft-question\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question\shaft-question\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-shaft-question\concurrency-observation.json
+    exit_code: 0
+  survey-poem-stakeout:
+    state: passed
+    segment_id: poem
+    started_at: '2026-11-17T17:48:02+08:00'
+    host_pid: 17328
+    process:
+      pid: 17328
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-poem-stakeout
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908889.6244156
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-poem-stakeout
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:48:27+08:00'
+    wall_seconds: 24.344
+    detail:
+      case_id: poem-stakeout
+      segment_id: poem
+      room: T01
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_poem
+        state:
+          beat: d1_poem
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 19.0
+          det_pos: (4.95, 4.95)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: T01
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 18.0
+        det_pos: (4.95, 4.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: T01
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_poem
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 19.0
+        det_pos: (4.95, 4.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: T01
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout\poem-stakeout\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout\poem-stakeout\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout\poem-stakeout\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-stakeout\concurrency-observation.json
+    exit_code: 0
+  survey-poem-expose:
+    state: passed
+    segment_id: poem
+    started_at: '2026-11-17T17:48:16+08:00'
+    host_pid: 19860
+    process:
+      pid: 19860
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-poem-expose
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908900.768272
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-poem-expose
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:48:37+08:00'
+    wall_seconds: 21.203
+    detail:
+      case_id: poem-expose
+      segment_id: poem
+      room: T01
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_poem
+        state:
+          beat: d1_poem
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 19.0
+          det_pos: (4.95, 4.95)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: T01
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 18.0
+        det_pos: (4.95, 4.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: T01
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_poem
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 19.0
+        det_pos: (4.95, 4.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: T01
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose\poem-expose\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose\poem-expose\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose\poem-expose\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-expose\concurrency-observation.json
+    exit_code: 0
+  survey-poem-indulge:
+    state: passed
+    segment_id: poem
+    started_at: '2026-11-17T17:48:27+08:00'
+    host_pid: 22720
+    process:
+      pid: 22720
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-poem-indulge
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908910.8545914
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-poem-indulge
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:48:47+08:00'
+    wall_seconds: 20.89
+    detail:
+      case_id: poem-indulge
+      segment_id: poem
+      room: T01
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_poem
+        state:
+          beat: d1_poem
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 19.0
+          det_pos: (4.95, 4.95)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: T01
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 18.0
+        det_pos: (4.95, 4.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: T01
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_poem
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 19.0
+        det_pos: (4.95, 4.95)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: T01
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge\poem-indulge\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge\poem-indulge\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge\poem-indulge\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-poem-indulge\concurrency-observation.json
+    exit_code: 0
+  survey-institutes-corridor:
+    state: passed
+    segment_id: institutes
+    started_at: '2026-11-17T17:48:37+08:00'
+    host_pid: 24320
+    process:
+      pid: 24320
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institutes-corridor
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908921.3134687
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institutes-corridor
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:48:51+08:00'
+    wall_seconds: 14.297
+    detail:
+      case_id: institutes-corridor
+      segment_id: institutes
+      room: Wind-Corridor
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: move_right
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 20.0
+          det_pos: (4.628943, 2.097638)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: walk
+          room: Wind-Corridor
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (2.85, 3.45)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: Wind-Corridor
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (4.628943, 2.097638)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: Wind-Corridor
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor\institutes-corridor\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor\institutes-corridor\02-movement.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor\institutes-corridor\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institutes-corridor\concurrency-observation.json
+    exit_code: 0
+  survey-institute-w-102:
+    state: failed
+    segment_id: institutes
+    started_at: '2026-11-17T17:48:47+08:00'
+    host_pid: 18464
+    process:
+      pid: 18464
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-w-102
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908931.5275035
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-w-102
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:49:04+08:00'
+    wall_seconds: 16.672
+    detail:
+      error: 'RuntimeError: Godot exit=3221225477, errors=[]'
+      case_id: institute-w-102
+      segment_id: institutes
+      room: W-102
+      reached_phase: completed
+      stalled: false
+      progress:
+        action: ''
+        case_id: institute-w-102
+        max_fps: 60
+        phase: completed
+        process_id: 18464
+        reason: ''
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 20.0
+          det_pos: (3.75, 2.25)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: W-102
+          viewport_size: (1440, 900)
+        status: passed
+        updated_at: '2026-11-17 17:48:57'
+      failure_lines: []
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102\institute-w-102\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102\institute-w-102\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102\institute-w-102\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-w-102\concurrency-observation.json
+    exit_code: 3221225477
+  survey-institute-s-102:
+    state: passed
+    segment_id: institutes
+    started_at: '2026-11-17T17:48:57+08:00'
+    host_pid: 31580
+    process:
+      pid: 31580
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-s-102
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908947.4049995
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-s-102
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:49:18+08:00'
+    wall_seconds: 20.75
+    detail:
+      case_id: institute-s-102
+      segment_id: institutes
+      room: S-102
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_inspect_walk
+        collected: true
+        id: e_s_tuning
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 20.0
+          det_pos: (5.25, 3.75)
+          evidence:
+          - e_s_tuning
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge:
+          - k_acoustic
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: S-102
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (4.95, 3.45)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: S-102
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (5.25, 3.75)
+        evidence:
+        - e_s_tuning
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge:
+        - k_acoustic
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: S-102
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102\institute-s-102\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102\institute-s-102\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102\institute-s-102\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-s-102\concurrency-observation.json
+    exit_code: 0
+  survey-institute-b-102:
+    state: passed
+    segment_id: institutes
+    started_at: '2026-11-17T17:49:04+08:00'
+    host_pid: 14188
+    process:
+      pid: 14188
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-b-102
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908950.8558934
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-b-102
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:49:18+08:00'
+    wall_seconds: 14.11
+    detail:
+      case_id: institute-b-102
+      segment_id: institutes
+      room: B-102
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_inspect_walk
+        collected: true
+        id: e_b_vials
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 20.0
+          det_pos: (5.25, 3.75)
+          evidence:
+          - e_b_vials
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge:
+          - k_density
+          - k_binding
+          - k_imprint
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: B-102
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (4.95, 3.75)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: B-102
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (5.25, 3.75)
+        evidence:
+        - e_b_vials
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge:
+        - k_density
+        - k_binding
+        - k_imprint
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: B-102
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102\institute-b-102\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102\institute-b-102\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102\institute-b-102\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-b-102\concurrency-observation.json
+    exit_code: 0
+  survey-institute-f-104:
+    state: passed
+    segment_id: institutes
+    started_at: '2026-11-17T17:49:17+08:00'
+    host_pid: 34556
+    process:
+      pid: 34556
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-f-104
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908961.3070376
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-institute-f-104
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:49:36+08:00'
+    wall_seconds: 19.531
+    detail:
+      case_id: institute-f-104
+      segment_id: institutes
+      room: F-104
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: production_inspect_walk
+        collected: true
+        id: e_f_gauge
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 20.0
+          det_pos: (5.25, 3.75)
+          evidence:
+          - e_f_gauge
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge:
+          - k_gauge
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: F-104
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (4.95, 3.75)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F-104
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (5.25, 3.75)
+        evidence:
+        - e_f_gauge
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge:
+        - k_gauge
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F-104
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104\institute-f-104\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104\institute-f-104\02-inspection.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104\institute-f-104\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-institute-f-104\concurrency-observation.json
+    exit_code: 0
+  survey-dinner-dumpling:
+    state: passed
+    segment_id: dinner
+    started_at: '2026-11-17T17:49:27+08:00'
+    host_pid: 42388
+    process:
+      pid: 42388
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-dinner-dumpling
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908976.699083
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-dinner-dumpling
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:49:51+08:00'
+    wall_seconds: 24.313
+    detail:
+      case_id: dinner-dumpling
+      segment_id: dinner
+      room: F03
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_dumpling
+        state:
+          beat: d1_dumpling
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 21.0
+          det_pos: (7.05, 6.15)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: c_borrow
+          pending_deduction: {}
+          pose: stand
+          room: F03
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 20.0
+        det_pos: (7.05, 6.15)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F03
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_dumpling
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 21.0
+        det_pos: (7.05, 6.15)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: c_borrow
+        pending_deduction: {}
+        pose: stand
+        room: F03
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling\dinner-dumpling\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling\dinner-dumpling\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling\dinner-dumpling\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-dumpling\concurrency-observation.json
+    exit_code: 0
+  survey-dinner-medical:
+    state: passed
+    segment_id: dinner
+    started_at: '2026-11-17T17:49:33+08:00'
+    host_pid: 37860
+    process:
+      pid: 37860
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-dinner-medical
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908980.0531917
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-dinner-medical
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:49:48+08:00'
+    wall_seconds: 15.203
+    detail:
+      case_id: dinner-medical
+      segment_id: dinner
+      room: F05
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: move_right
+        state:
+          beat: ''
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 21.0
+          det_pos: (5.794649, 0.923706)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: walk
+          room: F05
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 21.0
+        det_pos: (4.05, 2.25)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F05
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 21.0
+        det_pos: (5.794649, 0.923706)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F05
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical\dinner-medical\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical\dinner-medical\02-movement.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical\dinner-medical\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-medical\concurrency-observation.json
+    exit_code: 0
+  survey-dinner-plan:
+    state: passed
+    segment_id: dinner
+    started_at: '2026-11-17T17:49:47+08:00'
+    host_pid: 42788
+    process:
+      pid: 42788
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-dinner-plan
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794908991.6696208
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-dinner-plan
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:50:04+08:00'
+    wall_seconds: 17.578
+    detail:
+      case_id: dinner-plan
+      segment_id: dinner
+      room: F03
+      reached_phase: completed
+      issues: []
+      actions:
+      - action: process_production_beat
+        id: d1_plan
+        state:
+          beat: d1_plan
+          chapter_complete: false
+          chrome_visible: false
+          cursor: 22.0
+          det_pos: (7.05, 6.15)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: talk
+          room: F03
+          viewport_size: (1440, 900)
+      - action: production_chapter_completion_after_mock_time
+        state:
+          beat: d1_plan
+          chapter_complete: true
+          chrome_visible: false
+          cursor: 22.0
+          det_pos: (7.05, 6.15)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: false
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: talk
+          room: F03
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: false
+        chrome_visible: false
+        cursor: 21.0
+        det_pos: (7.05, 6.15)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: false
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F03
+        viewport_size: (1440, 900)
+      final:
+        beat: d1_plan
+        chapter_complete: true
+        chrome_visible: false
+        cursor: 22.0
+        det_pos: (7.05, 6.15)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: true
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: F03
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan\dinner-plan\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan\dinner-plan\02-beat.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan\dinner-plan\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-dinner-plan\concurrency-observation.json
+    exit_code: 0
+  survey-chapter-night:
+    state: failed
+    segment_id: chapter_end
+    started_at: '2026-11-17T17:49:58+08:00'
+    host_pid: 32620
+    process:
+      pid: 32620
+      executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      command:
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+      - --path
+      - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      - --language
+      - en
+      - --audio-driver
+      - Dummy
+      - --max-fps
+      - '60'
+      - --script
+      - res://tools/test/mainline_survey.gd
+      - --
+      - --dv-checkpoint-auto=false
+      - --dv-save-slot=eval-20261117t174600-514af9d1-survey-chapter-night
+      - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night\plan.json
+      - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night
+      cwd: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+      create_time: 1794909007.6678011
+      process_token: null
+    command:
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\godot\4.7.2\Godot_v4.7.2-stable_mono_win64.exe
+    - --path
+    - C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    - --language
+    - en
+    - --audio-driver
+    - Dummy
+    - --max-fps
+    - '60'
+    - --script
+    - res://tools/test/mainline_survey.gd
+    - --
+    - --dv-checkpoint-auto=false
+    - --dv-save-slot=eval-20261117t174600-514af9d1-survey-chapter-night
+    - --survey-plan=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night\plan.json
+    - --survey-output=C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night
+    headless: false
+    timeout_seconds: 150
+    ended_at: '2026-11-17T17:50:14+08:00'
+    wall_seconds: 16.219
+    detail:
+      case_id: chapter-night
+      segment_id: chapter_end
+      room: R05
+      reached_phase: completed
+      issues:
+      - Movement probe produced no displacement
+      actions:
+      - action: move_right
+        state:
+          beat: ''
+          chapter_complete: true
+          chrome_visible: false
+          cursor: 22.0
+          det_pos: (3.45, 3.45)
+          evidence: []
+          fade_alpha: 0.0
+          fade_visible: true
+          hold: {}
+          knowledge: []
+          modal_visible: true
+          pending_choice: {}
+          pending_conflict: ''
+          pending_deduction: {}
+          pose: stand
+          room: R05
+          viewport_size: (1440, 900)
+      initial:
+        beat: ''
+        chapter_complete: true
+        chrome_visible: false
+        cursor: 22.0
+        det_pos: (3.45, 3.45)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: true
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: R05
+        viewport_size: (1440, 900)
+      final:
+        beat: ''
+        chapter_complete: true
+        chrome_visible: false
+        cursor: 22.0
+        det_pos: (3.45, 3.45)
+        evidence: []
+        fade_alpha: 0.0
+        fade_visible: true
+        hold: {}
+        knowledge: []
+        modal_visible: true
+        pending_choice: {}
+        pending_conflict: ''
+        pending_deduction: {}
+        pose: stand
+        room: R05
+        viewport_size: (1440, 900)
+      snapshot_restored: true
+      images:
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night\chapter-night\01-entry.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night\chapter-night\02-movement.png
+      - artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night\chapter-night\03-result.png
+      concurrency_observation_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\artifacts\evaluation\runs\eval-20261117t174600-514af9d1\survey-chapter-night\concurrency-observation.json
+    exit_code: 0
+observed_concurrency:
+  peak_live_hosts: 2
+  witness:
+  - job: survey-corridor-meeting
+    pid: 42288
+  - job: survey-kitchen-evidence
+    pid: 39076
+  observed_at: '2026-11-17T17:46:14+08:00'
+errors: []
+display:
+  driver: Windows
+  owned: false
+  software_rendering: false
+source_fingerprint_after: 10ab667f08a30ed99d71a732526bd8f939378640d6eed6bb7685ab36883426ad
+revision_after: d341ce8d36422a5c63f409df20ee69a087e8ff32
+working_tree_changes_after: "M artifacts/review/live-progress.js\n M artifacts/review/scene-survey.js"
+source_changed_during_run: false
+ended_at: '2026-11-17T17:50:23+08:00'
+wall_seconds: 263.125
+test_results:
+  wake:
+    test_id: eval-20261117t174600-514af9d1-wake
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in wake-bedroom=6
+      text_density: 'Missing measurements: wake-bedroom'
+      action_sfx_integrity: 'Missing measurements: wake-bedroom'
+      audio_loudness: 'Missing measurements: wake-bedroom'
+      blind_narrative_match: 'Missing measurements: wake-bedroom'
+      aesthetic_similarity: 'Missing measurements: wake-bedroom'
+      narrative_flow: 'Missing measurements: wake-bedroom'
+    jobs:
+    - survey-wake-bedroom
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/02-movement.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/02-movement.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/03-result.png.json
+  corridor:
+    test_id: eval-20261117t174600-514af9d1-corridor
+    scores:
+      fluidity: 8
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: 'Lowest case score from this run: corridor-meeting=8'
+      text_density: 'Missing measurements: corridor-meeting'
+      action_sfx_integrity: 'Missing measurements: corridor-meeting'
+      audio_loudness: 'Missing measurements: corridor-meeting'
+      blind_narrative_match: 'Missing measurements: corridor-meeting'
+      aesthetic_similarity: 'Missing measurements: corridor-meeting'
+      narrative_flow: 'Missing measurements: corridor-meeting'
+    jobs:
+    - survey-corridor-meeting
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/02-door_r06.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/02-door_r06.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/02-npc_shen.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/02-npc_shen.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/03-result.png.json
+  kitchen_evidence:
+    test_id: eval-20261117t174600-514af9d1-kitchen_evidence
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in kitchen-evidence=6
+      text_density: 'Missing measurements: kitchen-evidence'
+      action_sfx_integrity: 'Missing measurements: kitchen-evidence'
+      audio_loudness: 'Missing measurements: kitchen-evidence'
+      blind_narrative_match: 'Missing measurements: kitchen-evidence'
+      aesthetic_similarity: 'Missing measurements: kitchen-evidence'
+      narrative_flow: 'Missing measurements: kitchen-evidence'
+    jobs:
+    - survey-kitchen-evidence
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/03-result.png.json
+  kitchen_reconstruction:
+    test_id: eval-20261117t174600-514af9d1-kitchen_reconstruction
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in kitchen-reconstruction=6
+      text_density: 'Missing measurements: kitchen-reconstruction'
+      action_sfx_integrity: 'Missing measurements: kitchen-reconstruction'
+      audio_loudness: 'Missing measurements: kitchen-reconstruction'
+      blind_narrative_match: 'Missing measurements: kitchen-reconstruction'
+      aesthetic_similarity: 'Missing measurements: kitchen-reconstruction'
+      narrative_flow: 'Missing measurements: kitchen-reconstruction'
+    jobs:
+    - survey-kitchen-reconstruction
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/02-reconstruction.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/02-reconstruction.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/03-result.png.json
+  service_route:
+    test_id: eval-20261117t174600-514af9d1-service_route
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in service-stair=6, service-maintenance=6
+      text_density: 'Missing measurements: service-stair, service-maintenance, service-hall'
+      action_sfx_integrity: 'Missing measurements: service-stair, service-maintenance,
+        service-hall'
+      audio_loudness: 'Missing measurements: service-stair, service-maintenance, service-hall'
+      blind_narrative_match: 'Missing measurements: service-stair, service-maintenance,
+        service-hall'
+      aesthetic_similarity: 'Missing measurements: service-stair, service-maintenance,
+        service-hall'
+      narrative_flow: 'Missing measurements: service-stair, service-maintenance, service-hall'
+    jobs:
+    - survey-service-stair
+    - survey-service-maintenance
+    - survey-service-hall
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/02-movement.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/02-movement.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/03-result.png.json
+  cross_zone:
+    test_id: eval-20261117t174600-514af9d1-cross_zone
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in cross-c-window=6, cross-d-pressure=6, cross-central=6
+      text_density: 'Missing measurements: cross-c-window, cross-d-pressure, cross-central'
+      action_sfx_integrity: 'Missing measurements: cross-c-window, cross-d-pressure,
+        cross-central'
+      audio_loudness: 'Missing measurements: cross-c-window, cross-d-pressure, cross-central'
+      blind_narrative_match: 'Missing measurements: cross-c-window, cross-d-pressure,
+        cross-central'
+      aesthetic_similarity: 'Missing measurements: cross-c-window, cross-d-pressure,
+        cross-central'
+      narrative_flow: 'Missing measurements: cross-c-window, cross-d-pressure, cross-central'
+    jobs:
+    - survey-cross-c-window
+    - survey-cross-d-pressure
+    - survey-cross-central
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/03-result.png.json
+  shaft:
+    test_id: eval-20261117t174600-514af9d1-shaft
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in shaft-north-stair=6, shaft-four-anchors=6,
+        shaft-question=6
+      text_density: 'Missing measurements: shaft-north-stair, shaft-four-anchors,
+        shaft-question'
+      action_sfx_integrity: 'Missing measurements: shaft-north-stair, shaft-four-anchors,
+        shaft-question'
+      audio_loudness: 'Missing measurements: shaft-north-stair, shaft-four-anchors,
+        shaft-question'
+      blind_narrative_match: 'Missing measurements: shaft-north-stair, shaft-four-anchors,
+        shaft-question'
+      aesthetic_similarity: 'Missing measurements: shaft-north-stair, shaft-four-anchors,
+        shaft-question'
+      narrative_flow: 'Missing measurements: shaft-north-stair, shaft-four-anchors,
+        shaft-question'
+    jobs:
+    - survey-shaft-north-stair
+    - survey-shaft-four-anchors
+    - survey-shaft-question
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/02-movement.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/02-movement.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/03-result.png.json
+  poem:
+    test_id: eval-20261117t174600-514af9d1-poem
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in poem-stakeout=6, poem-expose=6, poem-indulge=6
+      text_density: 'Missing measurements: poem-stakeout, poem-expose, poem-indulge'
+      action_sfx_integrity: 'Missing measurements: poem-stakeout, poem-expose, poem-indulge'
+      audio_loudness: 'Missing measurements: poem-stakeout, poem-expose, poem-indulge'
+      blind_narrative_match: 'Missing measurements: poem-stakeout, poem-expose, poem-indulge'
+      aesthetic_similarity: 'Missing measurements: poem-stakeout, poem-expose, poem-indulge'
+      narrative_flow: 'Missing measurements: poem-stakeout, poem-expose, poem-indulge'
+    jobs:
+    - survey-poem-stakeout
+    - survey-poem-expose
+    - survey-poem-indulge
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/03-result.png.json
+  institutes:
+    test_id: eval-20261117t174600-514af9d1-institutes
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in institutes-corridor=6, institute-w-102=6,
+        institute-s-102=6, institute-b-102=6, institute-f-104=6
+      text_density: 'Missing measurements: institutes-corridor, institute-w-102, institute-s-102,
+        institute-b-102, institute-f-104'
+      action_sfx_integrity: 'Missing measurements: institutes-corridor, institute-w-102,
+        institute-s-102, institute-b-102, institute-f-104'
+      audio_loudness: 'Missing measurements: institutes-corridor, institute-w-102,
+        institute-s-102, institute-b-102, institute-f-104'
+      blind_narrative_match: 'Missing measurements: institutes-corridor, institute-w-102,
+        institute-s-102, institute-b-102, institute-f-104'
+      aesthetic_similarity: 'Missing measurements: institutes-corridor, institute-w-102,
+        institute-s-102, institute-b-102, institute-f-104'
+      narrative_flow: 'Missing measurements: institutes-corridor, institute-w-102,
+        institute-s-102, institute-b-102, institute-f-104'
+    jobs:
+    - survey-institutes-corridor
+    - survey-institute-w-102
+    - survey-institute-s-102
+    - survey-institute-b-102
+    - survey-institute-f-104
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/02-movement.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/02-movement.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/02-inspection.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/02-inspection.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/03-result.png.json
+  dinner:
+    test_id: eval-20261117t174600-514af9d1-dinner
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in dinner-dumpling=6, dinner-medical=6, dinner-plan=6
+      text_density: 'Missing measurements: dinner-dumpling, dinner-medical, dinner-plan'
+      action_sfx_integrity: 'Missing measurements: dinner-dumpling, dinner-medical,
+        dinner-plan'
+      audio_loudness: 'Missing measurements: dinner-dumpling, dinner-medical, dinner-plan'
+      blind_narrative_match: 'Missing measurements: dinner-dumpling, dinner-medical,
+        dinner-plan'
+      aesthetic_similarity: 'Missing measurements: dinner-dumpling, dinner-medical,
+        dinner-plan'
+      narrative_flow: 'Missing measurements: dinner-dumpling, dinner-medical, dinner-plan'
+    jobs:
+    - survey-dinner-dumpling
+    - survey-dinner-medical
+    - survey-dinner-plan
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/02-movement.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/02-movement.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/03-result.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/02-beat.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/02-beat.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/03-result.png.json
+  chapter_end:
+    test_id: eval-20261117t174600-514af9d1-chapter_end
+    scores:
+      fluidity: 6
+      text_density: null
+      action_sfx_integrity: null
+      audio_loudness: null
+      blind_narrative_match: null
+      aesthetic_similarity: null
+      narrative_flow: null
+    reasons:
+      fluidity: Observed failing score in chapter-night=6
+      text_density: 'Missing measurements: chapter-night'
+      action_sfx_integrity: 'Missing measurements: chapter-night'
+      audio_loudness: 'Missing measurements: chapter-night'
+      blind_narrative_match: 'Missing measurements: chapter-night'
+      aesthetic_similarity: 'Missing measurements: chapter-night'
+      narrative_flow: 'Missing measurements: chapter-night'
+    jobs:
+    - survey-chapter-night
+    evidence:
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/launch.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/concurrency-observation.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/report.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/progress.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/metrics/timeline.yaml
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/metrics/frames.csv
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/metrics/audio.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/01-entry.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/01-entry.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/02-movement.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/02-movement.png.json
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/03-result.png
+    - artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/03-result.png.json

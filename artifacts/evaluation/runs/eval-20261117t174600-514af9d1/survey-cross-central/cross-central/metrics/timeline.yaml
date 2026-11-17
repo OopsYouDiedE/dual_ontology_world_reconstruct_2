@@ -1,0 +1,46 @@
+"schema_version": 1
+"metadata":
+  "mock": true
+  "case_id": "cross-central"
+  "acceptance_eligible": false
+  "frame_clock": "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+  "warmup_policy": "Cold start and each constructed room/stage: first 1.5 s recorded separately; only explicitly marked steady frames determine the 33.3 ms veto"
+  "content_text_policy": "visible_active_viewports"
+  "source_identity":
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2"
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+    "configured_main_scene": "res://scenes/main/Boot.tscn"
+    "current_scene": ""
+    "launch_scene": ""
+    "process_id": 28120
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe"
+  "fps_window": "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
+  "audio_method": "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
+  "audio_capture_buffer_s": 15.0
+  "audio_dba":
+    "value": null
+    "reason": "digital output has no calibrated acoustic SPL reference; use LUFS"
+  "vram_method": "Godot renderer resource allocation; not driver-wide dedicated GPU residency"
+  "render_backend": "gl_compatibility"
+  "start_local": "2026-11-17 17:47:41"
+  "start_unix": 1794908861.223
+  "measurement_context": "rendered_runtime"
+  "realtime_performance_eligible": true
+timeline:
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":423.61328125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908861.512},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":131072,"error":0},"avg_fps":38.2924358514671,"content_text":{"characters":84,"strings":["Lucian","Gu Pingzhang","Que","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Moran","Detective"]},"draw_calls":824,"elapsed_s":0.287263,"frame":11,"frame_p95_ms":143.215,"frame_p99_ms":143.215,"gpu_resource_mb":849.570886611938,"loading_warmup_frames":11,"low_1_fps":6.98250881541738,"low_5_fps":6.98250881541738,"max_frame_ms":143.215,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":423.61328125,"scene_node":"cross_zone","spikes_over_33_3_ms":1,"static_ram_mb":143.862295150757,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:47:41","total_visible_characters":84}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":423.61328125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908861.512},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":294912,"error":0},"avg_fps":52.1117326388492,"content_text":{"characters":84,"strings":["Lucian","Gu Pingzhang","Que","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Moran","Detective"]},"draw_calls":824,"elapsed_s":0.786771,"frame":41,"frame_p95_ms":29.52,"frame_p99_ms":143.215,"gpu_resource_mb":849.570886611938,"loading_warmup_frames":41,"low_1_fps":6.98250881541738,"low_5_fps":14.7661775780516,"max_frame_ms":143.215,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":423.61328125,"scene_node":"cross_zone","spikes_over_33_3_ms":1,"static_ram_mb":143.883707046509,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:47:42","total_visible_characters":84}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":423.9375,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908862.42677},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":458752,"error":0},"avg_fps":55.0203769128299,"content_text":{"characters":84,"strings":["Lucian","Gu Pingzhang","Que","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Moran","Detective"]},"draw_calls":824,"elapsed_s":1.290431,"frame":71,"frame_p95_ms":30.051,"frame_p99_ms":143.215,"gpu_resource_mb":849.570886611938,"loading_warmup_frames":71,"low_1_fps":6.98250881541738,"low_5_fps":17.0900732309638,"max_frame_ms":143.215,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":423.9375,"scene_node":"cross_zone","spikes_over_33_3_ms":1,"static_ram_mb":143.884103775024,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:47:42","total_visible_characters":84}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":485.0703125,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908864.68906},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":1146880,"error":0},"avg_fps":27.5406942748115,"content_text":{"characters":150,"strings":["Ward","Huo Duo","Ruan Qingyue","Margaret","Lucian","Gu Pingzhang","Que","Shen Ding","Su Ling","Selma","Elena","Detective","A Wing: open cuffs, missing key, door bolted from outside.","Ward","▼"]},"draw_calls":829,"elapsed_s":3.449441,"frame":95,"frame_p95_ms":30.184,"frame_p99_ms":1790.836,"gpu_resource_mb":914.16773891449,"loading_warmup_frames":83,"low_1_fps":0.558398423976288,"low_5_fps":2.46910775828225,"max_frame_ms":1790.836,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":485.0703125,"scene_node":"cross_zone","spikes_over_33_3_ms":2,"static_ram_mb":171.353471755981,"steady_spikes_over_33_3_ms":1,"system_time":"2026-11-17 17:47:44","total_visible_characters":150}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":485.0703125,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908864.68906},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":1343488,"error":0},"avg_fps":31.5476600595771,"content_text":{"characters":150,"strings":["Ward","Huo Duo","Ruan Qingyue","Margaret","Lucian","Gu Pingzhang","Que","Shen Ding","Su Ling","Selma","Elena","Detective","A Wing: open cuffs, missing key, door bolted from outside.","Ward","▼"]},"draw_calls":829,"elapsed_s":3.962259,"frame":125,"frame_p95_ms":30.021,"frame_p99_ms":143.215,"gpu_resource_mb":914.16773891449,"loading_warmup_frames":83,"low_1_fps":1.03409889397953,"low_5_fps":3.35716118450238,"max_frame_ms":1790.836,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":485.0703125,"scene_node":"cross_zone","spikes_over_33_3_ms":2,"static_ram_mb":165.174032211304,"steady_spikes_over_33_3_ms":1,"system_time":"2026-11-17 17:47:45","total_visible_characters":150}
+"summary":
+  "frames": 131
+  "max_frame_ms": 1790.836
+  "spikes_over_33_3_ms": 2
+  "steady_spikes_over_33_3_ms": 1
+  "loading_warmup_frames": 83
+  "audio_writer":
+    "bytes_written": 1867776
+    "bytes_queued": 0
+    "error": 0
+  "audio_discarded_frames": 0
+  "acceptance": "pending_independent_evidence_review"

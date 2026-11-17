@@ -2,7 +2,7 @@
   'use strict';
   const categories = ['fluidity', 'text_density', 'action_sfx_integrity', 'audio_loudness', 'blind_narrative_match', 'aesthetic_similarity', 'narrative_flow'];
   const labels = ['游玩流畅度', '界面字数', '动作与音效', '音频响度', '视听剧情替代', '参考图相似度', '剧情流畅性'];
-  const scoreText = value => value === null ? '未测' : `${value}/10`;
+  const scoreText = value => value === null ? '评分缺项' : `${value}/10`;
   const element = (tag, text) => { const node = document.createElement(tag); node.textContent = text; return node; };
   const valid = batch => categories.every(key => Object.hasOwn(batch.scores || {}, key)
     && (batch.scores[key] === null || (typeof batch.scores[key] === 'number' && Number.isFinite(batch.scores[key]) && batch.scores[key] >= 0 && batch.scores[key] <= 10))
@@ -29,7 +29,7 @@
       const body = document.createElement('div'); body.dataset.resultBody = '';
       body.append(element('p', `测试 ${batch.test_id} · ${event.at} · 版本 ${event.revision.slice(0, 12)}`));
       const values = categories.map(key => batch.scores[key]);
-      body.append(element('p', values.some(v => v !== null && v < 8) ? '不合格' : values.includes(null) ? '待补测' : '合格'));
+      body.append(element('p', values.some(v => v !== null && v < 8) ? '不合格' : values.includes(null) ? '已测 · 评分不全' : '合格'));
       const grid = document.createElement('div'); grid.className = 'dimensions';
       categories.forEach((key, i) => {
         const value = batch.scores[key], dim = document.createElement('div');
@@ -47,7 +47,7 @@
         }
         body.append(evidence);
       } else if (values.every(v => v !== null && v >= 8)) {
-        body.children[1].textContent = '待补测';
+        body.children[1].textContent = '已测 · 评分不全';
         body.append(element('p', 'This test did not attach measurement evidence.'));
       }
       card.querySelector('[data-result-body]').replaceWith(body);

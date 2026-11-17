@@ -1,0 +1,82 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:46:34",
+  "case_id": "kitchen-evidence",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/03-result.png",
+  "image_sha256": "1de05d7b637d0954b9ed3b90cb2aef5428d70bb417012805e079ff33d017fd23",
+  "phase": "03-result",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 39076,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 221.191665649414,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@202/@Label3D@204",
+      "text": "Huo Duo",
+      "width": 189.560852050781,
+      "x": 565.042358398438,
+      "y": 238.68620300293
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 254.160049438477,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@206/@Label3D@208",
+      "text": "Shen Ding",
+      "width": 232.220825195313,
+      "x": 317.125854492188,
+      "y": 203.91389465332
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 169.623016357422,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@210/@Label3D@212",
+      "text": "Su Ling",
+      "width": 205.466735839844,
+      "x": 106.12574005127,
+      "y": 278.257995605469
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 257.396728515625,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+      "text": "Detective",
+      "width": 235.802795410156,
+      "x": 761.451843261719,
+      "y": 200.815963745117
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 43.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@328",
+      "text": "E Lead Seal",
+      "width": 107.0,
+      "x": 666.5,
+      "y": 745.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 22.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@329",
+      "text": "Clues 7/7",
+      "width": 75.0,
+      "x": 18.0,
+      "y": 870.0
+    }
+  ],
+  "write_error": 0
+}

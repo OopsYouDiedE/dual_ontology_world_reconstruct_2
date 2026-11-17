@@ -1,0 +1,286 @@
+{
+  "acceptance_eligible": false,
+  "cases": [
+    {
+      "acceptance_eligible": false,
+      "actions": [
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_vials",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 20.0,
+            "det_pos": "(5.25, 3.75)",
+            "evidence": [
+              "e_b_vials"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [
+              "k_density",
+              "k_binding",
+              "k_imprint"
+            ],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-102",
+            "viewport_size": "(1440, 900)"
+          }
+        }
+      ],
+      "final": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 20.0,
+        "det_pos": "(5.25, 3.75)",
+        "evidence": [
+          "e_b_vials"
+        ],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [
+          "k_density",
+          "k_binding",
+          "k_imprint"
+        ],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "B-102",
+        "viewport_size": "(1440, 900)"
+      },
+      "fixture": {
+        "entry": "exploration",
+        "id": "institute-b-102",
+        "mock": {
+          "beat_cursor": 20.0,
+          "flags": {
+            "service_map": true
+          }
+        },
+        "mode": "story",
+        "playing": false,
+        "room": "B-102",
+        "schema_version": 1.0,
+        "time": {
+          "day": 1.0,
+          "hour": 15.0,
+          "minute": 30.0
+        }
+      },
+      "id": "institute-b-102",
+      "images": [
+        {
+          "caption": "institute-b-102 · 01-entry",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/01-entry.png",
+          "phase": "01-entry",
+          "room": "B-102",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 99.7811889648438,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@45/B-102/RoomPlaque",
+              "text": "白塔院 · 配药清洁制备室",
+              "width": 139.616271972656,
+              "x": 765.580078125,
+              "y": 196.088623046875
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 102.833770751953,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 88.8688354492188,
+              "x": 716.60546875,
+              "y": 442.189300537109
+            }
+          ]
+        },
+        {
+          "caption": "institute-b-102 · 02-inspection",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/02-inspection.png",
+          "phase": "02-inspection",
+          "room": "B-102",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 99.7811889648438,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@45/B-102/RoomPlaque",
+              "text": "白塔院 · 配药清洁制备室",
+              "width": 139.616271972656,
+              "x": 765.580078125,
+              "y": 196.088623046875
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 134.053649902344,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 122.40625,
+              "x": 716.289184570313,
+              "y": 438.149780273438
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 96.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+              "text": "源质是比空气重的惰性重气溶胶，也是神经与认知的物理拓印媒介；低处沉降。",
+              "width": 860.0,
+              "x": 290.0,
+              "y": 788.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 39.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+              "text": "Detective",
+              "width": 92.0,
+              "x": 308.0,
+              "y": 770.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 26.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+              "text": "▼",
+              "width": 26.0,
+              "x": 1110.0,
+              "y": 850.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 39.0,
+              "path": "/root/@Control@2/@Label@149",
+              "text": "Knowledge gained: 残影拓印",
+              "width": 206.0,
+              "x": 719.5,
+              "y": 60.0
+            }
+          ]
+        },
+        {
+          "caption": "institute-b-102 · 03-result",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/03-result.png",
+          "phase": "03-result",
+          "room": "B-102",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 99.7811889648438,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@45/B-102/RoomPlaque",
+              "text": "白塔院 · 配药清洁制备室",
+              "width": 139.616271972656,
+              "x": 765.580078125,
+              "y": 196.088623046875
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 134.053649902344,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 122.40625,
+              "x": 716.289184570313,
+              "y": 438.149780273438
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 39.0,
+              "path": "/root/@Control@2/@Label@149",
+              "text": "Knowledge gained: 残影拓印",
+              "width": 206.0,
+              "x": 719.5,
+              "y": 60.0
+            }
+          ]
+        }
+      ],
+      "initial": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 20.0,
+        "det_pos": "(4.95, 3.75)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "B-102",
+        "viewport_size": "(1440, 900)"
+      },
+      "issues": [],
+      "max_fps": 60,
+      "metrics": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/metrics/timeline.yaml",
+      "restored": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 20.0,
+        "det_pos": "(4.95, 3.75)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "B-102",
+        "viewport_size": "(1440, 900)"
+      },
+      "segment_id": "institutes",
+      "snapshot": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/entry.snapshot.json",
+      "snapshot_restored": true,
+      "snapshot_saved": true,
+      "source_identity": {
+        "configured_main_scene": "res://scenes/main/Boot.tscn",
+        "current_scene": "",
+        "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+        "launch_scene": "",
+        "process_id": 14188,
+        "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+        "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+      },
+      "stalls": [],
+      "status": "passed"
+    }
+  ],
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 14188,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  }
+}

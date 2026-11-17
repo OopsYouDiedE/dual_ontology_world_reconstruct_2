@@ -1,0 +1,32 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:47:24",
+  "case_id": "cross-d-pressure",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/03-result.png",
+  "image_sha256": "930a3a39cdb13ca6ae5ed5fa8e0925605ff17ae61c59d0794a43dc912b44e871",
+  "phase": "03-result",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 18748,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 116.496398925781,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+      "text": "Detective",
+      "width": 95.9597778320313,
+      "x": 679.75537109375,
+      "y": 313.043487548828
+    }
+  ],
+  "write_error": 0
+}

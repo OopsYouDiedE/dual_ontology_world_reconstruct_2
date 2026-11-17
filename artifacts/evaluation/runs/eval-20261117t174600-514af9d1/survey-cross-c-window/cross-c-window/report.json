@@ -1,0 +1,304 @@
+{
+  "acceptance_eligible": false,
+  "actions": [
+    {
+      "action": "production_inspect_walk",
+      "collected": true,
+      "id": "e_c_window",
+      "state": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 8.0,
+        "det_pos": "(6.75, 2.55)",
+        "evidence": [
+          "e_c_window"
+        ],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "C-P",
+        "viewport_size": "(1440, 900)"
+      }
+    },
+    {
+      "action": "production_inspect_walk",
+      "collected": true,
+      "id": "e_c_bandage",
+      "state": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 8.0,
+        "det_pos": "(4.35, 2.55)",
+        "evidence": [
+          "e_c_window",
+          "e_c_bandage"
+        ],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "C-P",
+        "viewport_size": "(1440, 900)"
+      }
+    },
+    {
+      "action": "production_inspect_walk",
+      "collected": true,
+      "id": "e_c_copper",
+      "state": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 8.0,
+        "det_pos": "(4.95, 2.25)",
+        "evidence": [
+          "e_c_window",
+          "e_c_bandage",
+          "e_c_copper"
+        ],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "C-P",
+        "viewport_size": "(1440, 900)"
+      }
+    }
+  ],
+  "final": {
+    "beat": "d1_deduce_window",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 9.0,
+    "det_pos": "(4.95, 2.25)",
+    "evidence": [
+      "e_c_window",
+      "e_c_bandage",
+      "e_c_copper"
+    ],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {
+      "id": "ded_window",
+      "next": ""
+    },
+    "pose": "talk",
+    "room": "C-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "fixture": {
+    "entry": "exploration",
+    "id": "cross-c-window",
+    "mock": {
+      "beat_cursor": 8.0,
+      "flags": {
+        "service_map": true
+      }
+    },
+    "mode": "story",
+    "playing": false,
+    "room": "C-P",
+    "schema_version": 1.0,
+    "time": {
+      "day": 1.0,
+      "hour": 10.0,
+      "minute": 20.0
+    }
+  },
+  "id": "cross-c-window",
+  "images": [
+    {
+      "caption": "cross-c-window · 01-entry",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/01-entry.png",
+      "phase": "01-entry",
+      "room": "C-P",
+      "visible_text": [
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 121.486907958984,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+          "text": "Detective",
+          "width": 99.6075439453125,
+          "x": 711.616638183594,
+          "y": 328.971527099609
+        }
+      ]
+    },
+    {
+      "caption": "cross-c-window · 02-inspection",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/02-inspection.png",
+      "phase": "02-inspection",
+      "room": "C-P",
+      "visible_text": [
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 136.609954833984,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+          "text": "Detective",
+          "width": 120.574157714844,
+          "x": 747.068786621094,
+          "y": 406.348114013672
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 96.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+          "text": "有人擦掉了求救者留下的痕迹。",
+          "width": 860.0,
+          "x": 290.0,
+          "y": 788.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 39.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+          "text": "Detective",
+          "width": 92.0,
+          "x": 308.0,
+          "y": 770.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 26.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+          "text": "▼",
+          "width": 26.0,
+          "x": 1110.0,
+          "y": 850.0
+        }
+      ]
+    },
+    {
+      "caption": "cross-c-window · 03-result",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/03-result.png",
+      "phase": "03-result",
+      "room": "C-P",
+      "visible_text": [
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 133.644897460938,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+          "text": "Detective",
+          "width": 110.867065429688,
+          "x": 654.926452636719,
+          "y": 314.383087158203
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 96.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+          "text": "The inner grille is dented. The outside was wiped clean.",
+          "width": 860.0,
+          "x": 290.0,
+          "y": 788.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 39.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+          "text": "Detective",
+          "width": 92.0,
+          "x": 308.0,
+          "y": 770.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 26.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+          "text": "▼",
+          "width": 26.0,
+          "x": 1110.0,
+          "y": 850.0
+        }
+      ]
+    }
+  ],
+  "initial": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 8.0,
+    "det_pos": "(5.55, 1.95)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "C-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "issues": [],
+  "max_fps": 60,
+  "metrics": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/metrics/timeline.yaml",
+  "restored": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 8.0,
+    "det_pos": "(5.55, 1.95)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "C-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "segment_id": "cross_zone",
+  "snapshot": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/entry.snapshot.json",
+  "snapshot_restored": true,
+  "snapshot_saved": true,
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 34232,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "stalls": [],
+  "status": "passed"
+}

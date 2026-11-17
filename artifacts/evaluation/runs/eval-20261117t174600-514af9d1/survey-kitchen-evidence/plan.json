@@ -1,0 +1,26 @@
+[
+  {
+    "id": "kitchen-evidence",
+    "segment_id": "kitchen_evidence",
+    "fixture": {
+      "schema_version": 1,
+      "mode": "story",
+      "room": "B-P",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 8,
+        "minute": 0
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 2,
+        "flags": {
+          "service_map": true
+        }
+      },
+      "id": "kitchen-evidence"
+    },
+    "controller": "kitchen"
+  }
+]

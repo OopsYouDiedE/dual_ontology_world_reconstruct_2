@@ -1,0 +1,26 @@
+[
+  {
+    "id": "shaft-question",
+    "segment_id": "shaft",
+    "fixture": {
+      "schema_version": 1,
+      "id": "shaft-question",
+      "mode": "story",
+      "room": "1F-Shaft-Monitor",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 11,
+        "minute": 25
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 12,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "beat": "d1_q1"
+  }
+]

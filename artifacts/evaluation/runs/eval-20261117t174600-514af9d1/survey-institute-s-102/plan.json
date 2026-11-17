@@ -1,0 +1,25 @@
+[
+  {
+    "id": "institute-s-102",
+    "segment_id": "institutes",
+    "fixture": {
+      "schema_version": 1,
+      "id": "institute-s-102",
+      "mode": "story",
+      "room": "S-102",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 15,
+        "minute": 30
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 20,
+        "flags": {
+          "service_map": true
+        }
+      }
+    }
+  }
+]

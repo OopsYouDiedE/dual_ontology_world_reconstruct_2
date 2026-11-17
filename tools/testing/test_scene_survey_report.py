@@ -67,6 +67,12 @@ class SceneSurveyTests(unittest.TestCase):
         self.assertIn('No measured &lt;value&gt;', html)
         payload = test_results.scene_survey_payload(self.root, data)
         self.assertEqual(payload['rows'][0]['reasons']['fluidity'], 'Observed a spike')
+        reviewed = json.loads(json.dumps(score_file))
+        reviewed['cases'][0]['scores']['text_density'] = 6
+        self.put(directory / 'scene-scores-reviewed.json', reviewed)
+        self.assertEqual(test_results.latest_scene_survey(self.root)['rows'][0]['scores']['text_density'], 6)
+        self.assertIsNone(json.loads((directory / 'scene-scores.json').read_text())['cases'][0]['scores']['text_density'])
+        (directory / 'scene-scores-reviewed.json').unlink()
         score_file['source_revision'] = 'other'
         self.put(directory / 'scene-scores.json', score_file)
         self.assertIsNone(test_results.latest_scene_survey(self.root)['rows'][0]['scores']['fluidity'])

@@ -1,0 +1,32 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:47:42",
+  "case_id": "shaft-north-stair",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png",
+  "image_sha256": "81c6bd11ee544acc987b649ea6b2ff185041e9613a948a43dec00d70d75767f2",
+  "phase": "01-entry",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 17616,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 131.917236328125,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+      "text": "Detective",
+      "width": 124.49365234375,
+      "x": 519.098571777344,
+      "y": 370.115600585938
+    }
+  ],
+  "write_error": 0
+}

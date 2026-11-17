@@ -1,0 +1,88 @@
+{
+  "host_pid": 18748,
+  "started_at": "2026-11-17T09:47:18.075310+00:00",
+  "ended_at": "2026-11-17T09:47:25.139285+00:00",
+  "sample_interval_seconds": 1.0,
+  "sample_count": 7,
+  "sampling_failures": 0,
+  "sampler_stopped": true,
+  "peak_observed_godot_processes": 3,
+  "observed_godot_pids": [
+    1512,
+    18748,
+    30996
+  ],
+  "coverage": "Periodic visible-process observations; short overlaps and GPU load may be missed.",
+  "samples": [
+    {
+      "timestamp": "2026-11-17T09:47:18.078307+00:00",
+      "godot_pids": [
+        1512,
+        18748,
+        30996
+      ],
+      "system_cpu_percent": 0.0,
+      "available_memory_bytes": 11684270080
+    },
+    {
+      "timestamp": "2026-11-17T09:47:19.143924+00:00",
+      "godot_pids": [
+        1512,
+        18748,
+        30996
+      ],
+      "system_cpu_percent": 37.1,
+      "available_memory_bytes": 11482390528
+    },
+    {
+      "timestamp": "2026-11-17T09:47:20.185766+00:00",
+      "godot_pids": [
+        1512,
+        18748,
+        30996
+      ],
+      "system_cpu_percent": 77.8,
+      "available_memory_bytes": 11431673856
+    },
+    {
+      "timestamp": "2026-11-17T09:47:21.202945+00:00",
+      "godot_pids": [
+        1512,
+        18748,
+        30996
+      ],
+      "system_cpu_percent": 63.6,
+      "available_memory_bytes": 11223457792
+    },
+    {
+      "timestamp": "2026-11-17T09:47:22.246704+00:00",
+      "godot_pids": [
+        1512,
+        18748,
+        30996
+      ],
+      "system_cpu_percent": 51.8,
+      "available_memory_bytes": 11225378816
+    },
+    {
+      "timestamp": "2026-11-17T09:47:23.341340+00:00",
+      "godot_pids": [
+        1512,
+        18748,
+        30996
+      ],
+      "system_cpu_percent": 47.9,
+      "available_memory_bytes": 11221651456
+    },
+    {
+      "timestamp": "2026-11-17T09:47:24.362999+00:00",
+      "godot_pids": [
+        1512,
+        18748,
+        30996
+      ],
+      "system_cpu_percent": 36.0,
+      "available_memory_bytes": 11219677184
+    }
+  ]
+}

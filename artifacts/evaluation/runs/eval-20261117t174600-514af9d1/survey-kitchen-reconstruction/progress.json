@@ -1,0 +1,37 @@
+{
+  "action": "",
+  "case_id": "kitchen-reconstruction",
+  "max_fps": 60,
+  "phase": "completed",
+  "process_id": 31572,
+  "reason": "",
+  "state": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 2.0,
+    "det_pos": "(3.299999, 4.32)",
+    "evidence": [
+      "e_b_sleeve",
+      "e_b_drag",
+      "e_b_water",
+      "e_b_cloth",
+      "e_b_ratchet",
+      "e_b_boots",
+      "e_b_seal"
+    ],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "B-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "status": "passed",
+  "updated_at": "2026-11-17 17:46:45"
+}

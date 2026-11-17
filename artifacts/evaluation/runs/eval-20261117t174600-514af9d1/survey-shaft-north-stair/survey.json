@@ -1,0 +1,252 @@
+{
+  "acceptance_eligible": false,
+  "cases": [
+    {
+      "acceptance_eligible": false,
+      "actions": [
+        {
+          "action": "move_right",
+          "state": {
+            "beat": "d1_q1",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 13.0,
+            "det_pos": "(3.5, 5.433868)",
+            "evidence": [],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "walk",
+            "room": "1F-Shaft-Monitor",
+            "viewport_size": "(1440, 900)"
+          }
+        }
+      ],
+      "final": {
+        "beat": "d1_q1",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 13.0,
+        "det_pos": "(3.5, 6.9)",
+        "evidence": [],
+        "fade_alpha": 0.753723740577698,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "talk",
+        "room": "1F-Shaft-Monitor",
+        "viewport_size": "(1440, 900)"
+      },
+      "fixture": {
+        "entry": "exploration",
+        "id": "shaft-north-stair",
+        "mock": {
+          "beat_cursor": 12.0,
+          "flags": {
+            "service_map": true
+          }
+        },
+        "mode": "story",
+        "playing": false,
+        "room": "2F-North-Stair",
+        "schema_version": 1.0,
+        "time": {
+          "day": 1.0,
+          "hour": 11.0,
+          "minute": 25.0
+        }
+      },
+      "id": "shaft-north-stair",
+      "images": [
+        {
+          "caption": "shaft-north-stair · 01-entry",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png",
+          "phase": "01-entry",
+          "room": "2F-North-Stair",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 131.917236328125,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 124.49365234375,
+              "x": 519.098571777344,
+              "y": 370.115600585938
+            }
+          ]
+        },
+        {
+          "caption": "shaft-north-stair · 02-movement",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/02-movement.png",
+          "phase": "02-movement",
+          "room": "1F-Shaft-Monitor",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 157.534301757813,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 159.692108154297,
+              "x": 503.686920166016,
+              "y": 512.956298828125
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 96.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+              "text": "Caretaker, did someone close the doors for us last night?",
+              "width": 860.0,
+              "x": 290.0,
+              "y": 788.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 39.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+              "text": "Detective",
+              "width": 92.0,
+              "x": 308.0,
+              "y": 770.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 26.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+              "text": "▼",
+              "width": 26.0,
+              "x": 1110.0,
+              "y": 850.0
+            }
+          ]
+        },
+        {
+          "caption": "shaft-north-stair · 03-result",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/03-result.png",
+          "phase": "03-result",
+          "room": "1F-Shaft-Monitor",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 176.762390136719,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 188.659454345703,
+              "x": 406.191864013672,
+              "y": 608.453796386719
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 96.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+              "text": "Caretaker, did someone close the doors for us last night?",
+              "width": 860.0,
+              "x": 290.0,
+              "y": 788.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 39.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+              "text": "Detective",
+              "width": 92.0,
+              "x": 308.0,
+              "y": 770.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 26.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+              "text": "▼",
+              "width": 26.0,
+              "x": 1110.0,
+              "y": 850.0
+            }
+          ]
+        }
+      ],
+      "initial": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 12.0,
+        "det_pos": "(2.25, 4.05)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "2F-North-Stair",
+        "viewport_size": "(1440, 900)"
+      },
+      "issues": [],
+      "max_fps": 60,
+      "metrics": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/metrics/timeline.yaml",
+      "restored": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 12.0,
+        "det_pos": "(2.25, 4.05)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "2F-North-Stair",
+        "viewport_size": "(1440, 900)"
+      },
+      "segment_id": "shaft",
+      "snapshot": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/entry.snapshot.json",
+      "snapshot_restored": true,
+      "snapshot_saved": true,
+      "source_identity": {
+        "configured_main_scene": "res://scenes/main/Boot.tscn",
+        "current_scene": "",
+        "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+        "launch_scene": "",
+        "process_id": 17616,
+        "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+        "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+      },
+      "stalls": [],
+      "status": "passed"
+    }
+  ],
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 17616,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  }
+}

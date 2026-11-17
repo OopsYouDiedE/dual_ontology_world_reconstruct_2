@@ -1,0 +1,82 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:49:11",
+  "case_id": "institute-s-102",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/02-inspection.png",
+  "image_sha256": "8598a7efab58c3652bb2498fa38389beefa562f8f6074285ef29a7f8c8111628",
+  "phase": "02-inspection",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 31580,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 84.3812866210938,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@45/S-102/RoomPlaque",
+      "text": "星仪院 · 精密仪器室",
+      "width": 115.684631347656,
+      "x": 776.998901367188,
+      "y": 203.602294921875
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 134.053649902344,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+      "text": "Detective",
+      "width": 122.40625,
+      "x": 716.289184570313,
+      "y": 438.149780273438
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 96.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+      "text": "源质泛音扭曲余音：漏音掩蔽了前两拍轻音，只留下重读的后半截。",
+      "width": 860.0,
+      "x": 290.0,
+      "y": 788.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 39.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+      "text": "Detective",
+      "width": 92.0,
+      "x": 308.0,
+      "y": 770.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 26.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+      "text": "▼",
+      "width": 26.0,
+      "x": 1110.0,
+      "y": 850.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 39.0,
+      "path": "/root/@Control@2/@Label@149",
+      "text": "Knowledge gained: 泛音扭曲",
+      "width": 206.0,
+      "x": 719.5,
+      "y": 60.0
+    }
+  ],
+  "write_error": 0
+}

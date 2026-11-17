@@ -1,0 +1,62 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:46:16",
+  "case_id": "corridor-meeting",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/01-entry.png",
+  "image_sha256": "b21d2501ef82c5162d5468746a1be39fc2de9295849a6ca95df4250230b2f59a",
+  "phase": "01-entry",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 42288,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 38.8291320800781,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/CorridorStage/@Label3D@353",
+      "text": "R05 · Mine",
+      "width": 63.6828536987305,
+      "x": 0.0,
+      "y": 77.160530090332
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 32.7212066650391,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/CorridorStage/@Label3D@366",
+      "text": "R06",
+      "width": 46.1651000976563,
+      "x": 459.439971923828,
+      "y": 118.946472167969
+    },
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 32.672607421875,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/CorridorStage/@Label3D@379",
+      "text": "R07",
+      "width": 51.324462890625,
+      "x": 982.526123046875,
+      "y": 160.76969909668
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 22.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@478",
+      "text": "Click to inspect",
+      "width": 99.0,
+      "x": 18.0,
+      "y": 870.0
+    }
+  ],
+  "write_error": 0
+}

@@ -1,0 +1,259 @@
+{
+  "host_pid": 39076,
+  "started_at": "2026-11-17T09:46:14.011700+00:00",
+  "ended_at": "2026-11-17T09:46:36.626782+00:00",
+  "sample_interval_seconds": 1.0,
+  "sample_count": 22,
+  "sampling_failures": 0,
+  "sampler_stopped": true,
+  "peak_observed_godot_processes": 4,
+  "observed_godot_pids": [
+    1512,
+    30996,
+    31572,
+    39076,
+    42288
+  ],
+  "coverage": "Periodic visible-process observations; short overlaps and GPU load may be missed.",
+  "samples": [
+    {
+      "timestamp": "2026-11-17T09:46:14.016709+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 0.0,
+      "available_memory_bytes": 11573997568
+    },
+    {
+      "timestamp": "2026-11-17T09:46:15.040774+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 83.4,
+      "available_memory_bytes": 11486121984
+    },
+    {
+      "timestamp": "2026-11-17T09:46:16.059240+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 62.1,
+      "available_memory_bytes": 11333464064
+    },
+    {
+      "timestamp": "2026-11-17T09:46:17.161199+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 42.9,
+      "available_memory_bytes": 11187552256
+    },
+    {
+      "timestamp": "2026-11-17T09:46:18.196301+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 57.7,
+      "available_memory_bytes": 11143897088
+    },
+    {
+      "timestamp": "2026-11-17T09:46:19.226044+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 45.9,
+      "available_memory_bytes": 11160076288
+    },
+    {
+      "timestamp": "2026-11-17T09:46:20.248363+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 47.9,
+      "available_memory_bytes": 11129581568
+    },
+    {
+      "timestamp": "2026-11-17T09:46:21.263486+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 47.7,
+      "available_memory_bytes": 11154804736
+    },
+    {
+      "timestamp": "2026-11-17T09:46:22.313360+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076,
+        42288
+      ],
+      "system_cpu_percent": 60.9,
+      "available_memory_bytes": 11079983104
+    },
+    {
+      "timestamp": "2026-11-17T09:46:23.325609+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076
+      ],
+      "system_cpu_percent": 53.4,
+      "available_memory_bytes": 11541716992
+    },
+    {
+      "timestamp": "2026-11-17T09:46:24.399319+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076
+      ],
+      "system_cpu_percent": 37.7,
+      "available_memory_bytes": 11519258624
+    },
+    {
+      "timestamp": "2026-11-17T09:46:25.460621+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        39076
+      ],
+      "system_cpu_percent": 45.3,
+      "available_memory_bytes": 11525353472
+    },
+    {
+      "timestamp": "2026-11-17T09:46:26.479275+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 44.5,
+      "available_memory_bytes": 11408420864
+    },
+    {
+      "timestamp": "2026-11-17T09:46:27.493260+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 75.8,
+      "available_memory_bytes": 11358089216
+    },
+    {
+      "timestamp": "2026-11-17T09:46:28.510276+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 89.3,
+      "available_memory_bytes": 11228876800
+    },
+    {
+      "timestamp": "2026-11-17T09:46:29.519300+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 58.0,
+      "available_memory_bytes": 11143962624
+    },
+    {
+      "timestamp": "2026-11-17T09:46:30.569328+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 73.5,
+      "available_memory_bytes": 11107983360
+    },
+    {
+      "timestamp": "2026-11-17T09:46:31.582649+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 78.4,
+      "available_memory_bytes": 11105390592
+    },
+    {
+      "timestamp": "2026-11-17T09:46:32.616944+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 46.6,
+      "available_memory_bytes": 11061788672
+    },
+    {
+      "timestamp": "2026-11-17T09:46:33.647296+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 38.2,
+      "available_memory_bytes": 11063803904
+    },
+    {
+      "timestamp": "2026-11-17T09:46:34.656925+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 44.5,
+      "available_memory_bytes": 11056943104
+    },
+    {
+      "timestamp": "2026-11-17T09:46:35.735140+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        31572,
+        39076
+      ],
+      "system_cpu_percent": 50.1,
+      "available_memory_bytes": 11295268864
+    }
+  ]
+}

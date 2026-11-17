@@ -1,0 +1,26 @@
+[
+  {
+    "id": "service-stair",
+    "segment_id": "service_route",
+    "fixture": {
+      "schema_version": 1,
+      "id": "service-stair",
+      "mode": "story",
+      "room": "service_stair_M",
+      "entry": "exploration",
+      "time": {
+        "day": 1,
+        "hour": 9,
+        "minute": 15
+      },
+      "playing": false,
+      "mock": {
+        "beat_cursor": 5,
+        "flags": {
+          "service_map": true
+        }
+      }
+    },
+    "beat": "d1_route"
+  }
+]

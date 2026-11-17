@@ -1,0 +1,29 @@
+{
+  "action": "",
+  "case_id": "cross-central",
+  "max_fps": 60,
+  "phase": "completed",
+  "process_id": 28120,
+  "reason": "",
+  "state": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 10.0,
+    "det_pos": "(7.05, 4.65)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "2F-cross-M",
+    "viewport_size": "(1440, 900)"
+  },
+  "status": "passed",
+  "updated_at": "2026-11-17 17:47:46"
+}

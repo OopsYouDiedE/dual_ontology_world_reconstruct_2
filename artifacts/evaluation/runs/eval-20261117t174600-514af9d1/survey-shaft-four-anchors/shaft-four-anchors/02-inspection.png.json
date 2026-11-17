@@ -1,0 +1,72 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:47:53",
+  "case_id": "shaft-four-anchors",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/02-inspection.png",
+  "image_sha256": "048ef63313dd199e576b4334001e28a22ef5c3808abeeadd69e3b796ddc03eae",
+  "phase": "02-inspection",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 32132,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 153.956176757813,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+      "text": "Detective",
+      "width": 144.239990234375,
+      "x": 595.4482421875,
+      "y": 490.892333984375
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 96.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+      "text": "23:31 是断路故障，23:55—00:02 才是四锚闭合与正压恢复。",
+      "width": 860.0,
+      "x": 290.0,
+      "y": 788.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 39.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+      "text": "Detective",
+      "width": 92.0,
+      "x": 308.0,
+      "y": 770.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 26.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+      "text": "▼",
+      "width": 26.0,
+      "x": 1110.0,
+      "y": 850.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 39.0,
+      "path": "/root/@Control@2/@Label@149",
+      "text": "Knowledge gained: 两个时间节点",
+      "width": 236.0,
+      "x": 719.5,
+      "y": 60.0
+    }
+  ],
+  "write_error": 0
+}

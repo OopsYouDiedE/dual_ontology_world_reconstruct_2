@@ -1,0 +1,29 @@
+{
+  "action": "",
+  "case_id": "service-maintenance",
+  "max_fps": 60,
+  "phase": "completed",
+  "process_id": 41084,
+  "reason": "",
+  "state": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 6.0,
+    "det_pos": "(5.55, 1.95)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "A-P",
+    "viewport_size": "(1440, 900)"
+  },
+  "status": "passed",
+  "updated_at": "2026-11-17 17:46:54"
+}

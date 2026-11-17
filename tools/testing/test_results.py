@@ -22,7 +22,7 @@ def normalize(test_id, segment, revision, at, scores, reasons, **extra):
                                   else 'Imported from the original test record.')
              for value, note in zip(values, notes)]
     status = ('不合格' if any(v is not None and v < 8 for v in values)
-              else '待补测' if any(v is None for v in values) else '合格')
+              else '已测 · 评分不全' if any(v is None for v in values) else '合格')
     return dict(id=test_id, segment_id=segment, revision=revision, at=at,
                 scores=values, reasons=notes, status=status, **extra)
 
@@ -39,7 +39,7 @@ def collect(reviews, events):
         if r.get('status') == 'blocked':
             result['status'] = '不合格'
         elif r.get('status') == 'incomplete' and result['status'] == '合格':
-            result['status'] = '待补测'
+            result['status'] = '已测 · 评分不全'
         results.append(result)
     for event in events:
         batch = event.get('test_result')
@@ -65,7 +65,7 @@ def latest_by_segment(results):
 
 
 def score_text(value):
-    return '未测' if value is None else f'{value:g}/10'
+    return '评分缺项' if value is None else f'{value:g}/10'
 
 
 def matrix(scenes, latest):
@@ -171,7 +171,9 @@ def latest_scene_survey(root):
         if not isinstance(status, dict) or status.get('profile') != 'scene_survey':
             continue
         rows = []
-        scores_data = _json_file(directory / 'scene-scores.json', {})
+        scores_data = _json_file(directory / 'scene-scores-reviewed.json')
+        if scores_data is None:
+            scores_data = _json_file(directory / 'scene-scores.json', {})
         case_scores = {}
         if (isinstance(scores_data, dict) and status.get('run_id') and status.get('revision')
                 and scores_data.get('run_id') == status.get('run_id')
@@ -299,6 +301,7 @@ def scene_survey_payload(root, survey):
                            images=[relative(p) for p in row.get('images', [])]) for row in survey['rows']])
 
 
-SCENE_LIVE_BOOTSTRAP = ("if(!window.__sceneSurveyLive){window.__sceneSurveyLive=true;"
+SCENE_LIVE_BOOTSTRAP = ("if(document.body.dataset.reportClientVersion!=='2'){window.location.reload();}"
+                        "else if(!window.__sceneSurveyLive){window.__sceneSurveyLive=true;"
                         "var s=document.createElement('script');s.src='scene-live.js?t='+Date.now();"
                         "s.onerror=function(){window.__sceneSurveyLive=false};document.body.append(s);}\n")

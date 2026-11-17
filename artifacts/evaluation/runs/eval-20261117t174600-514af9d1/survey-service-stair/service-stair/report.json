@@ -1,0 +1,299 @@
+{
+  "acceptance_eligible": false,
+  "actions": [
+    {
+      "action": "process_production_beat",
+      "id": "d1_route",
+      "state": {
+        "beat": "d1_route",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 6.0,
+        "det_pos": "(3.15, 3.15)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "service_stair_M",
+        "viewport_size": "(1440, 900)"
+      }
+    }
+  ],
+  "final": {
+    "beat": "d1_route",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 6.0,
+    "det_pos": "(3.15, 3.15)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "service_stair_M",
+    "viewport_size": "(1440, 900)"
+  },
+  "fixture": {
+    "entry": "exploration",
+    "id": "service-stair",
+    "mock": {
+      "beat_cursor": 5.0,
+      "flags": {
+        "service_map": true
+      }
+    },
+    "mode": "story",
+    "playing": false,
+    "room": "service_stair_M",
+    "schema_version": 1.0,
+    "time": {
+      "day": 1.0,
+      "hour": 9.0,
+      "minute": 15.0
+    }
+  },
+  "id": "service-stair",
+  "images": [
+    {
+      "caption": "service-stair · 01-entry",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/01-entry.png",
+      "phase": "01-entry",
+      "room": "service_stair_M",
+      "visible_text": [
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 121.927368164063,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+          "text": "Detective",
+          "width": 103.771362304688,
+          "x": 675.763610839844,
+          "y": 389.284454345703
+        }
+      ]
+    },
+    {
+      "caption": "service-stair · 02-beat",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/02-beat.png",
+      "phase": "02-beat",
+      "room": "service_stair_M",
+      "visible_text": [
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 59.7269897460938,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@156/@Label3D@158",
+          "text": "Que",
+          "width": 52.4969482421875,
+          "x": 767.441040039063,
+          "y": 342.947845458984
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 96.9696044921875,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@160/@Label3D@162",
+          "text": "Lucian",
+          "width": 92.5709228515625,
+          "x": 811.573547363281,
+          "y": 462.11328125
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 78.0486145019531,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@164/@Label3D@166",
+          "text": "Ward",
+          "width": 68.7005615234375,
+          "x": 712.006469726563,
+          "y": 425.180328369141
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 121.927368164063,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+          "text": "Detective",
+          "width": 103.771362304688,
+          "x": 675.763610839844,
+          "y": 389.284454345703
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 96.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+          "text": "The map shows a service passage. I didn't use the front",
+          "width": 860.0,
+          "x": 290.0,
+          "y": 788.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 39.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+          "text": "Que",
+          "width": 47.0,
+          "x": 308.0,
+          "y": 770.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 26.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+          "text": "▼",
+          "width": 26.0,
+          "x": 1110.0,
+          "y": 850.0
+        }
+      ]
+    },
+    {
+      "caption": "service-stair · 03-result",
+      "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/03-result.png",
+      "phase": "03-result",
+      "room": "service_stair_M",
+      "visible_text": [
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 59.7269897460938,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@156/@Label3D@158",
+          "text": "Que",
+          "width": 52.4969482421875,
+          "x": 767.441040039063,
+          "y": 342.947845458984
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 96.9696044921875,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@160/@Label3D@162",
+          "text": "Lucian",
+          "width": 92.5709228515625,
+          "x": 811.573547363281,
+          "y": 462.11328125
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 78.0486145019531,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@164/@Label3D@166",
+          "text": "Ward",
+          "width": 68.7005615234375,
+          "x": 712.006469726563,
+          "y": 425.180328369141
+        },
+        {
+          "class": "Label3D",
+          "disabled": false,
+          "height": 121.927368164063,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+          "text": "Detective",
+          "width": 103.771362304688,
+          "x": 675.763610839844,
+          "y": 389.284454345703
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 96.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148",
+          "text": "The map shows a service passage. I didn't use the front",
+          "width": 860.0,
+          "x": 290.0,
+          "y": 788.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 39.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@146",
+          "text": "Que",
+          "width": 47.0,
+          "x": 308.0,
+          "y": 770.0
+        },
+        {
+          "class": "Label",
+          "disabled": false,
+          "height": 26.0,
+          "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@148/@Label@147",
+          "text": "▼",
+          "width": 26.0,
+          "x": 1110.0,
+          "y": 850.0
+        }
+      ]
+    }
+  ],
+  "initial": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 5.0,
+    "det_pos": "(3.15, 3.15)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "service_stair_M",
+    "viewport_size": "(1440, 900)"
+  },
+  "issues": [],
+  "max_fps": 60,
+  "metrics": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/metrics/timeline.yaml",
+  "restored": {
+    "beat": "",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 5.0,
+    "det_pos": "(3.15, 3.15)",
+    "evidence": [],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "service_stair_M",
+    "viewport_size": "(1440, 900)"
+  },
+  "segment_id": "service_route",
+  "snapshot": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/entry.snapshot.json",
+  "snapshot_restored": true,
+  "snapshot_saved": true,
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 27912,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "stalls": [],
+  "status": "passed"
+}

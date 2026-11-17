@@ -45,7 +45,7 @@ class ResultBatches(unittest.TestCase):
 
     def test_missing_and_blocked_results(self):
         r = results.collect([], [self.event('one', '2026-11-17T01:00:00+00:00', [8] * 6 + [None])])[0]
-        self.assertEqual(r['status'], '待补测')
+        self.assertEqual(r['status'], '已测 · 评分不全')
         review = dict(id='blocked', segment_id='wake', revision='abc1234',
                       observed_at=r['at'], scores=[8] * 7, score_reasons=['Observed'] * 7,
                       report='report.md', status='blocked')

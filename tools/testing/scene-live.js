@@ -30,7 +30,7 @@
         const cell = node('td'); cell.className = 'survey-score'; cell.dataset.surveyScore = key;
         const value = row.scores?.[key];
         const valid = typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 10;
-        cell.append(node('strong', valid ? `${value}/10` : '未测'), node('small', row.reasons?.[key] || '该场景当前批次尚无评分。'));
+        cell.append(node('strong', valid ? `${value}/10` : '评分缺项'), node('small', row.reasons?.[key] || '该场景当前批次尚无评分。'));
         r.append(cell);
       });
       const evidence = node('td');

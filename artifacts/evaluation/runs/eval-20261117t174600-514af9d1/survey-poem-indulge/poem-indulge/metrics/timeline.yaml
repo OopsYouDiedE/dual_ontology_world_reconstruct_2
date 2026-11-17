@@ -1,0 +1,46 @@
+"schema_version": 1
+"metadata":
+  "mock": true
+  "case_id": "poem-indulge"
+  "acceptance_eligible": false
+  "frame_clock": "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+  "warmup_policy": "Cold start and each constructed room/stage: first 1.5 s recorded separately; only explicitly marked steady frames determine the 33.3 ms veto"
+  "content_text_policy": "visible_active_viewports"
+  "source_identity":
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2"
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+    "configured_main_scene": "res://scenes/main/Boot.tscn"
+    "current_scene": ""
+    "launch_scene": ""
+    "process_id": 22720
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe"
+  "fps_window": "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
+  "audio_method": "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
+  "audio_capture_buffer_s": 15.0
+  "audio_dba":
+    "value": null
+    "reason": "digital output has no calibrated acoustic SPL reference; use LUFS"
+  "vram_method": "Godot renderer resource allocation; not driver-wide dedicated GPU residency"
+  "render_backend": "gl_compatibility"
+  "start_local": "2026-11-17 17:48:37"
+  "start_unix": 1794908917.279
+  "measurement_context": "rendered_runtime"
+  "realtime_performance_eligible": true
+timeline:
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":478.79296875,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908917.50319},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":65536,"error":0},"avg_fps":40.7144572966415,"content_text":{"characters":85,"strings":["Lucian","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Moran","Veronica","Bertrand","Detective"]},"draw_calls":4405,"elapsed_s":0.245613,"frame":10,"frame_p95_ms":118.305,"frame_p99_ms":118.305,"gpu_resource_mb":851.995497703552,"loading_warmup_frames":10,"low_1_fps":8.45272811800008,"low_5_fps":8.45272811800008,"max_frame_ms":118.305,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":478.79296875,"scene_node":"poem","spikes_over_33_3_ms":1,"static_ram_mb":179.508177757263,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:48:37","total_visible_characters":85}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":478.79296875,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908917.50319},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":229376,"error":0},"avg_fps":53.8364370258126,"content_text":{"characters":85,"strings":["Lucian","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Moran","Veronica","Bertrand","Detective"]},"draw_calls":4405,"elapsed_s":0.761566,"frame":41,"frame_p95_ms":30.492,"frame_p99_ms":118.305,"gpu_resource_mb":851.995497703552,"loading_warmup_frames":41,"low_1_fps":8.45272811800008,"low_5_fps":16.6990442580336,"max_frame_ms":118.305,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":478.79296875,"scene_node":"poem","spikes_over_33_3_ms":1,"static_ram_mb":179.529589653015,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:48:38","total_visible_characters":85}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":478.79296875,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908917.50319},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":425984,"error":0},"avg_fps":56.279973049027,"content_text":{"characters":85,"strings":["Lucian","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Moran","Veronica","Bertrand","Detective"]},"draw_calls":4405,"elapsed_s":1.26155,"frame":71,"frame_p95_ms":29.87,"frame_p99_ms":118.305,"gpu_resource_mb":851.995497703552,"loading_warmup_frames":71,"low_1_fps":8.45272811800008,"low_5_fps":19.0911650860773,"max_frame_ms":118.305,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":478.79296875,"scene_node":"poem","spikes_over_33_3_ms":1,"static_ram_mb":179.529986381531,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:48:38","total_visible_characters":85}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":533.34765625,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908920.98162},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":1245184,"error":0},"avg_fps":25.2366608139092,"content_text":{"characters":154,"strings":["Lucian","Gu Pingzhang","Caretaker","Que","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Detective","Friends! These fourteen ancient lines may offer us comfort.","Lucian","▼"]},"draw_calls":4409,"elapsed_s":3.72474,"frame":94,"frame_p95_ms":30.854,"frame_p99_ms":2059.012,"gpu_resource_mb":1044.56715583801,"loading_warmup_frames":84,"low_1_fps":0.485669826110775,"low_5_fps":2.19337495481648,"max_frame_ms":2059.012,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":533.34765625,"scene_node":"poem","spikes_over_33_3_ms":4,"static_ram_mb":193.29424571991,"steady_spikes_over_33_3_ms":3,"system_time":"2026-11-17 17:48:41","total_visible_characters":154}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":533.34765625,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908920.98162},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":1409024,"error":0},"avg_fps":29.0908402877392,"content_text":{"characters":154,"strings":["Lucian","Gu Pingzhang","Caretaker","Que","Ward","Huo Duo","Shen Ding","Su Ling","Selma","Ruan Qingyue","Elena","Detective","Friends! These fourteen ancient lines may offer us comfort.","Lucian","▼"]},"draw_calls":4409,"elapsed_s":4.228135,"frame":123,"frame_p95_ms":30.492,"frame_p99_ms":118.305,"gpu_resource_mb":1044.56715583801,"loading_warmup_frames":84,"low_1_fps":0.918561697722472,"low_5_fps":2.95117823683121,"max_frame_ms":2059.012,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":533.34765625,"scene_node":"poem","spikes_over_33_3_ms":5,"static_ram_mb":202.564677238464,"steady_spikes_over_33_3_ms":4,"system_time":"2026-11-17 17:48:41","total_visible_characters":154}
+"summary":
+  "frames": 133
+  "max_frame_ms": 2059.012
+  "spikes_over_33_3_ms": 5
+  "steady_spikes_over_33_3_ms": 4
+  "loading_warmup_frames": 84
+  "audio_writer":
+    "bytes_written": 2129920
+    "bytes_queued": 0
+    "error": 0
+  "audio_discarded_frames": 0
+  "acceptance": "pending_independent_evidence_review"

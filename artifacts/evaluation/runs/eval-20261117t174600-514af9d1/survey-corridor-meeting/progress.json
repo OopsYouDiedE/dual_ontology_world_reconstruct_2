@@ -1,0 +1,31 @@
+{
+  "action": "",
+  "case_id": "corridor-meeting",
+  "max_fps": 60,
+  "phase": "completed",
+  "process_id": 42288,
+  "reason": "",
+  "state": {
+    "beat": "d1_wake",
+    "chapter_complete": false,
+    "chrome_visible": false,
+    "cursor": 1,
+    "det_pos": "(8.3, 2.2)",
+    "evidence": [
+      "e_b_water"
+    ],
+    "fade_alpha": 0.0,
+    "fade_visible": true,
+    "hold": {},
+    "knowledge": [],
+    "modal_visible": false,
+    "pending_choice": {},
+    "pending_conflict": "",
+    "pending_deduction": {},
+    "pose": "stand",
+    "room": "R05",
+    "viewport_size": "(1440, 900)"
+  },
+  "status": "passed",
+  "updated_at": "2026-11-17 17:46:22"
+}

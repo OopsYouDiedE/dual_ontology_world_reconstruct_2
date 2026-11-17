@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 from urllib.parse import quote, unquote, urlsplit
 import yaml
 from mainline_reviews import load_reviews, capture_time
@@ -141,8 +142,19 @@ def markdown_links(text):
 
 def atomic_write(path, text):
     temporary = path.with_name(path.name + f'.{os.getpid()}.tmp')
-    temporary.write_text(text, encoding='utf-8')
-    temporary.replace(path)
+    try:
+        temporary.write_text(text, encoding='utf-8')
+        for attempt in range(20):
+            try:
+                temporary.replace(path)
+                break
+            except PermissionError:
+                if attempt == 19:
+                    raise
+                time.sleep(0.025)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def development_image_origin(path):
@@ -886,6 +898,7 @@ def render():
         body += test_results.matrix(scenes, latest)
         body += ''.join(test_results.card(scene, latest.get(scene['id']), page, link, project_file, trajectory) for scene in scenes)
         document = wrap('第一章 · 测试评分', body, page, revision)
+        document = document.replace('<body ', '<body data-report-client-version="2" ', 1)
         document = document.replace(link(OUT / 'archive.html', '历史与辅助资料', page), '')
         document = document.replace('review.js', 'run-report.js')
         atomic_write(page, document)

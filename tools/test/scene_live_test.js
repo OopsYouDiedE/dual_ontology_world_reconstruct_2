@@ -27,7 +27,7 @@ assert.strictEqual(rows()[0].children[3].textContent,'受阻');
 assert.strictEqual(rows()[0].children[4].textContent,'gesture <wait>');
 assert.strictEqual(rows()[0].children[5].children[0].textContent,'6/10');
 assert.strictEqual(rows()[0].children[5].children[1].textContent,'spike > 33.3ms');
-assert.strictEqual(rows()[0].children[6].children[0].textContent,'未测');
+assert.strictEqual(rows()[0].children[6].children[0].textContent,'评分缺项');
 assert.strictEqual(rows()[0].children[6].children[1].textContent,'missing <proof>');
 assert.strictEqual(rows()[0].children[12].children[0].href,'../../artifacts/run/a/report.json');
 console.log('PASS: file:// scene status refresh, stall details, safe DOM, no duplicate table');

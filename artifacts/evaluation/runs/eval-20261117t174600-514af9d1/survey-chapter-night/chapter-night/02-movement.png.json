@@ -1,0 +1,92 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "mainline-development-survey",
+  "captured_local": "2026-11-17 17:50:12",
+  "case_id": "chapter-night",
+  "engine_time_scale": 1.0,
+  "image_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/02-movement.png",
+  "image_sha256": "9a2e8dcc1b22b9e2ec4624f005b2847bc39c3b00b223418a79bbee3211f1da5a",
+  "phase": "02-movement",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 32620,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "visible_text": [
+    {
+      "class": "Label3D",
+      "disabled": false,
+      "height": 139.068023681641,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+      "text": "Detective",
+      "width": 107.092529296875,
+      "x": 654.31591796875,
+      "y": 321.902282714844
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 22.0,
+      "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@244",
+      "text": "WASD Move",
+      "width": 75.0,
+      "x": 18.0,
+      "y": 870.0
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 35.0,
+      "path": "/root/@Control@2/@Control@150/@PanelContainer@249/@VBoxContainer@250/@Label@251",
+      "text": "Chapter 1 Complete",
+      "width": 584.0,
+      "x": 428.0,
+      "y": 395.5
+    },
+    {
+      "class": "Label",
+      "disabled": false,
+      "height": 23.0,
+      "path": "/root/@Control@2/@Control@150/@PanelContainer@249/@VBoxContainer@250/@Label@252",
+      "text": "The night ends. Tomorrow awaits.",
+      "width": 584.0,
+      "x": 428.0,
+      "y": 438.5
+    },
+    {
+      "class": "Button",
+      "disabled": false,
+      "height": 35.0,
+      "path": "/root/@Control@2/@Control@150/@PanelContainer@249/@VBoxContainer@250/@HBoxContainer@253/@Button@254",
+      "text": "Case File",
+      "width": 71.0,
+      "x": 428.0,
+      "y": 469.5
+    },
+    {
+      "class": "Button",
+      "disabled": false,
+      "height": 35.0,
+      "path": "/root/@Control@2/@Control@150/@PanelContainer@249/@VBoxContainer@250/@HBoxContainer@253/@Button@255",
+      "text": "Chapter 2",
+      "width": 76.0,
+      "x": 511.0,
+      "y": 469.5
+    },
+    {
+      "class": "Button",
+      "disabled": false,
+      "height": 35.0,
+      "path": "/root/@Control@2/@Control@150/@PanelContainer@249/@VBoxContainer@250/@HBoxContainer@253/@Button@256",
+      "text": "Title",
+      "width": 41.0,
+      "x": 599.0,
+      "y": 469.5
+    }
+  ],
+  "write_error": 0
+}

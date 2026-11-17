@@ -1,0 +1,531 @@
+{
+  "acceptance_eligible": false,
+  "cases": [
+    {
+      "acceptance_eligible": false,
+      "actions": [
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_sleeve",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 2.0,
+            "det_pos": "(3.45, 3.75)",
+            "evidence": [
+              "e_b_sleeve"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-P",
+            "viewport_size": "(1440, 900)"
+          }
+        },
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_drag",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 2.0,
+            "det_pos": "(4.05, 3.75)",
+            "evidence": [
+              "e_b_sleeve",
+              "e_b_drag"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-P",
+            "viewport_size": "(1440, 900)"
+          }
+        },
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_water",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 2.0,
+            "det_pos": "(3.75, 4.05)",
+            "evidence": [
+              "e_b_sleeve",
+              "e_b_drag",
+              "e_b_water"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-P",
+            "viewport_size": "(1440, 900)"
+          }
+        },
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_cloth",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 2.0,
+            "det_pos": "(3.45, 4.05)",
+            "evidence": [
+              "e_b_sleeve",
+              "e_b_drag",
+              "e_b_water",
+              "e_b_cloth"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-P",
+            "viewport_size": "(1440, 900)"
+          }
+        },
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_ratchet",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 2.0,
+            "det_pos": "(3.45, 4.05)",
+            "evidence": [
+              "e_b_sleeve",
+              "e_b_drag",
+              "e_b_water",
+              "e_b_cloth",
+              "e_b_ratchet"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-P",
+            "viewport_size": "(1440, 900)"
+          }
+        },
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_boots",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 2.0,
+            "det_pos": "(3.15, 4.05)",
+            "evidence": [
+              "e_b_sleeve",
+              "e_b_drag",
+              "e_b_water",
+              "e_b_cloth",
+              "e_b_ratchet",
+              "e_b_boots"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-P",
+            "viewport_size": "(1440, 900)"
+          }
+        },
+        {
+          "action": "production_inspect_walk",
+          "collected": true,
+          "id": "e_b_seal",
+          "state": {
+            "beat": "",
+            "chapter_complete": false,
+            "chrome_visible": false,
+            "cursor": 2.0,
+            "det_pos": "(8.25, 1.35)",
+            "evidence": [
+              "e_b_sleeve",
+              "e_b_drag",
+              "e_b_water",
+              "e_b_cloth",
+              "e_b_ratchet",
+              "e_b_boots",
+              "e_b_seal"
+            ],
+            "fade_alpha": 0.0,
+            "fade_visible": true,
+            "hold": {},
+            "knowledge": [],
+            "modal_visible": false,
+            "pending_choice": {},
+            "pending_conflict": "",
+            "pending_deduction": {},
+            "pose": "stand",
+            "room": "B-P",
+            "viewport_size": "(1440, 900)"
+          }
+        }
+      ],
+      "final": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 2.0,
+        "det_pos": "(8.25, 1.35)",
+        "evidence": [
+          "e_b_sleeve",
+          "e_b_drag",
+          "e_b_water",
+          "e_b_cloth",
+          "e_b_ratchet",
+          "e_b_boots",
+          "e_b_seal"
+        ],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "B-P",
+        "viewport_size": "(1440, 900)"
+      },
+      "fixture": {
+        "entry": "exploration",
+        "id": "kitchen-evidence",
+        "mock": {
+          "beat_cursor": 2.0,
+          "flags": {
+            "service_map": true
+          }
+        },
+        "mode": "story",
+        "playing": false,
+        "room": "B-P",
+        "schema_version": 1.0,
+        "time": {
+          "day": 1.0,
+          "hour": 8.0,
+          "minute": 0.0
+        }
+      },
+      "id": "kitchen-evidence",
+      "images": [
+        {
+          "caption": "kitchen-evidence · 01-entry",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/01-entry.png",
+          "phase": "01-entry",
+          "room": "B-P",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 194.152038574219,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@202/@Label3D@204",
+              "text": "Huo Duo",
+              "width": 196.268310546875,
+              "x": 928.26171875,
+              "y": 144.157287597656
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 222.821624755859,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@206/@Label3D@208",
+              "text": "Shen Ding",
+              "width": 197.634948730469,
+              "x": 741.534606933594,
+              "y": 111.622459411621
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 149.724502563477,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@210/@Label3D@212",
+              "text": "Su Ling",
+              "width": 128.476440429688,
+              "x": 559.570556640625,
+              "y": 178.789291381836
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 248.256988525391,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 220.298370361328,
+              "x": 472.702545166016,
+              "y": 307.092498779297
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 43.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@328",
+              "text": "E Heel Marks",
+              "width": 117.0,
+              "x": 661.5,
+              "y": 745.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 22.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@329",
+              "text": "Clues 0/7",
+              "width": 75.0,
+              "x": 18.0,
+              "y": 870.0
+            }
+          ]
+        },
+        {
+          "caption": "kitchen-evidence · 02-inspection",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/02-inspection.png",
+          "phase": "02-inspection",
+          "room": "B-P",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 196.763442993164,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@202/@Label3D@204",
+              "text": "Huo Duo",
+              "width": 198.825927734375,
+              "x": 926.116333007813,
+              "y": 146.810409545898
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 225.866333007813,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@206/@Label3D@208",
+              "text": "Shen Ding",
+              "width": 199.815673828125,
+              "x": 736.968566894531,
+              "y": 113.877471923828
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 151.710678100586,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@210/@Label3D@212",
+              "text": "Su Ling",
+              "width": 131.050476074219,
+              "x": 551.772888183594,
+              "y": 181.906509399414
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 255.90641784668,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 205.504821777344,
+              "x": 516.220397949219,
+              "y": 255.034683227539
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 43.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@328",
+              "text": "E Heel Marks",
+              "width": 117.0,
+              "x": 661.5,
+              "y": 745.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 22.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@329",
+              "text": "Clues 1/7",
+              "width": 75.0,
+              "x": 18.0,
+              "y": 870.0
+            }
+          ]
+        },
+        {
+          "caption": "kitchen-evidence · 03-result",
+          "path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/03-result.png",
+          "phase": "03-result",
+          "room": "B-P",
+          "visible_text": [
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 221.191665649414,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@202/@Label3D@204",
+              "text": "Huo Duo",
+              "width": 189.560852050781,
+              "x": 565.042358398438,
+              "y": 238.68620300293
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 254.160049438477,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@206/@Label3D@208",
+              "text": "Shen Ding",
+              "width": 232.220825195313,
+              "x": 317.125854492188,
+              "y": 203.91389465332
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 169.623016357422,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@47/@Node3D@210/@Label3D@212",
+              "text": "Su Ling",
+              "width": 205.466735839844,
+              "x": 106.12574005127,
+              "y": 278.257995605469
+            },
+            {
+              "class": "Label3D",
+              "disabled": false,
+              "height": 257.396728515625,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@SubViewportContainer@39/@SubViewport@40/@Node3D@41/@Node3D@48/@Node3D@50/@Label3D@53",
+              "text": "Detective",
+              "width": 235.802795410156,
+              "x": 761.451843261719,
+              "y": 200.815963745117
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 43.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@328",
+              "text": "E Lead Seal",
+              "width": 107.0,
+              "x": 666.5,
+              "y": 745.0
+            },
+            {
+              "class": "Label",
+              "disabled": false,
+              "height": 22.0,
+              "path": "/root/@Control@2/@VBoxContainer@4/@Control@37/@Label@329",
+              "text": "Clues 7/7",
+              "width": 75.0,
+              "x": 18.0,
+              "y": 870.0
+            }
+          ]
+        }
+      ],
+      "initial": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 2.0,
+        "det_pos": "(3.299999, 4.32)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "B-P",
+        "viewport_size": "(1440, 900)"
+      },
+      "issues": [],
+      "max_fps": 60,
+      "metrics": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/metrics/timeline.yaml",
+      "restored": {
+        "beat": "",
+        "chapter_complete": false,
+        "chrome_visible": false,
+        "cursor": 2.0,
+        "det_pos": "(3.299999, 4.32)",
+        "evidence": [],
+        "fade_alpha": 0.0,
+        "fade_visible": true,
+        "hold": {},
+        "knowledge": [],
+        "modal_visible": false,
+        "pending_choice": {},
+        "pending_conflict": "",
+        "pending_deduction": {},
+        "pose": "stand",
+        "room": "B-P",
+        "viewport_size": "(1440, 900)"
+      },
+      "segment_id": "kitchen_evidence",
+      "snapshot": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/entry.snapshot.json",
+      "snapshot_restored": true,
+      "snapshot_saved": true,
+      "source_identity": {
+        "configured_main_scene": "res://scenes/main/Boot.tscn",
+        "current_scene": "",
+        "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+        "launch_scene": "",
+        "process_id": 39076,
+        "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+        "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+      },
+      "stalls": [],
+      "status": "passed"
+    }
+  ],
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "",
+    "process_id": 39076,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  }
+}

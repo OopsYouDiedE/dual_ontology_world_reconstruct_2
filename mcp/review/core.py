@@ -52,7 +52,14 @@ def atomic_write(path: Path, content: str, *, exclusive=False):
             # A hard link publishes the complete file with create-only semantics.
             os.link(temporary, path)
         else:
-            os.replace(temporary, path)
+            for attempt in range(20):
+                try:
+                    os.replace(temporary, path)
+                    break
+                except PermissionError:
+                    if attempt == 19:
+                        raise
+                    time.sleep(0.025)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)

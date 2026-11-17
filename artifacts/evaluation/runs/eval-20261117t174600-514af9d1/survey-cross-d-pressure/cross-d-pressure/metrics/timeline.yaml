@@ -1,0 +1,47 @@
+"schema_version": 1
+"metadata":
+  "mock": true
+  "case_id": "cross-d-pressure"
+  "acceptance_eligible": false
+  "frame_clock": "Time.get_ticks_usec, unscaled, includes loading and capture overhead"
+  "warmup_policy": "Cold start and each constructed room/stage: first 1.5 s recorded separately; only explicitly marked steady frames determine the 33.3 ms veto"
+  "content_text_policy": "visible_active_viewports"
+  "source_identity":
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2"
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+    "configured_main_scene": "res://scenes/main/Boot.tscn"
+    "current_scene": ""
+    "launch_scene": ""
+    "process_id": 18748
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe"
+  "fps_window": "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
+  "audio_method": "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
+  "audio_capture_buffer_s": 15.0
+  "audio_dba":
+    "value": null
+    "reason": "digital output has no calibrated acoustic SPL reference; use LUFS"
+  "vram_method": "Godot renderer resource allocation; not driver-wide dedicated GPU residency"
+  "render_backend": "gl_compatibility"
+  "start_local": "2026-11-17 17:47:20"
+  "start_unix": 1794908840.906
+  "measurement_context": "rendered_runtime"
+  "realtime_performance_eligible": true
+timeline:
+  - {"audio":{},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":98304,"error":0},"avg_fps":40.6449541321693,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":2059,"elapsed_s":0.246033,"frame":10,"frame_p95_ms":133.182,"frame_p99_ms":133.182,"gpu_resource_mb":145.107025146484,"loading_warmup_frames":10,"low_1_fps":7.50852217266598,"low_5_fps":7.50852217266598,"max_frame_ms":133.182,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":null,"scene_node":"cross_zone","spikes_over_33_3_ms":1,"static_ram_mb":150.866233825684,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:47:21","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","ram_mb":405.0234375,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908841.18477},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":262144,"error":0},"avg_fps":53.4550683423049,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":2059,"elapsed_s":0.748292,"frame":40,"frame_p95_ms":30.285,"frame_p99_ms":133.182,"gpu_resource_mb":145.107025146484,"loading_warmup_frames":40,"low_1_fps":7.50852217266598,"low_5_fps":12.1950475911732,"max_frame_ms":133.182,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":405.0234375,"scene_node":"cross_zone","spikes_over_33_3_ms":1,"static_ram_mb":150.871845245361,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:47:21","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":405.3203125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908842.13394},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":425984,"error":0},"avg_fps":56.2130013546542,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":2059,"elapsed_s":1.263053,"frame":71,"frame_p95_ms":30.637,"frame_p99_ms":133.182,"gpu_resource_mb":147.138534545898,"loading_warmup_frames":71,"low_1_fps":7.50852217266598,"low_5_fps":17.6756517896597,"max_frame_ms":133.182,"measurement_context":"rendered_runtime","measurement_phase":"loading_warmup","monitor_characters":0,"monitor_visible":false,"ram_mb":405.3203125,"scene_node":"cross_zone","spikes_over_33_3_ms":1,"static_ram_mb":150.878051757813,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:47:22","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":405.3203125,"sample_peak_dbfs":null,"sample_rate":44100.0,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908842.13394},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":622592,"error":0},"avg_fps":57.2598713750533,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":2059,"elapsed_s":1.763888,"frame":101,"frame_p95_ms":30.534,"frame_p99_ms":32.8,"gpu_resource_mb":147.138534545898,"loading_warmup_frames":85,"low_1_fps":12.0494993433023,"low_5_fps":20.7157999406147,"max_frame_ms":133.182,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":405.3203125,"scene_node":"cross_zone","spikes_over_33_3_ms":1,"static_ram_mb":160.980609893799,"steady_spikes_over_33_3_ms":0,"system_time":"2026-11-17 17:47:22","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":null,"max_momentary_lufs":null,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":null,"ram_mb":415.79296875,"sample_peak_dbfs":null,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":false,"status":"measuring","true_peak_dbtp":null,"updated_unix":1794908842.72667},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":786432,"error":0},"avg_fps":56.2880576530431,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":2057,"elapsed_s":2.274017,"frame":128,"frame_p95_ms":31.662,"frame_p99_ms":43.853,"gpu_resource_mb":147.623302459717,"loading_warmup_frames":85,"low_1_fps":11.2972011184229,"low_5_fps":19.5272726258324,"max_frame_ms":133.182,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":415.79296875,"scene_node":"cross_zone","spikes_over_33_3_ms":5,"static_ram_mb":171.337875366211,"steady_spikes_over_33_3_ms":4,"system_time":"2026-11-17 17:47:23","total_visible_characters":9}
+  - {"audio":{"command":["C:\\Users\\iii\\Documents\\ffmpeg\\bin\\ffmpeg.EXE","-hide_banner","-nostats","-f","f32le","-ar","44100","-ac","2","-i","pipe:0","-af","ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'","-f","null","-"],"dba":null,"integrated_lufs":-30.124,"max_momentary_lufs":-28.605,"method":"FFmpeg EBU R128 / ITU BS.1770","momentary_lufs":-30.977,"ram_mb":422.48046875,"sample_peak_dbfs":-16.306171383648,"sample_rate":44100.0,"short_term_lufs":null,"signal_present":true,"status":"measuring","true_peak_dbtp":-16.306171383648,"updated_unix":1794908843.35452},"audio_discarded_frames":0,"audio_snapshot_read_retries":0,"audio_writer":{"bytes_queued":0,"bytes_written":950272,"error":0},"avg_fps":56.7451689389874,"content_text":{"characters":9,"strings":["Detective"]},"draw_calls":2057,"elapsed_s":2.784378,"frame":158,"frame_p95_ms":33.697,"frame_p99_ms":43.853,"gpu_resource_mb":147.623302459717,"loading_warmup_frames":85,"low_1_fps":11.2972011184229,"low_5_fps":19.4322857711946,"max_frame_ms":133.182,"measurement_context":"rendered_runtime","measurement_phase":"steady","monitor_characters":0,"monitor_visible":false,"ram_mb":422.48046875,"scene_node":"cross_zone","spikes_over_33_3_ms":8,"static_ram_mb":171.354011535645,"steady_spikes_over_33_3_ms":7,"system_time":"2026-11-17 17:47:23","total_visible_characters":9}
+"summary":
+  "frames": 186
+  "max_frame_ms": 133.182
+  "spikes_over_33_3_ms": 10
+  "steady_spikes_over_33_3_ms": 9
+  "loading_warmup_frames": 85
+  "audio_writer":
+    "bytes_written": 1146880
+    "bytes_queued": 0
+    "error": 0
+  "audio_discarded_frames": 0
+  "acceptance": "pending_independent_evidence_review"

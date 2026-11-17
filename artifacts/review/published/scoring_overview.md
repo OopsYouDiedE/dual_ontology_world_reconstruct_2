@@ -1,6 +1,6 @@
 # Chapter 1 scoring snapshot
 
-Revision: e816ad136e4cf29c395d2719af008be68f354064
+Revision: 5ac4c9fbc01d37eb3ca9111e1578c0198bbe98e8
 
 Historical evidence: 不完整 · 正式验收待评
 

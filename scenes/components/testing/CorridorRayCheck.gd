@@ -1,6 +1,6 @@
 extends RefCounted
-## Corridor-stage development ray probe. The stage has no production physics
-## bodies: collision shapes below are invisible, test-only proxies made from
+## Corridor-stage development ray probe. Collision shapes below are invisible,
+## test-only proxies made from
 ## actual visible meshes (including current skeletal poses). The camera and
 ## targets remain the original nodes, in their original SubViewport/world.
 ## The production corridor controller has no macro close-up; a follow-camera

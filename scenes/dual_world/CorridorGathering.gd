@@ -158,7 +158,21 @@ func _box(pos: Vector3, size: Vector3, c: Color, emit := 0.0) -> MeshInstance3D:
 	mi.material_override = _mat(c, emit)
 	mi.position = pos
 	_root.add_child(mi)
+	var shape := BoxShape3D.new()
+	shape.size = size
+	_add_surface_collision(mi, shape)
 	return mi
+
+
+func _add_surface_collision(mesh: MeshInstance3D, shape: Shape3D) -> void:
+	var body := StaticBody3D.new()
+	body.name = "CorridorSurface"
+	body.collision_layer = 1
+	body.collision_mask = 0
+	mesh.add_child(body)
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	body.add_child(collision)
 
 
 func _label(text: String, pos: Vector3, size := 0.0045, c := Color("#ffe3a3")) -> void:
@@ -189,6 +203,10 @@ func _plant(at: Vector3) -> void:
 	pot.material_override = _mat(Color("#9a5b3a"))
 	pot.position = Vector3(0, 0.25, 0)
 	holder.add_child(pot)
+	var pot_shape := CylinderShape3D.new()
+	pot_shape.radius = pm.top_radius
+	pot_shape.height = pm.height
+	_add_surface_collision(pot, pot_shape)
 	var rim := MeshInstance3D.new()
 	var rm := CylinderMesh.new()
 	rm.top_radius = 0.28

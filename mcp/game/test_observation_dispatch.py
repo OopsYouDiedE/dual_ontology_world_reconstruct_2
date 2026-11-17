@@ -54,6 +54,20 @@ class ObservationDispatchTests(unittest.TestCase):
         self.assertEqual(set(visible), {"session_id", "image_base64", "audio_base64", "source_identity", "server_identity"})
         self.assertEqual(visible["image_base64"], "pixels")
         self.assertEqual(visible["source_identity"], {"process_id": 7})
+        # The runtime removes the endpoint before returning close. Its stored
+        # blind identity must continue to govern the receipt and retries.
+        with patch.dict(runtime.SESSIONS, {}, clear=True):
+            closed = server.observer_result("input", "close", dict(result, closed=True, graceful_exit=True,
+                metrics_status="running", checkpoint_path="secret-save"))
+        self.assertTrue(closed["closed"])
+        self.assertTrue(closed["graceful_exit"])
+        self.assertEqual(closed["source_identity"], {"process_id": 7})
+        self.assertNotIn("checkpoint_path", closed)
+        self.assertNotIn("room", closed)
+        note = server.observer_result("input", "event_script", {"recorded": True,
+            "case_id": "secret", "evidence_path": "record.jsonl"}, "owned")
+        self.assertEqual(note, {"recorded": True, "evidence_path": "record.jsonl"})
+        server.BLIND_SESSIONS.discard("owned")
         with patch.dict(runtime.SESSIONS, {"owned": SimpleNamespace(assessment_plan=None)}):
             self.assertIs(server.observer_result("input", "observe", result), result)
 

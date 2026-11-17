@@ -430,7 +430,7 @@ def analyze_audio(directory: Path, name: str, intervals: list, rate: int, ffmpeg
             raise ValueError("Audio capture does not cover the scene interval")
         ranges.append((start, min(end, duration)))
         previous_end = end
-    command = [ffmpeg, "-hide_banner", "-nostats"]
+    command = [ffmpeg, "-hide_banner", "-nostats", "-nostdin"]
     for start, end in ranges:
         command.extend(["-ss", "%.9f" % start, "-t", "%.9f" % (end - start), "-f", "f32le", "-ar", str(rate), "-ac", "2", "-i", str(source)])
     filters = "volume=" + str(gain_db) + "dB,ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'"
@@ -446,7 +446,7 @@ def analyze_audio(directory: Path, name: str, intervals: list, rate: int, ffmpeg
     error = None
     with tempfile.TemporaryFile(dir=directory) as metadata_stream, tempfile.TemporaryFile(dir=directory) as error_stream:
         try:
-            result = subprocess.run(command, stdout=metadata_stream, stderr=error_stream,
+            result = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=metadata_stream, stderr=error_stream,
                                     timeout=timeout_seconds, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             exit_code = result.returncode
         except subprocess.TimeoutExpired:

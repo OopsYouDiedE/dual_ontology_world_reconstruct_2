@@ -13,6 +13,7 @@ import automation
 import environment
 import runtime
 
+BLIND_SESSIONS = set()
 
 def schema(properties, required=()):
     return {"type": "object", "properties": properties, "required": list(required), "additionalProperties": False}
@@ -99,14 +100,23 @@ def execute(service, name, arguments):
 
 
 
-def observer_result(service, name, result):
+def observer_result(service, name, result, session_id=None):
     """Keep blind gameplay responses to pixels and transport provenance."""
-    if service != "input" or name not in ("on", "step", "observe") or not isinstance(result, dict):
+    if service != "input" or not isinstance(result, dict):
         return result
-    endpoint = runtime.SESSIONS.get(result.get("session_id"))
-    if endpoint is None or not getattr(endpoint, "assessment_plan", None):
+    session_id = result.get("session_id") or session_id
+    endpoint = runtime.SESSIONS.get(session_id)
+    if endpoint is not None and getattr(endpoint, "assessment_plan", None):
+        BLIND_SESSIONS.add(session_id)
+    if session_id not in BLIND_SESSIONS:
         return result
     allowed = ("session_id", "source_identity", "server_identity", "image_base64", "audio_base64")
+    if name == "close":
+        allowed += ("closed", "graceful_exit", "metrics_status", "metrics_poll_tool")
+    elif name == "metrics_status":
+        allowed += ("metrics_status", "metrics_summary_path", "metrics_error")
+    elif name in ("event_script", "character_script", "charactor_script", "review_visible_text"):
+        allowed += ("recorded", "kind", "evidence_path", "monitor_elapsed_s")
     visible = {key: result[key] for key in allowed if key in result}
     # Runtime scene paths are also nested in capture provenance. Retain only
     # the static project identity and owning process needed for validation.
@@ -160,7 +170,7 @@ async def main(service):
         if name not in {tool.name for tool in tools}: raise ValueError("Unknown tool")
         try:
             result = await execute_owned(service, name, arguments)
-            result = observer_result(service, name, result)
+            result = observer_result(service, name, result, arguments.get("session_id"))
             png = result.pop("image_base64", None)
             audio = result.pop("audio_base64", None)
             content = [types.TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]

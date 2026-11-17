@@ -43,8 +43,10 @@ class AudioChannelTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=ROOT / '.runtime') as temporary:
             path = Path(temporary)
             (path / 'mix.f32le').write_bytes(bytes(8 * 100))
-            with patch('mainline_metrics.subprocess.run', side_effect=subprocess.TimeoutExpired('ffmpeg', 180)):
+            with patch('mainline_metrics.subprocess.run', side_effect=subprocess.TimeoutExpired('ffmpeg', 180)) as run:
                 state = analyze_audio(path, 'timeout', [[0, 1]], 100, 'ffmpeg')
+            self.assertIn('-nostdin', run.call_args.args[0])
+            self.assertEqual(run.call_args.kwargs['stdin'], subprocess.DEVNULL)
             self.assertEqual(state['status'], 'error')
             self.assertIsNone(state['ffmpeg_exit_code'])
             self.assertIn('timed out', state['reason'])

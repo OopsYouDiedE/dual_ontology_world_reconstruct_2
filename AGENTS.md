@@ -206,3 +206,7 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 - Run every planned scene, record exact failed or stalled phases, and publish all seven score fields together with evidence or explicit missing-measurement reasons.
 - Keep only `artifacts/review/index.html`; delete `gameplay.html`. Update the already-open local report automatically when scene states or scores change.
 - The user stopped the GPT-5.6 Terra tester. Do not resume or recreate that model for this task.
+
+## 完整评测交付硬门槛 — 2026-11-17
+
+- **用户要求“一次测试全部评分”时，任务完成条件是：全部目标场景的七项评分均有真实证据支持的数值、理由和可打开的证据链接，并已整批写入唯一首页、自动刷新、核验、提交和推送。** 开测前必须逐项确认 `fluidity`、`text_density`、`action_sfx_integrity`、`audio_loudness`、`blind_narrative_match`、`aesthetic_similarity`、`narrative_flow` 的采集方法、所需参考资料、负责代理及评分时机，将独立盲玩、音频测量、动态动作检查和参考图对比纳入同一轮计划；依赖缺失应在开测前处理。任何场景仍有缺项，整批任务保持“未完成”，负责代理继续补采、补评和复核。`null`、缺测说明和“场景执行结束”只用于如实记录当前进度，均不能满足完整评测交付条件。实测失败须按既定量表给出有证据的失败分并标出具体卡点；禁止用零分、默认分、猜测分、跨版本拼分或修改旧证据凑齐七项。补测必须保留自己的测试 ID、版本和证据关系；涉及版本变化时按该版本重新完成所需覆盖。达到时间上限或遇到真实阻塞时，保留记录、明确列出未完成项和原因，任务继续标为未完成，禁止宣称全部评测完成；本条不自动延长既定测试窗口。

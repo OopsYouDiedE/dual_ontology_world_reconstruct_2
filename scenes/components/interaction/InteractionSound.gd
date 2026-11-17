@@ -24,3 +24,4 @@ static func play(player: AudioStreamPlayer3D, cue: String) -> void:
 	stream.data = data
 	player.stream = stream
 	player.play()
+	preload("res://scenes/components/testing/AudioCueTelemetry.gd").record("spatial_effect")

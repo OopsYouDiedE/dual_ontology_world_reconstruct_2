@@ -62,6 +62,7 @@ class Endpoint:
         self.concurrency_observation_path = None
         self.concurrency_observation_error = None
         self.audio_observation_cursor = 0
+        self.audio_cue_cursor = 0
 
     def attach(self, process):
         self.process = process
@@ -502,6 +503,9 @@ def execute(name, arguments):
                 observation["audio_preview"] = {"available": False, "reason": "The audio capture directory is not ready."}
             else:
                 preview, endpoint.audio_observation_cursor, data = read_excerpt(endpoint.metrics_directory, endpoint.audio_observation_cursor)
+                from audio_cue_observation import read_cues
+                cues, endpoint.audio_cue_cursor = read_cues(endpoint.metrics_directory, endpoint.audio_cue_cursor)
+                observation["audio_cues"] = cues
                 observation["audio_preview"] = preview
                 if data: observation["audio_base64"] = data
         return dict(observation, session_id=identity, mode=endpoint.mode)

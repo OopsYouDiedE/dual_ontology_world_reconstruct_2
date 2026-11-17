@@ -240,6 +240,7 @@ func _schedule_step(s: int) -> void:
 func sfx(kind: String) -> void:
 	if not enabled: return
 	if not _started: start()
+	preload("res://scenes/components/testing/AudioCueTelemetry.gd").record("global_effect")
 	match kind:
 		"click":
 			_noise(0.035, 2100.0, 0.10)

@@ -30,6 +30,18 @@ class ObservationDispatchTests(unittest.TestCase):
             self.assertTrue(runtime.execute('review_visible_text', arguments)['recorded'])
             append.assert_called_once_with(endpoint, 'owned', '/root/prompt', 'Open', 'prompt', True, runtime.ROOT)
 
+    def test_audio_preview_returns_session_bound_scheduling_cues(self):
+        endpoint = SimpleNamespace(lock=threading.Lock(), backend="godot", mode="godot_manual",
+                                   metrics_directory=runtime.ROOT, audio_observation_cursor=0, audio_cue_cursor=0,
+                                   request=lambda operation, timeout: {"scene": "example"})
+        with patch.dict(runtime.SESSIONS, {"owned": endpoint}), \
+             patch("audio_observation.read_excerpt", return_value=({"available": True}, 8, "wav")), \
+             patch("audio_cue_observation.read_cues", return_value=({"available": True, "events": []}, 12)):
+            result = runtime.execute("observe", {"session_id": "owned", "capture_audio": True})
+        self.assertEqual((endpoint.audio_observation_cursor, endpoint.audio_cue_cursor), (8, 12))
+        self.assertEqual(result["audio_base64"], "wav")
+        self.assertTrue(result["audio_cues"]["available"])
+
     def test_unknown_session_is_rejected(self):
         with patch.dict(runtime.SESSIONS, {}, clear=True), self.assertRaisesRegex(ValueError, 'Unknown session'):
             runtime.execute('event_script', {'session_id': 'missing', 'text': 'A door opens.'})

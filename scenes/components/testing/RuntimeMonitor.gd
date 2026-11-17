@@ -13,6 +13,10 @@ var capture: AudioEffectCapture
 var capture_index := -1
 var background_streams: Array[Dictionary] = []
 var text_changes: FileAccess
+var audio_cues: FileAccess
+var _audio_cue_count := 0
+var _audio_cue_opened := false
+var _audio_cue_write_errors := 0
 var _last_text_signature := ""
 var _text_checked_frames := 0
 var _text_write_errors := 0
@@ -57,6 +61,7 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	metadata["fps_window"] = "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
 	metadata["audio_method"] = "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
 	metadata["audio_capture_buffer_s"] = 15.0
+	metadata["audio_cue_coverage"] = "Scheduled global and interaction effects only, after monitor initialization; no audibility or story inference; direct players and music are outside coverage"
 	metadata["background_audio_scope"] = "Music and existing Ambient buses; Master captures full mix. Music is background music; Sfx and Voice are excluded from background capture."
 	metadata["background_bus_inventory"] = []
 	for bus_name in ["Music", "Ambient"]:
@@ -89,6 +94,12 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	text_changes = FileAccess.open(directory + "/visible-text-changes.jsonl", FileAccess.WRITE)
 	_audio_route_initial = _audio_route_snapshot()
 	_started_usec = Time.get_ticks_usec()
+	audio_cues = FileAccess.open(directory + "/audio-cues.jsonl", FileAccess.WRITE)
+	if audio_cues != null:
+		_audio_cue_opened = true
+		audio_cues.store_line(JSON.stringify({"type": "configuration", "timebase": "RuntimeMonitor elapsed_s", "coverage": "instrumented effect scheduling after monitor initialization only", "audibility": "not determined"}))
+		if audio_cues.get_error() != OK: _audio_cue_write_errors += 1
+	add_to_group("runtime_audio_cue_monitor")
 	_audio_route_last = _audio_route_initial.duplicate(true)
 	_audio_route_events.append({"elapsed_s": 0.0, "snapshot": _audio_route_last.duplicate(true)})
 	_last_usec = _started_usec
@@ -173,6 +184,17 @@ func _record_audio_route(now: int) -> void:
 	_audio_route_last = current.duplicate(true)
 	_audio_route_events.append({"elapsed_s": float(now - _started_usec) / 1000000.0, "snapshot": current})
 
+func record_audio_cue(category: String) -> void:
+	# This is a scheduling trace only; it never asserts an audible sound.
+	if _finished or _started_usec == 0: return
+	if category not in ["global_effect", "spatial_effect"]: return
+	if audio_cues == null:
+		_audio_cue_write_errors += 1
+		return
+	_audio_cue_count += 1
+	audio_cues.store_line(JSON.stringify({"type": "scheduled", "elapsed_s": float(Time.get_ticks_usec() - _started_usec) / 1000000.0, "frame": _frame_count, "sequence": _audio_cue_count, "category": category}))
+	if audio_cues.get_error() != OK: _audio_cue_write_errors += 1
+
 func _record_visible_text(now: int) -> void:
 	if text_changes == null or not is_instance_valid(_owner): return
 	_text_checked_frames += 1
@@ -219,6 +241,9 @@ func _process(delta: float) -> void:
 	_sample_clock += delta
 	if _sample_clock < 0.5: return
 	_sample_clock = 0.0
+	if audio_cues != null:
+		audio_cues.flush()
+		if audio_cues.get_error() != OK: _audio_cue_write_errors += 1
 	var audio_path := output_dir + "/audio.json"
 	if FileAccess.file_exists(audio_path):
 		# A Windows snapshot replacement can race a reader. Preserve the previous
@@ -305,6 +330,13 @@ func finish() -> void:
 					break
 		var background_stop := FileAccess.open(output_dir + "/" + stream.stem + ".stop", FileAccess.WRITE)
 		if background_stop != null: background_stop.store_string("finalize"); background_stop.close()
+	remove_from_group("runtime_audio_cue_monitor")
+	if audio_cues != null:
+		audio_cues.store_line(JSON.stringify({"type": "finalized", "elapsed_s": float(Time.get_ticks_usec() - _started_usec) / 1000000.0, "scheduled_count": _audio_cue_count, "write_errors": _audio_cue_write_errors}))
+		audio_cues.flush()
+		if audio_cues.get_error() != OK: _audio_cue_write_errors += 1
+		audio_cues.close()
+		audio_cues = null
 	if text_changes != null:
 		text_changes.flush()
 		if text_changes.get_error() != OK: _text_write_errors += 1
@@ -320,7 +352,7 @@ func finish() -> void:
 				AudioServer.remove_bus_effect(0, index)
 				break
 	if frames != null: frames.flush(); frames.close(); frames = null
-	report.finish({"visible_text_collection": {"complete": _frame_count > 0 and _text_checked_frames == _frame_count and _text_write_errors == 0, "checked_frames": _text_checked_frames, "write_errors": _text_write_errors}, "frames": _frame_count, "max_frame_ms": _max_ms, "spikes_over_33_3_ms": _spikes, "steady_spikes_over_33_3_ms": _steady_spikes, "loading_warmup_frames": _warmup_frames, "audio_writer": pcm.stats(), "audio_discarded_frames": _capture_lost, "background_audio": background_status, "master_start_offset_s": float(_started_usec - _master_capture_usec) / 1000000.0, "audio_route": {"stable": _audio_route_stable, "snapshot": _audio_route_initial, "changes": _audio_route_events, "capture_point": "last enabled bus effect, before bus volume and send"}, "acceptance": "pending_independent_evidence_review"})
+	report.finish({"audio_cue_collection": {"complete": _audio_cue_opened and _audio_cue_write_errors == 0, "scheduled_count": _audio_cue_count, "write_errors": _audio_cue_write_errors, "coverage": "global and interaction effect scheduling after monitor initialization"}, "visible_text_collection": {"complete": _frame_count > 0 and _text_checked_frames == _frame_count and _text_write_errors == 0, "checked_frames": _text_checked_frames, "write_errors": _text_write_errors}, "frames": _frame_count, "max_frame_ms": _max_ms, "spikes_over_33_3_ms": _spikes, "steady_spikes_over_33_3_ms": _steady_spikes, "loading_warmup_frames": _warmup_frames, "audio_writer": pcm.stats(), "audio_discarded_frames": _capture_lost, "background_audio": background_status, "master_start_offset_s": float(_started_usec - _master_capture_usec) / 1000000.0, "audio_route": {"stable": _audio_route_stable, "snapshot": _audio_route_initial, "changes": _audio_route_events, "capture_point": "last enabled bus effect, before bus volume and send"}, "acceptance": "pending_independent_evidence_review"})
 
 func _exit_tree() -> void:
 	finish()

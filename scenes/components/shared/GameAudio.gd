@@ -150,6 +150,7 @@ func play_sfx(id: String, volume_db := 0.0, pitch := 1.0) -> void:
 	player.volume_db = volume_db
 	player.pitch_scale = pitch
 	player.play()
+	preload("res://scenes/components/testing/AudioCueTelemetry.gd").record("global_effect")
 
 func _target_db() -> float:
 	return MUSIC_DB + (DUCK_DB if _ducked else 0.0)

@@ -31509,3 +31509,443 @@ events:
     server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
     server_pid: 37752
     python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: all-story-segments-20261118
+  segment_id: project
+  kind: check
+  summary: Three isolated Terra-low observers started assigned segment entries with
+    audio capture disabled.
+  result: Verified three current-revision session metadata records; all record audio_capture_enabled=false
+    and no PCM files. One test-owned instance per observer; remaining cases follow
+    their prevalidated plans.
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: event-fff1ff3e9d3fd08b1ab42a74d3a02ccb
+  at: '2026-11-18T01:36:24.477954+08:00'
+  evidence:
+  - .runtime/all-story-20261118/batch-launch-check.json
+  - .runtime/all-story-20261118/group-a.json
+  - .runtime/all-story-20261118/group-b.json
+  - .runtime/all-story-20261118/group-c.json
+  evidence_sha256:
+  - path: .runtime/all-story-20261118/batch-launch-check.json
+    sha256: ea8e3c84db6b5144ff968e10d745daff5bd5caff54faf880806e886796165817
+  - path: .runtime/all-story-20261118/group-a.json
+    sha256: 535c713502d6f1825e4ab048777121909f2fa8118947124b95ca79422d344e78
+  - path: .runtime/all-story-20261118/group-b.json
+    sha256: 30a3ca1d68d51b8a81979052facf598a56fdbe1c7a43ae67d443bb2bc2e60a89
+  - path: .runtime/all-story-20261118/group-c.json
+    sha256: d923d3abef8f5fae7b8a63bb581a956df20f46a67fc0ccd5c3a991f1559113f0
+  related_event_ids: []
+  request_sha256: fff1ff3e9d3fd08b1ab42a74d3a02ccb34065612f946384b10bb22950e042a2c
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 37752
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: eval-20261118t022757-4d8f4240-scenario
+  segment_id: project
+  kind: check
+  summary: 启动测试：scenario
+  result: 测试进行中。
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: eval-20261118t022757-4d8f4240-scenario-start
+  at: '2026-11-18T02:28:04.486746+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids: []
+  request_sha256: fe83fcfef3dfa2879d08f3c74e0d68dbe0ff3d5ba17ad1eaf5dc31fd60cabea3
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 11436
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t022757-4d8f4240-scenario
+  segment_id: project
+  kind: check
+  summary: 完成测试：scenario
+  result: 测试通过。
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: eval-20261118t022757-4d8f4240-scenario-end
+  at: '2026-11-18T02:28:15.664090+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261118t022757-4d8f4240/scenario/godot.log
+  - artifacts/evaluation/runs/eval-20261118t022757-4d8f4240/scenario/launch.json
+  - artifacts/evaluation/runs/eval-20261118t022757-4d8f4240/scenario/timeline.yaml
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261118t022757-4d8f4240/scenario/godot.log
+    sha256: e784f9f69a71b3e742480fba5d872737eeac8a5cd4f78eb63418f9c15f9d1cfb
+  - path: artifacts/evaluation/runs/eval-20261118t022757-4d8f4240/scenario/launch.json
+    sha256: faa75b91bb74d4477e039c1da73dad9ef75f849a44c59db8388cc1fe9ecf4201
+  - path: artifacts/evaluation/runs/eval-20261118t022757-4d8f4240/scenario/timeline.yaml
+    sha256: e79e6eee6e348672c03c2a6ff36a22ba1d778750779f4dc67ab28c9212351951
+  related_event_ids: []
+  request_sha256: a9d80aee4c6e9d5908ee770637d914dda851fc4a714140f4df12f01f96c9f05a
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 11436
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t022757-4d8f4240-scenario
+  segment_id: project
+  kind: complete
+  summary: 完成测试记录：scenario
+  result: 测试已结束；结果和证据已记录。
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: eval-20261118t022757-4d8f4240-scenario-complete
+  at: '2026-11-18T02:28:19.148129+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids:
+  - eval-20261118t022757-4d8f4240-scenario-start
+  - eval-20261118t022757-4d8f4240-scenario-end
+  request_sha256: 72e836584a4362b22928899f5dd273a19ce55d607b28d547a46643bf053fdcc8
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 11436
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t023043-6c3ee487-room-fast
+  segment_id: project
+  kind: check
+  summary: 启动测试：room-fast
+  result: 测试进行中。
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: eval-20261118t023043-6c3ee487-room-fast-start
+  at: '2026-11-18T02:30:49.504292+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids: []
+  request_sha256: fff443a089c5c557d3b918a4623e2cd9d4d7695871b0b8fbd3deae3c2e8bed91
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 4444
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t023043-6c3ee487-room-fast
+  segment_id: project
+  kind: check
+  summary: 完成测试：room-fast
+  result: 测试通过。
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: eval-20261118t023043-6c3ee487-room-fast-end
+  at: '2026-11-18T02:30:55.633295+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/godot.log
+  - artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/launch.json
+  - artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/result.json
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/godot.log
+    sha256: 7b99f060bdbdea186b2a973deaab46b56ef8a07ddcc19def581afb5cae698b9c
+  - path: artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/launch.json
+    sha256: 82f155d55afde045afe71fd41308eb307326f61920ac777c041fe80b8901fb3e
+  - path: artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/result.json
+    sha256: ab985ef634480cf4c90fe7779cc60b7dcfe21480c6b73f9a2df8fa75b84982ac
+  related_event_ids: []
+  request_sha256: d2174a500e435a706f97047e722260ba9e2e2f542a355798965127aa0670873d
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 4444
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t023043-6c3ee487-room-fast
+  segment_id: project
+  kind: complete
+  summary: 完成测试记录：room-fast
+  result: 测试已结束；结果和证据已记录。
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: eval-20261118t023043-6c3ee487-room-fast-complete
+  at: '2026-11-18T02:30:59.202363+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids:
+  - eval-20261118t023043-6c3ee487-room-fast-start
+  - eval-20261118t023043-6c3ee487-room-fast-end
+  request_sha256: 2e2e18b489e642ce4df702e482e1ade2a640484a3228394d2b768f0a8a0650a3
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 4444
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: test-8aa0a0a1cab93c386e641c4127442614
+  segment_id: wake
+  kind: check
+  summary: 'Test scores: eval-20261118t023043-6c3ee487-wake'
+  result: Seven dimensions recorded
+  revision: 5b1cd55174659460a975adc5452141320adce0ed
+  event_id: event-82136839408bf833bd7a25379a4137f9
+  at: '2026-11-18T02:31:09.610793+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/godot.log
+  - artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/launch.json
+  - artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/result.json
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/godot.log
+    sha256: 7b99f060bdbdea186b2a973deaab46b56ef8a07ddcc19def581afb5cae698b9c
+  - path: artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/launch.json
+    sha256: 82f155d55afde045afe71fd41308eb307326f61920ac777c041fe80b8901fb3e
+  - path: artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/result.json
+    sha256: ab985ef634480cf4c90fe7779cc60b7dcfe21480c6b73f9a2df8fa75b84982ac
+  related_event_ids: []
+  request_sha256: 82136839408bf833bd7a25379a4137f9f1927ab5e1466de0e3ebafdc98f253ff
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 4444
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+  test_result:
+    test_id: eval-20261118t023043-6c3ee487-wake
+    scores:
+      fluidity: 0
+      text_density: 0
+      action_sfx_integrity: 0
+      audio_loudness: 0
+      blind_narrative_match: 0
+      aesthetic_similarity: 0
+      narrative_flow: 0
+    reasons:
+      fluidity: 'Provisional 0: evidence unavailable; test incomplete. No steady-state
+        frame-time samples were collected for this segment.'
+      text_density: 'Provisional 0: evidence unavailable; test incomplete. Visible
+        dialogue and prompts were not counted and checked for English.'
+      action_sfx_integrity: 'Provisional 0: evidence unavailable; test incomplete.
+        A complete same-session physical action assessment was not collected.'
+      audio_loudness: 'Provisional 0: evidence unavailable; test incomplete. Integrated
+        loudness and true peak were not measured for this segment.'
+      blind_narrative_match: 'Provisional 0: evidence unavailable; test incomplete.
+        A blind player narrative comparison was not collected.'
+      aesthetic_similarity: 'Provisional 0: evidence unavailable; test incomplete.
+        A reference image similarity assessment was not collected.'
+      narrative_flow: 'Provisional 0: evidence unavailable; test incomplete. An end-to-end
+        player pacing assessment was not collected.'
+    provisional_categories:
+    - fluidity
+    - text_density
+    - action_sfx_integrity
+    - audio_loudness
+    - blind_narrative_match
+    - aesthetic_similarity
+    - narrative_flow
+    status: incomplete
+  test_request_sha256: e26f8bf1f69ebf093087261fae6228dff1b013f4bc44d393953275cbef8c75db
+- work_id: eval-20261118t024013-cf85ffed-room-fast
+  segment_id: project
+  kind: check
+  summary: 启动测试：room-fast
+  result: 测试进行中。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024013-cf85ffed-room-fast-start
+  at: '2026-11-18T02:40:19.522247+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids: []
+  request_sha256: 598bcff0a311888de4d13d7b8dc06a088f9d61b4e88fc5a859e635d04144444b
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 10896
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024013-cf85ffed-room-fast
+  segment_id: project
+  kind: check
+  summary: 完成测试：room-fast
+  result: 测试通过。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024013-cf85ffed-room-fast-end
+  at: '2026-11-18T02:40:25.605475+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261118t024013-cf85ffed/room-fast/godot.log
+  - artifacts/evaluation/runs/eval-20261118t024013-cf85ffed/room-fast/launch.json
+  - artifacts/evaluation/runs/eval-20261118t024013-cf85ffed/room-fast/result.json
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261118t024013-cf85ffed/room-fast/godot.log
+    sha256: c0bea00aac7f12e51d35cf7d5f821283e59000e6b51328c12afe98a7912eff2d
+  - path: artifacts/evaluation/runs/eval-20261118t024013-cf85ffed/room-fast/launch.json
+    sha256: 8889036e0f003f82a56ce8f8609538784d5c2de584b58efdaba562244122db74
+  - path: artifacts/evaluation/runs/eval-20261118t024013-cf85ffed/room-fast/result.json
+    sha256: 017028b12e25a99d1b2f9a3956f8c5a60a5183002d42978edfbd9a6602ea17fe
+  related_event_ids: []
+  request_sha256: de44cc160fd5def65d414b559c0b9de3474e6f44b87cfd1a9261c9c9fc4676bd
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 10896
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024013-cf85ffed-room-fast
+  segment_id: project
+  kind: complete
+  summary: 完成测试记录：room-fast
+  result: 测试已结束；结果和证据已记录。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024013-cf85ffed-room-fast-complete
+  at: '2026-11-18T02:40:29.264900+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids:
+  - eval-20261118t024013-cf85ffed-room-fast-start
+  - eval-20261118t024013-cf85ffed-room-fast-end
+  request_sha256: a166a288caaf76dfad55df6429c7a4e1e3f53c76d954344241934073153c31ab
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 10896
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024056-82494a25-scenario
+  segment_id: project
+  kind: check
+  summary: 启动测试：scenario
+  result: 测试进行中。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024056-82494a25-scenario-start
+  at: '2026-11-18T02:41:02.233265+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids: []
+  request_sha256: b7cb3160cab394b48a1ff1ca4db5cb1296cee612c8d19ba2d4c049103e6bc484
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 18420
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024056-82494a25-scenario
+  segment_id: project
+  kind: check
+  summary: 完成测试：scenario
+  result: 测试通过。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024056-82494a25-scenario-end
+  at: '2026-11-18T02:41:14.912595+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261118t024056-82494a25/scenario/godot.log
+  - artifacts/evaluation/runs/eval-20261118t024056-82494a25/scenario/launch.json
+  - artifacts/evaluation/runs/eval-20261118t024056-82494a25/scenario/timeline.yaml
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261118t024056-82494a25/scenario/godot.log
+    sha256: 64804008b2447ba41cf95039e9c1fdd7697097610cafabfaec0f14b7aa9db582
+  - path: artifacts/evaluation/runs/eval-20261118t024056-82494a25/scenario/launch.json
+    sha256: 6af6ffccf9e7c259b7ec42799e5c306f7abae043622b67b682ba84e19f845010
+  - path: artifacts/evaluation/runs/eval-20261118t024056-82494a25/scenario/timeline.yaml
+    sha256: 16da035c3d859ede0c66dcc94e3608978c5906a759e9fea5a6b873cfd72e8d74
+  related_event_ids: []
+  request_sha256: e521db83d4cc306083102354b20ecd30b3a13b3bcff38c4cc3dd2760a46aa51b
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 18420
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024056-82494a25-scenario
+  segment_id: project
+  kind: complete
+  summary: 完成测试记录：scenario
+  result: 测试已结束；结果和证据已记录。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024056-82494a25-scenario-complete
+  at: '2026-11-18T02:41:18.231661+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids:
+  - eval-20261118t024056-82494a25-scenario-start
+  - eval-20261118t024056-82494a25-scenario-end
+  request_sha256: 8974a0e4bc115838c2f74cf59ffa1ea647f2c4e760a51200731486a488bf50e7
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 18420
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024231-da0f7509-scenario
+  segment_id: project
+  kind: check
+  summary: 启动测试：scenario
+  result: 测试进行中。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024231-da0f7509-scenario-start
+  at: '2026-11-18T02:42:37.366291+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids: []
+  request_sha256: 102755a981250cd42b5266f3379c6a64651a21f5a5735ceffe152083856786a8
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 26684
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024231-da0f7509-scenario
+  segment_id: project
+  kind: check
+  summary: 完成测试：scenario
+  result: 测试通过。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024231-da0f7509-scenario-end
+  at: '2026-11-18T02:42:53.030583+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/godot.log
+  - artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/launch.json
+  - artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/timeline.yaml
+  - artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/captures/entry.png
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/godot.log
+    sha256: 5ee72c168803553adbea799056670f7a029daea5b3ad76eaf45a96855cd0d8b2
+  - path: artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/launch.json
+    sha256: 707df8421667dbd5264714f938652adab38a36aaf4e595c6fb5929cbe66f9269
+  - path: artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/timeline.yaml
+    sha256: f5c80b65fff311c5dd30ef309ba3d103039442f852b03f455811998f325f8ebd
+  - path: artifacts/evaluation/runs/eval-20261118t024231-da0f7509/scenario/captures/entry.png
+    sha256: 4489a4573ce40fc2a206a24a5beb9b83da79ef342d8a7b31f2b9450bd64d040b
+  related_event_ids: []
+  request_sha256: af5878ee6564857de71884c9b12b09ddbb7deb7d38a118be275a96d8160e1567
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 26684
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261118t024231-da0f7509-scenario
+  segment_id: project
+  kind: complete
+  summary: 完成测试记录：scenario
+  result: 测试已结束；结果和证据已记录。
+  revision: 31bbd1930ec7d3ca3624455d16e04392284af552
+  event_id: eval-20261118t024231-da0f7509-scenario-complete
+  at: '2026-11-18T02:42:57.142751+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids:
+  - eval-20261118t024231-da0f7509-scenario-start
+  - eval-20261118t024231-da0f7509-scenario-end
+  request_sha256: 66b5ab92432ed858626ea437695ccceb5cb9d01ec98e9d6e3bc411a5ac637d11
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: 177442049c51eff191b452cae71f06f897298db3e289101e055844cf4d9bc8a5
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 26684
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe

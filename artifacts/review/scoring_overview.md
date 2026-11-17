@@ -1,10 +1,10 @@
 # 测试评分总览
 
-报告版本：ceaca7d3d318311330b70acb8a599a6359419596
+报告版本：31bbd1930ec7d3ca3624455d16e04392284af552
 
 | 片段 | 测试 ID | 游玩流畅度 | 界面字数 | 动作完整性 | 音频响度 | 视听剧情替代 | 参考图相似度 | 剧情流畅性 |
 |---|---|---|---|---|---|---|---|---|
-| 起床与卧室探索 | wake-retest-20261118-ceaca7d | 6/10 | 8/10 | 6/10 | 0/10 (暂定·缺证据) | 5/10 | 6/10 | 6/10 |
+| 起床与卧室探索 | eval-20261118t023043-6c3ee487-wake | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) |
 | 出门与走廊会合 | eval-20261117t174600-514af9d1-reviewed-corridor | 8/10 | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) |
 | 厨房七证物与原房间镜头 | eval-20261117t174600-514af9d1-reviewed-kitchen_evidence | 6/10 | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) |
 | 厨房三段脑内推演 | eval-20261117t174600-514af9d1-reviewed-kitchen_reconstruction | 6/10 | 0/10 (暂定·缺证据) | 6/10 | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) |
@@ -18,15 +18,15 @@
 
 ## 起床与卧室探索
 
-wake-retest-20261118-ceaca7d · 2026-11-18T01:25:28.919279+08:00 · ceaca7d3d318311330b70acb8a599a6359419596 · 已测 · 测试未完成
+eval-20261118t023043-6c3ee487-wake · 2026-11-18T02:31:09.610793+08:00 · 5b1cd55174659460a975adc5452141320adce0ed · 已测 · 测试未完成
 
-- 游玩流畅度：6/10 — 96,614 steady frames; 45 exceeded 33.3 ms. P95 16.762 ms, P99 18.713 ms, average 59.99 FPS. Peak observed Godot processes: 3 (one test-owned, two pre-existing); this is a concurrent-load result.
-- 界面字数：8/10 — 53 visible-text changes; maximum 12 words and 60 characters; five unclassified strings counted conservatively. Latin-script validation only.
-- 动作完整性：6/10 — Independent observer: bed blanket displaced without visible hand contact in sampled frames; door-reaching pose visible. Wardrobe and other objects were not examined before exit. Visible motion only.
-- 音频响度：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. Provisional missing-evidence penalty: captured PCM duration 1613.674667 s fails to cover the 1614.481795 s frame timeline plus capture offset. User subsequently waived further recording and requested proceeding to other segments; no audio rerun.
-- 视听剧情替代：5/10 — Completed blind account supports bedroom bed/waking and departure (2 of 4 equal-weight facts); memory loss and unexplained hand scratches are absent. Canonical comparison: 5/10.
-- 参考图相似度：6/10 — Independent same-session comparison: matching room layout, camera, palette and furniture; white exterior void, flatter materials and different lighting/shadow balance. Score 6.
-- 剧情流畅性：6/10 — Independent observer: clue-search objective and hallway transition understandable; delayed clicks and unlabeled close-up exit impede exploration. Other bedroom objects not completed.
+- 游玩流畅度：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. No steady-state frame-time samples were collected for this segment.
+- 界面字数：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. Visible dialogue and prompts were not counted and checked for English.
+- 动作完整性：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. A complete same-session physical action assessment was not collected.
+- 音频响度：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. Integrated loudness and true peak were not measured for this segment.
+- 视听剧情替代：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. A blind player narrative comparison was not collected.
+- 参考图相似度：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. A reference image similarity assessment was not collected.
+- 剧情流畅性：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. An end-to-end player pacing assessment was not collected.
 
 ## 出门与走廊会合
 

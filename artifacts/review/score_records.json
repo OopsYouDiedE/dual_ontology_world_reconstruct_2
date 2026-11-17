@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-18T01:27:03+08:00",
-  "revision": "ceaca7d3d318311330b70acb8a599a6359419596",
+  "generated_at": "2026-11-18T02:43:20+08:00",
+  "revision": "31bbd1930ec7d3ca3624455d16e04392284af552",
   "dimensions": [
     "游玩流畅度",
     "界面字数",
@@ -14,7 +14,7 @@
   "history_evidence": {
     "complete": true,
     "counts": {
-      "valid": 341,
+      "valid": 337,
       "missing": 0,
       "changed": 0,
       "unverified": 0
@@ -29,58 +29,55 @@
         "R05"
       ],
       "scores": [
-        6,
-        8,
-        6,
         0,
-        5,
-        6,
-        6
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "status": "已测 · 测试未完成",
       "test": {
-        "id": "wake-retest-20261118-ceaca7d",
+        "id": "eval-20261118t023043-6c3ee487-wake",
         "segment_id": "wake",
-        "revision": "ceaca7d3d318311330b70acb8a599a6359419596",
-        "at": "2026-11-18T01:25:28.919279+08:00",
+        "revision": "5b1cd55174659460a975adc5452141320adce0ed",
+        "at": "2026-11-18T02:31:09.610793+08:00",
         "scores": [
-          6,
-          8,
-          6,
           0,
-          5,
-          6,
-          6
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
-          "96,614 steady frames; 45 exceeded 33.3 ms. P95 16.762 ms, P99 18.713 ms, average 59.99 FPS. Peak observed Godot processes: 3 (one test-owned, two pre-existing); this is a concurrent-load result.",
-          "53 visible-text changes; maximum 12 words and 60 characters; five unclassified strings counted conservatively. Latin-script validation only.",
-          "Independent observer: bed blanket displaced without visible hand contact in sampled frames; door-reaching pose visible. Wardrobe and other objects were not examined before exit. Visible motion only.",
-          "Provisional 0: evidence unavailable; test incomplete. Provisional missing-evidence penalty: captured PCM duration 1613.674667 s fails to cover the 1614.481795 s frame timeline plus capture offset. User subsequently waived further recording and requested proceeding to other segments; no audio rerun.",
-          "Completed blind account supports bedroom bed/waking and departure (2 of 4 equal-weight facts); memory loss and unexplained hand scratches are absent. Canonical comparison: 5/10.",
-          "Independent same-session comparison: matching room layout, camera, palette and furniture; white exterior void, flatter materials and different lighting/shadow balance. Score 6.",
-          "Independent observer: clue-search objective and hallway transition understandable; delayed clicks and unlabeled close-up exit impede exploration. Other bedroom objects not completed."
+          "Provisional 0: evidence unavailable; test incomplete. No steady-state frame-time samples were collected for this segment.",
+          "Provisional 0: evidence unavailable; test incomplete. Visible dialogue and prompts were not counted and checked for English.",
+          "Provisional 0: evidence unavailable; test incomplete. A complete same-session physical action assessment was not collected.",
+          "Provisional 0: evidence unavailable; test incomplete. Integrated loudness and true peak were not measured for this segment.",
+          "Provisional 0: evidence unavailable; test incomplete. A blind player narrative comparison was not collected.",
+          "Provisional 0: evidence unavailable; test incomplete. A reference image similarity assessment was not collected.",
+          "Provisional 0: evidence unavailable; test incomplete. An end-to-end player pacing assessment was not collected."
         ],
         "status": "已测 · 测试未完成",
         "provisional_categories": [
-          "audio_loudness"
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "fluidity",
+          "narrative_flow",
+          "text_density"
         ],
-        "images": [
-          {
-            "path": "artifacts/acceptance/wake-retest-20261118-ceaca7d/receipts/000012-0.png",
-            "caption": "000012-0"
-          }
-        ],
+        "images": [],
         "evidence": [
-          "artifacts/acceptance/wake-retest-20261118-ceaca7d/evidence-index.json",
-          "artifacts/acceptance/wake-retest-20261118-ceaca7d/blind-account.md",
-          "artifacts/acceptance/wake-retest-20261118-ceaca7d/observer-review.json",
-          "artifacts/acceptance/wake-retest-20261118-ceaca7d/canonical-comparison-main-only.json",
-          "artifacts/acceptance/wake-retest-20261118-ceaca7d/transport-check.json",
-          "artifacts/acceptance/wake-retest-20261118-ceaca7d/metrics/segment-metrics.json",
-          "artifacts/acceptance/wake-retest-20261118-ceaca7d/receipts/000012-0.png"
+          "artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/godot.log",
+          "artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/launch.json",
+          "artifacts/evaluation/runs/eval-20261118t023043-6c3ee487/room-fast/result.json"
         ],
-        "event_id": "event-4341389c8a602f844c3bb619a7d9cd76",
+        "event_id": "event-82136839408bf833bd7a25379a4137f9",
         "independent_review": false,
         "evidence_issues": []
       }
@@ -134,24 +131,7 @@
           "narrative_flow",
           "text_density"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/02-door_r06.png",
-            "caption": "02-door_r06"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/02-npc_shen.png",
-            "caption": "02-npc_shen"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/concurrency-observation.json",
@@ -225,20 +205,7 @@
           "narrative_flow",
           "text_density"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/concurrency-observation.json",
@@ -309,20 +276,7 @@
           "narrative_flow",
           "text_density"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/02-reconstruction.png",
-            "caption": "02-reconstruction"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/concurrency-observation.json",
@@ -394,44 +348,7 @@
           "blind_narrative_match",
           "narrative_flow"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-maintenance/service-maintenance/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/02-movement.png",
-            "caption": "02-movement"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-hall/service-hall/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/concurrency-observation.json",
@@ -529,44 +446,7 @@
           "blind_narrative_match",
           "narrative_flow"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-d-pressure/cross-d-pressure/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-central/cross-central/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/concurrency-observation.json",
@@ -663,44 +543,7 @@
           "blind_narrative_match",
           "narrative_flow"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/02-movement.png",
-            "caption": "02-movement"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-four-anchors/shaft-four-anchors/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-question/shaft-question/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/concurrency-observation.json",
@@ -797,44 +640,7 @@
           "narrative_flow",
           "text_density"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-expose/poem-expose/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-indulge/poem-indulge/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/concurrency-observation.json",
@@ -934,68 +740,7 @@
           "blind_narrative_match",
           "narrative_flow"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/02-movement.png",
-            "caption": "02-movement"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-w-102/institute-w-102/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-s-102/institute-s-102/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-b-102/institute-b-102/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/02-inspection.png",
-            "caption": "02-inspection"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institute-f-104/institute-f-104/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/concurrency-observation.json",
@@ -1119,44 +864,7 @@
           "narrative_flow",
           "text_density"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/02-movement.png",
-            "caption": "02-movement"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-medical/dinner-medical/03-result.png",
-            "caption": "03-result"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/02-beat.png",
-            "caption": "02-beat"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-plan/dinner-plan/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/concurrency-observation.json",
@@ -1253,20 +961,7 @@
           "narrative_flow",
           "text_density"
         ],
-        "images": [
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/02-movement.png",
-            "caption": "02-movement"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/03-result.png",
-            "caption": "03-result"
-          }
-        ],
+        "images": [],
         "evidence": [
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/launch.json",
           "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/concurrency-observation.json",

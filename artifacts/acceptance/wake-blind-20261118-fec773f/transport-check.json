@@ -1,0 +1,26 @@
+{
+  "test_id": "wake-blind-20261118-fec773f",
+  "revision": "fec773fd5858b884e94050208757c8725cb764c6",
+  "session_id": "c3cd01d6a8bc2f89",
+  "startup_receipt": ".runtime/input-client/93873a98450b5e82/000001.json",
+  "redaction_passed": true,
+  "payload_keys": [
+    "server_identity",
+    "session_id",
+    "source_identity"
+  ],
+  "source_keys": [
+    "configured_main_scene",
+    "executable_path",
+    "process_id",
+    "project_root",
+    "project_sha256"
+  ],
+  "image_count": 1,
+  "checked_at": "2026-11-17T16:28:26.520455+00:00",
+  "unit_tests": {
+    "total": 46,
+    "passed": 46
+  },
+  "scope": "Transport verification only; gameplay scores come from this session collectors and isolated observer."
+}

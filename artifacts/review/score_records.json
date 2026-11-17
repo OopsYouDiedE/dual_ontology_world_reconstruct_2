@@ -1,11 +1,11 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-17T21:09:33+08:00",
-  "revision": "dd0a9dad21d5ead4d9cb456e38cdc289508b3a0a",
+  "generated_at": "2026-11-18T00:49:38+08:00",
+  "revision": "08c529ced9ba1936d5b0fee444de7b3a820cd76a",
   "dimensions": [
     "游玩流畅度",
     "界面字数",
-    "动作与音效",
+    "动作完整性",
     "音频响度",
     "视听剧情替代",
     "参考图相似度",
@@ -14,7 +14,7 @@
   "history_evidence": {
     "complete": true,
     "counts": {
-      "valid": 349,
+      "valid": 340,
       "missing": 0,
       "changed": 0,
       "unverified": 0
@@ -30,70 +30,57 @@
       ],
       "scores": [
         6,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
+        8,
+        6,
+        0,
+        0,
+        6,
+        7
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
-        "id": "eval-20261117t174600-514af9d1-reviewed-wake",
+        "id": "wake-blind-20261118-fec773f",
         "segment_id": "wake",
-        "revision": "d341ce8d36422a5c63f409df20ee69a087e8ff32",
-        "at": "2026-11-17T18:04:08.951609+08:00",
+        "revision": "fec773fd5858b884e94050208757c8725cb764c6",
+        "at": "2026-11-18T00:49:07.020409+08:00",
         "scores": [
           6,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          8,
+          6,
+          0,
+          0,
+          6,
+          7
         ],
         "reasons": [
-          "Observed failing score in wake-bedroom=6",
-          "Missing measurements: wake-bedroom",
-          "Missing measurements: wake-bedroom",
-          "Missing measurements: wake-bedroom",
-          "Missing measurements: wake-bedroom",
-          "Missing measurements: wake-bedroom",
-          "Missing measurements: wake-bedroom"
+          "53227 steady frames; 50 above 33.3 ms after the 1.5-second warmup exclusions. P95 16.799 ms, P99 25.098 ms, average 59.98 FPS. Peak observed load: three Godot processes, including two pre-existing instances; this test owns one. Runtime includes observer and tool waiting.",
+          "61 visible-text changes; maximum 12 words and 60 characters in one frame. Seven unclassified strings counted conservatively; recognized nameplates and single-key icons excluded. Script checks found no non-Latin violations; Latin script alone does not verify English.",
+          "Independent observer: 6/10. The detective moves to the wardrobe and its door opens; the bed cover changes position. The wardrobe edge obscures the arm, and the bed action lacks visible hand-to-cover contact. Visible motion only. Close-time isolation failure is retained beside this assessment.",
+          "Provisional 0: evidence unavailable; test incomplete. Same-session raw Master and Music audio contain signal, but both segment analyses timed out after 180 seconds. FFmpeg inherited MCP stdin and stalled. Retain original failed analysis; the next revision disables interactive input and requires a full retest.",
+          "Provisional 0: evidence unavailable; test incomplete. The observer reached the hallway and recorded waking, unexplained scratches and departure; memory loss was absent. The close receipt then exposed current_scene, violating the required server-side isolation guarantee. A valid fully isolated test is unavailable; repeat with a fresh observer after repair.",
+          "Independent observer: 6/10, after completing the blind account. Same-session bedroom framing and furniture placement match the assigned reference, while pure-white cutaway surroundings, harsher floor lighting, flatter surfaces and window lighting diverge.",
+          "Independent observer: 7/10. Markers and the bedroom door guided the transition. The opening question and wardrobe dialogue establish a mystery; the bed inspection reveals little and the exit transition is abrupt. No gameplay phase blocked. Test incomplete due to close-time isolation and audio analysis failures."
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "audio_loudness",
+          "blind_narrative_match"
+        ],
         "images": [
           {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/01-entry.png",
-            "caption": "01-entry"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/02-movement.png",
-            "caption": "02-movement"
-          },
-          {
-            "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/03-result.png",
-            "caption": "03-result"
+            "path": "artifacts/acceptance/wake-blind-20261118-fec773f/000024-0.png",
+            "caption": "000024-0"
           }
         ],
         "evidence": [
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/launch.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/concurrency-observation.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/report.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/progress.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/metrics/timeline.yaml",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/metrics/frames.csv",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/metrics/audio.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/01-entry.png",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/01-entry.png.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/02-movement.png",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/02-movement.png.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/03-result.png",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-wake-bedroom/wake-bedroom/03-result.png.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/scene-scores-reviewed.json",
-          "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/visual-assessments.json"
+          "artifacts/acceptance/wake-blind-20261118-fec773f/evidence-index.json",
+          "artifacts/acceptance/wake-blind-20261118-fec773f/segment-metrics.json",
+          "artifacts/acceptance/wake-blind-20261118-fec773f/observer-review.json",
+          "artifacts/acceptance/wake-blind-20261118-fec773f/blind-account.md",
+          "artifacts/acceptance/wake-blind-20261118-fec773f/000026.json",
+          "artifacts/acceptance/wake-blind-20261118-fec773f/000024-0.png"
         ],
-        "event_id": "event-ff1793ba8f7a9cfbb1ff016f08abe97e",
+        "event_id": "event-4cd5efb168027b2ddeb76f6c0ef074d1",
         "independent_review": false,
         "evidence_issues": []
       }
@@ -107,14 +94,14 @@
       ],
       "scores": [
         8,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "已测 · 评分不全",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-corridor",
         "segment_id": "corridor",
@@ -122,23 +109,31 @@
         "at": "2026-11-17T18:05:08.034603+08:00",
         "scores": [
           8,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Lowest case score from this run: corridor-meeting=8",
-          "Missing measurements: corridor-meeting",
-          "Missing measurements: corridor-meeting",
-          "Missing measurements: corridor-meeting",
-          "Missing measurements: corridor-meeting",
-          "Missing measurements: corridor-meeting",
-          "Missing measurements: corridor-meeting"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: corridor-meeting",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: corridor-meeting",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: corridor-meeting",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: corridor-meeting",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: corridor-meeting",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: corridor-meeting"
         ],
-        "status": "已测 · 评分不全",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow",
+          "text_density"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-corridor-meeting/corridor-meeting/01-entry.png",
@@ -190,14 +185,14 @@
       "fragment_run": "terra-integrated-20261116/kitchen",
       "scores": [
         6,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-kitchen_evidence",
         "segment_id": "kitchen_evidence",
@@ -205,23 +200,31 @@
         "at": "2026-11-17T18:05:11.181317+08:00",
         "scores": [
           6,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in kitchen-evidence=6",
-          "Missing measurements: kitchen-evidence",
-          "Missing measurements: kitchen-evidence",
-          "Missing measurements: kitchen-evidence",
-          "Missing measurements: kitchen-evidence",
-          "Missing measurements: kitchen-evidence",
-          "Missing measurements: kitchen-evidence"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-evidence",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-evidence",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-evidence",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-evidence",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-evidence",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-evidence"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow",
+          "text_density"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-evidence/kitchen-evidence/01-entry.png",
@@ -267,14 +270,14 @@
       "fragment_run": "terra-reconstruction-expression-20261116/reconstruction",
       "scores": [
         6,
-        null,
+        0,
         6,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-kitchen_reconstruction",
         "segment_id": "kitchen_reconstruction",
@@ -282,23 +285,30 @@
         "at": "2026-11-17T18:05:14.442091+08:00",
         "scores": [
           6,
-          null,
+          0,
           6,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in kitchen-reconstruction=6",
-          "Missing measurements: kitchen-reconstruction",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-reconstruction",
           "Observed failing score in kitchen-reconstruction=6",
-          "Missing measurements: kitchen-reconstruction",
-          "Missing measurements: kitchen-reconstruction",
-          "Missing measurements: kitchen-reconstruction",
-          "Missing measurements: kitchen-reconstruction"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-reconstruction",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-reconstruction",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-reconstruction",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: kitchen-reconstruction"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow",
+          "text_density"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-kitchen-reconstruction/kitchen-reconstruction/01-entry.png",
@@ -346,13 +356,13 @@
       "scores": [
         6,
         6,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-service_route",
         "segment_id": "service_route",
@@ -361,22 +371,29 @@
         "scores": [
           6,
           6,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in service-stair=6, service-maintenance=6",
           "Observed failing score in service-maintenance=6; missing measurements: service-stair, service-hall",
-          "Missing measurements: service-stair, service-maintenance, service-hall",
-          "Missing measurements: service-stair, service-maintenance, service-hall",
-          "Missing measurements: service-stair, service-maintenance, service-hall",
-          "Missing measurements: service-stair, service-maintenance, service-hall",
-          "Missing measurements: service-stair, service-maintenance, service-hall"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: service-stair, service-maintenance, service-hall",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: service-stair, service-maintenance, service-hall",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: service-stair, service-maintenance, service-hall",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: service-stair, service-maintenance, service-hall",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: service-stair, service-maintenance, service-hall"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-service-stair/service-stair/01-entry.png",
@@ -474,13 +491,13 @@
       "scores": [
         6,
         6,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-cross_zone",
         "segment_id": "cross_zone",
@@ -489,22 +506,29 @@
         "scores": [
           6,
           6,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in cross-c-window=6, cross-d-pressure=6, cross-central=6",
           "Observed failing score in cross-c-window=6, cross-d-pressure=6; missing measurements: cross-central",
-          "Missing measurements: cross-c-window, cross-d-pressure, cross-central",
-          "Missing measurements: cross-c-window, cross-d-pressure, cross-central",
-          "Missing measurements: cross-c-window, cross-d-pressure, cross-central",
-          "Missing measurements: cross-c-window, cross-d-pressure, cross-central",
-          "Missing measurements: cross-c-window, cross-d-pressure, cross-central"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: cross-c-window, cross-d-pressure, cross-central",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: cross-c-window, cross-d-pressure, cross-central",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: cross-c-window, cross-d-pressure, cross-central",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: cross-c-window, cross-d-pressure, cross-central",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: cross-c-window, cross-d-pressure, cross-central"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-cross-c-window/cross-c-window/01-entry.png",
@@ -601,13 +625,13 @@
       "scores": [
         6,
         6,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-shaft",
         "segment_id": "shaft",
@@ -616,22 +640,29 @@
         "scores": [
           6,
           6,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in shaft-north-stair=6, shaft-four-anchors=6, shaft-question=6",
           "Observed failing score in shaft-four-anchors=6; missing measurements: shaft-north-stair, shaft-question",
-          "Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
-          "Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
-          "Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
-          "Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
-          "Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: shaft-north-stair, shaft-four-anchors, shaft-question"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-shaft-north-stair/shaft-north-stair/01-entry.png",
@@ -726,14 +757,14 @@
       ],
       "scores": [
         6,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-poem",
         "segment_id": "poem",
@@ -741,23 +772,31 @@
         "at": "2026-11-17T18:05:27.221090+08:00",
         "scores": [
           6,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in poem-stakeout=6, poem-expose=6, poem-indulge=6",
-          "Missing measurements: poem-stakeout, poem-expose, poem-indulge",
-          "Missing measurements: poem-stakeout, poem-expose, poem-indulge",
-          "Missing measurements: poem-stakeout, poem-expose, poem-indulge",
-          "Missing measurements: poem-stakeout, poem-expose, poem-indulge",
-          "Missing measurements: poem-stakeout, poem-expose, poem-indulge",
-          "Missing measurements: poem-stakeout, poem-expose, poem-indulge"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: poem-stakeout, poem-expose, poem-indulge",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: poem-stakeout, poem-expose, poem-indulge",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: poem-stakeout, poem-expose, poem-indulge",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: poem-stakeout, poem-expose, poem-indulge",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: poem-stakeout, poem-expose, poem-indulge",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: poem-stakeout, poem-expose, poem-indulge"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow",
+          "text_density"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-poem-stakeout/poem-stakeout/01-entry.png",
@@ -857,13 +896,13 @@
       "scores": [
         6,
         6,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-institutes",
         "segment_id": "institutes",
@@ -872,22 +911,29 @@
         "scores": [
           6,
           6,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in institutes-corridor=6, institute-w-102=6, institute-s-102=6, institute-b-102=6, institute-f-104=6",
           "Observed failing score in institute-w-102=6, institute-s-102=6, institute-b-102=6, institute-f-104=6; missing measurements: institutes-corridor",
-          "Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
-          "Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
-          "Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
-          "Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
-          "Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: institutes-corridor, institute-w-102, institute-s-102, institute-b-102, institute-f-104"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-institutes-corridor/institutes-corridor/01-entry.png",
@@ -1033,14 +1079,14 @@
       ],
       "scores": [
         6,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-dinner",
         "segment_id": "dinner",
@@ -1048,23 +1094,31 @@
         "at": "2026-11-17T18:05:35.213454+08:00",
         "scores": [
           6,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in dinner-dumpling=6, dinner-medical=6, dinner-plan=6",
-          "Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
-          "Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
-          "Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
-          "Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
-          "Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
-          "Missing measurements: dinner-dumpling, dinner-medical, dinner-plan"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: dinner-dumpling, dinner-medical, dinner-plan",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: dinner-dumpling, dinner-medical, dinner-plan"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow",
+          "text_density"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-dinner-dumpling/dinner-dumpling/01-entry.png",
@@ -1159,14 +1213,14 @@
       ],
       "scores": [
         6,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
-      "status": "不合格",
+      "status": "已测 · 测试未完成",
       "test": {
         "id": "eval-20261117t174600-514af9d1-reviewed-chapter_end",
         "segment_id": "chapter_end",
@@ -1174,23 +1228,31 @@
         "at": "2026-11-17T18:05:38.721939+08:00",
         "scores": [
           6,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "reasons": [
           "Observed failing score in chapter-night=6",
-          "Missing measurements: chapter-night",
-          "Missing measurements: chapter-night",
-          "Missing measurements: chapter-night",
-          "Missing measurements: chapter-night",
-          "Missing measurements: chapter-night",
-          "Missing measurements: chapter-night"
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: chapter-night",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: chapter-night",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: chapter-night",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: chapter-night",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: chapter-night",
+          "Provisional 0: evidence unavailable; test incomplete. Missing measurements: chapter-night"
         ],
-        "status": "不合格",
+        "status": "已测 · 测试未完成",
+        "provisional_categories": [
+          "action_sfx_integrity",
+          "aesthetic_similarity",
+          "audio_loudness",
+          "blind_narrative_match",
+          "narrative_flow",
+          "text_density"
+        ],
         "images": [
           {
             "path": "artifacts/evaluation/runs/eval-20261117t174600-514af9d1/survey-chapter-night/chapter-night/01-entry.png",

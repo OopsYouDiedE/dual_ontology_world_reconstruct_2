@@ -30392,6 +30392,430 @@ events:
     server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\server.py
     server_pid: 37064
     python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: segment-synchronous-entry
+  segment_id: project
+  kind: change
+  summary: Bind each simultaneous seven-category test to one of the eleven gameplay
+    segments
+  result: Added scenario entry and same-host next-case transitions; title fallback
+    rejected. Report consolidation and validation in progress.
+  revision: a362e28531a5c98409308d82e8e6b5ae9b240fcf
+  event_id: event-c8857f9f59106dce6cb8019b804139b1
+  at: '2026-11-17T19:57:56.069409+08:00'
+  evidence:
+  - mcp/game/SegmentEntry.gd
+  - mcp/game/GameControl.gd
+  - mcp/game/assessment_plan.py
+  - AGENTS.md
+  evidence_sha256:
+  - path: mcp/game/SegmentEntry.gd
+    sha256: 3a14d89edd9e547ca221dc30a9d961056cd226ef1bffcba14f27ad88bac51401
+  - path: mcp/game/GameControl.gd
+    sha256: a249823511a4a69517d2c064f1a1335d10ae026287fa56bf3d8a9f578467e542
+  - path: mcp/game/assessment_plan.py
+    sha256: 529c7d953416550f73cdada600825438c8decca381d92fe92079e7d33ef4c624
+  - path: AGENTS.md
+    sha256: e7d6048126505177ce7cc9b5c9b66c21e7f41ac200e5362ae3cb1cbf8cd3a443
+  related_event_ids: []
+  request_sha256: c8857f9f59106dce6cb8019b804139b19c0b347f4241e43485af69cb0ecc8a66
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 30820
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: report-stop-reloading-20261117
+  segment_id: project
+  kind: change
+  summary: Stop forced report reloads
+  result: Live updates preserve the open page and scene table position.
+  revision: 8a47e5b
+  event_id: report-stop-reload-change
+  at: '2026-11-17T20:36:28.786075+08:00'
+  evidence:
+  - tools/testing/test_results.py
+  - tools/testing/scene-live.js
+  evidence_sha256:
+  - path: tools/testing/test_results.py
+    sha256: 136c671b5cc9ddd12e2b988d799e9d4af9bb8f56e04a705cb50ff941d12200b0
+  - path: tools/testing/scene-live.js
+    sha256: 01dbf6a17f3be054553b3a2bc7a0ed3c09c6d40811054b1337ed58cf206bd66c
+  related_event_ids: []
+  request_sha256: 44930bfe12e130c8cadeaf718a65f0f568d8592ccc5a7b662e542ce93cade563
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 37152
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: report-stop-reloading-20261117
+  segment_id: project
+  kind: check
+  summary: Verify report updates
+  result: Scene and score JavaScript tests and report unit tests passed.
+  revision: 8a47e5b
+  event_id: report-stop-reload-check
+  at: '2026-11-17T20:36:33.389246+08:00'
+  evidence:
+  - tools/testing/test_results.py
+  - tools/testing/scene-live.js
+  evidence_sha256:
+  - path: tools/testing/test_results.py
+    sha256: 136c671b5cc9ddd12e2b988d799e9d4af9bb8f56e04a705cb50ff941d12200b0
+  - path: tools/testing/scene-live.js
+    sha256: 01dbf6a17f3be054553b3a2bc7a0ed3c09c6d40811054b1337ed58cf206bd66c
+  related_event_ids: []
+  request_sha256: 167f1cebd938af343430c768ef868d767e6fe3703fb673b5e81e9a3337aa67dc
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 28368
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: report-stop-reloading-20261117
+  segment_id: project
+  kind: complete
+  summary: Complete report interaction fix
+  result: Checks passed.
+  revision: 8a47e5b
+  event_id: report-stop-reload-complete
+  at: '2026-11-17T20:36:37.710326+08:00'
+  evidence:
+  - tools/testing/test_results.py
+  - tools/testing/scene-live.js
+  evidence_sha256:
+  - path: tools/testing/test_results.py
+    sha256: 136c671b5cc9ddd12e2b988d799e9d4af9bb8f56e04a705cb50ff941d12200b0
+  - path: tools/testing/scene-live.js
+    sha256: 01dbf6a17f3be054553b3a2bc7a0ed3c09c6d40811054b1337ed58cf206bd66c
+  related_event_ids:
+  - report-stop-reload-change
+  - report-stop-reload-check
+  request_sha256: 04f33ddfe8fc55805a9ba08f24b55e661ddbfefb15a8a2de0aba377f54861af5
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 10132
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: report-group-scene-details-20261117
+  segment_id: project
+  kind: change
+  summary: Group scene details under each segment
+  result: Removed the standalone duplicate scene table; grouped scene evidence under
+    segment cards.
+  revision: dd0a9da
+  event_id: report-group-scene-change
+  at: '2026-11-17T21:08:56.617772+08:00'
+  evidence:
+  - tools/testing/test_results.py
+  - tools/testing/scene-live.js
+  - tools/testing/export_review_site.py
+  evidence_sha256:
+  - path: tools/testing/test_results.py
+    sha256: 0c7f411377d062a59afee5b4445baa074c551675a4d8270b27a380352bda3226
+  - path: tools/testing/scene-live.js
+    sha256: 70af6f707a158a4784bbf242133c5a4314de7f6f1fcfcb695491c2be60de2e98
+  - path: tools/testing/export_review_site.py
+    sha256: 99cafee6ac482c95c319fed6978580cb79f751302829682fca0e7c900095f127
+  related_event_ids: []
+  request_sha256: b20d5fd003d3f23946f9357f716ca3f85019227fa03e492001c750c8084b2d80
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 42400
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: report-group-scene-details-20261117
+  segment_id: project
+  kind: check
+  summary: Verify segment grouping and live updates
+  result: JavaScript grouping and refresh checks and six Python report tests passed.
+  revision: dd0a9da
+  event_id: report-group-scene-check
+  at: '2026-11-17T21:09:01.197342+08:00'
+  evidence:
+  - tools/testing/test_results.py
+  - tools/testing/scene-live.js
+  - tools/testing/export_review_site.py
+  evidence_sha256:
+  - path: tools/testing/test_results.py
+    sha256: 0c7f411377d062a59afee5b4445baa074c551675a4d8270b27a380352bda3226
+  - path: tools/testing/scene-live.js
+    sha256: 70af6f707a158a4784bbf242133c5a4314de7f6f1fcfcb695491c2be60de2e98
+  - path: tools/testing/export_review_site.py
+    sha256: 99cafee6ac482c95c319fed6978580cb79f751302829682fca0e7c900095f127
+  related_event_ids: []
+  request_sha256: 72085f02001b4feb3b3f364576d5f59e5c5fcf38e47d32145275c8feb1107fb1
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 27164
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: report-group-scene-details-20261117
+  segment_id: project
+  kind: complete
+  summary: Complete report grouping
+  result: Segment details and scoring matrix verified.
+  revision: dd0a9da
+  event_id: report-group-scene-complete
+  at: '2026-11-17T21:09:05.356770+08:00'
+  evidence:
+  - tools/testing/test_results.py
+  - tools/testing/scene-live.js
+  - tools/testing/export_review_site.py
+  evidence_sha256:
+  - path: tools/testing/test_results.py
+    sha256: 0c7f411377d062a59afee5b4445baa074c551675a4d8270b27a380352bda3226
+  - path: tools/testing/scene-live.js
+    sha256: 70af6f707a158a4784bbf242133c5a4314de7f6f1fcfcb695491c2be60de2e98
+  - path: tools/testing/export_review_site.py
+    sha256: 99cafee6ac482c95c319fed6978580cb79f751302829682fca0e7c900095f127
+  related_event_ids:
+  - report-group-scene-change
+  - report-group-scene-check
+  request_sha256: 1c9f775ec754b547014816c692288cebe876df0f6cc3535bb9574f3fc20eb36f
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 40848
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: live-audio-preview-20261117
+  segment_id: project
+  kind: change
+  summary: Expose the live Master mix through input MCP
+  result: Added bounded WAV excerpts with offsets and skipped-frame counts.
+  revision: 24d910b
+  event_id: live-audio-preview-change
+  at: '2026-11-17T21:37:13.954655+08:00'
+  evidence:
+  - mcp/game/runtime.py
+  - mcp/game/server.py
+  - mcp/game/audio_observation.py
+  - mcp/game/test_audio_observation.py
+  evidence_sha256:
+  - path: mcp/game/runtime.py
+    sha256: 52e2685ee5da5b97901994ff3e674383ac41ce32da53f7071516781d768255fa
+  - path: mcp/game/server.py
+    sha256: 96410c043bedb76062ce8ed20c3d5241c9230754857175fb280f22c7f6d9d920
+  - path: mcp/game/audio_observation.py
+    sha256: f696841ca433a172383f90320cb67fc67acedb74876489474028608bff312461
+  - path: mcp/game/test_audio_observation.py
+    sha256: 4b70510c2c7483835f7feec782c7673c9e2b667ad5fb6e7b1fc9a911bc045540
+  related_event_ids: []
+  request_sha256: f05672821dec235e0f23bc3fb37944112fe77d99cd21d117098174b8666c329f
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 34612
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: live-audio-preview-20261117
+  segment_id: project
+  kind: check
+  summary: Verify live audio excerpts and game session guards
+  result: Audio excerpt, runtime metrics and assessment plan unit tests passed.
+  revision: 24d910b
+  event_id: live-audio-preview-check
+  at: '2026-11-17T21:37:19.278993+08:00'
+  evidence:
+  - mcp/game/runtime.py
+  - mcp/game/server.py
+  - mcp/game/audio_observation.py
+  - mcp/game/test_audio_observation.py
+  evidence_sha256:
+  - path: mcp/game/runtime.py
+    sha256: 52e2685ee5da5b97901994ff3e674383ac41ce32da53f7071516781d768255fa
+  - path: mcp/game/server.py
+    sha256: 96410c043bedb76062ce8ed20c3d5241c9230754857175fb280f22c7f6d9d920
+  - path: mcp/game/audio_observation.py
+    sha256: f696841ca433a172383f90320cb67fc67acedb74876489474028608bff312461
+  - path: mcp/game/test_audio_observation.py
+    sha256: 4b70510c2c7483835f7feec782c7673c9e2b667ad5fb6e7b1fc9a911bc045540
+  related_event_ids: []
+  request_sha256: 195dc8d0bab8044bf5bc3d6b87d52d7ae2372c4acbe2d483223f64881f81d9fa
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 20220
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: same-session-text-20261117
+  segment_id: wake
+  kind: change
+  summary: Connect live visible-text reviews and session-bound blind observations
+  result: The monitor records text coverage; same-session observer entries are bound
+    to the test, revision, case, PID and timeline. The project input MCP exposes live
+    review and English observation tools.
+  revision: a9c2a75
+  event_id: event-7873f0375010f4d116898dee7dcc1e33
+  at: '2026-11-17T21:56:44.247497+08:00'
+  evidence:
+  - tools/testing/mainline_metrics.py
+  - mcp/game/text_observation.py
+  - mcp/game/blind_observation.py
+  evidence_sha256:
+  - path: tools/testing/mainline_metrics.py
+    sha256: 912c0f2c581af913bee0cd9f9e75255437689f9330d488c5c62a4e61ee3244ac
+  - path: mcp/game/text_observation.py
+    sha256: 122dfe0655cf3a5423dec74a7167ca1fd893bc29b36d179acaa4a656b30bb10b
+  - path: mcp/game/blind_observation.py
+    sha256: d3f1c5ffcb8b645a4c4aa2a91d1063ca3a23b7d86f3feb55ae64b9b7cd286056
+  related_event_ids: []
+  request_sha256: 7873f0375010f4d116898dee7dcc1e33e07e55a7a6cdf54f07e3f6497604e273
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 35984
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: segment-filter-20261117
+  segment_id: wake
+  kind: check
+  summary: Verify segment selection and precise missing-measurement reporting
+  result: The evaluation unit suite and scene score aggregation checks passed; a survey
+    still launches separate hosts and does not itself provide simultaneous assessment.
+  revision: a9c2a75
+  event_id: event-0508dd66ce06065f37fae6a0866e6fcf
+  at: '2026-11-17T21:56:47.399351+08:00'
+  evidence:
+  - mcp/evaluation/test_evaluation.py
+  - tools/testing/test_scene_survey_scores.py
+  evidence_sha256:
+  - path: mcp/evaluation/test_evaluation.py
+    sha256: 191da1b78379da9f3441e02e0c28a41f63aa731bcc73177afad918f3dc1d2571
+  - path: tools/testing/test_scene_survey_scores.py
+    sha256: 2cc9ab5be121b21ab1bace674633b96a2fc779b13e2307f33a190f6f2e729626
+  related_event_ids: []
+  request_sha256: 0508dd66ce06065f37fae6a0866e6fcf17b338f75cab76ab26807b43bad6e5cf
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 35984
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: same-session-text-20261117
+  segment_id: wake
+  kind: check
+  summary: Verify same-session observation and text settlement
+  result: Unit checks passed for live observation binding, visible-text classification,
+    metrics settlement, MCP dispatch and persistent client handling. Rendered Godot
+    validation remains outstanding.
+  revision: a9c2a75
+  event_id: same-session-text-check-a9c2a75
+  at: '2026-11-17T22:06:49.461782+08:00'
+  evidence:
+  - mcp/game/test_observation_dispatch.py
+  - mcp/game/test_text_observation.py
+  - tools/testing/test_mainline_metrics.py
+  evidence_sha256:
+  - path: mcp/game/test_observation_dispatch.py
+    sha256: 84e271c511121e51d2aaba034a4df2d3dfd838077627f452910b5fb8f4119bc6
+  - path: mcp/game/test_text_observation.py
+    sha256: 9cd0d2588ac7469f251dc4868ac5cd2cba85148efc413732d32eb03e923270af
+  - path: tools/testing/test_mainline_metrics.py
+    sha256: b87953cf71ce1690e79b7b5e9c36f15873ad65f575210dbb6c62ad5b441873e4
+  related_event_ids: []
+  request_sha256: bd2450a0cf99339a46887adbcc3bfbff4f982992095bdd22f95eb80c76ddb071
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 35984
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: segment-filter-20261117
+  segment_id: wake
+  kind: change
+  summary: Add segment filtering and preserve detailed missing reasons
+  result: Scene survey accepts an explicit segment selection and keeps each measurement's
+    missing reason. Separate case hosts remain a known survey limitation.
+  revision: a9c2a75
+  event_id: segment-filter-check-a9c2a75
+  at: '2026-11-17T22:06:52.866247+08:00'
+  evidence:
+  - mcp/evaluation/worker.py
+  - tools/testing/scene_survey_scores.py
+  evidence_sha256:
+  - path: mcp/evaluation/worker.py
+    sha256: cbdaafb459628f1c5539fe56a6d2e6fcc79dd1f2e48890b912e96e64d60b80c3
+  - path: tools/testing/scene_survey_scores.py
+    sha256: 45d93643df403b3e09b5cd2895de64b29a63b89ba832d53d305b1864894bb37b
+  related_event_ids: []
+  request_sha256: bdbc8723a48767773b099abe4ecdda43199b73a022282a7b197a8803029e7481
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 35984
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: audio-cue-trace-20261117
+  segment_id: wake
+  kind: change
+  summary: Record generic effect scheduling with session time
+  result: Instrumented shared effect pathways and added an incremental MCP observation
+    reader. These cues establish scheduling only, with explicit limited coverage and
+    no claim of audibility.
+  revision: d6e30a0
+  event_id: audio-cue-trace-change-d6e30a0
+  at: '2026-11-17T22:10:35.144989+08:00'
+  evidence:
+  - scenes/components/testing/AudioCueTelemetry.gd
+  - mcp/game/audio_cue_observation.py
+  evidence_sha256:
+  - path: scenes/components/testing/AudioCueTelemetry.gd
+    sha256: f24f7b97c083af4613016314bda0a3afa3d432694c586e007442ffb32c6c23dd
+  - path: mcp/game/audio_cue_observation.py
+    sha256: 34002a535e0f2ec3dd3d20b18aeb37ac0c82951b032fa98670d4b0e5355b9eee
+  related_event_ids: []
+  request_sha256: ae9b0b6cac1ce71ce7907aebe98bbb896d4c06b51cab04ec5dac0ad48f7c860f
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 35984
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: audio-cue-trace-20261117
+  segment_id: wake
+  kind: check
+  summary: Verify incremental audio cue observation
+  result: Cue reader and MCP dispatch tests passed. Rendered Godot integration and
+    independent sound interpretation remain to be verified.
+  revision: d6e30a0
+  event_id: audio-cue-trace-check-d6e30a0
+  at: '2026-11-17T22:10:38.487942+08:00'
+  evidence:
+  - mcp/game/test_audio_cue_observation.py
+  - mcp/game/test_observation_dispatch.py
+  evidence_sha256:
+  - path: mcp/game/test_audio_cue_observation.py
+    sha256: c5362b9063ec6267434160739722c5601e33bb9b00b4b906c6f480ea91997192
+  - path: mcp/game/test_observation_dispatch.py
+    sha256: 69429e09ddb947f059543af1b9f99fb6cfd9a173d3a9fe83d44cc1fcf9f44bfb
+  related_event_ids: []
+  request_sha256: b0661073376630dc3ac96be426f7e961023951dbd8c949465f13c72c9039c7c3
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 35984
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
 - work_id: test-c1dd77182e9c3c264170d4d988adee1a
   segment_id: wake
   kind: check
@@ -30543,3 +30967,328 @@ events:
     - audio_loudness
     status: incomplete
   test_request_sha256: 8e9d324a190c2df756cf1ccd2a7033db9786c18dd6df3ce1c0338e0dbe11b998
+- work_id: eval-20261117t233509-b2d7908e-scenario
+  segment_id: project
+  kind: check
+  summary: 启动测试：scenario
+  result: 测试进行中。
+  revision: a9afdfd7f017ba1ee231f57fa1b9b88ca6f150a7
+  event_id: eval-20261117t233509-b2d7908e-scenario-start
+  at: '2026-11-17T23:35:16.080434+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids: []
+  request_sha256: f015788256db8380dc0bb1b7c45760f37765efe04d3439c3829315f9be8189a9
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 37812
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261117t233509-b2d7908e-scenario
+  segment_id: project
+  kind: check
+  summary: 完成测试：scenario
+  result: 测试通过。
+  revision: a9afdfd7f017ba1ee231f57fa1b9b88ca6f150a7
+  event_id: eval-20261117t233509-b2d7908e-scenario-end
+  at: '2026-11-17T23:35:26.949745+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261117t233509-b2d7908e/scenario/godot.log
+  - artifacts/evaluation/runs/eval-20261117t233509-b2d7908e/scenario/launch.json
+  - artifacts/evaluation/runs/eval-20261117t233509-b2d7908e/scenario/timeline.yaml
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261117t233509-b2d7908e/scenario/godot.log
+    sha256: e784f9f69a71b3e742480fba5d872737eeac8a5cd4f78eb63418f9c15f9d1cfb
+  - path: artifacts/evaluation/runs/eval-20261117t233509-b2d7908e/scenario/launch.json
+    sha256: 96214e6b8309a013b72ad1bfdfca494742d356d6b08199e8fff439638c33f9af
+  - path: artifacts/evaluation/runs/eval-20261117t233509-b2d7908e/scenario/timeline.yaml
+    sha256: 3c897e4451544f6b1ae8cd8c93dd742962c99512963d8707e496bd359a10d076
+  related_event_ids: []
+  request_sha256: 10ebe4a0ef6a1baf7256bb2f4225ecbe4237ca405a77f431668c7d4ddd861a7f
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 37812
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261117t233509-b2d7908e-scenario
+  segment_id: project
+  kind: complete
+  summary: 完成测试记录：scenario
+  result: 测试已结束；结果和证据已记录。
+  revision: a9afdfd7f017ba1ee231f57fa1b9b88ca6f150a7
+  event_id: eval-20261117t233509-b2d7908e-scenario-complete
+  at: '2026-11-17T23:35:30.257208+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids:
+  - eval-20261117t233509-b2d7908e-scenario-start
+  - eval-20261117t233509-b2d7908e-scenario-end
+  request_sha256: 9624f9f3f6790982487c58c8a7217255932c442df568e4408bc69ca7a1121bb1
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 37812
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261117t233839-17c518f8-scenario
+  segment_id: project
+  kind: check
+  summary: 启动测试：scenario
+  result: 测试进行中。
+  revision: a9afdfd7f017ba1ee231f57fa1b9b88ca6f150a7
+  event_id: eval-20261117t233839-17c518f8-scenario-start
+  at: '2026-11-17T23:38:45.235222+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids: []
+  request_sha256: 8fd42a61daffb14f6c8385aaaf77671470d95e04a85aeee6806239d5a35ad074
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 26216
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261117t233839-17c518f8-scenario
+  segment_id: project
+  kind: check
+  summary: 完成测试：scenario
+  result: 测试通过。
+  revision: a9afdfd7f017ba1ee231f57fa1b9b88ca6f150a7
+  event_id: eval-20261117t233839-17c518f8-scenario-end
+  at: '2026-11-17T23:38:56.758373+08:00'
+  evidence:
+  - artifacts/evaluation/runs/eval-20261117t233839-17c518f8/scenario/godot.log
+  - artifacts/evaluation/runs/eval-20261117t233839-17c518f8/scenario/launch.json
+  - artifacts/evaluation/runs/eval-20261117t233839-17c518f8/scenario/timeline.yaml
+  evidence_sha256:
+  - path: artifacts/evaluation/runs/eval-20261117t233839-17c518f8/scenario/godot.log
+    sha256: e784f9f69a71b3e742480fba5d872737eeac8a5cd4f78eb63418f9c15f9d1cfb
+  - path: artifacts/evaluation/runs/eval-20261117t233839-17c518f8/scenario/launch.json
+    sha256: 0badf89f70a0005f32ba9b144f0ddba015c9ef5957baf35def7248115a02e883
+  - path: artifacts/evaluation/runs/eval-20261117t233839-17c518f8/scenario/timeline.yaml
+    sha256: 1e86ea6486f34c0628dd71b254b0623fee0a6722176a3139dfd9d566f2967062
+  related_event_ids: []
+  request_sha256: 61c3135cfcae4e6853612e3b5a7ff795a1131350a95ba9974281c4d5104693f2
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 26216
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: eval-20261117t233839-17c518f8-scenario
+  segment_id: project
+  kind: complete
+  summary: 完成测试记录：scenario
+  result: 测试已结束；结果和证据已记录。
+  revision: a9afdfd7f017ba1ee231f57fa1b9b88ca6f150a7
+  event_id: eval-20261117t233839-17c518f8-scenario-complete
+  at: '2026-11-17T23:39:01.019024+08:00'
+  evidence: []
+  evidence_sha256: []
+  related_event_ids:
+  - eval-20261117t233839-17c518f8-scenario-start
+  - eval-20261117t233839-17c518f8-scenario-end
+  request_sha256: 4c40de33a4fe225d51c2b09e11a4851ff880fcde81c153d98c77d783cbd1ed24
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\evaluation\worker.py
+    server_pid: 26216
+    python_executable: C:\Users\iii\AppData\Local\Programs\Python\Python310\python.exe
+- work_id: wake-lifecycle-20261118
+  segment_id: wake
+  kind: change
+  summary: Bound startup to 200 seconds and separate shutdown receipts from asynchronous
+    same-session metrics.
+  result: 46 game MCP unit tests passed. Rendered lifecycle verification in progress.
+  revision: 05122f2
+  event_id: event-856a608d4900c820acfead9b4b9f48a6
+  at: '2026-11-18T00:20:24.789565+08:00'
+  evidence:
+  - mcp/game/runtime.py
+  - mcp/game/server.py
+  - mcp/game/input_client.py
+  - mcp/game/test_runtime_metrics.py
+  evidence_sha256:
+  - path: mcp/game/runtime.py
+    sha256: 5adcab0716ab32d941e5b14571597f5d23730f6021684259d701484573fc9dd1
+  - path: mcp/game/server.py
+    sha256: 65496fe41d278a048cf881e9e505e53151c8053309873f9da9e19a40f0f7b05d
+  - path: mcp/game/input_client.py
+    sha256: 0b43cf2537dbf7159f2b5c5cfaf34b90e102e6cc594670d9b69233a904f9bc80
+  - path: mcp/game/test_runtime_metrics.py
+    sha256: 3193948db2e75476f8a7afc0f1d91176656adfe36ea7de623288d48c0517df56
+  related_event_ids: []
+  request_sha256: 856a608d4900c820acfead9b4b9f48a60177fc70aa02fe1096a295f33ee8ed0b
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 37752
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: wake-lifecycle-20261118
+  segment_id: wake
+  kind: check
+  summary: Verify asynchronous shutdown receipts and preserve the incorrect-entry
+    diagnostic explicitly.
+  result: 46 unit tests passed. Shutdown returned graceful_exit=true before metrics
+    analysis; subsequent same-connection polling returned complete. This lifecycle
+    probe used the wrong default title entry, was closed, and supplies no segment
+    gameplay scores. Explicit segment entry is now documented. Nested current_scene
+    redaction covered by regression test; live segment verification delegated to the
+    isolated observer.
+  revision: fec773f
+  event_id: event-93faac34667b3d8b50b65f46a7408c3c
+  at: '2026-11-18T00:24:05.569592+08:00'
+  evidence:
+  - mcp/game/test_runtime_metrics.py
+  - mcp/game/test_observation_dispatch.py
+  - .runtime/input-client/37055ccf95cca80c/000002.json
+  - .runtime/input-client/37055ccf95cca80c/000003.json
+  evidence_sha256:
+  - path: mcp/game/test_runtime_metrics.py
+    sha256: 3193948db2e75476f8a7afc0f1d91176656adfe36ea7de623288d48c0517df56
+  - path: mcp/game/test_observation_dispatch.py
+    sha256: efaaa68a3c3ec24efda3fc76a86b2a9618b83de90d6150930be54311a4b3d3a9
+  - path: .runtime/input-client/37055ccf95cca80c/000002.json
+    sha256: 0db9146859e920ece91843156102702f6a07fecd8a47e5306e24b9219fc9ef56
+  - path: .runtime/input-client/37055ccf95cca80c/000003.json
+    sha256: e33f52dfde0b44b1bbc0506e1fcd5a6c65ea81ecf38a9dae9172b3522b3ce538
+  related_event_ids: []
+  request_sha256: 93faac34667b3d8b50b65f46a7408c3c64eabe325eb88a8cef47103589e994b3
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 37752
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: wake-lifecycle-20261118
+  segment_id: wake
+  kind: change
+  summary: Extend blind filtering through close and disable FFmpeg interactive stdin
+    during postprocessing.
+  result: 46 MCP tests and 3 audio-channel tests passed. A one-second retained audio
+    interval completed in 0.156 seconds with stdin disabled. The completed fec773f
+    session retains the original 180-second audio timeouts and close-time scene-field
+    leak; it will be published incomplete before a new-revision retest.
+  revision: fec773f
+  event_id: event-ce094a7a8ee673c5a3a2f24524decf1b
+  at: '2026-11-18T00:47:40.866960+08:00'
+  evidence:
+  - mcp/game/server.py
+  - mcp/game/test_observation_dispatch.py
+  - tools/testing/mainline_metrics.py
+  - tools/testing/test_audio_capture_channels.py
+  evidence_sha256:
+  - path: mcp/game/server.py
+    sha256: 9077f3f0af2c93493010317a349dd72867f6eea38a9061650d15ddef8c3e4de4
+  - path: mcp/game/test_observation_dispatch.py
+    sha256: 12d2b87fda8b74e1c67dbc2c4b8ee54bfa572b7b2273e405ea6dfa7d34d2ae8d
+  - path: tools/testing/mainline_metrics.py
+    sha256: 662a5c6256a2b1e5c434e34a35a7efb79073b158f68d558aaddd0ccf99ccf6fa
+  - path: tools/testing/test_audio_capture_channels.py
+    sha256: 988a484686902c7a3818e3950c82c389c71681c75d698b01cba8957c2cb208ef
+  related_event_ids: []
+  request_sha256: ce094a7a8ee673c5a3a2f24524decf1b8d868207c39a2bc548cbeadd7184e969
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 37752
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+- work_id: test-62555ed88587b3136b4148fa18bb79be
+  segment_id: wake
+  kind: check
+  summary: 'Test scores: wake-blind-20261118-fec773f'
+  result: Seven dimensions recorded
+  revision: fec773fd5858b884e94050208757c8725cb764c6
+  event_id: event-4cd5efb168027b2ddeb76f6c0ef074d1
+  at: '2026-11-18T00:49:07.020409+08:00'
+  evidence:
+  - artifacts/acceptance/wake-blind-20261118-fec773f/evidence-index.json
+  - artifacts/acceptance/wake-blind-20261118-fec773f/segment-metrics.json
+  - artifacts/acceptance/wake-blind-20261118-fec773f/observer-review.json
+  - artifacts/acceptance/wake-blind-20261118-fec773f/blind-account.md
+  - artifacts/acceptance/wake-blind-20261118-fec773f/000026.json
+  - artifacts/acceptance/wake-blind-20261118-fec773f/000024-0.png
+  evidence_sha256:
+  - path: artifacts/acceptance/wake-blind-20261118-fec773f/evidence-index.json
+    sha256: e104ae1e8be56d402cc7bb04dc2150f68aee60aacb9a8d5b58fba25ae8801549
+  - path: artifacts/acceptance/wake-blind-20261118-fec773f/segment-metrics.json
+    sha256: 17ff38390ebbc34183ebc9cd37df77fef66543cdece2a6adbabf2ccc8f79173c
+  - path: artifacts/acceptance/wake-blind-20261118-fec773f/observer-review.json
+    sha256: 549ee5e64f26fb398d2f417583e3a4cb6212fa99fd8512315d3083b4f8165a42
+  - path: artifacts/acceptance/wake-blind-20261118-fec773f/blind-account.md
+    sha256: 77327950a0ad8c339cdb272b827f3fe2ae73c6ec38c585b17726d7eae8965357
+  - path: artifacts/acceptance/wake-blind-20261118-fec773f/000026.json
+    sha256: ffc1b7292b2fd06765d646227d6da5cbbd75392127ae0c68416ee41acbc0a8d4
+  - path: artifacts/acceptance/wake-blind-20261118-fec773f/000024-0.png
+    sha256: 061a5424657acce8ba85fdc4dd65616e8bf02d49404c06965e7b87faff0fbc15
+  related_event_ids: []
+  request_sha256: 4cd5efb168027b2ddeb76f6c0ef074d18e49a0d1b1e268907d4c4ebafa54e38e
+  server_identity:
+    project_root: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2
+    project_sha256: c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec
+    configured_main_scene: res://scenes/main/Boot.tscn
+    server_path: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\mcp\review\server.py
+    server_pid: 37752
+    python_executable: C:\Users\iii\Desktop\dual_ontology_world_reconstruct_2\.runtime\python\Scripts\python.exe
+  test_result:
+    test_id: wake-blind-20261118-fec773f
+    scores:
+      fluidity: 6
+      text_density: 8
+      action_sfx_integrity: 6
+      audio_loudness: 0
+      blind_narrative_match: 0
+      aesthetic_similarity: 6
+      narrative_flow: 7
+    reasons:
+      fluidity: '53227 steady frames; 50 above 33.3 ms after the 1.5-second warmup
+        exclusions. P95 16.799 ms, P99 25.098 ms, average 59.98 FPS. Peak observed
+        load: three Godot processes, including two pre-existing instances; this test
+        owns one. Runtime includes observer and tool waiting.'
+      text_density: 61 visible-text changes; maximum 12 words and 60 characters in
+        one frame. Seven unclassified strings counted conservatively; recognized nameplates
+        and single-key icons excluded. Script checks found no non-Latin violations;
+        Latin script alone does not verify English.
+      action_sfx_integrity: 'Independent observer: 6/10. The detective moves to the
+        wardrobe and its door opens; the bed cover changes position. The wardrobe
+        edge obscures the arm, and the bed action lacks visible hand-to-cover contact.
+        Visible motion only. Close-time isolation failure is retained beside this
+        assessment.'
+      audio_loudness: 'Provisional 0: evidence unavailable; test incomplete. Same-session
+        raw Master and Music audio contain signal, but both segment analyses timed
+        out after 180 seconds. FFmpeg inherited MCP stdin and stalled. Retain original
+        failed analysis; the next revision disables interactive input and requires
+        a full retest.'
+      blind_narrative_match: 'Provisional 0: evidence unavailable; test incomplete.
+        The observer reached the hallway and recorded waking, unexplained scratches
+        and departure; memory loss was absent. The close receipt then exposed current_scene,
+        violating the required server-side isolation guarantee. A valid fully isolated
+        test is unavailable; repeat with a fresh observer after repair.'
+      aesthetic_similarity: 'Independent observer: 6/10, after completing the blind
+        account. Same-session bedroom framing and furniture placement match the assigned
+        reference, while pure-white cutaway surroundings, harsher floor lighting,
+        flatter surfaces and window lighting diverge.'
+      narrative_flow: 'Independent observer: 7/10. Markers and the bedroom door guided
+        the transition. The opening question and wardrobe dialogue establish a mystery;
+        the bed inspection reveals little and the exit transition is abrupt. No gameplay
+        phase blocked. Test incomplete due to close-time isolation and audio analysis
+        failures.'
+    provisional_categories:
+    - audio_loudness
+    - blind_narrative_match
+    status: incomplete
+  test_request_sha256: 0d427c4490eb3ffd9368149677acfd5392397f8c65dee915ec145172024554e6

@@ -1,0 +1,35 @@
+{
+  "test_id": "wake-blind-20261118-fec773f",
+  "revision": "fec773fd5858b884e94050208757c8725cb764c6",
+  "owner": "main-agent",
+  "observer_access": false,
+  "method": "Four equally weighted opening facts. Award 10 for explicit recognition, 5 for partial or uncertain recognition, 0 for absent or contradicted recognition; arithmetic mean. Distinguish visual observation from visible dialogue understanding. Do not require discovery of later plot causes.",
+  "facts": [
+    {
+      "fact": "The protagonist wakes in a bedroom bed.",
+      "source": "docs/第一至四天剧情与分支（Gemini设定）.md#line-19"
+    },
+    {
+      "fact": "The protagonist has a gap in memory since arrival.",
+      "source": "localization/translations.csv#line-22"
+    },
+    {
+      "fact": "The protagonist discovers unexplained scratches on the hand.",
+      "source": "localization/translations.csv#line-23"
+    },
+    {
+      "fact": "The protagonist leaves the bedroom into the hallway.",
+      "source": "docs/第一至四天剧情与分支（Gemini设定）.md#line-19"
+    }
+  ],
+  "sources": [
+    {
+      "path": "docs/第一至四天剧情与分支（Gemini设定）.md",
+      "sha256": "b13b5faeb12c81aa76e1f4b95f79df99519c05d99571e99d70880f2a1ab899b0"
+    },
+    {
+      "path": "localization/translations.csv",
+      "sha256": "ea7c6e28aee6bbe43e86c771ff55bc1d42d5c375fb051db8064da7d95d089cb1"
+    }
+  ]
+}

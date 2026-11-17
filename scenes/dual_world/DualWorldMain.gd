@@ -251,9 +251,9 @@ func _ready() -> void:
 	set_process(true)
 	if resume_path != "":
 		if _read_save(resume_path):
-			_toast("已读取存档（时间已暂停，准备好后点「继续」）")
+			_toast("Game loaded. Resume when ready.")
 		else:
-			_toast("存档无法读取，已从头开始")
+			_toast("Could not load save. Starting over.")
 	# 正式游戏默认进 3D 房间（单房间俯视角）：侦探在房间里走动；2D 地图是辅助视图
 	_set_view("room")
 	checkpoints = Checkpoint.new()
@@ -476,7 +476,7 @@ func _build_ui() -> void:
 	top_phase.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_phase.clip_text = true
 	tb.add_child(top_phase)
-	play_btn = _btn(tb, "暂停", func():
+	play_btn = _btn(tb, "Pause", func():
 		if eng.s.ending != "":
 			_ending_dismissed = false
 			_modal_key = ""
@@ -490,36 +490,36 @@ func _build_ui() -> void:
 	_sync_speed_pick()
 	speed_pick.item_selected.connect(func(i: int): eng.set_speed(float(speed_pick.get_item_metadata(i))))
 	tb.add_child(speed_pick)
-	next_btn = _btn(tb, "跳到下一节拍", func(): eng.next_beat(),
-		"无事可做时用它推进剧情；比拉高倍速更不容易漏掉关键节点")
-	auto_btn = _btn(tb, "自动搜证", func(): auto_search = auto_btn.button_pressed,
-		"开：侦探会自己走动、搜查所在房间，并去查推演还缺的证物；关：只由你点击证物")
+	next_btn = _btn(tb, "Next Beat", func(): eng.next_beat(),
+		"Advance the story without skipping evidence.")
+	auto_btn = _btn(tb, "Auto Search", func(): auto_search = auto_btn.button_pressed,
+		"Let the detective search the room and pending clues.")
 	auto_btn.toggle_mode = true
 	auto_btn.button_pressed = auto_search
-	for v in [["room", "房间"], ["map", "地图"]]:
+	for v in [["room", "Room"], ["map", "Map"]]:
 		var vb := _btn(tb, v[1], func(): _set_view(v[0], v[0] == "room"))
 		vb.toggle_mode = true
 		view_btns[v[0]] = vb
-	drawer_btn = _btn(tb, "案卷", func(): _toggle_drawer())
+	drawer_btn = _btn(tb, "Case File", func(): _toggle_drawer())
 	drawer_btn.toggle_mode = true
-	drawer_btn.tooltip_text = "日志 / 证物 / 推演 / 知识 / 词义 / 关系"
+	drawer_btn.tooltip_text = "Log / Evidence / Deductions / Knowledge / Terms / Relations"
 	menu_btn = MenuButton.new()
-	menu_btn.text = "菜单"
+	menu_btn.text = "Menu"
 	menu_btn.focus_mode = Control.FOCUS_NONE
 	var pm := menu_btn.get_popup()
-	pm.add_item("下一节拍", 0)
+	pm.add_item("Next Beat", 0)
 	pm.add_separator()
-	pm.add_check_item("背景音乐", 2)
+	pm.add_check_item("Music", 2)
 	pm.set_item_checked(pm.get_item_index(2), true)
-	pm.add_check_item("作者视角（显示词义分歧）", 3)
-	pm.add_check_item("自动跳过字幕", 4)
+	pm.add_check_item("Author View", 3)
+	pm.add_check_item("Skip Subtitles", 4)
 	pm.add_separator()
-	pm.add_item("2D 场景编辑器", 5)
+	pm.add_item("2D Scene Editor", 5)
 	pm.add_separator()
-	pm.add_item("存档（槽位 1）", 7)
-	pm.add_item("读档（槽位 1）", 8)
+	pm.add_item("Save (Slot 1)", 7)
+	pm.add_item("Load (Slot 1)", 8)
 	pm.add_separator()
-	pm.add_item("返回标题", 9)
+	pm.add_item("Return to Title", 9)
 	pm.id_pressed.connect(_on_menu)
 	tb.add_child(menu_btn)
 	# ── 中央：整块画面都给地图 / 3D 房间 / 编辑器 ──
@@ -544,7 +544,7 @@ func _build_ui() -> void:
 	var lh := HBoxContainer.new()
 	lv.add_child(lh)
 	var lt := Label.new()
-	lt.text = "当前位置"
+	lt.text = "Location"
 	lt.add_theme_color_override("font_color", BRASS)
 	lt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lh.add_child(lt)
@@ -561,7 +561,7 @@ func _build_ui() -> void:
 	left_text.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	left_body.add_child(left_text)
 	# 房间说明默认折叠，把首屏留给目标与证物
-	left_note_btn = _btn(left_body, "▸ 房间说明", func(): pass)
+	left_note_btn = _btn(left_body, "▸ Room Details", func(): pass)
 	left_note_btn.flat = true
 	left_note_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	left_note = Label.new()
@@ -572,7 +572,7 @@ func _build_ui() -> void:
 	left_body.add_child(left_note)
 	left_note_btn.pressed.connect(func():
 		left_note.visible = not left_note.visible
-		left_note_btn.text = ("▾ " if left_note.visible else "▸ ") + "房间说明")
+		left_note_btn.text = ("▾ " if left_note.visible else "▸ ") + "Room Details")
 	left_evidence = VBoxContainer.new()
 	left_evidence.add_theme_constant_override("separation", 3)
 	left_body.add_child(left_evidence)
@@ -598,38 +598,37 @@ func _build_ui() -> void:
 	center.add_child(drawer)
 	right_tabs = TabContainer.new()
 	drawer.add_child(right_tabs)
-	tab_log = _add_tab("日志")
-	tab_ev = _add_tab("证物")
+	tab_log = _add_tab("Log")
+	tab_ev = _add_tab("Evidence")
 	var case_scroll := ScrollContainer.new()
-	case_scroll.name = "推演"
+	case_scroll.name = "Deductions"
 	case_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right_tabs.add_child(case_scroll)
 	tab_case = VBoxContainer.new()
 	tab_case.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tab_case.add_theme_constant_override("separation", 6)
 	case_scroll.add_child(tab_case)
-	tab_know = _add_tab("知识")
+	tab_know = _add_tab("Knowledge")
 	var lex_box := VBoxContainer.new()
-	lex_box.name = "词义"
+	lex_box.name = "Terms"
 	right_tabs.add_child(lex_box)
 	term_pick = OptionButton.new()
 	for k in data.terms:
-		term_pick.add_item(str(data.terms[k].word))
+		term_pick.add_item(tr(str(data.terms[k].word)))
 		term_pick.set_item_metadata(term_pick.item_count - 1, k)
 	term_pick.item_selected.connect(func(_i: int): _dirty = true)
 	lex_box.add_child(term_pick)
 	tab_lex = _rich()
 	lex_box.add_child(tab_lex)
-	tab_rel = _add_tab("关系")
-	tab_contract = _add_tab("契约")
-	tab_author = _add_tab("调试")
+	tab_rel = _add_tab("Relations")
+	tab_contract = _add_tab("Contract")
+	tab_author = _add_tab("Debug")
 	_apply_author_tabs()
 	# ── 底部：台词字幕 + 操作提示 ──
 	room_hint = Label.new()
-	room_hint.text = "点光柱 → 侦探走过去查看  ·  右键拖动旋转  ·  滚轮缩放"
+	room_hint.text = "Click to inspect · WASD to move"
 	room_hint.add_theme_font_size_override("font_size", 14)
 	room_hint.add_theme_color_override("font_color", Color("#d8c9a8", 0.95))
-	room_hint.text = "点金色光柱或左侧「本房证物」查看  ·  WASD/方向键走动  ·  右键拖动旋转  ·  滚轮缩放"
 	room_hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	room_hint.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	room_hint.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -660,7 +659,7 @@ func _build_ui() -> void:
 	subtitle.offset_bottom = -16
 	subtitle.visible = false
 	subtitle.mouse_filter = Control.MOUSE_FILTER_STOP
-	subtitle.tooltip_text = "点击或按空格 / 回车继续"
+	subtitle.tooltip_text = "Click or press Space or Enter to continue"
 	subtitle.gui_input.connect(func(ev: InputEvent):
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT: _sub_until = 0.0)
 	# 说话人铭牌（压在对话框左上沿）与「继续」小三角
@@ -807,33 +806,33 @@ func _build_center() -> void:
 	kinds.sort()
 	for k in kinds:
 		if k == "evidence_marker": continue
-		kind_pick.add_item("%s（%s）" % [Geo.prop_label(str(k)), k])
+		kind_pick.add_item("%s (%s)" % [tr(str(Geo.prop_label(str(k)))), k])
 		kind_pick.set_item_metadata(kind_pick.item_count - 1, k)
 	bar.add_child(kind_pick)
 	editor = Editor2D.new()
 	editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	editor.custom_minimum_size = Vector2(300, 240)
 	# 编辑器工具栏分组：常用操作在前，次要操作收进「更多」菜单，避免 11 个按钮挤一行。
-	_btn(bar, "添加家具", func(): editor.add_prop(str(kind_pick.get_item_metadata(kind_pick.selected))), "把所选家具放到房间中央（会找不重叠的落点）")
-	_btn(bar, "旋转 90° (R)", func(): editor.rotate_selected(90.0), "旋转选中家具；也可按 R")
-	_btn(bar, "删除 (Del)", func(): editor.delete_selected(), "删除选中家具/门窗；也可按 Delete")
-	_btn(bar, "撤销", func(): editor.undo(), "Ctrl+Z")
-	_btn(bar, "重做", func(): editor.redo(), "Ctrl+Y")
+	_btn(bar, "Add Furniture", func(): editor.add_prop(str(kind_pick.get_item_metadata(kind_pick.selected))), "Add furniture in an available position.")
+	_btn(bar, "Rotate 90° (R)", func(): editor.rotate_selected(90.0), "Rotate the selection.")
+	_btn(bar, "Delete (Del)", func(): editor.delete_selected(), "Delete the selection.")
+	_btn(bar, "Undo", func(): editor.undo(), "Ctrl+Z")
+	_btn(bar, "Redo", func(): editor.redo(), "Ctrl+Y")
 	var more := MenuButton.new()
-	more.text = "更多 ▾"
+	more.text = "More ▾"
 	more.focus_mode = Control.FOCUS_NONE
-	more.tooltip_text = "加窗 / 加拱门 / 重新自动布置"
+	more.tooltip_text = "Add a window or arch, or reset the layout."
 	var mp := more.get_popup()
-	mp.add_item("加窗", 0)
-	mp.add_item("加拱门", 1)
-	mp.add_item("重新自动布置（恢复默认家具）", 2)
+	mp.add_item("Add Window", 0)
+	mp.add_item("Add Arch", 1)
+	mp.add_item("Reset Layout", 2)
 	mp.id_pressed.connect(func(id: int):
 		if id == 0: editor.add_opening("rectangular_window")
 		elif id == 1: editor.add_opening("portal_arch")
 		elif id == 2: editor.reset_auto())
 	bar.add_child(more)
 	snap_check = CheckBox.new()
-	snap_check.text = "吸附网格"
+	snap_check.text = "Snap to Grid"
 	snap_check.button_pressed = true
 	snap_check.add_theme_color_override("font_color", TEXT)
 	snap_check.add_theme_color_override("font_pressed_color", Color("#e9c98a"))
@@ -847,8 +846,8 @@ func _build_center() -> void:
 		editor.snap_on = on
 		editor.queue_redraw())
 	bar.add_child(snap_check)
-	_btn(bar, "保存设计", _save_design)
-	_btn(bar, "在 3D 中预览", func():
+	_btn(bar, "Save Design", _save_design)
+	_btn(bar, "Preview in 3D", func():
 		_save_design()
 		_room_loaded = ""
 		_set_view("room"))
@@ -858,10 +857,10 @@ func _build_center() -> void:
 	editor_box.add_child(side)
 	editor_sel = Label.new()
 	editor_sel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	editor_sel.text = "未选中"
+	editor_sel.text = "Nothing selected"
 	side.add_child(editor_sel)
 	var help := Label.new()
-	help.text = "操作：点家具选中 → 拖动移动 → R 旋转 → Delete 删除\n滚轮缩放 · 中键拖动平移 · [ ] 调门窗宽"
+	help.text = "Click and drag furniture. R rotates; Delete removes.\nScroll to zoom; middle-drag to pan; [ ] resizes openings."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.add_theme_color_override("font_color", MUTED)
 	help.add_theme_font_size_override("font_size", 13)
@@ -869,7 +868,7 @@ func _build_center() -> void:
 	editor_status = _rich()
 	side.add_child(editor_status)
 	editor.design_changed.connect(_update_editor_status)
-	editor.selection_changed.connect(func(t: String): editor_sel.text = t if t != "" else "未选中")
+	editor.selection_changed.connect(func(t: String): editor_sel.text = tr(t) if t != "" else "Nothing selected")
 	# 换房间时的黑场（盖在 3D 上，不挡 UI）
 	fade_rect = ColorRect.new()
 	fade_rect.color = Color(0.03, 0.02, 0.02, 1.0)
@@ -972,7 +971,7 @@ func _pump_subtitles(now: float) -> void:
 
 
 func _toast(text: String) -> void:
-	toast.text = text
+	toast.text = tr(text)
 	toast.visible = true
 	_toast_until = Time.get_ticks_msec() / 1000.0 + 2.6
 
@@ -999,7 +998,7 @@ func _save_design() -> void:
 	var f := FileAccess.open(design_save_path(), FileAccess.WRITE)
 	if f != null:
 		f.store_string(JSON.stringify(designs))
-	_toast("设计已保存：" + str(editor.design.name))
+	_toast("Design saved: " + str(editor.design.name))
 
 
 func _open_editor(room_id: String) -> void:
@@ -1030,7 +1029,7 @@ func _write_auto() -> void:
 
 func _save_game(slot: int) -> void:
 	_write_save(slot_save_path(slot))
-	_toast("已存档至槽位 %d" % slot)
+	_toast("Saved to slot %d" % slot)
 	score.sfx("success")
 
 
@@ -1068,9 +1067,9 @@ func _read_save(path: String) -> bool:
 func _load_game(slot: int) -> void:
 	var sp := slot_save_path(slot)
 	if not FileAccess.file_exists(sp):
-		_toast("槽位为空")
+		_toast("Save slot is empty")
 		return
-	if _read_save(sp): _toast("已读取槽位 %d（已暂停）" % slot)
+	if _read_save(sp): _toast("Loaded slot %d (paused)" % slot)
 
 
 # ───────────────────────── 3D：单房间 ─────────────────────────
@@ -1910,8 +1909,8 @@ func _begin_transit(to: String) -> void:
 	_transit = {"active": true, "from": from, "to": to, "phase": "exit"}
 	if hops.size() > 2:
 		var names: Array = []
-		for i in range(1, hops.size() - 1): names.append(str(data.room_by_id[hops[i]].label))
-		_toast("途经：" + "、".join(names))
+		for i in range(1, hops.size() - 1): names.append(tr(str(data.room_by_id[hops[i]].label)))
+		_toast("Via: " + ", ".join(names))
 	det_done = Callable()
 	if op.is_empty():
 		_transit_swap()
@@ -2028,10 +2027,10 @@ func _process(delta: float) -> void:
 		var n: Dictionary = eng.notices.pop_front()
 		_toast(str(n.get("text", "")))
 	var c: Dictionary = eng.clock()
-	top_clock.text = "第 %d 天  %s  %s" % [c.day, c.text, _day_label(c.hour)]
+	top_clock.text = "Day %d  %s  %s" % [c.day, c.text, _day_label(c.hour)]
 	var hold_msg: String = eng.hold_text()
-	top_phase.text = hold_msg if hold_msg != "" else "%s · %s" % [eng.phase().title, eng.phase().sub]
-	play_btn.text = "结局" if eng.s.ending != "" else ("继续" if not eng.s.playing else "暂停")
+	top_phase.text = tr(hold_msg) if hold_msg != "" else "%s · %s" % [tr(str(eng.phase().title)), tr(str(eng.phase().sub))]
+	play_btn.text = "Ending" if eng.s.ending != "" else ("Resume" if not eng.s.playing else "Pause")
 	map_view.hour = c.hour
 	_light_cd -= delta
 	if _light_cd <= 0.0:
@@ -2061,18 +2060,18 @@ func _process(delta: float) -> void:
 func _name_bb(id: String) -> String:
 	if not data.actor_by_id.has(id): return id
 	var a: Dictionary = data.actor_by_id[id]
-	return "[color=%s]%s[/color]" % [Color(str(a.color)).lightened(0.55).to_html(false), a.name]
+	return "[color=%s]%s[/color]" % [Color(str(a.color)).lightened(0.55).to_html(false), tr(str(a.name))]
 
 
 func _day_label(hour: float) -> String:
 	# 独立于昼夜光照脚本的 UI 时间标签，避免脚本资源热重载时静态方法缺失。
-	if hour < 5.0 or hour >= 20.0: return "夜"
-	if hour < 7.0: return "拂晓"
-	if hour < 11.0: return "上午"
-	if hour < 13.5: return "正午"
-	if hour < 17.0: return "午后"
-	if hour < 20.0: return "黄昏"
-	return "夜"
+	if hour < 5.0 or hour >= 20.0: return "Night"
+	if hour < 7.0: return "Dawn"
+	if hour < 11.0: return "Morning"
+	if hour < 13.5: return "Noon"
+	if hour < 17.0: return "Afternoon"
+	if hour < 20.0: return "Dusk"
+	return "Night"
 
 
 func _sync_speed_pick() -> void:
@@ -2206,17 +2205,17 @@ func _screen_to_world(v: Vector2) -> Vector2:
 func _objective_text() -> String:
 	var s: Dictionary = eng.s
 	if s.ending != "":
-		return "故事已结束，可重新开始或返回标题。"
+		return "The story has ended. Restart or return to the title."
 	# 现场门：不替玩家传送，明确告知当前目标与可走路径。
 	var story_gate: Dictionary = s.get("story_gate", {})
 	if not story_gate.is_empty() and data.room_by_id.has(str(story_gate.get("room", ""))):
 		var target := str(story_gate.room)
-		return "目标：前往「%s」。剧情在此等待，不会替你瞬移。\n从门口/地图手动移动；抵达后再调查现场证物。" % data.room_by_id[target].label
+		return "Go to %s and investigate." % tr(str(data.room_by_id[target].label))
 	# 开场：侦探在 R05 床上醒来（四人里最晚）。
 	if s.t < 480.0 and str(s.room) == "R05" and s.beat_cursor <= 1:
-		return "目标：你在 R05 床上醒来，是四人里最后醒的。按 WASD 起床并检查卧室；到 08:00 后亲自从寝室门走去 B-P 乙区小厨房。"
+		return "Get up, inspect the bedroom and leave through the door."
 	if s.t < 480.0 and str(s.room) == "B-P" and s.beat_cursor <= 1:
-		return "目标：乙区小厨房。先亲自走近并检查拖痕、湿布、反扣棘轮等现场证物，再开始推演。"
+		return "Inspect the kitchen clues, then reconstruct the sequence."
 	var hold: Dictionary = s.get("hold", {})
 	var did := ""
 	if not hold.is_empty(): did = str(hold.deduction)
@@ -2226,39 +2225,39 @@ func _objective_text() -> String:
 		var g: Dictionary = eng.deduction_progress(did)
 		var dd: Dictionary = data.deduction_by_id[did]
 		if int(g.have) >= int(g.need):
-			return "目标：「%s」所需证物已齐（%d/%d），准备完成推演。" % [str(dd.title), int(g.have), int(g.need)]
+			return "Ready to deduce: %s (%d/%d clues)." % [tr(str(dd.title)), int(g.have), int(g.need)]
 		var rooms: Array = []
 		for eid in g.get("missing", []):
-			var lb := str(data.room_by_id[data.evidence_by_id[eid].room].label)
+			var lb := tr(str(data.room_by_id[data.evidence_by_id[eid].room].label))
 			if not rooms.has(lb): rooms.append(lb)
-		var where := ("去：" + "、".join(rooms)) if not rooms.is_empty() else "证物已齐，等待推演弹出"
-		return "目标：为「%s」搜集证物 %d/%d\n%s\n（点金色光柱，或用左侧「本房证物」）" % [str(dd.title), int(g.have), int(g.need), where]
+		var where := ("Visit: " + ", ".join(rooms)) if not rooms.is_empty() else "Clues collected"
+		return "Collect clues for %s: %d/%d\n%s" % [tr(str(dd.title)), int(g.have), int(g.need), where]
 	if not s.pending_conflict.is_empty() or not s.pending_choice.is_empty():
-		return "目标：处理当前弹窗（争执 / 抉择）。"
+		return "Resolve the current choice."
 	if s.doors.get("wind", false):
 		var outer_missing: Array = []
 		for rm in ["W-102", "S-102", "B-102", "F-104"]:
 			for e in data.evidence_by_room.get(rm, []):
 				if not s.evidence.has(e.id):
-					outer_missing.append(str(data.room_by_id[rm].label))
+					outer_missing.append(tr(str(data.room_by_id[rm].label)))
 					break
 		if not outer_missing.is_empty():
-			return "目标：白天风窗已开（09:00—17:00）。可前往外院补齐源质知识：%s。" % "、".join(outer_missing)
-	return "目标：自由探索。时间推进到下一节拍时，新的推演会弹出。"
+			return "Visit the institutes while the wind window is open: %s." % ", ".join(outer_missing)
+	return "Explore while the story advances."
 
 
 func _refresh_left() -> void:
 	var rid: String = eng.s.room
 	var r: Dictionary = data.room_by_id[rid]
 	left_text.clear()
-	left_text.append_text("[color=#bfe0ae][b]当前目标[/b][/color]\n[color=#f4ead4]%s[/color]\n\n" % _objective_text())
-	left_text.append_text("[color=#f2d493][b]%s[/b][/color]  [color=#d6c6a6]%s · %s区[/color]\n" % [r.label, r.floor, r.zone])
-	left_note.text = str(r.note)
+	left_text.append_text("[color=#bfe0ae][b]Objective[/b][/color]\n[color=#f4ead4]%s[/color]\n\n" % _objective_text())
+	left_text.append_text("[color=#f2d493][b]%s[/b][/color]  [color=#d6c6a6]%s · %s Wing[/color]\n" % [tr(str(r.label)), r.floor, r.zone])
+	left_note.text = tr(str(r.note))
 	var here: Array = eng.actors_in_room(rid).filter(func(i): return str(i) != "detective")
-	left_text.append_text("[color=#e3c27a]在场：[/color]" + (("、".join(here.map(func(i): return _name_bb(str(i))))) if not here.is_empty() else "无人"))
+	left_text.append_text("[color=#e3c27a]Present: [/color]" + ((", ".join(here.map(func(i): return _name_bb(str(i))))) if not here.is_empty() else "Nobody"))
 	if view == "map" and map_view.selected != "" and map_view.selected != rid:
 		var sr: Dictionary = data.room_by_id[map_view.selected]
-		left_text.append_text("\n[color=#7fbcf0]选中：%s（双击进入）[/color]" % sr.label)
+		left_text.append_text("\n[color=#7fbcf0]Selected: %s (double-click to enter)[/color]" % tr(str(sr.label)))
 	# ── 本房证物：放在出口之前，不进滚动区 ──
 	for c in left_evidence.get_children():
 		left_evidence.remove_child(c)
@@ -2269,14 +2268,14 @@ func _refresh_left() -> void:
 		for e0 in evs:
 			if eng.s.evidence.has(e0.id): got_n += 1
 		var h2 := Label.new()
-		h2.text = "本房证物  %d/%d" % [got_n, evs.size()]
+		h2.text = "Evidence  %d/%d" % [got_n, evs.size()]
 		h2.add_theme_color_override("font_color", Color("#f2d493"))
 		left_evidence.add_child(h2)
 		for e in evs:
 			var got: bool = eng.s.evidence.has(e.id)
 			var b2 := Button.new()
-			b2.text = ("✓ " if got else "◆ ") + str(e.label)
-			b2.tooltip_text = "走过去查看" if not got else "已取得"
+			b2.text = ("✓ " if got else "◆ ") + tr(str(e.label))
+			b2.tooltip_text = "Walk over to inspect" if not got else "Collected"
 			b2.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			b2.clip_text = true
 			b2.focus_mode = Control.FOCUS_NONE
@@ -2290,7 +2289,7 @@ func _refresh_left() -> void:
 		left_actions.remove_child(c)
 		c.queue_free()
 	var h := Label.new()
-	h.text = "出口"
+	h.text = "Exits"
 	h.add_theme_color_override("font_color", Color("#e3c27a"))
 	left_actions.add_child(h)
 	for dr in data.doors:
@@ -2300,7 +2299,7 @@ func _refresh_left() -> void:
 		if other == "": continue
 		var ok: bool = eng.unlocked(dr)
 		var b := Button.new()
-		b.text = "%s → %s%s" % [dr.get("label", ""), data.room_by_id[other].label, "" if ok else "（锁）"]
+		b.text = "%s → %s%s" % [tr(str(dr.get("label", ""))), tr(str(data.room_by_id[other].label)), "" if ok else " (Locked)"]
 		b.disabled = not ok
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.clip_text = true
@@ -2330,16 +2329,16 @@ func _refresh_case_tab() -> void:
 		for eid in dd.evidence:
 			if s.evidence.has(eid): have += 1
 		var l := Label.new()
-		var tag := "待推演" if st == "" else ("已解开" if st == "solved" else "判错 · 这一页留白")
-		l.text = "%s —— %s（证物 %d/%d）" % [dd.title, tag, have, int(dd.get("minEvidence", 2))]
+		var tag := "Pending" if st == "" else ("Solved" if st == "solved" else "Incorrect")
+		l.text = "%s — %s (evidence %d/%d)" % [tr(str(dd.title)), tag, have, int(dd.get("minEvidence", 2))]
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.add_theme_color_override("font_color", Color("#a8c89a") if st == "solved" else (Color("#ea9c8c") if st == "wrong" else TEXT))
 		tab_case.add_child(l)
 		if st == "wrong":
 			var b := Button.new()
-			b.text = "重新推演"
+			b.text = "Retry Deduction"
 			b.disabled = busy
-			b.tooltip_text = "取齐证物后再来一次；若对应争执还没拆解，推演完成后会接着弹出"
+			b.tooltip_text = "Collect the evidence and try again."
 			var did: String = str(dd.id)
 			b.pressed.connect(func():
 				b.disabled = true
@@ -2347,7 +2346,7 @@ func _refresh_case_tab() -> void:
 			tab_case.add_child(b)
 	if not any:
 		var e := Label.new()
-		e.text = "还没有推演记录。取到足够的证物后，推演会自动弹出。"
+		e.text = "No deductions yet. Collect evidence to begin."
 		e.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		e.add_theme_color_override("font_color", MUTED)
 		tab_case.add_child(e)
@@ -2368,34 +2367,34 @@ func _refresh_right() -> void:
 			"confront": col = "#ea9c8c"
 			"knowledge": col = "#d1b3ef"
 			"evidence": col = "#a8c89a"
-		tab_log.append_text("[color=#d6c6a6]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, l.text])
+		tab_log.append_text("[color=#d6c6a6]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, tr(str(l.text))])
 	tab_log.scroll_to_line(maxi(0, tab_log.get_line_count() - 1))
 	_refresh_case_tab()
 	# 证物
 	tab_ev.clear()
-	if s.evidence.is_empty(): tab_ev.append_text("[color=#d6c6a6]尚未取得证物。到各房间里找发光的标记。[/color]")
+	if s.evidence.is_empty(): tab_ev.append_text("[color=#d6c6a6]No evidence collected yet.[/color]")
 	for eid in s.evidence:
 		var e: Dictionary = data.evidence_by_id[eid]
 		var r: Dictionary = eng.read_evidence(eid)
-		tab_ev.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#d6c6a6]%s[/color]\n%s\n" % [e.label, data.room_by_id[e.room].label, r.text])
+		tab_ev.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#d6c6a6]%s[/color]\n%s\n" % [tr(str(e.label)), tr(str(data.room_by_id[e.room].label)), tr(str(r.text))])
 		if not r.correct:
-			tab_ev.append_text("[color=#ea9c8c]· 这一读法不一定对——似乎还缺一块知识。[/color]\n")
+			tab_ev.append_text("[color=#ea9c8c]· More knowledge may clarify this evidence.[/color]\n")
 			if author:
-				tab_ev.append_text("[color=#6b3fa0]【作者】缺：%s[/color]\n" % "、".join(r.need.map(func(k): return str(data.know_by_id[k].title))))
+				tab_ev.append_text("[color=#6b3fa0]Author · Missing: %s[/color]\n" % ", ".join(r.need.map(func(k): return tr(str(data.know_by_id[k].title)))))
 		tab_ev.append_text("\n")
 	# 知识
 	tab_know.clear()
-	tab_know.append_text("[color=#d6c6a6]源质知识：第一章全员缺失。补齐后，旧证物会改读。[/color]\n\n")
+	tab_know.append_text("[color=#d6c6a6]Prima knowledge can reveal new readings of evidence.[/color]\n\n")
 	for k in data.knowledge:
 		if s.knowledge.has(k.id):
-			tab_know.append_text("[color=#d1b3ef][b]%s[/b][/color]\n%s\n\n" % [k.title, k.text])
+			tab_know.append_text("[color=#d1b3ef][b]%s[/b][/color]\n%s\n\n" % [tr(str(k.title)), tr(str(k.text))])
 		elif author:
-			tab_know.append_text("[color=#6b3fa0]（未得）%s —— 解锁：%s[/color]\n\n" % [k.title, k.unlock])
+			tab_know.append_text("[color=#6b3fa0](Missing) %s — Unlock: %s[/color]\n\n" % [tr(str(k.title)), tr(str(k.unlock))])
 	# 词义
 	var term := str(term_pick.get_item_metadata(maxi(0, term_pick.selected)))
 	var td: Dictionary = data.terms[term]
 	tab_lex.clear()
-	tab_lex.append_text("[color=#e9c98a][b]%s[/b][/color]\n[color=#d6c6a6]%s[/color]\n\n" % [td.word, td.note if author else "同一个词，在不同人脑里是不同的事实。"])
+	tab_lex.append_text("[color=#e9c98a][b]%s[/b][/color]\n[color=#d6c6a6]%s[/color]\n\n" % [tr(str(td.word)), tr(str(td.note)) if author else "The same word can mean different things to different people."])
 	var shown := 0
 	var term_unlocked: bool = bool(s.get("unlocked_terms", {}).get(term, false))
 	for a in data.actors:
@@ -2418,9 +2417,9 @@ func _refresh_right() -> void:
 					break
 		if known:
 			shown += 1
-			tab_lex.append_text("%s：%s\n" % [_name_bb(str(a.id)), data.sense_label(str(a.id), term)])
+			tab_lex.append_text("%s: %s\n" % [_name_bb(str(a.id)), tr(str(data.sense_label(str(a.id), term)))])
 	if shown == 0:
-		tab_lex.append_text("[color=#d6c6a6]（还没有人对这个词产生过分歧。期待落空之前，谁也听不出差别。）[/color]")
+		tab_lex.append_text("[color=#d6c6a6]No differences in meaning have emerged yet.[/color]")
 	# 关系
 	tab_rel.clear()
 	for k in s.relations:
@@ -2429,15 +2428,15 @@ func _refresh_right() -> void:
 		var filled := clampi(int(rel.trust / 10.0), 0, 10)
 		var bar := "█".repeat(filled) + "░".repeat(10 - filled)
 		var bad_rel := int(rel.trust) < 40 or bool(rel.get("permanent", false))
-		tab_rel.append_text("%s ↔ %s  [color=%s]%s %d%s[/color]\n" % [_name_bb(pr[0]), _name_bb(pr[1]), "#ea9c8c" if bad_rel else "#a8c89a", bar, int(rel.trust), "  永久受损" if rel.permanent else ""])
+		tab_rel.append_text("%s ↔ %s  [color=%s]%s %d%s[/color]\n" % [_name_bb(pr[0]), _name_bb(pr[1]), "#ea9c8c" if bad_rel else "#a8c89a", bar, int(rel.trust), "  Permanently damaged" if rel.permanent else ""])
 		for g in rel.grievances:
-			tab_rel.append_text("[color=#d6c6a6]　　%s[/color]\n" % g.text)
+			tab_rel.append_text("[color=#d6c6a6]    %s[/color]\n" % tr(str(g.text)))
 	if s.irreparable:
-		tab_rel.append_text("\n[color=#ea9c8c]第一天的真话被各自听成不同事实；事后查明真相也不会复原这几条。[/color]")
+		tab_rel.append_text("\n[color=#ea9c8c]Some relationships were permanently damaged on the first day.[/color]")
 	# 调试
 	tab_author.clear()
 	if not author:
-		tab_author.append_text("[color=#d6c6a6]打开顶栏「作者视角」后，这里显示判定依据。正常游玩不会出现这些内容。[/color]")
+		tab_author.append_text("[color=#d6c6a6]Enable Author View to see diagnostic details.[/color]")
 	else:
 		for i in range(maxi(0, s.debug_log.size() - 60), s.debug_log.size()):
 			var dl: Dictionary = s.debug_log[i]
@@ -2664,8 +2663,8 @@ func _modal_conflict(cid: String) -> void:
 		if data.actor_by_id.has(who): l.add_theme_color_override("font_color", Color(str(data.actor_by_id[who].color)).darkened(0.25))
 	if eng.s.author_view:
 		var term: Dictionary = data.terms[c.word]
-		var txt := "【作者】关键词「%s」——" % term.word
-		for sn in eng.conflict_senses(cid): txt += "%s=%s；" % [sn.name, sn.sense]
+		var txt := "Author · Keyword: %s — " % tr(str(term.word))
+		for sn in eng.conflict_senses(cid): txt += "%s=%s; " % [tr(str(sn.name)), tr(str(sn.sense))]
 		var al := _ink_label(v, txt, 12)
 		al.add_theme_color_override("font_color", Color("#6b3fa0"))
 	_ink_label(v, "How do you respond?", 13)
@@ -2710,16 +2709,11 @@ func _begin_intro() -> void:
 
 
 func _modal_intro() -> void:
-	var v := _modal_shell("第一天 · 清晨", "游戏开始时时间是暂停的。准备好了再按「开始」。")
-	_ink_label(v, "你扮演侦探。第一天清晨，你在 R05 居室的床上醒来——四人里醒得最晚。\n霍铎、沈师傅和苏泠已经在乙区小厨房（B-P）等着了。", 14)
-	_ink_label(v, "每一天都按同一个节奏：", 14)
-	_ink_label(v, "① 取证：点房间里的金色标记查看证物。证物不足时推演不会弹出，时间也会停住；自动搜证是可选辅助，开局默认关闭。", 14)
-	_ink_label(v, "② 推演：弹窗会显示「已勾选 / 已取得 / 至少需要」。证物不足时先去调查；判错的推演可在「案卷 → 推演」或争执前重做。", 14)
-	_ink_label(v, "③ 争执：正解选项只有推演成功才会出现。第一天正午的「对质」选错会永久折损三组人物信任，务必先把证物取齐。", 14)
-	_ink_label(v, "剧情按场景逐幕播放：一幕只显示该房间真正开口或等候的人。08:00 的厨房现场需要你从 R05 亲自走过去；时间会停在门口等你，不会把人瞬移到别的地图。\n操作：WASD/方向键亲自走动；点光柱或左侧证物查看；空格推进字幕；顶栏可暂停、调速或开启自动搜证。", 13)
+	var v := _modal_shell("Day One · Morning", "The game is paused.")
+	_ink_label(v, "Move with WASD. Inspect clues and follow the story.", 14)
 	var row := HBoxContainer.new()
 	v.add_child(row)
-	var go := _btn(row, "开始", func(): pass)
+	var go := _btn(row, "Start", func(): pass)
 	go.custom_minimum_size = Vector2(140, 38)
 	go.pressed.connect(func():
 		go.disabled = true
@@ -2772,14 +2766,14 @@ func _modal_chapter() -> void:
 
 func _modal_ending() -> void:
 	var e: Dictionary = data.endings[eng.s.ending]
-	var v := _modal_shell(str(e.title), "")
-	_ink_label(v, "结局由你的推演、争执与抉择共同决定。重新开始可以换一条路走。", 12)
-	_ink_label(v, eng.ending_summary(), 16)
-	_ink_label(v, "知识 %d/%d · 证物 %d/%d · %s" % [eng.knowledge_count(), data.knowledge.size(), eng.s.found_count, data.evidence.size(), "有不可弥合的裂痕" if eng.s.irreparable else "没有无法回头的关系"], 13)
+	var v := _modal_shell(tr(str(e.title)), "")
+	_ink_label(v, "Your deductions and choices shaped this ending.", 12)
+	_ink_label(v, tr(eng.ending_summary()), 16)
+	_ink_label(v, "Knowledge %d/%d · Evidence %d/%d · %s" % [eng.knowledge_count(), data.knowledge.size(), eng.s.found_count, data.evidence.size(), "Relationships damaged" if eng.s.irreparable else "Relationships preserved"], 13)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	v.add_child(row)
-	var b_restart := _btn(row, "重新开始", func():
+	var b_restart := _btn(row, "Restart", func():
 		_ending_dismissed = false
 		_stop_exploration()
 		eng.new_game()
@@ -2796,13 +2790,13 @@ func _modal_ending() -> void:
 		_start_opening())
 	b_restart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b_restart.custom_minimum_size = Vector2(140, 38)
-	var b_case := _btn(row, "翻看案卷", func():
+	var b_case := _btn(row, "Case File", func():
 		_ending_dismissed = true
 		_dismiss_modal()
 		if not drawer.visible: _toggle_drawer())
 	b_case.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b_case.custom_minimum_size = Vector2(140, 38)
-	var b_back := _btn(row, "返回标题", func(): _close())
+	var b_back := _btn(row, "Title", func(): _close())
 	b_back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b_back.custom_minimum_size = Vector2(140, 38)
 
@@ -2834,10 +2828,10 @@ func mcp_observe() -> Dictionary:
 		"mode": "dual_world",
 		"view": view,
 		"room": str(eng.s.room),
-		"room_label": str(data.room_by_id.get(eng.s.room, {}).get("label", eng.s.room)),
+		"room_label": tr(str(data.room_by_id.get(eng.s.room, {}).get("label", eng.s.room))),
 		"day": int(ck.day),
 		"clock": str(ck.text),
-		"phase": str(ph.title),
+		"phase": tr(str(ph.title)),
 		"playing": bool(eng.s.playing),
 		"speed": float(eng.s.speed),
 		"waiting": bool(eng.s.waiting),

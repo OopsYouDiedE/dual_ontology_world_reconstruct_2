@@ -155,7 +155,7 @@ func _complete_chapter_one() -> void:
 
 func continue_chapter() -> bool:
 	if not _is_chapter_one() or not bool(s.get("chapter_complete", false)):
-		notice("第一章尚未完成。")
+		notice("Chapter 1 is not complete.")
 		return false
 	s.chapter = 2
 	s.chapter_complete = false
@@ -290,7 +290,7 @@ func enter_room(id: String, silent := false) -> bool:
 	if not d.room_by_id.has(id): return false
 	var path := path_to(id)
 	if path.is_empty() and not s.author_view:
-		notice("门从里面闩着，现在过不去。")
+		notice("The door is bolted from inside.")
 		sfx.emit("error")
 		return false
 	s.room = id
@@ -329,7 +329,7 @@ func grant_knowledge(id: String, why := "") -> bool:
 	s.knowledge[id] = {"at": s.t, "why": why}
 	_log("knowledge", "【新知 · %s】%s" % [kd.title, kd.text], [])
 	_debug("knowledge", "【%s】%s（来源：%s）" % [kd.title, kd.text, why if why != "" else "调查"])
-	notice("获得源质知识：【%s】" % kd.title)
+	notice("Knowledge gained: %s" % tr(str(kd.title)))
 	sfx.emit("page")
 	_recheck_evidence_knowledge()
 	changed.emit("knowledge")
@@ -380,7 +380,7 @@ func inspect_evidence(eid: String, visual_presented := false) -> bool:
 	if not d.evidence_by_id.has(eid): return false
 	var e: Dictionary = d.evidence_by_id[eid]
 	if s.room != e.room and not s.author_view:
-		notice("得先到那间房去。")
+		notice("Go to that room first.")
 		sfx.emit("error")
 		return false
 	var first: bool = not s.evidence.has(eid)
@@ -483,10 +483,10 @@ func solve_deduction(did: String, hyp_id: String, picked: Array = []) -> void:
 	_log("deduce", "案卷推演 · %s → %s" % [dd.title, "已解开" if solved else "暂留空白"], [s.selected_actor])
 	_debug("deduction", "%s → %s（假设 %s，证物 %d/%d 件）" % [did, s.deductions[did], hyp_id, relevant.size(), need_min])
 	if solved:
-		notice("推演成立：「%s」已记入案卷。" % dd.title)
+		notice("Deduction solved: %s" % tr(str(dd.title)))
 		sfx.emit("success")
 	else:
-		notice("推演未成立：「%s」留白，可在「案卷 → 推演」或争执前重新推演。" % dd.title)
+		notice("Deduction incomplete: %s. You can retry." % tr(str(dd.title)))
 		sfx.emit("error")
 	if nxt != "": open_conflict(nxt)
 	changed.emit("deduction")
@@ -702,7 +702,7 @@ func effective_beat_lines(b: Dictionary) -> Array:
 
 func next_beat() -> void:
 	if _is_chapter_one() and bool(s.get("chapter_complete", false)):
-		notice("第一章已完成，请明确选择继续第二章。")
+		notice("Chapter 1 is complete. Choose Chapter 2 to continue.")
 		return
 	# 先消费当前时刻已经抵达的第一章节拍（尤其是 d1_plan），再寻找下一节拍。
 	# 否则开发跳拍停在 21:35 时会绕过收束节拍，直接把章节标为完成。
@@ -712,7 +712,7 @@ func next_beat() -> void:
 			changed.emit("jump")
 			return
 	if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty() or not s.get("postponed", {}).is_empty():
-		notice("请先处理当前现场取证或弹窗事项。")
+		notice("Finish the current investigation or choice first.")
 		return
 	if _is_chapter_one():
 		for b in d.beats:
@@ -789,8 +789,8 @@ func process_beats() -> void:
 			if str(s.get("story_gate", {}).get("beat", "")) != str(b.id):
 				s.story_gate = {"beat": b.id, "room": target_room}
 				s.t = float(b.at)
-				var destination := str(d.room_by_id[target_room].label) if d.room_by_id.has(target_room) else "剧情现场"
-				notice("前往 " + destination.left(12))
+				var destination := tr(str(d.room_by_id[target_room].label)) if d.room_by_id.has(target_room) else "the scene"
+				notice("Go to " + destination)
 			break
 		if not s.get("story_gate", {}).is_empty() and str(s.story_gate.get("beat", "")) == str(b.id):
 			s.story_gate = {}
@@ -933,7 +933,7 @@ func _hold_for_evidence(b: Dictionary) -> bool:
 		s.hold = {"beat": b.id, "deduction": b.deduction}
 		_log("system", "【先搜证】%s：手头相关证物 %d/%d 件，推演前先到现场查看。" % [d.deduction_by_id[b.deduction].title, g.have, g.need], [])
 		_debug("gate", "推演 %s 被挂起：证物 %d/%d" % [b.deduction, g.have, g.need])
-		notice("先搜证：「%s」还差 %d 件相关证物。" % [d.deduction_by_id[b.deduction].title, g.need - g.have])
+		notice("Collect %d more clues for %s." % [g.need - g.have, tr(str(d.deduction_by_id[b.deduction].title))])
 		changed.emit("hold")
 	return true
 
@@ -945,10 +945,10 @@ func hold_text() -> String:
 	var g := gate_status(str(h.deduction))
 	var rooms: Array = []
 	for eid in g.missing:
-		var lb := str(d.room_by_id[d.evidence_by_id[eid].room].label)
+		var lb := tr(str(d.room_by_id[d.evidence_by_id[eid].room].label))
 		if not rooms.has(lb): rooms.append(lb)
-	return "等待搜证 · %s：证物 %d/%d%s" % [d.deduction_by_id[h.deduction].title, g.have, g.need,
-		("  可查：" + "、".join(rooms)) if not rooms.is_empty() else ""]
+	return "Collect clues · %s: %d/%d%s" % [tr(str(d.deduction_by_id[h.deduction].title)), g.have, g.need,
+		("  Visit: " + ", ".join(rooms)) if not rooms.is_empty() else ""]
 
 
 ## 侦探下一件该查的证物（自动搜证用）：

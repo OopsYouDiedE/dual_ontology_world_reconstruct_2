@@ -6,8 +6,11 @@
   const node = (tag, text = '') => { const e = document.createElement(tag); e.textContent = text; return e; };
   const href = path => document.body.dataset.projectBase + path.split('/').map(encodeURIComponent).join('/');
   function anchor(path, text) { const a = node('a', text); a.href = href(path); return a; }
+  let lastData = null;
   function draw(data) {
     if (!data || !Array.isArray(data.rows)) return;
+    const serialized = JSON.stringify(data);
+    if (serialized === lastData) return;
     let section = document.querySelector('.scene-survey');
     if (!section) {
       section = node('section'); section.className = 'score-coverage scene-survey';
@@ -18,6 +21,9 @@
     const heading = node('h2', '场景逐项测试与卡点');
     const summary = node('p', `批次 ${data.id} · 版本 ${(data.revision || '').slice(0,12)} · ${stateNames[data.state] || data.state} · `);
     if (data.status_path) summary.append(anchor(data.status_path, '批次状态'));
+    const previousScroll = section.querySelector('.coverage-scroll');
+    const scrollLeft = previousScroll?.scrollLeft || 0;
+    const scrollTop = previousScroll?.scrollTop || 0;
     const scroll = node('div'); scroll.className = 'coverage-scroll';
     const table = node('table'), head = node('thead'), tr = node('tr');
     ['场景','房间','最近阶段','状态','问题 / 卡点',...labels,'证据'].forEach(label => tr.append(node('th', label)));
@@ -41,6 +47,8 @@
       r.append(evidence); tbody.append(r);
     });
     table.append(head,tbody); scroll.append(table); section.replaceChildren(heading,summary,scroll);
+    scroll.scrollLeft = scrollLeft; scroll.scrollTop = scrollTop;
+    lastData = serialized;
   }
   let loading = false;
   function refresh() {

@@ -301,7 +301,6 @@ def scene_survey_payload(root, survey):
                            images=[relative(p) for p in row.get('images', [])]) for row in survey['rows']])
 
 
-SCENE_LIVE_BOOTSTRAP = ("if(document.body.dataset.reportClientVersion!=='2'){window.location.reload();}"
-                        "else if(!window.__sceneSurveyLive){window.__sceneSurveyLive=true;"
+SCENE_LIVE_BOOTSTRAP = ("if(!window.__sceneSurveyLive){window.__sceneSurveyLive=true;"
                         "var s=document.createElement('script');s.src='scene-live.js?t='+Date.now();"
                         "s.onerror=function(){window.__sceneSurveyLive=false};document.body.append(s);}\n")

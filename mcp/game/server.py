@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import atexit
 import json
+import threading
 
 from mcp import types
 from mcp.server.lowlevel import Server
@@ -95,6 +96,25 @@ def execute(service, name, arguments):
     return runtime.execute(name, arguments)
 
 
+
+async def execute_owned(service, name, arguments):
+    """Close a session if the caller disappears while its launch is running."""
+    task = asyncio.create_task(asyncio.to_thread(execute, service, name, arguments))
+    try:
+        return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        def dispose(finished):
+            try:
+                result = finished.result()
+                session_id = result.get("session_id") if isinstance(result, dict) else None
+                if service == "input" and name == "on" and session_id:
+                    threading.Thread(target=runtime.execute, args=("close", {"session_id": session_id}), daemon=True).start()
+            except (Exception, asyncio.CancelledError):
+                pass
+        task.add_done_callback(dispose)
+        raise
+
+
 def cleanup():
     # A tool invocation owns each automatic run; disconnect cancels its hosts.
     for endpoint in list(runtime.SESSIONS.values()): endpoint.stop()
@@ -119,7 +139,7 @@ async def main(service):
     async def call_tool(name, arguments):
         if name not in {tool.name for tool in tools}: raise ValueError("Unknown tool")
         try:
-            result = await asyncio.to_thread(execute, service, name, arguments)
+            result = await execute_owned(service, name, arguments)
             png = result.pop("image_base64", None)
             audio = result.pop("audio_base64", None)
             content = [types.TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]

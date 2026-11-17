@@ -1,4 +1,5 @@
 """Validate the input MCP routes observation calls to the owned session."""
+import asyncio
 import threading
 from types import SimpleNamespace
 import unittest
@@ -45,6 +46,26 @@ class ObservationDispatchTests(unittest.TestCase):
     def test_unknown_session_is_rejected(self):
         with patch.dict(runtime.SESSIONS, {}, clear=True), self.assertRaisesRegex(ValueError, 'Unknown session'):
             runtime.execute('event_script', {'session_id': 'missing', 'text': 'A door opens.'})
+
+
+class CancelledLaunchTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cancelled_launch_closes_session_once_launch_returns(self):
+        started, release, closed = threading.Event(), threading.Event(), threading.Event()
+        def launch(service, name, arguments):
+            started.set()
+            release.wait(5)
+            return {"session_id": "owned"}
+        def close(name, arguments):
+            self.assertEqual((name, arguments), ("close", {"session_id": "owned"}))
+            closed.set()
+        with patch.object(server, "execute", side_effect=launch), patch.object(runtime, "execute", side_effect=close):
+            task = asyncio.create_task(server.execute_owned("input", "on", {}))
+            self.assertTrue(await asyncio.to_thread(started.wait, 2))
+            task.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await task
+            release.set()
+            self.assertTrue(await asyncio.to_thread(closed.wait, 3))
 
 
 if __name__ == '__main__':

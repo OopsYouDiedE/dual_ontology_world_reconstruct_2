@@ -365,7 +365,8 @@ class Evaluation:
                 or observation.get("detective_camera_rules_unchanged") is not True
                 or observation.get("explicit_watcher_before_next_frame") is not True
                 or observation.get("from") != c.FLOW_PRETRANSIT_FROM or observation.get("to") != target
-                or observation.get("path") != str(c.project_path(pretransit))
+                or not isinstance(observation.get("path"), str)
+                or c.project_path(observation["path"]) != c.project_path(pretransit)
                 or not isinstance(path_points, int) or isinstance(path_points, bool) or path_points < 2
                 or not isinstance(coordinates, list) or len(coordinates) != 2
                 or any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in coordinates)):

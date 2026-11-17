@@ -154,7 +154,7 @@ func _step_talk(delta: float) -> void:
 	var shown: bool = host.subtitle.visible or not host._sub_queue.is_empty()
 	if shown: _talk_seen = true
 	# 说到手背抓痕时低头看手
-	var look_down: bool = host.subtitle.visible and "抓痕" in host.subtitle.text
+	var look_down: bool = host.subtitle.visible and ("抓痕" in host.subtitle.text or "scratches" in host.subtitle.text.to_lower())
 	_set_head(Vector3(0.0, 0.5 if look_down else 0.15, 0.0), 1.0, delta)
 	if _talk_seen:
 		_talk_idle = 0.0 if shown else _talk_idle + delta
@@ -281,7 +281,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
-	_hint.text = "WASD移动"
+	_hint.text = "WASD Move"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
@@ -308,11 +308,11 @@ func _build_markers() -> void:
 		var marker := Node3D.new()
 		marker.position = Vector3(pos.x, float(def.y), pos.z)
 		_markers_root.add_child(marker)
-		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, str(def.label), {"emission_energy_multiplier": 1.8})
+		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, tr(str(def.label)), {"emission_energy_multiplier": 1.8})
 		var gem: MeshInstance3D = parts["gem"]
 		var mat: StandardMaterial3D = parts["mat"]
 		var tag: Label3D = parts["tag"]
-		_items.append({"id": str(def.id), "label": str(def.label), "lines": def.lines, "pos": pos,
+		_items.append({"id": str(def.id), "label": tr(str(def.label)), "lines": def.lines, "pos": pos,
 			"marker": marker, "gem": gem, "mat": mat, "tag": tag, "seen": false, "base_y": float(def.y)})
 
 

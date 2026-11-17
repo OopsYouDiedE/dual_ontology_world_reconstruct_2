@@ -42,8 +42,9 @@ func install(original: Node3D, observation: String) -> bool:
 		"window":
 			var glass := original.find_child("Glass", true, false) as MeshInstance3D
 			var center := to_local(glass.to_global(glass.get_aabb().get_center())) if glass != null else Vector3(0, 0.8, 0)
+			if not preload("res://scenes/components/world/WindowCourtyard.gd").install(original,glass): return false
 			set_meta("focus", center)
-			set_meta("camera_offset", Vector3(0.3, 0.25, 4.2))
+			set_meta("camera_offset", Vector3(0.3, 1.4, 4.2))
 			set_meta("camera_fov", 58.0)
 		_: return false
 	_sound = AudioStreamPlayer3D.new()
@@ -77,7 +78,8 @@ func _install_notebook() -> void:
 	set_meta("camera_offset", Vector3(0.12, 0.72, 0.45))
 
 func _install_water() -> void:
-	var bowl := _original.find_child("Bowl", true, false) as MeshInstance3D
+	# Bowl is a grouping node in wash_table.glb; its visible mesh is Bowl_Dish.
+	var bowl := _original.find_child("Bowl_Dish", true, false) as MeshInstance3D
 	if bowl == null: return
 	var bounds := bowl.get_aabb()
 	var top := bowl.to_global(bounds.get_center() + Vector3(0, bounds.size.y * 0.35, 0))
@@ -100,6 +102,7 @@ func _install_water() -> void:
 		_moving.append(ripple)
 	set_meta("focus", center)
 	set_meta("camera_offset", Vector3(0.3, 0.66, 0.95))
+	set_meta("inspection_target", get_path_to(bowl))
 
 func activate() -> void:
 	if _running: return

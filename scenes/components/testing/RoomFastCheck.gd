@@ -356,6 +356,9 @@ func _target_mesh(prop: Node3D) -> Dictionary:
 	# Observation wrappers are children of the original furniture.
 	if str(prop.name).begins_with("RoomObservation_"): selection = prop.get_parent()
 	var focus: Vector3 = prop.to_global(prop.get_meta("focus",Vector3.ZERO))
+	if prop.has_meta("inspection_target"):
+		var explicit := prop.get_node_or_null(NodePath(prop.get_meta("inspection_target"))) as MeshInstance3D
+		return {"mesh":explicit,"root":explicit,"focus":focus}
 	var best: MeshInstance3D
 	var distance := INF
 	for proxy in proxies:

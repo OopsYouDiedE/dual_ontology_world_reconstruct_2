@@ -45,7 +45,7 @@ func refresh() -> void:
 		button.button_group = _group
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size.y = 76
-		button.text = "%s\n%s" % [slot.label, _summary(slot)]
+		button.text = "%s\n%s" % [_slot_label(slot), _summary(slot)]
 		button.button_pressed = str(slot.id) == _selected
 		button.pressed.connect(_select.bind(str(slot.id)))
 		slot_list.add_child(button)
@@ -62,14 +62,14 @@ func _show_detail() -> void:
 	var can_save: bool = host != null and host.can_save()
 	var manual := str(slot.get("kind", "")) == "manual"
 	var exists := bool(slot.get("exists", false))
-	slot_title.text = str(slot.get("label", ""))
+	slot_title.text = _slot_label(slot)
 	if exists:
-		detail.text = "场所　%s\n时刻　%s\n记于　%s" % [slot.get("place", "—"), slot.get("game_time", "—"), _local_time(int(slot.get("saved_at", 0)))]
-		if not manual: detail.text += "\n\n离开生活场景或退出时更新这一页。"
+		detail.text = "Place: %s\nTime: %s\nSaved: %s" % [tr(str(slot.get("place", "—"))), slot.get("game_time", "—"), _local_time(int(slot.get("saved_at", 0)))]
+		if not manual: detail.text += "\n\nUpdated when leaving the game."
 	elif manual:
-		detail.text = "这一页还空着。" + ("\n可以把当前生活进度写在这里。" if can_save else "\n开始生活后，才能把进度写在这里。")
+		detail.text = "Empty slot." + ("\nSave the current session here." if can_save else "\nStart a game to save here.")
 	else:
-		detail.text = "还没有自动记录。\n离开生活场景时会自动写下。"
+		detail.text = "No autosave yet."
 	write_button.visible = manual
 	write_button.disabled = not can_save
 	load_button.disabled = not exists
@@ -83,7 +83,7 @@ func _confirm(action: String) -> void:
 	if needs_confirm and (_armed != action or Time.get_ticks_msec() / 1000.0 > _armed_until):
 		_armed = action
 		_armed_until = Time.get_ticks_msec() / 1000.0 + CONFIRM_SECONDS
-		status.text = {"write": "再按一次，覆盖这一页。", "load": "再按一次读取；当前未记下的进度会丢失。", "delete": "再按一次，撕去这一页。"}[action]
+		status.text = {"write": "Press again to overwrite.", "load": "Press again to load; unsaved progress will be lost.", "delete": "Press again to delete."}[action]
 		_label_buttons()
 		return
 	_disarm()
@@ -93,7 +93,7 @@ func _confirm(action: String) -> void:
 		"load": error = host.load_slot(_selected)
 		"delete": error = host.delete_slot(_selected)
 	if not is_inside_tree(): return
-	status.text = error if not error.is_empty() else {"write": "已写入。", "load": "正在读取……", "delete": "已撕去。"}[action]
+	status.text = tr(error) if not error.is_empty() else {"write": "Saved.", "load": "Loading…", "delete": "Deleted."}[action]
 	refresh()
 
 func _disarm() -> void:
@@ -101,9 +101,9 @@ func _disarm() -> void:
 	_label_buttons()
 
 func _label_buttons() -> void:
-	write_button.text = "确认覆盖" if _armed == "write" else "写入此页"
-	load_button.text = "确认读取" if _armed == "load" else "读取"
-	delete_button.text = "确认撕去" if _armed == "delete" else "撕去"
+	write_button.text = "Confirm Overwrite" if _armed == "write" else "Save"
+	load_button.text = "Confirm Load" if _armed == "load" else "Load"
+	delete_button.text = "Confirm Delete" if _armed == "delete" else "Delete"
 
 func _process(_delta: float) -> void:
 	if not _armed.is_empty() and Time.get_ticks_msec() / 1000.0 > _armed_until:
@@ -116,8 +116,12 @@ func _slot(id: String) -> Dictionary:
 	return {}
 
 func _summary(slot: Dictionary) -> String:
-	if not bool(slot.get("exists", false)): return "空白"
-	return "%s　%s" % [slot.get("game_time", "—"), slot.get("place", "—")]
+	if not bool(slot.get("exists", false)): return "Empty"
+	return "%s  %s" % [slot.get("game_time", "—"), tr(str(slot.get("place", "—")))]
+
+func _slot_label(slot: Dictionary) -> String:
+	if str(slot.get("kind", "")) != "manual": return "Autosave"
+	return "Save %s" % str(slot.get("id", ""))
 
 static func _local_time(unix: int) -> String:
 	if unix <= 0: return "—"

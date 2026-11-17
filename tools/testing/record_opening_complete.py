@@ -79,7 +79,12 @@ def main():
                   'start':datetime.now().astimezone().isoformat(), 'source_sha256':{}}
         for relative in ['tools/test/capture_opening_complete.gd', 'tools/testing/TestStoryHost.gd',
                          'scenes/dual_world/DualWorldMain.gd', 'scenes/dual_world/WakeOpening.gd',
-                         'scenes/dual_world/CorridorGathering.gd', 'scenes/components/testing/StoryCheckpoint.gd']:
+                         'scenes/dual_world/CorridorGathering.gd', 'scenes/components/testing/StoryCheckpoint.gd',
+                         'scenes/components/interaction/RoomObservation.gd',
+                         'scenes/components/interaction/RoomEvidenceDetails.gd',
+                         'scenes/components/interaction/RoomWardrobe.gd',
+                         'scenes/components/interaction/InRoomEvidenceCloseup.gd',
+                         'scenes/components/world/WindowCourtyard.gd']:
             launch['source_sha256'][relative] = hashlib.sha256((ROOT/relative).read_bytes()).hexdigest()
         with (folder/'godot.log').open('w',encoding='utf-8') as log:
             proc = subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)

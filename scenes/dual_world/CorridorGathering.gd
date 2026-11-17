@@ -107,7 +107,7 @@ func _setup_stage() -> void:
 		host.figures[id] = f
 		_npc[id] = f
 		var tag := Label3D.new()
-		tag.text = str(host.data.actor_by_id[id].name)
+		tag.text = tr(str(host.data.actor_by_id[id].name))
 		tag.font = host.SANS_FONT
 		tag.font_size = 40
 		tag.pixel_size = 0.005
@@ -251,7 +251,7 @@ func _build_corridor() -> void:
 		if own:
 			var leaf := _box(Vector3(x - 0.45, 1.05, 0.5), Vector3(0.08, 2.05, 0.85), Color("#6b4a2e"))
 			leaf.rotation.y = deg_to_rad(-62.0)
-			_label("%s · 我" % d[0], Vector3(x, 2.6, 0.2), 0.0042)
+			_label("%s · Mine" % d[0], Vector3(x, 2.6, 0.2), 0.0042)
 		else:
 			_box(Vector3(x, 1.05, 0.1), Vector3(0.96, 2.05, 0.07), Color("#5f4229"))               # 关紧的门扇
 			_box(Vector3(x, 1.05, 0.145), Vector3(0.62, 1.5, 0.02), Color("#6d4c30"))              # 门板嵌线
@@ -466,7 +466,7 @@ func _show_card() -> void:
 	_card = PanelContainer.new()
 	_card.add_theme_stylebox_override("panel", host._style(Color(0.07, 0.055, 0.04, 0.9), host.BRASS, 10, 14))
 	var l := Label.new()
-	l.text = "各自失忆\n去厨房复查"
+	l.text = "Check the kitchen"
 	l.add_theme_font_size_override("font_size", 17)
 	l.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_card.add_child(l)
@@ -591,7 +591,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
-	_hint.text = "点物调查"
+	_hint.text = "Click to inspect"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
@@ -609,7 +609,8 @@ func _build_items() -> void:
 		var marker := Node3D.new()
 		_root.add_child(marker)
 		var locked: bool = "（锁）" in str(def.label)
-		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, str(def.label), {
+		var label := tr(str(def.label))
+		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, label, {
 			"albedo_color": Color("#d9604f") if locked else Color("#ffa51f"),
 			"emission_color": Color("#c02a1a") if locked else Color("#ff8a00"),
 			"emission_energy_multiplier": 1.6,
@@ -619,6 +620,7 @@ func _build_items() -> void:
 		var mat: StandardMaterial3D = parts["mat"]
 		var tag: Label3D = parts["tag"]
 		var it: Dictionary = def
+		it["label"] = label
 		it["marker"] = marker
 		it["gem"] = gem
 		it["mat"] = mat
@@ -756,7 +758,7 @@ func _step_free(delta: float) -> void:
 	_prompt.visible = show_prompt
 	if show_prompt:
 		var it: Dictionary = _items[near]
-		_prompt.text = "E %s" % ("去小厨房复查" if str(it.id) == "kitchen" else str(it.label).replace("（锁）", ""))
+		_prompt.text = "E %s" % str(it.label)
 	for i in _items.size():
 		(_items[i].tag as Label3D).visible = i == _hover and not show_prompt and not sub_up
 	_hint.visible = not sub_up and not show_prompt and _hover < 0

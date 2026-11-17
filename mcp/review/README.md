@@ -10,6 +10,8 @@
 
 `review_append` 必填 work_id、summary、record。record 原样经过 mainline_reviews.validate，保持独立 Terra 与真实主线全部校验，并生成对应 check 事件。supersedes 审计限定同版本同段。review 和进展跨两个文件采用可恢复提交：评分文件先完整发布，事件后发布；相同请求重试补齐投影。生产评分随后自动全量渲染 HTML，渲染成功回执位于 `.runtime/review-export/review-<id>.rendered.json`；成功重试复用回执，失败重试补做导出。返回成功时评分、进展与对应 HTML 均已发布。独立渲染锁串行全量导出，普通进展写入持续可用。测试沙盒评分只返回 skipped_test_sandbox，始终跳过正式页面。
 
+已有独立实机评分的页面提供“修订这条评分”：填写新记录 ID、说明、分数及依据后下载 JSON 草稿。将草稿保存到项目内，例如 `.runtime/review-correction.json`，执行 `& ./.runtime/python/Scripts/python.exe mcp/review/client.py review_append --arguments '@.runtime/review-correction.json'`。提交经过与原评审相同的来源与证据验证，成功后自动重渲染；旧评分保留在历史中。没有独立实机记录的段落显示待评，需先完成独立评审。
+
 持久化：跨线程与跨进程写锁；同目录临时文件 flush/fsync 后原子替换；独立评分通过硬链接 create-only 发布；进展由 YAML 作为持久源，JS 为轻量派生快照。YAML/JS 各自原子更新；进程在两次写入间终止时，重试原请求或调用 flush 重建 JS。所有事件只追加，旧 ID 内容不能覆盖。未关联该写锁的旧脚本应停止直接写进展；评分的旧 append 仍有独占创建保护。
 
 页面通过 script 标签重载 live-progress.js，支持直接 file:// 打开。事件追加不扫描报告链接；render 才调用现有完整导出器。服务本身不声称已完成浏览器视觉验收。

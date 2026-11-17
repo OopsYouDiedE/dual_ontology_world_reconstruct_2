@@ -36,6 +36,8 @@ var _time := 0.0
 
 func _ready() -> void:
 	theme = _build_theme()
+	for control in [$Menu/TitleLabel, $Menu/StartButton, continue_button, records_button, $Menu/CampaignButton, $Menu/BuilderButton, life_test_button, settings_button, quit_button, hint]:
+		control.text = tr(control.text)
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
 	gradient.colors = PackedColorArray([Color(GOLD, 0.0), GOLD, Color(GOLD, 0.0)])
@@ -115,8 +117,8 @@ func _build_theme() -> Theme:
 	theme.default_font = BODY_FONT
 	theme.default_font_size = 28
 	theme.set_type_variation("TitleLabel", "Label")
-	theme.set_font("font", "TitleLabel", TITLE_FONT)
-	theme.set_font_size("font_size", "TitleLabel", 92)
+	theme.set_font("font", "TitleLabel", LATIN_FONT)
+	theme.set_font_size("font_size", "TitleLabel", 54)
 	theme.set_color("font_color", "TitleLabel", CREAM)
 	theme.set_constant("shadow_offset_x", "TitleLabel", 0)
 	theme.set_constant("shadow_offset_y", "TitleLabel", 0)
@@ -172,7 +174,7 @@ func _install_title_polish() -> void:
 	if title != null and title.get_parent() is BoxContainer:
 		var tagline := Label.new()
 		tagline.name = "Tagline"
-		tagline.text = "双本体 · 案卷推演与主观认知"
+		tagline.text = tr("双本体 · 案卷推演与主观认知")
 		tagline.horizontal_alignment = title.horizontal_alignment
 		tagline.add_theme_font_size_override("font_size", 20)
 		tagline.add_theme_color_override("font_color", Color(0.88, 0.8, 0.64, 0.8))

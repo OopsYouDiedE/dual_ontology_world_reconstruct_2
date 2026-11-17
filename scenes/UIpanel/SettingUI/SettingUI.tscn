@@ -19,7 +19,7 @@ offset_top = 82.0
 offset_right = 668.0
 offset_bottom = 160.0
 theme_type_variation = &"HeaderLabel"
-text = "设置"
+text = "Settings"
 
 [node name="LeftCaption" type="Label" parent="."]
 layout_mode = 0
@@ -28,7 +28,7 @@ offset_top = 160.0
 offset_right = 668.0
 offset_bottom = 192.0
 theme_type_variation = &"CaptionLabel"
-text = "画面、语言与阅读"
+text = "Display, language and reading"
 
 [node name="LeftColumn" type="VBoxContainer" parent="."]
 layout_mode = 0
@@ -45,7 +45,7 @@ offset_top = 82.0
 offset_right = 1404.0
 offset_bottom = 160.0
 theme_type_variation = &"HeaderLabel"
-text = "声与光"
+text = "Sound and Accessibility"
 
 [node name="RightCaption" type="Label" parent="."]
 layout_mode = 0
@@ -54,7 +54,7 @@ offset_top = 160.0
 offset_right = 1404.0
 offset_bottom = 192.0
 theme_type_variation = &"CaptionLabel"
-text = "声音与辅助功能，修改后立即生效"
+text = "Changes apply immediately"
 
 [node name="RightColumn" type="VBoxContainer" parent="."]
 layout_mode = 0
@@ -70,4 +70,4 @@ offset_left = 1196.0
 offset_top = 852.0
 offset_right = 1404.0
 offset_bottom = 900.0
-text = "恢复默认"
+text = "Reset Defaults"

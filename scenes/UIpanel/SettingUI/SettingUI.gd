@@ -10,7 +10,7 @@ const LEFT_ROWS := [
 	{"section": "graphics", "key": "max_fps", "label": "帧率上限", "options": [[0, "不限"], [30, "30"], [60, "60"], [120, "120"], [144, "144"]]},
 	{"section": "graphics", "key": "vsync", "label": "垂直同步", "kind": "bool"},
 	{"group": "语言"},
-	{"section": "language", "key": "locale", "label": "界面语言", "options": [["zh_CN", "简体中文"], ["ja", "日本語"], ["en", "English"]]},
+	{"section": "language", "key": "locale", "label": "界面语言", "options": [["en", "English"]]},
 	{"group": "阅读"},
 	{"section": "accessibility", "key": "text_speed", "label": "文字速度", "options": [[0.5, "慢"], [1.0, "标准"], [2.0, "快"], [0.0, "立即"]]},
 	{"section": "accessibility", "key": "text_scale", "label": "文字大小", "options": [[1.0, "100%"], [1.25, "125%"], [1.5, "150%"]]},
@@ -62,15 +62,15 @@ func refresh() -> void:
 				entry.value_label.text = "%d%%" % roundi(float(value) * 100.0)
 			"bool":
 				entry.toggle.set_pressed_no_signal(bool(value))
-				entry.toggle.text = "● 开启" if bool(value) else "○ 关闭"
+				entry.toggle.text = "● On" if bool(value) else "○ Off"
 			_:
-				entry.value_label.text = str(spec.options[_option_index(spec, value)][1])
+				entry.value_label.text = tr(str(spec.options[_option_index(spec, value)][1]))
 
 func _build(column: VBoxContainer, rows: Array) -> void:
 	for spec: Dictionary in rows:
 		if spec.has("group"):
 			var group := Label.new()
-			group.text = spec.group
+			group.text = tr(spec.group)
 			group.theme_type_variation = &"GroupLabel"
 			group.custom_minimum_size.y = 46
 			group.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
@@ -81,7 +81,7 @@ func _build(column: VBoxContainer, rows: Array) -> void:
 		row.add_theme_constant_override("separation", 8)
 		column.add_child(row)
 		var label := Label.new()
-		label.text = spec.label
+		label.text = tr(spec.label)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		row.add_child(label)

@@ -46,7 +46,7 @@ theme_override_constants/separation = 4
 [node name="TitleLabel" type="Label" parent="Menu"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
-text = "安眠者有福"
+text = "Blessed Are the Sleeping"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Menu"]
@@ -68,7 +68,7 @@ mouse_filter = 2
 
 [node name="StartButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "开始新游戏 · 双本体推演（正式）"
+text = "New Game"
 
 [node name="ContinueButton" type="Button" parent="Menu"]
 layout_mode = 2
@@ -76,27 +76,27 @@ text = "继续游戏"
 
 [node name="RecordsButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "生活手记"
+text = "Journal"
 
 [node name="CampaignButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "旧版原型（C# 调试面板）"
+text = "Campaign Prototype"
 
 [node name="BuilderButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "建筑设计工具（编辑器）"
+text = "Building Editor"
 
 [node name="LifeTestButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "生活推演（测试场景）"
+text = "Life Simulation"
 
 [node name="SettingsButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "设置"
+text = "Settings"
 
 [node name="QuitButton" type="Button" parent="Menu"]
 layout_mode = 2
-text = "离开书房"
+text = "Quit"
 
 [node name="Hint" type="Label" parent="."]
 layout_mode = 1
@@ -106,7 +106,7 @@ anchor_top = 0.93
 anchor_right = 0.6
 anchor_bottom = 0.98
 theme_type_variation = &"HintLabel"
-text = "选择「开始新游戏」进入五日正篇；点击桌上的书册可调整设置"
+text = "Start a new game or open the book for settings."
 
 [node name="Fade" type="ColorRect" parent="."]
 layout_mode = 1

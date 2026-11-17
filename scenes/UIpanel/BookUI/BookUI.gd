@@ -10,10 +10,10 @@ const Sound := preload("res://scenes/components/shared/Sound.gd")
 const BODY_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 const HEADING_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
 const PAGES := [
-	{"id": "journal", "title": "手记", "node": "JournalPage", "color": Color("6a413c")},
-	{"id": "gallery", "title": "图录", "node": "GalleryPage", "color": Color("6a413c")},
-	{"id": "save", "title": "存档", "node": "SavePage", "color": Color("505c65")},
-	{"id": "settings", "title": "设置", "node": "SettingsPage", "color": Color("6d6f4f")},
+	{"id": "journal", "title": "Journal", "node": "JournalPage", "color": Color("6a413c")},
+	{"id": "gallery", "title": "Gallery", "node": "GalleryPage", "color": Color("6a413c")},
+	{"id": "save", "title": "Save", "node": "SavePage", "color": Color("505c65")},
+	{"id": "settings", "title": "Settings", "node": "SettingsPage", "color": Color("6d6f4f")},
 ]
 const LEFT_HALF := Rect2(0.0, 0.0, 0.5, 1.0)
 const RIGHT_HALF := Rect2(0.5, 0.0, 0.5, 1.0)
@@ -21,7 +21,7 @@ const INK := Color("241d14")
 const ACCENT := Color("694d2e")
 const FAINT := Color(0.33, 0.28, 0.22, 0.88)
 const CREAM := Color("eae0c4")
-const NUMERALS := ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
+const NUMERALS := ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 
 @onready var page_viewport: SubViewport = $PageViewport
 @onready var spread: Control = $PageViewport/Spread
@@ -63,6 +63,8 @@ func _ready() -> void:
 		tabs.add_child(tab)
 		_tab_buttons.append(tab)
 	close_button.pressed.connect(close)
+	prev_button.text = "‹ Previous"
+	next_button.text = "Next ›"
 	prev_button.pressed.connect(func(): goto_index(current - 1))
 	next_button.pressed.connect(func(): goto_index(current + 1))
 	for index in PAGES.size(): _page(index).visible = false
@@ -190,7 +192,7 @@ func _show_page(index: int) -> void:
 	next_button.disabled = index >= PAGES.size() - 1
 	left_folio.text = "— %s —" % NUMERALS[(index * 2) % NUMERALS.size()]
 	right_folio.text = "— %s —" % NUMERALS[(index * 2 + 1) % NUMERALS.size()]
-	close_button.text = "合上案卷"
+	close_button.text = "Close Book"
 	var page := _page(index)
 	if page.has_method("on_page_shown"): page.on_page_shown()
 	page_changed.emit(page_id())

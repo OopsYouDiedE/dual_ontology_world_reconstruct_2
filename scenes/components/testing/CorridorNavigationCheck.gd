@@ -29,6 +29,9 @@ static func xz_path(points: PackedVector3Array) -> Array:
 	for point in points: output.append([point.x, point.z])
 	return output
 
+static func xz_distance(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x, a.z).distance_to(Vector2(b.x, b.z))
+
 func _inside(point: Vector2) -> bool:
 	return point.x >= bounds.position.x and point.x <= bounds.end.x and point.y >= bounds.position.y and point.y <= bounds.end.y
 
@@ -198,10 +201,10 @@ func probe(start: Vector2, destination: Vector2) -> Dictionary:
 	var nearest_start := NavigationServer3D.map_get_closest_point(nav_map, from)
 	var nearest_end := NavigationServer3D.map_get_closest_point(nav_map, to)
 	const TOL := 0.035
-	var start_on_mesh := _inside(start) and nearest_start.distance_to(from) < TOL
-	var end_on_mesh := _inside(destination) and nearest_end.distance_to(to) < TOL
-	var agent_reaches := not agent_path.is_empty() and agent_path[agent_path.size() - 1].distance_to(to) < TOL
-	var server_reaches := not server_path.is_empty() and server_path[server_path.size() - 1].distance_to(to) < TOL
+	var start_on_mesh := _inside(start) and xz_distance(nearest_start, from) < TOL
+	var end_on_mesh := _inside(destination) and xz_distance(nearest_end, to) < TOL
+	var agent_reaches := not agent_path.is_empty() and xz_distance(agent_path[agent_path.size() - 1], to) < TOL
+	var server_reaches := not server_path.is_empty() and xz_distance(server_path[server_path.size() - 1], to) < TOL
 	var clearance := _path_clearance(server_path)
 	var agent_clearance := _path_clearance(agent_path)
 	var ok: bool = start_on_mesh and end_on_mesh and agent_reaches and server_reaches \
@@ -209,6 +212,9 @@ func probe(start: Vector2, destination: Vector2) -> Dictionary:
 		and agent_clearance.npc_clearance_pass and agent_clearance.static_proxy_clearance_pass
 	return {"status": "checked", "pass": ok, "map_iteration": map_iteration,
 		"start_on_mesh": start_on_mesh, "destination_on_mesh": end_on_mesh,
+		"start": [start.x, start.y], "destination": [destination.x, destination.y],
+		"bounds": {"position": [bounds.position.x, bounds.position.y], "end": [bounds.end.x, bounds.end.y]},
+		"destination_mesh_distance": xz_distance(nearest_end, to),
 		"agent_reaches_target": agent_reaches, "server_reaches_target": server_reaches,
 		"agent_path": xz_path(agent_path), "navigation_path": xz_path(server_path),
 		"nearest_start": xyz(nearest_start), "nearest_destination": xyz(nearest_end),

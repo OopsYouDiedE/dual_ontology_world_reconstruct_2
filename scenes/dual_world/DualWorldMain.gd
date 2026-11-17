@@ -907,7 +907,7 @@ func _on_room_activated(id: String) -> void:
 # ───────────────────────── 台词队列 ─────────────────────────
 func _on_said(who: String, text: String, kind: String) -> void:
 	if instant_story: _sub_queue.clear()
-	_sub_queue.append({"who": who, "text": text, "kind": kind})
+	_sub_queue.append({"who": who, "text": tr(text), "kind": kind})
 
 
 func _story_busy() -> bool:
@@ -940,17 +940,22 @@ func _pump_subtitles(now: float) -> void:
 	var who: String = ln.who
 	var text: String = ln.text
 	# Keep complete dialogue in order, with short on-screen fragments.
-	if text.length() > 16:
-		var split_at := 16
-		for index in range(15,7,-1):
-			if text[index] in ["，","。","；","！","？","、"," "]: split_at = index+1; break
+	var words := text.split(" ", false)
+	if text.length() > 60 or words.size() > 12:
+		var split_at := mini(text.length(), 60)
+		if words.size() > 12:
+			var first_words := " ".join(words.slice(0, 12))
+			split_at = mini(split_at, first_words.length())
+		if split_at < text.length() and text[split_at] != " ":
+			for index in range(split_at - 1, 0, -1):
+				if text[index] in ["，","。","；","！","？","、"," "]: split_at = index + 1; break
 		var remainder := ln.duplicate()
-		remainder.text = text.substr(split_at)
+		remainder.text = text.substr(split_at).strip_edges()
 		_sub_queue.push_front(remainder)
-		text = text.left(split_at)
+		text = text.left(split_at).strip_edges()
 	_speaker = who
 	if who != "narrator" and data.actor_by_id.has(who):
-		sub_name.text = str(data.actor_name(who))
+		sub_name.text = tr(str(data.actor_name(who)))
 		sub_name.add_theme_color_override("font_color", Color(str(data.actor_by_id[who].color)).lightened(0.6))
 		sub_name.visible = true
 	else:
@@ -1405,7 +1410,7 @@ func _make_room_figure(a: Dictionary, index: int, sp: Vector2, mid: Vector2) -> 
 	f.rotation.y = atan2(to.x, to.y)
 	figures_root.add_child(f)
 	var tag := Label3D.new()
-	tag.text = str(a.name)
+	tag.text = tr(str(a.name))
 	tag.font_size = 40
 	tag.pixel_size = 0.006
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -1442,7 +1447,7 @@ func _spawn_detective() -> void:
 	det.add_child(ring)
 	det_ring = ring
 	var tag := Label3D.new()
-	tag.text = "侦探"
+	tag.text = tr("侦探")
 	tag.font_size = 46
 	tag.pixel_size = 0.006
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -2489,7 +2494,7 @@ func _modal_shell(title: String, sub: String) -> VBoxContainer:
 
 func _ink_label(parent: Node, text: String, size := 15) -> Label:
 	var l := Label.new()
-	l.text = text
+	l.text = tr(text)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.add_theme_color_override("font_color", INK)
 	l.add_theme_font_size_override("font_size", size)
@@ -2540,9 +2545,9 @@ func _modal_deduction(did: String) -> void:
 	# ded_drag 仍由 DualEngine 持有证物门槛与结果；正式厨房里改用角色动作复演确认先后。
 	if kitchen != null and kitchen.active and kitchen.begin_order_replay(did): return
 	var dd: Dictionary = data.deduction_by_id[did]
-	var v := _modal_shell("案卷推演 · " + str(dd.title), str(dd.prompt))
+	var v := _modal_shell("Deduction · " + tr(str(dd.title)), tr(str(dd.prompt)))
 	# 推演说明：让玩家明白「为什么现在弹推演」以及「证物不够会怎样」
-	_ink_label(v, "证物不足时无法作答：先去现场取证，齐了会自动回来；判错后可在「案卷 → 推演」里重新推演。", 12).add_theme_color_override("font_color", Color("#6b5a44"))
+	_ink_label(v, "Collect enough evidence before answering. Wrong deductions can be retried in the case file.", 12).add_theme_color_override("font_color", Color("#6b5a44"))
 	var prog: Dictionary = eng.deduction_progress(did)
 	var checks: Dictionary = {}
 	var hyp_btns: Array = []
@@ -2550,11 +2555,11 @@ func _modal_deduction(did: String) -> void:
 	var count_hdr := HBoxContainer.new()
 	count_hdr.add_theme_constant_override("separation", 8)
 	v.add_child(count_hdr)
-	var chk_hint := _ink_label(count_hdr, "依据的证物（点一下可取消勾选）", 12)
+	var chk_hint := _ink_label(count_hdr, "Evidence (click to uncheck)", 12)
 	chk_hint.add_theme_color_override("font_color", Color("#6b5a44"))
 	chk_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var select_all_btn := Button.new()
-	select_all_btn.text = "全选已得证物"
+	select_all_btn.text = "Select All Found"
 	select_all_btn.focus_mode = Control.FOCUS_NONE
 	select_all_btn.visible = false
 	count_hdr.add_child(select_all_btn)
@@ -2566,7 +2571,7 @@ func _modal_deduction(did: String) -> void:
 	for eid in dd.evidence:
 		var cb := CheckBox.new()
 		var have: bool = eng.s.evidence.has(eid)
-		cb.text = str(data.evidence_by_id[eid].label) if have else "？未取得"
+		cb.text = tr(str(data.evidence_by_id[eid].label)) if have else "? Missing"
 		cb.disabled = not have
 		cb.button_pressed = have
 		cb.focus_mode = Control.FOCUS_NONE
@@ -2582,14 +2587,14 @@ func _modal_deduction(did: String) -> void:
 		for k in checks:
 			if checks[k].button_pressed and not checks[k].disabled:
 				checked_cnt += 1
-		pl.text = "已勾选 %d / 已取得 %d 件相关证物（至少需要 %d 件）" % [checked_cnt, int(prog.have), int(prog.need)]
+		pl.text = "Selected %d / Found %d (need %d)" % [checked_cnt, int(prog.have), int(prog.need)]
 		var enough_checked := checked_cnt >= int(prog.need) or int(prog.have) < int(prog.need)
 		pl.add_theme_color_override("font_color", Color("#2f6b3a") if (int(prog.have) >= int(prog.need) and enough_checked) else Color("#a03a24"))
 		select_all_btn.visible = int(prog.have) > checked_cnt
 		var block_for_uncheck := can_answer and int(prog.have) >= int(prog.need) and checked_cnt < int(prog.need)
 		uncheck_warn.visible = block_for_uncheck
 		if block_for_uncheck:
-			uncheck_warn.text = "请至少保持勾选 %d 件已得证物（点右上「全选已得证物」可一键恢复），否则推演无法成立。" % int(prog.need)
+			uncheck_warn.text = "Keep at least %d evidence items selected." % int(prog.need)
 		for hb in hyp_btns:
 			hb.disabled = (not can_answer) or block_for_uncheck
 	select_all_btn.pressed.connect(func():
@@ -2599,18 +2604,18 @@ func _modal_deduction(did: String) -> void:
 	for k in checks:
 		checks[k].toggled.connect(func(_on: bool): sync_check_state.call())
 	if not can_answer:
-		var warn := _ink_label(v, "证物不足，现在下结论只会判错。先去现场取证，证物齐了推演会自动回来。", 13)
+		var warn := _ink_label(v, "Evidence is missing. Inspect the scene before answering.", 13)
 		warn.add_theme_color_override("font_color", Color("#a03a24"))
 	elif prog.have < prog.need:
-		var warn2 := _ink_label(v, "能取到的证物都查过了，只能凭现有线索推演（证物不足会判错，之后可在「案卷 → 推演」里重新推演）。", 13)
+		var warn2 := _ink_label(v, "All available evidence is recorded; this deduction may remain uncertain.", 13)
 		warn2.add_theme_color_override("font_color", Color("#a03a24"))
-	var q := _ink_label(v, str(dd.get("question", "哪一种推论更站得住脚？")), 17)
+	var q := _ink_label(v, tr(str(dd.get("question", "Which conclusion fits best?"))), 17)
 	q.add_theme_font_override("font", SERIF_FONT)
 	q.add_theme_color_override("font_color", Color("#7a3a24"))
 	var hyp_i := 0
 	for h in dd.hypotheses:
 		var b := Button.new()
-		b.text = "%s　%s" % [char(65 + hyp_i), str(h.label)]
+		b.text = "%s  %s" % [char(65 + hyp_i), tr(str(h.label))]
 		hyp_i += 1
 		_choice_style(b)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -2629,7 +2634,7 @@ func _modal_deduction(did: String) -> void:
 	sync_check_state.call()
 	if not can_answer:
 		var go := Button.new()
-		go.text = "先去取证（时间保持暂停）"
+		go.text = "Inspect Evidence"
 		go.focus_mode = Control.FOCUS_NONE
 		go.pressed.connect(func():
 			go.disabled = true
@@ -2640,22 +2645,22 @@ func _modal_deduction(did: String) -> void:
 
 func _modal_conflict(cid: String) -> void:
 	var c: Dictionary = data.conflict_by_id[cid]
-	var v := _modal_shell("争执 · " + str(c.title), "第 %d 天 · 在场：%s" % [int(c.day), "、".join(c.parties.map(func(i): return data.actor_name(str(i))))])
+	var v := _modal_shell("Conflict · " + tr(str(c.title)), "Day %d · Present: %s" % [int(c.day), ", ".join(c.parties.map(func(i): return tr(str(data.actor_name(str(i))))))])
 	var perm: bool = bool(c.get("permanent", false))
 	var ded_id: String = str(c.get("deduction", "")) if c.get("deduction", null) != null else ""
 	var ded_state: String = str(eng.s.deductions.get(ded_id, "")) if ded_id != "" else "solved"
-	var desc := "争执里只有一方能得到申诉证据，另一方并不知道自己「违约」了。"
+	var desc := "One side can appeal; the other may not know they broke the rules."
 	if perm:
-		desc += "\n这是关键对质：选错会造成三组人物信任永久受损，事后查明真相也无法复原。"
+		desc += "\nA wrong choice permanently damages trust."
 	else:
-		desc += "\n选错会折损双方信任，也可先搁下留白。"
+		desc += "\nA wrong choice reduces trust; you may postpone."
 	_ink_label(v, desc, 12)
 	if ded_id != "" and ded_state != "solved":
-		var miss_lbl := _ink_label(v, "注意：前置推演「%s」尚未解开，关键拆解项当前未出现！建议先翻回案卷重做推演。" % str(data.deduction_by_id[ded_id].title), 13)
+		var miss_lbl := _ink_label(v, "Solve the prerequisite deduction first: %s." % tr(str(data.deduction_by_id[ded_id].title)), 13)
 		miss_lbl.add_theme_color_override("font_color", Color("#a03a24"))
 	for ln in c.lines:
 		var who: String = ln[0]
-		var l := _ink_label(v, "%s：%s" % [data.actor_name(who), ln[1]])
+		var l := _ink_label(v, "%s: %s" % [tr(str(data.actor_name(who))), tr(str(ln[1]))])
 		if data.actor_by_id.has(who): l.add_theme_color_override("font_color", Color(str(data.actor_by_id[who].color)).darkened(0.25))
 	if eng.s.author_view:
 		var term: Dictionary = data.terms[c.word]
@@ -2663,10 +2668,10 @@ func _modal_conflict(cid: String) -> void:
 		for sn in eng.conflict_senses(cid): txt += "%s=%s；" % [sn.name, sn.sense]
 		var al := _ink_label(v, txt, 12)
 		al.add_theme_color_override("font_color", Color("#6b3fa0"))
-	_ink_label(v, "你要怎么回应？", 13)
+	_ink_label(v, "How do you respond?", 13)
 	if ded_id != "" and ded_state == "wrong":
 		var rb := Button.new()
-		rb.text = "↺ 先翻回案卷重新推演「%s」（解开后自动回到本场对质）" % str(data.deduction_by_id[ded_id].title)
+		rb.text = "↺ Retry: %s" % tr(str(data.deduction_by_id[ded_id].title))
 		rb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		rb.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		rb.focus_mode = Control.FOCUS_NONE
@@ -2677,7 +2682,7 @@ func _modal_conflict(cid: String) -> void:
 		v.add_child(rb)
 	for o in eng.conflict_options(cid):
 		var b := Button.new()
-		b.text = str(o.label)
+		b.text = tr(str(o.label))
 		_choice_style(b)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -2689,7 +2694,7 @@ func _modal_conflict(cid: String) -> void:
 		v.add_child(b)
 	if not perm:
 		var d := Button.new()
-		d.text = "先搁下（义项分歧照旧落空）"
+		d.text = "Postpone"
 		d.pressed.connect(func():
 			d.disabled = true
 			_dismiss_modal()
@@ -2725,12 +2730,12 @@ func _modal_intro() -> void:
 
 func _modal_choice() -> void:
 	var pc: Dictionary = eng.s.pending_choice
-	var v := _modal_shell(str(pc.choice.prompt), "")
+	var v := _modal_shell(tr(str(pc.choice.prompt)), "")
 	# 抉择说明：不同选择会改变后续剧情与人物关系
-	_ink_label(v, "这是一个抉择：不同选择会改变后续剧情走向与人物反应。选定后不能撤销（推演判错可重推，抉择不行）。", 12)
+	_ink_label(v, "Your choice changes the story and cannot be undone.", 12)
 	for o in pc.choice.options:
 		var b := Button.new()
-		b.text = str(o.label)
+		b.text = tr(str(o.label))
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
@@ -2744,15 +2749,15 @@ func _modal_choice() -> void:
 func _modal_chapter() -> void:
 	_write_auto()
 	_write_save(chapter_save_path(1))
-	var body := _modal_shell("第一章完成", "夜深，明日继续。")
+	var body := _modal_shell("Chapter 1 Complete", "The night ends. Tomorrow awaits.")
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	body.add_child(row)
-	_btn(row, "案卷", func():
+	_btn(row, "Case File", func():
 		_chapter_dismissed = true
 		_dismiss_modal()
 		if not drawer.visible: _toggle_drawer())
-	_btn(row, "第二章", func():
+	_btn(row, "Chapter 2", func():
 		_dismiss_modal()
 		_cine = true
 		_fade(1.0, 0.3, func():
@@ -2762,7 +2767,7 @@ func _modal_chapter() -> void:
 				_write_auto()
 			_cine = false
 			_fade(0.0, 0.4)))
-	_btn(row, "标题", _close)
+	_btn(row, "Title", _close)
 
 
 func _modal_ending() -> void:

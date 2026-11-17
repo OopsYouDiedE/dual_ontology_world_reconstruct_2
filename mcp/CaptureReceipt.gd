@@ -6,9 +6,8 @@ static func save(image: Image, output: String, tree: SceneTree, kind := "develop
 	if image == null or image.is_empty():
 		push_error("Capture has no rendered image")
 		return false
-	# Explicit absolute outputs remain supported. Relative outputs bind to res://.
-	var explicit_external := output.is_absolute_path() and not output.begins_with("res://")
-	var path := Source.project_output(output, explicit_external)
+	# Absolute paths are permitted only inside this project; never escape the root.
+	var path := Source.project_output(output)
 	if path.is_empty(): return false
 	var error := DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	if error != OK:

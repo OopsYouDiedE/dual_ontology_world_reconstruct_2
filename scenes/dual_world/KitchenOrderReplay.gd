@@ -2,7 +2,7 @@ extends Node
 ## Compact order controls backed by the shared three-stage production performance.
 const Reenactment := preload("res://scenes/components/interaction/ReconstructionPerformance.gd")
 const EXPECTED := ["su_open","detective_pull","shen_cloth","huo_lock"]
-const LABELS := {"su_open":"扳门","detective_pull":"拉回","shen_cloth":"塞布","huo_lock":"反扣"}
+const LABELS := {"su_open":"Open","detective_pull":"Pull Back","shen_cloth":"Place Cloth","huo_lock":"Lock"}
 var host: Control
 var active := false
 var _playing := false
@@ -72,9 +72,9 @@ func _build_panel() -> void:
 	footer.alignment = BoxContainer.ALIGNMENT_END
 	footer.add_theme_constant_override("separation",8)
 	body.add_child(footer)
-	_replay = _button("重看")
+	_replay = _button("Replay")
 	_replay.pressed.connect(_play)
-	_confirm = _button("确认")
+	_confirm = _button("Confirm")
 	_confirm.pressed.connect(_confirm_order)
 	footer.add_child(_replay)
 	footer.add_child(_confirm)
@@ -118,19 +118,19 @@ func _play() -> void:
 func _finished() -> void:
 	if not active: return
 	_playing = false
-	_status.text = "核对"
+	_status.text = "Check"
 	_render()
 
 func _confirm_order() -> void:
 	if not active or _playing: return
 	if _order != EXPECTED:
-		_status.text = "再看"
+		_status.text = "Watch Again"
 		return
 	var picked: Array = []
 	for evidence in ["e_b_sleeve","e_b_drag","e_b_water","e_b_ratchet"]:
 		if host.eng.s.evidence.has(evidence): picked.append(evidence)
 	if picked.size()<4:
-		_status.text = "取证"
+		_status.text = "Inspect"
 		return
 	var h := host
 	active = false

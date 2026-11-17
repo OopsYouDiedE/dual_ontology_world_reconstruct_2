@@ -58,6 +58,8 @@ def run():
         check(name + ': mainline order', [e.attrs['data-segment'] for e in cards] == expected)
         check(name + ': every first element is a trajectory', all(e.children[0].attrs.get('class', '').startswith('trajectory') for e in cards))
         check(name + ': all seven score cards', all(len(e.find(lambda n: n.attrs.get('class') == 'dimensions')[0].children) == 7 for e in cards))
+        check(name + ': score cards visible without disclosure', all(e.find(lambda n: n.attrs.get('class') == 'acceptance-dimensions')[0].tag == 'div' for e in cards))
+        check(name + ': image subscore summary present', all(e.find(lambda n: n.attrs.get('class') == 'semantic-score-summary') for e in cards))
         main = doc.find(lambda e: e.tag == 'main')[0]
         check(name + ': live progress is the final content section', main.children[-2].attrs.get('id') == 'live-progress' and main.children[-1].tag == 'script')
         check(name + ': auxiliary report tables removed', all(e.attrs.get('id') not in ('scores', 'references', 'reports') for e in doc.find(lambda n: True)))
@@ -75,6 +77,16 @@ def run():
     check('actual blocked state fails', site.review_result(dict(record, status='blocked')) == '不合格')
     check('development evidence never passes', site.review_result(dict(record, acceptance_eligible=False)) == '待评')
     check('isolated evidence never passes', site.review_result(dict(record, source_isolated=True)) == '待评')
+    pending = site.dimension_scores({})
+    check('unscored rubric has seven pending cards', pending.count('待评') == 7)
+    semantic = dict(modality='original_subtitled_stills', action_score=0, intent_score=7.5,
+                    observation={'readability_score': 8}, mapping={'source_revision': '<untrusted>'})
+    summary = site.semantic_score_summary(semantic)
+    check('development subscore summary retains zero and escapes provenance', '>0<small>/10</small>' in summary and '&lt;untrusted&gt;' in summary)
+    check('missing image review stays explicitly pending', '待评' in site.semantic_score_summary(None))
+    editable = site.score_editor(dict(record, id='existing', score_reasons=['source'] * 7, summary='</script><script>alert(1)</script>'))
+    check('recorded reviews expose escaped correction editor', 'class="score-editor"' in editable and '<script>alert(1)</script>' not in editable)
+    check('missing reviews cannot be edited into acceptance scores', 'class="score-editor"' not in site.score_editor({}))
 
     progress = {'schema_version': 1, 'events': [dict(event_id='escaping-test', work_id='escaping-test', kind='change', at='2026-11-16T12:00:00+08:00', segment_id='project', revision='01234567', summary='</script><script>alert(1)</script>', result='test only', evidence=[])]}
     html = site.progress_section(progress, site.OUT / 'index.html')

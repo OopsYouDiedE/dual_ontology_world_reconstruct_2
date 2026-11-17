@@ -132,7 +132,7 @@ func _step_free(delta: float) -> void:
 		var seen_count := 0
 		for item in _items:
 			if _seen(item): seen_count += 1
-		_hint.text = "现场 %d/7" % seen_count
+		_hint.text = "Clues %d/7" % seen_count
 	_maybe_finish()
 
 
@@ -204,7 +204,7 @@ func _build_overlay() -> void:
 	_prompt.visible = false
 	host.center.add_child(_prompt)
 	_hint = Label.new()
-	_hint.text = "WASD移动"
+	_hint.text = "WASD Move"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
@@ -230,7 +230,7 @@ func _build_markers() -> void:
 		var pos := Vector3(n.global_position.x, 0.0, n.global_position.z)
 		var marker := Node3D.new()
 		_markers_root.add_child(marker)
-		var label := str(SHORT_LABELS.get(eid,e.label))
+		var label := tr(str(SHORT_LABELS.get(eid,e.label)))
 		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, label, {"font": host.SANS_FONT})
 		var gem: MeshInstance3D = parts["gem"]
 		var mat: StandardMaterial3D = parts["mat"]

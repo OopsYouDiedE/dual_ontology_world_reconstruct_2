@@ -50,13 +50,18 @@ class CaptureProvenanceTests(unittest.TestCase):
             capture.assert_root(self.root, self.root.parent / "engine")
 
     def test_runtime_root_is_bound_to_authorized_checkout(self):
-        with patch("pathlib.Path.home", return_value=self.root.parent):
-            with self.assertRaisesRegex(ValueError, "Unauthorized runtime project root"):
-                capture.assert_runtime_root(self.root)
-            authorized = self.root.parent / "Desktop" / "dual_ontology_world_reconstruct_2"
-            authorized.mkdir(parents=True)
-            (authorized / "project.godot").write_text("[application]\n", encoding="utf-8")
-            self.assertEqual(capture.assert_runtime_root(authorized), authorized.resolve())
+        authorized = Path(capture.__file__).resolve().parents[1]
+        self.assertEqual(capture.assert_runtime_root(authorized), authorized)
+        with self.assertRaisesRegex(ValueError, "Unauthorized runtime project root"):
+            capture.assert_runtime_root(self.root)
+        # Even another directory with the exact authorized name is not this checkout.
+        foreign = self.root.parent / "dual_ontology_world_reconstruct_2"
+        foreign.mkdir()
+        (foreign / "project.godot").write_text("[application]\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "Unauthorized runtime project root"):
+            capture.assert_runtime_root(foreign)
+        with self.assertRaisesRegex(ValueError, "MCP project root mismatch"):
+            capture.assert_runtime_root(authorized, self.root)
 
     def test_snapshot_capture_is_marked_ineligible(self):
         image = self.root / "snapshot.png"

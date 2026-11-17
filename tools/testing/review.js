@@ -6,6 +6,53 @@
   }));
   dialog?.querySelector('button').addEventListener('click', () => dialog.close());
   dialog?.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+  document.querySelectorAll('.score-editor').forEach(editor => {
+    const original = JSON.parse(editor.dataset.review);
+    const labels = JSON.parse(editor.dataset.labels);
+    const form = document.createElement('form');
+    const addField = (label, input) => {
+      const wrapper = document.createElement('label');
+      wrapper.append(document.createTextNode(label), input);
+      form.append(wrapper);
+      return input;
+    };
+    const id = addField('新记录 ID', document.createElement('input'));
+    id.required = true; id.pattern = '[a-z0-9][a-z0-9_-]{1,119}';
+    id.placeholder = '例如 wake-audit-01';
+    const summary = addField('修订说明', document.createElement('input'));
+    summary.required = true; summary.maxLength = 8000;
+    const fields = labels.map((label, index) => {
+      const score = document.createElement('input');
+      score.type = 'number'; score.min = '0'; score.max = '10'; score.step = 'any';
+      score.value = original.scores[index] ?? '';
+      addField(label + ' (0–10，留空为待评)', score);
+      const reason = document.createElement('textarea');
+      reason.value = original.score_reasons[index] ?? '';
+      addField(label + ' 评分依据', reason);
+      return {score, reason};
+    });
+    const submit = document.createElement('button');
+    submit.type = 'submit'; submit.textContent = '下载修订请求'; form.append(submit);
+    const message = document.createElement('p'); message.className = 'meta';
+    message.setAttribute('role', 'status'); form.append(message);
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const scores = fields.map(field => field.score.value === '' ? null : Number(field.score.value));
+      if (id.value === original.id || scores.some((score, index) => score !== null && !fields[index].reason.value.trim())) {
+        message.textContent = '请使用新的记录 ID，并为每个已评分项填写依据。'; return;
+      }
+      const record = {...original, id: id.value, supersedes: original.id,
+        observed_at: new Date().toISOString(), scores,
+        score_reasons: fields.map(field => field.reason.value)};
+      const request = {work_id: id.value, summary: summary.value, record};
+      const url = URL.createObjectURL(new Blob([JSON.stringify(request, null, 2) + '\n'], {type: 'application/json'}));
+      const download = document.createElement('a');
+      download.href = url; download.download = id.value + '.json'; download.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      message.textContent = '草稿已下载；请按项目说明通过 MCP 提交并验证。';
+    });
+    editor.querySelector('.score-editor-fields').append(form);
+  });
   const list = document.getElementById('progress-events');
   if (!list) return;
   const seen = new Set(Array.from(list.children, row => row.dataset.eventId));

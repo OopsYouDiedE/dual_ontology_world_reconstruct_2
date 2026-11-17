@@ -34,10 +34,15 @@ def assert_root(root, expected=None):
 
 
 def assert_runtime_root(root, expected=None):
-    """Bind real launchers to the one authorized checkout before any I/O."""
+    """Bind launchers to this exact named checkout, irrespective of OS or cwd.
+
+    The module's own real path is the authority; neither an environment variable
+    nor a caller-supplied path can authorize a different checkout.  Explicit
+    expected roots remain an additional assertion, never an override.
+    """
     root = assert_root(root, expected)
-    authorized = (Path.home() / "Desktop" / "dual_ontology_world_reconstruct_2").resolve()
-    if root != authorized:
+    authorized = Path(__file__).resolve().parents[1]
+    if authorized.name != "dual_ontology_world_reconstruct_2" or root != authorized:
         raise ValueError("Unauthorized runtime project root: " + str(root))
     return root
 

@@ -55,8 +55,13 @@ def atomic_write(path: Path, content: str, *, exclusive=False):
 
 
 class Store:
-    def __init__(self, expected_project_root=None, test_sandbox=None):
+    def __init__(self, expected_project_root=None, test_sandbox=None, *, server_script=None):
         self.root = provenance.assert_runtime_root(ROOT, expected_project_root)
+        # Other project-bound services may reuse the exact same locked ledger.
+        # Their actual script/PID, not the review server's path, is recorded.
+        self.server_script = provenance.project_path(server_script or Path(__file__).with_name("server.py"), self.root)
+        if not self.server_script.is_file():
+            raise ValueError("Ledger publisher script must exist inside the project")
         self.base = self.root
         self.testing = test_sandbox is not None
         if self.testing:
@@ -106,7 +111,7 @@ class Store:
                         fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
     def identity(self):
-        return provenance.server_identity(self.root, Path(__file__).with_name("server.py"))
+        return provenance.server_identity(self.root, self.server_script)
 
     def load(self):
         data = yaml.safe_load(self.progress.read_text(encoding="utf-8-sig")) if self.progress.exists() else {"schema_version": 1, "events": []}

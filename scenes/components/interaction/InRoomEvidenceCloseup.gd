@@ -169,8 +169,8 @@ func _inspection_position(focus: Vector3) -> Vector3:
 
 func _build_gesture_hint() -> void:
 	var text := ""
-	if kind in ["water", "cloth", "chalk", "drag", "boots"]: text = "按住划取"
-	elif kind in ["hand", "sleeve", "copper"]: text = "向右拖动对齐" if kind == "sleeve" else "按住转动手腕"
+	if kind in ["water", "cloth", "chalk", "drag", "boots"]: text = "Drag to sample"
+	elif kind in ["hand", "sleeve", "copper"]: text = "Drag right to align" if kind == "sleeve" else "Hold to turn wrist"
 	if text.is_empty(): return
 	_gesture_hint = Label.new()
 	_gesture_hint.name = "EvidenceGesture"
@@ -198,7 +198,7 @@ func _event(phase: String) -> Dictionary:
 func _on_sampled() -> void:
 	_has_result = true
 	if is_instance_valid(_close_button): _close_button.text = "✓"
-	if is_instance_valid(_gesture_hint): _gesture_hint.text = "已取证"
+	if is_instance_valid(_gesture_hint): _gesture_hint.text = "Collected"
 	observed.emit(_event("result"))
 
 func _surface_rect() -> Rect2:

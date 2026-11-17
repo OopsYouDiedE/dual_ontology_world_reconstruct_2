@@ -142,6 +142,14 @@ async def run():
         await call(session, "review_append", review_args, label="immutable review retry deduplicated")
         await call(session, "review_append", dict(review_args, record=dict(record, status="blocked")), error=True, label="immutable review overwrite rejected")
         assert review_file.read_bytes() == original
+        corrected = dict(record, id="synthetic-correction", supersedes=record["id"],
+                         scores=[6] + [None] * 6, score_reasons=["Observed pacing spike"] + [""] * 6)
+        correction_args = dict(work_id="synthetic-correction-work", summary="Correct the pacing score", record=corrected)
+        correction = await call(session, "review_append", correction_args, label="audited score correction appended")
+        assert json.loads(Path(correction["review_path"]).read_text(encoding="utf-8"))["supersedes"] == record["id"]
+        assert review_file.read_bytes() == original
+        await call(session, "review_append", dict(correction_args, record=dict(corrected, id="synthetic-other-segment", segment_id="corridor")), error=True, label="correction cannot change segment")
+        await call(session, "review_append", dict(correction_args, record=dict(corrected, id="synthetic-missing-original", supersedes="absent-review")), error=True, label="correction requires existing review")
         assert not (ROOT / "artifacts/acceptance/gameplay-reviews/synthetic-review.json").exists()
 
     # Concurrent independent MCP server processes share the same Windows file lock.
@@ -151,8 +159,8 @@ async def run():
     await asyncio.gather(*(concurrent(index) for index in range(4)))
     store = Store(test_sandbox=sandbox)
     data = store.load()
-    assert len(data["events"]) == 8
-    assert len({event["event_id"] for event in data["events"]}) == 8
+    assert len(data["events"]) == 9
+    assert len({event["event_id"] for event in data["events"]}) == 9
     assert [row["event_id"] for row in data["events"][:3]] == [event["event_id"], checked["event"]["event_id"], completed["event"]["event_id"]]
     results.append({"check": "four-process writes retain every event and original ordering", "passed": True})
     # Exercise production rendering control flow with the actual exporter subprocess

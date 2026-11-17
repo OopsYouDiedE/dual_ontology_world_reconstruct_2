@@ -20,5 +20,19 @@ func _initialize() -> void:
 		push_error("Capture source receipt is invalid")
 		quit(1)
 		return
-	print("PASS relative, res://, absolute paths; nested output; SHA256 sidecar; fixture exclusion")
+	# The guard emits expected ERROR diagnostics for rejected paths; the runner
+	# verifies those separately. No external file is opened or written.
+	var forbidden := ProjectSettings.globalize_path("res://").trim_suffix("/").get_base_dir().path_join("__evaluation_forbidden_output__.png")
+	if not Source.project_output(forbidden).is_empty() or Receipt.save(image, forbidden, self):
+		push_error("External absolute capture path was incorrectly authorized")
+		quit(1)
+		return
+	var directory := DirAccess.open("res://.runtime/capture-path-regression")
+	if directory != null and directory.is_link("outside-link"):
+		if not Source.project_output("res://.runtime/capture-path-regression/outside-link/sentinel.png").is_empty():
+			push_error("Symlink capture escape was incorrectly authorized")
+			quit(1)
+			return
+		print("PASS symbolic-link path rejected")
+	print("PASS relative, res://, absolute project paths; external paths rejected; SHA256 sidecar; fixture exclusion")
 	quit()

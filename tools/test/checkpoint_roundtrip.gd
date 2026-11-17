@@ -2,6 +2,7 @@ extends SceneTree
 ## Development-only state roundtrip; never an independent gameplay acceptance.
 const Main := preload("res://scenes/dual_world/DualWorldMain.tscn")
 const Checkpoint := preload("res://scenes/components/testing/StoryCheckpoint.gd")
+const Source := preload("res://mcp/CaptureSource.gd")
 var failures: Array[String] = []
 var game: Control
 
@@ -14,6 +15,12 @@ func _initialize() -> void:
 
 func run() -> void:
 	var started := Time.get_ticks_msec()
+	var output_root := Source.project_output(Checkpoint.argument("--dv-fixture-root", "res://.runtime/checkpoints"))
+	if output_root.is_empty():
+		printerr("Project-local --dv-fixture-root required")
+		quit(2)
+		return
+	DirAccess.make_dir_recursive_absolute(output_root.path_join("fixtures"))
 	game = Main.instantiate()
 	root.add_child(game)
 	current_scene = game
@@ -22,7 +29,7 @@ func run() -> void:
 	await process_frame
 	game.eng.s.playing = false
 	game.eng.process_beats()
-	var path := "res://.runtime/checkpoints/roundtrip.json"
+	var path := output_root.path_join("roundtrip.json")
 	var opening = game.opening
 	check(opening != null and opening.active, "production opening active")
 	opening.phase = "look"
@@ -34,7 +41,7 @@ func run() -> void:
 	game._sub_clock = 12.0
 	game._sub_until = 15.0
 	check(game.checkpoints.save_now(path), "atomic snapshot saved")
-	game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/opening-look.json")
+	game.checkpoints.save_now(output_root.path_join("fixtures/opening-look.json"))
 	var state: Dictionary = game.checkpoints.read_snapshot(path)
 	check(not state.is_empty(), "snapshot integrity and project identity verified")
 	game.opening._pt = 0
@@ -53,7 +60,7 @@ func run() -> void:
 	opening.process(getup_duration + 0.01)
 	check(opening.phase == "free" and game.det.pose == "stand" and game._det_can_occupy(game.det_pos), "bedroom free fixture uses completed production get-up and walkable landing")
 	check(game.eng.s.playing and is_equal_approx(game.eng.s.speed, opening.AMBIENT_SPEED), "bedroom free fixture keeps natural exploration clock")
-	game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/opening-free.json")
+	game.checkpoints.save_now(output_root.path_join("fixtures/opening-free.json"))
 	game._stop_exploration()
 	check(game.eng.enter_room("B-P"), "kitchen entered through rule engine")
 	game._build_room("B-P")
@@ -71,7 +78,7 @@ func run() -> void:
 	game.kitchen.process(0.0)
 	var before: Vector3 = game.det.position
 	check(game.checkpoints.save_now(path), "kitchen snapshot saved")
-	game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/kitchen-free.json")
+	game.checkpoints.save_now(output_root.path_join("fixtures/kitchen-free.json"))
 	check(game.checkpoints.restore_file(path), "kitchen restored directly")
 	check(game.eng.s.room == "B-P" and game.kitchen.active and game.kitchen.phase == "free", "production kitchen controller resumed")
 	check(game.det.position.is_equal_approx(before) and game.det_pos.is_equal_approx(Vector2(before.x, before.z)), "actual kitchen entrance position retained")
@@ -84,7 +91,7 @@ func run() -> void:
 	var detail = game.evidence_presentations.water
 	detail.progress = 0.42
 	check(game.checkpoints.save_now(path), "mid-interaction snapshot saved")
-	game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/kitchen-water-partial.json")
+	game.checkpoints.save_now(output_root.path_join("fixtures/kitchen-water-partial.json"))
 	check(game.checkpoints.restore_file(path), "mid-interaction restored")
 	check(is_instance_valid(game.interactions.active) and game.interactions.active.kind == "water", "closeup controller and completion callback reconstructed")
 	check(is_equal_approx(game.evidence_presentations.water.progress, 0.42), "sampling progress retained")
@@ -104,7 +111,7 @@ func run() -> void:
 	game.det_pos = Vector2(8.3, 2.2)
 	game.det.position = Vector3(8.3, 0, 2.2)
 	check(game.checkpoints.save_now(path), "corridor snapshot saved")
-	game.checkpoints.save_now("res://.runtime/checkpoints/fixtures/corridor-free.json")
+	game.checkpoints.save_now(output_root.path_join("fixtures/corridor-free.json"))
 	check(game.checkpoints.restore_file(path), "corridor restored")
 	check(game.gathering.active and game.gathering.phase == "free" and game.gathering._line == 3, "corridor stage and dialogue cursor retained")
 	check(game.det_pos.is_equal_approx(Vector2(8.3, 2.2)), "corridor position retained separately from engine room")

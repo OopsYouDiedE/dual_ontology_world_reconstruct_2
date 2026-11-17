@@ -573,7 +573,7 @@ func _build_book() -> void:
 		_box(_hinge, Vector3(0.024, COVER + 0.001, 0.024), Vector3(board.x - 0.011, STACK + COVER * 0.5, corner * (board.z * 0.5 - 0.011)), gold)
 		_box(_book, Vector3(0.024, COVER + 0.001, 0.024), Vector3(board.x - 0.011, COVER * 0.5, corner * (board.z * 0.5 - 0.011)), gold)
 	var title := Label3D.new()
-	title.text = "案 卷"
+	title.text = "CASE FILE"
 	title.font = COVER_FONT
 	title.font_size = 96
 	title.pixel_size = 0.0005

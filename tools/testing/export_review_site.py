@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime
+import hashlib
 from html import escape
 from html.parser import HTMLParser
 import json
@@ -31,6 +32,11 @@ def read_json(path, default=None):
 
 def href(path, page):
     return quote(os.path.relpath(path.resolve(), page.parent.resolve()).replace(os.sep, '/'), safe='/#:')
+
+
+def markdown_href(path, page):
+    """Return a portable relative Markdown target for the generated report."""
+    return href(path, page)
 
 
 def link(path, label, page):
@@ -134,6 +140,36 @@ def atomic_write(path, text):
     temporary.replace(path)
 
 
+def development_image_origin(path):
+    """Preserve clearly labelled, hash-checked historical fixtures after relocation.
+
+    This is an archive display rule, not a substitute for verify_image: the old
+    host/PID cannot be revalidated and the image can never qualify as acceptance.
+    Never open the original host path recorded in the sidecar.
+    """
+    try:
+        provenance.verify_image(path, ROOT, allow_fixture=True)
+        return 'current-host-verified'
+    except ValueError as original:
+        sidecar = path.with_suffix(path.suffix + '.json')
+        if not sidecar.is_file():
+            raise original
+        data = json.loads(sidecar.read_text(encoding='utf-8-sig'))
+        source = data.get('source_identity') or {}
+        former_root = str(source.get('project_root', '')).replace('\\', '/').rstrip('/')
+        current = provenance.project_identity(ROOT)
+        current_root = str(ROOT).replace('\\', '/').rstrip('/')
+        if (former_root.casefold() == current_root.casefold()
+                or not former_root.casefold().endswith('/dual_ontology_world_reconstruct_2')
+                or data.get('acceptance_eligible') is not False
+                or source.get('project_sha256') != current['project_sha256']
+                or source.get('configured_main_scene') != current['configured_main_scene']
+                or not isinstance(source.get('process_id'), int) or source['process_id'] <= 0
+                or data.get('image_sha256') != hashlib.sha256(path.read_bytes()).hexdigest()):
+            raise original
+        return 'historical-other-host-unverified'
+
+
 def review_result(record):
     if not record or record.get('source_isolated') or record.get('acceptance_eligible') is False:
         return '待评'
@@ -175,7 +211,10 @@ def load_changes():
         if row.get('fast_report'):
             project_file(row['fast_report'])
         for image in row.get('images', []):
-            provenance.verify_image(project_file(image['path']), ROOT, allow_fixture=True)
+            origin = development_image_origin(project_file(image['path']))
+            image['archive_origin'] = origin
+            if origin == 'historical-other-host-unverified':
+                image['caption'] = image.get('caption', '') + ' · 跨主机历史图：原 PID 不可复核，非验收证据'
         seen.add(key)
     return data['changes']
 
@@ -209,6 +248,31 @@ def dimension_scores(record, previous=None):
         cls = 'pending' if score is None else 'pass' if score >= 8 else 'fail'
         cards.append(f'<div class="dimension {cls}"><span>{name}</span><b>{value}</b>{delta}<p>{escape(str(reason or "等待独立实机评审"))}</p></div>')
     return '<div class="dimensions">' + ''.join(cards) + '</div>'
+
+
+def score_editor(record):
+    if not record:
+        return '<p class="muted">评分修订将在独立实机评审记录产生后开放。</p>'
+    data = escape(json.dumps(record, ensure_ascii=False), quote=True)
+    labels = escape(json.dumps(DIMENSIONS, ensure_ascii=False), quote=True)
+    return ('<details class="score-editor" data-review="' + data + '" data-labels="' + labels + '">'
+            '<summary>修订这条评分</summary>'
+            '<p class="meta">生成修订请求草稿；提交至 review_append 后通过来源校验并保留原记录。</p>'
+            '<div class="score-editor-fields"></div></details>')
+
+
+def semantic_score_summary(review):
+    if not review:
+        return '<div class="semantic-score-summary"><h3>图片盲读分项 · 开发评审</h3><p class="muted">动作一致度、意图理解与可读性：待评。</p></div>'
+    intent = '意图理解（含原字幕）' if review['modality'] == 'original_subtitled_stills' else '意图一致度'
+    scores = [('动作一致度', review['action_score']), (intent, review['intent_score']),
+              ('测试者自评可读性', review['observation']['readability_score'])]
+    cards = ''.join('<div class="semantic-subscore"><span>' + escape(label) + '</span><b>' +
+                    escape(str(score)) + '<small>/10</small></b></div>' for label, score in scores)
+    revision = review['mapping'].get('source_revision') or '历史开发素材'
+    return ('<div class="semantic-score-summary"><h3>图片盲读分项 · 开发评审</h3>'
+            '<p class="meta">图片版本 ' + escape(revision) + ' · 动作与意图按目标平均；可读性为测试者自评。</p>'
+            '<div class="semantic-subscore-grid">' + cards + '</div></div>')
 
 
 def review_details(record, page):
@@ -361,10 +425,10 @@ def segment_card(entry, number, page, audit):
         conclusion_label = '图片盲读'
     body += f'<div class="segment-heading"><div><small>第一章 · {number:02d} / 11</small><h2>{escape(entry["label"])}</h2></div><div class="conclusion"><span>{conclusion_label}</span>{badge(conclusion)}<span>修改 <b>{entry["modification_count"]}</b> 次</span></div></div>'
     body += '<p class="meta">' + escape(' / '.join(entry['rooms'])) + ' · 当前版本 ' + ('独立评审已记录' if current else '待独立实机评审') + '</p>'
-    if entry.get('semantic'):
-        semantic = entry['semantic']
-        intent = '意图理解（含原字幕）' if semantic['modality']=='original_subtitled_stills' else '意图一致度'
-        body += '<p class="semantic-scores">动作一致度 <b>'+str(semantic['action_score'])+'/10</b>　'+intent+' <b>'+str(semantic['intent_score'])+'/10</b></p>'
+    body += '<div class="acceptance-dimensions"><h3>完整实机七项验收 · ' + entry['status'] + '</h3>'
+    body += '<p class="meta">当前版本独立实机评分；缺少评审的分项显示待评。</p>' + dimension_scores(current) + '</div>'
+    body += score_editor(current)
+    body += semantic_score_summary(entry.get('semantic'))
     if entry.get('recordings'):
         body += recording_details(entry['recordings'][-1],page)
     if entry.get('semantic'):
@@ -373,7 +437,6 @@ def segment_card(entry, number, page, audit):
         body += semantic_details(entry['semantic'],page)
     else:
         body += '<p class="muted">图片动作／意图盲读：等待独立测试者记录。</p>'
-    body += '<details class="acceptance-dimensions"><summary>完整实机七项验收 · ' + entry['status'] + '</summary>' + dimension_scores(current) + '</details>'
     if current:
         body += review_details(current, page)
     body += repair_feedback(entry['changes'], entry['events'], page, audit)
@@ -411,22 +474,23 @@ def wrap(title, body, page, revision, navigation=''):
 
 
 def markdown(entries, revision, progress, audit):
+    page = OUT / '评分总览.md'
     integrity = '完整' if audit['complete'] else '不完整；不得视为验收通过'
-    lines = ['# 第一章主线评分', '', '版本：' + revision, '', '**历史证据：' + integrity + '**', '', f'[证据审计](<{(OUT / "evidence-audit.json").as_posix()}>) · [HTML 主线](<{(OUT / "index.html").as_posix()}>) · [历史与辅助资料](<{(OUT / "archive.html").as_posix()}>)', '']
+    lines = ['# 第一章主线评分', '', '版本：' + revision, '', '**历史证据：' + integrity + '**', '', f'[证据审计](<{markdown_href(OUT / "evidence-audit.json", page)}>) · [HTML 主线](<{markdown_href(OUT / "index.html", page)}>) · [历史与辅助资料](<{markdown_href(OUT / "archive.html", page)}>)', '']
     for i, entry in enumerate(entries, 1):
         lines += [f'## {i:02d} · {entry["label"]}', '']
         images = entry['current'].get('images', []) or semantic_images(entry)
-        lines += [' '.join(f'![{image.get("caption", "实机轨迹")}](<{project_file(image["path"]).as_posix()}>)' for image in images) if images else '起始 → 过程 → 结束：实机轨迹待采集。', '']
+        lines += [' '.join(f'![{image.get("caption", "实机轨迹")}](<{markdown_href(project_file(image["path"]), page)}>)' for image in images) if images else '起始 → 过程 → 结束：实机轨迹待采集。', '']
         if images and not entry['current']:
             lines += ['开发快反画面；本段验收待独立评审。', '']
         lines += [f'**完整实机验收：{entry["status"]} · 修改 {entry["modification_count"]} 次**', '']
         if entry.get('recordings'):
             recording=entry['recordings'][-1]
             lines += ['完整过程已录制，保留原速与原字幕；本段对白显示片段 '+str(len(recording['subtitles']))+' 个。', '',
-                      '[本段连续视频](<'+project_file(recording['video']).as_posix()+'>) · [覆盖清单](<'+project_file(recording['coverage']).as_posix()+'>) · [第一二段完整视频](<'+project_file(recording['full_video']).as_posix()+'>)', '']
+                      '[本段连续视频](<'+markdown_href(project_file(recording['video']), page)+'>) · [覆盖清单](<'+markdown_href(project_file(recording['coverage']), page)+'>) · [第一二段完整视频](<'+markdown_href(project_file(recording['full_video']), page)+'>)', '']
         if entry.get('recordings'):
             capture = entry['recordings'][-1]
-            lines += ['完整原速录制、原字幕对白覆盖：完整。', '', '[本段视频](<'+project_file(capture['video']).as_posix()+'>) · [覆盖清单](<'+project_file(capture['coverage']).as_posix()+'>)', '']
+            lines += ['完整原速录制、原字幕对白覆盖：完整。', '', '[本段视频](<'+markdown_href(project_file(capture['video']), page)+'>) · [覆盖清单](<'+markdown_href(project_file(capture['coverage']), page)+'>)', '']
         semantic = entry.get('semantic')
         if semantic:
             observation = semantic['observation']
@@ -436,7 +500,7 @@ def markdown(entries, revision, progress, audit):
             for c in semantic['comparisons']:
                 cell=lambda s:str(s).replace('|','／').replace('\n',' ')
                 lines.append('| '+'、'.join(c['frame_ids'])+' | '+cell(c['expected_action']+'；'+c['expected_intent'])+' | '+cell(c['difference'])+f' | {c["action_score"]}／{c["intent_score"]} |')
-            lines += ['', '下一次修正：'+semantic['next_fix'],'', '[Terra 原始记录](<'+project_file(semantic['observations']).as_posix()+'>)', '']
+            lines += ['', '下一次修正：'+semantic['next_fix'],'', '[Terra 原始记录](<'+markdown_href(project_file(semantic['observations']), page)+'>)', '']
         lines += ['| 实机验收分项 | 分数 | 原因 |', '| --- | --- | --- |']
         for name, score, reason in zip(DIMENSIONS, entry['scores'], entry['current'].get('score_reasons', [None] * 7)):
             lines.append('| ' + name + ' | ' + ('待评' if score is None else str(score)) + ' | ' + str(reason or '等待独立实机评审').replace('|', '／').replace('\n', ' ') + ' |')
@@ -450,7 +514,7 @@ def markdown(entries, revision, progress, audit):
         if not entry['changes'] and not entry['events']:
             lines += ['等待本段主线游玩反馈。']
         for r in entry['history']:
-            lines += ['', '### 历史 ' + r['revision'][:8] + ' · ' + review_result(r), '', ' '.join(f'![{im.get("caption", "实机轨迹")}](<{project_file(im["path"]).as_posix()}>)' for im in r['images']), '', '[原始评审](<' + project_file(r['report']).as_posix() + '>)', '']
+            lines += ['', '### 历史 ' + r['revision'][:8] + ' · ' + review_result(r), '', ' '.join(f'![{im.get("caption", "实机轨迹")}](<{markdown_href(project_file(im["path"]), page)}>)' for im in r['images']), '', '[原始评审](<' + markdown_href(project_file(r['report']), page) + '>)', '']
     lines += ['', '## 实时进展', '']
     for e in progress['events']:
         lines += ['- ' + e['at'] + ' · ' + e['kind'] + ' · ' + e['work_id'] + '：' + e['summary'] + '；' + str(e['result'])]
@@ -514,6 +578,12 @@ def validate_export():
                 broken.append({'page': str(page), 'url': url})
     for page in OUT.rglob('*.md'):
         for url in markdown_links(page.read_text(encoding='utf-8-sig')):
+            if os.name == 'nt' and re.match(r'^[A-Za-z]:[\\/]', url):
+                checked += 1
+                path = Path(url).resolve()
+                if not path.is_relative_to(ROOT) or not path.exists():
+                    broken.append({'page': str(page), 'url': url})
+                continue
             target = urlsplit(url)
             if target.scheme in ('http', 'https', 'mailto', 'data'):
                 continue
@@ -525,7 +595,7 @@ def validate_export():
             if not path.is_absolute():
                 path = page.parent / path
             path = path.resolve()
-            if not path.is_relative_to(ROOT) or not path.is_file() or (target.fragment and path in documents and target.fragment not in documents[path].ids):
+            if not path.is_relative_to(ROOT) or not path.exists() or (target.fragment and path in documents and target.fragment not in documents[path].ids):
                 broken.append({'page': str(page), 'url': url})
     data = read_json(OUT / 'score_records.json')
     expected = [s['id'] for s in read_json(PLAN)['scenes']]

@@ -310,6 +310,8 @@ class ProfileTests(ProjectFixture):
             self.assertEqual(detail["pretransit_snapshot"], str(path.relative_to(c.ROOT)))
             self.assertEqual(detail["pretransit_snapshot_sha256"], c.sha256(path))
             self.assertTrue(detail["pretransit_observation"]["explicit_watcher_before_next_frame"])
+        log.write_text(prefix + json.dumps(dict(marker, path=path.as_posix())) + "\n", encoding="utf-8")
+        self.assertEqual(worker._failure_evidence("chapter1-flow", os.getpid())["pretransit_snapshot_sha256"], c.sha256(path))
         with self.assertRaisesRegex(ValueError, "PID"):
             worker._failure_evidence("chapter1-flow", os.getpid() + 1)
         worker.launch = {"pretransit_to": "T01"}

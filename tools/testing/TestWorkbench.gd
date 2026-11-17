@@ -55,9 +55,12 @@ func _ready() -> void:
 	monitor.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	monitor.offset_top = -82.0
 	add_child(monitor)
-	# User decision: collect continuously, hide the diagnostic overlay by default.
-	monitor.visible = false
-	monitor.configure(output_dir, {"config_path": config_path, "config_sha256": FileAccess.get_sha256(config_path), "mock": true, "monitor_visible": false, "monitor_policy": "hidden_by_user_request", "capture_policy": "development evidence; Terra full-process capture and blind review required for acceptance"}, content)
+	# User decision: collect continuously, hide the overlay by default. The test
+	# operator can opt in explicitly or toggle it with F2; collection continues.
+	_monitor_visible = _argument("--monitor-visible", "false") == "true"
+	monitor.visible = _monitor_visible
+	content.offset_bottom = -82.0 if _monitor_visible else 0.0
+	monitor.configure(output_dir, {"config_path": config_path, "config_sha256": FileAccess.get_sha256(config_path), "mock": true, "monitor_visible": _monitor_visible, "monitor_policy": "hidden_by_default_opt_in_diagnostic_view", "capture_policy": "development evidence; Terra full-process capture and blind review required for acceptance"}, content)
 	_load_fixture(config_path)
 	if error != "": return
 	fixture_ready.emit()

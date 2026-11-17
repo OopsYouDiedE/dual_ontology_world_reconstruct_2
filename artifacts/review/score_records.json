@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-17T16:18:53+08:00",
-  "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
+  "generated_at": "2026-11-17T17:04:36+08:00",
+  "revision": "aa221296da6847c31e6c15928b509dea33a42790",
   "dimensions": [
     "游玩流畅度",
     "界面字数",
@@ -29,47 +29,49 @@
         "R05"
       ],
       "scores": [
-        8,
-        8,
         null,
         null,
         null,
         null,
-        8
+        null,
+        null,
+        null
       ],
       "status": "待补测",
       "test": {
-        "id": "terra-batch-20261117-wake",
+        "id": "eval-20261117t170218-ded02f19-wake",
         "segment_id": "wake",
-        "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
-        "at": "2026-11-17T16:17:32.425634+08:00",
+        "revision": "aa221296da6847c31e6c15928b509dea33a42790",
+        "at": "2026-11-17T17:04:25.250399+08:00",
         "scores": [
-          8,
-          8,
           null,
           null,
           null,
           null,
-          8
+          null,
+          null,
+          null
         ],
         "reasons": [
-          "Steady wake telemetry recorded P95 9.507 ms, P99 13.319 ms, and zero steady spikes over 33.3 ms.",
-          "Visible English dialogue and prompts met the observed concise-text rule.",
-          "A stand-up phase and bed camera move were observed, without a complete skeletal-and-SFX measurement.",
-          "Final FFmpeg audio postprocess timed out; retained live telemetry is not a final audio measurement.",
-          "No canonical-plot comparison was supplied to the blind tester.",
-          "No Astra target image was supplied for visual comparison.",
-          "Wake-up, bed inspection, and door transition formed a clear short progression."
+          "No steady-state frame-time samples were collected for this segment.",
+          "Visible dialogue and prompts were not counted and checked for English.",
+          "A complete animation, decal, sound and occlusion assessment was not collected.",
+          "Integrated loudness and true peak were not measured for this segment.",
+          "A blind player narrative comparison was not collected.",
+          "A reference image similarity assessment was not collected.",
+          "An end-to-end player pacing assessment was not collected."
         ],
         "status": "待补测",
         "images": [],
         "evidence": [
-          "artifacts/evaluation/terra-batch-20261117/observations.md",
-          "artifacts/evaluation/terra-batch-20261117/receipt.json",
-          "artifacts/evaluation/terra-batch-20261117/timeline.yaml",
-          "artifacts/evaluation/terra-batch-20261117/frames.csv"
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/story-visual/godot.log",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/story-visual/launch.json",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/story-visual/survey.json",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/bedroom-fast/godot.log",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/bedroom-fast/launch.json",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/bedroom-fast/result.json"
         ],
-        "event_id": "event-932c92c342b91c68f8ee982e78ae7897",
+        "event_id": "event-91c6f2314a5d5ad48c926954cb51faf2",
         "independent_review": false,
         "evidence_issues": []
       }
@@ -82,47 +84,46 @@
         "B-P"
       ],
       "scores": [
-        6,
-        8,
         null,
         null,
         null,
         null,
-        8
+        null,
+        null,
+        null
       ],
-      "status": "不合格",
+      "status": "待补测",
       "test": {
-        "id": "terra-batch-20261117-corridor",
+        "id": "eval-20261117t170218-ded02f19-corridor",
         "segment_id": "corridor",
-        "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
-        "at": "2026-11-17T16:17:36.899698+08:00",
+        "revision": "aa221296da6847c31e6c15928b509dea33a42790",
+        "at": "2026-11-17T17:04:27.953715+08:00",
         "scores": [
-          6,
-          8,
           null,
           null,
           null,
           null,
-          8
+          null,
+          null,
+          null
         ],
         "reasons": [
-          "Corridor telemetry recorded two steady-state spikes over 33.3 ms after live interaction.",
-          "Visible English lines and interaction labels were concise; no untranslated text was observed.",
-          "The run covered character selection and dialogue, without a complete skeletal-and-SFX measurement.",
-          "Final FFmpeg audio postprocess timed out; retained live telemetry is not a final audio measurement.",
-          "No canonical-plot comparison was supplied to the blind tester.",
-          "No Astra target image was supplied for visual comparison.",
-          "Selectable group dialogue communicated clues and directed the player to the Kitchen."
+          "No steady-state frame-time samples were collected for this segment.",
+          "Visible dialogue and prompts were not counted and checked for English.",
+          "A complete animation, decal, sound and occlusion assessment was not collected.",
+          "Integrated loudness and true peak were not measured for this segment.",
+          "A blind player narrative comparison was not collected.",
+          "A reference image similarity assessment was not collected.",
+          "An end-to-end player pacing assessment was not collected."
         ],
-        "status": "不合格",
+        "status": "待补测",
         "images": [],
         "evidence": [
-          "artifacts/evaluation/terra-batch-20261117/observations.md",
-          "artifacts/evaluation/terra-batch-20261117/receipt.json",
-          "artifacts/evaluation/terra-batch-20261117/timeline.yaml",
-          "artifacts/evaluation/terra-batch-20261117/frames.csv"
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/corridor-fast/godot.log",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/corridor-fast/launch.json",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/corridor-fast/result.json"
         ],
-        "event_id": "event-23765bb92e166112d982908048db4876",
+        "event_id": "event-53da018f893c8de9933520a9b7dd0c87",
         "independent_review": false,
         "evidence_issues": []
       }
@@ -135,47 +136,46 @@
       ],
       "fragment_run": "terra-integrated-20261116/kitchen",
       "scores": [
-        6,
-        8,
-        6,
         null,
         null,
         null,
-        8
+        null,
+        null,
+        null,
+        null
       ],
-      "status": "不合格",
+      "status": "待补测",
       "test": {
-        "id": "terra-batch-20261117-kitchen_evidence",
+        "id": "eval-20261117t170218-ded02f19-kitchen_evidence",
         "segment_id": "kitchen_evidence",
-        "revision": "5571db5e0b6af1a87bb605c743fb05e0ec2a9fe3",
-        "at": "2026-11-17T16:17:41.153996+08:00",
+        "revision": "aa221296da6847c31e6c15928b509dea33a42790",
+        "at": "2026-11-17T17:04:30.610575+08:00",
         "scores": [
-          6,
-          8,
-          6,
           null,
           null,
           null,
-          8
+          null,
+          null,
+          null,
+          null
         ],
         "reasons": [
-          "Kitchen telemetry recorded three steady-state spikes over 33.3 ms during the live evidence segment.",
-          "Only concise English prompts and a 0/7 then 2/7 clue counter were visible.",
-          "The heel-mark macro frame visibly placed part of the detective mesh in the lower-left evidence view.",
-          "Final FFmpeg audio postprocess timed out; retained live telemetry is not a final audio measurement.",
-          "No canonical-plot comparison was supplied to the blind tester.",
-          "No Astra target image was supplied for visual comparison.",
-          "Two direct in-room sampling interactions completed and advanced the counter from 0/7 to 2/7."
+          "No steady-state frame-time samples were collected for this segment.",
+          "Visible dialogue and prompts were not counted and checked for English.",
+          "A complete animation, decal, sound and occlusion assessment was not collected.",
+          "Integrated loudness and true peak were not measured for this segment.",
+          "A blind player narrative comparison was not collected.",
+          "A reference image similarity assessment was not collected.",
+          "An end-to-end player pacing assessment was not collected."
         ],
-        "status": "不合格",
+        "status": "待补测",
         "images": [],
         "evidence": [
-          "artifacts/evaluation/terra-batch-20261117/observations.md",
-          "artifacts/evaluation/terra-batch-20261117/receipt.json",
-          "artifacts/evaluation/terra-batch-20261117/timeline.yaml",
-          "artifacts/evaluation/terra-batch-20261117/frames.csv"
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/kitchen-fast/godot.log",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/kitchen-fast/launch.json",
+          "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/kitchen-fast/result.json"
         ],
-        "event_id": "event-95d5f21618fe8efb844c5985570a6057",
+        "event_id": "event-57fb472efb99ac82adce1e4146703e04",
         "independent_review": false,
         "evidence_issues": []
       }

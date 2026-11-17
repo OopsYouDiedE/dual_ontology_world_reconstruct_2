@@ -1,0 +1,15 @@
+{
+  "acceptance_eligible": false,
+  "capture_kind": "development-ui-contract",
+  "image_sha256": "563cd79a591b792b45a65e975b0f38b46a31c348756fe232e4ec2094d1788f2c",
+  "snapshot_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\artifacts\\evaluation\\runs\\eval-20261117t170218-ded02f19\\fixtures\\fixtures\\opening-free.json",
+  "source_identity": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "res://scenes/main/Main.tscn",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "res://tools/test/exploration_ui_contract.gd",
+    "process_id": 37756,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  }
+}

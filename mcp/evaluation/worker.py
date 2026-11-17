@@ -19,6 +19,9 @@ import psutil
 
 import common as c
 
+sys.path.insert(0, str(c.ROOT / "mcp/game"))
+from concurrency_observer import ConcurrencyObserver  # noqa: E402
+
 sys.path.insert(0, str(c.ROOT / "mcp/review"))
 from core import Store  # noqa: E402
 
@@ -547,6 +550,7 @@ class Evaluation:
         directory.mkdir(parents=True, exist_ok=True)
         start_event = False
         process = None
+        observer = None
         children = {}
         tick = time.monotonic()
         self.update(job, state="starting", segment_id=segment, started_at=c.now())
@@ -559,6 +563,8 @@ class Evaluation:
             with (directory / "godot.log").open("w", encoding="utf-8") as log:
                 process = subprocess.Popen(command, cwd=self.root, env=self.env, stdin=subprocess.DEVNULL,
                                            stdout=log, stderr=subprocess.STDOUT, start_new_session=(os.name != "nt"))
+                observer = ConcurrencyObserver(process.pid)
+                observer.start()
                 identity = c.inspect_process(process.pid, expected_exe=self.godot,
                                              required=["--path", str(self.root)])
                 with self.lock:
@@ -614,6 +620,11 @@ class Evaluation:
                 except Exception as validation_error:
                     detail["evidence_validation_error"] = type(validation_error).__name__ + ": " + str(validation_error)
         finally:
+            if observer is not None:
+                try:
+                    detail["concurrency_observation_path"] = str(observer.stop(directory))
+                except (OSError, RuntimeError) as observation_error:
+                    detail["concurrency_observation_error"] = str(observation_error)
             with self.lock:
                 self.procs.pop(job, None)
         elapsed = round(time.monotonic() - tick, 3)

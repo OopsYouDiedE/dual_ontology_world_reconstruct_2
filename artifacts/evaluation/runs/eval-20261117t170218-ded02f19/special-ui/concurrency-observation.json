@@ -1,0 +1,98 @@
+{
+  "host_pid": 37756,
+  "started_at": "2026-11-17T09:03:24.013384+00:00",
+  "ended_at": "2026-11-17T09:03:31.786589+00:00",
+  "sample_interval_seconds": 1.0,
+  "sample_count": 8,
+  "sampling_failures": 0,
+  "sampler_stopped": true,
+  "peak_observed_godot_processes": 3,
+  "observed_godot_pids": [
+    1512,
+    30996,
+    37756
+  ],
+  "coverage": "Periodic visible-process observations; short overlaps and GPU load may be missed.",
+  "samples": [
+    {
+      "timestamp": "2026-11-17T09:03:24.017384+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 100.0,
+      "available_memory_bytes": 12682752000
+    },
+    {
+      "timestamp": "2026-11-17T09:03:25.056736+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 46.4,
+      "available_memory_bytes": 12506628096
+    },
+    {
+      "timestamp": "2026-11-17T09:03:26.070168+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 63.2,
+      "available_memory_bytes": 12375838720
+    },
+    {
+      "timestamp": "2026-11-17T09:03:27.075134+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 29.7,
+      "available_memory_bytes": 12296474624
+    },
+    {
+      "timestamp": "2026-11-17T09:03:28.082331+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 37.1,
+      "available_memory_bytes": 12257218560
+    },
+    {
+      "timestamp": "2026-11-17T09:03:29.086425+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 31.0,
+      "available_memory_bytes": 12135211008
+    },
+    {
+      "timestamp": "2026-11-17T09:03:30.102143+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 26.8,
+      "available_memory_bytes": 12137967616
+    },
+    {
+      "timestamp": "2026-11-17T09:03:31.106482+00:00",
+      "godot_pids": [
+        1512,
+        30996,
+        37756
+      ],
+      "system_cpu_percent": 31.7,
+      "available_memory_bytes": 12161912832
+    }
+  ]
+}

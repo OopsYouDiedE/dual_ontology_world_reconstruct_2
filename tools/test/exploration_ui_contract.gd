@@ -99,6 +99,22 @@ func _run() -> void:
 	await process_frame
 	game._sync_exploration_ui()
 	_hidden_chrome("restored exploration")
+	# Story ticks must not reconstruct hidden navigation controls or journal text.
+	var hidden_children: Array = game.left_actions.get_children()
+	var hidden_log: String = game.tab_log.get_parsed_text()
+	game._refresh()
+	check(game.left_actions.get_children() == hidden_children, "hidden exit controls retain node identity on refresh")
+	check(game.tab_log.get_parsed_text() == hidden_log, "hidden journal skips rich text reconstruction")
+	game._set_view("map")
+	game._refresh()
+	check(game.left_actions.get_child_count() > 0, "map populates current room exits on opening")
+	game._toggle_drawer()
+	check(game.drawer.is_visible_in_tree(), "drawer opens visibly from map")
+	game.tab_log.text = "stale journal sentinel"
+	game._refresh()
+	check(game.tab_log.get_parsed_text() != "stale journal sentinel", "opening drawer refreshes current journal even when empty")
+	game._set_view("room")
+	game._sync_exploration_ui()
 	var controller: Node = game.opening if is_instance_valid(game.opening) and game.opening.active else game.kitchen
 	check(is_instance_valid(controller) and controller.phase == "free", "fixture has active free exploration controller")
 	fixture_fade_alpha = game.fade_rect.modulate.a

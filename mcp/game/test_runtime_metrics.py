@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import tempfile
+import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -15,6 +16,14 @@ class FinalizeMetricsTests(unittest.TestCase):
                       metrics_directory=directory, process=SimpleNamespace(pid=123), expected_source={})
         values.update(changes)
         return SimpleNamespace(**values)
+
+    def test_close_reports_concurrency_write_error(self):
+        endpoint = self.endpoint(None, backend="cli", lock=threading.Lock(), closed=True,
+                                 last_source=None, server_source={},
+                                 concurrency_observation_error="disk full", stop=lambda: None)
+        with patch.dict(runtime.SESSIONS, {"test-session": endpoint}):
+            result = runtime.execute("close", {"session_id": "test-session"})
+        self.assertEqual(result["concurrency_observation_error"], "disk full")
 
     def test_movie_and_interrupted_runs_are_not_scored(self):
         self.assertEqual(runtime.finalize_metrics(self.endpoint(None, movie_path="movie"), True)["metrics_status"], "not_eligible")
@@ -36,6 +45,22 @@ class FinalizeMetricsTests(unittest.TestCase):
             self.assertEqual(result["metrics_segments"], ["wake"])
             self.assertFalse(result["acceptance_scored"])
             self.assertEqual(validate.call_args.kwargs["pid"], 123)
+
+    def test_concurrency_context_is_bound_to_summary_and_survives_failure(self):
+        with tempfile.TemporaryDirectory(dir=runtime.ROOT / ".runtime") as base:
+            directory = Path(base) / "run-123"
+            directory.mkdir()
+            observation = directory / "concurrency-observation.json"
+            observation.write_text(json.dumps({"host_pid": 123, "peak_observed_godot_processes": 2}), encoding="utf-8")
+            endpoint = self.endpoint(directory, concurrency_observation_path=observation)
+            with patch.object(runtime.provenance, "validate_source"), \
+                 patch("importlib.import_module", return_value=SimpleNamespace(summarize=lambda path: {"source_identity": {}, "segments": {}})):
+                result = runtime.finalize_metrics(endpoint, True)
+            summary = json.loads(Path(result["metrics_summary_path"]).read_text(encoding="utf-8"))
+            self.assertEqual(summary["concurrency_observation"]["host_pid"], 123)
+            with patch("importlib.import_module", side_effect=RuntimeError("analysis failed")):
+                failed = runtime.finalize_metrics(endpoint, True)
+            self.assertEqual(failed["concurrency_observation_path"], str(observation))
 
     def test_snapshot_summary_is_separate_and_bound_to_host(self):
         with tempfile.TemporaryDirectory(dir=runtime.ROOT / ".runtime") as base:

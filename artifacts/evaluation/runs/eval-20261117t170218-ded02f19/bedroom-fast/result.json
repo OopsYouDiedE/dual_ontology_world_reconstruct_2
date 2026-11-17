@@ -1,0 +1,3311 @@
+{
+  "actors": {
+    "detective_occupiable": true,
+    "detective_pose": "stand",
+    "detective_position": [
+      4.94999980926514,
+      1.64999997615814
+    ],
+    "occupancy_context": "exploration_landing",
+    "occupancy_pass": true,
+    "opening_phase": "free",
+    "pass": true,
+    "positions": {
+      "detective": [
+        4.94999980926514,
+        1.64999997615814
+      ]
+    },
+    "snapshot_pairs": [],
+    "snapshot_pairwise_clear": true,
+    "spawn_occupiable": true,
+    "spawn_pairs": [],
+    "spawn_pairwise_clear": true,
+    "spawn_position": [
+      5.77999973297119,
+      1.19999957084656
+    ],
+    "walking_occupancy_required": true
+  },
+  "controller": "opening",
+  "elapsed_ms": 455.925,
+  "entry": {
+    "cell_open": true,
+    "position": [
+      5.77999973297119,
+      1.19999957084656
+    ],
+    "source": "production_door_inner"
+  },
+  "errors": [],
+  "format": "room-fast-check-v1",
+  "interactions": [
+    {
+      "actual_stand": [
+        4.94999980926514,
+        1.04999995231628
+      ],
+      "approach_failure_reason": "",
+      "approach_plan_ok": true,
+      "arrival_distance": 1.16867399215698,
+      "arrival_within_interaction_range": true,
+      "arrival_within_skip_approach_radius": true,
+      "astar_cells": 4,
+      "astar_path": [
+        [
+          5.85,
+          1.05
+        ],
+        [
+          5.55,
+          1.05
+        ],
+        [
+          5.25,
+          1.05
+        ],
+        [
+          4.95,
+          1.05
+        ]
+      ],
+      "id": "bed",
+      "interaction_position": [
+        3.88000011444092,
+        1.51999950408936
+      ],
+      "interaction_radius": 1.5,
+      "navigation_agent_points": 7,
+      "navigation_agent_reaches_returned_stand": true,
+      "navigation_agent_reaches_target": true,
+      "navigation_path": [
+        [
+          5.77999973297119,
+          1.19999969005585
+        ],
+        [
+          5.69999980926514,
+          1.18554186820984
+        ],
+        [
+          5.6823525428772,
+          1.1823525428772
+        ],
+        [
+          5.40000009536743,
+          1.13132512569427
+        ],
+        [
+          5.31617641448975,
+          1.11617624759674
+        ],
+        [
+          5.09999990463257,
+          1.07710826396942
+        ],
+        [
+          4.94999980926514,
+          1.04999995231628
+        ]
+      ],
+      "navigation_reaches_target": true,
+      "navigation_server_points": 7,
+      "navigation_server_reaches_returned_stand": true,
+      "path_explanation": {
+        "figure_exclusion_probes": {},
+        "interaction_stands": {
+          "free_center_count": 24,
+          "free_center_sample": [
+            [
+              2.54999995231628,
+              1.35000002384186
+            ],
+            [
+              2.54999995231628,
+              1.64999997615814
+            ],
+            [
+              2.54999995231628,
+              1.95000004768372
+            ],
+            [
+              2.84999990463257,
+              0.449999988079071
+            ]
+          ],
+          "interaction_radius": 1.5,
+          "reachable_center_count": 24,
+          "reachable_center_sample": [
+            [
+              2.54999995231628,
+              1.35000002384186
+            ],
+            [
+              2.54999995231628,
+              1.64999997615814
+            ],
+            [
+              2.54999995231628,
+              1.95000004768372
+            ],
+            [
+              2.84999990463257,
+              0.449999988079071
+            ]
+          ]
+        },
+        "probe_semantics": "diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction",
+        "static_furniture_grid": {
+          "cells": 4,
+          "end_cell": [
+            16,
+            3
+          ],
+          "end_center": [
+            4.95,
+            1.05
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        },
+        "with_all_figures": {
+          "cells": 4,
+          "end_cell": [
+            16,
+            3
+          ],
+          "end_center": [
+            4.95,
+            1.05
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        }
+      },
+      "path_pass": true,
+      "production_path": [
+        [
+          5.55000019073486,
+          1.04999995231628
+        ],
+        [
+          5.25,
+          1.04999995231628
+        ],
+        [
+          4.94999980926514,
+          1.04999995231628
+        ],
+        [
+          4.94999980926514,
+          1.04999995231628
+        ]
+      ],
+      "ray": {
+        "applicable": true,
+        "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+        "camera_position": [
+          5.63000011444092,
+          1.97000002861023,
+          2.86999940872192
+        ],
+        "context": "visual_probe_after_planned_approach",
+        "elapsed_ms": 5.748,
+        "first_hit_category": "target",
+        "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_bed_01/VisualRoot/ModelInstance/Asset/Blanket",
+        "first_hit_position": [
+          3.90949440002441,
+          0.65749990940094,
+          1.78608083724976
+        ],
+        "kind": "bed",
+        "pass": true,
+        "standing_position": [
+          4.94999980926514,
+          1.04999995231628
+        ],
+        "status": "hit",
+        "target_aabb_center": [
+          3.88000011444092,
+          0.634999990463257,
+          1.7674994468689
+        ],
+        "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_bed_01/VisualRoot/ModelInstance/Asset/Blanket",
+        "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_bed_01"
+      },
+      "ray_required": true,
+      "requested_stand": [
+        4.66888952255249,
+        1.38713383674622
+      ],
+      "resolved_stand": [
+        4.94999980926514,
+        1.04999995231628
+      ],
+      "returned_stand_is_rejection_fallback": false,
+      "skip_approach_radius": 1.3,
+      "snapshot_interaction": {
+        "actual_stand": [
+          4.94999980926514,
+          1.64999997615814
+        ],
+        "already_near": true,
+        "approach_failure_reason": "",
+        "approach_plan_ok": true,
+        "arrival_distance": 1.07786798477173,
+        "path": [
+          [
+            4.94999980926514,
+            1.64999997615814
+          ]
+        ],
+        "ray": {
+          "applicable": true,
+          "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+          "camera_position": [
+            5.63000011444092,
+            1.97000002861023,
+            2.86999940872192
+          ],
+          "context": "visual_probe_after_planned_approach",
+          "elapsed_ms": 2.859,
+          "first_hit_category": "target",
+          "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_bed_01/VisualRoot/ModelInstance/Asset/Blanket",
+          "first_hit_position": [
+            3.90949440002441,
+            0.65749990940094,
+            1.78608083724976
+          ],
+          "kind": "bed",
+          "pass": true,
+          "standing_position": [
+            4.94999980926514,
+            1.64999997615814
+          ],
+          "status": "hit",
+          "target_aabb_center": [
+            3.88000011444092,
+            0.634999990463257,
+            1.7674994468689
+          ],
+          "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_bed_01/VisualRoot/ModelInstance/Asset/Blanket",
+          "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_bed_01"
+        }
+      },
+      "stand_occupiable": true
+    },
+    {
+      "actual_stand": [
+        2.84999990463257,
+        0.449999988079071
+      ],
+      "approach_failure_reason": "",
+      "approach_plan_ok": true,
+      "arrival_distance": 0.466904073953629,
+      "arrival_within_interaction_range": true,
+      "arrival_within_skip_approach_radius": true,
+      "astar_cells": 24,
+      "astar_path": [
+        [
+          5.85,
+          1.05
+        ],
+        [
+          5.55,
+          1.35
+        ],
+        [
+          5.25,
+          1.65
+        ],
+        [
+          4.95,
+          1.95
+        ],
+        [
+          4.95,
+          2.25
+        ],
+        [
+          4.95,
+          2.55
+        ],
+        [
+          4.95,
+          2.85
+        ],
+        [
+          4.65,
+          2.85
+        ],
+        [
+          4.35,
+          2.85
+        ],
+        [
+          4.05,
+          2.85
+        ],
+        [
+          3.75,
+          2.85
+        ],
+        [
+          3.45,
+          2.85
+        ],
+        [
+          3.15,
+          2.85
+        ],
+        [
+          2.85,
+          2.85
+        ],
+        [
+          2.85,
+          2.55
+        ],
+        [
+          2.85,
+          2.25
+        ],
+        [
+          2.85,
+          1.95
+        ],
+        [
+          2.55,
+          1.65
+        ],
+        [
+          2.25,
+          1.35
+        ],
+        [
+          2.25,
+          1.05
+        ],
+        [
+          2.25,
+          0.75
+        ],
+        [
+          2.25,
+          0.45
+        ],
+        [
+          2.55,
+          0.45
+        ],
+        [
+          2.85,
+          0.45
+        ]
+      ],
+      "id": "lamp",
+      "interaction_position": [
+        2.76999998092651,
+        0.909999370574951
+      ],
+      "interaction_radius": 1.5,
+      "navigation_agent_points": 42,
+      "navigation_agent_reaches_returned_stand": true,
+      "navigation_agent_reaches_target": true,
+      "navigation_path": [
+        [
+          5.77999973297119,
+          1.19999969005585
+        ],
+        [
+          5.77594900131226,
+          1.27594923973084
+        ],
+        [
+          5.76399993896484,
+          1.5
+        ],
+        [
+          5.7607593536377,
+          1.56075930595398
+        ],
+        [
+          5.74799966812134,
+          1.79999995231628
+        ],
+        [
+          5.74556970596313,
+          1.84556972980499
+        ],
+        [
+          5.73199987411499,
+          2.09999990463257
+        ],
+        [
+          5.73037958145142,
+          2.13037967681885
+        ],
+        [
+          5.71600008010864,
+          2.40000009536743
+        ],
+        [
+          5.71518993377686,
+          2.41518998146057
+        ],
+        [
+          5.69999980926514,
+          2.70000004768372
+        ],
+        [
+          5.42999982833862,
+          2.73000001907349
+        ],
+        [
+          5.40000009536743,
+          2.73333334922791
+        ],
+        [
+          5.15999984741211,
+          2.75999999046326
+        ],
+        [
+          5.09999990463257,
+          2.76666665077209
+        ],
+        [
+          4.8899998664856,
+          2.78999996185303
+        ],
+        [
+          4.80000019073486,
+          2.79999995231628
+        ],
+        [
+          4.61999988555908,
+          2.8199999332428
+        ],
+        [
+          4.5,
+          2.83333325386047
+        ],
+        [
+          4.34999990463257,
+          2.85000014305115
+        ],
+        [
+          4.19999980926514,
+          2.86666679382324
+        ],
+        [
+          4.07999992370605,
+          2.88000011444092
+        ],
+        [
+          3.90000009536743,
+          2.90000009536743
+        ],
+        [
+          3.80999994277954,
+          2.91000008583069
+        ],
+        [
+          3.59999990463257,
+          2.93333339691162
+        ],
+        [
+          3.53999996185303,
+          2.94000005722046
+        ],
+        [
+          3.29999995231628,
+          2.96666669845581
+        ],
+        [
+          3.26999998092651,
+          2.97000002861023
+        ],
+        [
+          3.0,
+          3.0
+        ],
+        [
+          3.0,
+          2.70000004768372
+        ],
+        [
+          3.0,
+          2.40000009536743
+        ],
+        [
+          3.0,
+          2.09999990463257
+        ],
+        [
+          3.0,
+          1.79999995231628
+        ],
+        [
+          2.70000004768372,
+          1.79999995231628
+        ],
+        [
+          2.70000004768372,
+          1.5
+        ],
+        [
+          2.40000009536743,
+          1.5
+        ],
+        [
+          2.40000009536743,
+          1.20000004768372
+        ],
+        [
+          2.40000009536743,
+          0.899999976158142
+        ],
+        [
+          2.40000009536743,
+          0.600000023841858
+        ],
+        [
+          2.625,
+          0.524999976158142
+        ],
+        [
+          2.70000004768372,
+          0.499999970197678
+        ],
+        [
+          2.84999990463257,
+          0.449999988079071
+        ]
+      ],
+      "navigation_reaches_target": true,
+      "navigation_server_points": 42,
+      "navigation_server_reaches_returned_stand": true,
+      "path_explanation": {
+        "figure_exclusion_probes": {},
+        "interaction_stands": {
+          "free_center_count": 28,
+          "free_center_sample": [
+            [
+              1.35000002384186,
+              1.04999995231628
+            ],
+            [
+              1.35000002384186,
+              1.35000002384186
+            ],
+            [
+              1.64999997615814,
+              1.04999995231628
+            ],
+            [
+              1.64999997615814,
+              1.35000002384186
+            ]
+          ],
+          "interaction_radius": 1.5,
+          "reachable_center_count": 28,
+          "reachable_center_sample": [
+            [
+              1.35000002384186,
+              1.04999995231628
+            ],
+            [
+              1.35000002384186,
+              1.35000002384186
+            ],
+            [
+              1.64999997615814,
+              1.04999995231628
+            ],
+            [
+              1.64999997615814,
+              1.35000002384186
+            ]
+          ]
+        },
+        "probe_semantics": "diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction",
+        "static_furniture_grid": {
+          "cells": 24,
+          "end_cell": [
+            9,
+            1
+          ],
+          "end_center": [
+            2.85,
+            0.45
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        },
+        "with_all_figures": {
+          "cells": 24,
+          "end_cell": [
+            9,
+            1
+          ],
+          "end_center": [
+            2.85,
+            0.45
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        }
+      },
+      "path_pass": true,
+      "production_path": [
+        [
+          5.55000019073486,
+          1.35000002384186
+        ],
+        [
+          5.25,
+          1.64999997615814
+        ],
+        [
+          4.94999980926514,
+          1.95000004768372
+        ],
+        [
+          4.94999980926514,
+          2.25
+        ],
+        [
+          4.94999980926514,
+          2.54999995231628
+        ],
+        [
+          4.94999980926514,
+          2.84999990463257
+        ],
+        [
+          4.65000009536743,
+          2.84999990463257
+        ],
+        [
+          4.34999990463257,
+          2.84999990463257
+        ],
+        [
+          4.05000019073486,
+          2.84999990463257
+        ],
+        [
+          3.75,
+          2.84999990463257
+        ],
+        [
+          3.45000004768372,
+          2.84999990463257
+        ],
+        [
+          3.15000009536743,
+          2.84999990463257
+        ],
+        [
+          2.84999990463257,
+          2.84999990463257
+        ],
+        [
+          2.84999990463257,
+          2.54999995231628
+        ],
+        [
+          2.84999990463257,
+          2.25
+        ],
+        [
+          2.84999990463257,
+          1.95000004768372
+        ],
+        [
+          2.54999995231628,
+          1.64999997615814
+        ],
+        [
+          2.25,
+          1.35000002384186
+        ],
+        [
+          2.25,
+          1.04999995231628
+        ],
+        [
+          2.25,
+          0.75
+        ],
+        [
+          2.25,
+          0.449999988079071
+        ],
+        [
+          2.54999995231628,
+          0.449999988079071
+        ],
+        [
+          2.84999990463257,
+          0.449999988079071
+        ],
+        [
+          2.84999990463257,
+          0.449999988079071
+        ]
+      ],
+      "ray": {
+        "applicable": true,
+        "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+        "camera_position": [
+          3.0699999332428,
+          1.30000007152557,
+          1.88499927520752
+        ],
+        "context": "visual_probe_after_planned_approach",
+        "elapsed_ms": 107.925,
+        "first_hit_category": "target",
+        "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_banker_lamp_01/RoomObservation_lamp/@Node3D@256/Green_shade",
+        "first_hit_position": [
+          2.80557775497437,
+          1.0796480178833,
+          1.0476621389389
+        ],
+        "kind": "lamp",
+        "pass": true,
+        "standing_position": [
+          2.84999990463257,
+          0.449999988079071
+        ],
+        "status": "hit",
+        "target_aabb_center": [
+          2.76999998092651,
+          1.04999995231628,
+          0.934999465942383
+        ],
+        "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_banker_lamp_01/VisualRoot/ModelInstance/Asset/Warm_tube",
+        "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_banker_lamp_01"
+      },
+      "ray_required": true,
+      "requested_stand": [
+        3.56631278991699,
+        0.986720561981201
+      ],
+      "resolved_stand": [
+        2.84999990463257,
+        0.449999988079071
+      ],
+      "returned_stand_is_rejection_fallback": false,
+      "skip_approach_radius": 1.3,
+      "snapshot_interaction": {
+        "actual_stand": [
+          2.84999990463257,
+          0.449999988079071
+        ],
+        "already_near": false,
+        "approach_failure_reason": "",
+        "approach_plan_ok": true,
+        "arrival_distance": 0.466904073953629,
+        "path": [
+          [
+            4.94999980926514,
+            1.95000004768372
+          ],
+          [
+            4.94999980926514,
+            2.25
+          ],
+          [
+            4.94999980926514,
+            2.54999995231628
+          ],
+          [
+            4.94999980926514,
+            2.84999990463257
+          ],
+          [
+            4.65000009536743,
+            2.84999990463257
+          ],
+          [
+            4.34999990463257,
+            2.84999990463257
+          ],
+          [
+            4.05000019073486,
+            2.84999990463257
+          ],
+          [
+            3.75,
+            2.84999990463257
+          ],
+          [
+            3.45000004768372,
+            2.84999990463257
+          ],
+          [
+            3.15000009536743,
+            2.84999990463257
+          ],
+          [
+            2.84999990463257,
+            2.84999990463257
+          ],
+          [
+            2.84999990463257,
+            2.54999995231628
+          ],
+          [
+            2.84999990463257,
+            2.25
+          ],
+          [
+            2.84999990463257,
+            1.95000004768372
+          ],
+          [
+            2.54999995231628,
+            1.64999997615814
+          ],
+          [
+            2.25,
+            1.35000002384186
+          ],
+          [
+            2.25,
+            1.04999995231628
+          ],
+          [
+            2.25,
+            0.75
+          ],
+          [
+            2.25,
+            0.449999988079071
+          ],
+          [
+            2.54999995231628,
+            0.449999988079071
+          ],
+          [
+            2.84999990463257,
+            0.449999988079071
+          ],
+          [
+            2.84999990463257,
+            0.449999988079071
+          ]
+        ],
+        "ray": {
+          "applicable": true,
+          "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+          "camera_position": [
+            3.0699999332428,
+            1.30000007152557,
+            1.88499927520752
+          ],
+          "context": "visual_probe_after_planned_approach",
+          "elapsed_ms": 3.367,
+          "first_hit_category": "target",
+          "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_banker_lamp_01/RoomObservation_lamp/@Node3D@256/Green_shade",
+          "first_hit_position": [
+            2.80557775497437,
+            1.0796480178833,
+            1.0476621389389
+          ],
+          "kind": "lamp",
+          "pass": true,
+          "standing_position": [
+            2.84999990463257,
+            0.449999988079071
+          ],
+          "status": "hit",
+          "target_aabb_center": [
+            2.76999998092651,
+            1.04999995231628,
+            0.934999465942383
+          ],
+          "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_banker_lamp_01/VisualRoot/ModelInstance/Asset/Warm_tube",
+          "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_banker_lamp_01"
+        }
+      },
+      "stand_occupiable": true
+    },
+    {
+      "actual_stand": [
+        1.35000002384186,
+        3.15000009536743
+      ],
+      "approach_failure_reason": "",
+      "approach_plan_ok": true,
+      "arrival_distance": 0.952942550182343,
+      "arrival_within_interaction_range": true,
+      "arrival_within_skip_approach_radius": true,
+      "astar_cells": 19,
+      "astar_path": [
+        [
+          5.85,
+          1.05
+        ],
+        [
+          5.55,
+          1.35
+        ],
+        [
+          5.25,
+          1.65
+        ],
+        [
+          4.95,
+          1.95
+        ],
+        [
+          4.95,
+          2.25
+        ],
+        [
+          4.95,
+          2.55
+        ],
+        [
+          4.95,
+          2.85
+        ],
+        [
+          4.65,
+          3.15
+        ],
+        [
+          4.35,
+          3.15
+        ],
+        [
+          4.05,
+          3.15
+        ],
+        [
+          3.75,
+          3.15
+        ],
+        [
+          3.45,
+          3.15
+        ],
+        [
+          3.15,
+          3.15
+        ],
+        [
+          2.85,
+          3.15
+        ],
+        [
+          2.55,
+          3.15
+        ],
+        [
+          2.25,
+          3.15
+        ],
+        [
+          1.95,
+          3.15
+        ],
+        [
+          1.65,
+          3.15
+        ],
+        [
+          1.35,
+          3.15
+        ]
+      ],
+      "id": "desk",
+      "interaction_position": [
+        0.509999990463257,
+        3.59999942779541
+      ],
+      "interaction_radius": 1.5,
+      "navigation_agent_points": 38,
+      "navigation_agent_reaches_returned_stand": true,
+      "navigation_agent_reaches_target": true,
+      "navigation_path": [
+        [
+          5.77999973297119,
+          1.19999969005585
+        ],
+        [
+          5.77499961853027,
+          1.27499997615814
+        ],
+        [
+          5.75999975204468,
+          1.5
+        ],
+        [
+          5.75624942779541,
+          1.55624961853027
+        ],
+        [
+          5.73999929428101,
+          1.79999995231628
+        ],
+        [
+          5.73749971389771,
+          1.83749961853027
+        ],
+        [
+          5.71999931335449,
+          2.09999990463257
+        ],
+        [
+          5.71874952316284,
+          2.11874961853027
+        ],
+        [
+          5.69999980926514,
+          2.40000009536743
+        ],
+        [
+          5.5,
+          2.5
+        ],
+        [
+          5.40000009536743,
+          2.54999971389771
+        ],
+        [
+          5.29999971389771,
+          2.59999990463257
+        ],
+        [
+          5.09999990463257,
+          2.70000004768372
+        ],
+        [
+          4.82307720184326,
+          2.72307682037354
+        ],
+        [
+          4.80000019073486,
+          2.72500014305115
+        ],
+        [
+          4.5461540222168,
+          2.74615383148193
+        ],
+        [
+          4.5,
+          2.75
+        ],
+        [
+          4.26923084259033,
+          2.76923084259033
+        ],
+        [
+          4.19999980926514,
+          2.77500009536743
+        ],
+        [
+          3.99230766296387,
+          2.79230785369873
+        ],
+        [
+          3.90000009536743,
+          2.79999995231628
+        ],
+        [
+          3.71538472175598,
+          2.81538462638855
+        ],
+        [
+          3.59999990463257,
+          2.82500028610229
+        ],
+        [
+          3.43846154212952,
+          2.83846163749695
+        ],
+        [
+          3.29999995231628,
+          2.85000014305115
+        ],
+        [
+          3.16153860092163,
+          2.86153864860535
+        ],
+        [
+          3.0,
+          2.875
+        ],
+        [
+          2.88461542129517,
+          2.88461542129517
+        ],
+        [
+          2.70000004768372,
+          2.90000009536743
+        ],
+        [
+          2.60769248008728,
+          2.90769243240356
+        ],
+        [
+          2.40000009536743,
+          2.92499995231628
+        ],
+        [
+          2.33076930046082,
+          2.93076920509338
+        ],
+        [
+          2.09999990463257,
+          2.95000004768372
+        ],
+        [
+          2.05384612083435,
+          2.95384621620178
+        ],
+        [
+          1.79999995231628,
+          2.97500014305115
+        ],
+        [
+          1.77692306041718,
+          2.97692322731018
+        ],
+        [
+          1.5,
+          3.0
+        ],
+        [
+          1.35000002384186,
+          3.15000009536743
+        ]
+      ],
+      "navigation_reaches_target": true,
+      "navigation_server_points": 38,
+      "navigation_server_reaches_returned_stand": true,
+      "path_explanation": {
+        "figure_exclusion_probes": {},
+        "interaction_stands": {
+          "free_center_count": 28,
+          "free_center_sample": [
+            [
+              0.449999988079071,
+              2.25
+            ],
+            [
+              0.449999988079071,
+              2.54999995231628
+            ],
+            [
+              0.449999988079071,
+              4.65000009536743
+            ],
+            [
+              0.449999988079071,
+              4.94999980926514
+            ]
+          ],
+          "interaction_radius": 1.5,
+          "reachable_center_count": 28,
+          "reachable_center_sample": [
+            [
+              0.449999988079071,
+              2.25
+            ],
+            [
+              0.449999988079071,
+              2.54999995231628
+            ],
+            [
+              0.449999988079071,
+              4.65000009536743
+            ],
+            [
+              0.449999988079071,
+              4.94999980926514
+            ]
+          ]
+        },
+        "probe_semantics": "diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction",
+        "static_furniture_grid": {
+          "cells": 19,
+          "end_cell": [
+            4,
+            10
+          ],
+          "end_center": [
+            1.35,
+            3.15
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        },
+        "with_all_figures": {
+          "cells": 19,
+          "end_cell": [
+            4,
+            10
+          ],
+          "end_center": [
+            1.35,
+            3.15
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        }
+      },
+      "path_pass": true,
+      "production_path": [
+        [
+          5.55000019073486,
+          1.35000002384186
+        ],
+        [
+          5.25,
+          1.64999997615814
+        ],
+        [
+          4.94999980926514,
+          1.95000004768372
+        ],
+        [
+          4.94999980926514,
+          2.25
+        ],
+        [
+          4.94999980926514,
+          2.54999995231628
+        ],
+        [
+          4.94999980926514,
+          2.84999990463257
+        ],
+        [
+          4.65000009536743,
+          3.15000009536743
+        ],
+        [
+          4.34999990463257,
+          3.15000009536743
+        ],
+        [
+          4.05000019073486,
+          3.15000009536743
+        ],
+        [
+          3.75,
+          3.15000009536743
+        ],
+        [
+          3.45000004768372,
+          3.15000009536743
+        ],
+        [
+          3.15000009536743,
+          3.15000009536743
+        ],
+        [
+          2.84999990463257,
+          3.15000009536743
+        ],
+        [
+          2.54999995231628,
+          3.15000009536743
+        ],
+        [
+          2.25,
+          3.15000009536743
+        ],
+        [
+          1.95000004768372,
+          3.15000009536743
+        ],
+        [
+          1.64999997615814,
+          3.15000009536743
+        ],
+        [
+          1.35000002384186,
+          3.15000009536743
+        ],
+        [
+          1.35000002384186,
+          3.15000009536743
+        ]
+      ],
+      "ray": {
+        "applicable": true,
+        "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+        "camera_position": [
+          0.379999995231628,
+          1.55599999427795,
+          3.94279956817627
+        ],
+        "context": "visual_probe_after_planned_approach",
+        "elapsed_ms": 5.289,
+        "first_hit_category": "target",
+        "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_residential_accessories_01/RoomObservation_desk/NotebookCoverHinge/@MeshInstance3D@242",
+        "first_hit_position": [
+          0.508669853210449,
+          0.83050000667572,
+          3.85094904899597
+        ],
+        "kind": "desk",
+        "pass": true,
+        "standing_position": [
+          1.35000002384186,
+          3.15000009536743
+        ],
+        "status": "hit",
+        "target_aabb_center": [
+          0.509999990463257,
+          0.823000013828278,
+          3.84999942779541
+        ],
+        "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_residential_accessories_01/RoomObservation_desk/NotebookCoverHinge/@MeshInstance3D@242",
+        "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_residential_accessories_01"
+      },
+      "ray_required": true,
+      "requested_stand": [
+        1.23805642127991,
+        3.26843667030334
+      ],
+      "resolved_stand": [
+        1.35000002384186,
+        3.15000009536743
+      ],
+      "returned_stand_is_rejection_fallback": false,
+      "skip_approach_radius": 1.3,
+      "snapshot_interaction": {
+        "actual_stand": [
+          1.35000002384186,
+          3.15000009536743
+        ],
+        "already_near": false,
+        "approach_failure_reason": "",
+        "approach_plan_ok": true,
+        "arrival_distance": 0.952942550182343,
+        "path": [
+          [
+            4.94999980926514,
+            1.95000004768372
+          ],
+          [
+            4.94999980926514,
+            2.25
+          ],
+          [
+            4.94999980926514,
+            2.54999995231628
+          ],
+          [
+            4.94999980926514,
+            2.84999990463257
+          ],
+          [
+            4.65000009536743,
+            3.15000009536743
+          ],
+          [
+            4.34999990463257,
+            3.15000009536743
+          ],
+          [
+            4.05000019073486,
+            3.15000009536743
+          ],
+          [
+            3.75,
+            3.15000009536743
+          ],
+          [
+            3.45000004768372,
+            3.15000009536743
+          ],
+          [
+            3.15000009536743,
+            3.15000009536743
+          ],
+          [
+            2.84999990463257,
+            3.15000009536743
+          ],
+          [
+            2.54999995231628,
+            3.15000009536743
+          ],
+          [
+            2.25,
+            3.15000009536743
+          ],
+          [
+            1.95000004768372,
+            3.15000009536743
+          ],
+          [
+            1.64999997615814,
+            3.15000009536743
+          ],
+          [
+            1.35000002384186,
+            3.15000009536743
+          ],
+          [
+            1.35000002384186,
+            3.15000009536743
+          ]
+        ],
+        "ray": {
+          "applicable": true,
+          "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+          "camera_position": [
+            0.379999995231628,
+            1.55599999427795,
+            3.94279956817627
+          ],
+          "context": "visual_probe_after_planned_approach",
+          "elapsed_ms": 3.251,
+          "first_hit_category": "target",
+          "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_residential_accessories_01/RoomObservation_desk/NotebookCoverHinge/@MeshInstance3D@242",
+          "first_hit_position": [
+            0.508669853210449,
+            0.83050000667572,
+            3.85094904899597
+          ],
+          "kind": "desk",
+          "pass": true,
+          "standing_position": [
+            1.35000002384186,
+            3.15000009536743
+          ],
+          "status": "hit",
+          "target_aabb_center": [
+            0.509999990463257,
+            0.823000013828278,
+            3.84999942779541
+          ],
+          "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_residential_accessories_01/RoomObservation_desk/NotebookCoverHinge/@MeshInstance3D@242",
+          "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_residential_accessories_01"
+        }
+      },
+      "stand_occupiable": true
+    },
+    {
+      "actual_stand": [
+        1.04999995231628,
+        2.84999990463257
+      ],
+      "approach_failure_reason": "",
+      "approach_plan_ok": true,
+      "arrival_distance": 1.26605653762817,
+      "arrival_within_interaction_range": true,
+      "arrival_within_skip_approach_radius": true,
+      "astar_cells": 20,
+      "astar_path": [
+        [
+          5.85,
+          1.05
+        ],
+        [
+          5.55,
+          1.35
+        ],
+        [
+          5.25,
+          1.65
+        ],
+        [
+          4.95,
+          1.95
+        ],
+        [
+          4.95,
+          2.25
+        ],
+        [
+          4.95,
+          2.55
+        ],
+        [
+          4.95,
+          2.85
+        ],
+        [
+          4.65,
+          2.85
+        ],
+        [
+          4.35,
+          2.85
+        ],
+        [
+          4.05,
+          2.85
+        ],
+        [
+          3.75,
+          2.85
+        ],
+        [
+          3.45,
+          2.85
+        ],
+        [
+          3.15,
+          2.85
+        ],
+        [
+          2.85,
+          2.85
+        ],
+        [
+          2.55,
+          2.85
+        ],
+        [
+          2.25,
+          2.85
+        ],
+        [
+          1.95,
+          2.85
+        ],
+        [
+          1.65,
+          2.85
+        ],
+        [
+          1.35,
+          2.85
+        ],
+        [
+          1.05,
+          2.85
+        ]
+      ],
+      "id": "window",
+      "interaction_position": [
+        0.0299999713897705,
+        3.59999942779541
+      ],
+      "interaction_radius": 1.5,
+      "navigation_agent_points": 40,
+      "navigation_agent_reaches_returned_stand": true,
+      "navigation_agent_reaches_target": true,
+      "navigation_path": [
+        [
+          5.77999973297119,
+          1.19999969005585
+        ],
+        [
+          5.77499961853027,
+          1.27499997615814
+        ],
+        [
+          5.75999975204468,
+          1.5
+        ],
+        [
+          5.75624942779541,
+          1.55624961853027
+        ],
+        [
+          5.73999929428101,
+          1.79999995231628
+        ],
+        [
+          5.73749971389771,
+          1.83749961853027
+        ],
+        [
+          5.71999931335449,
+          2.09999990463257
+        ],
+        [
+          5.71874952316284,
+          2.11874961853027
+        ],
+        [
+          5.69999980926514,
+          2.40000009536743
+        ],
+        [
+          5.5,
+          2.5
+        ],
+        [
+          5.40000009536743,
+          2.54999971389771
+        ],
+        [
+          5.29999971389771,
+          2.59999990463257
+        ],
+        [
+          5.09999990463257,
+          2.70000004768372
+        ],
+        [
+          4.81071424484253,
+          2.71071434020996
+        ],
+        [
+          4.80000019073486,
+          2.71111130714417
+        ],
+        [
+          4.52142858505249,
+          2.72142863273621
+        ],
+        [
+          4.5,
+          2.72222232818604
+        ],
+        [
+          4.23214244842529,
+          2.73214292526245
+        ],
+        [
+          4.19999980926514,
+          2.73333334922791
+        ],
+        [
+          3.94285702705383,
+          2.74285697937012
+        ],
+        [
+          3.90000009536743,
+          2.74444460868835
+        ],
+        [
+          3.65357136726379,
+          2.75357151031494
+        ],
+        [
+          3.59999990463257,
+          2.75555562973022
+        ],
+        [
+          3.36428546905518,
+          2.76428556442261
+        ],
+        [
+          3.29999995231628,
+          2.76666688919067
+        ],
+        [
+          3.07500004768372,
+          2.77500009536743
+        ],
+        [
+          3.0,
+          2.77777767181396
+        ],
+        [
+          2.78571438789368,
+          2.78571438789368
+        ],
+        [
+          2.70000004768372,
+          2.78888869285584
+        ],
+        [
+          2.49642848968506,
+          2.79642844200134
+        ],
+        [
+          2.40000009536743,
+          2.79999995231628
+        ],
+        [
+          2.20714282989502,
+          2.80714297294617
+        ],
+        [
+          2.09999990463257,
+          2.81111097335815
+        ],
+        [
+          1.9178569316864,
+          2.81785702705383
+        ],
+        [
+          1.79999995231628,
+          2.8222222328186
+        ],
+        [
+          1.62857139110565,
+          2.82857155799866
+        ],
+        [
+          1.5,
+          2.83333325386047
+        ],
+        [
+          1.33928561210632,
+          2.83928561210632
+        ],
+        [
+          1.20000004768372,
+          2.84444427490234
+        ],
+        [
+          1.04999995231628,
+          2.84999990463257
+        ]
+      ],
+      "navigation_reaches_target": true,
+      "navigation_server_points": 40,
+      "navigation_server_reaches_returned_stand": true,
+      "path_explanation": {
+        "figure_exclusion_probes": {},
+        "interaction_stands": {
+          "free_center_count": 14,
+          "free_center_sample": [
+            [
+              0.449999988079071,
+              2.25
+            ],
+            [
+              0.449999988079071,
+              2.54999995231628
+            ],
+            [
+              0.449999988079071,
+              4.65000009536743
+            ],
+            [
+              0.449999988079071,
+              4.94999980926514
+            ]
+          ],
+          "interaction_radius": 1.5,
+          "reachable_center_count": 14,
+          "reachable_center_sample": [
+            [
+              0.449999988079071,
+              2.25
+            ],
+            [
+              0.449999988079071,
+              2.54999995231628
+            ],
+            [
+              0.449999988079071,
+              4.65000009536743
+            ],
+            [
+              0.449999988079071,
+              4.94999980926514
+            ]
+          ]
+        },
+        "probe_semantics": "diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction",
+        "static_furniture_grid": {
+          "cells": 20,
+          "end_cell": [
+            3,
+            9
+          ],
+          "end_center": [
+            1.05,
+            2.85
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        },
+        "with_all_figures": {
+          "cells": 20,
+          "end_cell": [
+            3,
+            9
+          ],
+          "end_center": [
+            1.05,
+            2.85
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        }
+      },
+      "path_pass": true,
+      "production_path": [
+        [
+          5.55000019073486,
+          1.35000002384186
+        ],
+        [
+          5.25,
+          1.64999997615814
+        ],
+        [
+          4.94999980926514,
+          1.95000004768372
+        ],
+        [
+          4.94999980926514,
+          2.25
+        ],
+        [
+          4.94999980926514,
+          2.54999995231628
+        ],
+        [
+          4.94999980926514,
+          2.84999990463257
+        ],
+        [
+          4.65000009536743,
+          2.84999990463257
+        ],
+        [
+          4.34999990463257,
+          2.84999990463257
+        ],
+        [
+          4.05000019073486,
+          2.84999990463257
+        ],
+        [
+          3.75,
+          2.84999990463257
+        ],
+        [
+          3.45000004768372,
+          2.84999990463257
+        ],
+        [
+          3.15000009536743,
+          2.84999990463257
+        ],
+        [
+          2.84999990463257,
+          2.84999990463257
+        ],
+        [
+          2.54999995231628,
+          2.84999990463257
+        ],
+        [
+          2.25,
+          2.84999990463257
+        ],
+        [
+          1.95000004768372,
+          2.84999990463257
+        ],
+        [
+          1.64999997615814,
+          2.84999990463257
+        ],
+        [
+          1.35000002384186,
+          2.84999990463257
+        ],
+        [
+          1.04999995231628,
+          2.84999990463257
+        ],
+        [
+          1.04999995231628,
+          2.84999990463257
+        ]
+      ],
+      "ray": {
+        "applicable": true,
+        "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+        "camera_position": [
+          4.22006845474243,
+          3.47499990463257,
+          2.91782546043396
+        ],
+        "context": "visual_probe_after_planned_approach",
+        "elapsed_ms": 4.138,
+        "first_hit_category": "target",
+        "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_window_01/WindowAtmosphere/WindowLocalHaze",
+        "first_hit_position": [
+          0.124202288687229,
+          2.09494924545288,
+          3.59027862548828
+        ],
+        "kind": "window",
+        "pass": true,
+        "standing_position": [
+          1.04999995231628,
+          2.84999990463257
+        ],
+        "status": "hit",
+        "target_aabb_center": [
+          0.0649949759244919,
+          2.07500004768372,
+          3.59999942779541
+        ],
+        "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_window_01/VisualRoot/ModelInstance/Asset/Glass",
+        "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_window_01"
+      },
+      "ray_required": true,
+      "requested_stand": [
+        0.768271505832672,
+        3.29185128211975
+      ],
+      "resolved_stand": [
+        1.04999995231628,
+        2.84999990463257
+      ],
+      "returned_stand_is_rejection_fallback": false,
+      "skip_approach_radius": 1.3,
+      "snapshot_interaction": {
+        "actual_stand": [
+          1.04999995231628,
+          3.15000009536743
+        ],
+        "already_near": false,
+        "approach_failure_reason": "",
+        "approach_plan_ok": true,
+        "arrival_distance": 1.11485397815704,
+        "path": [
+          [
+            4.94999980926514,
+            1.95000004768372
+          ],
+          [
+            4.94999980926514,
+            2.25
+          ],
+          [
+            4.94999980926514,
+            2.54999995231628
+          ],
+          [
+            4.94999980926514,
+            2.84999990463257
+          ],
+          [
+            4.65000009536743,
+            3.15000009536743
+          ],
+          [
+            4.34999990463257,
+            3.15000009536743
+          ],
+          [
+            4.05000019073486,
+            3.15000009536743
+          ],
+          [
+            3.75,
+            3.15000009536743
+          ],
+          [
+            3.45000004768372,
+            3.15000009536743
+          ],
+          [
+            3.15000009536743,
+            3.15000009536743
+          ],
+          [
+            2.84999990463257,
+            3.15000009536743
+          ],
+          [
+            2.54999995231628,
+            3.15000009536743
+          ],
+          [
+            2.25,
+            3.15000009536743
+          ],
+          [
+            1.95000004768372,
+            3.15000009536743
+          ],
+          [
+            1.64999997615814,
+            3.15000009536743
+          ],
+          [
+            1.35000002384186,
+            3.15000009536743
+          ],
+          [
+            1.04999995231628,
+            3.15000009536743
+          ],
+          [
+            1.04999995231628,
+            3.15000009536743
+          ]
+        ],
+        "ray": {
+          "applicable": true,
+          "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+          "camera_position": [
+            4.22006845474243,
+            3.47499990463257,
+            2.91782546043396
+          ],
+          "context": "visual_probe_after_planned_approach",
+          "elapsed_ms": 4.426,
+          "first_hit_category": "target",
+          "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_window_01/WindowAtmosphere/WindowLocalHaze",
+          "first_hit_position": [
+            0.124202288687229,
+            2.09494924545288,
+            3.59027862548828
+          ],
+          "kind": "window",
+          "pass": true,
+          "standing_position": [
+            1.04999995231628,
+            3.15000009536743
+          ],
+          "status": "hit",
+          "target_aabb_center": [
+            0.0649949759244919,
+            2.07500004768372,
+            3.59999942779541
+          ],
+          "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_window_01/VisualRoot/ModelInstance/Asset/Glass",
+          "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_window_01"
+        }
+      },
+      "stand_occupiable": true
+    },
+    {
+      "actual_stand": [
+        1.95000004768372,
+        0.449999988079071
+      ],
+      "approach_failure_reason": "",
+      "approach_plan_ok": true,
+      "arrival_distance": 0.870229721069336,
+      "arrival_within_interaction_range": true,
+      "arrival_within_skip_approach_radius": true,
+      "astar_cells": 22,
+      "astar_path": [
+        [
+          5.85,
+          1.05
+        ],
+        [
+          5.55,
+          1.35
+        ],
+        [
+          5.25,
+          1.65
+        ],
+        [
+          4.95,
+          1.95
+        ],
+        [
+          4.95,
+          2.25
+        ],
+        [
+          4.95,
+          2.55
+        ],
+        [
+          4.95,
+          2.85
+        ],
+        [
+          4.65,
+          2.85
+        ],
+        [
+          4.35,
+          2.85
+        ],
+        [
+          4.05,
+          2.85
+        ],
+        [
+          3.75,
+          2.85
+        ],
+        [
+          3.45,
+          2.85
+        ],
+        [
+          3.15,
+          2.85
+        ],
+        [
+          2.85,
+          2.85
+        ],
+        [
+          2.55,
+          2.55
+        ],
+        [
+          2.55,
+          2.25
+        ],
+        [
+          2.25,
+          1.95
+        ],
+        [
+          1.95,
+          1.65
+        ],
+        [
+          1.95,
+          1.35
+        ],
+        [
+          1.95,
+          1.05
+        ],
+        [
+          1.95,
+          0.75
+        ],
+        [
+          1.95,
+          0.45
+        ]
+      ],
+      "id": "wardrobe",
+      "interaction_position": [
+        1.08000016212463,
+        0.429999351501465
+      ],
+      "interaction_radius": 1.5,
+      "navigation_agent_points": 40,
+      "navigation_agent_reaches_returned_stand": true,
+      "navigation_agent_reaches_target": true,
+      "navigation_path": [
+        [
+          5.77999973297119,
+          1.19999969005585
+        ],
+        [
+          5.79113864898682,
+          1.29113876819611
+        ],
+        [
+          5.81666612625122,
+          1.5
+        ],
+        [
+          5.83291101455688,
+          1.63291108608246
+        ],
+        [
+          5.85333299636841,
+          1.79999995231628
+        ],
+        [
+          5.87468338012695,
+          1.97468340396881
+        ],
+        [
+          5.8899998664856,
+          2.09999990463257
+        ],
+        [
+          5.91645526885986,
+          2.31645536422729
+        ],
+        [
+          5.92666625976563,
+          2.40000009536743
+        ],
+        [
+          5.95822763442993,
+          2.65822768211365
+        ],
+        [
+          5.96333312988281,
+          2.70000004768372
+        ],
+        [
+          6.0,
+          3.0
+        ],
+        [
+          5.69999980926514,
+          2.70000004768372
+        ],
+        [
+          5.69999980926514,
+          3.0
+        ],
+        [
+          5.40000009536743,
+          2.70000004768372
+        ],
+        [
+          5.40000009536743,
+          3.0
+        ],
+        [
+          5.09999990463257,
+          2.70000004768372
+        ],
+        [
+          5.09999990463257,
+          3.0
+        ],
+        [
+          4.80000019073486,
+          2.70000004768372
+        ],
+        [
+          4.80000019073486,
+          3.0
+        ],
+        [
+          4.5,
+          2.70000004768372
+        ],
+        [
+          4.5,
+          3.0
+        ],
+        [
+          4.19999980926514,
+          2.70000004768372
+        ],
+        [
+          4.19999980926514,
+          3.0
+        ],
+        [
+          3.90000009536743,
+          2.70000004768372
+        ],
+        [
+          3.90000009536743,
+          3.0
+        ],
+        [
+          3.59999990463257,
+          2.70000004768372
+        ],
+        [
+          3.59999990463257,
+          3.0
+        ],
+        [
+          3.29999995231628,
+          2.70000004768372
+        ],
+        [
+          3.29999995231628,
+          3.0
+        ],
+        [
+          3.0,
+          2.70000004768372
+        ],
+        [
+          2.90000009536743,
+          2.40000009536743
+        ],
+        [
+          2.84999990463257,
+          2.24999976158142
+        ],
+        [
+          2.79999995231628,
+          2.09999990463257
+        ],
+        [
+          2.70000004768372,
+          1.79999995231628
+        ],
+        [
+          2.54999995231628,
+          1.5
+        ],
+        [
+          2.39999985694885,
+          1.19999980926514
+        ],
+        [
+          2.25,
+          0.899999976158142
+        ],
+        [
+          2.09999990463257,
+          0.600000023841858
+        ],
+        [
+          1.95000004768372,
+          0.450000017881393
+        ]
+      ],
+      "navigation_reaches_target": true,
+      "navigation_server_points": 40,
+      "navigation_server_reaches_returned_stand": true,
+      "path_explanation": {
+        "figure_exclusion_probes": {},
+        "interaction_stands": {
+          "free_center_count": 25,
+          "free_center_sample": [
+            [
+              0.449999988079071,
+              1.04999995231628
+            ],
+            [
+              0.449999988079071,
+              1.35000002384186
+            ],
+            [
+              0.449999988079071,
+              1.64999997615814
+            ],
+            [
+              0.75,
+              1.04999995231628
+            ]
+          ],
+          "interaction_radius": 1.5,
+          "reachable_center_count": 25,
+          "reachable_center_sample": [
+            [
+              0.449999988079071,
+              1.04999995231628
+            ],
+            [
+              0.449999988079071,
+              1.35000002384186
+            ],
+            [
+              0.449999988079071,
+              1.64999997615814
+            ],
+            [
+              0.75,
+              1.04999995231628
+            ]
+          ]
+        },
+        "probe_semantics": "diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction",
+        "static_furniture_grid": {
+          "cells": 22,
+          "end_cell": [
+            6,
+            1
+          ],
+          "end_center": [
+            1.95,
+            0.45
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        },
+        "with_all_figures": {
+          "cells": 22,
+          "end_cell": [
+            6,
+            1
+          ],
+          "end_center": [
+            1.95,
+            0.45
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        }
+      },
+      "path_pass": true,
+      "production_path": [
+        [
+          5.55000019073486,
+          1.35000002384186
+        ],
+        [
+          5.25,
+          1.64999997615814
+        ],
+        [
+          4.94999980926514,
+          1.95000004768372
+        ],
+        [
+          4.94999980926514,
+          2.25
+        ],
+        [
+          4.94999980926514,
+          2.54999995231628
+        ],
+        [
+          4.94999980926514,
+          2.84999990463257
+        ],
+        [
+          4.65000009536743,
+          2.84999990463257
+        ],
+        [
+          4.34999990463257,
+          2.84999990463257
+        ],
+        [
+          4.05000019073486,
+          2.84999990463257
+        ],
+        [
+          3.75,
+          2.84999990463257
+        ],
+        [
+          3.45000004768372,
+          2.84999990463257
+        ],
+        [
+          3.15000009536743,
+          2.84999990463257
+        ],
+        [
+          2.84999990463257,
+          2.84999990463257
+        ],
+        [
+          2.54999995231628,
+          2.54999995231628
+        ],
+        [
+          2.54999995231628,
+          2.25
+        ],
+        [
+          2.25,
+          1.95000004768372
+        ],
+        [
+          1.95000004768372,
+          1.64999997615814
+        ],
+        [
+          1.95000004768372,
+          1.35000002384186
+        ],
+        [
+          1.95000004768372,
+          1.04999995231628
+        ],
+        [
+          1.95000004768372,
+          0.75
+        ],
+        [
+          1.95000004768372,
+          0.449999988079071
+        ],
+        [
+          1.95000004768372,
+          0.449999988079071
+        ]
+      ],
+      "ray": {
+        "applicable": true,
+        "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+        "camera_position": [
+          1.08000016212463,
+          1.40000009536743,
+          2.94999933242798
+        ],
+        "context": "visual_probe_after_planned_approach",
+        "elapsed_ms": 5.157,
+        "first_hit_category": "target",
+        "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wardrobe_01/RoomWardrobeMechanism/@MeshInstance3D@233",
+        "first_hit_position": [
+          1.08000016212463,
+          1.21458756923676,
+          0.524999260902405
+        ],
+        "kind": "wardrobe",
+        "pass": true,
+        "standing_position": [
+          1.95000004768372,
+          0.449999988079071
+        ],
+        "status": "hit",
+        "target_aabb_center": [
+          1.08000016212463,
+          1.21000003814697,
+          0.464999347925186
+        ],
+        "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wardrobe_01/RoomWardrobeMechanism/@MeshInstance3D@233",
+        "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wardrobe_01/RoomWardrobeMechanism"
+      },
+      "ray_required": true,
+      "requested_stand": [
+        1.86947548389435,
+        0.559338986873627
+      ],
+      "resolved_stand": [
+        1.95000004768372,
+        0.449999988079071
+      ],
+      "returned_stand_is_rejection_fallback": false,
+      "skip_approach_radius": 1.3,
+      "snapshot_interaction": {
+        "actual_stand": [
+          1.95000004768372,
+          0.75
+        ],
+        "already_near": false,
+        "approach_failure_reason": "",
+        "approach_plan_ok": true,
+        "arrival_distance": 0.926984488964081,
+        "path": [
+          [
+            4.94999980926514,
+            1.95000004768372
+          ],
+          [
+            4.94999980926514,
+            2.25
+          ],
+          [
+            4.94999980926514,
+            2.54999995231628
+          ],
+          [
+            4.94999980926514,
+            2.84999990463257
+          ],
+          [
+            4.65000009536743,
+            2.84999990463257
+          ],
+          [
+            4.34999990463257,
+            2.84999990463257
+          ],
+          [
+            4.05000019073486,
+            2.84999990463257
+          ],
+          [
+            3.75,
+            2.84999990463257
+          ],
+          [
+            3.45000004768372,
+            2.84999990463257
+          ],
+          [
+            3.15000009536743,
+            2.84999990463257
+          ],
+          [
+            2.84999990463257,
+            2.84999990463257
+          ],
+          [
+            2.54999995231628,
+            2.54999995231628
+          ],
+          [
+            2.25,
+            2.25
+          ],
+          [
+            1.95000004768372,
+            1.95000004768372
+          ],
+          [
+            1.95000004768372,
+            1.64999997615814
+          ],
+          [
+            1.95000004768372,
+            1.35000002384186
+          ],
+          [
+            1.95000004768372,
+            1.04999995231628
+          ],
+          [
+            1.95000004768372,
+            0.75
+          ],
+          [
+            1.95000004768372,
+            0.75
+          ]
+        ],
+        "ray": {
+          "applicable": true,
+          "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+          "camera_position": [
+            1.08000016212463,
+            1.40000009536743,
+            2.94999933242798
+          ],
+          "context": "visual_probe_after_planned_approach",
+          "elapsed_ms": 4.671,
+          "first_hit_category": "target",
+          "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wardrobe_01/RoomWardrobeMechanism/@MeshInstance3D@233",
+          "first_hit_position": [
+            1.08000016212463,
+            1.21458756923676,
+            0.524999260902405
+          ],
+          "kind": "wardrobe",
+          "pass": true,
+          "standing_position": [
+            1.95000004768372,
+            0.75
+          ],
+          "status": "hit",
+          "target_aabb_center": [
+            1.08000016212463,
+            1.21000003814697,
+            0.464999347925186
+          ],
+          "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wardrobe_01/RoomWardrobeMechanism/@MeshInstance3D@233",
+          "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wardrobe_01/RoomWardrobeMechanism"
+        }
+      },
+      "stand_occupiable": true
+    },
+    {
+      "actual_stand": [
+        5.84999990463257,
+        2.84999990463257
+      ],
+      "approach_failure_reason": "",
+      "approach_plan_ok": true,
+      "arrival_distance": 0.650691568851471,
+      "arrival_within_interaction_range": true,
+      "arrival_within_skip_approach_radius": true,
+      "astar_cells": 7,
+      "astar_path": [
+        [
+          5.85,
+          1.05
+        ],
+        [
+          5.85,
+          1.35
+        ],
+        [
+          5.85,
+          1.65
+        ],
+        [
+          5.85,
+          1.95
+        ],
+        [
+          5.85,
+          2.25
+        ],
+        [
+          5.85,
+          2.55
+        ],
+        [
+          5.85,
+          2.85
+        ]
+      ],
+      "id": "wash",
+      "interaction_position": [
+        5.88000011444092,
+        3.49999952316284
+      ],
+      "interaction_radius": 1.5,
+      "navigation_agent_points": 12,
+      "navigation_agent_reaches_returned_stand": true,
+      "navigation_agent_reaches_target": true,
+      "navigation_path": [
+        [
+          5.77999973297119,
+          1.19999969005585
+        ],
+        [
+          5.78354454040527,
+          1.28354489803314
+        ],
+        [
+          5.79272747039795,
+          1.5
+        ],
+        [
+          5.79683589935303,
+          1.59683585166931
+        ],
+        [
+          5.80545473098755,
+          1.79999995231628
+        ],
+        [
+          5.81012678146362,
+          1.91012692451477
+        ],
+        [
+          5.81818199157715,
+          2.09999990463257
+        ],
+        [
+          5.82341814041138,
+          2.22341823577881
+        ],
+        [
+          5.83090925216675,
+          2.40000009536743
+        ],
+        [
+          5.83670902252197,
+          2.53670930862427
+        ],
+        [
+          5.84363651275635,
+          2.70000004768372
+        ],
+        [
+          5.84999990463257,
+          2.84999990463257
+        ]
+      ],
+      "navigation_reaches_target": true,
+      "navigation_server_points": 12,
+      "navigation_server_reaches_returned_stand": true,
+      "path_explanation": {
+        "figure_exclusion_probes": {},
+        "interaction_stands": {
+          "free_center_count": 47,
+          "free_center_sample": [
+            [
+              4.65000009536743,
+              2.84999990463257
+            ],
+            [
+              4.65000009536743,
+              3.15000009536743
+            ],
+            [
+              4.65000009536743,
+              3.45000004768372
+            ],
+            [
+              4.65000009536743,
+              3.75
+            ]
+          ],
+          "interaction_radius": 1.5,
+          "reachable_center_count": 47,
+          "reachable_center_sample": [
+            [
+              4.65000009536743,
+              2.84999990463257
+            ],
+            [
+              4.65000009536743,
+              3.15000009536743
+            ],
+            [
+              4.65000009536743,
+              3.45000004768372
+            ],
+            [
+              4.65000009536743,
+              3.75
+            ]
+          ]
+        },
+        "probe_semantics": "diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction",
+        "static_furniture_grid": {
+          "cells": 7,
+          "end_cell": [
+            19,
+            9
+          ],
+          "end_center": [
+            5.85,
+            2.85
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        },
+        "with_all_figures": {
+          "cells": 7,
+          "end_cell": [
+            19,
+            9
+          ],
+          "end_center": [
+            5.85,
+            2.85
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        }
+      },
+      "path_pass": true,
+      "production_path": [
+        [
+          5.84999990463257,
+          1.35000002384186
+        ],
+        [
+          5.84999990463257,
+          1.64999997615814
+        ],
+        [
+          5.84999990463257,
+          1.95000004768372
+        ],
+        [
+          5.84999990463257,
+          2.25
+        ],
+        [
+          5.84999990463257,
+          2.54999995231628
+        ],
+        [
+          5.84999990463257,
+          2.84999990463257
+        ],
+        [
+          5.84999990463257,
+          2.84999990463257
+        ]
+      ],
+      "ray": {
+        "applicable": true,
+        "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+        "camera_position": [
+          6.03999996185303,
+          1.6360000371933,
+          4.48999929428101
+        ],
+        "context": "visual_probe_after_planned_approach",
+        "elapsed_ms": 7.128,
+        "first_hit_category": "target",
+        "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wash_table_01/VisualRoot/ModelInstance/Asset/Bowl/Bowl_Dish",
+        "first_hit_position": [
+          5.73230743408203,
+          0.915999948978424,
+          3.51564049720764
+        ],
+        "kind": "wash",
+        "pass": true,
+        "standing_position": [
+          5.84999990463257,
+          2.84999990463257
+        ],
+        "status": "hit",
+        "target_aabb_center": [
+          5.73999977111816,
+          0.934000015258789,
+          3.53999948501587
+        ],
+        "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wash_table_01/VisualRoot/ModelInstance/Asset/Bowl/Bowl_Dish",
+        "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wash_table_01/VisualRoot/ModelInstance/Asset/Bowl/Bowl_Dish"
+      },
+      "ray_required": true,
+      "requested_stand": [
+        5.84525012969971,
+        2.70075464248657
+      ],
+      "resolved_stand": [
+        5.84999990463257,
+        2.84999990463257
+      ],
+      "returned_stand_is_rejection_fallback": false,
+      "skip_approach_radius": 1.3,
+      "snapshot_interaction": {
+        "actual_stand": [
+          5.55000019073486,
+          2.84999990463257
+        ],
+        "already_near": false,
+        "approach_failure_reason": "",
+        "approach_plan_ok": true,
+        "arrival_distance": 0.728971540927887,
+        "path": [
+          [
+            5.25,
+            1.95000004768372
+          ],
+          [
+            5.55000019073486,
+            2.25
+          ],
+          [
+            5.55000019073486,
+            2.54999995231628
+          ],
+          [
+            5.55000019073486,
+            2.84999990463257
+          ],
+          [
+            5.55000019073486,
+            2.84999990463257
+          ]
+        ],
+        "ray": {
+          "applicable": true,
+          "camera_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Camera3D@43",
+          "camera_position": [
+            6.03999996185303,
+            1.6360000371933,
+            4.48999929428101
+          ],
+          "context": "visual_probe_after_planned_approach",
+          "elapsed_ms": 9.544,
+          "first_hit_category": "target",
+          "first_hit_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wash_table_01/VisualRoot/ModelInstance/Asset/Bowl/Bowl_Dish",
+          "first_hit_position": [
+            5.73230743408203,
+            0.915999948978424,
+            3.51564049720764
+          ],
+          "kind": "wash",
+          "pass": true,
+          "standing_position": [
+            5.55000019073486,
+            2.84999990463257
+          ],
+          "status": "hit",
+          "target_aabb_center": [
+            5.73999977111816,
+            0.934000015258789,
+            3.53999948501587
+          ],
+          "target_path": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wash_table_01/VisualRoot/ModelInstance/Asset/Bowl/Bowl_Dish",
+          "target_root": "/root/DualWorldMain/@VBoxContainer@3/@Control@36/@SubViewportContainer@38/@SubViewport@39/@Node3D@40/@Node3D@44/R05/Instances/R05_wash_table_01/VisualRoot/ModelInstance/Asset/Bowl/Bowl_Dish"
+        }
+      },
+      "stand_occupiable": true
+    },
+    {
+      "actual_stand": [
+        5.77999973297119,
+        1.19999957084656
+      ],
+      "approach_failure_reason": "",
+      "approach_plan_ok": true,
+      "arrival_distance": 1.20000004768372,
+      "arrival_within_interaction_range": true,
+      "arrival_within_skip_approach_radius": true,
+      "astar_cells": 1,
+      "astar_path": [
+        [
+          5.85,
+          1.05
+        ]
+      ],
+      "id": "door",
+      "interaction_position": [
+        5.77999973297119,
+        -0.000000476837158203125
+      ],
+      "interaction_radius": 1.5,
+      "navigation_agent_points": 2,
+      "navigation_agent_reaches_returned_stand": true,
+      "navigation_agent_reaches_target": true,
+      "navigation_path": [
+        [
+          5.77999973297119,
+          1.19999969005585
+        ],
+        [
+          5.77999973297119,
+          1.19999969005585
+        ]
+      ],
+      "navigation_reaches_target": true,
+      "navigation_server_points": 2,
+      "navigation_server_reaches_returned_stand": true,
+      "path_explanation": {
+        "figure_exclusion_probes": {},
+        "interaction_stands": {
+          "free_center_count": 22,
+          "free_center_sample": [
+            [
+              4.94999980926514,
+              0.449999988079071
+            ],
+            [
+              4.94999980926514,
+              0.75
+            ],
+            [
+              4.94999980926514,
+              1.04999995231628
+            ],
+            [
+              5.25,
+              0.449999988079071
+            ]
+          ],
+          "interaction_radius": 1.5,
+          "reachable_center_count": 22,
+          "reachable_center_sample": [
+            [
+              4.94999980926514,
+              0.449999988079071
+            ],
+            [
+              4.94999980926514,
+              0.75
+            ],
+            [
+              4.94999980926514,
+              1.04999995231628
+            ],
+            [
+              5.25,
+              0.449999988079071
+            ]
+          ]
+        },
+        "probe_semantics": "diagnostic_grid_only_original_actors_unchanged; reachable refers to returned stand, which may be a rejected-plan fallback, not necessarily the interaction",
+        "static_furniture_grid": {
+          "cells": 1,
+          "end_cell": [
+            19,
+            3
+          ],
+          "end_center": [
+            5.85,
+            1.05
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        },
+        "with_all_figures": {
+          "cells": 1,
+          "end_cell": [
+            19,
+            3
+          ],
+          "end_center": [
+            5.85,
+            1.05
+          ],
+          "reachable": true,
+          "start_cell": [
+            19,
+            3
+          ]
+        }
+      },
+      "path_pass": true,
+      "production_path": [
+        [
+          5.77999973297119,
+          1.19999957084656
+        ]
+      ],
+      "ray": {
+        "applicable": false,
+        "context": "visual_probe_after_planned_approach",
+        "kind": "",
+        "pass": true,
+        "status": "not_applicable"
+      },
+      "ray_required": false,
+      "requested_stand": [
+        5.77999973297119,
+        1.19999957084656
+      ],
+      "resolved_stand": [
+        5.77999973297119,
+        1.19999957084656
+      ],
+      "returned_stand_is_rejection_fallback": false,
+      "skip_approach_radius": 1.3,
+      "snapshot_interaction": {
+        "actual_stand": [
+          5.55000019073486,
+          0.75
+        ],
+        "already_near": false,
+        "approach_failure_reason": "",
+        "approach_plan_ok": true,
+        "arrival_distance": 0.784474670886993,
+        "path": [
+          [
+            4.94999980926514,
+            1.35000002384186
+          ],
+          [
+            5.25,
+            1.04999995231628
+          ],
+          [
+            5.55000019073486,
+            0.75
+          ],
+          [
+            5.55000019073486,
+            0.75
+          ]
+        ],
+        "ray": {
+          "applicable": false,
+          "context": "visual_probe_after_planned_approach",
+          "kind": "",
+          "pass": true,
+          "status": "not_applicable"
+        }
+      },
+      "stand_occupiable": true
+    }
+  ],
+  "launch_arguments": [
+    "--script",
+    "res://tools/test/room_fast_check.gd"
+  ],
+  "navigation_diagnostics": {
+    "map_active": true,
+    "map_iteration": 2,
+    "nav_map_valid": true,
+    "nearest_start": [
+      5.77999973297119,
+      0.0,
+      1.19999957084656
+    ],
+    "polygons": 566,
+    "region_enabled": true,
+    "region_map_equal": true,
+    "region_map_valid": true,
+    "region_valid": true,
+    "regions": 1,
+    "vertices": 343
+  },
+  "navigation_mesh_cells": 575,
+  "navigation_readiness": {
+    "iteration": 2,
+    "nearest": [
+      0.449999988079071,
+      0.0,
+      1.04999995231628
+    ],
+    "owner_matches_region": true,
+    "probe": [
+      0.449999988079071,
+      0.0,
+      1.04999995231628
+    ],
+    "ready": true,
+    "reason": "ready"
+  },
+  "navigation_wait_frames": 4,
+  "pass": true,
+  "path_pass": true,
+  "project": {
+    "configured_main_scene": "res://scenes/main/Boot.tscn",
+    "current_scene": "res://scenes/dual_world/DualWorldMain.tscn",
+    "executable_path": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2/.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe",
+    "launch_scene": "res://scenes/dual_world/DualWorldMain.tscn",
+    "process_id": 31168,
+    "project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+    "project_sha256": "c883a9787f78965406f8dab2213722f6a754e22b33e7e1d4a2ccff4f6dcc71ec"
+  },
+  "proxies": 719,
+  "purpose": "runtime_geometry_diagnostic",
+  "ray_pass": true,
+  "restored_state": {
+    "beat_cursor": 1,
+    "cinematic": false,
+    "detective_pose": "stand",
+    "door_crossing": false,
+    "door_path_points": 0,
+    "playing": true,
+    "speed": 0.2,
+    "time": 420.0
+  },
+  "room": "R05",
+  "room_checks_context": "free_exploration_geometry",
+  "skinned_pose_proxies": 1,
+  "snapshot": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\artifacts\\evaluation\\runs\\eval-20261117t170218-ded02f19\\fixtures\\fixtures\\opening-free.json",
+  "source_sha256": {
+    "checker": "01e01ba8bda2027fd966ac2eae5dbf52b53198ffaadb3fc87af654761e87a767",
+    "closeup": "e4d85d89a440067d5fc396f2468ad51b023a38cb296a2580c7093033e6f736cc",
+    "main": "953be1304a7d154fe1292b3fd41fbfbd06e52c673c9c9acdc9c0306017a8b2ff",
+    "snapshot": "5ec6db97b034e9fa7e10c80c243d2e5da39eceaeee5ed3ff8d75dc7961d8bd2f"
+  },
+  "target_coverage": {
+    "complete": true,
+    "controller": "opening",
+    "duplicates": [],
+    "expected": [
+      "bed",
+      "lamp",
+      "desk",
+      "window",
+      "wardrobe",
+      "wash",
+      "door"
+    ],
+    "missing": [],
+    "observed": [
+      "bed",
+      "lamp",
+      "desk",
+      "window",
+      "wardrobe",
+      "wash",
+      "door"
+    ],
+    "supported": true,
+    "unexpected": []
+  },
+  "total_elapsed_ms": 1292.711,
+  "under_5_seconds": true
+}

@@ -191,3 +191,11 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 - One test publishes all seven score dimensions together under one test ID, with a reason per dimension. Record missing measurements explicitly; never fill them using another test or revision.
 - The report homepage shows the latest test per segment. Delete obsolete report pages and duplicated historical report content; do not move clutter to a history page.
 - After every revision, complete the relevant checks, commit all completed revisions on the existing main branch, and push to its configured remote. This is standing authorization; no repeated confirmation is needed. Report any failed commit or push accurately.
+
+## Benchmark scheduling — 2026-11-17
+
+- Batch multiple gameplay segments into one rendered session and collect all seven dimensions per segment. This amortizes startup and audio analysis across the day.
+- Reserve performance measurement windows for one rendered Godot instance. Finish builds, other engine runs, audio postprocessing and bulk image exports before the window; run those jobs between measurement windows. Lightweight orchestration may continue.
+- Concurrent functional runs must retain their concurrency observations with their scores. Performance reports identify overlap explicitly. No numeric safe instance limit has been measured yet.
+- To calibrate a limit, repeat the same committed revision, renderer, resolution, seed, scene and action trace with 1, 2 and 3 instances. Alternate single-instance controls between trials, exclude the same 1.5-second warmup windows, and compare per-instance P95/P99, low FPS and steady frames above 33.3 ms. Keep each trial's raw metrics; do not combine independent sessions into a baseline.
+- After the optimization checks and commit, hand gameplay testing to a fresh isolated Terra. Terra owns its MCP sessions, observations, complete score batches and shutdown. Keep the committed source fixed for the duration of its test.

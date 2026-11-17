@@ -2027,17 +2027,20 @@ func _process(delta: float) -> void:
 		var n: Dictionary = eng.notices.pop_front()
 		_toast(str(n.get("text", "")))
 	var c: Dictionary = eng.clock()
-	top_clock.text = "Day %d  %s  %s" % [c.day, c.text, _day_label(c.hour)]
-	var hold_msg: String = eng.hold_text()
-	top_phase.text = tr(hold_msg) if hold_msg != "" else "%s · %s" % [tr(str(eng.phase().title)), tr(str(eng.phase().sub))]
-	play_btn.text = "Ending" if eng.s.ending != "" else ("Resume" if not eng.s.playing else "Pause")
+	# Exploration uses the world and book UI. Build legacy HUD text only when shown.
+	if top_bar.is_visible_in_tree():
+		top_clock.text = "Day %d  %s  %s" % [c.day, c.text, _day_label(c.hour)]
+		var hold_msg: String = eng.hold_text()
+		var phase: Dictionary = eng.phase()
+		top_phase.text = tr(hold_msg) if hold_msg != "" else "%s · %s" % [tr(str(phase.title)), tr(str(phase.sub))]
+		play_btn.text = "Ending" if eng.s.ending != "" else ("Resume" if not eng.s.playing else "Pause")
 	map_view.hour = c.hour
 	_light_cd -= delta
 	if _light_cd <= 0.0:
 		_light_cd = 0.25
 		if view == "room":
 			DayNight.apply(c.hour, sun, env, room_mesh.lamps, room_mesh.glow_materials)
-		map_view.queue_redraw()
+		if map_view.is_visible_in_tree(): map_view.queue_redraw()
 	_music_cd -= delta
 	if _music_cd <= 0.0:
 		_music_cd = 1.0
@@ -2136,11 +2139,13 @@ func _sync_ring() -> void:
 func _refresh() -> void:
 	_sync_speed_pick()
 	_ensure_room_if_needed()
-	_refresh_left()
-	_refresh_right()
+	# Avoid rebuilding invisible buttons and rich text on every story change.
+	# View and drawer changes mark _dirty, so opening them refreshes current state.
+	if left_card.is_visible_in_tree(): _refresh_left()
+	if drawer.is_visible_in_tree(): _refresh_right()
 	_sync_modal()
 	map_view.selected = map_view.selected if map_view.selected != "" else eng.s.room
-	map_view.queue_redraw()
+	if map_view.is_visible_in_tree(): map_view.queue_redraw()
 
 
 func _ensure_room_if_needed() -> void:

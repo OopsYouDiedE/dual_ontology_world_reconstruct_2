@@ -1,0 +1,35 @@
+Godot Engine v4.7.2.stable.mono.official.ed1daf0bf - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 595.79 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 3070
+
+PASS production opening active
+PASS atomic snapshot saved
+PASS snapshot integrity and project identity verified
+PASS opening restored
+PASS opening phase and local time restored
+PASS engine state restored without later mutations
+PASS dialogue queue and remaining time restored
+PASS original camera optics restored
+PASS bedroom free fixture uses completed production get-up and walkable landing
+PASS bedroom free fixture keeps natural exploration clock
+PASS kitchen entered through rule engine
+PASS kitchen fixture has completed doorway crossing with no stale callback
+PASS kitchen fixture enables player movement at actual entry landing
+PASS kitchen natural clock advances without stale story or door locks
+PASS kitchen snapshot saved
+PASS kitchen restored directly
+PASS production kitchen controller resumed
+PASS actual kitchen entrance position retained
+PASS restored kitchen remains outside doorway crossing with natural clock enabled
+PASS original room closeup started
+PASS mid-interaction snapshot saved
+PASS mid-interaction restored
+PASS closeup controller and completion callback reconstructed
+PASS sampling progress retained
+PASS restored closeup completion registers actual evidence
+PASS restored interaction releases cinematic lock
+PASS corridor snapshot saved
+PASS corridor restored
+PASS corridor stage and dialogue cursor retained
+PASS corridor position retained separately from engine room
+PASS corrupt snapshot rejected before scene mutation
+CHECKPOINT_RESULT {"acceptance_scored":false,"elapsed_ms":3935,"failures":[]}

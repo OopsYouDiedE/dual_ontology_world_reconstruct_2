@@ -14,6 +14,7 @@ import time
 from environment import resolve_dotnet, resolve_godot
 from build_runtime import DeadlineReached, build, remaining
 from host_process import spawn, terminate
+from concurrency_observer import ConcurrencyObserver
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import capture_provenance as provenance
@@ -56,9 +57,15 @@ class Endpoint:
         self.checkpoint_path = None
         self.checkpoint_stop_path = None
         self.metrics_directory = None
+        self.concurrency_observer = None
+        self.concurrency_observation_path = None
+        self.concurrency_observation_error = None
 
     def attach(self, process):
         self.process = process
+        if self.backend == "godot":
+            self.concurrency_observer = ConcurrencyObserver(process.pid)
+            self.concurrency_observer.start()
         threading.Thread(target=drain, args=(process.stderr, self.logs), daemon=True).start()
         threading.Thread(target=drain, args=(process.stdout, self.lines if self.backend == "cli" else self.logs),
                          daemon=True).start()
@@ -118,6 +125,13 @@ class Endpoint:
     def stop(self):
         with self.stop_lock:
             self.closed = True
+            if self.concurrency_observer:
+                observer, self.concurrency_observer = self.concurrency_observer, None
+                directory = self.metrics_directory or (ROOT / ".runtime" / "concurrency-observations" / (str(self.process.pid) + "-" + self.token))
+                try:
+                    self.concurrency_observation_path = observer.stop(directory)
+                except OSError as error:
+                    self.concurrency_observation_error = str(error)
             if self.process: terminate(self.process)
             if self.connection:
                 try: self.connection.shutdown(socket.SHUT_RDWR)
@@ -140,7 +154,10 @@ def finalize_metrics(endpoint, graceful):
     if endpoint.movie_path is not None:
         return dict(development_flags, metrics_status="not_eligible", metrics_error="Fixed-step movie runs are development captures")
     if not graceful or endpoint.metrics_directory is None:
-        return dict(development_flags, metrics_status="incomplete", metrics_error="A gracefully closed monitored session is required")
+        result = dict(development_flags, metrics_status="incomplete", metrics_error="A gracefully closed monitored session is required")
+        if getattr(endpoint, "concurrency_observation_path", None):
+            result["concurrency_observation_path"] = str(endpoint.concurrency_observation_path)
+        return result
     directory = provenance.project_path(endpoint.metrics_directory, ROOT)
     if not directory.name.endswith("-" + str(endpoint.process.pid)):
         return dict(development_flags, metrics_status="error", metrics_error="Monitor directory PID mismatch")
@@ -159,6 +176,9 @@ def finalize_metrics(endpoint, graceful):
                             or data.get("snapshot_path") != str(provenance.project_path(endpoint.snapshot_path, ROOT))):
             raise ValueError("Development metrics provenance mismatch")
         provenance.validate_source(data.get("source_identity"), endpoint.expected_source, pid=endpoint.process.pid)
+        observation_path = getattr(endpoint, "concurrency_observation_path", None)
+        if observation_path:
+            data["concurrency_observation"] = json.loads(Path(observation_path).read_text(encoding="utf-8"))
         temporary = output.with_name(output.name + ".tmp")
         try:
             temporary.write_text(json.dumps(data, ensure_ascii=False, allow_nan=False, indent=2) + "\n", encoding="utf-8")
@@ -170,9 +190,14 @@ def finalize_metrics(endpoint, graceful):
                   "metrics_segments": list(data.get("segments", {})), "acceptance_scored": False}
         if development:
             result.update(acceptance_eligible=False, snapshot_path=data["snapshot_path"])
+        if observation_path:
+            result["concurrency_observation_path"] = str(observation_path)
         return result
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
-        return dict(development_flags, metrics_status="error", metrics_error=str(error))
+        result = dict(development_flags, metrics_status="error", metrics_error=str(error))
+        if getattr(endpoint, "concurrency_observation_path", None):
+            result["concurrency_observation_path"] = str(endpoint.concurrency_observation_path)
+        return result
 
 
 
@@ -355,6 +380,8 @@ def execute(name, arguments):
                 except (OSError, ValueError, TypeError, KeyError) as error:
                     result["checkpoint_error"] = str(error)
             result.update(finalize_metrics(endpoint, graceful))
+            if endpoint.concurrency_observation_error:
+                result["concurrency_observation_error"] = endpoint.concurrency_observation_error
             if endpoint.movie_path:
                 result.update(movie_path=str(endpoint.movie_path),
                               movie_finalized=graceful and endpoint.movie_path.is_file() and endpoint.movie_path.stat().st_size > 0,

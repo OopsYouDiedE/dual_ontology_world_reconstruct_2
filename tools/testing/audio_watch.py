@@ -129,10 +129,17 @@ def run(args: argparse.Namespace) -> int:
 
     def read_metadata():
         assert process.stdout
+        # FFmpeg emits several metadata fields per 100 ms of audio. Publishing
+        # every field makes filesystem and process-memory queries throttle the
+        # reader, which can in turn block the FFmpeg stdout pipe.
+        next_publish = time.monotonic() + 0.5
         for line in iter(process.stdout.readline, b""):
             with lock:
-                if update_metadata(state, line.decode("utf-8", errors="replace")):
+                changed = update_metadata(state, line.decode("utf-8", errors="replace"))
+                now = time.monotonic()
+                if changed and now >= next_publish:
                     publish()
+                    next_publish = now + 0.5
 
     reader = threading.Thread(target=read_metadata, daemon=True)
     reader.start()

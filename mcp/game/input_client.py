@@ -1,8 +1,8 @@
 """Persistent interactive client for the project's formal input MCP.
 
 Send one JSON object per line: {"tool":"on","arguments":{...}}, then
-step/observe/close. The server connection and its single session stay alive
-until close or EOF. Every server response and returned image is retained.
+step/observe/notes/close. The server connection and its single session stay alive
+until close or EOF. Every server response and returned image/audio is retained.
 """
 import asyncio
 import base64
@@ -19,7 +19,19 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "mcp"))
 import capture_provenance as provenance
 PYTHON = Path(sys.executable)
-ALLOWED = {"on", "step", "observe", "close"}
+HOST_TOOLS = {"on", "step", "observe", "close"}
+NOTE_TOOLS = {"event_script", "character_script", "charactor_script", "review_visible_text"}
+ALLOWED = HOST_TOOLS | NOTE_TOOLS
+
+
+def retain_audio(block, receipt_dir, index, audio_index):
+    """Retain a returned WAV with its MIME type and byte count in the receipt."""
+    if block.mimeType != "audio/wav":
+        raise ValueError(f"Unsupported audio type: {block.mimeType}")
+    audio_bytes = base64.b64decode(block.data, validate=True)
+    audio_path = receipt_dir / f"{index:06d}-{audio_index}.wav"
+    audio_path.write_bytes(audio_bytes)
+    return {"path": str(audio_path), "mime_type": block.mimeType, "bytes": len(audio_bytes)}
 
 
 async def main():
@@ -49,7 +61,7 @@ async def main():
                         tool = request.get("tool")
                         arguments = request.get("arguments", {})
                         if tool not in ALLOWED or not isinstance(arguments, dict):
-                            raise ValueError("Use on, step, observe or close with an arguments object.")
+                            raise ValueError("Use a supported tool with an arguments object.")
                         if tool == "on" and current is not None:
                             raise ValueError("Close the current session before opening another.")
                         if tool != "on":
@@ -61,7 +73,7 @@ async def main():
                         result = await client.call_tool(tool, arguments)
                         index += 1
                         data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
-                        if not result.isError:
+                        if not result.isError and tool in HOST_TOOLS:
                             source = data.get("source_identity") or {}
                             server = data.get("server_identity") or {}
                             provenance.validate_source(source, expected, pid=host_pid)
@@ -73,7 +85,10 @@ async def main():
                             if server_pid is not None and server["server_pid"] != server_pid:
                                 raise ValueError("Server PID changed during capture")
                             host_pid, server_pid = source["process_id"], server["server_pid"]
+                        if not result.isError and tool in NOTE_TOOLS and (host_pid is None or server_pid is None):
+                            raise ValueError("Notes require a previously validated owning session.")
                         images = []
+                        audio = []
                         for block in result.content:
                             if block.type == "image":
                                 suffix = ".png" if block.mimeType == "image/png" else ".jpg"
@@ -81,10 +96,12 @@ async def main():
                                 image_path.write_bytes(base64.b64decode(block.data, validate=True))
                                 provenance.save_image_sidecar(image_path, data)
                                 images.append(str(image_path))
+                            elif block.type == "audio":
+                                audio.append(retain_audio(block, receipt_dir, index, len(audio)))
                         payload = {"tool": tool, "is_error": bool(result.isError),
                             "data": result.structuredContent,
                             "text": [block.text for block in result.content if block.type == "text"],
-                            "images": images}
+                            "images": images, "audio": audio}
                         receipt = receipt_dir / f"{index:06d}.json"
                         receipt.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
                         payload["receipt"] = str(receipt)
@@ -95,7 +112,7 @@ async def main():
                             host_pid = None
                         data = result.structuredContent if isinstance(result.structuredContent, dict) else {}
                         summary = {"tool": tool, "is_error": bool(result.isError), "session_id": current,
-                            "receipt": str(receipt), "images": images}
+                            "receipt": str(receipt), "images": images, "audio": audio}
                         for key in ("started", "busy", "scene", "observation_path", "host_errors", "source_identity", "server_identity",
                                     "closed", "graceful_exit", "movie_path", "movie_finalized", "movie_bytes",
                                     "checkpoint_path", "checkpoint_restored", "checkpoint_error", "checkpoint_saved",

@@ -61,6 +61,7 @@ class Endpoint:
         self.concurrency_observer = None
         self.concurrency_observation_path = None
         self.concurrency_observation_error = None
+        self.audio_observation_cursor = 0
 
     def attach(self, process):
         self.process = process
@@ -411,6 +412,13 @@ def execute(name, arguments):
     if endpoint is None:
         raise ValueError("Unknown session_id in this MCP server. Start your own session.")
     with endpoint.lock:
+        if name in ("event_script", "character_script", "charactor_script"):
+            from blind_observation import append_observation
+            return append_observation(endpoint, identity, name, arguments["text"], ROOT)
+        if name == "review_visible_text":
+            from text_observation import append_text_observation
+            return append_text_observation(endpoint, identity, arguments["path"], arguments["text"],
+                                           arguments["category"], arguments["english_verified"], ROOT)
         if name == "close":
             graceful = False
             try:
@@ -488,4 +496,12 @@ def execute(name, arguments):
         observation = endpoint.request(operation, timeout=request_timeout)
         if not isinstance(observation, dict):
             observation = {"case_reasoning": observation}
+        if arguments.get("capture_audio") and endpoint.backend == "godot":
+            from audio_observation import read_excerpt
+            if endpoint.metrics_directory is None:
+                observation["audio_preview"] = {"available": False, "reason": "The audio capture directory is not ready."}
+            else:
+                preview, endpoint.audio_observation_cursor, data = read_excerpt(endpoint.metrics_directory, endpoint.audio_observation_cursor)
+                observation["audio_preview"] = preview
+                if data: observation["audio_base64"] = data
         return dict(observation, session_id=identity, mode=endpoint.mode)

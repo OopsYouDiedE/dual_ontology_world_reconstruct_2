@@ -38,15 +38,26 @@ def relative(path: Path) -> str:
     return provenance.project_path(path, ROOT).relative_to(ROOT).as_posix()
 
 
-def validated_evidence(paths):
-    if not isinstance(paths, list) or not paths:
+def validated_evidence(paths, *, case_dir, required):
+    if paths is None and not required:
+        paths = []
+    if not isinstance(paths, list) or (required and not paths):
         raise ValueError("A reviewed score requires project-local evidence")
     result = []
+    has_case_evidence = False
+    run_root = ROOT / "artifacts/evaluation/runs"
+    current_run = case_dir.parent.parent.resolve()
     for value in paths:
         p = provenance.project_path(value, ROOT)
         if not p.is_file():
             raise ValueError("Missing score evidence: " + str(value))
+        if p.is_relative_to(run_root) and not p.is_relative_to(current_run):
+            raise ValueError("Score evidence belongs to a different test run: " + str(value))
+        if p.is_relative_to(case_dir.resolve()):
+            has_case_evidence = True
         result.append(relative(p))
+    if required and not has_case_evidence:
+        raise ValueError("A reviewed score requires evidence from its own case")
     return list(dict.fromkeys(result))
 
 
@@ -159,7 +170,7 @@ def score_case(run_dir: Path, job: str, job_row: dict, revision: str, assessment
             raise ValueError("Human score must be null or a number from zero to ten")
         if not isinstance(reason, str) or not reason.strip():
             raise ValueError("Human score requires a concrete reason")
-        evidence = validated_evidence(review.get("evidence"))
+        evidence = validated_evidence(review.get("evidence"), case_dir=case_dir, required=value is not None)
         result["scores"][category] = value
         result["reasons"][category] = reason.strip()
         result["evidence"].extend(evidence)
@@ -179,15 +190,17 @@ def aggregate(cases):
         rows = [case for case in cases if case["segment_id"] == segment]
         for category in CATEGORIES:
             present = [(row["case_id"], row["scores"][category]) for row in rows if row["scores"][category] is not None]
-            absent = [row["case_id"] for row in rows if row["scores"][category] is None]
+            absent_rows = [row for row in rows if row["scores"][category] is None]
+            absent = [row["case_id"] for row in absent_rows]
+            missing_detail = "; ".join(f"{row['case_id']} ({row['reasons'][category]})" for row in absent_rows)
             failing = [(case_id, value) for case_id, value in present if value < 8]
             if failing:
                 value = min(value for _, value in failing)
                 reason = "Observed failing score in " + ", ".join(f"{name}={score}" for name, score in failing)
-                if absent: reason += "; missing measurements: " + ", ".join(absent)
+                if absent: reason += "; missing measurements: " + missing_detail
             elif absent:
                 value = None
-                reason = "Missing measurements: " + ", ".join(absent)
+                reason = "Missing measurements: " + missing_detail
             elif present:
                 value = min(value for _, value in present)
                 reason = "Lowest case score from this run: " + ", ".join(f"{name}={score}" for name, score in present)
@@ -209,6 +222,8 @@ def collect(run_dir: Path, assessments=None):
     revision = status.get("revision")
     if not isinstance(revision, str) or not revision:
         raise ValueError("Source revision missing")
+    if assessments is not None and not isinstance(assessments, dict):
+        raise ValueError("Human assessments must be an object")
     assessments = assessments or {}
     if assessments and (assessments.get("run_id") != status.get("run_id") or assessments.get("source_revision") != revision):
         raise ValueError("Human assessment run or revision does not match")

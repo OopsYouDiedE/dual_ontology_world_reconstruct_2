@@ -311,4 +311,4 @@ func _handle(request: Dictionary) -> void:
 	_reply(identity, result)
 
 func _collect(node: Node, controls: Array) -> void:
-	preload("res://scenes/components/testing/VisibleText.gd").collect(node, get_viewport(), controls, false)
+	preload("res://scenes/components/testing/VisibleText.gd").collect(node, get_viewport(), controls, true)

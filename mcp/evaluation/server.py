@@ -35,6 +35,9 @@ SCHEMAS = {
     "evaluation_start": schema({**ROOT_FIELD,
         "profile": {"enum": ["chapter1_ui", "chapter1_flow", "room_fast", "kitchen_click", "scenario", "scene_survey"], "default": "chapter1_ui"},
         "rendered": {"type": "boolean", "default": False},
+        "segments": {"type": "array", "minItems": 1, "maxItems": 11, "uniqueItems": True,
+                     "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+                     "description": "scene_survey only: limit jobs to the requested segment IDs."},
         "godot": {"type": "string", "description": "Optional project-local 4.7.2 executable."},
         "snapshot_path": {"type": "string", "description": "Project-local checkpoint for room_fast or kitchen_click."},
         "interaction_id": {"type": "string", "pattern": "^[a-z0-9_]{1,64}$", "description": "Optional kitchen item ID for the direct-handler diagnostic."},
@@ -125,6 +128,11 @@ def _verify_worker(launch):
 
 def start(args):
     profile = args.get("profile", "chapter1_ui")
+    if "segments" in args:
+        if profile != "scene_survey":
+            raise ValueError("segments is only applicable to scene_survey")
+        from worker import survey_cases
+        survey_cases(c.ROOT, args["segments"])
     if "motion_time_scale" in args and profile not in ("chapter1_flow", "chapter1_ui"):
         raise ValueError("motion_time_scale is only applicable to chapter-one diagnostic profiles")
     if "pretransit_to" in args and profile not in ("chapter1_flow", "chapter1_ui"):
@@ -186,6 +194,7 @@ def start(args):
                   "worker_executable": identity["executable"],
                   "worker_command": identity["command"], "project_root": str(c.ROOT),
                   "profile": profile, "rendered": args.get("rendered", False),
+                  "segments": args.get("segments"),
                   "monitor_visible": args.get("monitor_visible", False),
                   "motion_time_scale": args.get("motion_time_scale"),
                   "pretransit_to": args.get("pretransit_to", c.FLOW_PRETRANSIT_TARGETS[0]),

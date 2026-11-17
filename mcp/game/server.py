@@ -57,9 +57,17 @@ TOOLS = {
                                        "movie_fps": {"type": "integer", "minimum": 1, "maximum": 60, "description": "Fixed simulation/video frame rate for movie capture (30 if omitted); this is not a real-time performance benchmark."},
                                        "background_capture": {"type": "boolean", "default": True, "description": "Keep the real Godot window minimized while rendering MCP observations; false opens a visible manual window."}})),
         types.Tool(name="step", description="Submit one live operation and return the new observation. CLI: advance/select. Godot: start/select/input_action/click. Choices must come from the current screen.",
-                   inputSchema=schema({"session_id": SESSION, "operation": OPERATION, "wait_ms": WAIT, "capture_image":{"type":"boolean","default":True}}, ["session_id", "operation"])),
+                   inputSchema=schema({"session_id": SESSION, "operation": OPERATION, "wait_ms": WAIT, "capture_image":{"type":"boolean","default":True}, "capture_audio":{"type":"boolean","default":False,"description":"Include new captured Master audio as a WAV listening preview."}}, ["session_id", "operation"])),
         types.Tool(name="observe", description="Read the latest observation without submitting an action. Godot returns the current rendered PNG and visible UI; its real window continues running.",
-                   inputSchema=schema({"session_id": SESSION, "wait_ms": WAIT, "capture_image":{"type":"boolean","default":True}}, ["session_id"])),
+                   inputSchema=schema({"session_id": SESSION, "wait_ms": WAIT, "capture_image":{"type":"boolean","default":True}, "capture_audio":{"type":"boolean","default":False,"description":"Include new captured Master audio as a WAV listening preview."}}, ["session_id"])),
+        types.Tool(name="event_script", description="Record an English blind observation of visible actions or heard cues in this session.",
+                   inputSchema=schema({"session_id": SESSION, "text": {"type": "string", "minLength": 1, "maxLength": 4096}}, ["session_id", "text"])),
+        types.Tool(name="character_script", description="Record English dialogue observed in this session.",
+                   inputSchema=schema({"session_id": SESSION, "text": {"type": "string", "minLength": 1, "maxLength": 4096}}, ["session_id", "text"])),
+        types.Tool(name="charactor_script", description="Compatibility alias for character_script.",
+                   inputSchema=schema({"session_id": SESSION, "text": {"type": "string", "minLength": 1, "maxLength": 4096}}, ["session_id", "text"])),
+        types.Tool(name="review_visible_text", description="Classify a currently visible text string and verify whether it is English.",
+                   inputSchema=schema({"session_id": SESSION, "path": {"type":"string", "minLength":1}, "text": {"type":"string", "minLength":1}, "category": {"type":"string", "enum":["dialogue", "spoken_dialogue", "speech", "prompt", "interaction_prompt", "nameplate", "single_key_icon", "action_key_icon", "hud", "menu", "other_ui"]}, "english_verified": {"type":"boolean"}}, ["session_id", "path", "text", "category", "english_verified"])),
         types.Tool(name="close", description="Close this session and release its actual host process.",
                    inputSchema=schema({"session_id": SESSION}, ["session_id"])),
     ],
@@ -99,7 +107,7 @@ async def main(service):
     tools = TOOLS[service]
     server = Server("dual-ontology-" + service, version="2.0.0", instructions=(
         "Automatic tests belong to the auto MCP (GodotMCP/CliMCP); one call runs to the deadline without Agent input. "
-        "Input MCP exposes only on, step, observe, close; each SubAgent opens its own session. "
+        "Input MCP exposes on, step, observe, event_script, character_script and close; each observer opens its own session. "
         "The environment MCP prepares a project-local Godot .NET distribution when missing. "
         "Godot input starts at the production title and follows the real new-game path. "
         "Never forge receipts or inject author facts into campaign sessions. Deadline reached is not a campaign pass."))
@@ -113,8 +121,10 @@ async def main(service):
         try:
             result = await asyncio.to_thread(execute, service, name, arguments)
             png = result.pop("image_base64", None)
+            audio = result.pop("audio_base64", None)
             content = [types.TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
             if png: content.append(types.ImageContent(type="image", mimeType="image/png", data=png))
+            if audio: content.append(types.AudioContent(type="audio", mimeType="audio/wav", data=audio))
             return types.CallToolResult(content=content, structuredContent=result)
         except Exception as error:
             return types.CallToolResult(isError=True, content=[types.TextContent(type="text", text=str(error))])

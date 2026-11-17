@@ -30,7 +30,7 @@ sys.path.insert(0, str(c.ROOT / "mcp/review"))
 from core import Store  # noqa: E402
 
 
-def survey_cases(root):
+def survey_cases(root, segments=None):
     cases = c.read_json(root / "assets/data/test_scenarios/mainline_survey.json")
     if not isinstance(cases, list) or not cases:
         raise ValueError("Scene survey plan must contain cases")
@@ -43,10 +43,33 @@ def survey_cases(root):
         if row["id"] in seen or not isinstance(row.get("fixture"), dict):
             raise ValueError("Duplicate or malformed scene survey case")
         seen.add(row["id"])
+    if segments is not None:
+        if not isinstance(segments, list) or not segments or any(not isinstance(value, str) for value in segments):
+            raise ValueError("Scene survey segments must be a nonempty list of IDs")
+        known = {row["segment_id"] for row in cases}
+        unknown = sorted(set(segments) - known)
+        if unknown:
+            raise ValueError("Unknown scene survey segment: " + ", ".join(unknown))
+        cases = [row for row in cases if row["segment_id"] in set(segments)]
     return cases
 
 
-def planned_jobs(profile, rendered):
+def newest_fixture(root, name):
+    """Select the newest valid project fixture and keep its run path in the job plan."""
+    if name != "corridor-free.json":
+        raise ValueError("Unsupported survey fixture")
+    runs = root / "artifacts/evaluation/runs"
+    candidates = sorted(runs.glob("eval-*/fixtures/fixtures/" + name), reverse=True)
+    for path in candidates:
+        try:
+            c.validate_snapshot(path)
+            return path
+        except (OSError, ValueError, TypeError):
+            continue
+    raise ValueError("No valid generated corridor fixture exists; run the fixture generation profile first")
+
+
+def planned_jobs(profile, rendered, segments=None):
     """Enumerate only lanes scheduled by this profile."""
     singles = {"room_fast": ("room-fast", "project"),
                "kitchen_click": ("kitchen-click", "kitchen_evidence"),
@@ -55,7 +78,7 @@ def planned_jobs(profile, rendered):
     if profile == "scene_survey":
         if not rendered:
             raise ValueError("Scene survey requires a rendered display")
-        return [("survey-" + row["id"], row["segment_id"]) for row in survey_cases(c.ROOT)]
+        return [("survey-" + row["id"], row["segment_id"]) for row in survey_cases(c.ROOT, segments)]
     if profile in singles:
         return [singles[profile]]
     if profile != "chapter1_ui":
@@ -182,7 +205,7 @@ class Evaluation:
         self.deadline = self.started + min(float(self.launch["deadline_seconds"]), remaining, 28800.0)
         self.store = Store(self.root, server_script=__file__)
         state = c.revision_state()
-        self.survey_cases = {"survey-" + row["id"]: row for row in survey_cases(self.root)} if self.launch["profile"] == "scene_survey" else {}
+        self.survey_cases = {"survey-" + row["id"]: row for row in survey_cases(self.root, self.launch.get("segments"))} if self.launch["profile"] == "scene_survey" else {}
         self.state = {"schema_version": 1, "run_id": run_id, "state": "running",
                       "profile": self.launch["profile"], "rendered": self.launch["rendered"],
                       "resource_policy": self.launch["resource_policy"],
@@ -195,7 +218,7 @@ class Evaluation:
                       "acceptance_eligible": False, "acceptance_scored": False,
                       "notice": "测试结果记录测量范围、证据与七项评分。",
                       "jobs": {job: {"state": "planned", "segment_id": segment}
-                               for job, segment in planned_jobs(self.launch["profile"], self.launch["rendered"])},
+                               for job, segment in planned_jobs(self.launch["profile"], self.launch["rendered"], self.launch.get("segments"))},
                       "observed_concurrency": {"peak_live_hosts": 0, "witness": []}, "errors": []}
         self._publish()
 
@@ -347,8 +370,7 @@ class Evaluation:
             headless = False
             case = dict(self.survey_cases[job])
             if case.get("controller") == "corridor" and case.get("snapshot"):
-                snapshot = self.root / "artifacts/evaluation/runs/eval-20261117t170218-ded02f19/fixtures/fixtures/corridor-free.json"
-                c.validate_snapshot(snapshot)
+                snapshot = newest_fixture(self.root, "corridor-free.json")
                 case["snapshot"] = str(snapshot)
             plan = directory / "plan.json"
             c.write_json(plan, [case])
@@ -802,7 +824,7 @@ class Evaluation:
                     self.run_job("chapter1-flow", "project")
                 elif profile == "scene_survey":
                     with ThreadPoolExecutor(max_workers=min(3, self.launch["resource_policy"]["workers"]), thread_name_prefix="scene-survey") as pool:
-                        futures = [pool.submit(self.run_job, job, segment) for job, segment in planned_jobs(profile, True)]
+                        futures = [pool.submit(self.run_job, job, segment) for job, segment in planned_jobs(profile, True, self.launch.get("segments"))]
                         for future in as_completed(futures):
                             future.result()
                 elif profile == "chapter1_ui":

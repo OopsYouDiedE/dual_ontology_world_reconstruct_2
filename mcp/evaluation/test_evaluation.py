@@ -675,6 +675,42 @@ class SceneSurveyTests(ProjectFixture):
         with self.assertRaises(ValueError):
             worker.planned_jobs("scene_survey", False)
 
+    def test_survey_segment_selection_and_validation(self):
+        import worker
+        from jsonschema import Draft202012Validator
+        cases = worker.survey_cases(c.ROOT)
+        wake = [row for row in cases if row["segment_id"] == "wake"]
+        self.assertEqual(worker.survey_cases(c.ROOT, ["wake"]), wake)
+        self.assertEqual(worker.planned_jobs("scene_survey", True, ["wake"]),
+                         [("survey-" + row["id"], "wake") for row in wake])
+        self.assertTrue(all(segment in {"shaft", "poem"} for _, segment in
+                            worker.planned_jobs("scene_survey", True, ["shaft", "poem"])))
+        with self.assertRaisesRegex(ValueError, "Unknown scene survey segment"):
+            worker.survey_cases(c.ROOT, ["not-a-segment"])
+        schema = Draft202012Validator(server.SCHEMAS["evaluation_start"])
+        self.assertTrue(schema.is_valid({"profile": "scene_survey", "segments": ["wake"]}))
+        self.assertFalse(schema.is_valid({"profile": "scene_survey", "segments": []}))
+        self.assertFalse(schema.is_valid({"profile": "scene_survey", "segments": ["wake", "wake"]}))
+        with self.assertRaisesRegex(ValueError, "only applicable"):
+            server.start({"profile": "chapter1_flow", "segments": ["wake"]})
+
+    def test_corridor_fixture_selection_uses_newest_valid_checkpoint(self):
+        import worker
+        runs = self.directory / "artifacts/evaluation/runs"
+        old = runs / "eval-20260101t000000-00000001/fixtures/fixtures/corridor-free.json"
+        bad = runs / "eval-20260102t000000-00000002/fixtures/fixtures/corridor-free.json"
+        for path in (old, bad):
+            path.parent.mkdir(parents=True)
+            path.write_text("{}", encoding="utf-8")
+        def validate(path):
+            if path == bad:
+                raise ValueError("Invalid fixture")
+        with patch("worker.c.validate_snapshot", side_effect=validate):
+            self.assertEqual(worker.newest_fixture(self.directory, "corridor-free.json"), old)
+            old.unlink()
+            with self.assertRaisesRegex(ValueError, "No valid generated"):
+                worker.newest_fixture(self.directory, "corridor-free.json")
+
     def test_scene_command_is_rendered_and_limited_to_sixty(self):
         from worker import Evaluation, survey_cases
         case = survey_cases(c.ROOT)[0]

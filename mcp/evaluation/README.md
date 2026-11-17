@@ -95,3 +95,10 @@ For rendered evaluations, MCP uses the native Windows display or a reachable Lin
 通过本项目 MCP 的 `evaluation_start` 调用 `{"profile":"scene_survey","rendered":true,"workers":3,"max_seconds":1800}`。此配置从 `assets/data/test_scenarios/mainline_survey.json` 为每个场景创建独立任务，最多同时运行三个 Godot 进程，每个进程使用 `--max-fps 60`，并分别保存画面、回执、输出、并发观测及失败详情。单场景最长运行 150 秒；超时或其他错误记入该场景结果，其他场景继续执行。状态文件和 `report.yaml` 按场景列出房间、阶段、具体动作与未完成项，七维暂缺数据保留空值。
 
 由并行负载采得的帧时间携带并发上下文，供该次场景测试解释；单实例基准可另行采集。场景通过快照或预设状态切入，连续玩家通关进度由实际游玩记录呈现。
+
+
+## Filtering survey jobs and reviewing evidence
+
+`evaluation_start` accepts `segments` for `scene_survey`, for example `{"profile":"scene_survey","rendered":true,"segments":["wake"]}`. The server rejects unknown segment IDs before launching a worker. The job plan records the selection, and corridor jobs record the selected validated fixture path. The survey currently starts a separate host for each case; filtering alone does not create a continuous multi-case segment session.
+
+The `scene_survey_scores.py` collector accepts a project-local `--assessments` JSON whose run ID, source revision, case IDs, scores, reasons and evidence are checked. A numerical human score must include evidence from its own case; reference images and other project-local comparison inputs may accompany it. A null score may carry a reason without evidence. This collector does not itself start an observer or establish simultaneous observation; the test coordinator must establish and document those conditions at launch.

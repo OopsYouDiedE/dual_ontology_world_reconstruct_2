@@ -14,6 +14,8 @@ var capture_index := -1
 var background_streams: Array[Dictionary] = []
 var text_changes: FileAccess
 var _last_text_signature := ""
+var _text_checked_frames := 0
+var _text_write_errors := 0
 var _audio_route_initial: Dictionary = {}
 var _audio_route_stable := true
 var _audio_route_last: Dictionary = {}
@@ -173,6 +175,7 @@ func _record_audio_route(now: int) -> void:
 
 func _record_visible_text(now: int) -> void:
 	if text_changes == null or not is_instance_valid(_owner): return
+	_text_checked_frames += 1
 	var entries: Array = []
 	preload("res://scenes/components/testing/VisibleText.gd").collect(_owner, _owner.get_viewport(), entries)
 	var stable: Array = []
@@ -181,6 +184,7 @@ func _record_visible_text(now: int) -> void:
 	if signature == _last_text_signature: return
 	_last_text_signature = signature
 	text_changes.store_line(JSON.stringify({"frame": _frame_count, "elapsed_s": float(now - _started_usec) / 1000000.0, "scene_node": node_id, "entries": entries}))
+	if text_changes.get_error() != OK: _text_write_errors += 1
 
 func _process(delta: float) -> void:
 	if _finished or _last_usec == 0: return
@@ -301,7 +305,11 @@ func finish() -> void:
 					break
 		var background_stop := FileAccess.open(output_dir + "/" + stream.stem + ".stop", FileAccess.WRITE)
 		if background_stop != null: background_stop.store_string("finalize"); background_stop.close()
-	if text_changes != null: text_changes.flush(); text_changes.close(); text_changes = null
+	if text_changes != null:
+		text_changes.flush()
+		if text_changes.get_error() != OK: _text_write_errors += 1
+		text_changes.close()
+		text_changes = null
 	if output_dir != "":
 		var stop := FileAccess.open(output_dir + "/audio.stop", FileAccess.WRITE)
 		if stop != null: stop.store_string("finalize"); stop.close()
@@ -312,7 +320,7 @@ func finish() -> void:
 				AudioServer.remove_bus_effect(0, index)
 				break
 	if frames != null: frames.flush(); frames.close(); frames = null
-	report.finish({"frames": _frame_count, "max_frame_ms": _max_ms, "spikes_over_33_3_ms": _spikes, "steady_spikes_over_33_3_ms": _steady_spikes, "loading_warmup_frames": _warmup_frames, "audio_writer": pcm.stats(), "audio_discarded_frames": _capture_lost, "background_audio": background_status, "master_start_offset_s": float(_started_usec - _master_capture_usec) / 1000000.0, "audio_route": {"stable": _audio_route_stable, "snapshot": _audio_route_initial, "changes": _audio_route_events, "capture_point": "last enabled bus effect, before bus volume and send"}, "acceptance": "pending_independent_evidence_review"})
+	report.finish({"visible_text_collection": {"complete": _frame_count > 0 and _text_checked_frames == _frame_count and _text_write_errors == 0, "checked_frames": _text_checked_frames, "write_errors": _text_write_errors}, "frames": _frame_count, "max_frame_ms": _max_ms, "spikes_over_33_3_ms": _spikes, "steady_spikes_over_33_3_ms": _steady_spikes, "loading_warmup_frames": _warmup_frames, "audio_writer": pcm.stats(), "audio_discarded_frames": _capture_lost, "background_audio": background_status, "master_start_offset_s": float(_started_usec - _master_capture_usec) / 1000000.0, "audio_route": {"stable": _audio_route_stable, "snapshot": _audio_route_initial, "changes": _audio_route_events, "capture_point": "last enabled bus effect, before bus volume and send"}, "acceptance": "pending_independent_evidence_review"})
 
 func _exit_tree() -> void:
 	finish()

@@ -7,13 +7,13 @@ import unittest
 import os
 import yaml
 
-from mainline_metrics import summarize, provenance, audio_score
+from mainline_metrics import summarize, provenance, audio_score, _load_text_reviews, _load_live_text_reviews, file_hash
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class MainlineMetricsTests(unittest.TestCase):
-    def measure(self, rows, *, legacy=False, text_count=None, metadata_override=None, snapshot_path=None, scenario_path=None, full=False):
+    def measure(self, rows, *, legacy=False, text_count=None, metadata_override=None, snapshot_path=None, scenario_path=None, full=False, text_records=None, text_summary=None, live_review=False):
         base = ROOT / ".runtime/metrics-unit-tests"
         base.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=base) as directory:
@@ -22,10 +22,21 @@ class MainlineMetricsTests(unittest.TestCase):
                             source_identity=dict(provenance.project_identity(ROOT), process_id=os.getpid()))
             if metadata_override:
                 metadata.update(metadata_override)
+            if live_review:
+                plan = path / "plan.json"
+                plan.write_text(json.dumps({"blind_observer": {"identity": "blind"}, "cases": [{"id": "case", "segment_id": "kitchen_evidence"}]}), encoding="utf-8")
+                metadata.update(test_id="one", revision="abc", assessment_plan=str(plan), assessment_plan_sha256=file_hash(plan))
+                review = {"schema_version": 1, "test_id": "one", "revision": "abc", "host_pid": os.getpid(),
+                          "assessment_plan_sha256": file_hash(plan), "reviewer": "blind", "session_id": "session",
+                          "case_id": "case", "segment_id": "kitchen_evidence", "monitor_elapsed_s": 1,
+                          "path": "/p", "text": "Hello", "category": "dialogue", "english_verified": True}
+                (path / "visible-text-reviews.jsonl").write_text(json.dumps(review) + "\n", encoding="utf-8")
             if text_count is not None:
                 metadata["content_text_policy"] = "visible_active_viewports"
             sample = "" if text_count is None else "  - " + json.dumps({"gameplay_segment": "kitchen_evidence", "total_visible_characters": text_count}) + "\n"
-            (path / "timeline.yaml").write_text(yaml.safe_dump({"metadata": metadata}) + "timeline:\n" + sample + "summary: {}\n", encoding="utf-8")
+            (path / "timeline.yaml").write_text(yaml.safe_dump({"metadata": metadata}) + "timeline:\n" + sample + yaml.safe_dump({"summary": text_summary or {}}), encoding="utf-8")
+            if text_records is not None:
+                (path / "visible-text-changes.jsonl").write_text("".join(json.dumps(item, ensure_ascii=False) + "\n" for item in text_records), encoding="utf-8")
             with (path / "frames.csv").open("w", newline="", encoding="utf-8") as stream:
                 fields = ["node", "elapsed_s", "frame_ms"] + ([] if legacy else ["measurement_phase"])
                 writer = csv.DictWriter(stream, fieldnames=fields)
@@ -99,6 +110,81 @@ class MainlineMetricsTests(unittest.TestCase):
             self.assertEqual(result["max_recorded_visible_characters"], count)
             self.assertIsNone(result["measured_scores"][1])
             self.assertIn("classification", result["text_score_reason"])
+
+    def test_visible_text_scoring_requires_complete_same_session_collection(self):
+        record = {"frame": 1, "elapsed_s": 1.0, "scene_node": "kitchen_evidence/B-P", "entries": []}
+        complete = {"frames": 2, "visible_text_collection": {"complete": True, "checked_frames": 2, "write_errors": 0}}
+        result = self.measure([(16, "steady"), (16, "steady")], text_records=[record], text_summary=complete, full=True)
+        self.assertEqual(result["segments"]["kitchen_evidence"]["measured_scores"][1], 10)
+        self.assertIn("visible-text-changes.jsonl", result["source_sha256"])
+        broken = {"frames": 2, "visible_text_collection": {"complete": True, "checked_frames": 1, "write_errors": 0}}
+        result = self.measure([(16, "steady"), (16, "steady")], text_records=[record], text_summary=broken)
+        self.assertIsNone(result["measured_scores"][1])
+        self.assertIn("coverage was not verified", result["text_score_reason"])
+
+    def test_visible_text_failure_and_unreviewed_strings_are_preserved(self):
+        complete = {"frames": 1, "visible_text_collection": {"complete": True, "checked_frames": 1, "write_errors": 0}}
+        entry = {"path": "/dialogue", "text": "你好", "category": "dialogue"}
+        record = {"frame": 1, "elapsed_s": 1.0, "scene_node": "kitchen_evidence/B-P", "entries": [entry]}
+        result = self.measure([(16, "steady")], text_records=[record], text_summary=complete)
+        self.assertEqual(result["measured_scores"][1], 6)
+        entry["text"] = "Hello"
+        entry["category"] = "unknown"
+        result = self.measure([(16, "steady")], text_records=[record], text_summary=complete)
+        self.assertIsNone(result["measured_scores"][1])
+        self.assertIn("classification", result["text_score_reason"])
+
+    def test_settlement_automatically_uses_live_session_review(self):
+        complete = {"frames": 1, "visible_text_collection": {"complete": True, "checked_frames": 1, "write_errors": 0}}
+        record = {"frame": 1, "elapsed_s": 1.0, "scene_node": "kitchen_evidence/B-P",
+                  "entries": [{"path": "/p", "text": "Hello", "category": "unknown"}]}
+        result = self.measure([(16, "steady")], text_records=[record], text_summary=complete, full=True, live_review=True)
+        self.assertEqual(result["segments"]["kitchen_evidence"]["measured_scores"][1], 8)
+        self.assertIn("visible-text-reviews.jsonl", result["source_sha256"])
+        self.assertEqual(result["test_id"], "one")
+
+    def test_review_requires_same_test_revision_pid_and_timeline(self):
+        base = ROOT / ".runtime/metrics-unit-tests"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as directory:
+            path = Path(directory)
+            timeline = path / "visible-text-changes.jsonl"
+            timeline.write_text("{}\n", encoding="utf-8")
+            metadata = {"test_id": "one", "revision": "abc", "source_identity": {"process_id": 123}}
+            document = {"schema_version": 1, "test_id": "one", "revision": "abc", "process_id": 123,
+                        "timeline_sha256": file_hash(timeline), "reviewer": "observer",
+                        "entries": [{"path": "/p", "text": "Hello", "category": "dialogue", "english_verified": True}]}
+            review = path / "review.json"
+            review.write_text(json.dumps(document), encoding="utf-8")
+            self.assertTrue(_load_text_reviews(review, metadata, timeline)[("/p", "Hello")]["english_verified"])
+            for key, value in (("test_id", "other"), ("revision", "other"), ("process_id", 124), ("timeline_sha256", "other")):
+                changed = dict(document, **{key: value})
+                review.write_text(json.dumps(changed), encoding="utf-8")
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    _load_text_reviews(review, metadata, timeline)
+
+    def test_live_review_requires_exact_session_and_captured_text(self):
+        base = ROOT / ".runtime/metrics-unit-tests"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as directory:
+            path = Path(directory)
+            plan = path / "plan.json"
+            plan.write_text(json.dumps({"blind_observer": {"identity": "blind"}, "cases": [{"id": "case", "segment_id": "kitchen_evidence"}]}), encoding="utf-8")
+            metadata = {"test_id": "one", "revision": "abc", "source_identity": {"process_id": 123},
+                        "assessment_plan": str(plan), "assessment_plan_sha256": file_hash(plan)}
+            timeline = path / "visible-text-changes.jsonl"
+            timeline.write_text(json.dumps({"scene_node": "kitchen_evidence/room", "entries": [{"path": "/p", "text": "Hello"}]}) + "\n", encoding="utf-8")
+            document = {"schema_version": 1, "test_id": "one", "revision": "abc", "host_pid": 123,
+                        "assessment_plan_sha256": file_hash(plan), "reviewer": "blind", "session_id": "session",
+                        "case_id": "case", "segment_id": "kitchen_evidence", "monitor_elapsed_s": 1,
+                        "path": "/p", "text": "Hello", "category": "dialogue", "english_verified": True}
+            review = path / "visible-text-reviews.jsonl"
+            review.write_text(json.dumps(document) + "\n", encoding="utf-8")
+            self.assertTrue(_load_live_text_reviews(review, metadata, timeline)["kitchen_evidence"][("/p", "Hello")]["english_verified"])
+            for key, value in (("test_id", "other"), ("revision", "other"), ("host_pid", 124), ("text", "other"), ("reviewer", "other")):
+                review.write_text(json.dumps(dict(document, **{key: value})) + "\n", encoding="utf-8")
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    _load_live_text_reviews(review, metadata, timeline)
 
     def test_audio_requires_signal_and_completed_analysis(self):
         self.assertIsNone(audio_score({"status": "error", "signal_present": True, "integrated_lufs": -25, "true_peak_dbtp": -30})[0])

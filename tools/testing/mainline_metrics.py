@@ -13,6 +13,7 @@ import sys
 
 import yaml
 from audio_watch import find_ffmpeg, update_metadata
+from visible_text_metrics import analyze_visible_text
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "mcp"))
@@ -65,7 +66,84 @@ def audio_score(audio: dict, background: dict | None = None) -> tuple[int | None
     return None, "Ambient-only peak is not isolated from dialogue or effects"
 
 
-def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path | None = None, scenario_path: Path | None = None) -> dict:
+def _load_text_reviews(path: Path, metadata: dict, text_path: Path) -> dict:
+    """Bind reviewer classifications to this exact PID, revision and raw timeline."""
+    path = provenance.project_path(path, ROOT)
+    review = json.loads(path.read_text(encoding="utf-8-sig"))
+    source = metadata.get("source_identity", {})
+    if (not isinstance(review, dict) or review.get("schema_version") != 1
+            or not isinstance(metadata.get("test_id"), str) or not metadata["test_id"]
+            or review.get("test_id") != metadata["test_id"]
+            or not isinstance(metadata.get("revision"), str) or not metadata["revision"]
+            or review.get("revision") != metadata["revision"]
+            or review.get("process_id") != source.get("process_id")
+            or not text_path.is_file() or review.get("timeline_sha256") != file_hash(text_path)
+            or not isinstance(review.get("reviewer"), str) or not review["reviewer"].strip()
+            or not isinstance(review.get("entries"), list)):
+        raise ValueError("Visible-text review provenance does not match this session")
+    result = {}
+    for item in review["entries"]:
+        if (not isinstance(item, dict) or not isinstance(item.get("path"), str)
+                or not isinstance(item.get("text"), str) or not isinstance(item.get("category"), str)
+                or not isinstance(item.get("english_verified"), bool)):
+            raise ValueError("Invalid visible-text review entry")
+        key = item["path"], item["text"]
+        if key in result:
+            raise ValueError("Duplicate visible-text review entry")
+        result[key] = {"category": item["category"], "english_verified": item["english_verified"]}
+    return result
+
+
+def _load_live_text_reviews(path: Path, metadata: dict, timeline: Path) -> dict:
+    """Read session-time classifications, requiring a matching recorded text and identity."""
+    from visible_text_metrics import COUNTED_CATEGORIES, EXCLUDED_CATEGORIES
+    path = provenance.project_path(path, ROOT)
+    source = metadata.get("source_identity", {})
+    plan_path = provenance.project_path(metadata.get("assessment_plan", ""), ROOT)
+    if not plan_path.is_file() or file_hash(plan_path) != metadata.get("assessment_plan_sha256"):
+        raise ValueError("Visible-text review assessment plan is missing or changed")
+    plan = json.loads(plan_path.read_text(encoding="utf-8-sig"))
+    reviewer = plan.get("blind_observer", {}).get("identity")
+    cases = {case.get("id"): case.get("segment_id") for case in plan.get("cases", []) if isinstance(case, dict)}
+    if not isinstance(reviewer, str) or not reviewer:
+        raise ValueError("Visible-text reviewer identity is unavailable")
+    seen = set()
+    for line in timeline.read_text(encoding="utf-8-sig").splitlines():
+        if not line.strip():
+            continue
+        item = json.loads(line)
+        segment = item["scene_node"].split("/", 1)[0]
+        for entry in item["entries"]:
+            seen.add((segment, entry["path"], entry["text"]))
+    result = {}
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        if (not isinstance(row, dict) or row.get("schema_version") != 1
+                or not metadata.get("test_id") or row.get("test_id") != metadata.get("test_id")
+                or not metadata.get("revision") or row.get("revision") != metadata.get("revision")
+                or row.get("host_pid") != source.get("process_id")
+                or row.get("assessment_plan_sha256") != metadata.get("assessment_plan_sha256")
+                or row.get("reviewer") != reviewer or not row.get("session_id")
+                or cases.get(row.get("case_id")) != row.get("segment_id")
+                or not isinstance(row.get("monitor_elapsed_s"), (int, float))
+                or isinstance(row.get("monitor_elapsed_s"), bool)
+                or not math.isfinite(row["monitor_elapsed_s"]) or row["monitor_elapsed_s"] < 0
+                or row.get("category") not in COUNTED_CATEGORIES | EXCLUDED_CATEGORIES
+                or not isinstance(row.get("english_verified"), bool)
+                or (row.get("segment_id"), row.get("path"), row.get("text")) not in seen):
+            raise ValueError("Visible-text live review does not match recorded session evidence")
+        key = row["path"], row["text"]
+        value = {"category": row["category"], "english_verified": row["english_verified"]}
+        reviews = result.setdefault(row["segment_id"], {})
+        if key in reviews and reviews[key] != value:
+            raise ValueError("Conflicting visible-text classifications")
+        reviews[key] = value
+    return result
+
+
+def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path | None = None, scenario_path: Path | None = None, text_review_path: Path | None = None) -> dict:
     provenance.assert_runtime_root(ROOT)
     directory = provenance.project_path(directory, ROOT)
     timeline = directory / "timeline.yaml"
@@ -152,6 +230,20 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
     audio_path = directory / "audio.json"
     audio = json.loads(audio_path.read_text(encoding="utf-8-sig")) if audio_path.is_file() else {}
     audio_complete = finalized and audio.get("status") == "complete" and not (summary.get("audio_discarded_frames", 0) or summary.get("audio_writer", {}).get("error", 0)) and not any(s.get("audio_discarded_frames", 0) or s.get("audio_writer", {}).get("error", 0) for s in samples)
+    text_path = directory / "visible-text-changes.jsonl"
+    text_reviews = _load_text_reviews(text_review_path, metadata, text_path) if text_review_path is not None else None
+    live_review_path = directory / "visible-text-reviews.jsonl"
+    live_reviews, live_review_error = {}, None
+    if live_review_path.is_file():
+        try:
+            live_reviews = _load_live_text_reviews(live_review_path, metadata, text_path)
+        except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as error:
+            live_review_error = str(error)
+    text_capture = summary.get("visible_text_collection", {})
+    text_complete = (finalized and isinstance(text_capture, dict) and text_capture.get("complete") is True
+                     and isinstance(summary.get("frames"), int) and summary["frames"] > 0
+                     and text_capture.get("checked_frames") == summary["frames"]
+                     and text_capture.get("write_errors") == 0)
     route = summary.get("audio_route", {})
     ffmpeg = find_ffmpeg() if audio_complete else None
     for name, segment in segments.items():
@@ -171,6 +263,14 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
         # neither word count nor English checks. Retain it as evidence, but do
         # not convert it to the dialogue/prompt score.
         segment["text_score_reason"] = "Visible aggregate lacks prompt classification, word count and English coverage"
+        if text_path.is_file():
+            text_result = analyze_visible_text(text_path, segment_id=name, collection_complete=text_complete,
+                                               reviews=text_reviews if text_reviews is not None else live_reviews.get(name))
+            if live_review_error:
+                text_result["reason"] += " Live review unavailable: " + live_review_error
+            segment["visible_text"] = text_result
+            segment["measured_scores"][1] = text_result["score"]
+            segment["text_score_reason"] = text_result["reason"]
         segment["audio"] = {"status": "pending", "reason": "Final complete audio and FFmpeg are required"}
         if ffmpeg and name not in ("boot", "title"):
             segment_route = route_for_intervals(route, segment["intervals_s"])
@@ -198,7 +298,11 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
             "acceptance_eligible": False if snapshot_path is not None or scenario_path is not None else metadata.get("acceptance_eligible", True),
             "acceptance_scored": False,
             "frame_clock": metadata.get("frame_clock"), "audio_alignment": "Frame intervals shifted by each capture start offset; audio mix-block timing uncertainty remains; capture loss makes audio pending",
-            "source_sha256": {path.name: file_hash(path) for path in [timeline, directory / "frames.csv"]},
+            "source_sha256": {path.name: file_hash(path) for path in [timeline, directory / "frames.csv", text_path, live_review_path] if path.is_file()},
+            "test_id": metadata.get("test_id"), "assessment_revision": metadata.get("revision"),
+            "text_review": ({"path": str(provenance.project_path(text_review_path, ROOT)),
+                             "sha256": file_hash(provenance.project_path(text_review_path, ROOT))}
+                            if text_review_path is not None else None),
             "segments": segments}
 
 

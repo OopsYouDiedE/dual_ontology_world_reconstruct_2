@@ -207,6 +207,6 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 - Keep only `artifacts/review/index.html`; delete `gameplay.html`. Update the already-open local report automatically when scene states or scores change.
 - The user stopped the GPT-5.6 Terra tester. Do not resume or recreate that model for this task.
 
-## 完整评测交付硬门槛 — 2026-11-17
+## 同一次测试同步完整采评硬要求 — 2026-11-17
 
-- **用户要求“一次测试全部评分”时，任务完成条件是：全部目标场景的七项评分均有真实证据支持的数值、理由和可打开的证据链接，并已整批写入唯一首页、自动刷新、核验、提交和推送。** 开测前必须逐项确认 `fluidity`、`text_density`、`action_sfx_integrity`、`audio_loudness`、`blind_narrative_match`、`aesthetic_similarity`、`narrative_flow` 的采集方法、所需参考资料、负责代理及评分时机，将独立盲玩、音频测量、动态动作检查和参考图对比纳入同一轮计划；依赖缺失应在开测前处理。任何场景仍有缺项，整批任务保持“未完成”，负责代理继续补采、补评和复核。`null`、缺测说明和“场景执行结束”只用于如实记录当前进度，均不能满足完整评测交付条件。实测失败须按既定量表给出有证据的失败分并标出具体卡点；禁止用零分、默认分、猜测分、跨版本拼分或修改旧证据凑齐七项。补测必须保留自己的测试 ID、版本和证据关系；涉及版本变化时按该版本重新完成所需覆盖。达到时间上限或遇到真实阻塞时，保留记录、明确列出未完成项和原因，任务继续标为未完成，禁止宣称全部评测完成；本条不自动延长既定测试窗口。
+- **每次测试必须从启动起同步采集全部七项评分所需证据，并在该次测试结束时一次性输出全部目标场景的完整七项评分。** `fluidity`、`text_density`、`action_sfx_integrity`、`audio_loudness`、`blind_narrative_match`、`aesthetic_similarity`、`narrative_flow` 的采集器、负责代理、独立盲玩观察和有效参考图必须在启动前全部就绪；各项采集与评判流程必须覆盖同一次实际测试过程，共用明确的测试 ID、源码版本、场景和时间轴。运行期间同步记录性能、可见文字、动态动作与音效、音频响度、盲玩叙事及节奏观察，并采集参考图对比所需画面；结束时使用本次同步采集的证据完成统计结算与评分，一次性将七项数值、理由、证据链接和失败卡点写入唯一首页并自动更新、核验、提交推送。**禁止先执行场景测试，再另开盲玩、音频、视觉或人工评测来拼成“一次完整测试”；禁止以事后补评计划、七个空字段或“场景执行结束”代替同步完整采评。** 测试前缺少任一采评条件，应先补齐测试配置与依赖；运行中出现采评中断，必须如实保留该次不完整记录并标为未完成，修复采集链路后重新执行受影响的完整场景测试，七项随重测一同采集，禁止跨测试或跨版本拼分。实测失败按量表和证据给失败分，禁止猜测分、默认分或将缺测强填零分。既定时间上限继续生效，到期保留未完成状态与具体阻塞，本条不自动延长测试窗口。

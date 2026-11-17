@@ -1,8 +1,10 @@
-# 文档索引
+# 项目文档
 
-现行操作见 [项目入口](../README.md)、[评估 MCP](../mcp/evaluation/README.md) 和 [评审 MCP](../mcp/review/README.md)。运行时接口以源码和工具 schema 为准。
+| 想做什么 | 从这里开始 |
+| --- | --- |
+| 构建、启动、定位源码 | [仓库 README](../README.md)、[运行时与目录](runtime.md) |
+| 修改剧情或验跨场景交接 | [剧情流程与验证](story-validation.md) |
+| 修改建筑、门窗与派生楼面 | [建筑房间拓扑](building-topology.md) |
+| 找历史原稿和结论 | [档案索引](archive/README.md) |
 
-- 技术参考：[系统架构与核心机制](31%20系统架构与核心机制.md)、[建筑房间拓扑](建筑房间拓扑.md)、[动捕工具](../tools/mocap/README.md)。
-- 施工蓝图：[第一章剧情优化方案](第一章剧情优化方案.md)，按因果交接组织剧情与检查点。
-- 设计原件：《安眠者有福》三部设计案和 `（Gemini设定）` 文件描述剧情、世界、美术和技术目标。以剧情源文件与实际测试核定已实现的行为。
-- 历史记录：迁移、房间修正、审计与早期测试文件保留当时的修订、范围和观察。执行新测试使用上面的现行手册；评分与原始证据从 [评审首页](../artifacts/review/index.html) 查阅。
+操作参数由各 MCP 手册维护：[游戏操作](../mcp/game/README.md) · [评估批次](../mcp/evaluation/README.md) · [评审发布](../mcp/review/README.md)。本目录保留现行开发说明与静态插图；实机记录写入 `artifacts/`，一次性工具输出写入 `.runtime/`。

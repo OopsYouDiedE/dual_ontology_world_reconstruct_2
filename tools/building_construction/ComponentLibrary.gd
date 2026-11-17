@@ -397,6 +397,6 @@ func _show_catalog() -> void:
 
 func _capture() -> void:
 	await RenderingServer.frame_post_draw
-	var path := "res://docs/BuildingSimulator.png"
+	var path := "res://.runtime/building_catalog/BuildingSimulator.png"
 	var saved := preload("res://mcp/CaptureReceipt.gd").save(get_viewport().get_texture().get_image(), path, get_tree(), "manual-component-capture")
 	status.text = "已保存实机截图：" + path if saved else "截图保存失败"

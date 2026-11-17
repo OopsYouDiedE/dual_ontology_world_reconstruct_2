@@ -1,10 +1,10 @@
 # 测试评分总览
 
-报告版本：08c529ced9ba1936d5b0fee444de7b3a820cd76a
+报告版本：ceaca7d3d318311330b70acb8a599a6359419596
 
 | 片段 | 测试 ID | 游玩流畅度 | 界面字数 | 动作完整性 | 音频响度 | 视听剧情替代 | 参考图相似度 | 剧情流畅性 |
 |---|---|---|---|---|---|---|---|---|
-| 起床与卧室探索 | wake-blind-20261118-fec773f | 6/10 | 8/10 | 6/10 | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 6/10 | 7/10 |
+| 起床与卧室探索 | wake-retest-20261118-ceaca7d | 6/10 | 8/10 | 6/10 | 0/10 (暂定·缺证据) | 5/10 | 6/10 | 6/10 |
 | 出门与走廊会合 | eval-20261117t174600-514af9d1-reviewed-corridor | 8/10 | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) |
 | 厨房七证物与原房间镜头 | eval-20261117t174600-514af9d1-reviewed-kitchen_evidence | 6/10 | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) |
 | 厨房三段脑内推演 | eval-20261117t174600-514af9d1-reviewed-kitchen_reconstruction | 6/10 | 0/10 (暂定·缺证据) | 6/10 | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) | 0/10 (暂定·缺证据) |
@@ -18,15 +18,15 @@
 
 ## 起床与卧室探索
 
-wake-blind-20261118-fec773f · 2026-11-18T00:49:07.020409+08:00 · fec773fd5858b884e94050208757c8725cb764c6 · 已测 · 测试未完成
+wake-retest-20261118-ceaca7d · 2026-11-18T01:25:28.919279+08:00 · ceaca7d3d318311330b70acb8a599a6359419596 · 已测 · 测试未完成
 
-- 游玩流畅度：6/10 — 53227 steady frames; 50 above 33.3 ms after the 1.5-second warmup exclusions. P95 16.799 ms, P99 25.098 ms, average 59.98 FPS. Peak observed load: three Godot processes, including two pre-existing instances; this test owns one. Runtime includes observer and tool waiting.
-- 界面字数：8/10 — 61 visible-text changes; maximum 12 words and 60 characters in one frame. Seven unclassified strings counted conservatively; recognized nameplates and single-key icons excluded. Script checks found no non-Latin violations; Latin script alone does not verify English.
-- 动作完整性：6/10 — Independent observer: 6/10. The detective moves to the wardrobe and its door opens; the bed cover changes position. The wardrobe edge obscures the arm, and the bed action lacks visible hand-to-cover contact. Visible motion only. Close-time isolation failure is retained beside this assessment.
-- 音频响度：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. Same-session raw Master and Music audio contain signal, but both segment analyses timed out after 180 seconds. FFmpeg inherited MCP stdin and stalled. Retain original failed analysis; the next revision disables interactive input and requires a full retest.
-- 视听剧情替代：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. The observer reached the hallway and recorded waking, unexplained scratches and departure; memory loss was absent. The close receipt then exposed current_scene, violating the required server-side isolation guarantee. A valid fully isolated test is unavailable; repeat with a fresh observer after repair.
-- 参考图相似度：6/10 — Independent observer: 6/10, after completing the blind account. Same-session bedroom framing and furniture placement match the assigned reference, while pure-white cutaway surroundings, harsher floor lighting, flatter surfaces and window lighting diverge.
-- 剧情流畅性：7/10 — Independent observer: 7/10. Markers and the bedroom door guided the transition. The opening question and wardrobe dialogue establish a mystery; the bed inspection reveals little and the exit transition is abrupt. No gameplay phase blocked. Test incomplete due to close-time isolation and audio analysis failures.
+- 游玩流畅度：6/10 — 96,614 steady frames; 45 exceeded 33.3 ms. P95 16.762 ms, P99 18.713 ms, average 59.99 FPS. Peak observed Godot processes: 3 (one test-owned, two pre-existing); this is a concurrent-load result.
+- 界面字数：8/10 — 53 visible-text changes; maximum 12 words and 60 characters; five unclassified strings counted conservatively. Latin-script validation only.
+- 动作完整性：6/10 — Independent observer: bed blanket displaced without visible hand contact in sampled frames; door-reaching pose visible. Wardrobe and other objects were not examined before exit. Visible motion only.
+- 音频响度：0/10 (暂定·缺证据) — Provisional 0: evidence unavailable; test incomplete. Provisional missing-evidence penalty: captured PCM duration 1613.674667 s fails to cover the 1614.481795 s frame timeline plus capture offset. User subsequently waived further recording and requested proceeding to other segments; no audio rerun.
+- 视听剧情替代：5/10 — Completed blind account supports bedroom bed/waking and departure (2 of 4 equal-weight facts); memory loss and unexplained hand scratches are absent. Canonical comparison: 5/10.
+- 参考图相似度：6/10 — Independent same-session comparison: matching room layout, camera, palette and furniture; white exterior void, flatter materials and different lighting/shadow balance. Score 6.
+- 剧情流畅性：6/10 — Independent observer: clue-search objective and hallway transition understandable; delayed clicks and unlabeled close-up exit impede exploration. Other bedroom objects not completed.
 
 ## 出门与走廊会合
 

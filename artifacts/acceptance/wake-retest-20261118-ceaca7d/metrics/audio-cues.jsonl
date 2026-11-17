@@ -1,0 +1,3 @@
+{"audibility":"not determined","coverage":"instrumented effect scheduling after monitor initialization only","timebase":"RuntimeMonitor elapsed_s","type":"configuration"}
+{"category":"spatial_effect","elapsed_s":218.432187,"frame":13095,"sequence":1,"type":"scheduled"}
+{"elapsed_s":1614.559144,"scheduled_count":1,"type":"finalized","write_errors":0}

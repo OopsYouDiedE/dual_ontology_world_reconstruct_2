@@ -46,7 +46,7 @@ RUN = schema({
 })
 TOOLS = {
     "input": [
-        types.Tool(name="on", description="Open a fresh real CLI/Godot host for human or SubAgent input. Returns session_id and initial observation; Godot starts at the title screen. No automatic decisions.",
+        types.Tool(name="on", description="Open a fresh real CLI/Godot host for human or SubAgent input. Returns session_id and initial observation. Segment tests require explicit scenario_path and a matching assessment_plan; never default them to title/new-game. No automatic decisions.",
                    inputSchema=schema({"backend": {"type": "string", "enum": ["cli", "godot"], "default": "cli"},
                                        "seed": {"type": "integer", "minimum": 0, "default": 1},
                                        "viewer": {"type": "string", "default": "detective"},
@@ -159,7 +159,7 @@ async def main(service):
         "Automatic tests belong to the auto MCP (GodotMCP/CliMCP); one call runs to the deadline without Agent input. "
         "Input MCP exposes on, step, observe, event_script, character_script and close; each observer opens its own session. "
         "The environment MCP prepares a project-local Godot .NET distribution when missing. "
-        "Godot input starts at the production title and follows the real new-game path. "
+        "Segment tests start at their explicit scenario/checkpoint using a matching assessment plan. Title startup is reserved for explicitly requested menu tests. "
         "Never forge receipts or inject author facts into campaign sessions. Deadline reached is not a campaign pass."))
 
     @server.list_tools()

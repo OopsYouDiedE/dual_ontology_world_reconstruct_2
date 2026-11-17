@@ -1,0 +1,35 @@
+{
+  "case_id": "poem-stakeout",
+  "segment_id": "poem",
+  "created_at": "2026-11-18T01:18:14.370359+08:00",
+  "method": "Scene-conditioned edit using bundled image_gen.py; gpt-image-2, high, auto; one existing Godot screenshot input.",
+  "prompt": "artifacts/references/all-segments-20261118/prompt.txt",
+  "prompt_sha256": "2cd234a184af2ce5e4a450e997a650e659f844cd46174285887ed77960f4e620",
+  "output": "artifacts/references/all-segments-20261118/poem-stakeout.png",
+  "output_sha256": "ffbc57eb037483ed5dbe9901e1616577ee0dfdf5f2327b52eaf19ee0a273c218",
+  "output_size": [
+    1586,
+    992
+  ],
+  "source_image": "artifacts/acceptance/mainline-survey-20261116-v2/poem-stakeout/01-entry.png",
+  "source_image_sha256": "3061707684d217892985bc3f6a8b98661ed89e444714325f64f4d4c80f2654dd",
+  "source_image_size": [
+    1440,
+    900
+  ],
+  "source_capture_metadata": "artifacts/acceptance/mainline-survey-20261116-v2/poem-stakeout/01-entry.png.json",
+  "source_capture_metadata_sha256": "144e8e4280f00232ebda66352696cd1e418d0348f925382a8298d14cc454f3c7",
+  "source_launch": "artifacts/acceptance/mainline-survey-20261116-v2/launch.json",
+  "source_launch_sha256": "8cfe9c28bc32ebd3d2c218c4641ae628cd88c1313ba45aa223fe7af8f51f4cf2",
+  "source_project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+  "source_revision": "d49b93ecec98cb2f86b80e748cf14da1a38f6144",
+  "source_pid": 7288,
+  "source_case_id": "poem-stakeout",
+  "source_capture_kind": "mainline-development-survey",
+  "source_phase": "01-entry",
+  "source_captured_local": "2026-11-16 12:52:58",
+  "source_fixture_room": "T01",
+  "comparison_scope": "Entry-frame lighting and broad materials only. Original camera and object placement remain authoritative; assess full-resolution source and generated frame together. Ignore generated text and interaction glyph fidelity.",
+  "visual_review": "Inspected source/edit pairs in 21-case contact sheet. Broad camera and room layout are recognizable. Generative detail, lighting, labels, and small geometry may differ; exact pixel and animation fidelity is not certified.",
+  "use_restrictions": "Static entry-frame design target only; source is from an earlier revision and test fixture, not a frame from the current test; no numerical quality or acceptance score is implied."
+}

@@ -238,3 +238,12 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 - Verify the segment entry arguments before launching. If the scenario/checkpoint or required assessment configuration is missing, stop and prepare it before starting a process. Never fall back to the title screen, new game or chapter opening.
 - Calling `on(backend="godot")` without an explicit segment entry is prohibited for these tasks. Lifecycle diagnostics follow the same entry requirement as gameplay tests.
 - Launch from the title screen only when the user explicitly requests a title/menu test. This rule supersedes earlier title-start instructions for segment testing.
+
+
+## Latest user testing override — 2026-11-18
+
+- Continue all remaining story segments in parallel with up to three test-owned rendered instances at 60 FPS. This supersedes the earlier single-observer scheduling for this batch. Each worker remains context-isolated from canonical story and owns its segment sessions.
+- Use Terra with low reasoning for subsequent gameplay observers (available subagent selector: `gpt-5.6-terra`). This latest user selection supersedes the earlier restriction on that model.
+- The user extended the execution window by eight hours: the deadline is now **2026-11-18 10:43:39 Asia/Taipei**, replacing 02:43:39.
+- Disable audio recording and loudness postprocessing for the remaining batch. Mark audio as skipped by user request; preserve the seven-field report schema with an explicitly labeled provisional 0 for that unmeasured field. Evaluate the other six categories from each same-session test. Audio is no longer a launch prerequisite or reason to repeat a segment in this batch.
+- Complete the remaining tests before giving the user the results; avoid interim result reports.

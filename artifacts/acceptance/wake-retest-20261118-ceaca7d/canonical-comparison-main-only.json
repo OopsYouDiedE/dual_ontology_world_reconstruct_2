@@ -1,0 +1,33 @@
+{
+  "test_id": "wake-retest-20261118-ceaca7d",
+  "revision": "ceaca7d3d318311330b70acb8a599a6359419596",
+  "method": "Four equally weighted expected facts; 2.5 points each. Only the completed blind account is compared.",
+  "score": 5,
+  "facts": [
+    {
+      "fact": "Awakens in the R05 bedroom bed",
+      "credit": 2.5,
+      "observed": "Detective sits upright on bed, then stands beside it."
+    },
+    {
+      "fact": "Memory loss since arrival",
+      "credit": 0,
+      "observed": "Absent from blind account."
+    },
+    {
+      "fact": "Unexplained hand scratches",
+      "credit": 0,
+      "observed": "Absent from blind account."
+    },
+    {
+      "fact": "Leaves bedroom for corridor",
+      "credit": 2.5,
+      "observed": "Door reach and hallway transition recorded."
+    }
+  ],
+  "canonical_sources": [
+    "assets/data/dual_world/dual_world.json:BEATS.d1_wake",
+    "localization/translations.csv"
+  ],
+  "blind_account": ".runtime\\wake-retest-20261118-ceaca7d\\blind-account.md"
+}

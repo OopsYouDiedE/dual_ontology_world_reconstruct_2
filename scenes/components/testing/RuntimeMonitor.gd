@@ -6,6 +6,7 @@ var node_id := "boot"
 var output_dir := ""
 var latest: Dictionary = {}
 var audio: Dictionary = {}
+var audio_capture_enabled := true
 var report := Timeline.new()
 var frames: FileAccess
 var pcm := preload("res://scenes/components/testing/AsyncPcmWriter.gd").new()
@@ -59,6 +60,9 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 	metadata["content_text_policy"] = "visible_active_viewports"
 	metadata["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree(), str(metadata.get("launch_scene", "")))
 	metadata["fps_window"] = "last 3600 frames; low FPS = 1000 / mean slowest fraction of frame times"
+	audio_capture_enabled = not "--dv-no-audio-capture" in OS.get_cmdline_user_args()
+	metadata["audio_capture_enabled"] = audio_capture_enabled
+	if not audio_capture_enabled: audio = {"status": "skipped", "reason": "Audio recording waived by user for this test batch"}
 	metadata["audio_method"] = "FFmpeg ebur128 / ITU BS.1770 K-weighting, 4x true-peak oversampling"
 	metadata["audio_capture_buffer_s"] = 15.0
 	metadata["audio_cue_coverage"] = "Scheduled global and interaction effects only, after monitor initialization; no audibility or story inference; direct players and music are outside coverage"
@@ -80,17 +84,18 @@ func configure(directory: String, metadata: Dictionary, content: Control) -> voi
 		return
 	frames = FileAccess.open(directory + "/frames.csv", FileAccess.WRITE)
 	if frames != null: frames.store_line("frame,elapsed_s,node,frame_ms,draw_calls,static_ram_mb,gpu_resource_mb,measurement_phase,warmup_reason")
-	if pcm.start(directory + "/mix.f32le") != OK: push_error("Audio recording file could not open")
-	capture = AudioEffectCapture.new()
-	# Scene construction can block longer than the default ring. Preserve its
-	# audio while the unscaled frame clock continues to report that stall.
-	capture.buffer_length = 15.0
-	AudioServer.add_bus_effect(0, capture)
-	_master_capture_usec = Time.get_ticks_usec()
-	capture_index = AudioServer.get_bus_effect_count(0) - 1
-	_start_audio_worker()
-	for bus_name in ["Music", "Ambient"]:
-		_start_background_capture(bus_name)
+	if audio_capture_enabled:
+		if pcm.start(directory + "/mix.f32le") != OK: push_error("Audio recording file could not open")
+		capture = AudioEffectCapture.new()
+		# Scene construction can block longer than the default ring. Preserve its
+		# audio while the unscaled frame clock continues to report that stall.
+		capture.buffer_length = 15.0
+		AudioServer.add_bus_effect(0, capture)
+		_master_capture_usec = Time.get_ticks_usec()
+		capture_index = AudioServer.get_bus_effect_count(0) - 1
+		_start_audio_worker()
+		for bus_name in ["Music", "Ambient"]:
+			_start_background_capture(bus_name)
 	text_changes = FileAccess.open(directory + "/visible-text-changes.jsonl", FileAccess.WRITE)
 	_audio_route_initial = _audio_route_snapshot()
 	_started_usec = Time.get_ticks_usec()
@@ -342,7 +347,7 @@ func finish() -> void:
 		if text_changes.get_error() != OK: _text_write_errors += 1
 		text_changes.close()
 		text_changes = null
-	if output_dir != "":
+	if audio_capture_enabled and output_dir != "":
 		var stop := FileAccess.open(output_dir + "/audio.stop", FileAccess.WRITE)
 		if stop != null: stop.store_string("finalize"); stop.close()
 	if capture_index >= 0:

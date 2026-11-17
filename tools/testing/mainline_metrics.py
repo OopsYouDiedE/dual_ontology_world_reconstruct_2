@@ -273,6 +273,10 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
             segment["measured_scores"][1] = text_result["score"]
             segment["text_score_reason"] = text_result["reason"]
         segment["audio"] = {"status": "pending", "reason": "Final complete audio and FFmpeg are required"}
+        if metadata.get("audio_capture_enabled") is False:
+            segment["audio"] = {"status": "skipped", "reason": "Audio recording waived by user for this test batch"}
+            segment["audio_score_reason"] = segment["audio"]["reason"]
+            continue
         if ffmpeg and name not in ("boot", "title"):
             segment_route = route_for_intervals(route, segment["intervals_s"])
             snapshot = segment_route.get("snapshot", {})

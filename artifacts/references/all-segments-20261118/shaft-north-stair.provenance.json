@@ -1,0 +1,35 @@
+{
+  "case_id": "shaft-north-stair",
+  "segment_id": "shaft",
+  "created_at": "2026-11-18T01:18:14.348983+08:00",
+  "method": "Scene-conditioned edit using bundled image_gen.py; gpt-image-2, high, auto; one existing Godot screenshot input.",
+  "prompt": "artifacts/references/all-segments-20261118/prompt.txt",
+  "prompt_sha256": "2cd234a184af2ce5e4a450e997a650e659f844cd46174285887ed77960f4e620",
+  "output": "artifacts/references/all-segments-20261118/shaft-north-stair.png",
+  "output_sha256": "fbe8ab9098a0b87100c27e9440ca22c884773d4302ff77d647210fadad7fec2e",
+  "output_size": [
+    1586,
+    992
+  ],
+  "source_image": "artifacts/acceptance/mainline-survey-20261116-v2/shaft-north-stair/01-entry.png",
+  "source_image_sha256": "e0ea6fd0679aab8f2f78b8b46792a55677671e26cfbc92f9d168f3919a96f332",
+  "source_image_size": [
+    1440,
+    900
+  ],
+  "source_capture_metadata": "artifacts/acceptance/mainline-survey-20261116-v2/shaft-north-stair/01-entry.png.json",
+  "source_capture_metadata_sha256": "3fc8bb5f48e03628b4eb0a7776e550b4434ee0841816c905ce7efe21bd268db2",
+  "source_launch": "artifacts/acceptance/mainline-survey-20261116-v2/launch.json",
+  "source_launch_sha256": "8cfe9c28bc32ebd3d2c218c4641ae628cd88c1313ba45aa223fe7af8f51f4cf2",
+  "source_project_root": "C:/Users/iii/Desktop/dual_ontology_world_reconstruct_2",
+  "source_revision": "d49b93ecec98cb2f86b80e748cf14da1a38f6144",
+  "source_pid": 7288,
+  "source_case_id": "shaft-north-stair",
+  "source_capture_kind": "mainline-development-survey",
+  "source_phase": "01-entry",
+  "source_captured_local": "2026-11-16 12:52:43",
+  "source_fixture_room": "2F-North-Stair",
+  "comparison_scope": "Entry-frame lighting and broad materials only. Original camera and object placement remain authoritative; assess full-resolution source and generated frame together. Ignore generated text and interaction glyph fidelity. Historical launch recorded missing actor spawn positions; reference does not validate actor coverage or motion.",
+  "visual_review": "Inspected source/edit pairs in 21-case contact sheet. Broad camera and room layout are recognizable. Generative detail, lighting, labels, and small geometry may differ; exact pixel and animation fidelity is not certified.",
+  "use_restrictions": "Static entry-frame design target only; source is from an earlier revision and test fixture, not a frame from the current test; no numerical quality or acceptance score is implied."
+}

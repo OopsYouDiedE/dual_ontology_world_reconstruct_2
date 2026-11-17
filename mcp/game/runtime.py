@@ -376,6 +376,8 @@ def start(arguments, deadline=None):
             command.append("--dv-content=" + endpoint.content_path)
             if getattr(endpoint, "assessment_plan", None):
                 command.append("--dv-assessment-plan=" + endpoint.assessment_plan["plan_path"])
+                if endpoint.assessment_plan.get("audio_capture_enabled") is False:
+                    command.append("--dv-no-audio-capture")
             command.append("--dv-checkpoint-output=" + str(endpoint.checkpoint_path))
             command.append("--dv-checkpoint-stop=" + str(endpoint.checkpoint_stop_path))
             if snapshot_path is not None:

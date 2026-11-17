@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "generated_at": "2026-11-18T00:49:38+08:00",
-  "revision": "08c529ced9ba1936d5b0fee444de7b3a820cd76a",
+  "generated_at": "2026-11-18T01:27:03+08:00",
+  "revision": "ceaca7d3d318311330b70acb8a599a6359419596",
   "dimensions": [
     "游玩流畅度",
     "界面字数",
@@ -14,7 +14,7 @@
   "history_evidence": {
     "complete": true,
     "counts": {
-      "valid": 340,
+      "valid": 341,
       "missing": 0,
       "changed": 0,
       "unverified": 0
@@ -33,54 +33,54 @@
         8,
         6,
         0,
-        0,
+        5,
         6,
-        7
+        6
       ],
       "status": "已测 · 测试未完成",
       "test": {
-        "id": "wake-blind-20261118-fec773f",
+        "id": "wake-retest-20261118-ceaca7d",
         "segment_id": "wake",
-        "revision": "fec773fd5858b884e94050208757c8725cb764c6",
-        "at": "2026-11-18T00:49:07.020409+08:00",
+        "revision": "ceaca7d3d318311330b70acb8a599a6359419596",
+        "at": "2026-11-18T01:25:28.919279+08:00",
         "scores": [
           6,
           8,
           6,
           0,
-          0,
+          5,
           6,
-          7
+          6
         ],
         "reasons": [
-          "53227 steady frames; 50 above 33.3 ms after the 1.5-second warmup exclusions. P95 16.799 ms, P99 25.098 ms, average 59.98 FPS. Peak observed load: three Godot processes, including two pre-existing instances; this test owns one. Runtime includes observer and tool waiting.",
-          "61 visible-text changes; maximum 12 words and 60 characters in one frame. Seven unclassified strings counted conservatively; recognized nameplates and single-key icons excluded. Script checks found no non-Latin violations; Latin script alone does not verify English.",
-          "Independent observer: 6/10. The detective moves to the wardrobe and its door opens; the bed cover changes position. The wardrobe edge obscures the arm, and the bed action lacks visible hand-to-cover contact. Visible motion only. Close-time isolation failure is retained beside this assessment.",
-          "Provisional 0: evidence unavailable; test incomplete. Same-session raw Master and Music audio contain signal, but both segment analyses timed out after 180 seconds. FFmpeg inherited MCP stdin and stalled. Retain original failed analysis; the next revision disables interactive input and requires a full retest.",
-          "Provisional 0: evidence unavailable; test incomplete. The observer reached the hallway and recorded waking, unexplained scratches and departure; memory loss was absent. The close receipt then exposed current_scene, violating the required server-side isolation guarantee. A valid fully isolated test is unavailable; repeat with a fresh observer after repair.",
-          "Independent observer: 6/10, after completing the blind account. Same-session bedroom framing and furniture placement match the assigned reference, while pure-white cutaway surroundings, harsher floor lighting, flatter surfaces and window lighting diverge.",
-          "Independent observer: 7/10. Markers and the bedroom door guided the transition. The opening question and wardrobe dialogue establish a mystery; the bed inspection reveals little and the exit transition is abrupt. No gameplay phase blocked. Test incomplete due to close-time isolation and audio analysis failures."
+          "96,614 steady frames; 45 exceeded 33.3 ms. P95 16.762 ms, P99 18.713 ms, average 59.99 FPS. Peak observed Godot processes: 3 (one test-owned, two pre-existing); this is a concurrent-load result.",
+          "53 visible-text changes; maximum 12 words and 60 characters; five unclassified strings counted conservatively. Latin-script validation only.",
+          "Independent observer: bed blanket displaced without visible hand contact in sampled frames; door-reaching pose visible. Wardrobe and other objects were not examined before exit. Visible motion only.",
+          "Provisional 0: evidence unavailable; test incomplete. Provisional missing-evidence penalty: captured PCM duration 1613.674667 s fails to cover the 1614.481795 s frame timeline plus capture offset. User subsequently waived further recording and requested proceeding to other segments; no audio rerun.",
+          "Completed blind account supports bedroom bed/waking and departure (2 of 4 equal-weight facts); memory loss and unexplained hand scratches are absent. Canonical comparison: 5/10.",
+          "Independent same-session comparison: matching room layout, camera, palette and furniture; white exterior void, flatter materials and different lighting/shadow balance. Score 6.",
+          "Independent observer: clue-search objective and hallway transition understandable; delayed clicks and unlabeled close-up exit impede exploration. Other bedroom objects not completed."
         ],
         "status": "已测 · 测试未完成",
         "provisional_categories": [
-          "audio_loudness",
-          "blind_narrative_match"
+          "audio_loudness"
         ],
         "images": [
           {
-            "path": "artifacts/acceptance/wake-blind-20261118-fec773f/000024-0.png",
-            "caption": "000024-0"
+            "path": "artifacts/acceptance/wake-retest-20261118-ceaca7d/receipts/000012-0.png",
+            "caption": "000012-0"
           }
         ],
         "evidence": [
-          "artifacts/acceptance/wake-blind-20261118-fec773f/evidence-index.json",
-          "artifacts/acceptance/wake-blind-20261118-fec773f/segment-metrics.json",
-          "artifacts/acceptance/wake-blind-20261118-fec773f/observer-review.json",
-          "artifacts/acceptance/wake-blind-20261118-fec773f/blind-account.md",
-          "artifacts/acceptance/wake-blind-20261118-fec773f/000026.json",
-          "artifacts/acceptance/wake-blind-20261118-fec773f/000024-0.png"
+          "artifacts/acceptance/wake-retest-20261118-ceaca7d/evidence-index.json",
+          "artifacts/acceptance/wake-retest-20261118-ceaca7d/blind-account.md",
+          "artifacts/acceptance/wake-retest-20261118-ceaca7d/observer-review.json",
+          "artifacts/acceptance/wake-retest-20261118-ceaca7d/canonical-comparison-main-only.json",
+          "artifacts/acceptance/wake-retest-20261118-ceaca7d/transport-check.json",
+          "artifacts/acceptance/wake-retest-20261118-ceaca7d/metrics/segment-metrics.json",
+          "artifacts/acceptance/wake-retest-20261118-ceaca7d/receipts/000012-0.png"
         ],
-        "event_id": "event-4cd5efb168027b2ddeb76f6c0ef074d1",
+        "event_id": "event-4341389c8a602f844c3bb619a7d9cd76",
         "independent_review": false,
         "evidence_issues": []
       }

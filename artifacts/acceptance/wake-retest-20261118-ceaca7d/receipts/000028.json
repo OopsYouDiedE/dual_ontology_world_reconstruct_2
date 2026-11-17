@@ -1,0 +1,14 @@
+{
+  "tool": "metrics_status",
+  "is_error": false,
+  "data": {
+    "session_id": "ef82f03f85d4108b",
+    "metrics_status": "complete",
+    "metrics_summary_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mainline-runs\\2026-11-18T00-52-48-18344\\segment-metrics.json"
+  },
+  "text": [
+    "{\"session_id\": \"ef82f03f85d4108b\", \"metrics_status\": \"complete\", \"metrics_summary_path\": \"C:\\\\Users\\\\iii\\\\Desktop\\\\dual_ontology_world_reconstruct_2\\\\.runtime\\\\mainline-runs\\\\2026-11-18T00-52-48-18344\\\\segment-metrics.json\"}"
+  ],
+  "images": [],
+  "audio": []
+}

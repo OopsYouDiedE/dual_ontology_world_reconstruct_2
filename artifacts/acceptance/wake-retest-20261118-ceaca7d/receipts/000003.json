@@ -1,0 +1,15 @@
+{
+  "tool": "event_script",
+  "is_error": false,
+  "data": {
+    "recorded": true,
+    "kind": "event",
+    "evidence_path": "C:\\Users\\iii\\Desktop\\dual_ontology_world_reconstruct_2\\.runtime\\mainline-runs\\2026-11-18T00-52-48-18344\\blind-observations.jsonl",
+    "monitor_elapsed_s": 47.90005
+  },
+  "text": [
+    "{\"recorded\": true, \"kind\": \"event\", \"evidence_path\": \"C:\\\\Users\\\\iii\\\\Desktop\\\\dual_ontology_world_reconstruct_2\\\\.runtime\\\\mainline-runs\\\\2026-11-18T00-52-48-18344\\\\blind-observations.jsonl\", \"monitor_elapsed_s\": 47.90005}"
+  ],
+  "images": [],
+  "audio": []
+}

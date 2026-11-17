@@ -41,5 +41,6 @@ The user explicitly authorized this new eight-hour window on 2026-11-17 and requ
 - 10:19: Pushed commit `5ac4c9f` to `origin/main`. Post-push score contracts pass 39 checks and review integration passes 36; corridor production collision and localization work continues.
 - 10:24: Corridor stage now has production surface colliders; the targeted diagnostic records 42 physics bodies and completes in 1.74 seconds. Navigation and macro-camera coverage remain open.
 - 10:24–10:36: Expanded the English catalog to 397 unique entries, including locations, evidence readings, engine notices, objectives and shared case UI. One UI run passed its 49 assertions but exited with a Windows access violation; a repeat UI job passed, while its flow job completed assertions before another access-violation exit. The editor import reported a Busy parse error in `BuildingSimulator.tscn`.
+- 10:41: Development flow and UI now use the shared audio-draining shutdown path. A focused flow run and a full batch exit cleanly; flow, fixtures, visual survey, UI, bedroom and kitchen pass. Corridor remains blocked on navigation and macro-camera coverage.
 
 At the deadline stop feature changes, terminate owned test processes, export the final report, preserve evidence and provide a handover. Commit only changes whose provenance and scope are verified.

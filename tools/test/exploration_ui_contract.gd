@@ -192,4 +192,4 @@ func _finish() -> void:
 	print(JSON.stringify({"pass": report.pass, "checks": checks.size(), "failures": failures, "report": output, "elapsed_ms": report.elapsed_ms}))
 	shell.queue_free()
 	await process_frame
-	quit(0 if report.pass else 1)
+	await preload("res://scenes/components/shared/HostLifecycle.gd").quit(self, 0 if report.pass else 1)

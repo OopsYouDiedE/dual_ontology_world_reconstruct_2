@@ -303,4 +303,4 @@ func _initialize() -> void:
 
 	print("RESULT fails=", fails, " beat=", game.eng.s.current_beat, " time=", game.eng.s.t, " room=", game.eng.s.room)
 	await _teardown_game(game)
-	call_deferred("quit", 1 if fails > 0 else 0)
+	await preload("res://scenes/components/shared/HostLifecycle.gd").quit(self, 1 if fails > 0 else 0)

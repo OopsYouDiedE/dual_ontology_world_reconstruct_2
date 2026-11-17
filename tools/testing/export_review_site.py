@@ -894,11 +894,13 @@ def render():
     if obsolete.is_file(): obsolete.unlink()
     for filename in ('index.html',):
         page = OUT / filename
-        body = test_results.scene_survey_table(survey, page, link)
-        body += test_results.matrix(scenes, latest)
-        body += ''.join(test_results.card(scene, latest.get(scene['id']), page, link, project_file, trajectory) for scene in scenes)
+        body = test_results.matrix(scenes, latest)
+        for scene in scenes:
+            card = test_results.card(scene, latest.get(scene['id']), page, link, project_file, trajectory)
+            details = test_results.scene_survey_table(survey, page, link, scene['id'])
+            body += card.replace('</article>', details + '</article>')
         document = wrap('第一章 · 测试评分', body, page, revision)
-        document = document.replace('<body ', '<body data-report-client-version="2" ', 1)
+        document = document.replace('<body ', '<body data-report-client-version="3" ', 1)
         document = document.replace(link(OUT / 'archive.html', '历史与辅助资料', page), '')
         document = document.replace('review.js', 'run-report.js')
         atomic_write(page, document)

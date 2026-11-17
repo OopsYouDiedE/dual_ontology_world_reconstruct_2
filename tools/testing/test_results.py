@@ -252,7 +252,8 @@ def latest_scene_survey(root):
             evidence = _local_file(root, directory / job / case_id / 'report.json') or result_path
             scoring = case_scores.get(case_id) or {'scores': {key: None for key in CATEGORIES},
                                                      'reasons': {key: '该场景当前批次尚无评分。' for key in CATEGORIES}}
-            rows.append(dict(id=case_id, room=str(room), phase=str(phase), state=str(entry.get('state', 'unknown')),
+            segment_id = entry.get('segment_id') or config.get('segment_id') or configs.get(job, {}).get('segment_id')
+            rows.append(dict(id=case_id, segment_id=str(segment_id or ''), room=str(room), phase=str(phase), state=str(entry.get('state', 'unknown')),
                              reason='；'.join(dict.fromkeys(problems)), images=images,
                              evidence=evidence, progress=progress_path, **scoring))
         return dict(id=str(status.get('run_id') or directory.name), revision=str(status.get('revision', '')),
@@ -260,15 +261,18 @@ def latest_scene_survey(root):
     return None
 
 
-def scene_survey_table(survey, page, link):
+def scene_survey_table(survey, page, link, segment_id=None):
     if not survey:
         return ''
-    labels = {'passed': '完成', 'failed': '失败', 'blocked': '受阻', 'cancelled': '已停止',
+    rows_for_segment = [row for row in survey['rows'] if segment_id is None or row.get('segment_id') == segment_id]
+    if not rows_for_segment:
+        return ''
+    labels = {'passed': '执行结束', 'failed': '失败', 'blocked': '受阻', 'cancelled': '已停止',
               'running': '进行中', 'starting': '启动中', 'planned': '等待中', 'unknown': '未知'}
     rows = []
-    for row in survey['rows']:
+    for row in rows_for_segment:
         state = labels.get(row['state'], row['state'])
-        reason = row['reason'] or ('检查执行结束' if row['state'] == 'passed' else '等待结果')
+        reason = row['reason'] or ('执行结束，评分见对应片段' if row['state'] == 'passed' else '等待结果')
         evidence = []
         if row.get('evidence'):
             evidence.append(link(row['evidence'], '结果', page))
@@ -276,17 +280,14 @@ def scene_survey_table(survey, page, link):
             evidence.append(link(row['progress'], '最近步骤', page))
         if row.get('images'):
             evidence.append(link(row['images'][-1], '画面', page))
-        dimensions = ''.join('<td class="survey-score" data-survey-score="' + escape(key, quote=True) + '"><strong>'
-                             + escape(score_text(row['scores'][key])) + '</strong><small>' + escape(row['reasons'][key])
-                             + '</small></td>' for key in CATEGORIES)
         rows.append('<tr data-survey-case="' + escape(row['id'], quote=True) + '"><th>' + escape(row['id']) + '</th><td>'
                     + escape(row['room']) + '</td><td>' + escape(row['phase']) + '</td><td>' + escape(state) + '</td><td>'
-                    + escape(reason) + '</td>' + dimensions + '<td>' + (' '.join(evidence) if evidence else '—') + '</td></tr>')
+                    + escape(reason) + '</td><td>' + (' '.join(evidence) if evidence else '—') + '</td></tr>')
     summary = '批次 ' + survey['id'] + ' · 版本 ' + survey['revision'][:12] + ' · ' + labels.get(survey['state'], survey['state'])
-    return ('<section class="score-coverage scene-survey"><h2>场景逐项测试与卡点</h2><p>' + escape(summary) + ' · '
+    return ('<section class="scene-survey" data-scene-evidence><details><summary>场景执行详情与卡点</summary><p>' + escape(summary) + ' · '
             + link(survey['status_path'], '批次状态', page) + '</p><div class="coverage-scroll"><table><thead><tr>'
-            + '<th>场景</th><th>房间</th><th>最近阶段</th><th>状态</th><th>问题 / 卡点</th>' + ''.join('<th>' + escape(label) + '</th>' for label in LABELS) + '<th>证据</th></tr></thead><tbody>'
-            + ''.join(rows) + '</tbody></table></div></section>')
+            + '<th>场景</th><th>房间</th><th>最近阶段</th><th>执行状态</th><th>问题 / 卡点</th><th>证据</th></tr></thead><tbody>'
+            + ''.join(rows) + '</tbody></table></div></details></section>')
 
 
 def scene_survey_payload(root, survey):

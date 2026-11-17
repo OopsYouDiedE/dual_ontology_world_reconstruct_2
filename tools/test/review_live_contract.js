@@ -14,6 +14,7 @@ const document = {
   body,
   getElementById(id) { return {'progress-events': list, 'progress-empty': empty}[id] || null; },
   querySelectorAll() { return []; },
+  querySelector() { return null; },
   createElement(tag) { return new Element(tag); }
 };
 const first = {event_id:'one',kind:'change',at:'2026-11-16 12:00:00',summary:'<script>unsafe</script>',result:'changed',work_id:'same-work',segment_id:'wake',revision:'12345678',evidence:['artifacts/带 空格.png']};

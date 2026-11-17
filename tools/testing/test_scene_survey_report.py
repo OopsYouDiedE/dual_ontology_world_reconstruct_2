@@ -62,9 +62,9 @@ class SceneSurveyTests(unittest.TestCase):
         self.assertIsNone(data['rows'][0]['scores']['audio_loudness'])
         self.assertIsNone(data['rows'][1]['scores']['fluidity'])
         html = test_results.scene_survey_table(data, None, lambda *args: '<a>link</a>')
-        self.assertEqual(html.count('data-survey-score='), 14)
-        self.assertIn('6/10', html)
-        self.assertIn('No measured &lt;value&gt;', html)
+        self.assertEqual(html.count('data-survey-score='), 0)
+        self.assertIn('<details>', html)
+        self.assertIn('执行结束，评分见对应片段', html)
         payload = test_results.scene_survey_payload(self.root, data)
         self.assertEqual(payload['rows'][0]['reasons']['fluidity'], 'Observed a spike')
         reviewed = json.loads(json.dumps(score_file))
@@ -91,6 +91,25 @@ class SceneSurveyTests(unittest.TestCase):
         self.assertEqual(row['id'], 'boot')
         self.assertEqual(row['room'], 'B-P')
         self.assertIn('inspect / boot-print / walking path timed out', row['reason'])
+
+    def test_scenes_are_grouped_under_their_segment(self):
+        directory = self.runs / 'eval-20261117t170000-test'
+        self.put(directory / 'status.json', dict(profile='scene_survey', jobs={
+            'survey-a': {'segment_id': 'wake', 'state': 'passed'},
+            'survey-b': {'segment_id': 'shaft', 'state': 'failed'}}))
+        data = test_results.latest_scene_survey(self.root)
+        wake = test_results.scene_survey_table(data, None, lambda *args: '<a>link</a>', 'wake')
+        shaft = test_results.scene_survey_table(data, None, lambda *args: '<a>link</a>', 'shaft')
+        self.assertIn('data-survey-case="a"', wake)
+        self.assertNotIn('data-survey-case="b"', wake)
+        self.assertIn('data-survey-case="b"', shaft)
+        self.assertEqual(test_results.scene_survey_table(data, None, lambda *args: '', 'poem'), '')
+        payload = test_results.scene_survey_payload(self.root, data)
+        self.assertEqual([row['segment_id'] for row in payload['rows']], ['wake', 'shaft'])
+
+    def test_live_bootstrap_never_reloads_for_older_pages(self):
+        self.assertNotIn('location.reload', test_results.SCENE_LIVE_BOOTSTRAP)
+        self.assertIn('window.__sceneSurveyLive', test_results.SCENE_LIVE_BOOTSTRAP)
 
     def test_missing_or_invalid_results_and_untrusted_links(self):
         directory = self.runs / 'eval-20261117t170000-test'

@@ -9,12 +9,35 @@ import tempfile
 import unittest
 
 from audio_watch import find_ffmpeg
-from mainline_metrics import audio_score, analyze_background
+from mainline_metrics import audio_score, analyze_audio, analyze_background
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class AudioChannelTests(unittest.TestCase):
+    @unittest.skipUnless(find_ffmpeg(), "FFmpeg unavailable")
+    def test_selected_intervals_exclude_unselected_audio_and_concatenate(self):
+        runtime = ROOT / '.runtime'
+        runtime.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=runtime) as directory:
+            path = Path(directory)
+            rate = 44100
+            silence = array.array('f', [0.0]) * (rate * 2)
+            tone = array.array('f', (0.1 * math.sin(2 * math.pi * 440 * i / rate)
+                                     for i in range(rate) for _ in range(2)))
+            (path / 'mix.f32le').write_bytes(silence.tobytes() + tone.tobytes() + silence.tobytes())
+            quiet = analyze_audio(path, 'quiet', [[0, 1], [2, 3]], rate, find_ffmpeg())
+            self.assertFalse(quiet.get('signal_present', False))
+            loud = analyze_audio(path, 'loud', [[1, 2]], rate, find_ffmpeg())
+            self.assertTrue(loud.get('signal_present'))
+            self.assertAlmostEqual(loud['true_peak_dbtp'], -20.0, delta=0.5)
+            mixed = analyze_audio(path, 'mixed', [[0, 1], [1, 2]], rate, find_ffmpeg())
+            self.assertTrue(mixed.get('signal_present'))
+            with self.assertRaises(ValueError):
+                analyze_audio(path, 'bad', [[2.9, 3.1]], rate, find_ffmpeg())
+            with self.assertRaises(ValueError):
+                analyze_audio(path, 'bad', [[1, 2], [1.5, 2.5]], rate, find_ffmpeg())
+
     @unittest.skipUnless(find_ffmpeg(), "FFmpeg unavailable")
     def test_parallel_channel_files_and_silence(self):
         runtime = ROOT / '.runtime'

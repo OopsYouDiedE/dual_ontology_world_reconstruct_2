@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "wake-bedroom",
+  "mode": "story",
+  "room": "R05",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 7,
+    "minute": 15
+  },
+  "playing": false,
+  "mock": {
+    "beat_cursor": 1,
+    "flags": {
+      "service_map": true
+    }
+  }
+}

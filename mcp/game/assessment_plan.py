@@ -52,4 +52,10 @@ def validate(path, root, revision=None):
         receipt = local(reference.get('provenance', ''))
         if not receipt.stat().st_size:
             raise ValueError('Reference provenance is empty')
+        if plan.get('entry_mode') == 'segment':
+            scenario = local(case.get('scenario_path', ''))
+            if hashlib.sha256(scenario.read_bytes()).hexdigest() != case.get('scenario_sha256'):
+                raise ValueError('Scenario hash mismatch for ' + case['id'])
+            if case['segment_id'] != plan.get('segment_id'):
+                raise ValueError('One segment test may only contain its own scene cases')
     return dict(plan, plan_path=str(plan_path), plan_sha256=hashlib.sha256(plan_path.read_bytes()).hexdigest())

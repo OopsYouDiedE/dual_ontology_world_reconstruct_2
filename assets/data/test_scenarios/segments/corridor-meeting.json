@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "corridor-meeting",
+  "mode": "story",
+  "room": "R05",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 7,
+    "minute": 20
+  },
+  "playing": false,
+  "mock": {
+    "beat_cursor": 1,
+    "flags": {
+      "service_map": true
+    }
+  },
+  "presentation_snapshot": "res://artifacts/evaluation/runs/eval-20261117t170218-ded02f19/fixtures/fixtures/corridor-free.json"
+}

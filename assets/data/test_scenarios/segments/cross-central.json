@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "cross-central",
+  "mode": "story",
+  "room": "2F-cross-M",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 11,
+    "minute": 5
+  },
+  "playing": false,
+  "mock": {
+    "beat_cursor": 10,
+    "flags": {
+      "service_map": true
+    }
+  }
+}

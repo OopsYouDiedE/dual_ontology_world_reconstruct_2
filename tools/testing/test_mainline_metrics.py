@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class MainlineMetricsTests(unittest.TestCase):
-    def measure(self, rows, *, legacy=False, text_count=None, metadata_override=None, snapshot_path=None, full=False):
+    def measure(self, rows, *, legacy=False, text_count=None, metadata_override=None, snapshot_path=None, scenario_path=None, full=False):
         base = ROOT / ".runtime/metrics-unit-tests"
         base.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=base) as directory:
@@ -35,7 +35,7 @@ class MainlineMetricsTests(unittest.TestCase):
                     if not legacy:
                         row["measurement_phase"] = phase
                     writer.writerow(row)
-            result = summarize(path, snapshot_path=snapshot_path)
+            result = summarize(path, snapshot_path=snapshot_path, scenario_path=scenario_path)
             return result if full else result["segments"]["kitchen_evidence"]
 
     def test_snapshot_metrics_are_explicitly_development_only(self):
@@ -56,6 +56,21 @@ class MainlineMetricsTests(unittest.TestCase):
                        dict(snapshot_path=str(ROOT / ".runtime" / "other.json"))):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 self.measure([(16, "steady")], metadata_override=dict(metadata, **change), snapshot_path=snapshot)
+
+    def test_scenario_metadata_requires_existing_matching_project_file(self):
+        scenario = ROOT / "assets/data/test_scenarios/wake.yaml"
+        self.assertTrue(scenario.is_file())
+        metadata = dict(mock=True, entry="scenario", scenario_path=str(scenario))
+        result = self.measure([(16, "steady")], metadata_override=metadata, scenario_path=scenario, full=True)
+        self.assertEqual(result["scenario_path"], str(scenario))
+        for change in (dict(mock=False), dict(entry="production_title"), dict(scenario_path=str(scenario.parent / "other.yaml")),
+                       dict(measurement_context="fixed_step_movie")):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.measure([(16, "steady")], metadata_override=dict(metadata, **change), scenario_path=scenario)
+        with self.assertRaises(ValueError):
+            self.measure([(16, "steady")], metadata_override=metadata, scenario_path=scenario.parent / "missing.yaml")
+        with self.assertRaises(ValueError):
+            self.measure([(16, "steady")], metadata_override=metadata, scenario_path=scenario, snapshot_path=ROOT / ".runtime" / "fixture.json")
 
     def test_production_cannot_use_snapshot_mode(self):
         with self.assertRaises(ValueError):

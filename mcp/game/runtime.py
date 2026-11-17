@@ -54,6 +54,7 @@ class Endpoint:
         self.executable = None
         self.last_source = None
         self.snapshot_path = None
+        self.scenario_path = None
         self.checkpoint_path = None
         self.checkpoint_stop_path = None
         self.metrics_directory = None
@@ -149,8 +150,12 @@ def finalize_metrics(endpoint, graceful):
     if endpoint.backend != "godot":
         return {"metrics_status": "not_applicable"}
     development = endpoint.snapshot_path is not None
+    scenario = endpoint.scenario_path is not None
     development_flags = {"acceptance_eligible": False, "acceptance_scored": False,
                          "snapshot_path": str(endpoint.snapshot_path)} if development else {}
+    if scenario:
+        development_flags.update(acceptance_eligible=False, acceptance_scored=False,
+                                 scenario_path=str(endpoint.scenario_path))
     if endpoint.movie_path is not None:
         return dict(development_flags, metrics_status="not_eligible", metrics_error="Fixed-step movie runs are development captures")
     if not graceful or endpoint.metrics_directory is None:
@@ -170,8 +175,12 @@ def finalize_metrics(endpoint, graceful):
         if testing_path not in sys.path:
             sys.path.insert(0, testing_path)
         metrics = importlib.import_module("mainline_metrics")
-        data = (metrics.summarize(directory, snapshot_path=endpoint.snapshot_path)
+        data = (metrics.summarize(directory, scenario_path=endpoint.scenario_path) if endpoint.scenario_path
+                else metrics.summarize(directory, snapshot_path=endpoint.snapshot_path)
                 if development else metrics.summarize(directory))
+        if scenario and (data.get("entry") != "scenario" or data.get("acceptance_eligible") is not False
+                         or data.get("scenario_path") != str(provenance.project_path(endpoint.scenario_path, ROOT))):
+            raise ValueError("Scenario metrics provenance mismatch")
         if development and (data.get("acceptance_eligible") is not False
                             or data.get("snapshot_path") != str(provenance.project_path(endpoint.snapshot_path, ROOT))):
             raise ValueError("Development metrics provenance mismatch")
@@ -190,6 +199,8 @@ def finalize_metrics(endpoint, graceful):
                   "metrics_segments": list(data.get("segments", {})), "acceptance_scored": False}
         if development:
             result.update(acceptance_eligible=False, snapshot_path=data["snapshot_path"])
+        if scenario:
+            result.update(acceptance_eligible=False, scenario_path=data["scenario_path"])
         if observation_path:
             result["concurrency_observation_path"] = str(observation_path)
         return result
@@ -208,6 +219,35 @@ def _movie_hash(path):
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _scenario_start_ready(endpoint, observation):
+    """Validate scenario host, test identity and recorder before registering it."""
+    if not isinstance(observation, dict):
+        raise RuntimeError("Scenario host returned an invalid observation")
+    detail = observation.get("scenario_error")
+    if detail:
+        raise RuntimeError("Scenario entry failed: " + str(detail))
+    scene = observation.get("scene")
+    if scene in (None, "", "res://scenes/main/Boot.tscn"):
+        return False
+    if scene != "res://mcp/game/SegmentEntry.tscn":
+        raise RuntimeError("Scenario entry returned unexpected scene: " + str(scene))
+    if observation.get("scenario_ready") is not True:
+        return False
+    identity = observation.get("assessment_test_id")
+    expected = endpoint.assessment_plan.get("test_id")
+    if not identity:
+        return False
+    if not expected or identity != expected:
+        raise RuntimeError("Scenario assessment test ID does not match its plan")
+    recorded = observation.get("metrics_directory")
+    if not recorded:
+        return False
+    directory = provenance.project_path(recorded, ROOT)
+    if not directory.name.endswith("-" + str(endpoint.process.pid)) or endpoint.metrics_directory != directory:
+        raise RuntimeError("Scenario metrics directory is not bound to the host")
+    return True
 
 
 def start(arguments, deadline=None):
@@ -253,11 +293,21 @@ def start(arguments, deadline=None):
     elif "movie_fps" in arguments:
         raise ValueError("movie_fps requires movie_filename.")
     backend = endpoint.backend
+    if arguments.get("scenario_path") and not arguments.get("assessment_plan"):
+        raise ValueError("Segment entry requires its simultaneous assessment plan")
     if backend == "godot" and (arguments.get("assessment_plan") or arguments.get("decision_maker") in ("agent", "llm")):
         from assessment_plan import validate
         if not arguments.get("assessment_plan"):
             raise ValueError("Agent tests require an assessment_plan with all seven synchronous channels ready")
         endpoint.assessment_plan = validate(arguments["assessment_plan"], ROOT)
+        if endpoint.assessment_plan.get("entry_mode") == "segment":
+            requested = provenance.project_path(arguments.get("scenario_path", ""), ROOT)
+            expected = provenance.project_path(endpoint.assessment_plan["cases"][0]["scenario_path"], ROOT)
+            if snapshot_path is not None or requested != expected:
+                raise ValueError("Segment test must start at its configured scenario; title/new-game entry is forbidden")
+            endpoint.scenario_path = requested
+        elif arguments.get("scenario_path"):
+            raise ValueError("Scenario entry requires a segment assessment plan")
         if endpoint.movie_path:
             raise ValueError("Complete evaluation requires real-time capture; fixed-step movie capture cannot measure fluidity")
     # Validate capture options before reserving an output file.
@@ -310,6 +360,8 @@ def start(arguments, deadline=None):
             command.append("--dv-checkpoint-stop=" + str(endpoint.checkpoint_stop_path))
             if snapshot_path is not None:
                 command.append("--dv-snapshot=" + str(snapshot_path))
+            if endpoint.scenario_path is not None:
+                command.append("--dv-scenario=" + str(endpoint.scenario_path))
             save_slot = arguments.get("save_slot", endpoint.token)
             if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", save_slot):
                 raise ValueError("Invalid save slot")
@@ -330,6 +382,12 @@ def start(arguments, deadline=None):
                     time.sleep(.1)
             endpoint.stream = endpoint.connection.makefile("rb")
             observation = endpoint.request({"type": "observe", "wait_ms": 300})
+            if endpoint.scenario_path is not None:
+                ready_deadline = time.monotonic() + remaining(deadline, 20)
+                while not _scenario_start_ready(endpoint, observation):
+                    if time.monotonic() >= ready_deadline:
+                        raise RuntimeError("Scenario host, assessment ID or metrics recorder did not become ready")
+                    observation = endpoint.request({"type": "observe", "wait_ms": 100}, timeout=min(5, max(.1, ready_deadline - time.monotonic())))
             if snapshot_path is not None and not observation.get("checkpoint_restored", False):
                 detail = observation.get("checkpoint_error") or " ".join(observation.get("host_errors", []))
                 raise RuntimeError("Snapshot restoration failed: " + (detail or "restored host did not report success"))
@@ -408,8 +466,10 @@ def execute(name, arguments):
         if endpoint.backend == "cli":
             if operation.get("type") not in ("select", "advance", "observe", "case_reasoning"):
                 raise ValueError("CLI operations: select(choice_id), advance(steps), observe.")
-        elif operation.get("type") not in ("start", "select", "input_action", "click", "drag", "observe", "case_reasoning", "character"):
+        elif operation.get("type") not in ("start", "select", "input_action", "click", "drag", "observe", "case_reasoning", "character", "next_case"):
             raise ValueError("Godot operations: start, select(choice_id), input_action(action,frames), click(x,y), observe.")
+        if operation.get("type") == "start" and endpoint.scenario_path:
+            raise ValueError("Segment sessions cannot restart from title/new-game")
         if operation.get("type") == "case_reasoning":
             query = json.loads(operation.get("case_request", "{}"))
             if not isinstance(query, dict) or query.get("operation") not in ("info", "infer", "check", "prove", "check_goal", "check_natural", "review", "strategy", "travel_actor", "sim4_plan", "sim4_execute", "questions", "scene", "seal_scene"):

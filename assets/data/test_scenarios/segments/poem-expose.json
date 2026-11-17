@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "poem-expose",
+  "mode": "story",
+  "room": "T01",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 13,
+    "minute": 35
+  },
+  "playing": false,
+  "mock": {
+    "beat_cursor": 18,
+    "flags": {
+      "service_map": true
+    },
+    "choices": {
+      "poem": "expose"
+    }
+  }
+}

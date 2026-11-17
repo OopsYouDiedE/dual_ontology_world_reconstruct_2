@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "dinner-plan",
+  "mode": "story",
+  "room": "F03",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 21,
+    "minute": 35
+  },
+  "playing": false,
+  "mock": {
+    "beat_cursor": 21,
+    "flags": {
+      "service_map": true
+    }
+  }
+}

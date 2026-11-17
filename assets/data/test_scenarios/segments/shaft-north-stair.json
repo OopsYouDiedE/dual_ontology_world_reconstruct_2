@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "shaft-north-stair",
+  "mode": "story",
+  "room": "2F-North-Stair",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 11,
+    "minute": 25
+  },
+  "playing": false,
+  "mock": {
+    "beat_cursor": 12,
+    "flags": {
+      "service_map": true
+    }
+  }
+}

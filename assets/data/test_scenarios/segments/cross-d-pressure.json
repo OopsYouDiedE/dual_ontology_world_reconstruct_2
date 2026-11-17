@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "cross-d-pressure",
+  "mode": "story",
+  "room": "D-P",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 10,
+    "minute": 50
+  },
+  "playing": false,
+  "mock": {
+    "beat_cursor": 10,
+    "flags": {
+      "service_map": true
+    }
+  }
+}

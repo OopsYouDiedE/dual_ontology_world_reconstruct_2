@@ -172,7 +172,7 @@ func _record_audio_route(now: int) -> void:
 	_audio_route_events.append({"elapsed_s": float(now - _started_usec) / 1000000.0, "snapshot": current})
 
 func _record_visible_text(now: int) -> void:
-	if text_changes == null or _owner == null: return
+	if text_changes == null or not is_instance_valid(_owner): return
 	var entries: Array = []
 	preload("res://scenes/components/testing/VisibleText.gd").collect(_owner, _owner.get_viewport(), entries)
 	var stable: Array = []

@@ -59,6 +59,21 @@ class AssessmentPlanTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'assessor'):
             self.check()
 
+    def test_segment_cases_are_bound_to_their_scenario_and_segment(self):
+        scenario = self.root / 'scenario.json'
+        scenario.write_text('{"schema_version":1}')
+        self.plan.update(entry_mode='segment', segment_id='segment')
+        case = self.plan['cases'][0]
+        case.update(scenario_path='scenario.json', scenario_sha256=hashlib.sha256(scenario.read_bytes()).hexdigest())
+        self.check()
+        case['segment_id'] = 'other'
+        with self.assertRaisesRegex(ValueError, 'own scene cases'):
+            self.check()
+        case['segment_id'] = 'segment'
+        scenario.write_text('{}')
+        with self.assertRaisesRegex(ValueError, 'Scenario hash'):
+            self.check()
+
 
 if __name__ == '__main__':
     unittest.main()

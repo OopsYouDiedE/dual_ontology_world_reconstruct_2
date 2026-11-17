@@ -12,10 +12,26 @@ import runtime
 
 class FinalizeMetricsTests(unittest.TestCase):
     def endpoint(self, directory, **changes):
-        values = dict(backend="godot", snapshot_path=None, movie_path=None,
+        values = dict(backend="godot", snapshot_path=None, scenario_path=None, movie_path=None,
                       metrics_directory=directory, process=SimpleNamespace(pid=123), expected_source={})
         values.update(changes)
         return SimpleNamespace(**values)
+
+    def test_scenario_ready_requires_matching_scene_test_and_recorder(self):
+        with tempfile.TemporaryDirectory(dir=runtime.ROOT / ".runtime") as base:
+            directory = Path(base) / "run-123"
+            directory.mkdir()
+            endpoint = self.endpoint(directory, assessment_plan={"test_id": "test-1"})
+            observation = {"scene": "res://mcp/game/SegmentEntry.tscn", "scenario_ready": True,
+                           "assessment_test_id": "test-1", "metrics_directory": str(directory)}
+            self.assertTrue(runtime._scenario_start_ready(endpoint, observation))
+            self.assertFalse(runtime._scenario_start_ready(endpoint, dict(observation, scenario_ready=False)))
+            self.assertFalse(runtime._scenario_start_ready(endpoint, dict(observation, metrics_directory="")))
+            self.assertFalse(runtime._scenario_start_ready(endpoint, dict(observation, scene="res://scenes/main/Boot.tscn")))
+            for change in ({"scene": "res://scenes/main/Main.tscn"}, {"assessment_test_id": "wrong"},
+                           {"metrics_directory": str(Path(base) / "run-456")}, {"scenario_error": "bad fixture"}):
+                with self.subTest(change=change), self.assertRaises(RuntimeError):
+                    runtime._scenario_start_ready(endpoint, dict(observation, **change))
 
     def test_close_reports_concurrency_write_error(self):
         endpoint = self.endpoint(None, backend="cli", lock=threading.Lock(), closed=True,
@@ -81,6 +97,29 @@ class FinalizeMetricsTests(unittest.TestCase):
             self.assertEqual(json.loads(Path(result["metrics_summary_path"]).read_text(encoding="utf-8")), data)
             summarize.assert_called_once_with(directory, snapshot_path=snapshot)
             self.assertEqual(validate.call_args.kwargs["pid"], 123)
+
+    def test_scenario_summary_is_bound_to_configured_entry_and_host(self):
+        with tempfile.TemporaryDirectory(dir=runtime.ROOT / ".runtime") as base:
+            directory = Path(base) / "run-123"
+            directory.mkdir()
+            scenario = Path(base) / "scenario.yaml"
+            scenario.write_text("{}", encoding="utf-8")
+            data = {"source_identity": {"process_id": 123}, "segments": {"wake": {}},
+                    "entry": "scenario", "acceptance_eligible": False, "scenario_path": str(scenario)}
+            from unittest.mock import Mock
+            summarize = Mock(return_value=data)
+            with patch.object(runtime.provenance, "validate_source") as validate, \
+                 patch("importlib.import_module", return_value=SimpleNamespace(summarize=summarize)):
+                result = runtime.finalize_metrics(self.endpoint(directory, scenario_path=scenario), True)
+            self.assertEqual(result["metrics_status"], "complete")
+            self.assertEqual(result["scenario_path"], str(scenario))
+            summarize.assert_called_once_with(directory, scenario_path=scenario)
+            self.assertEqual(validate.call_args.kwargs["pid"], 123)
+            for change in ({"scenario_path": "other"}, {"entry": "production_title"}, {"acceptance_eligible": True}):
+                with patch("importlib.import_module", return_value=SimpleNamespace(summarize=lambda *args, **kw: dict(data, **change))):
+                    failed = runtime.finalize_metrics(self.endpoint(directory, scenario_path=scenario), True)
+                self.assertEqual(failed["metrics_status"], "error")
+                self.assertIn("provenance mismatch", failed["metrics_error"])
 
     def test_snapshot_summary_rejects_incorrect_provenance(self):
         with tempfile.TemporaryDirectory(dir=runtime.ROOT / ".runtime") as base:

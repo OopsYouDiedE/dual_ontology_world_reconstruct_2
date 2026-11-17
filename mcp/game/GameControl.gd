@@ -12,6 +12,11 @@ var snapshot_path := ""
 var assessment_plan_path := ""
 var assessment_test_id := ""
 var realtime_capture: Node
+var scenario_path := ""
+var assessment_output_directory := ""
+var assessment_segment_id := ""
+var assessment_cases: Array = []
+var assessment_case_index := 0
 
 func _ready() -> void:
 	var port := 0
@@ -24,8 +29,10 @@ func _ready() -> void:
 		elif argument.begins_with("--dv-project-root="): expected_root = argument.trim_prefix("--dv-project-root=")
 		elif argument.begins_with("--dv-project-sha256="): expected_hash = argument.trim_prefix("--dv-project-sha256=")
 		elif argument.begins_with("--dv-snapshot="): snapshot_path = argument.trim_prefix("--dv-snapshot=")
+		elif argument.begins_with("--dv-scenario="): scenario_path = argument.trim_prefix("--dv-scenario=")
 		elif argument.begins_with("--dv-assessment-plan="): assessment_plan_path = argument.trim_prefix("--dv-assessment-plan=")
 	if port == 0: set_process(false); return
+	assessment_output_directory = "res://.runtime/segment-sessions/" + str(OS.get_process_id())
 	var source := preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
 	var root_path := str(source.project_root).replace("\\", "/").simplify_path().trim_suffix("/")
 	var required_root := expected_root.replace("\\", "/").simplify_path().trim_suffix("/")
@@ -50,8 +57,8 @@ func _start_monitor() -> void:
 	for attempt in 120:
 		await get_tree().process_frame
 		content = get_tree().current_scene as Control
-		if is_instance_valid(content) and (content.has_method("open_dual_world") or (not snapshot_path.is_empty() and content.has_method("start_kitchen_exploration"))): break
-	if not is_instance_valid(content) or not (content.has_method("open_dual_world") or (not snapshot_path.is_empty() and content.has_method("start_kitchen_exploration"))):
+		if is_instance_valid(content) and (content.has_method("open_dual_world") or ((not snapshot_path.is_empty() or not scenario_path.is_empty()) and content.has_method("start_kitchen_exploration"))): break
+	if not is_instance_valid(content) or not (content.has_method("open_dual_world") or ((not snapshot_path.is_empty() or not scenario_path.is_empty()) and content.has_method("start_kitchen_exploration"))):
 		push_error("Mainline metrics could not find the production title")
 		return
 	monitor = preload("res://scenes/components/testing/RuntimeMonitor.gd").new()
@@ -60,12 +67,15 @@ func _start_monitor() -> void:
 	monitor.visible = false
 	var directory := ".runtime/mainline-runs/" + Time.get_datetime_string_from_system().replace(":", "-") + "-" + str(OS.get_process_id())
 	var metadata := {"mock": not snapshot_path.is_empty(), "entry": "snapshot" if not snapshot_path.is_empty() else "production_title", "snapshot_path": snapshot_path, "acceptance_eligible": snapshot_path.is_empty(), "launch_scene": launch_scene, "process_id": OS.get_process_id(), "project_sha256": FileAccess.get_sha256("res://project.godot"), "monitor_visible": false, "capture_policy": "independent Terra review required", "max_fps": Engine.max_fps}
+	if not scenario_path.is_empty(): metadata.merge({"mock": true, "entry": "scenario", "scenario_path": scenario_path, "acceptance_eligible": false}, true)
 	if not assessment_plan_path.is_empty():
 		var plan = JSON.parse_string(FileAccess.get_file_as_string(assessment_plan_path))
 		if not plan is Dictionary:
 			push_error("Simultaneous assessment plan could not be read")
 			return
 		assessment_test_id = str(plan.test_id)
+		assessment_segment_id = str(plan.get("segment_id", ""))
+		assessment_cases = plan.cases
 		metadata.merge({"test_id": plan.test_id, "revision": plan.revision, "assessment_plan": assessment_plan_path, "assessment_plan_sha256": FileAccess.get_sha256(assessment_plan_path), "collection_mode": "simultaneous", "assessment_channels": plan.channels})
 	monitor.configure(directory, metadata, content)
 	if not assessment_plan_path.is_empty():
@@ -134,6 +144,7 @@ func _tag_monitor() -> void:
 		if story.gathering != null and story.gathering.active and is_instance_valid(story.gathering._root): scene_root = story.gathering._root
 		monitor.tag_scene(str(scene_root.get_instance_id()) + "/" + story._room_loaded)
 	else: monitor.tag_scene("title")
+	if not assessment_segment_id.is_empty(): segment = assessment_segment_id
 	monitor.node_id = segment + "/" + room
 	monitor.sample_context = {"gameplay_segment": segment, "room": room, "story_clock": clock, "text_exempt": exempt}
 
@@ -186,6 +197,22 @@ func _handle(request: Dictionary) -> void:
 	var identity = request.get("id")
 	var main := get_tree().current_scene
 	match str(request.get("type", "observe")):
+		"next_case":
+			if scenario_path.is_empty() or assessment_case_index + 1 >= assessment_cases.size():
+				_reply(identity, {}, "No next case in this segment")
+				return
+			var next: Dictionary = assessment_cases[assessment_case_index + 1]
+			if FileAccess.get_sha256(str(next.scenario_path)) != str(next.scenario_sha256):
+				_reply(identity, {}, "Scenario changed after assessment launch")
+				return
+			assessment_case_index += 1
+			scenario_path = str(next.scenario_path)
+			if monitor != null: monitor._owner = null
+			var changed := get_tree().change_scene_to_file("res://mcp/game/SegmentEntry.tscn")
+			if changed != OK:
+				_reply(identity, {}, "Scenario transition failed: " + error_string(changed))
+				return
+			await get_tree().process_frame
 		"close":
 			_reply(identity, {"closed": true, "source_identity": preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)})
 			await preload("res://scenes/components/shared/HostLifecycle.gd").quit(get_tree())
@@ -252,7 +279,13 @@ func _handle(request: Dictionary) -> void:
 	if wait_ms > 0: await get_tree().create_timer(wait_ms / 1000.0).timeout
 	await get_tree().process_frame
 	main = get_tree().current_scene
+	if not is_instance_valid(main):
+		_reply(identity, {}, "Scene transition has not produced a live scene")
+		return
 	var result: Dictionary = main.mcp_observe() if main.has_method("mcp_observe") else {"scene": main.scene_file_path}
+	if not scenario_path.is_empty():
+		result["scenario_ready"] = main.scene_file_path == "res://mcp/game/SegmentEntry.tscn" and str(main.get("fixture_error")).is_empty()
+		result["scenario_error"] = str(main.get("fixture_error"))
 	result.merge(_checkpoint_status(main), true)
 	var controls: Array = []
 	_collect(get_tree().root, controls)
@@ -264,6 +297,8 @@ func _handle(request: Dictionary) -> void:
 		result["metrics"] = monitor.latest
 		result["assessment_test_id"] = assessment_test_id
 		result["assessment_segment"] = monitor.node_id
+		result["assessment_case_index"] = assessment_case_index
+		result["assessment_case_count"] = assessment_cases.size()
 	if bool(request.get("capture_image", true)):
 		var captured := get_viewport().get_texture().get_image()
 		var encoder := Thread.new()

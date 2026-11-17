@@ -65,7 +65,7 @@ def audio_score(audio: dict, background: dict | None = None) -> tuple[int | None
     return None, "Ambient-only peak is not isolated from dialogue or effects"
 
 
-def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path | None = None) -> dict:
+def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path | None = None, scenario_path: Path | None = None) -> dict:
     provenance.assert_runtime_root(ROOT)
     directory = provenance.project_path(directory, ROOT)
     timeline = directory / "timeline.yaml"
@@ -98,10 +98,12 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
     provenance.validate_source(source, provenance.project_identity(ROOT))
     if not isinstance(source.get("process_id"), int) or source["process_id"] <= 0:
         raise ValueError("Recorded actual host PID is required")
-    if snapshot_path is None:
+    if snapshot_path is not None and scenario_path is not None:
+        raise ValueError("Scenario and snapshot modes are mutually exclusive")
+    if snapshot_path is None and scenario_path is None:
         if metadata.get("mock") is not False or metadata.get("entry") != "production_title" or metadata.get("acceptance_eligible") is False:
             raise ValueError("Only production title/new-game capture enters mainline metrics")
-    else:
+    elif snapshot_path is not None:
         snapshot_path = provenance.project_path(snapshot_path, ROOT)
         recorded_snapshot = metadata.get("snapshot_path")
         if (metadata.get("mock") is not True or metadata.get("entry") != "snapshot"
@@ -109,6 +111,13 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
                 or not isinstance(recorded_snapshot, str) or not recorded_snapshot
                 or provenance.project_path(recorded_snapshot, ROOT) != snapshot_path):
             raise ValueError("Snapshot metadata does not match the development session")
+    else:
+        scenario_path = provenance.project_path(scenario_path, ROOT)
+        recorded_scenario = metadata.get("scenario_path")
+        if (not scenario_path.is_file() or metadata.get("mock") is not True or metadata.get("entry") != "scenario"
+                or not isinstance(recorded_scenario, str) or not recorded_scenario
+                or provenance.project_path(recorded_scenario, ROOT) != scenario_path):
+            raise ValueError("Scenario metadata does not match the rendered session")
     if metadata.get("measurement_context") != "rendered_runtime":
         raise ValueError("A rendered real-time session is required")
     segments = {}
@@ -185,7 +194,8 @@ def summarize(directory: Path, *, incomplete: bool = False, snapshot_path: Path 
             "finalized": finalized, "source_directory": str(directory), "source_identity": metadata.get("source_identity"),
             "entry": metadata.get("entry"), "measurement_context": metadata.get("measurement_context"),
             "snapshot_path": str(snapshot_path) if snapshot_path is not None else None,
-            "acceptance_eligible": False if snapshot_path is not None else metadata.get("acceptance_eligible", True),
+            "scenario_path": str(scenario_path) if scenario_path is not None else None,
+            "acceptance_eligible": False if snapshot_path is not None or scenario_path is not None else metadata.get("acceptance_eligible", True),
             "acceptance_scored": False,
             "frame_clock": metadata.get("frame_clock"), "audio_alignment": "Frame intervals shifted by each capture start offset; audio mix-block timing uncertainty remains; capture loss makes audio pending",
             "source_sha256": {path.name: file_hash(path) for path in [timeline, directory / "frames.csv"]},
@@ -289,15 +299,44 @@ def analyze_background(directory: Path, name: str, intervals: list, rate: int, f
 
 
 def analyze_audio(directory: Path, name: str, intervals: list, rate: int, ffmpeg: str, *, stem: str = "mix", gain_db: float = 0.0) -> dict:
-    # Select only this observed segment, so title music cannot determine room LUFS.
-    expression = "+".join("between(t,%.6f,%.6f)" % (start, end) for start, end in intervals)
-    filters = "aselect='" + expression + "',asetpts=N/SR/TB,volume=" + str(gain_db) + "dB,ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'"
-    command = [ffmpeg, "-hide_banner", "-nostats", "-f", "f32le", "-ar", str(rate), "-ac", "2",
-               "-i", str(directory / (stem + ".f32le")), "-af", filters, "-f", "null", "-"]
+    """Seek each selected raw-PCM interval and analyze them as one stream."""
+    if not isinstance(rate, int) or isinstance(rate, bool) or rate <= 0 or not _valid_gain(gain_db):
+        raise ValueError("Invalid audio rate or gain")
+    source = directory / (stem + ".f32le")
+    size = source.stat().st_size
+    if size % 8:
+        raise ValueError("Incomplete stereo float audio frame")
+    duration = size / (8 * rate)
+    if not intervals:
+        raise ValueError("Audio intervals are empty")
+    ranges = []
+    previous_end = 0.0
+    for interval in intervals:
+        if not isinstance(interval, (list, tuple)) or len(interval) != 2:
+            raise ValueError("Invalid audio interval")
+        start, end = interval
+        if not _valid_gain(start) or not _valid_gain(end) or start < 0 or end <= start or start < previous_end:
+            raise ValueError("Invalid or overlapping audio interval")
+        # Capture and frame clocks can differ by one audio mixer block at shutdown.
+        if end > duration + 0.05 or start >= duration:
+            raise ValueError("Audio capture does not cover the scene interval")
+        ranges.append((start, min(end, duration)))
+        previous_end = end
+    command = [ffmpeg, "-hide_banner", "-nostats"]
+    for start, end in ranges:
+        command.extend(["-ss", "%.9f" % start, "-t", "%.9f" % (end - start), "-f", "f32le", "-ar", str(rate), "-ac", "2", "-i", str(source)])
+    filters = "volume=" + str(gain_db) + "dB,ebur128=metadata=1:peak=sample+true,ametadata=mode=print:direct=1:file='pipe\\:1'"
+    if len(ranges) == 1:
+        command.extend(["-af", filters])
+    else:
+        inputs = "".join("[%d:a]" % i for i in range(len(ranges)))
+        command.extend(["-filter_complex", inputs + "concat=n=" + str(len(ranges)) + ":v=0:a=1," + filters])
+    command.extend(["-f", "null", "-"])
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
                             timeout=180, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     state = {"status": "complete" if result.returncode == 0 else "error", "ffmpeg_exit_code": result.returncode,
-             "method": "FFmpeg EBU R128 / ITU BS.1770 on this segment only", "intervals_s": intervals}
+             "method": "FFmpeg EBU R128 / ITU BS.1770 on selected PCM intervals", "intervals_s": intervals,
+             "analyzed_intervals_s": ranges, "capture_tail_clipped_s": max(0.0, intervals[-1][1] - duration)}
     for line in result.stdout.splitlines():
         update_metadata(state, line)
     log = directory / ("segment-" + name + "-" + stem + "-audio.log")

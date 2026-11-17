@@ -6,6 +6,9 @@ const FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 
 func _ready() -> void:
 	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--dv-scenario="):
+			get_tree().change_scene_to_file.call_deferred("res://mcp/game/SegmentEntry.tscn")
+			return
 		if argument.begins_with("--dv-snapshot="):
 			get_tree().change_scene_to_file.call_deferred("res://scenes/dual_world/DualWorldMain.tscn")
 			return

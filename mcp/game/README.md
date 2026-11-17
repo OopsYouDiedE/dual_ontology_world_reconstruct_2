@@ -12,6 +12,8 @@
 | `design` | `building`、`lighting`、`expressions`、`mocap` | 直接启动工作台，检查控制、预览和诊断。`diagnostic` 支持 `monitor`、`reload`，建筑矩阵还支持 `previous_case`、`next_case`。动作捕捉工作台使用项目内指定的参考动作；`focus_catalog` 会标明它是否就绪。工作台内部诊断文字沿用工具自身语言。 |
 | `story` | `wake-bedroom`、`kitchen-reconstruction`、`shaft-question` | 直接加载指定分段夹具与其快照；核对起点，再用普通输入推进到预期节点。每个节点单独启动、单独结算。 |
 
+连续剧情使用 `story / day-one-live`，由正式标题一路玩到第二天。见 [完整剧情测试](../evaluation/day-one-route.md)。
+
 ## 四个调用
 
 1. `focus_catalog {}`：列出有效目标、前置条件、精确判项键和实时报告位置。

@@ -49,6 +49,20 @@
         link.href = '#' + run.test_id + '-' + id;
       });
     });
+    if (run.route?.length) {
+      const trail = el('details', undefined, card);
+      el('summary', '连续剧情轨迹 · ' + run.route.length + ' 条实测状态变化', trail);
+      const checkpoints = el('ol', undefined, trail);
+      run.route.forEach(({step, state}) => {
+        const row = el('li', undefined, checkpoints);
+        const marker = el('a', step, row);
+        marker.href = '#' + run.test_id + '-' + step;
+        el('span', ' · ' + [state.day && `第 ${state.day} 天`, state.clock, state.room || '标题',
+          state.chapter_complete && '第 1 章已结算', state.controller_phase, state.modal_key,
+          state.pending_choice, state.pending_deduction, state.pending_conflict,
+          state.found_count == null ? '' : `已发现 ${state.found_count}`].filter(Boolean).join(' · '), row);
+      });
+    }
     const steps = el('ol', undefined, card);
     run.steps.forEach(step => {
       const row = el('li', `${step.id} · ${step.operation.type}${step.room ? ' · ' + step.room : ''} · ${step.note}`, steps);

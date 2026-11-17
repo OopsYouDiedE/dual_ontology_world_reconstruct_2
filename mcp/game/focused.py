@@ -22,6 +22,13 @@ ROOMS = {"R05": "wake-bedroom", "B-P": "kitchen-evidence", "A-P": "service-maint
 WORKBENCH = {"wardrobe": "interaction", "expressions": "expressions", "building": "building",
              "lighting": "lighting", "mocap": "mocap"}
 INTERACTIONS = {"kitchen-props": "kitchen-evidence", "corridor-characters": "corridor-meeting"}
+DAY_ONE_TARGET = "day-one-live"
+DAY_ONE_RUBRIC = {
+    "completion": "Play from the production title to the Chapter 1 completion screen, then explicitly continue to Day 2 in the same host.",
+    "agency": "Verify feedback and recovery when choosing the order of accessible investigations, leaving, or revisiting.",
+    "state_continuity": "Track time, room, clues and unresolved gates across transitions; verify state carries over on the route taken.",
+    "presentation": "Review whether dialogue, camera, actor actions and important sound cues communicate each observed transition.",
+}
 RUBRICS = {
     "room": {"layout": "Actors and props have usable spacing; no obstructing overlap or clipping.",
              "navigation": "Walk the intended local route and verify collisions and reachability.",
@@ -54,7 +61,7 @@ def resolve_file(path):
 
 def target_spec(scope, target):
     workbench = scenario = expected_room = None
-    if scope == "ui" and target == "title":
+    if (scope, target) in (("ui", "title"), ("story", DAY_ONE_TARGET)):
         pass
     elif scope == "room" and target in ROOMS:
         scenario, expected_room = ROOMS[target], target
@@ -89,7 +96,7 @@ def story_targets():
 
 def named_targets():
     return {"room": list(ROOMS), "interaction": [*INTERACTIONS, "wardrobe"], "ui": ["title"],
-            "design": [key for key in WORKBENCH if key != "wardrobe"], "story": story_targets()}
+            "design": [key for key in WORKBENCH if key != "wardrobe"], "story": [DAY_ONE_TARGET, *story_targets()]}
 
 
 def catalog():
@@ -102,7 +109,8 @@ def catalog():
                 targets[scope][name] = {"ready": True, "room": spec["expected_room"]}
             except ValueError as error:
                 targets[scope][name] = {"ready": False, "reason": str(error)}
-    return {"targets": targets, "rubrics": RUBRICS, "report": str(directory().with_suffix(".html"))}
+    return {"targets": targets, "rubrics": RUBRICS,
+            "target_rubrics": {DAY_ONE_TARGET: DAY_ONE_RUBRIC}, "report": str(directory().with_suffix(".html"))}
 
 
 def now():
@@ -137,12 +145,13 @@ def open_run(arguments):
     revision, dirty = git("rev-parse", "HEAD"), bool(git("status", "--porcelain"))
     run = {"test_id": test_id, "tester": tester, "scope": scope, "target": target,
            "revision": revision, "dirty": dirty, "status": "starting", "started_at": now(),
-           "checks": RUBRICS[scope], "steps": [], "acceptance_eligible": False,
+           "checks": DAY_ONE_RUBRIC if target == DAY_ONE_TARGET else RUBRICS[scope],
+           "steps": [], "acceptance_eligible": False,
            "_lock": threading.Lock(), "_session": None}
     publish(run)
     try:
         spec = target_spec(scope, target)
-        audio = arguments.get("audio", False)
+        audio = arguments.get("audio", target == DAY_ONE_TARGET)
         if audio and spec["workbench"]:
             raise ValueError("MCP audio preview is available for direct game entries, not the workbench")
         observation = runtime.start({"mode": "godot_manual", "background_capture": True}, focused={
@@ -190,6 +199,11 @@ def step_run(run, args):
     operation = dict(args.get("operation", {"type": "observe"}))
     if operation["type"] not in ("observe", "start", "click", "drag", "input_action", "diagnostic"):
         raise ValueError("Focused steps use ordinary game input or named workbench commands")
+    if run["target"] == DAY_ONE_TARGET:
+        if operation["type"] == "start":
+            raise ValueError("Continuous Day 1 uses the visible New Game control on the production title")
+        if run.get("route_interrupted") and operation["type"] != "observe":
+            raise ValueError("The continuous route has ended; create a new test to replay")
     if operation["type"] == "diagnostic" and run["scope"] not in ("design", "interaction"):
         raise ValueError("Diagnostic commands are for workbench targets")
     offsets = args.get("motion_frames", [])
@@ -237,7 +251,8 @@ def step_run(run, args):
                                                executable=endpoint.executable)
             frame.update(path=str(path.relative_to(directory())).replace("\\", "/"), sha256=receipt["image_sha256"])
         observed = {key: result[key] for key in ("controller", "controller_phase", "clock", "found_count",
-                    "modal_key", "matrix_index", "monitor_visible") if key in result}
+                    "modal_key", "matrix_index", "monitor_visible", "day", "chapter", "chapter_complete", "waiting",
+                    "pending_choice", "pending_deduction", "pending_conflict") if key in result}
         if isinstance(result.get("snapshot"), dict):
             observed.update({key: result["snapshot"][key] for key in ("kind", "progress", "completed", "expression")
                              if key in result["snapshot"]})
@@ -257,6 +272,18 @@ def step_run(run, args):
                 audio_path.write_bytes(audio)
                 entry["audio"] = {"path": audio_path.relative_to(directory()).as_posix(),
                                   "sha256": hashlib.sha256(audio).hexdigest()}
+        if run["target"] == DAY_ONE_TARGET:
+            state = {key: entry.get(key) for key in ("room", "scene")}
+            state.update({key: observed.get(key) for key in (
+                "day", "chapter", "chapter_complete", "clock", "found_count", "waiting", "pending_choice",
+                "pending_deduction", "pending_conflict", "modal_key", "controller_phase")})
+            trail = run.setdefault("route", [])
+            if state["chapter"] is None and any(point["state"]["chapter"] is not None for point in trail):
+                run["route_interrupted"] = True
+                result["scope_warning"] = "Returned to the title after game entry; finish this continuous route here."
+            # Report observed state transitions. Do not infer intervening visits from room lists.
+            if not trail or trail[-1]["state"] != state:
+                trail.append({"step": evidence_id, "state": state})
         if run["scope"] == "room" and result.get("room") != run["target"]:
             run["left_room"] = True
             result["scope_warning"] = "Room changed; finish the single-room test here."
@@ -284,6 +311,26 @@ def validate_verdicts(run, verdicts):
             raise ValueError("Every verdict requires an outcome and concrete reason")
         if not set(steps) <= evidence or (outcome in ("pass", "fail") and not steps):
             raise ValueError("Pass/fail must cite observed step IDs from this scope; blocked/N/A need a reason")
+
+    if run["target"] == DAY_ONE_TARGET:
+        completion = verdicts["completion"]
+        if completion["outcome"] == "not_applicable":
+            raise ValueError("Completion is required for a continuous Day 1 run; record blocked or failed with the stopping reason")
+        if completion["outcome"] == "pass":
+            if run.get("route_interrupted"):
+                raise ValueError("The route returned to the title; completion requires uninterrupted gameplay")
+            cited = set(completion["steps"])
+            saw_finish = False
+            for point in run.get("route", []):
+                if point["step"] not in cited:
+                    continue
+                state = point["state"]
+                if state["chapter"] == 1 and state["day"] == 1 and state["chapter_complete"] is True:
+                    saw_finish = True
+                if saw_finish and state["chapter"] == 2 and state["day"] == 2 and state["room"] == "R05":
+                    break
+            else:
+                raise ValueError("Completion requires cited observations of Chapter 1 complete followed by Day 2 in R05")
 
 
 def finish_run(run, verdicts):

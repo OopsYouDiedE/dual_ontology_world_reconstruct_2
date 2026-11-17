@@ -30,6 +30,7 @@ You are authorized to dispatch and coordinate the following specialized SubAgent
   - MCP automatically selects a working native display and renderer when available. If no usable native display is available on Linux, MCP provisions and starts an isolated **Xvfb** display for rendered tests, and cleans up its owned display process.
   - **DO NOT pass the `--headless` CLI flag during visual or camera testing**, as `--headless` activates Godot's `Dummy` rendering driver and produces black/empty frames on `obs()` capture. Use the standard Godot Forward+ rendering pipeline with the available native renderer, or with Xvfb backed by hardware EGL or Mesa `llvmpipe`/`lavapipe` when needed, so PBR shaders, `Decal` projections, shadows, and post-processing render authentically.
 - **Testing Interface Prohibition**: Strictly PROHIBITED from using OS-level `Computer-use` (GUI mouse/keyboard emulation) commands. All execution, stepping, and inspection MUST be performed exclusively via the project's MCP tools.
+- **MUST use https to open local html**
 
 ### 2. Global Engineering Discipline, Repository Hygiene & Anti-Deadlock Laws (Highest Priority)
 1. **Hard Directory Isolation**:
@@ -230,3 +231,10 @@ Replace text-based deduction menus with an in-situ 3D visual performance answeri
 - One test agent plays and records its own English interpretation from the observed visuals and gameplay, including uncertainty, without access to the canonical plot. After the agent completes its account, it evaluates the same session against the visual reference. At the end, the main agent compares the recorded blind account with the true plot and scores narrative match. Keep all assessments tied to the same test ID and session.
 
 - In blind gameplay the test agent uses MCP images and visible English UI for decisions and story interpretation. Hide internal scene, controller, navigation and story-state fields from the observer; transport identifiers and collection records are for the main agent.
+
+## Mandatory segment entry — 2026-11-18
+
+- Start every run for the current segment-testing task, including MCP startup/shutdown diagnostics, redaction checks and blind gameplay, at the explicitly assigned segment scenario or checkpoint. For the wake segment, use `assets/data/test_scenarios/wake.yaml` with its matching simultaneous assessment plan.
+- Verify the segment entry arguments before launching. If the scenario/checkpoint or required assessment configuration is missing, stop and prepare it before starting a process. Never fall back to the title screen, new game or chapter opening.
+- Calling `on(backend="godot")` without an explicit segment entry is prohibited for these tasks. Lifecycle diagnostics follow the same entry requirement as gameplay tests.
+- Launch from the title screen only when the user explicitly requests a title/menu test. This rule supersedes earlier title-start instructions for segment testing.

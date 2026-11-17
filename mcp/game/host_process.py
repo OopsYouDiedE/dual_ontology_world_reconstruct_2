@@ -34,7 +34,7 @@ def terminate(process):
     process.wait(timeout=5)
 
 
-def spawn(command, **kwargs):
+def spawn(command, *, user_data_root=None, **kwargs):
     """Start a project-owned process with the reproducible tool environment."""
     provenance.assert_runtime_root(ROOT)
     if "--path" in command:
@@ -57,6 +57,17 @@ def spawn(command, **kwargs):
         }
         for key, folder in folders.items():
             environment.setdefault(key, drive + "/" + folder)
+    if user_data_root is not None:
+        root = provenance.project_path(user_data_root, ROOT)
+        local_root = ROOT / ".runtime" / "focused"
+        if root == local_root or not root.is_relative_to(local_root):
+            raise ValueError("Isolated Godot user data must stay under the focused run directory")
+        variables = {"APPDATA": "roaming", "LOCALAPPDATA": "local"} if os.name == "nt" else {
+            "XDG_DATA_HOME": "data", "XDG_CONFIG_HOME": "config"}
+        for variable, name in variables.items():
+            directory = root / name
+            directory.mkdir(parents=True, exist_ok=True)
+            environment[variable] = str(directory)
     environment.setdefault("DOTNET_ROLL_FORWARD", "Major")
     environment.setdefault("DOTNET_CLI_HOME", str(ROOT / ".runtime/dotnet-home"))
     environment.setdefault("NUGET_PACKAGES", str(ROOT / ".runtime/nuget/packages"))

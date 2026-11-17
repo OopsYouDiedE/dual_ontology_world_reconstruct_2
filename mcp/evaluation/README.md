@@ -1,5 +1,7 @@
 # Evaluation MCP 测试手册
 
+快速单点人工测试使用 [游戏定点测试 MCP](../game/README.md)；本手册适用于开发批处理与完整分段评估。
+
 ## 定点检查
 
 先用环境 MCP `prepare` 检查工具链。`evaluation_start` 返回 `run_id`；用 `evaluation_status` 读取状态、各任务阶段和证据，必要时用 `evaluation_cancel` 由 worker 清理自己的进程。
@@ -19,7 +21,7 @@
 1. 从 [主线分段计划](../../assets/data/test_scenarios/gameplay_review_plan.json) 选择一个分段，冻结已提交的修订。用 `python mcp/game/segment_plan.py <分段ID> <观察者ID> <测试ID>` 生成计划；该工具校验场景和参考图来源，输出首场景路径、计划路径及准备凭证位置。
 2. 在启动前配置七项采评渠道，准备有效参考图、独立盲玩观察者和匹配的准备凭证。观察者先读操作规则，保持剧情原文与带剧透的参考图隔离；准备凭证需包含 `test_id`、`observer`、`ready: true`、`canonical_unseen: true`。分段验证要求 60 FPS 上限和最多三个实例；按本次计划分配并记录实际并发负载。音频默认为开启，`--skip-audio` 仅用于用户明确豁免的任务，并记录缺测。
 3. 调用游戏 MCP `on`，传入 `backend: godot`、`decision_maker: agent`、首场景 `scenario_path` 和 `assessment_plan`。用 `step` 操作、`observe` 观察，`review_visible_text` 标注屏幕文字，`event_script` 和 `character_script` 记录英文观察和对白。同段后续场景用 `step` 的 `next_case`，保持同一会话。手动检查点诊断可另用 `on(snapshot_path=...)`；再现既有检查点时保留其来源，切勿将其成绩并入另一会话。
-4. 会话结束调用 `close`，再用 `metrics_status` 等待同一会话的分析完成。收集器给出流畅度、文字密度和响度；观察者依据同一会话的画面、音效和参考图评动作音效、美术相似度和节奏；主评将事先写下的盲玩记录和剧情原文对照，给出叙事匹配结果。
+4. 会话结束调用 `close`，再用 `metrics_status` 等待同一会话的分析完成。收集器提供流畅度、文字密度和响度证据。由同一位观察者提交全部评分：先完成并保留盲玩记录，再对照参考图与剧情原文；动作音效、美术相似度和节奏均使用同一会话的证据。
 5. 按 [评审 MCP](../review/README.md) 一次提交七项结果，保留原因、证据和准确的失败阶段。需要重测时使用新的测试 ID。日常进度刷新轻量数据；分段闭环或交付时生成完整页面并验证本地链接。
 
 ## 量表要点

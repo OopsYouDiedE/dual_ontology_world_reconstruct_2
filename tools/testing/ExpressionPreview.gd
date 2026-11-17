@@ -46,7 +46,7 @@ func _process(delta: float) -> void:
 	_elapsed += delta
 	if _expression_clock >= 1.2 and _expression_captures.size() == _expression_index:
 		_expression_captures.append(controller.test_snapshot())
-		_capture()
+		if _arg("capture-manual-only", "false") != "true": _capture()
 		var file := FileAccess.open(output_dir+"/expression-report.json",FileAccess.WRITE)
 		if file != null: file.store_string(JSON.stringify(_expression_captures,"\t"))
 	if _arg("expression-auto","false") == "true" and _expression_clock>2.0 and _expression_index<ORDER.size()-1: _next()

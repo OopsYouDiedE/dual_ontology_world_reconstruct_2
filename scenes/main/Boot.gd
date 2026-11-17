@@ -6,6 +6,9 @@ const FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 
 func _ready() -> void:
 	for argument in OS.get_cmdline_user_args():
+		if argument == "--dv-focused-workbench":
+			get_tree().change_scene_to_file.call_deferred("res://tools/testing/StoryTest.tscn")
+			return
 		if argument.begins_with("--dv-scenario="):
 			get_tree().change_scene_to_file.call_deferred("res://mcp/game/SegmentEntry.tscn")
 			return

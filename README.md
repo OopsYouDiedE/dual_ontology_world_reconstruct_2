@@ -15,6 +15,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/build/OpenEditor.p
 
 ## 测试与结果
 
+- [游戏定点测试 MCP](mcp/game/README.md)：五类快捷实机入口、单测试者判项、按需截图和实时验收。
 - [评估 MCP](mcp/evaluation/README.md)：房间快检、检查点、盲玩分段计划、采集与预算。
 - [评审 MCP](mcp/review/README.md)：七项评分提交、缺测记录与导出。
 - [评审首页](artifacts/review/index.html)：每段最新结果与证据。浏览器通过配置好的本地 HTTPS 服务打开首页。

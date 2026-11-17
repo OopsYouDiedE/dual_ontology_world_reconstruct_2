@@ -38,6 +38,37 @@ OPERATION = schema({
     "x": {"type": "number", "minimum": 0}, "y": {"type": "number", "minimum": 0},
     "to_x": {"type": "number", "minimum": 0}, "to_y": {"type": "number", "minimum": 0}
 }, ["type"])
+FOCUS_OPERATION = schema({
+    **{key: OPERATION["properties"][key] for key in ("action", "frames", "x", "y", "to_x", "to_y")},
+    "type": {"type": "string", "enum": ["observe", "start", "click", "drag", "input_action", "diagnostic"]},
+}, ["type"])
+FOCUS_VERDICT = schema({
+    "outcome": {"type": "string", "enum": ["pass", "fail", "blocked", "not_applicable"]},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 2500},
+    "steps": {"type": "array", "uniqueItems": True, "items": {"type": "string", "pattern": "^step-[0-9]{4,}$"}},
+}, ["outcome", "reason"])
+FOCUS_TOOLS = [
+    types.Tool(name="focus_catalog", description="List five focused Forward+ development test scopes, named targets, fixture readiness, and exact rubric keys.", inputSchema=schema({})),
+    types.Tool(name="focus_open", description="Open one named scope with one tester. Direct entry; no screenshot or assessment setup. Publishes running or blocked state to the local live HTML.", inputSchema=schema({
+        "scope": {"type": "string", "enum": ["room", "interaction", "ui", "design", "story"]},
+        "target": {"type": "string", "minLength": 1, "maxLength": 120},
+        "tester": {"type": "string", "minLength": 1, "maxLength": 100},
+        "audio": {"type": "boolean", "default": False, "description": "Enable on-demand live audio preview for direct game entries."},
+    }, ["scope", "target", "tester"])),
+    types.Tool(name="focus_step", description="Operate or observe the focused host. Opt in to a still or to ordered pre-action and motion-frame evidence. Named workbench actions: monitor, reload, previous_case, next_case.", inputSchema=schema({
+        "session_id": SESSION, "operation": FOCUS_OPERATION,
+        "wait_ms": {**WAIT, "default": 0},
+        "note": {"type": "string", "maxLength": 2000, "description": "What to verify/what you observed; required when taking a screenshot."},
+        "still": {"type": "boolean", "default": False},
+        "motion_frames": {"type": "array", "minItems": 2, "maxItems": 3, "items": {"type": "integer", "minimum": 2, "maximum": 120},
+                          "description": "Two or three frame offsets from dispatch; frame zero is captured before the action automatically."},
+        "inline": {"type": "boolean", "description": "Return retained images inline (default yes for still, no for a motion sequence)."},
+        "capture_audio": {"type": "boolean", "default": False},
+    }, ["session_id"])),
+    types.Tool(name="focus_finish", description="Close the host and publish the opening tester's single immutable verdict batch. Use exact rubric keys; cite observed step IDs for pass/fail, give reasons for blocked or not applicable.", inputSchema=schema({
+        "session_id": SESSION, "verdicts": {"type": "object", "additionalProperties": FOCUS_VERDICT},
+    }, ["session_id", "verdicts"])),
+]
 RUN = schema({
     "duration_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 86400, "description": "Wall-clock duration including build/startup; default 60 seconds"},
     "deadline": {"type": "string", "description": "Alternative absolute ISO-8601 deadline with timezone, e.g. +08:00 or Z"},
@@ -45,7 +76,7 @@ RUN = schema({
     "viewer": {"type": "string", "default": "detective"}
 })
 TOOLS = {
-    "input": [
+    "input": FOCUS_TOOLS + [
         types.Tool(name="on", description="Open a fresh real CLI/Godot host for human or SubAgent input. Returns session_id and initial observation. Segment tests require explicit scenario_path and a matching assessment_plan; never default them to title/new-game. No automatic decisions.",
                    inputSchema=schema({"backend": {"type": "string", "enum": ["cli", "godot"], "default": "cli"},
                                        "seed": {"type": "integer", "minimum": 0, "default": 1},
@@ -92,6 +123,9 @@ def execute(service, name, arguments):
         return dict(environment.prepare(**arguments), server_identity=runtime.provenance.server_identity(runtime.ROOT, __file__))
     if service == "auto":
         return automation.tool("godot" if name == "GodotMCP" else "cli", arguments)
+    if name.startswith("focus_"):
+        import focused
+        return focused.execute(name, arguments)
     if name == "on":
         backend = arguments.get("backend", "cli")
         options = dict(arguments, mode="cli_ai" if backend == "cli" else "godot_manual", controller="player")
@@ -137,6 +171,9 @@ async def execute_owned(service, name, arguments):
             try:
                 result = finished.result()
                 session_id = result.get("session_id") if isinstance(result, dict) else None
+                if service == "input" and name == "focus_open" and session_id:
+                    import focused
+                    threading.Thread(target=focused.abandon, args=(session_id,), daemon=True).start()
                 if service == "input" and name == "on" and session_id:
                     threading.Thread(target=runtime.execute, args=("close", {"session_id": session_id}), daemon=True).start()
             except (Exception, asyncio.CancelledError):
@@ -147,7 +184,13 @@ async def execute_owned(service, name, arguments):
 
 def cleanup():
     # A tool invocation owns each automatic run; disconnect cancels its hosts.
-    for endpoint in list(runtime.SESSIONS.values()): endpoint.stop()
+    # Import only when a focused tool has been used (normal input startup stays light).
+    import sys
+    try:
+        if "focused" in sys.modules:
+            sys.modules["focused"].abandon()
+    finally:
+        for endpoint in list(runtime.SESSIONS.values()): endpoint.stop()
 
 
 atexit.register(cleanup)
@@ -172,9 +215,11 @@ async def main(service):
             result = await execute_owned(service, name, arguments)
             result = observer_result(service, name, result, arguments.get("session_id"))
             png = result.pop("image_base64", None)
+            images = result.pop("images_base64", [])
             audio = result.pop("audio_base64", None)
             content = [types.TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
-            if png: content.append(types.ImageContent(type="image", mimeType="image/png", data=png))
+            if png: images.append(png)
+            content.extend(types.ImageContent(type="image", mimeType="image/png", data=image) for image in images)
             if audio: content.append(types.AudioContent(type="audio", mimeType="audio/wav", data=audio))
             return types.CallToolResult(content=content, structuredContent=result)
         except Exception as error:

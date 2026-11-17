@@ -82,7 +82,11 @@ func _load_fixture(path: String) -> void:
 	_world = null
 	_viewport = null
 	error = ""
-	var configuration: Dictionary = loader.configuration
+	var configuration: Dictionary = loader.configuration.duplicate(true)
+	if "--dv-focused-workbench" in OS.get_cmdline_user_args():
+		configuration["expression-auto"] = false
+		configuration["capture-times"] = ""
+		configuration["capture-manual-only"] = true
 	var mode := str(configuration.get("mode", "story"))
 	monitor.node_id = str(configuration.get("id", mode))
 	_event({"phase": "load", "configuration": configuration, "source": path, "sha256": FileAccess.get_sha256(path)})
@@ -276,24 +280,34 @@ func _run_suite() -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
-	if subject != null and subject.has_method("test_snapshot"):
+	if is_instance_valid(subject) and subject.has_method("test_snapshot"):
 		var state: Dictionary = subject.test_snapshot()
 		monitor.node_id = str(state.get("opening_phase", state.get("kitchen_phase", state.get("room", "story"))))
 		if state.has("reconstruction"): monitor.node_id = "reconstruction_"+str(state.reconstruction.performance.get("stage","off"))
 	if _duration > 0 and _elapsed >= _duration and not _suite_running: _finish()
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	if not event is InputEventKey or not event.pressed or event.echo: return
-	match event.keycode:
-		KEY_F2:
+func mcp_diagnostic(action: String) -> bool:
+	match action:
+		"monitor":
 			_monitor_visible = not _monitor_visible
 			monitor.visible = _monitor_visible
 			content.offset_bottom = -82.0 if _monitor_visible else 0.0
 			_event({"phase": "monitor_visibility", "visible": _monitor_visible, "policy": "manual_diagnostic_view"})
-		KEY_F5: _load_fixture(config_path)
+		"reload": _load_fixture(config_path)
+		"previous_case", "next_case":
+			if _world == null: return false
+			_build_matrix_case(_matrix_index + (1 if action == "next_case" else -1))
+		_: return false
+	return true
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not event is InputEventKey or not event.pressed or event.echo: return
+	match event.keycode:
+		KEY_F2: mcp_diagnostic("monitor")
+		KEY_F5: mcp_diagnostic("reload")
 		KEY_F8: _capture("manual_" + str(Time.get_ticks_msec()))
-		KEY_PAGEUP: if _world != null: _build_matrix_case(_matrix_index - 1)
-		KEY_PAGEDOWN: if _world != null: _build_matrix_case(_matrix_index + 1)
+		KEY_PAGEUP: mcp_diagnostic("previous_case")
+		KEY_PAGEDOWN: mcp_diagnostic("next_case")
 		_: return
 	get_viewport().set_input_as_handled()
 
@@ -327,4 +341,4 @@ func wait_for_shutdown() -> void:
 	if monitor._worker_pid > 0 and OS.is_process_running(monitor._worker_pid): push_error("Audio worker did not finalize before shutdown")
 
 func mcp_observe() -> Dictionary:
-	return {"test_fixture": true, "configuration": loader.configuration, "output_directory": output_dir, "error": error, "suite": suite, "suite_running": _suite_running, "elapsed_s": _elapsed, "monitor_visible": monitor.visible if monitor != null else false, "snapshot": subject.test_snapshot() if subject != null and subject.has_method("test_snapshot") else {}, "metrics": monitor.latest if monitor != null else {}, "acceptance": "pending_independent_review"}
+	return {"test_fixture": true, "configuration": loader.configuration, "output_directory": output_dir, "error": error, "suite": suite, "suite_running": _suite_running, "matrix_index": _matrix_index if _world != null else -1, "elapsed_s": _elapsed, "monitor_visible": monitor.visible if monitor != null else false, "snapshot": subject.test_snapshot() if is_instance_valid(subject) and subject.has_method("test_snapshot") else {}, "metrics": monitor.latest if monitor != null else {}, "acceptance": "pending_independent_review"}

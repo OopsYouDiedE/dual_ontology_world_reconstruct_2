@@ -18,10 +18,13 @@ var assessment_segment_id := ""
 var assessment_cases: Array = []
 var assessment_case_index := 0
 
+var focused_output := ""
+
 func _ready() -> void:
 	var port := 0
 	var expected_root := ""
 	var expected_hash := ""
+	var focused_state := ""
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--dv-mcp-port="): port = int(argument.trim_prefix("--dv-mcp-port="))
 		elif argument.begins_with("--dv-mcp-token="): token = argument.trim_prefix("--dv-mcp-token=")
@@ -29,10 +32,14 @@ func _ready() -> void:
 		elif argument.begins_with("--dv-project-root="): expected_root = argument.trim_prefix("--dv-project-root=")
 		elif argument.begins_with("--dv-project-sha256="): expected_hash = argument.trim_prefix("--dv-project-sha256=")
 		elif argument.begins_with("--dv-snapshot="): snapshot_path = argument.trim_prefix("--dv-snapshot=")
+		elif argument.begins_with("--dv-focused-state="):
+			focused_state = preload("res://mcp/CaptureSource.gd").project_output(argument.trim_prefix("--dv-focused-state="))
+		elif argument.begins_with("--dv-focused-output="):
+			focused_output = preload("res://mcp/CaptureSource.gd").project_output(argument.trim_prefix("--dv-focused-output="))
 		elif argument.begins_with("--dv-scenario="): scenario_path = argument.trim_prefix("--dv-scenario=")
 		elif argument.begins_with("--dv-assessment-plan="): assessment_plan_path = argument.trim_prefix("--dv-assessment-plan=")
 	if port == 0: set_process(false); return
-	assessment_output_directory = "res://.runtime/segment-sessions/" + str(OS.get_process_id())
+	assessment_output_directory = focused_state if not focused_state.is_empty() else "res://.runtime/segment-sessions/" + str(OS.get_process_id())
 	var source := preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
 	var root_path := str(source.project_root).replace("\\", "/").simplify_path().trim_suffix("/")
 	var required_root := expected_root.replace("\\", "/").simplify_path().trim_suffix("/")
@@ -48,7 +55,8 @@ func _ready() -> void:
 		set_process(false)
 		return
 	add_to_group("lifecycle_hosts")
-	_start_monitor.call_deferred()
+	if focused_output.is_empty() or (not "--dv-no-audio-capture" in OS.get_cmdline_user_args() and not "--dv-focused-workbench" in OS.get_cmdline_user_args()):
+		_start_monitor.call_deferred()
 
 func _start_monitor() -> void:
 	# Boot replaces itself at the first frame boundary. Wait until the title owns
@@ -66,7 +74,7 @@ func _start_monitor() -> void:
 	add_child(monitor)
 	monitor.visible = false
 	var directory := ".runtime/mainline-runs/" + Time.get_datetime_string_from_system().replace(":", "-") + "-" + str(OS.get_process_id())
-	var metadata := {"mock": not snapshot_path.is_empty(), "entry": "snapshot" if not snapshot_path.is_empty() else "production_title", "snapshot_path": snapshot_path, "acceptance_eligible": snapshot_path.is_empty(), "launch_scene": launch_scene, "process_id": OS.get_process_id(), "project_sha256": FileAccess.get_sha256("res://project.godot"), "monitor_visible": false, "capture_policy": "independent Terra review required", "max_fps": Engine.max_fps}
+	var metadata := {"mock": not snapshot_path.is_empty(), "entry": "snapshot" if not snapshot_path.is_empty() else "production_title", "snapshot_path": snapshot_path, "acceptance_eligible": snapshot_path.is_empty() and focused_output.is_empty(), "launch_scene": launch_scene, "process_id": OS.get_process_id(), "project_sha256": FileAccess.get_sha256("res://project.godot"), "monitor_visible": false, "capture_policy": "independent Terra review required", "max_fps": Engine.max_fps}
 	if not scenario_path.is_empty(): metadata.merge({"mock": true, "entry": "scenario", "scenario_path": scenario_path, "acceptance_eligible": false}, true)
 	if not assessment_plan_path.is_empty():
 		var plan = JSON.parse_string(FileAccess.get_file_as_string(assessment_plan_path))
@@ -193,10 +201,31 @@ func _reply(identity, result: Dictionary, error := "") -> void:
 		peer.put_data((JSON.stringify({"id": identity, "result": result} if error.is_empty() else {"id": identity, "error": error}) + "\n").to_utf8_buffer())
 	busy = false
 
+# Sample distinct real render frames relative to the input dispatch. Retain
+# raw frames in memory; PNG encoding happens only after the sampled motion.
+func _sample_motion(offsets: Array, frames: Array) -> void:
+	var elapsed := 0
+	for offset in offsets:
+		while elapsed < int(offset):
+			await get_tree().process_frame
+			elapsed += 1
+		await RenderingServer.frame_post_draw
+		frames.append({"frame": elapsed, "image": get_viewport().get_texture().get_image(), "ticks_us": Time.get_ticks_usec()})
+
 func _handle(request: Dictionary) -> void:
 	var identity = request.get("id")
 	var main := get_tree().current_scene
 	var operation := str(request.get("type", "observe"))
+	var captured_frames: Array = []
+	var offsets: Array = request.get("motion_frames", [])
+	var evidence_id := str(request.get("evidence_id", ""))
+	if not evidence_id.is_empty() and focused_output.is_empty():
+		_reply(identity, {}, "Focused evidence requires a focused host")
+		return
+	if not offsets.is_empty():
+		await RenderingServer.frame_post_draw
+		captured_frames.append({"frame": 0, "image": get_viewport().get_texture().get_image(), "ticks_us": Time.get_ticks_usec()})
+		_sample_motion(offsets, captured_frames)
 	if operation in ["click", "drag", "input_action"] and is_instance_valid(main) and main.has_method("begin_segment_input"):
 		main.begin_segment_input()
 	match operation:
@@ -247,6 +276,10 @@ func _handle(request: Dictionary) -> void:
 			event.pressed = false
 			event.button_mask = 0
 			Input.parse_input_event(event)
+		"diagnostic":
+			if focused_output.is_empty() or not is_instance_valid(main) or not main.has_method("mcp_diagnostic") or not main.mcp_diagnostic(str(request.get("action", ""))):
+				_reply(identity, {}, "Diagnostic action unavailable in this workbench")
+				return
 		"observe": pass
 		"drag":
 			var from := Vector2(float(request.get("x", -1)), float(request.get("y", -1)))
@@ -295,6 +328,12 @@ func _handle(request: Dictionary) -> void:
 	var wait_ms := clampi(int(request.get("wait_ms", 200)), 0, 10000)
 	if wait_ms > 0: await get_tree().create_timer(wait_ms / 1000.0).timeout
 	await get_tree().process_frame
+	if not evidence_id.is_empty():
+		if offsets.is_empty():
+			await RenderingServer.frame_post_draw
+			captured_frames.append({"frame": null, "image": get_viewport().get_texture().get_image(), "ticks_us": Time.get_ticks_usec()})
+		else:
+			while captured_frames.size() <= offsets.size(): await get_tree().process_frame
 	main = get_tree().current_scene
 	if not is_instance_valid(main):
 		_reply(identity, {}, "Scene transition has not produced a live scene")
@@ -308,6 +347,10 @@ func _handle(request: Dictionary) -> void:
 	_collect(get_tree().root, controls)
 	result["controls"] = controls
 	result["scene"] = main.scene_file_path
+	if not focused_output.is_empty():
+		result["renderer"] = RenderingServer.get_current_rendering_method()
+		var viewport_size := get_viewport().get_visible_rect().size
+		result["viewport_size"] = [viewport_size.x, viewport_size.y]
 	result["source_identity"] = preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
 	if monitor != null:
 		result["metrics_directory"] = monitor.output_dir
@@ -316,6 +359,15 @@ func _handle(request: Dictionary) -> void:
 		result["assessment_segment"] = monitor.node_id
 		result["assessment_case_index"] = assessment_case_index
 		result["assessment_case_count"] = assessment_cases.size()
+	if not evidence_id.is_empty():
+		var evidence: Array = []
+		for sample: Dictionary in captured_frames:
+			var path := focused_output.path_join(evidence_id + "-%02d.png" % evidence.size())
+			if not preload("res://mcp/CaptureReceipt.gd").save(sample.image, path, get_tree(), "focused-development"):
+				_reply(identity, {}, "Could not save focused screenshot")
+				return
+			evidence.append({"path": path, "frame": sample.frame, "elapsed_ms": (sample.ticks_us - captured_frames[0].ticks_us) / 1000.0})
+		result["evidence_frames"] = evidence
 	if bool(request.get("capture_image", true)):
 		var captured := get_viewport().get_texture().get_image()
 		var encoder := Thread.new()

@@ -267,7 +267,7 @@ def _scenario_start_ready(endpoint, observation):
     return True
 
 
-def start(arguments, deadline=None):
+def start(arguments, deadline=None, *, focused=None):
     provenance.assert_runtime_root(ROOT)
     launch_deadline = min(deadline, time.monotonic() + 200) if deadline else time.monotonic() + 200
     session_deadline = deadline
@@ -313,6 +313,10 @@ def start(arguments, deadline=None):
     elif "movie_fps" in arguments:
         raise ValueError("movie_fps requires movie_filename.")
     backend = endpoint.backend
+    if focused is not None:
+        if mode != "godot_manual" or snapshot_path or arguments.get("assessment_plan") or endpoint.movie_path:
+            raise ValueError("Focused sessions use their own isolated Godot entry")
+        endpoint.scenario_path = focused.get("scenario")
     if arguments.get("scenario_path") and not arguments.get("assessment_plan"):
         raise ValueError("Segment entry requires its simultaneous assessment plan")
     if backend == "godot" and (arguments.get("assessment_plan") or arguments.get("decision_maker") in ("agent", "llm")):
@@ -382,6 +386,14 @@ def start(arguments, deadline=None):
             command.append("--dv-checkpoint-stop=" + str(endpoint.checkpoint_stop_path))
             if snapshot_path is not None:
                 command.append("--dv-snapshot=" + str(snapshot_path))
+            if focused is not None:
+                command += ["--dv-focused-output=" + str(focused["output"]),
+                            "--dv-focused-state=" + str(focused["workbench_output"] / "state")]
+                if not focused["audio"]:
+                    command.append("--dv-no-audio-capture")
+                if focused.get("workbench"):
+                    command += ["--dv-focused-workbench", "--scenario=" + str(focused["workbench"]),
+                                "--test-output=" + str(focused["workbench_output"])]
             if endpoint.scenario_path is not None:
                 command.append("--dv-scenario=" + str(endpoint.scenario_path))
             save_slot = arguments.get("save_slot", endpoint.token)
@@ -392,7 +404,8 @@ def start(arguments, deadline=None):
                 command.append("--dv-background-capture")
             else:
                 command.append("--dv-visible-window")
-            endpoint.attach(spawn(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+            profile_env = {"user_data_root": focused["workbench_output"] / "profile"} if focused else {}
+            endpoint.attach(spawn(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **profile_env))
             connect_deadline = time.monotonic() + remaining(deadline, 30)
             while True:
                 try:
@@ -403,7 +416,24 @@ def start(arguments, deadline=None):
                         raise RuntimeError("Godot bridge did not start: " + "\n".join(endpoint.logs)[-4000:])
                     time.sleep(.1)
             endpoint.stream = endpoint.connection.makefile("rb")
-            if endpoint.scenario_path is not None:
+            if focused is not None:
+                ready_deadline = time.monotonic() + remaining(deadline, 25)
+                expected = ("res://tools/testing/StoryTest.tscn" if focused.get("workbench") else
+                            "res://mcp/game/SegmentEntry.tscn" if endpoint.scenario_path else "res://scenes/main/Main.tscn")
+                while True:
+                    budget = ready_deadline - time.monotonic()
+                    if budget <= 0:
+                        raise RuntimeError("Focused host did not reach " + expected)
+                    observation = endpoint.request({"type": "observe", "wait_ms": 0, "capture_image": False},
+                                                   timeout=min(10, budget))
+                    detail = observation.get("scenario_error") or observation.get("error")
+                    if detail:
+                        raise RuntimeError("Focused entry failed: " + detail)
+                    if observation.get("scene") == expected and (not endpoint.scenario_path or observation.get("scenario_ready")):
+                        break
+                    time.sleep(.05)
+                observation["acceptance_eligible"] = False
+            elif endpoint.scenario_path is not None:
                 ready_deadline = time.monotonic() + remaining(deadline, 20)
                 while True:
                     budget = ready_deadline - time.monotonic()
@@ -422,6 +452,7 @@ def start(arguments, deadline=None):
                 raise RuntimeError("Snapshot restoration failed: " + (detail or "restored host did not report success"))
         identity = secrets.token_hex(8)
         endpoint.deadline = session_deadline
+        endpoint.focused = focused is not None
         SESSIONS[identity] = endpoint
         return dict(observation, session_id=identity, mode=mode,
                     **({"movie_path": str(endpoint.movie_path), "movie_fps": arguments.get("movie_fps", 30),
@@ -491,7 +522,9 @@ def execute(name, arguments):
                     result["checkpoint_saved"] = True
                 except (OSError, ValueError, TypeError, KeyError) as error:
                     result["checkpoint_error"] = str(error)
-            if endpoint.backend == "godot" and graceful and endpoint.metrics_directory:
+            if getattr(endpoint, "focused", False):
+                result["acceptance_eligible"] = False
+            elif endpoint.backend == "godot" and graceful and endpoint.metrics_directory:
                 result.update(collect_metrics_async(identity, endpoint, graceful))
             else:
                 result.update(finalize_metrics(endpoint, graceful))

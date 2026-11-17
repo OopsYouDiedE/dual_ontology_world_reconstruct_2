@@ -79,7 +79,9 @@ def _import_stamp(godot, deadline):
     # Git supplies the workspace resource inventory, including untracked source
     # edits, while excluding runtime captures and Godot's generated cache.
     result = subprocess.run(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
-                            cwd=ROOT, capture_output=True, timeout=remaining(deadline, 10), check=True)
+                            cwd=ROOT, stdin=subprocess.DEVNULL, capture_output=True,
+                            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                            timeout=remaining(deadline, 10), check=True)
     paths = {Path(os.fsdecode(part)) for part in result.stdout.split(b"\0") if part}
     if asset_bundle.MANIFEST.is_file():
         paths.update(Path(item["path"]) for item in json.loads(asset_bundle.MANIFEST.read_text(encoding="utf-8"))["files"])

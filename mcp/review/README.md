@@ -18,7 +18,7 @@
 
 页面通过本地脚本自动刷新，每次替换整批七项结果。测试结束调用 `render` 生成 `artifacts/review/index.html` 和 `scoring_overview.md` 并核验本地链接。首页保留每个片段的最新测试，旧报告页已删除。
 
-`review_append` 接受带真实来源的七项评测；`semantic_append` 记录图片盲读；`progress_append` 记录修改、检查和完成事件。完成事件引用同一 work 的已有事件。`flush` 修复实时投影，`render` 生成报告。来源、PID、截图哈希和版本校验持续生效。
+`review_append` 保留标题／新游戏来源校验的历史评审入口；现行分段测试使用 `add_scores`；`semantic_append` 记录图片盲读；`progress_append` 记录修改、检查和完成事件。完成事件引用同一 work 的已有事件。`flush` 修复实时投影，`render` 生成报告。来源、PID、截图哈希和版本校验持续生效。
 
 ## 调用与验证
 
@@ -26,4 +26,4 @@
 
 回归入口：`mcp/review/test_batch_scores.py`、`mcp/review/test_integration.py`、`tools/testing/test_result_batches.py`。
 
-The `action_sfx_integrity` identifier is retained for compatibility. Current assessments score visible physical action; historical scores retain their original rubric and reasons.
+评分应覆盖本次会话中的可见动作与可听音效。缺少某项证据时，传入 null 和具体原因；服务发布带缺测标记的暂定 0，并将批次标为未完成。暂定值不作为实测分。

@@ -1,5 +1,9 @@
 extends Control
 ## 正式调查始终使用房间原相机、原世界和已经摆在现场的证物。
+const ENTER_DURATION := 0.85
+const RETURN_DURATION := 0.65
+const AUTO_ACTIVATE_KINDS := ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"]
+
 var host: Control
 var kind := ""
 var prop: Node3D
@@ -32,7 +36,7 @@ func checkpoint_state() -> Dictionary:
 		"ready": _ready_for_input, "closing": _closing, "has_result": _has_result, "visibility": visibility,
 		"camera": camera.global_transform, "fov": camera.fov,
 		"return_playing": checkpoint_return_playing, "return_cinematic": checkpoint_return_cinematic,
-		"elapsed": _tween.get_total_elapsed_time() if _tween != null and _tween.is_valid() else 0.85}
+		"elapsed": _tween.get_total_elapsed_time() if _tween != null and _tween.is_valid() else ENTER_DURATION}
 
 func restore_checkpoint(state: Dictionary) -> void:
 	if _tween != null: _tween.kill()
@@ -51,19 +55,16 @@ func restore_checkpoint(state: Dictionary) -> void:
 	_ready_for_input = bool(state.ready)
 	if _has_result: _on_sampled()
 	if bool(state.closing):
-		close(maxf(0.01, 0.65 - float(state.elapsed)))
+		close(maxf(0.01, RETURN_DURATION - float(state.elapsed)))
 	elif not _ready_for_input:
-		var focus: Vector3 = prop.to_global(prop.get_meta("focus", Vector3.ZERO))
-		var target := Transform3D(Basis.IDENTITY, _inspection_position(focus)).looking_at(focus, Vector3.UP)
-		_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		var remaining := maxf(0.01, 0.85 - float(state.elapsed))
-		_tween.tween_property(camera, "global_transform", target, remaining)
-		_tween.parallel().tween_property(camera, "fov", float(prop.get_meta("camera_fov", 48.0)), remaining)
-		_tween.finished.connect(func():
-			_ready_for_input = true
-			if kind in ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"] and not prop.completed: prop.activate())
-	elif kind in ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"] and not prop.completed:
-		prop.activate()
+		_begin_approach(maxf(0.01, ENTER_DURATION - float(state.elapsed)))
+		_tween.finished.connect(_finish_restored_approach)
+	else:
+		_activate_prop(false)
+
+func _finish_restored_approach() -> void:
+	_ready_for_input = true
+	_activate_prop(false)
 
 func _visibility_key(node: Node) -> String:
 	for key in ["top_bar", "left_card", "drawer", "room_hint", "det_ring"]:
@@ -136,18 +137,31 @@ func _ready() -> void:
 	gui_input.connect(_on_input)
 	prop.sampled.connect(_on_sampled)
 	camera.near = 0.015
-	var focus: Vector3 = prop.to_global(prop.get_meta("focus", Vector3.ZERO))
-	var camera_position := _inspection_position(focus)
-	var target := Transform3D(Basis.IDENTITY, camera_position).looking_at(focus, Vector3.UP)
-	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_tween.tween_property(camera, "global_transform", target, 0.85)
-	_tween.parallel().tween_property(camera, "fov", float(prop.get_meta("camera_fov", 48.0)), 0.85)
+	_begin_approach(ENTER_DURATION)
 	observed.emit(_event("anchor"))
 	await _tween.finished
 	if _closing or not is_inside_tree(): return
 	_ready_for_input = true
 	observed.emit(_event("closeup"))
-	if kind in ["wardrobe", "ratchet", "grille", "seal", "bed", "desk", "lamp", "wash", "window"]: prop.activate()
+	_activate_prop(true)
+
+func _activate_prop(revisit_completed: bool) -> void:
+	# A normal revisit can re-emit the result; restore already reports it above.
+	if kind in AUTO_ACTIVATE_KINDS and (revisit_completed or not prop.completed):
+		prop.activate()
+
+func _begin_approach(duration: float) -> void:
+	var focus := _prop_focus()
+	var target := Transform3D(Basis.IDENTITY, _inspection_position(focus)).looking_at(focus, Vector3.UP)
+	_move_camera(target, float(prop.get_meta("camera_fov", 48.0)), duration)
+
+func _prop_focus() -> Vector3:
+	return prop.to_global(prop.get_meta("focus", Vector3.ZERO))
+
+func _move_camera(target: Transform3D, fov: float, duration: float) -> void:
+	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_tween.tween_property(camera, "global_transform", target, duration)
+	_tween.parallel().tween_property(camera, "fov", fov, duration)
 
 func _inspection_position(focus: Vector3) -> Vector3:
 	var offset: Vector3 = prop.global_basis.orthonormalized() * Vector3(prop.get_meta("camera_offset", Vector3(0.4, 0.5, 1.0)))
@@ -202,7 +216,7 @@ func _on_sampled() -> void:
 	observed.emit(_event("result"))
 
 func _surface_rect() -> Rect2:
-	var focus: Vector3 = prop.to_global(prop.get_meta("focus", Vector3.ZERO))
+	var focus := _prop_focus()
 	var center := camera.unproject_position(focus)
 	var distance := maxf(0.1, camera.global_position.distance_to(focus))
 	var height := float(camera.get_viewport().size.y)
@@ -233,14 +247,12 @@ func _on_input(event: InputEvent) -> void:
 			prop.align_hand(Vector2(_hand_start_x + travel, 0))
 		accept_event()
 
-func close(duration := 0.65) -> void:
+func close(duration := RETURN_DURATION) -> void:
 	if _closing or not is_instance_valid(camera): return
 	_closing = true
 	_ready_for_input = false
 	if _tween != null: _tween.kill()
-	_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_tween.tween_property(camera, "global_transform", _saved_transform, duration)
-	_tween.parallel().tween_property(camera, "fov", _saved_fov, duration)
+	_move_camera(_saved_transform, _saved_fov, duration)
 	await _tween.finished
 	_restore()
 	observed.emit(_event("return"))

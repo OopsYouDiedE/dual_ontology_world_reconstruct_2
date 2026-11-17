@@ -16,3 +16,6 @@ tools/building_construction/candidates/life-*.dv
 
 # Local transcription outputs
 outputs/subtitles/
+
+# Generated workspace inventory (tools/testing/build_project_map.py)
+/project-map.html

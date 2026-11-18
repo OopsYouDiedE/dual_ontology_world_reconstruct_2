@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Night Roll Call · Academy Design Study</title>
+<link rel="stylesheet" href="study.css">
+<script src="study.js" defer></script>
+</head>
+<body>
+<main class="page">
+  <header class="masthead">
+    <div class="edition"><span class="seal" aria-hidden="true">✦</span><span>THE OVERSEAS ACADEMY <small>FIELD STUDIES / 01</small></span></div>
+    <div class="controls"><button id="sound" type="button" aria-pressed="false">Sound off</button><button id="reset" type="button">Restart</button></div>
+  </header>
+  <div class="intro"><p class="eyebrow">DESIGN PROTOTYPE &nbsp;/&nbsp; AFTER HOURS</p><h1>Night Roll Call</h1><p class="dek">Sixteen students live here. Tonight the register counts seventeen.</p></div>
+  <div class="layout">
+    <section class="stage" aria-label="Interactive corridor">
+      <div class="view" id="view" data-look="routine">
+        <svg id="corridor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" preserveAspectRatio="none" role="img" aria-labelledby="corridor-title corridor-desc">
+          <title id="corridor-title">Second-floor dormitory corridor</title><desc id="corridor-desc">A row of wood doors, a brass speaking tube, and three mullioned windows.</desc>
+        </svg>
+        <div class="frame-label"><span id="time">21:59</span><span> / </span><span id="look">BEFORE THE BELL</span></div>
+        <div class="hotspots" id="hotspots" aria-label="Things to inspect">
+          <button type="button" class="spot notice" data-action="notice"><span>01</span> Notice</button>
+          <button type="button" class="spot witness" data-action="witness" hidden><span>02</span> Lin</button>
+          <button type="button" class="spot tube" data-action="tube" hidden><span>03</span> Speaking tube</button>
+          <button type="button" class="spot chalk" data-action="chalk" hidden><span>04</span> Chalk marks</button>
+        </div>
+      </div>
+      <div class="scene-caption"><span><b>02</b> &nbsp; DORMITORY CORRIDOR</span><span id="scene-note">Mullioned windows · west wing</span></div>
+    </section>
+    <aside class="desk" aria-label="Duty desk">
+      <div class="sheet" id="sheet" aria-live="polite" aria-atomic="true"></div>
+      <div class="actions" id="actions"></div>
+    </aside>
+  </div>
+  <footer class="footer"><span><b>01</b> &nbsp; ATMOSPHERE &amp; RULES STUDY</span><span>Made for <i>Blessed Are the Sleepers</i></span></footer>
+</main>
+</body>
+</html>

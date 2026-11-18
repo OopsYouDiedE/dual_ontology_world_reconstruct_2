@@ -100,12 +100,18 @@ public sealed partial class RuntimeSession
             throw new InvalidDataException("生活库存不守恒或出现负数。");
     }
     private JsonElement LifeObject(string id)=>lifeDefinition.Get("objects").Items().FirstOrDefault(item=>item.Get("id").Text()==id);
-    private void UpdateLifePlacement(string actor,double positionX,double positionZ)
+    private void UpdateLifePlacement(string actor,double positionX,double positionY,double positionZ)
     {
         if(!IsLifeSession)return;
-        var zone=LifeScenario.Zone(lifeDefinition.Get("rooms").Items().ToArray(),positionX,positionZ);
-        if(zone>=0&&LifeNumber(actor+".zone")!=zone)
+        var multilevel=lifeDefinition.Get("multilevel").Flag();
+        var zone=LifeScenario.Zone(lifeDefinition.Get("rooms").Items().ToArray(),positionX,positionZ,multilevel?positionY:null);
+        if((zone>=0||multilevel)&&LifeNumber(actor+".zone")!=zone)
             Rules.Changed(World.Apply(new Dictionary<FieldKey,Fact>{{PathKey(actor+".zone"),LifeFact(zone)}}));
+    }
+    private bool ShareLifeZone(string actor,string other)
+    {
+        var zone=LifeNumber(actor+".zone");
+        return (zone>=0||!lifeDefinition.Get("multilevel").Flag())&&zone==LifeNumber(other+".zone");
     }
     private bool LifeLit(int zone)
     {
@@ -167,7 +173,7 @@ public sealed partial class RuntimeSession
         value!.Value.Get("actor").Text()==actor&&value.Value.Get("target").Text()==target&&value.Value.Get("category").Text()==category&&value.Value.Get("status").Text() is "pending" or "awaiting_seating");
     private bool LifeCanDeliver(string actor,string target,string category)
     {
-        if(LifeNumber(actor+".zone")!=LifeNumber(target+".zone"))return false;
+        if(!ShareLifeZone(actor,target))return false;
         if(running.TryGetValue(target,out var execution)&&lifeDefinition.Get("actions").Get(execution.Decision.Action.Declaration.Get("life").Get("action").Text()).Get("pose").Text()=="lie")return false;
         var effect=lifeDefinition.Get("social").Get("categories").Get(category).Get("fx").Text();
         if(effect=="share_food")return LifeNumber(actor+".food")>=1&&LifeNumber(target+".food")==0;
@@ -245,7 +251,7 @@ public sealed partial class RuntimeSession
             {
                 noiseUntil=work.DueAt/contentTimeUnit;
                 var elapsed=Math.Max(0,Math.Min(ContentTime,noiseUntil)-Math.Max(last,work.WorkStartedAt!.Value/contentTimeUnit));
-                if(elapsed>0)foreach(var listener in actors.Keys.Where(listener=>listener!=actor&&LifeNumber(listener+".zone")==LifeNumber(actor+".zone")))
+                if(elapsed>0)foreach(var listener in actors.Keys.Where(listener=>listener!=actor&&ShareLifeZone(actor,listener)))
                     Scheduler.ApplyNeedEffects(listener,JsonSerializer.SerializeToElement(new {calm=-elapsed*lifeDefinition.Get("response").Get("noise_calm_per_minute").Number()}),Clock.Now);
             }
             if(LifeNumber(actor+".noise_until")!=noiseUntil)writes[PathKey(actor+".noise_until")]=LifeFact(noiseUntil);
@@ -265,7 +271,7 @@ public sealed partial class RuntimeSession
             return true;
         }
         var target=meta.Get("target").Text();var category=meta.Get("category").Text();
-        if(LifeNumber(actor+".zone")!=LifeNumber(target+".zone"))return false;
+        if(!ShareLifeZone(actor,target))return false;
         if(spatialAuthorityEnabled&&placements.TryGetValue(actor,out var from)&&placements.TryGetValue(target,out var to)&&
             Math.Pow(from.X-to.X,2)+Math.Pow(from.Z-to.Z,2)>Math.Pow(lifeDefinition.Get("response").Get("range_m").Number(),2))return false;
         var categoryRule=lifeDefinition.Get("social").Get("categories").Get(category);

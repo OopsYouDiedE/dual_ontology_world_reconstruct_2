@@ -14,16 +14,16 @@ public sealed partial class RuntimeSession
     {
         var senses=lifeDefinition.Get("senses");var zone=LifeNumber(actor+".zone");
         foreach(var field in senses.Get("own_fields").Items())LifeObserve(actor,PathKey(actor+"."+field.Text()));
-        var lit=LifeLit((int)zone);
+        var lit=(zone>=0||!lifeDefinition.Get("multilevel").Flag())&&LifeLit((int)zone);
         if(lit)foreach(var item in lifeDefinition.Get("objects").Items().Where(item=>item.Get("zone").Number()==zone))
             foreach(var field in senses.Get("object_fields").Items())LifeObserve(actor,PathKey(item.Get("id").Text()+"."+field.Text()));
-        var audible=actors.Keys.Any(source=>LifeNumber(source+".zone")==zone&&LifeWorking(source)&&
+        var audible=actors.Keys.Any(source=>ShareLifeZone(actor,source)&&LifeWorking(source)&&
             running.TryGetValue(source,out var work)&&lifeDefinition.Get("actions").Get(work.Decision.Action.Declaration.Get("life").Get("action").Text()).Get("noise").Number()>senses.Get("noise_threshold").Number());
         LifeFragment(actor,actor+".trace.music_audible",audible,"hearing");
         foreach(var other in actors.Keys.Where(other=>other!=actor))
         {
             foreach(var field in senses.Get("own_relation_fields").Items())LifeObserve(actor,PathKey(Pair(actor,other)+"."+field.Text()));
-            var visible=lit&&LifeNumber(other+".zone")==zone;
+            var visible=lit&&ShareLifeZone(actor,other);
             if(visible&&spatialAuthorityEnabled&&placements.TryGetValue(actor,out var from)&&placements.TryGetValue(other,out var to))
                 visible=Math.Pow(from.X-to.X,2)+Math.Pow(from.Z-to.Z,2)<=Math.Pow(senses.Get("visual_range_m").Number(),2);
             LifeFragment(actor,other+".trace.in_view",visible,"visual_attention");

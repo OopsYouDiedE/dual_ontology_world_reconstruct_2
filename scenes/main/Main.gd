@@ -5,14 +5,19 @@ const BOOK_UI_SCENE := preload("res://scenes/UIpanel/BookUI/BookUI.tscn")
 const STUDY_STAGE_SCENE := preload("res://scenes/components/world/StudyDeskStage3D.tscn")
 const Sound := preload("res://scenes/components/shared/Sound.gd")
 
-const Space = preload("res://scenes/components/life/BuildingSpace.gd")
+const Routes = preload("res://scenes/components/life/BuildingRoutes.gd")
 const Components = preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
 const Wall = preload("res://tools/building_construction/BuildingConstruction/Walls/WallPathGeometry.gd")
 const Floor = preload("res://tools/building_construction/BuildingConstruction/Floors/ArchitectFloor.gd")
+const Stair = preload("res://tools/building_construction/BuildingConstruction/Stairs/ArchitectStair.gd")
+const Railing = preload("res://tools/building_construction/BuildingConstruction/Railings/ArchitectRailing.gd")
 const Props = preload("res://tools/building_construction/BuildingConstruction/Props/ArchitectProps.gd")
 const DEFAULT_CONTENT := "res://assets/data/scenarios/life_simulation.dv"
 const DUAL_WORLD_SCENE := preload("res://scenes/dual_world/DualWorldMain.tscn")
 const DUAL_WORLD_SCRIPT := preload("res://scenes/dual_world/DualWorldMain.gd")
+
+const LIFE_ENGLISH = preload("res://assets/data/life_simulation/display_en.json")
+const LIFE_PROMISE_PREFIX := "履行承诺："
 
 var bridge: Variant
 var builder: Control
@@ -259,7 +264,7 @@ func open_life(building: Dictionary = {}) -> void:
 	initial_building = building.duplicate(true)
 	var result: Dictionary = JSON.parse_string(bridge.Open(content_path, JSON.stringify(building) if not building.is_empty() else "", seed_value))
 	if not result.get("ok", false):
-		status_text = str(result.get("error", "无法开局"))
+		status_text = str(result.get("error", "Could not start the simulation"))
 		push_error(status_text)
 		return
 	rules = result.definition
@@ -271,12 +276,12 @@ func _present_life(restored: bool) -> void:
 		life_ui.queue_free()
 	selected = rules.agents[0].id
 	speed = 20.0
-	space = Space.new()
+	space = Routes.new()
 	var layer_index := 0
 	for index in range(rules.building.layers.size()):
 		if not rules.building.layers[index].get("roomFaces", []).is_empty(): layer_index = index; break
 	space.setup(rules.building, layer_index, rules.capacities)
-	bridge.SetObjectRouteSpace(space, rules.actions)
+	bridge.SetObjectRouteSpace3D(space, rules.actions)
 	if is_instance_valid(title_ui): title_ui.hide_title()
 	book_ui.close_immediately()
 	stage.set_active(false)
@@ -295,7 +300,7 @@ func _present_life(restored: bool) -> void:
 		var declaration: Dictionary = {}
 		for entry in roster:
 			if entry.character_id == profile.id: declaration = entry; break
-		if declaration.is_empty(): push_error("缺少人物模型：" + profile.id); continue
+		if declaration.is_empty(): push_error("Missing character model: " + profile.id); continue
 		var model := preload("res://scenes/components/characters/CharacterModel.tscn").instantiate()
 		camera.get_parent().add_child(model)
 		model.configure(declaration)
@@ -306,12 +311,24 @@ func _present_life(restored: bool) -> void:
 		caption.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		camera.get_parent().add_child(caption)
 		captions[profile.id] = caption
+	var start_positions: Array[Vector3] = []
 	for actor in snapshot.actors:
-		var position := Vector2(actor.placement.X, actor.placement.Z)
-		if not restored: position = space.nearest_free(position)
-		if position == Vector2.INF: push_error("人物没有可用出生位置"); continue
-		if not restored: bridge.Place(actor.id, position.x, space.layer_y, position.y, 0.0)
-		figures[actor.id].position = Vector3(position.x, space.layer_y, position.y)
+		if not figures.has(actor.id): continue
+		var position := Vector3(actor.placement.X, actor.placement.Y, actor.placement.Z)
+		if not restored:
+			position = space.spawn_near(position, start_positions, 12)
+			if not position.is_finite():
+				# Very small rooms can have fewer full-body slots than the roster.
+				# Prefer a tighter distinct start, then let the actor route out normally.
+				position = space.spawn_near(Vector3(actor.placement.X, actor.placement.Y, actor.placement.Z), start_positions, 16, 0.45)
+		if not position.is_finite():
+			push_error("No distinct standable start for " + str(actor.id))
+			figures[actor.id].hide()
+			captions[actor.id].hide()
+			continue
+		start_positions.append(position)
+		if not restored: bridge.Place(actor.id, position.x, position.y, position.z, 0.0)
+		figures[actor.id].position = position
 	active = true
 	paused = restored
 	status_text = ""
@@ -328,24 +345,24 @@ func _make_life_ui() -> void:
 	life_ui.add_child(column)
 	var header := HFlowContainer.new()
 	column.add_child(header)
-	_button(header, "返回建筑器" if is_instance_valid(builder) else "返回主菜单", close_life)
-	_button(header, "暂停／继续", func():
+	_button(header, "Back to Builder" if is_instance_valid(builder) else "Main Menu", close_life)
+	_button(header, "Pause / Resume", func():
 		paused = not paused
-		status_text = "已暂停。" if paused else "")
+		status_text = "Paused." if paused else "")
 	var speeds := OptionButton.new()
 	for value in [1, 5, 20, 60, 240]: speeds.add_item(str(value) + "×", value)
 	speeds.select(2)
 	speeds.item_selected.connect(func(index): speed = speeds.get_item_id(index))
 	header.add_child(speeds)
-	_button(header, "保存进度", func(): status_text = bridge.Save(_slot_path("auto")))
-	_button(header, "读取进度", func(): _load_save(_auto_path()))
-	_button(header, "手记", func(): _open_book_page("journal"))
-	_button(header, "存档", func(): _open_book_page("save"))
-	_button(header, "设置", func(): _open_book_page("settings"))
-	_button(header, "重载内容", func():
+	_button(header, "Quick Save", func(): status_text = bridge.Save(_slot_path("auto")))
+	_button(header, "Quick Load", func(): _load_save(_auto_path()))
+	_button(header, "Journal", func(): _open_book_page("journal"))
+	_button(header, "Saves", func(): _open_book_page("save"))
+	_button(header, "Settings", func(): _open_book_page("settings"))
+	_button(header, "Reload Content", func():
 		status_text = bridge.Reload(content_path)
-		if status_text.is_empty(): status_text = "内容已重载，运行状态与证据保留。")
-	_button(header, "切换墙体", func():
+		if status_text.is_empty(): status_text = "Content reloaded. Progress and evidence retained.")
+	_button(header, "Toggle Walls", func():
 		for wall in walls: wall.visible = not wall.visible)
 	clock_label = Label.new()
 	header.add_child(clock_label)
@@ -356,7 +373,7 @@ func _make_life_ui() -> void:
 	sidebar.custom_minimum_size.x = 300
 	body.add_child(sidebar)
 	actor_pick = OptionButton.new()
-	for profile in rules.agents: actor_pick.add_item(profile.name)
+	for profile in rules.agents: actor_pick.add_item(_life_text(profile.name))
 	actor_pick.item_selected.connect(func(index): selected = rules.agents[index].id; _refresh())
 	sidebar.add_child(actor_pick)
 	detail = RichTextLabel.new()
@@ -366,7 +383,7 @@ func _make_life_ui() -> void:
 	choice_pick.custom_minimum_size.x = 280
 	choice_pick.clip_text = true
 	sidebar.add_child(choice_pick)
-	_button(sidebar, "提交当前可用行动", func():
+	_button(sidebar, "Queue Selected Action", func():
 		if choice_pick.selected >= 0:
 			status_text = bridge.Submit(selected, str(choice_pick.get_item_metadata(choice_pick.selected))))
 	var viewport_box := SubViewportContainer.new()
@@ -397,12 +414,14 @@ func _make_life_ui() -> void:
 	events.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(events)
 	status_label = Label.new()
-	status_label.text = "右键旋转，滚轮缩放。"
+	status_label.text = "Right-click and drag to orbit; scroll to zoom."
 	column.add_child(status_label)
 
 func _build_view() -> void:
 	var world := camera.get_parent()
 	for layer in rules.building.layers: world.add_child(Floor.build(layer))
+	for stair in rules.building.get("stairs", []): world.add_child(Stair.build(stair))
+	for rail in rules.building.get("railings", []): world.add_child(Railing.build(rail))
 	for data in rules.building.walls:
 		var wall = Wall.build(data)
 		if wall != null: world.add_child(wall); walls.append(wall)
@@ -417,8 +436,8 @@ func _build_view() -> void:
 		else: prop = Props.build(data)
 		if prop != null: world.add_child(prop); props[str(data.id)] = prop
 	for wall in walls: wall.scale.y = 0.32
-	camera_target = Vector3(space.bounds.get_center().x, space.layer_y + 0.4, space.bounds.get_center().y)
-	distance = maxf(space.bounds.size.x, space.bounds.size.y) * 1.25
+	camera_target = Vector3(space.primary.bounds.get_center().x, space.primary.layer_y + 0.4, space.primary.bounds.get_center().y)
+	distance = maxf(space.primary.bounds.size.x, space.primary.bounds.size.y) * 1.25
 	_update_camera()
 
 func _update_camera() -> void:
@@ -436,24 +455,25 @@ func _view_input(event: InputEvent) -> void:
 		_update_camera()
 
 func _dispatch(action: Dictionary) -> void:
-	var position: Vector3 = figures[action.actor].position
+	var model := figures.get(action.actor) as Node3D
+	if model == null: bridge.Fail(int(action.execution), "navigation_actor_missing"); return
+	var position := model.position
 	var plan: Dictionary = {}
 	var meta: Dictionary = action.meta
 	if meta.get("target", "") != "":
-		var other: Vector3 = figures[meta.target].position
-		var approach: Vector2 = space.nearest_free(Vector2(other.x, other.z) + Vector2(0.8, 0.0), 4)
-		var route: Array = space.find_path(Vector2(position.x, position.z), approach)
-		if approach != Vector2.INF and (not route.is_empty() or Vector2(position.x, position.z).distance_to(approach) < 0.4):
-			plan = {"point": {"approach": approach}, "path": route, "length": space.path_length(Vector2(position.x, position.z), route)}
+		var other := figures.get(meta.target) as Node3D
+		if other != null:
+			var approach: Vector3 = space.nearby_floor_point(other.position + Vector3(0.8, 0.0, 0.0))
+			plan = space.find_route(position, approach)
+			if not plan.is_empty(): plan["target"] = approach
 	else:
-		var object = space.object_by_id.get(str(meta.get("obj", "")))
-		if object != null: plan = space.plan_use(Vector2(position.x, position.z), object, rules.actions[meta.action], int(meta.get("slot", 0)))
+		plan = space.plan_use(position, str(meta.get("obj", "")), rules.actions[meta.action], int(meta.get("slot", 0)))
 	if plan.is_empty(): bridge.Fail(int(action.execution), "navigation_unreachable"); return
-	var endpoint: Vector2 = plan.point.approach
-	if not bridge.SetTarget(int(action.execution), endpoint.x, space.layer_y, endpoint.y, float(plan.length), 2.4):
+	var endpoint: Vector3 = plan.target
+	if not bridge.SetTarget(int(action.execution), endpoint.x, endpoint.y, endpoint.z, float(plan.length), 2.4):
 		bridge.Fail(int(action.execution), "navigation_target_rejected")
 		return
-	paths[action.actor] = {"execution": int(action.execution), "route": plan.path, "target": endpoint, "meta": meta, "label": action.label}
+	paths[action.actor] = {"execution": int(action.execution), "route": plan.path, "meta": meta, "label": action.label}
 
 func _move(seconds: float) -> void:
 	for actor in paths.keys():
@@ -468,23 +488,23 @@ func _move(seconds: float) -> void:
 			continue
 		var model: Node3D = figures[actor]
 		model.set_motion(true)
-		var position := Vector2(model.position.x, model.position.z)
+		var position := model.position
 		var budget := seconds * 2.4
 		while budget > 0.0 and not movement.route.is_empty():
-			var waypoint: Vector2 = movement.route[0]
+			var waypoint: Vector3 = movement.route[0]
 			var gap := position.distance_to(waypoint)
 			if gap <= budget: position = waypoint; budget -= gap; movement.route.pop_front()
 			else:
 				var direction := position.direction_to(waypoint)
 				position += direction * budget
-				model.rotation.y = atan2(direction.x, direction.y)
+				model.rotation.y = atan2(direction.x, direction.z)
 				if model.has_method("set_motion"): model.set_motion(true, false)
 				budget = 0
-		model.position = Vector3(position.x, space.layer_y, position.y)
+		model.position = position
 		if model.has_method("set_motion") and movement.route.is_empty(): model.set_motion(false)
-		bridge.Progress(movement.execution, position.x, space.layer_y, position.y, space.path_length(position, movement.route))
+		bridge.Progress(movement.execution, position.x, position.y, position.z, Routes.path_length(position, movement.route))
 		if movement.route.is_empty():
-			if not bridge.Arrive(movement.execution, position.x, space.layer_y, position.y): bridge.Fail(movement.execution, "arrival_rejected")
+			if not bridge.Arrive(movement.execution, position.x, position.y, position.z): bridge.Fail(movement.execution, "arrival_rejected")
 			paths.erase(actor)
 
 func _sync_life_animations() -> void:
@@ -530,7 +550,7 @@ func _process(delta: float) -> void:
 		figures[actor.id].pause_animation(paused)
 		var placement: Dictionary = actor.placement
 		figures[actor.id].position = Vector3(placement.X, placement.Y, placement.Z)
-		var text: String = actor.name
+		var text: String = _life_text(actor.name)
 		if actor.activity != null:
 			text += "\n" + actor.activity.Phase
 		captions[actor.id].text = text
@@ -548,33 +568,53 @@ func _process(delta: float) -> void:
 	ui_elapsed += delta
 	if ui_elapsed >= 0.3: ui_elapsed = 0; _refresh()
 
+# English presentation only: declarations, save hashes and evidence values stay intact.
+func _life_text(raw: Variant) -> String:
+	var label := str(raw) if raw != null else ""
+	var aliases: Dictionary = LIFE_ENGLISH.data
+	if aliases.has(label): return aliases[label]
+	if label.begins_with(LIFE_PROMISE_PREFIX):
+		return "Keep Promise: " + _life_text(label.trim_prefix(LIFE_PROMISE_PREFIX))
+	return label
+
+func _life_query(query: Dictionary) -> String:
+	var id := str(query.id)
+	var separator := id.find("_")
+	if separator > 0 and id.substr(0, separator) in ["source", "ask", "offer", "stock", "motive"]:
+		var other := id.substr(separator + 1)
+		var template := str(query.label).replace(other, "${other}")
+		var profile: Array = rules.agents.filter(func(agent): return agent.id == other)
+		var name := _life_text(profile[0].name) if not profile.is_empty() else other.capitalize()
+		return _life_text(template).replace("${other}", name)
+	return _life_text(query.label)
+
 func _refresh() -> void:
 	if not active: return
 	var minute := int(snapshot.get("time", 420))
-	clock_label.text = "第%d日 %02d:%02d%s" % [minute / 1440 + 1, minute % 1440 / 60, minute % 60, " · 暂停" if paused else ""]
-	var text := "作者检查器\n"
+	clock_label.text = "Day %d %02d:%02d%s" % [minute / 1440 + 1, minute % 1440 / 60, minute % 60, " · Paused" if paused else ""]
+	var text := "Character Inspector\n"
 	var refresh_choices := not choice_pick.get_popup().visible
 	var previous_choice := str(choice_pick.get_item_metadata(choice_pick.selected)) if choice_pick.selected >= 0 else ""
 	if refresh_choices: choice_pick.clear()
 	for actor in snapshot.get("actors", []):
 		if actor.id != selected: continue
-		text += str(actor.purpose) + "\n\n"
-		for need in actor.needs: text += "%s: %.0f\n" % [str(rules.needs[need].label), float(actor.needs[need])]
-		text += "口粮 %s · 证据 %s\n" % [actor.food, actor.evidence_count]
-		text += "\n人物主观认知（观察片段与推论）\n"
+		text += _life_text(actor.purpose) + "\n\n"
+		for need in actor.needs: text += "%s: %.0f\n" % [_life_text(rules.needs[need].label), float(actor.needs[need])]
+		text += "Rations %s · Evidence %s\n" % [actor.food, actor.evidence_count]
+		text += "\nCharacter Knowledge (Observations and Inferences)\n"
 		var cognition: Dictionary = actor.get("cognition", {})
-		var status_labels := {"proved":"有依据", "refuted":"有反证", "conflicted":"证据冲突", "unknown":"未知", "pending":"整理中"}
+		var status_labels := {"proved":"Supported", "refuted":"Refuted", "conflicted":"Conflicting", "unknown":"Unknown", "pending":"Pending"}
 		for query in cognition.get("queries", []):
-			text += "%s：%s\n" % [query.label, status_labels.get(query.status, query.status)]
+			text += "%s: %s\n" % [_life_query(query), status_labels.get(query.status, query.status)]
 		if refresh_choices:
 			for choice in actor.choices:
-				choice_pick.add_item(choice.label)
+				choice_pick.add_item(_life_text(choice.label))
 				choice_pick.set_item_metadata(choice_pick.item_count - 1, choice.id)
 				if choice.id == previous_choice: choice_pick.select(choice_pick.item_count - 1)
-	text += "\n有向关系（好感／信任／积怨）\n"
+	text += "\nRelationships (Affinity / Trust / Tension)\n"
 	var audit: Dictionary = snapshot.get("audit", {})
 	for relation in audit.get("relations", []):
-		if relation.from == selected: text += "%s: %.1f / %.1f / %.1f %s\n" % [relation.to, relation.affinity, relation.trust, relation.tension, relation.stage]
+		if relation.from == selected: text += "%s: %.1f / %.1f / %.1f %s\n" % [relation.to, relation.affinity, relation.trust, relation.tension, _life_text(relation.stage)]
 	detail.text = text
 	# F4：事件文本只在 mechanics / receipts 数量变化时重建，不再每 0.3 秒遍历全部历史
 	var mech: Array = snapshot.get("mechanics", [])
@@ -582,17 +622,17 @@ func _refresh() -> void:
 	var events_key := "%d|%d" % [mech.size(), rcpt.size()]
 	if events_key != _events_key:
 		_events_key = events_key
-		var log_text := "事件与实际兑现\n"
+		var log_text := "Events and Outcomes\n"
 		for event in mech:
 			if event.Kind == "life_response":
 				var response: Dictionary = event.Details
-				log_text += "%s → %s · %s\n%s · %s\n\n" % [response.requester, response.responder, rules.social.categories[response.category].label, rules.social.mode_labels[response.mode], "已兑现" if response.delivered else "尚未兑现"]
+				log_text += "%s → %s · %s\n%s · %s\n\n" % [response.requester, response.responder, _life_text(rules.social.categories[response.category].label), _life_text(rules.social.mode_labels[response.mode]), "Delivered" if response.delivered else "Pending"]
 			elif event.Kind == "life_seating":
-				log_text += "%s · 座位约定%s\n\n" % [event.Details.requester, "已实际履行" if event.Success else "已到期"]
+				log_text += "%s · Seating promise: %s\n\n" % [event.Details.requester, "Kept" if event.Success else "Expired"]
 		for receipt in rcpt.slice(-8): log_text += "%s · %s\n" % [receipt.Actor, receipt.Reason]
 		events.text = log_text
 	if not status_text.is_empty(): status_label.text = status_text
-	elif not audit.is_empty(): status_label.text = "库存 %.0f · 携带 %.0f · 已消耗 %.0f · 总供给 %.0f　|　原模型姿态显示，坐卧骨骼动作未接入" % [audit.stock, audit.carried, audit.consumed, audit.supplied]
+	elif not audit.is_empty(): status_label.text = "Stock %.0f · Carried %.0f · Consumed %.0f · Total supply %.0f" % [audit.stock, audit.carried, audit.consumed, audit.supplied]
 
 func _load_save(path: String) -> void:
 	status_text = bridge.Load(path)
@@ -600,7 +640,7 @@ func _load_save(path: String) -> void:
 		rules = JSON.parse_string(bridge.Definition())
 		_present_life(true)
 		book_paused = true
-		status_text = "已恢复；保持暂停。"
+		status_text = "Save restored. Simulation paused."
 	_refresh()
 
 func close_life() -> void:
@@ -627,7 +667,7 @@ func journal() -> Dictionary:
 
 func journal_actions() -> Array:
 	for actor in snapshot.get("actors", []):
-		if actor.id == selected: return actor.choices
+		if actor.id == selected: return actor.choices.map(func(choice): return {"id": choice.id, "label": _life_text(choice.label)})
 	return []
 
 func journal_submit(action: String) -> void:
@@ -639,33 +679,33 @@ func journal_save_note(title: String, text: String, related: String, judgement: 
 func save_slots() -> Array:
 	var slots: Array = []
 	var auto_path := _auto_path()
-	slots.append(_slot_summary("auto", "自动记录", auto_path))
+	slots.append(_slot_summary("auto", "Autosave", auto_path))
 	for index in range(1, 7):
 		var path := _slot_path(str(index))
-		slots.append(_slot_summary(str(index), "手记 " + ["一", "二", "三", "四", "五", "六"][index - 1], path))
+		slots.append(_slot_summary(str(index), "Slot %d" % index, path))
 	return slots
 
 func _slot_summary(id: String, label: String, path: String) -> Dictionary:
 	var exists := FileAccess.file_exists(path)
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if exists else null
 	var minute := float(data.get("game_time", 0.0)) if data is Dictionary else 0.0
-	return {"id":id, "label":label, "kind":"auto" if id == "auto" else "manual", "exists":exists, "saved_at":FileAccess.get_modified_time(path) if exists else 0, "place":"生活宅邸" if exists else "—", "game_time":"第%d日 %02d:%02d" % [int(minute / 1440) + 1, int(minute) % 1440 / 60, int(minute) % 60] if exists else "—"}
+	return {"id":id, "label":label, "kind":"auto" if id == "auto" else "manual", "exists":exists, "saved_at":FileAccess.get_modified_time(path) if exists else 0, "place":"Life Simulation" if exists else "—", "game_time":"Day %d %02d:%02d" % [int(minute / 1440) + 1, int(minute) % 1440 / 60, int(minute) % 60] if exists else "—"}
 
 func save_to_slot(id: String) -> String:
-	if id == "auto": return "自动记录由生活进程写入。"
-	if not id.is_valid_int() or int(id) < 1 or int(id) > 6: return "无效的手记页。"
+	if id == "auto": return "The simulation writes the autosave."
+	if not id.is_valid_int() or int(id) < 1 or int(id) > 6: return "Invalid save slot."
 	return bridge.Save(_slot_path(id))
 
 func load_slot(id: String) -> String:
-	if id != "auto" and (not id.is_valid_int() or int(id) < 1 or int(id) > 6): return "无效的手记页。"
+	if id != "auto" and (not id.is_valid_int() or int(id) < 1 or int(id) > 6): return "Invalid save slot."
 	var path := _auto_path() if id == "auto" else _slot_path(id)
-	if not FileAccess.file_exists(path): return "这一页的记录无法读取。"
+	if not FileAccess.file_exists(path): return "This save could not be read."
 	_load_save(path)
-	return "" if status_text == "已恢复；保持暂停。" else status_text
+	return "" if status_text == "Save restored. Simulation paused." else status_text
 
 func delete_slot(id: String) -> String:
-	if id == "auto": return "自动记录不能撕去。"
-	if not id.is_valid_int() or int(id) < 1 or int(id) > 6: return "无效的手记页。"
+	if id == "auto": return "The autosave cannot be deleted."
+	if not id.is_valid_int() or int(id) < 1 or int(id) > 6: return "Invalid save slot."
 	var path := _slot_path(id)
 	if FileAccess.file_exists(path):
 		var error := DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

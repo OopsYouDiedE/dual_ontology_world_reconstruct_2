@@ -13,17 +13,26 @@ public partial class LifeBridge : Node
     private readonly List<ActionReceipt> receipts=[];
     private string contentPath="res://assets/data/scenarios/life_simulation.dv";
     private string sourceManifest="";
-    private bool customBuilding;
+    private bool customBuilding, multilevel;
     private string error="";
     private string auditDirectory="";
     private readonly Dictionary<string,string> disabledReasons=[];
     private JsonObject notes=new();
     private GodotObject? objectRouteSpace;
     private Godot.Collections.Dictionary? objectRouteActions;
-    private readonly Dictionary<(double X,double Z,string Object,string Action,int Slot),double?> objectRoutes=[];
+    private bool physicalObjectRoute;
+    private readonly Dictionary<(double X,double Y,double Z,string Object,string Action,int Slot),double?> objectRoutes=[];
 
     public void SetObjectRouteSpace(GodotObject space,Godot.Collections.Dictionary actions)
     {
+        physicalObjectRoute=false;
+        objectRouteSpace=space;
+        objectRouteActions=actions;
+        BindObjectRouteProbe();
+    }
+    public void SetObjectRouteSpace3D(GodotObject space,Godot.Collections.Dictionary actions)
+    {
+        physicalObjectRoute=true;
         objectRouteSpace=space;
         objectRouteActions=actions;
         BindObjectRouteProbe();
@@ -35,27 +44,30 @@ public partial class LifeBridge : Node
     }
     private double? ProbeObjectRoute(PhysicalPlacement from,string obj,string action,int slot)
     {
-        var key=(from.X,from.Z,obj,action,slot);
+        var key=(from.X,from.Y,from.Z,obj,action,slot);
         if(objectRoutes.TryGetValue(key,out var cached))return cached;
-        var result=objectRouteSpace!.Call("object_route_length",from.X,from.Z,obj,action,slot,objectRouteActions!);
+        var result=physicalObjectRoute
+            ?objectRouteSpace!.Call("physical_object_route_length",from.X,from.Y,from.Z,obj,action,slot,objectRouteActions!)
+            :objectRouteSpace!.Call("object_route_length",from.X,from.Z,obj,action,slot,objectRouteActions!);
         var distance=result.VariantType==Variant.Type.Float?result.AsDouble():double.PositiveInfinity;
         return objectRoutes[key]=double.IsFinite(distance)&&distance>=0?distance:null;
     }
     private static string Encode(object? value)=>JsonSerializer.Serialize(value);
     private static string Read(string path)=>System.IO.File.ReadAllText(ProjectSettings.GlobalizePath(path));
-    private static CharacterSessionDefinition Prepare(string source,string buildingJson)
+    private static CharacterSessionDefinition Prepare(string source,string buildingJson,bool multilevel=false)
     {
         const string buildingPath="res://session-building.dv";
         if(buildingJson.Length>0)
         {
             var document=DuelView.Dv.DvDocument.Parse(source).Definition("data","runtime.character_session").GetProperty("value");
             var root=JsonNode.Parse(document.GetRawText())!.AsObject();root["building_source"]=buildingPath;
+            if(multilevel)root["life_multilevel"]=true;
             source="schema \"dv-script-v1\";\ndata runtime.character_session { value = "+root.ToJsonString()+"; }\n";
         }
         string ReadContent(string path)=>path==buildingPath
             ?"schema \"dv-script-v1\";\ndata life.building { value = "+JsonNode.Parse(buildingJson)!.ToJsonString()+"; }\n":Read(path);
         var prepared=new CharacterSessionDefinition(source,Read("res://assets/data/98-runtime-session.data.dv"),ReadContent);
-        if(!prepared.Create().IsLifeSession)throw new InvalidDataException("此入口需要生活场景；案件场景请使用 CLI 宿主。");
+        if(!prepared.Create().IsLifeSession)throw new InvalidDataException("This entry requires a life scenario. Use the CLI host for case scenarios.");
         return prepared;
     }
     public string Open(string path,string buildingJson,int seed)
@@ -66,7 +78,8 @@ public partial class LifeBridge : Node
             var source=Read(contentPath);
             sourceManifest=source;
             customBuilding=buildingJson.Length>0;
-            definition=Prepare(source,buildingJson);
+            multilevel=customBuilding&&JsonNode.Parse(buildingJson)?["layers"] is JsonArray {Count:>1};
+            definition=Prepare(source,buildingJson,multilevel);
             session=definition.Create();session.ConfigureLifeSeed(seed);session.ConfigureVisibleRoom("house");
             decisions.Clear();receipts.Clear();disabledReasons.Clear();notes=new();error="";
             auditDirectory=ProjectSettings.GlobalizePath("res://.runtime/life-sessions/"+Guid.NewGuid().ToString("N"));
@@ -79,7 +92,7 @@ public partial class LifeBridge : Node
     }
     public string Step(double seconds)
     {
-        if(session is null||definition is null)return Encode(new {error="尚未开局"});
+        if(session is null||definition is null)return Encode(new {error="The simulation has not started."});
         try
         {
             // The installed grid is immutable. Reuse routes for stationary actors,
@@ -132,7 +145,7 @@ public partial class LifeBridge : Node
     }
     public string SaveNote(string actor,string title,string text,string related,string judgement,string identity)
     {
-        if(session is null)return "尚未开局";
+        if(session is null)return "The simulation has not started.";
         _=session.View(actor);
         var entries=notes[actor] as JsonArray;
         if(entries is null){entries=new();notes[actor]=entries;}
@@ -169,19 +182,19 @@ public partial class LifeBridge : Node
     }
     public string Submit(string actor,string action)
     {
-        if(session is null)return "尚未开局";
+        if(session is null)return "The simulation has not started.";
         try{session.SetAutonomy(actor,false);session.Submit(actor,action);session.SetAutonomy(actor,true);return "";}
         catch(Exception exception){session.SetAutonomy(actor,true);return exception.Message;}
     }
     public string Save(string path)
     {
-        if(session is null||definition is null)return "尚未开局";
+        if(session is null||definition is null)return "The simulation has not started.";
         try
         {
             var destination=ProjectSettings.GlobalizePath(path);
             var temporary=destination+".tmp";
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destination)!);
-            System.IO.File.WriteAllText(temporary,Encode(new {hash=definition.Hash,state=session.SaveState(),receipts,notes,building=session.LifeDefinition.GetProperty("building"),game_time=session.ContentTime,content_path=contentPath,source=sourceManifest,custom_building=customBuilding}));
+            System.IO.File.WriteAllText(temporary,Encode(new {hash=definition.Hash,state=session.SaveState(),receipts,notes,building=session.LifeDefinition.GetProperty("building"),game_time=session.ContentTime,content_path=contentPath,source=sourceManifest,custom_building=customBuilding,multilevel}));
             System.IO.File.Move(temporary,destination,true);
             return "";
         }
@@ -194,8 +207,9 @@ public partial class LifeBridge : Node
         {
             using var document=JsonDocument.Parse(Read(path));var root=document.RootElement;
             var source=root.TryGetProperty("source",out var storedSource)?storedSource.GetString()!:sourceManifest;
-            var restoredDefinition=root.TryGetProperty("source",out _)?Prepare(source,root.TryGetProperty("custom_building",out var custom)&&custom.GetBoolean()?root.GetProperty("building").GetRawText():""):definition??Prepare(Read(contentPath),"");
-            if(restoredDefinition is null||root.GetProperty("hash").GetString()!=restoredDefinition.Hash)return "存档内容版本不同，需要兼容迁移或新局。";
+            var layered=root.TryGetProperty("multilevel",out var storedLevel)&&storedLevel.GetBoolean();
+            var restoredDefinition=root.TryGetProperty("source",out _)?Prepare(source,root.TryGetProperty("custom_building",out var custom)&&custom.GetBoolean()?root.GetProperty("building").GetRawText():"",layered):definition??Prepare(Read(contentPath),"");
+            if(restoredDefinition is null||root.GetProperty("hash").GetString()!=restoredDefinition.Hash)return "This save requires a compatible content version or a new session.";
             var replacement=restoredDefinition.Create();replacement.RestoreState(root.GetProperty("state").Deserialize<RuntimeSessionState>()!);
             var restoredReceipts=root.TryGetProperty("receipts",out var savedReceipts)?savedReceipts.Deserialize<ActionReceipt[]>()!:[];
             var restoredNotes=root.TryGetProperty("notes",out var storedNotes)?JsonNode.Parse(storedNotes.GetRawText())!.AsObject():new JsonObject();
@@ -206,6 +220,7 @@ public partial class LifeBridge : Node
             System.IO.Directory.CreateDirectory(destination);
             System.IO.File.AppendAllText(System.IO.Path.Combine(destination,"session-events.jsonl"),Encode(new {kind="load",path,time=replacement.ContentTime,hash=restoredDefinition.Hash})+"\n");
             session=replacement;definition=restoredDefinition;sourceManifest=source;auditDirectory=destination;error="";
+            multilevel=layered;
             customBuilding=root.TryGetProperty("custom_building",out var restoredCustom)&&restoredCustom.GetBoolean();
             if(root.TryGetProperty("content_path",out var savedPath))contentPath=savedPath.GetString()!;
             decisions.Clear();foreach(var item in restoredDecisions)decisions.Add(item.Key,item.Value);
@@ -216,7 +231,7 @@ public partial class LifeBridge : Node
     }
     public string Reload(string path)
     {
-        if(session is null||definition is null)return "尚未开局";
+        if(session is null||definition is null)return "The simulation has not started.";
         try
         {
             var replacement=new CharacterSessionDefinition(Read(path),Read("res://assets/data/98-runtime-session.data.dv"),Read);
@@ -231,7 +246,7 @@ public partial class LifeBridge : Node
                 if(session.DecisionFor(execution.Execution) is { } decision)decisions.Add(execution.Execution,decision);
             return "";
         }
-        catch(Exception exception){return "内容未重载，原会话保留："+exception.Message;}
+        catch(Exception exception){return "Reload failed; the current session was kept: "+exception.Message;}
     }
     public void Close()
     {

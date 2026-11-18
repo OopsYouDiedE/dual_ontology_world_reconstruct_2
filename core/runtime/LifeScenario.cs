@@ -23,16 +23,40 @@ public static class LifeScenario
         var rules=Read(manifest.Get("life_source").Text(),"runtime.life",read);
         var cognition=Read(rules.Get("cognition_source").Text(),"runtime.life_cognition",read);
         var building=Read(manifest.Get("building_source").Text(),"life.building",read);
-        var roots=building.Get("layers").Items().Where(layer=>layer.Get("roomFaces").Items().Any()).ToArray();
+        var layers=building.Get("layers").Items().ToArray();
+        var roots=layers.Where(layer=>layer.Get("roomFaces").Items().Any()).ToArray();
         if(roots.Length==0)throw new InvalidDataException("生活建筑缺少封闭房间。");
         var layer=roots[0];var height=layer.Get("y").Number();
         var rooms=layer.Get("roomFaces").Items().ToArray();
-        var props=building.Get("props").Items().Where(prop=>Math.Abs(prop.Get("y").Number()-height)<0.6).ToArray();
+        var multilevel=manifest.Get("life_multilevel").Flag();
+        var floors=layers.Select(value=>value.Get("y").Number()).Distinct().ToArray();
+        // Legacy scenario declarations stay byte-for-byte identical so their save hashes remain valid.
+        var props=building.Get("props").Items().Where(prop=>multilevel
+            ?floors.Any(y=>Math.Abs(prop.Get("y").Number()-y)<0.6)
+            :Math.Abs(prop.Get("y").Number()-height)<0.6).ToArray();
         if(props.Select(prop=>prop.Get("id").Text()).Distinct().Count()!=props.Length)throw new InvalidDataException("生活建筑家具 ID 重复。");
         var life=JsonNode.Parse(rules.GetRawText())!.AsObject();
         life["building"]=Copy(building);life["layer_y"]=height;
         life["senses"]=Copy(cognition.Get("senses"));
-        life["rooms"]=new JsonArray(rooms.Select(Copy).ToArray());
+        var allRooms=rooms;
+        if(multilevel)
+        {
+            static JsonElement OnFloor(JsonElement face,double y)
+            {
+                var node=Copy(face)!.AsObject();node["floor_y"]=y;
+                return JsonSerializer.SerializeToElement(node);
+            }
+            var zones=rooms.Select(room=>OnFloor(room,height)).ToList();
+            foreach(var other in layers.Where(value=>value.Get("id").Text()!=layer.Get("id").Text()))
+            {
+                var y=other.Get("y").Number();
+                var faces=other.Get("roomFaces").Items().ToArray();
+                if(faces.Length>0)zones.AddRange(faces.Select(face=>OnFloor(face,y)));
+                else zones.AddRange(other.Get("polygons").Items().Select(polygon=>JsonSerializer.SerializeToElement(new {polygon,floor_y=y})));
+            }
+            allRooms=zones.ToArray();life["multilevel"]=true;
+        }
+        life["rooms"]=new JsonArray(allRooms.Select(Copy).ToArray());
         var objects=new JsonArray();var facts=new JsonObject();var slots=new JsonArray();
         var root=JsonNode.Parse(manifest.GetRawText())!.AsObject();
         root["compact"]=true;root["life"]=life;root["facts"]=facts;root["slots"]=slots;
@@ -48,9 +72,10 @@ public static class LifeScenario
         foreach(var prop in props)
         {
             var id=prop.Get("id").Text();var kind=prop.Get("kind").Text();
-            var zone=Zone(rooms,prop.Get("x").Number(),prop.Get("z").Number());
+            var floor=multilevel?floors.MinBy(y=>Math.Abs(y-prop.Get("y").Number())):height;
+            var zone=Zone(allRooms,prop.Get("x").Number(),prop.Get("z").Number(),multilevel?floor:null);
             var capacity=(int)rules.Get("capacities").Get(kind).Number(1);
-            objects.Add(Object(new {id,kind,zone,x=prop.Get("x").Number(),z=prop.Get("z").Number(),y=height,yaw=prop.Get("yaw").Number(),capacity}));
+            objects.Add(Object(new {id,kind,zone,x=prop.Get("x").Number(),z=prop.Get("z").Number(),y=floor,yaw=prop.Get("yaw").Number(),capacity}));
             for(var slot=0;slot<capacity;slot++)slots.Add(Object(new {id="life.slot."+id+"."+slot,capacity=1}));
             var stock=kind=="cabinet"?inventory.Get("initial_per_pantry").Number():0;
             facts[id+".stock"]=stock;facts[id+".lamp"]=false;facts[id+".occupants"]=new JsonArray();supplied+=stock;
@@ -110,7 +135,7 @@ public static class LifeScenario
                 foreach(var gain in action.Get("chain_gain").Fields())predicted[gain.Name]=gain.Value.Number();
                 var spec=Object(new {id=id+".life."+definition.Name+"."+objectId+"."+slot,label=action.Get("label").Text(),kind="life",minutes=duration,
                     focus=objectId,offscreen_approach_seconds=rules.Get("time").Get("logical_approach_seconds").Number(),cooldown_minutes=action.Get("cooldown").Number(2),completion_text=action.Get("label").Text(),
-                    life=new {action=definition.Name,obj=objectId,slot},motor=new {posture=action.Get("pose").Text(),animation=definition.Name,target=new[]{item["x"]!.GetValue<double>(),height,item["z"]!.GetValue<double>()}}});
+                    life=new {action=definition.Name,obj=objectId,slot},motor=new {posture=action.Get("pose").Text(),animation=definition.Name,target=new[]{item["x"]!.GetValue<double>(),item["y"]!.GetValue<double>(),item["z"]!.GetValue<double>()}}});
                 spec["when"]=when;spec["requires"]=All(requires.Select(value=>value!).ToArray());
                 spec["writes"]=writes;spec["increments"]=increments;
                 spec["observes"]=new JsonArray(new[]{id+".zone",id+".food",id+".book"}.Concat(action.Get("reveals").Items().Select(field=>objectId+"."+field.Text())).Select(value=>(JsonNode)JsonValue.Create(value)!).ToArray());
@@ -150,14 +175,15 @@ public static class LifeScenario
             foreach(var axis in rules.Get("relationship").Get("initial").Fields())facts[pair+"."+axis.Name]=Copy(axis.Value);
             facts[pair+".day"]=-1;facts[pair+".up"]=new JsonObject();facts[pair+".down"]=new JsonObject();facts[pair+".habit"]=new JsonObject();facts[pair+".stage"]="生疏";
         }
-        root["actors"]=actors;root.Remove("life_source");root.Remove("building_source");
+        root["actors"]=actors;root.Remove("life_source");root.Remove("building_source");root.Remove("life_multilevel");
         LifeCognitionScenario.Acceptance(root,cognition,actorIds);
         return JsonSerializer.SerializeToElement(root);
     }
-    internal static int Zone(JsonElement[] rooms,double positionX,double positionZ)
+    internal static int Zone(JsonElement[] rooms,double positionX,double positionZ,double? floor=null)
     {
         for(var room=0;room<rooms.Length;room++)
         {
+            if(floor.HasValue&&Math.Abs(rooms[room].Get("floor_y").Number()-floor.Value)>0.075)continue;
             var polygon=rooms[room].Get("polygon").Items().ToArray();var inside=false;
             for(var index=0;index<polygon.Length;index++)
             {

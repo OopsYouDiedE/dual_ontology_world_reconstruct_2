@@ -261,7 +261,7 @@ public sealed partial class RuntimeSession
         var hadPrior=placements.TryGetValue(actor,out var prior);
         var roomChanged=!hadPrior||prior!.Room!=room;
         placements[actor]=new(x,y,z,yaw,room,Clock.Now);
-        UpdateLifePlacement(actor,x,z);
+        UpdateLifePlacement(actor,x,y,z);
         var radiusChanged=hadPrior && presenceGroups.Any(group=>group.Center is not null && group.Members.Contains(actor,StringComparer.Ordinal)
             && InRadius(prior!,group)!=InRadius(placements[actor],group));
         if(roomChanged||radiusChanged)UpdatePresenceGroups();

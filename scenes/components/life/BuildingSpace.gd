@@ -154,13 +154,16 @@ func _build_grid() -> void:
 			for col in range(low.x, high.x + 1):
 				if Geometry2D.is_point_in_polygon(_cell_center(col, row), surface.polygon): solid[row * nx + col] = 0
 	for wall in data.walls:
-		if absf(float(wall.get("baseY", wall.points[0][1])) - layer_y) >= 0.3: continue
+		if wall.points.size() < 2: continue
+		var base := float(wall.get("baseY", wall.points[0][1]))
+		if base >= layer_y + MIN_PASSAGE_HEIGHT or base + float(wall.get("height", 0.0)) <= layer_y + 0.01: continue
 		var pts: Array[Vector2] = []
 		for point in wall.points: pts.append(Vector2(point[0], point[2]))
 		if wall.get("closed", false) and pts.size() > 2 and not pts[0].is_equal_approx(pts[-1]): pts.append(pts[0])
 		var portals: Dictionary = {}
 		for op in wall.get("openings", []):
-			if not DOORS.has(str(op.type)) or float(op.get("bottom", 0.0)) > CLEARANCE or float(op.get("height", 0.0)) < MIN_PASSAGE_HEIGHT: continue
+			var bottom := base + float(op.get("bottom", 0.0))
+			if not DOORS.has(str(op.type)) or bottom > layer_y + CLEARANCE or bottom + float(op.get("height", 0.0)) < layer_y + MIN_PASSAGE_HEIGHT: continue
 			var half_width := float(op.width) * 0.5 - CLEARANCE
 			if half_width <= 0.0: continue
 			var idx := int(op.segment)
@@ -168,6 +171,12 @@ func _build_grid() -> void:
 			portals[idx].append(Vector2(float(op.center) - half_width, float(op.center) + half_width))
 		for idx in range(pts.size() - 1):
 			_stamp_segment(pts[idx], pts[idx + 1], float(wall.thickness) * 0.5 + CLEARANCE, portals.get(idx, []))
+	for rail in data.get("railings", []):
+		for i in range(rail.points.size() - 1):
+			var a: Array = rail.points[i]
+			var b: Array = rail.points[i + 1]
+			if absf(float(a[1]) - layer_y) > 0.3 or absf(float(b[1]) - layer_y) > 0.3: continue
+			_stamp_segment(Vector2(a[0], a[2]), Vector2(b[0], b[2]), 0.045 + CLEARANCE, [])
 	for obj in objects:
 		if not Footprint.blocks(obj.prop): continue
 		var corners := Footprint.corners(obj.prop, 0.12)
@@ -178,6 +187,8 @@ func _build_grid() -> void:
 		for row_index in range(low_cell.y, high_cell.y + 1):
 			for column_index in range(low_cell.x, high_cell.x + 1):
 				if Footprint.contains(obj.prop, _cell_center(column_index, row_index), 0.12): solid[row_index * nx + column_index] = 1
+	for stair in data.get("stairs", []):
+		_stamp_stair_treads(stair)
 	astar = AStarGrid2D.new()
 	astar.region = Rect2i(0, 0, nx, ny)
 	astar.cell_size = Vector2(cell, cell)
@@ -187,6 +198,35 @@ func _build_grid() -> void:
 	for row_index in range(ny):
 		for column_index in range(nx):
 			if solid[row_index * nx + column_index] == 1: astar.set_point_solid(Vector2i(column_index, row_index), true)
+
+# A flat route can pass under high treads, but cannot walk horizontally
+# through low treads. The separate 3D flight crosses this footprint.
+func _stamp_stair_treads(stair: Dictionary) -> void:
+	var foot := Vector2(float(stair.x), float(stair.z))
+	var y := float(stair.get("y", 0.0))
+	var run := float(stair.get("run", 0.0))
+	var rise := float(stair.get("rise", 0.0))
+	var width := float(stair.get("width", 0.0))
+	var steps := int(stair.get("risers", 0))
+	var angle := deg_to_rad(float(stair.get("yaw", 0.0)))
+	if not foot.is_finite() or not is_finite(run) or not is_finite(rise) or not is_finite(width) or not is_finite(angle): return
+	if run <= 0.0 or rise <= 0.0 or width <= 0.0 or steps < 1 or y + rise <= layer_y + 0.02: return
+	if y >= layer_y + MIN_PASSAGE_HEIGHT: return
+	var forward := Vector2(cos(angle), -sin(angle))
+	var side := forward.orthogonal()
+	var half := width * 0.5 + CLEARANCE
+	var tip := foot + forward * run
+	var box := Rect2(foot + side * half, Vector2.ZERO).expand(foot - side * half).expand(tip + side * half).expand(tip - side * half)
+	var low := _cell_of(box.position)
+	var high := _cell_of(box.end)
+	for row in range(low.y, high.y + 1):
+		for col in range(low.x, high.x + 1):
+			var delta := _cell_center(col, row) - foot
+			var along := forward.dot(delta)
+			if along <= 0.0 or along >= run or absf(side.dot(delta)) >= half: continue
+			var tread_y := y + (floorf(along * steps / run) + 1.0) * rise / steps
+			if tread_y > layer_y + 0.02 and tread_y < layer_y + MIN_PASSAGE_HEIGHT:
+				solid[row * nx + col] = 1
 
 # An opening is a hole in its own wall segment only. It never clears
 # unsupported floor, furniture, or the collision from a crossing wall.
@@ -253,6 +293,23 @@ func nearest_free(point: Vector2, radius := 8) -> Vector2:
 					best = nearest_point
 		if best != Vector2.INF: return best
 	return Vector2.INF
+
+# Search outward from the resolved entry, preserving reachability to that entry.
+func free_starts(point: Vector2, radius: int) -> Array[Vector2]:
+	var anchor := nearest_free(point, radius)
+	var candidates: Array[Vector2] = []
+	if not anchor.is_finite(): return candidates
+	var origin := _cell_of(anchor)
+	for row in range(maxi(0, origin.y - radius), mini(ny, origin.y + radius + 1)):
+		for column in range(maxi(0, origin.x - radius), mini(nx, origin.x + radius + 1)):
+			if solid[row * nx + column] != 0: continue
+			var candidate := _cell_center(column, row)
+			if line_clear(anchor, candidate): candidates.append(candidate)
+	candidates.sort_custom(func(a: Vector2, b: Vector2) -> bool:
+		var a_distance := a.distance_squared_to(point)
+		var b_distance := b.distance_squared_to(point)
+		return (a.y < b.y or (a.y == b.y and a.x < b.x)) if a_distance == b_distance else a_distance < b_distance)
+	return candidates
 
 func line_clear(start_point: Vector2, end_point: Vector2) -> bool:
 	var sample_count := int(ceil(start_point.distance_to(end_point) / (cell * 0.5)))
@@ -335,23 +392,25 @@ func object_route_length(x: float, z: float, object_id: String, action: String, 
 	if not object_by_id.has(object_id) or not actions.has(action): return INF
 	return float(plan_use(Vector2(x, z), object_by_id[object_id], actions[action], slot).get("length", INF))
 
+# Route between two exact traversable points; the graph uses this at each landing.
+func route_between(from: Vector2, to: Vector2) -> Dictionary:
+	if is_solid_at(from) or is_solid_at(to): return {}
+	var path := find_path(from, to)
+	if path.is_empty() and _cell_of(from) != _cell_of(to): return {}
+	if not path.is_empty() and not line_clear(from, path.front()):
+		var first := _cell_of(from)
+		path.push_front(_cell_center(first.x, first.y))
+	var last: Vector2 = from if path.is_empty() else path.back()
+	if not line_clear(last, to): return {}
+	if not last.is_equal_approx(to): path.append(to)
+	return {"path": path, "length": path_length(from, path)}
+
 func plan_use(from: Vector2, obj: Dictionary, act: Dictionary, slot := 0) -> Dictionary:
 	if is_solid_at(from): return {}
 	var best := {}
-	var best_len := INF
 	for use_point in use_points(obj, act, slot):
-		var approach: Vector2 = use_point.approach
-		var path := find_path(from, approach)
-		# An empty grid path can mean either the same cell or disconnected cells.
-		if path.is_empty() and _cell_of(from) != _cell_of(approach): continue
-		if not path.is_empty() and not line_clear(from, path.front()):
-			var first := _cell_of(from)
-			path.push_front(_cell_center(first.x, first.y))
-		var last: Vector2 = from if path.is_empty() else path.back()
-		if not line_clear(last, approach): continue
-		if not last.is_equal_approx(approach): path.append(approach)
-		var length := path_length(from, path)
-		if length < best_len:
-			best_len = length
-			best = {"point": use_point, "path": path, "length": length}
+		var route := route_between(from, use_point.approach)
+		if not route.is_empty() and route.length < float(best.get("length", INF)):
+			best = route
+			best["point"] = use_point
 	return best

@@ -1,6 +1,7 @@
 extends RefCounted
 ## A run-local camp. The host owns the world clock and the captain input controller.
 
+## Announces the camp mode; the captain remains under player input in both modes.
 signal control_changed(mode: StringName, captain_id: String)
 
 const TICK_SECONDS := 0.25
@@ -34,7 +35,7 @@ func setup(captain_id: String, graph: Dictionary, residents: Array, objects: Arr
 	var people := {}
 	var occupied := {}
 	for row in residents:
-		if not row is Dictionary or not row.get("id") is String or row.id.is_empty() or people.has(row.id):
+		if not row is Dictionary or not row.get("id") is String or row.id.is_empty() or row.id == captain_id or people.has(row.id):
 			return false
 		var cell: Variant = row.get("cell")
 		if not graph.has(cell) or occupied.has(cell) or not row.get("needs", {}) is Dictionary:
@@ -47,8 +48,6 @@ func setup(captain_id: String, graph: Dictionary, residents: Array, objects: Arr
 			needs[need] = value
 		people[row.id] = {"cell": cell, "needs": needs, "job": {}, "return_to": null, "status": &"idle"}
 		occupied[cell] = true
-	if not people.has(captain_id):
-		return false
 	var fixtures := {}
 	var stands := {}
 	for row in objects:
@@ -82,7 +81,7 @@ func enter_camp() -> bool:
 	return true
 
 
-## Release jobs atomically before giving input ownership back to the captain.
+## Release companion jobs atomically; the captain is already under player control.
 func leave_camp() -> bool:
 	if not _in_camp:
 		return false
@@ -102,6 +101,8 @@ func step() -> void:
 		return
 	_tick += 1
 	var ids := _sorted_ids(_residents)
+	if ids.is_empty():
+		return
 	var first := (_tick - 1) % ids.size()
 	for id in ids:
 		for i in NEEDS.size():

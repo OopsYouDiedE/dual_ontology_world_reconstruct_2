@@ -13,6 +13,7 @@ func _initialize() -> void:
 	_test_walk_use_and_result()
 	_test_contention()
 	_test_departure()
+	_test_solo_captain()
 	_test_need_priority_and_stall()
 	_test_repeatability_and_social()
 	print("Camp residents: %d failure(s)" % failures)
@@ -36,9 +37,9 @@ func _meal(id: String, stand: Vector2i, stock: int = 1) -> Dictionary:
 func _test_walk_use_and_result() -> void:
 	var camp := Camp.new()
 	var graph := {A: [B], B: [A, C], C: [B], X: []} # Adjacent tile X has a wall edge.
-	_expect(camp.setup("lead", graph, [_person("lead", A)], [_meal("01_wall", X), _meal("02_meal", C)]), "valid setup")
+	_expect(camp.setup("Captain", graph, [_person("lead", A)], [_meal("01_wall", X), _meal("02_meal", C)]), "valid setup")
 	graph[A].clear() # Inputs are copied by setup.
-	_expect(not camp.setup("missing", graph, [_person("lead", A)], []), "invalid setup rejected atomically")
+	_expect(not camp.setup("Captain", graph, [_person("Captain", A)], []), "captain cannot enter the AI roster; rejection is atomic")
 	_expect(camp.enter_camp(), "enter camp")
 	camp.step()
 	var reading := camp.snapshot()
@@ -66,7 +67,7 @@ func _test_walk_use_and_result() -> void:
 
 func _test_contention() -> void:
 	var camp := Camp.new()
-	_expect(camp.setup("lead", {A: [B], B: [A, C, D], C: [B], D: [B]},
+	_expect(camp.setup("Captain", {A: [B], B: [A, C, D], C: [B], D: [B]},
 		[_person("lead", A), _person("other", D)], [_meal("meal", C, 2)]), "contention setup")
 	camp.enter_camp()
 	camp.step()
@@ -88,13 +89,13 @@ func _test_departure() -> void:
 	var changes := []
 	camp.control_changed.connect(func(mode: StringName, id: String) -> void:
 		changes.append([mode, id]))
-	_expect(camp.setup("lead", {A: []}, [_person("lead", A)], [_meal("meal", A)]), "departure setup")
+	_expect(camp.setup("Captain", {A: []}, [_person("lead", A)], [_meal("meal", A)]), "departure setup")
 	camp.enter_camp()
 	camp.step()
 	camp.step()
 	_expect(camp.leave_camp() and not camp.leave_camp(), "departure is idempotent")
 	var reading := camp.snapshot()
-	_expect(changes == [[&"camp_ai", "lead"], [&"captain", "lead"]] and reading.mode == &"captain", "captain control handoff")
+	_expect(changes == [[&"camp_ai", "Captain"], [&"captain", "Captain"]] and reading.mode == &"captain", "mode changes identify the same player-controlled captain")
 	_expect(reading.events.back().reason == &"left_camp" and reading.objects.meal.reserved_by == "" and reading.objects.meal.stock == 1, "departure cancels in-flight use without payment or reward")
 	camp.step()
 	_expect(camp.snapshot() == reading, "outside camp freezes resident state")
@@ -112,7 +113,7 @@ func _test_need_priority_and_stall() -> void:
 	# making the original route inaccessible; a long use exposes the timeout.
 	var blocker := _meal("meal", B)
 	blocker.duration = 12
-	_expect(camp.setup("lead", {A: [B, X], B: [A, C, D], C: [B], D: [B], X: [A]},
+	_expect(camp.setup("Captain", {A: [B, X], B: [A, C, D], C: [B], D: [B], X: [A]},
 		[first, _person("other", D, 98)], [rest, blocker, _meal("snack", X)]), "stall setup")
 	camp.enter_camp()
 	camp.step()
@@ -130,7 +131,7 @@ func _test_repeatability_and_social() -> void:
 	resident.needs.social = 85
 	var seat := {"id": "seat", "stand": A, "need": "social", "duration": 2, "relief": 45}
 	for camp in [first, second]:
-		_expect(camp.setup("lead", {A: []}, [resident], [seat]), "social setup")
+		_expect(camp.setup("Captain", {A: []}, [resident], [seat]), "social setup")
 		camp.enter_camp()
 		for i in 3:
 			camp.step()
@@ -138,3 +139,15 @@ func _test_repeatability_and_social() -> void:
 	_expect(reading == second.snapshot(), "same inputs reproduce the entire trace")
 	_expect(reading.residents.lead.needs.social == 43 and reading.objects.seat.stock == -1,
 		"social action relieves the configured need and unlimited stock stays unlimited")
+
+
+func _test_solo_captain() -> void:
+	var camp := Camp.new()
+	_expect(camp.setup("Captain", {A: []}, [], [_meal("meal", A)]), "solo captain accepts an empty AI roster")
+	camp.enter_camp()
+	camp.step()
+	var reading := camp.snapshot()
+	_expect(reading.tick == 1 and reading.captain_id == "Captain" and reading.residents.is_empty(),
+		"camp clock advances without a captain AI record")
+	_expect(reading.events.is_empty() and reading.objects.meal.reserved_by == "", "solo captain gets no autonomous job")
+	camp.leave_camp()

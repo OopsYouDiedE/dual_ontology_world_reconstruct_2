@@ -166,6 +166,7 @@ static func build(wall: Dictionary) -> Node3D:
 		for o in holes:
 			var component = Openings.build(o.type,o.width,o.height,o.bottom,(o.get("rise",0.4) if o.get("rise",0.4) else 0.4),thickness)
 			component.position = Vector3(o.center,o.bottom,0)
+			if o.has("id"): component.set_meta("opening_id", str(o.id))
 			seg.add_child(component)
 		seg.position = Vector3(p0[0],segment_y,p0[2])
 		seg.rotation.y = -atan2(dz,dx)

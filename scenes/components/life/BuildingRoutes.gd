@@ -13,9 +13,18 @@ var links: Dictionary = {}
 var object_floors: Dictionary = {}
 var primary: Grid
 var data: Dictionary
+var base_layer: int
+var action_capacities: Dictionary
+var door_states: Dictionary
 
-func setup(building: Dictionary, layer_index: int, capacities: Dictionary = {}) -> void:
+func set_door_states(states: Dictionary) -> void:
+	if door_states != states: setup(data, base_layer, action_capacities, states)
+
+func setup(building: Dictionary, layer_index: int, capacities: Dictionary = {}, live_doors: Dictionary = {}) -> void:
 	data = building
+	base_layer = layer_index
+	action_capacities = capacities
+	door_states = live_doors.duplicate()
 	primary = null
 	floors.clear()
 	ports.clear()
@@ -25,7 +34,7 @@ func setup(building: Dictionary, layer_index: int, capacities: Dictionary = {}) 
 	object_floors.clear()
 	for i in range(building.layers.size()):
 		var grid := Grid.new()
-		grid.setup(building, i, capacities)
+		grid.setup(building, i, capacities, door_states)
 		floors.append(grid)
 		if i == layer_index: primary = grid
 		for id in grid.object_by_id:
@@ -84,6 +93,7 @@ func _clear_flight(foot: Vector3, head: Vector3) -> bool:
 				var through_opening := false
 				for opening in wall.get("openings", []):
 					if int(opening.segment) != segment or str(opening.type) not in Grid.DOORS: continue
+					if door_states.get(str(opening.get("id", "")), "open") != "open": continue
 					var floor_y := y + float(opening.get("bottom", 0.0))
 					if floor_y > pos.y + Grid.CLEARANCE or floor_y + float(opening.height) < pos.y + Grid.MIN_PASSAGE_HEIGHT: continue
 					if absf(float(opening.center) - along) + BODY_RADIUS <= float(opening.width) * 0.5:

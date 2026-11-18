@@ -7,6 +7,7 @@ const Sound := preload("res://scenes/components/shared/Sound.gd")
 
 const Routes = preload("res://scenes/components/life/BuildingRoutes.gd")
 const Components = preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
+const Openings = preload("res://tools/building_construction/BuildingConstruction/Windows/ArchitectOpenings.gd")
 const Wall = preload("res://tools/building_construction/BuildingConstruction/Walls/WallPathGeometry.gd")
 const Floor = preload("res://tools/building_construction/BuildingConstruction/Floors/ArchitectFloor.gd")
 const Stair = preload("res://tools/building_construction/BuildingConstruction/Stairs/ArchitectStair.gd")
@@ -30,6 +31,10 @@ var figures: Dictionary = {}
 var captions: Dictionary = {}
 var props: Dictionary = {}
 var walls: Array = []
+var door_models: Dictionary = {}
+var door_pick: OptionButton
+var door_toggle: Button
+var door_lock: Button
 var camera: Camera3D
 var sun: DirectionalLight3D
 var environment: Environment
@@ -291,8 +296,10 @@ func _present_life(restored: bool) -> void:
 	captions.clear()
 	props.clear()
 	walls.clear()
+	door_models.clear()
 	_make_life_ui()
 	_build_view()
+	_refresh_doors()
 	_events_key = ""
 	snapshot = JSON.parse_string(bridge.Observe())
 	var roster: Array = load("res://scenes/components/characters/ModelCatalog.cs").new().ReadRoster()
@@ -366,6 +373,11 @@ func _make_life_ui() -> void:
 		for wall in walls: wall.visible = not wall.visible)
 	clock_label = Label.new()
 	header.add_child(clock_label)
+	door_pick = OptionButton.new()
+	door_pick.item_selected.connect(func(_index): _refresh_door_buttons())
+	header.add_child(door_pick)
+	door_toggle = _button(header, "Close Door", func(): _change_door("toggle"))
+	door_lock = _button(header, "Lock Door", func(): _change_door("lock"))
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(body)
@@ -424,7 +436,11 @@ func _build_view() -> void:
 	for rail in rules.building.get("railings", []): world.add_child(Railing.build(rail))
 	for data in rules.building.walls:
 		var wall = Wall.build(data)
-		if wall != null: world.add_child(wall); walls.append(wall)
+		if wall != null:
+			world.add_child(wall)
+			walls.append(wall)
+			for part in wall.find_children("*", "Node3D", true, false):
+				if part.has_meta("opening_id"): door_models[part.get_meta("opening_id")] = part
 	for data in rules.building.props:
 		var prop: Node3D
 		if str(data.get("path", "")) != "":
@@ -439,6 +455,43 @@ func _build_view() -> void:
 	camera_target = Vector3(space.primary.bounds.get_center().x, space.primary.layer_y + 0.4, space.primary.bounds.get_center().y)
 	distance = maxf(space.primary.bounds.size.x, space.primary.bounds.size.y) * 1.25
 	_update_camera()
+
+func _refresh_doors() -> void:
+	var retain := str(door_pick.get_selected_metadata().id) if door_pick.selected >= 0 else ""
+	var controls: Array = JSON.parse_string(bridge.DoorControls())
+	door_pick.clear()
+	var choice := 0
+	for control in controls:
+		var index := door_pick.item_count
+		door_pick.add_item("Door %d · %s" % [index + 1, str(control.state).capitalize()])
+		door_pick.set_item_metadata(index, control)
+		if control.id == retain: choice = index
+		if door_models.has(control.id): Openings.set_door_open(door_models[control.id], control.state == "open")
+	if not controls.is_empty(): door_pick.select(choice)
+	for widget in [door_pick, door_toggle, door_lock]: widget.visible = not controls.is_empty()
+	_refresh_door_buttons()
+
+func _refresh_door_buttons() -> void:
+	if door_pick.selected < 0: return
+	var state_name := str(door_pick.get_selected_metadata().state)
+	door_toggle.disabled = state_name == "locked"
+	door_toggle.text = "Close Door" if state_name == "open" else "Open Door"
+	door_lock.text = "Unlock Door" if state_name == "locked" else "Lock Door"
+
+func _change_door(operation: String) -> void:
+	if not active or door_pick.selected < 0: return
+	status_text = bridge.ChangeDoor(str(door_pick.get_selected_metadata().id), operation)
+	if status_text.is_empty():
+		_refresh_doors()
+		# The bridge has published the new grid and invalidated cached action costs.
+		# Replace every outstanding physical approach before any actor moves again.
+		for actor in paths:
+			if figures.has(actor): figures[actor].set_motion(false)
+		paths.clear()
+		var navigation: Array = JSON.parse_string(bridge.Navigation())
+		for action in navigation: _dispatch(action)
+	snapshot = JSON.parse_string(bridge.Observe())
+	_refresh()
 
 func _update_camera() -> void:
 	camera.position = camera_target + Vector3(sin(orbit.x) * cos(orbit.y), sin(orbit.y), cos(orbit.x) * cos(orbit.y)) * distance

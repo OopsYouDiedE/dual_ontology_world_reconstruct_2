@@ -2,6 +2,22 @@ extends RefCounted
 ## Direct statement port of OpeningsKit.createOpeningMesh.
 const Geo = preload("../Shared/ArchitectGeometry.gd")
 
+static func door_pivot(root: Node3D, hinge_x: float, swing_degrees: float) -> Node3D:
+	var pivot := Node3D.new()
+	pivot.position.x = hinge_x
+	pivot.set_meta("swing_degrees", swing_degrees)
+	root.add_child(pivot)
+	return pivot
+
+static func leaf_part(pivot: Node3D, part: Node3D) -> void:
+	part.position.x -= pivot.position.x
+	pivot.add_child(part)
+
+static func set_door_open(root: Node3D, is_open: bool) -> void:
+	for child in root.get_children():
+		if child.has_meta("swing_degrees"):
+			child.rotation_degrees.y = float(child.get_meta("swing_degrees")) if is_open else 0.0
+
 static func build(type: String, width: float, height: float, _bottom: float, rise: float = 0.4, wallThick: float = 0.28) -> Node3D:
 	var root = Node3D.new()
 	var frameThick = wallThick + 0.05
@@ -119,25 +135,26 @@ static func build(type: String, width: float, height: float, _bottom: float, ris
 		cornice.position = Vector3(0, height + headerH + 0.04, 0)
 		root.add_child(cornice)
 		var leafW = width - frameW * 2 - 0.02
+		var pivot := door_pivot(root, -leafW * 0.5, 92.0)
 		var leafH = height - 0.02
 		var leaf = Geo.box(Vector3(leafW, leafH, 0.06), "wood")
 		leaf.position = Vector3(0, leafH * 0.5 + 0.01, 0)
-		root.add_child(leaf)
+		leaf_part(pivot, leaf)
 		var panelW = leafW * 0.72
 		var lowerH = leafH * 0.35
 		var upperH = leafH * 0.45
 		var panelL = Geo.box(Vector3(panelW, lowerH, 0.085), "wood_dark")
 		panelL.position = Vector3(0, 0.12 + lowerH * 0.5, 0)
-		root.add_child(panelL)
+		leaf_part(pivot, panelL)
 		var panelU = Geo.box(Vector3(panelW, upperH, 0.085), "wood_dark")
 		panelU.position = Vector3(0, leafH - 0.08 - upperH * 0.5, 0)
-		root.add_child(panelU)
+		leaf_part(pivot, panelU)
 		var hPlate = Geo.box(Vector3(0.045, 0.18, 0.095), "gold")
 		hPlate.position = Vector3(width * 0.32, 1.05, 0)
-		root.add_child(hPlate)
+		leaf_part(pivot, hPlate)
 		var hLever = Geo.box(Vector3(0.12, 0.022, 0.11), "gold")
 		hLever.position = Vector3(width * 0.32 - 0.04, 1.07, 0.01)
-		root.add_child(hLever)
+		leaf_part(pivot, hLever)
 	elif type == 'double_door':
 		var headerH = frameW * 1.35
 		var jambL = Geo.box(Vector3(frameW, height, frameThick + 0.03), "wood_dark")
@@ -156,24 +173,25 @@ static func build(type: String, width: float, height: float, _bottom: float, ris
 		var leafH = height - 0.02
 		for sign in [-1, 1]:
 			var cx = sign * (singleW * 0.5 + 0.01)
+			var pivot := door_pivot(root, cx + sign * singleW * 0.5, -sign * 92.0)
 			var leaf = Geo.box(Vector3(singleW, leafH, 0.06), "wood")
 			leaf.position = Vector3(cx, leafH * 0.5 + 0.01, 0)
-			root.add_child(leaf)
+			leaf_part(pivot, leaf)
 			var pW = singleW * 0.72
 			var lowerH = leafH * 0.35
 			var upperH = leafH * 0.45
 			var pL = Geo.box(Vector3(pW, lowerH, 0.085), "wood_dark")
 			pL.position = Vector3(cx, 0.12 + lowerH * 0.5, 0)
-			root.add_child(pL)
+			leaf_part(pivot, pL)
 			var pU = Geo.box(Vector3(pW, upperH, 0.085), "wood_dark")
 			pU.position = Vector3(cx, leafH - 0.08 - upperH * 0.5, 0)
-			root.add_child(pU)
+			leaf_part(pivot, pU)
 			var hPlate = Geo.box(Vector3(0.04, 0.18, 0.095), "gold")
 			hPlate.position = Vector3(sign * 0.06, 1.05, 0)
-			root.add_child(hPlate)
+			leaf_part(pivot, hPlate)
 			var hLever = Geo.box(Vector3(0.10, 0.022, 0.11), "gold")
 			hLever.position = Vector3(sign * 0.06 - sign * 0.03, 1.07, 0.01)
-			root.add_child(hLever)
+			leaf_part(pivot, hLever)
 	elif type == 'portal_arch':
 		var headerH = frameW * 1.4
 		var jambL = Geo.box(Vector3(frameW * 1.2, height, frameThick * 1.1), "wood_dark")

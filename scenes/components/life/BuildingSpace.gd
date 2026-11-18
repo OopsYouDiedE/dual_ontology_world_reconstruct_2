@@ -23,12 +23,14 @@ var objects: Array = []
 var object_by_id: Dictionary = {}
 var bounds := Rect2()
 var capacities: Dictionary = {}
+var door_states: Dictionary = {}
 var surfaces: Array = []
 var grid_limit_exceeded := false
 
-func setup(building: Dictionary, layer_idx := 0, declared_capacities: Dictionary = {}) -> void:
+func setup(building: Dictionary, layer_idx := 0, declared_capacities: Dictionary = {}, live_doors: Dictionary = {}) -> void:
 	data = building
 	capacities = declared_capacities
+	door_states = live_doors
 	layer_index = clampi(layer_idx, 0, maxi(building.layers.size() - 1, 0))
 	var layer: Dictionary = building.layers[layer_index]
 	layer_y = float(layer.y)
@@ -163,7 +165,7 @@ func _build_grid() -> void:
 		var portals: Dictionary = {}
 		for op in wall.get("openings", []):
 			var bottom := base + float(op.get("bottom", 0.0))
-			if not DOORS.has(str(op.type)) or bottom > layer_y + CLEARANCE or bottom + float(op.get("height", 0.0)) < layer_y + MIN_PASSAGE_HEIGHT: continue
+			if not DOORS.has(str(op.type)) or door_states.get(str(op.get("id", "")), "open") != "open" or bottom > layer_y + CLEARANCE or bottom + float(op.get("height", 0.0)) < layer_y + MIN_PASSAGE_HEIGHT: continue
 			var half_width := float(op.width) * 0.5 - CLEARANCE
 			if half_width <= 0.0: continue
 			var idx := int(op.segment)

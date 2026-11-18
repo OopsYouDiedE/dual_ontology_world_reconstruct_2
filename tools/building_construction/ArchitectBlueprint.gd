@@ -7,6 +7,7 @@ var panning = false
 var dragging = false
 var drag_start = Vector2.ZERO
 var snapshot: Dictionary = {}
+var drag_selection: Dictionary = {}
 
 func _ready() -> void:
 	clip_contents = true
@@ -76,8 +77,7 @@ func _input(event: InputEvent) -> void:
 	# Match the source editor's window-level mouseup, including release outside the canvas.
 	if event is InputEventMouseButton and not event.pressed:
 		if event.button_index==MOUSE_BUTTON_LEFT and dragging:
-			dragging = false
-			editor.state.remember()
+			end_drag(true)
 		if event.button_index in [MOUSE_BUTTON_RIGHT,MOUSE_BUTTON_MIDDLE]: panning = false
 
 func _draw() -> void:
@@ -239,8 +239,7 @@ func _gui_input(event: InputEvent) -> void:
 		elif event.button_index in [MOUSE_BUTTON_RIGHT,MOUSE_BUTTON_MIDDLE]: panning = event.pressed
 		elif event.button_index==MOUSE_BUTTON_LEFT:
 			if not event.pressed:
-				if dragging: state.remember()
-				dragging = false
+				if dragging: end_drag(true)
 				return
 			if event.double_click:
 				if editor.tool!="select": editor.finish_path(editor.tool!="railing")
@@ -249,8 +248,7 @@ func _gui_input(event: InputEvent) -> void:
 					if hit.get("kind","") in ["wallNode","floorNode","opening","prop","stair"]:
 						state.selected = hit
 						editor.show_parameters()
-					elif state.insert_wall_node(point,10/zoom): editor.refresh()
-					else: editor.insert_floor_node(point,10/zoom)
+					else: editor.insert_plan_node(point,10/zoom)
 				return
 			match editor.tool:
 				"wall","floor","railing":
@@ -271,10 +269,7 @@ func _gui_input(event: InputEvent) -> void:
 				_:
 					state.selected = hit_test(point)
 					editor.refresh_inspector()
-					if not state.selected.is_empty():
-						dragging = true
-						drag_start = point
-						snapshot = state.data.duplicate(true)
+					if not state.selected.is_empty(): begin_drag(point)
 	elif event is InputEventMouseMotion:
 		var point = world(event.position)
 		hover = Vector2(state.snap(point.x),state.snap(point.y))
@@ -284,39 +279,65 @@ func _gui_input(event: InputEvent) -> void:
 			if not magnet_hit.is_empty(): hover = Vector2(snappedf(magnet_hit.point.x,0.01),snappedf(magnet_hit.point.y,0.01))
 		editor.update_cursor(hover)
 		if panning: pan += event.relative
-		elif dragging and not state.selected.is_empty():
-			var s = state.selected
-			var delta = Vector2(state.snap(point.x-drag_start.x),state.snap(point.y-drag_start.y))
-			match s.kind:
-				"wallNode":
-					var wall = state.data.walls[s.wallIndex]
-					state.set_node(wall,s.ptIndex,0,state.snap(point.x))
-					state.set_node(wall,s.ptIndex,2,state.snap(point.y))
-				"wall":
-					state.translate_wall(s.wallIndex,snapshot,delta.x,delta.y)
-				"opening":
-					var wall = state.data.walls[s.wallIndex]
-					var op = wall.openings[s.opIndex]
-					var hit = state.project(point,p2(wall.points[op.segment]),p2(wall.points[op.segment+1]))
-					op.center = max(op.width*0.5+0.05,min(hit.len-op.width*0.5-0.05,state.snap(hit.t*hit.len)))
-				"floorNode":
-					state.move_room_node(s.layerIndex,s.polyIndex,s.ptIndex,state.snap(point.x),state.snap(point.y))
-				"floorPoly":
-					state.translate_room(s.layerIndex,s.polyIndex,snapshot,delta.x,delta.y)
-				"railingNode":
-					state.data.railings[s.railIndex].points[s.ptIndex][0] = state.snap(point.x)
-					state.data.railings[s.railIndex].points[s.ptIndex][2] = state.snap(point.y)
-				"railing":
-					var rail = state.data.railings[s.railIndex]
-					for i in range(rail.points.size()):
-						rail.points[i][0] = editor.Geo.js_round((snapshot.railings[s.railIndex].points[i][0]+delta.x)*100)/100
-						rail.points[i][2] = editor.Geo.js_round((snapshot.railings[s.railIndex].points[i][2]+delta.y)*100)/100
-				"prop":
-					state.data.props[s.index].x = state.snap(point.x)
-					state.data.props[s.index].z = state.snap(point.y)
-					if not Input.is_key_pressed(KEY_ALT): editor.snap_prop(state.data.props[s.index],point)
-				"stair":
-					state.data.stairs[s.index].x = editor.Geo.js_round((snapshot.stairs[s.index].x+delta.x)*100)/100
-					state.data.stairs[s.index].z = editor.Geo.js_round((snapshot.stairs[s.index].z+delta.y)*100)/100
-			editor.request_rebuild()
-			editor.refresh_inspector()
+		elif dragging: move_drag(point, not Input.is_key_pressed(KEY_ALT))
+
+func begin_drag(point: Vector2) -> void:
+	if dragging or editor.pending_build != null or editor.state.selected.is_empty(): return
+	dragging = true
+	drag_start = point
+	snapshot = editor.state.data.duplicate(true)
+	drag_selection = editor.state.selected.duplicate(true)
+	editor.gesture_build = editor.state.fork_candidate()
+
+func end_drag(apply: bool) -> void:
+	if not dragging: return
+	dragging = false
+	var draft: RefCounted = editor.gesture_build
+	editor.gesture_build = null
+	snapshot.clear()
+	drag_selection.clear()
+	if apply and draft != null: editor.commit_edit(draft, true)
+	else: editor.refresh()
+
+func move_drag(point: Vector2, snap_to_wall: bool) -> void:
+	var state: RefCounted = editor.gesture_build
+	if state == null: return
+	# Recompute against the gesture origin. Replaying the same movement has
+	# identical topology whether delivered in one event or in small increments.
+	state.data = snapshot.duplicate(true)
+	state.selected = drag_selection.duplicate(true)
+	if state.selected.is_empty(): return
+	var s = state.selected
+	var delta = Vector2(state.snap(point.x-drag_start.x),state.snap(point.y-drag_start.y))
+	match s.kind:
+		"wallNode":
+			var wall = state.data.walls[s.wallIndex]
+			var origin: Array = wall.points[s.ptIndex]
+			state.move_junction(origin, [state.snap(point.x), origin[1], state.snap(point.y)])
+		"wall":
+			state.translate_wall(s.wallIndex,snapshot,delta.x,delta.y)
+		"opening":
+			var wall = state.data.walls[s.wallIndex]
+			var op = wall.openings[s.opIndex]
+			var hit = state.project(point,p2(wall.points[op.segment]),p2(wall.points[op.segment+1]))
+			op.center = max(op.width*0.5+0.05,min(hit.len-op.width*0.5-0.05,state.snap(hit.t*hit.len)))
+		"floorNode":
+			state.move_room_node(s.layerIndex,s.polyIndex,s.ptIndex,state.snap(point.x),state.snap(point.y))
+		"floorPoly":
+			state.translate_room(s.layerIndex,s.polyIndex,snapshot,delta.x,delta.y)
+		"railingNode":
+			state.data.railings[s.railIndex].points[s.ptIndex][0] = state.snap(point.x)
+			state.data.railings[s.railIndex].points[s.ptIndex][2] = state.snap(point.y)
+		"railing":
+			var rail = state.data.railings[s.railIndex]
+			for i in range(rail.points.size()):
+				rail.points[i][0] = editor.Geo.js_round((snapshot.railings[s.railIndex].points[i][0]+delta.x)*100)/100
+				rail.points[i][2] = editor.Geo.js_round((snapshot.railings[s.railIndex].points[i][2]+delta.y)*100)/100
+		"prop":
+			state.data.props[s.index].x = state.snap(point.x)
+			state.data.props[s.index].z = state.snap(point.y)
+			if snap_to_wall: editor.snap_prop(state.data.props[s.index],point,state)
+		"stair":
+			state.data.stairs[s.index].x = editor.Geo.js_round((snapshot.stairs[s.index].x+delta.x)*100)/100
+			state.data.stairs[s.index].z = editor.Geo.js_round((snapshot.stairs[s.index].z+delta.y)*100)/100
+	editor.request_rebuild()

@@ -10,11 +10,14 @@ var history_index = -1
 var grid_snap = 0.2
 var candidate_source: int = 0
 var candidate_base := ""
+var revision := 0
+var candidate_revision := -1
 
 func fork_candidate() -> RefCounted:
 	var draft: RefCounted = get_script().new()
 	draft.candidate_source = get_instance_id()
 	draft.candidate_base = JSON.stringify(data)
+	draft.candidate_revision = revision
 	draft.data = data.duplicate(true)
 	draft.selected = selected.duplicate(true)
 	draft.grid_snap = grid_snap
@@ -22,11 +25,14 @@ func fork_candidate() -> RefCounted:
 
 func accept_candidate(draft: RefCounted) -> bool:
 	if draft == null or draft.get_script() != get_script(): return false
-	if draft.candidate_source != get_instance_id() or draft.candidate_base != JSON.stringify(data): return false
-	data = draft.data.duplicate(true)
+	if draft.candidate_source != get_instance_id() or draft.candidate_revision != revision or draft.candidate_base != JSON.stringify(data): return false
+	draft.sync_rooms()
+	var changed: bool = JSON.stringify(draft.data) != draft.candidate_base
 	selected = draft.selected.duplicate(true)
 	draft.candidate_source = 0
-	remember()
+	if changed:
+		data = draft.data.duplicate(true)
+		remember()
 	return true
 
 func uid(prefix: String) -> String: return prefix+"_"+str(Time.get_ticks_usec())+"_"+str(randi()%10000)
@@ -49,6 +55,7 @@ func remember() -> void:
 	history.append(text)
 	if history.size()>40: history.pop_front()
 	history_index = history.size()-1
+	revision += 1
 const OPENING_DEFAULTS = {"width":1.2,"height":2.0,"bottom":0.0,"rise":0.4,"center":1.0}
 const OPENING_TYPES = ["arched_window","rectangular_window","round_window","double_door","closed_door","arched_closed_door","portal_arch"]
 const STAIR_DEFAULTS = {"rise":2.4,"run":3.2,"risers":12,"width":1.2,"railingPos":"both","yaw":0.0,"nosing":0.03,"x":0.0,"y":0.0,"z":0.0}
@@ -73,6 +80,7 @@ func restore(text: String) -> bool:
 	if not data.get("activeLayerId") and not data.layers.is_empty(): data.activeLayerId = data.layers[0].id
 	selected = {}
 	sync_rooms()
+	revision += 1
 	return true
 
 ## Fill defaults and drop unusable records so later code never meets a missing key.

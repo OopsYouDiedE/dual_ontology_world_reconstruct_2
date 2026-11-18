@@ -47,6 +47,10 @@ func _run() -> void:
 	original.undo(-1)
 	check(not original.accept_candidate(stale), "a candidate based on an older draft cannot replace current edits")
 
+	var aba := original.fork_candidate()
+	check(original.undo(1) and original.undo(-1) and not original.accept_candidate(aba),
+		"undo/redo cannot revive an old candidate even when the same bytes return")
+
 	var cases := 0
 	for pairs in range(1,5):
 		for seed_value in range(12):
@@ -122,5 +126,60 @@ func test_workbench(kitchen: String) -> void:
 		"stair geometry is staged in the editor before placement")
 	if editor.pending_build != null: editor.close_build_preview(false,false)
 	check(JSON.stringify(editor.state.data) == sealed, "discard leaves the original stair records intact")
+	var piece: Dictionary = editor.state.data.props[0]
+	var anchor := Vector2(piece.x, piece.z)
+	var destination := anchor + Vector2(1.0, -0.6)
+	var journal: Array = editor.state.history.duplicate()
+	editor.state.selected = {"kind":"prop","index":0}
+	editor.blueprint.begin_drag(anchor)
+	editor.blueprint.move_drag(anchor + Vector2(0.2, 0.0), false)
+	editor.blueprint.move_drag(destination, false)
+	var drag := JSON.stringify(editor.display_state().data)
+	check(drag != sealed and JSON.stringify(editor.state.data) == sealed and editor.state.history == journal,
+		"drag updates the shared preview without editing the live kitchen or history")
+	editor.blueprint.end_drag(false)
+	check(JSON.stringify(editor.state.data) == sealed and editor.state.history == journal, "canceling a drag restores the exact committed scene and redo branch")
+	editor.blueprint.begin_drag(anchor)
+	editor.blueprint.move_drag(destination, false)
+	check(JSON.stringify(editor.display_state().data) == drag, "drag endpoints do not depend on mouse event subdivision")
+	editor.blueprint.end_drag(true)
+	check(JSON.stringify(editor.state.data) == drag and editor.state.undo(-1) and JSON.stringify(editor.state.data) == sealed,
+		"releasing a drag commits the final preview in a single undo step")
+	check(editor.state.undo(1) and JSON.stringify(editor.state.data) == drag, "redo restores the exact moved kitchen prop")
+	editor.state.selected = {"kind":"prop","index":0}
+	editor.rotate_selected()
+	var rotated := JSON.stringify(editor.state.data)
+	check(rotated != drag and editor.state.data.props[0].id == piece.id, "rotation preserves the original prop identity")
+	editor.duplicate_selected()
+	var copied := JSON.stringify(editor.state.data)
+	check(editor.state.data.props.size() == props + 1 and editor.state.data.props[-1].id != piece.id, "copy adds a new prop identity without changing the source")
+	editor.set_build_field(["props",props,"name"], "Duplicate test fixture")
+	var edited := JSON.stringify(editor.state.data)
+	check(edited != copied and editor.state.data.props[-1].name == "Duplicate test fixture", "property change commits to the copied prop")
+	editor.delete_selected()
+	var deleted := JSON.stringify(editor.state.data)
+	check(editor.state.data.props.size() == props and deleted == rotated, "delete removes only the copied prop")
+	for previous in [edited, copied, rotated, drag, sealed]:
+		check(editor.state.undo(-1) and JSON.stringify(editor.state.data) == previous, "undo restores exact previous committed kitchen state")
+	for following in [drag, rotated, copied, edited, deleted]:
+		check(editor.state.undo(1) and JSON.stringify(editor.state.data) == following, "redo restores exact subsequent committed kitchen state")
+	editor.state.selected = {"kind":"prop","index":0}
+	var save := "res://.runtime/build-transaction-%d.json" % Time.get_ticks_usec()
+	editor.file_action = "json"
+	editor.blueprint.begin_drag(anchor)
+	editor.blueprint.move_drag(destination + Vector2(0.0, 1.0), false)
+	editor._file_selected(save)
+	check(not FileAccess.file_exists(save), "save cannot leak uncommitted gesture geometry")
+	editor.blueprint.end_drag(false)
+	editor._file_selected(save)
+	var saved_text := FileAccess.get_file_as_string(save)
+	var reopened := State.new()
+	check(saved_text == JSON.stringify(editor.state.data, "  ") and reopened.restore(saved_text) and JSON.stringify(reopened.data) == deleted,
+		"saved kitchen contains the committed result and restores it exactly through the production parser")
+	check(not editor.load_build("bad scene") and JSON.stringify(editor.state.data) == deleted, "invalid import keeps the committed kitchen")
+	check(editor.load_build(sealed) and editor.state.undo(-1) and JSON.stringify(editor.state.data) == deleted,
+		"successful import replaces the draft through the same undo transaction")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(save))
+
 	editor.queue_free()
 	await process_frame

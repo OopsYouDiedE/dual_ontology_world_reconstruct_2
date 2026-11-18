@@ -68,6 +68,7 @@ var furnish_report: Label
 var component_list: ItemList
 var component_filter = ""
 var art_room: Node3D
+var gesture_build: RefCounted
 var pending_build: RefCounted
 var pending_window: ConfirmationDialog
 var layout_seed := 47
@@ -122,7 +123,7 @@ func label(parent: Node, text: String) -> Label:
 	item.text = text
 	parent.add_child(item)
 	return item
-func number(parent: Node, text: String, value: float, callback: Callable, step := 0.1, minimum := -10000.0, maximum := 10000.0, decimal_step := 0.0) -> SpinBox:
+func number(parent: Node, text: String, value: float, callback: Callable, step := 0.1, minimum := -10000.0, maximum := 10000.0, decimal_step := 0.001) -> SpinBox:
 	var row = HBoxContainer.new()
 	parent.add_child(row)
 	var caption = label(row,text)
@@ -130,7 +131,7 @@ func number(parent: Node, text: String, value: float, callback: Callable, step :
 	var item = SpinBox.new()
 	item.min_value = minimum
 	item.max_value = maximum
-	# HTML number inputs retain arbitrary source values; step only affects arrows.
+	# Format editor coordinates to millimetres. Opening the inspector does not round saved values.
 	item.step = decimal_step
 	item.custom_arrow_step = step
 	item.value = value
@@ -328,12 +329,10 @@ func _make_ui() -> void:
 		state.data.activeLayerId = layer_select.get_item_metadata(index)
 		if auto_y: sync_wall("baseY",state.layer().y)
 		refresh_layers())
-	button(floors,"Add Floor",func(): state.new_layer(); state.remember(); refresh_layers())
+	button(floors,"Add Floor",func(): edit_build(func(draft): draft.new_layer(), true))
 	ui_fields.layer_y = number(floors,"Floor Height (m)",0,func(v):
-		state.layer().y = v
-		if auto_y: sync_wall("baseY",v)
-		commit())
-	ui_fields.floor_style = choice(floors,"Floor Finish",FLOOR_STYLES,"octagonal_tile",func(v): state.layer().style = v; commit())
+		if edit_build(func(draft): draft.layer().y = v) and auto_y: sync_wall("baseY",v))
+	ui_fields.floor_style = choice(floors,"Floor Finish",FLOOR_STYLES,"octagonal_tile",func(v): edit_build(func(draft): draft.layer().style = v))
 	button(floors,"Draw Floor in 2D",func(): set_tool("floor"))
 	label(floors,"Nearby floors merge within 0.3 m.")
 	var walls = page(tabs,"Walls")
@@ -352,8 +351,8 @@ func _make_ui() -> void:
 		if draft.auto_walls(wall_params): preview_build(draft, "Walls from Floor")
 		else: status.text = "Draw a floor first, or edit the existing walls directly.")
 	var layout := page(tabs,"Layout")
-	number(layout,"Seed",layout_seed,func(v): layout_seed = int(v),1,0,2147483647)
-	number(layout,"Room pairs",layout_pairs,func(v): layout_pairs = int(v),1,1,4)
+	number(layout,"Seed",layout_seed,func(v): layout_seed = int(v),1,0,2147483647,1.0)
+	number(layout,"Room pairs",layout_pairs,func(v): layout_pairs = int(v),1,1,4,1.0)
 	label(layout,"Generate rooms on both sides of one shared hall.")
 	button(layout,"Preview New Layout",preview_generated_layout)
 	var openings = page(tabs,"Openings")
@@ -424,11 +423,7 @@ func _make_ui() -> void:
 	for room in rooms: room_select.add_item(str(room.id)+" · "+DisplayNames.name_of(room))
 	if rooms.size()>1: room_select.select(1)
 	button(presets,"Load Room Preset",func():
-		if state.restore(JSON.stringify(rooms[room_select.selected])):
-			hidden_parts.clear()
-			state.remember()
-			refresh()
-			reset_views())
+		load_build(JSON.stringify(rooms[room_select.selected])))
 	label(presets,"Original Room Art")
 	var art_select := OptionButton.new()
 	presets.add_child(art_select)
@@ -463,6 +458,7 @@ func sync_wall(key: String, value: float) -> void:
 	if key=="baseY":
 		for p in drawing: p[2] = value
 func set_tool(value: String) -> void:
+	if gesture_build != null: blueprint.end_drag(false)
 	tool = value
 	drawing = []
 	for key in tool_buttons: tool_buttons[key].set_pressed_no_signal(key==tool)
@@ -471,7 +467,7 @@ func set_tool(value: String) -> void:
 func update_status() -> void:
 	status.text = {"select":"Select or drag with the left mouse button. Double-click a node or press E to edit. Delete removes, Ctrl+Z undoes, F centers.", "wall":"Place wall nodes. Click the start or press Enter to close, or choose Finish Open Path.", "floor":"Place floor vertices. Click the start or press Enter to finish.", "opening":"Click a wall to place an opening. In Select mode, drag it along the wall.", "railing":"Place railing nodes and press Enter to finish.", "prop":"Click in 2D to place the selected component."}.get(tool,tool)+"  |  Nodes: "+str(drawing.size())
 func display_state() -> RefCounted:
-	return pending_build if pending_build != null else state
+	return pending_build if pending_build != null else (gesture_build if gesture_build != null else state)
 
 func preview_generated_layout() -> void:
 	if pending_build != null: return
@@ -560,18 +556,23 @@ func finish_path(close: bool) -> void:
 	var candidate_title: String = title[tool]
 	set_tool("select")
 	preview_build(draft,candidate_title)
-func insert_floor_node(point: Vector2, tolerance: float) -> void:
-	for li in range(state.data.layers.size()):
-		for pi in range(state.data.layers[li].polygons.size()):
-			var poly = state.data.layers[li].polygons[pi]
+func insert_plan_node(point: Vector2, tolerance: float) -> void:
+	if pending_build != null or gesture_build != null: return
+	var draft: RefCounted = state.fork_candidate()
+	if draft.insert_wall_node(point, tolerance):
+		commit_edit(draft, true)
+		return
+	for li in range(draft.data.layers.size()):
+		for pi in range(draft.data.layers[li].polygons.size()):
+			var poly = draft.data.layers[li].polygons[pi]
 			for i in range(poly.size()):
 				var a = poly[i]
 				var b = poly[(i+1)%poly.size()]
 				var hit = state.project(point,Vector2(a[0],a[1]),Vector2(b[0],b[1]))
 				if hit.dist<=tolerance:
 					poly.insert(i+1,[state.snap(hit.point.x),state.snap(hit.point.y)])
-					state.selected = {"kind":"floorNode","layerIndex":li,"polyIndex":pi,"ptIndex":i+1}
-					commit()
+					draft.selected = {"kind":"floorNode","layerIndex":li,"polyIndex":pi,"ptIndex":i+1}
+					commit_edit(draft, true)
 					return
 func spawn_stair() -> void:
 	if pending_build != null or state.layer().is_empty(): return
@@ -591,13 +592,13 @@ func refresh_component_list() -> void:
 		component_list.set_item_metadata(component_list.item_count-1,entry)
 
 ## Push a wall-hugging or wall-mounted piece flush against the nearest wall face.
-func snap_prop(item: Dictionary, point: Vector2) -> void:
+func snap_prop(item: Dictionary, point: Vector2, draft: RefCounted) -> void:
 	if str(item.get("kind",""))=="native_recipe": return
 	var f = Footprint.info(item)
 	var wants = f.mount==Footprint.WALL or str(item.kind) in Footprint.AGAINST_WALL
 	if not wants: return
 	var reach = 0.45 if f.mount==Footprint.WALL else f.d*0.5+0.4
-	var hit = state.wall_snap(point,reach,float(state.layer().get("y",0)))
+	var hit = draft.wall_snap(point,reach,float(draft.layer().get("y",0)))
 	if hit.is_empty(): return
 	Footprint.against_wall(item,hit.point,hit.normal,hit.half)
 
@@ -613,7 +614,7 @@ func place_prop(point: Vector2) -> void:
 		if mount_field!="" and prop_params.has(mount_field):
 			item.y = Geo.js_round((layer_y+float(prop_params[mount_field]))*100)/100
 			item.params[mount_field] = item.y
-		if not Input.is_key_pressed(KEY_ALT): snap_prop(item,point)
+		if not Input.is_key_pressed(KEY_ALT): snap_prop(item,point,draft)
 	else:
 		item = {"id":draft.uid("prop"),"name":prop_entry.label,"kind":"native_recipe","path":prop_entry.path,"x":draft.snap(point.x),"y":layer_y,"z":draft.snap(point.y),"yaw":prop_yaw,"params":prop_params.duplicate(true)}
 	draft.data.props.append(item)
@@ -630,20 +631,42 @@ func refresh_prop_fields() -> void:
 	for field in prop_presets[web_prop_kind].fields:
 		prop_params[field.id] = field.val
 		number(prop_fields,field.label,field.val,func(v): prop_params[field.id] = v,field.step)
-func commit() -> void:
-	state.remember()
-	refresh()
-## Scalar edits: keep the inspector (and its keyboard focus) alive, rebuild only the 3D parts that changed.
-func commit_light() -> void:
-	state.remember()
-	conflicts = state.prop_conflicts()
-	request_rebuild()
-	refresh_layers()
-	refresh_outline()
-	update_status()
+# Each command edits a private draft. Scalar commits keep the focused control alive.
+func commit_edit(draft: RefCounted, full_refresh := false) -> bool:
+	if not state.accept_candidate(draft):
+		refresh()
+		status.text = "Edit discarded because the draft changed."
+		return false
+	if full_refresh:
+		refresh()
+	else:
+		clear_art_room()
+		conflicts = state.prop_conflicts()
+		request_rebuild()
+		refresh_layers()
+		refresh_outline()
+		update_status()
+	return true
+
+func edit_build(edit: Callable, full_refresh := false) -> bool:
+	if pending_build != null or gesture_build != null: return false
+	var draft: RefCounted = state.fork_candidate()
+	edit.call(draft)
+	return commit_edit(draft, full_refresh)
+
+func set_build_field(path: Array, value: Variant) -> void:
+	edit_build(func(draft):
+		var item: Variant = draft.data
+		for key in path.slice(0, -1):
+			if item is Dictionary and not item.has(key): return
+			if item is Array and (not key is int or key < 0 or key >= item.size()): return
+			item = item[key]
+		if item is Array and (not path[-1] is int or path[-1] < 0 or path[-1] >= item.size()): return
+		item[path[-1]] = value)
+
 func delete_selected() -> void:
-	state.delete_selected()
-	refresh()
+	if not state.selected.is_empty(): edit_build(func(draft): draft.delete_selected(), true)
+
 func refresh() -> void:
 	clear_art_room()
 	conflicts = state.prop_conflicts()
@@ -794,7 +817,7 @@ func show_visibility() -> void:
 	for category in {"walls":"Walls and Openings","layers":"Floors","stairs":"Stairs","railings":"Railing","props":"Furniture and Lighting"}:
 		visibility_check(box,{"walls":"Walls and Openings","layers":"Floors","stairs":"Stairs","railings":"Railing","props":"Furniture and Lighting"}[category],category)
 	for wall in state.data.walls:
-		label(box,str(wall.name))
+		label(box,DisplayNames.name_of(wall))
 		for i in range(wall.points.size()-1):
 			visibility_check(box,"Wall Segment %d · %s → %s" % [i+1,str(wall.points[i]),str(wall.points[i+1])],str(wall.id)+"/Segment_"+str(i))
 	for spec in [["layers","Floors"],["stairs","Stairs"],["railings","Railing"],["props","Furniture and Lighting"]]:
@@ -939,52 +962,60 @@ func fill_parameters(parent: Node) -> void:
 	label(parent,"Selected: "+str(s.kind))
 	if s.kind in ["wall","wallNode"]:
 		var wall = state.data.walls[s.wallIndex]
-		text_field(parent,"Name",wall.name,func(v): wall.name = v; commit_light())
-		choice(parent,"Wall Finish",STYLES,wall.get("style","classical"),func(v): wall.style = v; commit_light())
+		text_field(parent,"Name",wall.name,func(v): set_build_field(["walls",s.wallIndex,"name"],v))
+		choice(parent,"Wall Finish",STYLES,wall.get("style","classical"),func(v): set_build_field(["walls",s.wallIndex,"style"],v))
 		for key in ["height","thickness"]:
-			number(parent,"Wall Height" if key=="height" else "Wall Thickness",wall[key],func(v): wall[key] = v; commit_light(),0.1 if key=="height" else 0.02,0.05)
-		number(parent,"Wall Elevation Y",wall.get("baseY",0),func(v): state.set_wall_y(wall,v); commit())
-		check(parent,"Decorative Columns",wall.get("hasPillars",true),func(v): wall.hasPillars = v; commit_light())
+			number(parent,"Wall Height" if key=="height" else "Wall Thickness",wall[key],func(v): set_build_field(["walls",s.wallIndex,key],v),0.1 if key=="height" else 0.02,0.05)
+		number(parent,"Wall Elevation Y",wall.get("baseY",0),func(v): edit_build(func(draft): draft.set_wall_y(draft.data.walls[s.wallIndex],v), true))
+		check(parent,"Decorative Columns",wall.get("hasPillars",true),func(v): set_build_field(["walls",s.wallIndex,"hasPillars"],v))
 		var indices = [s.ptIndex] if s.kind=="wallNode" else range(wall.points.size()-(1 if wall.closed else 0))
 		for index in indices:
 			label(parent,"Node #"+str(index+1))
 			for axis in range(3):
-				number(parent,["X","Y","Z"][axis],wall.points[index][axis],func(v): state.set_node(wall,index,axis,v); commit_light())
+				number(parent,["X","Y","Z"][axis],wall.points[index][axis],func(v): edit_build(func(draft): draft.set_node(draft.data.walls[s.wallIndex],index,axis,v)))
 	elif s.kind=="opening":
 		var wall = state.data.walls[s.wallIndex]
 		var op = wall.openings[s.opIndex]
-		choice(parent,"Opening Type",OPENINGS,op.type,func(v): op.type = v; commit_light())
+		choice(parent,"Opening Type",OPENINGS,op.type,func(v): set_build_field(["walls",s.wallIndex,"openings",s.opIndex,"type"],v))
 		for spec in [["segment","Wall Segment (Starts at 0)"],["center","Distance Along Wall"],["width","Opening Width"],["height","Opening Height"],["bottom","Height Above Floor"],["rise","Arch Rise"]]:
 			var key = spec[0]
-			number(parent,spec[1],op.get(key,0.4),func(v): op[key] = int(v) if key=="segment" else v; commit_light(),1 if key=="segment" else 0.1,0,wall.points.size()-2 if key=="segment" else 10000)
+			number(parent,spec[1],op.get(key,0.4),func(v): set_build_field(["walls",s.wallIndex,"openings",s.opIndex,key],int(v) if key=="segment" else v),1 if key=="segment" else 0.1,0,wall.points.size()-2 if key=="segment" else 10000,1.0 if key=="segment" else 0.001)
 	elif s.kind in ["floorPoly","floorNode"]:
 		var layer = state.data.layers[s.layerIndex]
-		text_field(parent,"Floor Name",layer.name,func(v): layer.name = v; commit_light())
-		number(parent,"Floor Elevation",layer.y,func(v): layer.y = v; commit_light())
-		choice(parent,"Floor Finish",FLOOR_STYLES,layer.style,func(v): layer.style = v; commit_light())
+		text_field(parent,"Floor Name",layer.name,func(v): set_build_field(["layers",s.layerIndex,"name"],v))
+		number(parent,"Floor Elevation",layer.y,func(v): set_build_field(["layers",s.layerIndex,"y"],v))
+		choice(parent,"Floor Finish",FLOOR_STYLES,layer.style,func(v): set_build_field(["layers",s.layerIndex,"style"],v))
 		if s.kind=="floorNode":
 			var pt = layer.roomFaces[s.polyIndex].nodes[s.ptIndex] if layer.has("roomFaces") else layer.polygons[s.polyIndex][s.ptIndex]
 			for axis in range(2): number(parent,["X","Z"][axis],pt[axis],func(v):
-				state.move_room_node(s.layerIndex,s.polyIndex,s.ptIndex,v if axis==0 else pt[0],v if axis==1 else pt[1]); commit_light())
+				edit_build(func(draft):
+					var floor: Dictionary = draft.data.layers[s.layerIndex]
+					if s.polyIndex >= floor.polygons.size(): return
+					var nodes: Array = floor.roomFaces[s.polyIndex].nodes if floor.get("roomFaces", []).size() > s.polyIndex else floor.polygons[s.polyIndex]
+					if s.ptIndex >= nodes.size(): return
+					var current: Array = nodes[s.ptIndex]
+					draft.move_room_node(s.layerIndex,s.polyIndex,s.ptIndex,v if axis==0 else current[0],v if axis==1 else current[1])))
 	elif s.kind in ["railing","railingNode"]:
 		var rail = state.data.railings[s.railIndex]
-		number(parent,"Railing Height",rail.height,func(v): rail.height = v; commit_light(),0.1,0.12)
-		number(parent,"Post Spacing",rail.get("spacing",0.18),func(v): rail.spacing = v; commit_light(),0.02,0.02)
+		number(parent,"Railing Height",rail.height,func(v): set_build_field(["railings",s.railIndex,"height"],v),0.1,0.12)
+		number(parent,"Post Spacing",rail.get("spacing",0.18),func(v): set_build_field(["railings",s.railIndex,"spacing"],v),0.02,0.02)
 		if s.kind=="railingNode":
-			for axis in range(3): number(parent,["X","Y","Z"][axis],rail.points[s.ptIndex][axis],func(v): rail.points[s.ptIndex][axis] = v; commit_light())
+			for axis in range(3): number(parent,["X","Y","Z"][axis],rail.points[s.ptIndex][axis],func(v): set_build_field(["railings",s.railIndex,"points",s.ptIndex,axis],v))
 	elif s.kind in ["stair","prop"]:
-		var item = state.data.stairs[s.index] if s.kind=="stair" else state.data.props[s.index]
-		text_field(parent,"Name",item.get("name",item.id),func(v): item.name = v; commit_light())
+		var collection := "stairs" if s.kind=="stair" else "props"
+		var item = state.data[collection][s.index]
+		text_field(parent,"Name",item.get("name",item.id),func(v): set_build_field([collection,s.index,"name"],v))
 		for key in (["x","y","z","yaw","rise","run","risers","width","nosing"] if s.kind=="stair" else ["x","y","z","yaw"]):
-			number(parent,key,item.get(key,0),func(v): item[key] = v; commit_light(),1 if key=="risers" else 0.1,1 if key=="risers" else -10000)
+			number(parent,key,item.get(key,0),func(v): set_build_field([collection,s.index,key],v),1 if key=="risers" else 0.1,1 if key=="risers" else -10000,10000,1.0 if key=="risers" else 0.001)
 		if s.kind=="prop":
 			if conflicts.has(s.index): label(parent,"⚠ Overlaps Other Furniture" if conflicts[s.index]=="overlap" else "⚠ Outside the Room")
 			var mount_field = Footprint.MOUNT_FIELD.get(str(item.kind),"")
 			for field in prop_presets.get(item.kind,{"fields":[]}).fields:
 				number(parent,field.label,item.params.get(field.id,field.val),func(v):
-					item.params[field.id] = v
-					if field.id==mount_field: item.y = v
-					commit_light(),field.step)
+					edit_build(func(draft):
+						var piece: Dictionary = draft.data.props[s.index]
+						piece.params[field.id] = v
+						if field.id==mount_field: piece.y = v),field.step)
 			if item.kind=="native_recipe":
 				var defaults = {}
 				for entry in catalog.items:
@@ -992,14 +1023,16 @@ func fill_parameters(parent: Node) -> void:
 				for key in defaults:
 					var value = item.params.get(key,defaults[key])
 					if value is float or value is int:
-						number(parent,str(key),value,func(v): item.params[key] = v; commit_light(),0.1)
+						number(parent,str(key),value,func(v): set_build_field([collection,s.index,"params",key],v),0.1)
 					elif value is bool:
-						check(parent,str(key),value,func(v): item.params[key] = v; commit_light())
-		if s.kind=="stair": choice(parent,"Handrail",{"both":"Both Sides","left":"Left","right":"Right","none":"None"},item.get("railingPos","both"),func(v): item.railingPos = v; commit_light())
+						check(parent,str(key),value,func(v): set_build_field([collection,s.index,"params",key],v))
+		if s.kind=="stair": choice(parent,"Handrail",{"both":"Both Sides","left":"Left","right":"Right","none":"None"},item.get("railingPos","both"),func(v): set_build_field([collection,s.index,"railingPos"],v))
 func show_parameters() -> void:
 	if state.selected.is_empty(): return
 	if is_instance_valid(modal): modal.queue_free()
 	modal = Window.new()
+	modal.transient = true
+	modal.exclusive = true
 	modal.title = "Component Properties"
 	modal.size = Vector2i(420,620)
 	modal.close_requested.connect(func(): modal.queue_free())
@@ -1013,7 +1046,17 @@ func show_parameters() -> void:
 	fill_parameters(column)
 	button(column,"Close",func(): modal.queue_free())
 	modal.popup_centered()
+func load_build(text: String) -> bool:
+	if pending_build != null or gesture_build != null: return false
+	var draft: RefCounted = state.fork_candidate()
+	if not draft.restore(text): return false
+	hidden_parts.clear()
+	if not commit_edit(draft, true): return false
+	reset_views()
+	return true
+
 func open_file(action: String) -> void:
+	if pending_build != null or gesture_build != null: return
 	file_action = action
 	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE if action=="import" else FileDialog.FILE_MODE_SAVE_FILE
 	file_dialog.filters = PackedStringArray(["*.tscn ; Godot Scene"] if action=="scene" else (["*.yaml ; ArchBuilder YAML"] if action=="yaml" else ["*.json,*.yaml,*.yml ; ArchBuilder JSON / YAML"]))
@@ -1021,16 +1064,16 @@ func open_file(action: String) -> void:
 	file_dialog.current_file = "BuildingCandidate.tscn" if action=="scene" else ("BuildingCandidate.yaml" if action=="yaml" else "BuildingCandidate.json")
 	file_dialog.popup_centered(Vector2i(850,600))
 func _file_selected(path: String) -> void:
+	if pending_build != null or gesture_build != null: return
 	if file_action=="import":
-		if state.restore(FileAccess.get_file_as_string(path)):
-			state.remember()
-			refresh()
-			reset_views()
-		else: status.text = "Invalid JSON or YAML scene."
+		if not load_build(FileAccess.get_file_as_string(path)): status.text = "Invalid JSON or YAML scene."
 	elif file_action in ["json","yaml"]:
 		var file = FileAccess.open(path,FileAccess.WRITE)
 		if file: file.store_string(preload("ArchitectYaml.gd").dump(state.data)+"\n" if file_action=="yaml" else JSON.stringify(state.data,"  ")); status.text = "Saved: "+path
 	else:
+		# A scalar command might have committed since the last deferred mesh rebuild.
+		rebuild_pending = false
+		rebuild()
 		var copy = candidates.duplicate()
 		copy.visible = true
 		for node in copy.find_children("*","Node3D",true,false): node.visible = true
@@ -1051,11 +1094,11 @@ func clear_dialog() -> void:
 	dialog.dialog_text = "Clear this scene? You can undo this change."
 	add_child(dialog)
 	dialog.confirmed.connect(func():
-		state.data = {"activeLayerId":null,"layers":[],"walls":[],"stairs":[],"railings":[],"props":[]}
-		state.selected = {}
-		state.new_layer()
 		set_tool("select")
-		commit()
+		edit_build(func(draft):
+			draft.data = {"activeLayerId":null,"layers":[],"walls":[],"stairs":[],"railings":[],"props":[]}
+			draft.selected = {}
+			draft.new_layer(), true)
 		dialog.queue_free())
 	dialog.canceled.connect(func(): dialog.queue_free())
 	dialog.popup_centered()
@@ -1118,28 +1161,39 @@ func _camera_input(event: InputEvent) -> void:
 		elif event.button_index==MOUSE_BUTTON_WHEEL_DOWN: distance = minf(300,distance*1.1)
 		_update_camera()
 func nudge_selected(delta: Vector2) -> void:
-	var sel = state.selected
-	if sel.get("kind","") not in ["prop","stair"]: return
-	var item = state.data.props[sel.index] if sel.kind=="prop" else state.data.stairs[sel.index]
-	item.x = Geo.js_round((item.x+delta.x)*100)/100
-	item.z = Geo.js_round((item.z+delta.y)*100)/100
-	commit_light()
-	refresh_inspector()
+	var sel: Dictionary = state.selected
+	if sel.get("kind", "") not in ["prop", "stair"]: return
+	if edit_build(func(draft):
+		var item: Dictionary = draft.data.props[sel.index] if sel.kind == "prop" else draft.data.stairs[sel.index]
+		item.x = Geo.js_round((item.x + delta.x) * 100) / 100
+		item.z = Geo.js_round((item.z + delta.y) * 100) / 100):
+		refresh_inspector()
 
 func duplicate_selected() -> void:
-	var sel = state.selected
-	if sel.get("kind","")!="prop": return
-	var copy = state.data.props[sel.index].duplicate(true)
-	copy.id = state.uid("prop")
-	copy.x += 0.4
-	copy.z += 0.4
-	state.data.props.append(copy)
-	state.selected = {"kind":"prop","index":state.data.props.size()-1}
-	commit()
+	var sel: Dictionary = state.selected
+	if sel.get("kind", "") not in ["prop", "stair"]: return
+	edit_build(func(draft):
+		var collection: Array = draft.data.props if sel.kind == "prop" else draft.data.stairs
+		var copy: Dictionary = collection[sel.index].duplicate(true)
+		copy.id = draft.uid("prop" if sel.kind == "prop" else "st")
+		copy.x += 0.4
+		copy.z += 0.4
+		collection.append(copy)
+		draft.selected = {"kind": sel.kind, "index": collection.size() - 1}, true)
+
+func rotate_selected() -> void:
+	var sel: Dictionary = state.selected
+	if sel.get("kind", "") not in ["prop", "stair"]: return
+	edit_build(func(draft):
+		var item: Dictionary = draft.data.props[sel.index] if sel.kind == "prop" else draft.data.stairs[sel.index]
+		item.yaw = fposmod(item.get("yaw", 0) + (45 if sel.kind == "prop" else 90), 360), true)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if pending_build != null: return
 	if not event is InputEventKey or not event.pressed: return
+	if gesture_build != null:
+		if event.keycode == KEY_ESCAPE: blueprint.end_drag(false)
+		return
 	if get_viewport().gui_get_focus_owner() is LineEdit: return
 	var command = event.is_command_or_control_pressed()
 	var step = 1.0 if event.shift_pressed else 0.1
@@ -1165,9 +1219,4 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if command and state.undo(1 if event.shift_pressed else -1): refresh()
 		KEY_Y:
 			if command and state.undo(1): refresh()
-		KEY_R:
-			var s = state.selected
-			if s.get("kind","") in ["prop","stair"]:
-				var item = state.data.props[s.index] if s.kind=="prop" else state.data.stairs[s.index]
-				item.yaw = fposmod(item.get("yaw",0)+(45 if s.kind=="prop" else 90),360)
-				commit()
+		KEY_R: rotate_selected()

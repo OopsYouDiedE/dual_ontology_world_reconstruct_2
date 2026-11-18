@@ -507,26 +507,32 @@ func _view_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN: distance = minf(100, distance * 1.1)
 		_update_camera()
 
-func _dispatch(action: Dictionary) -> void:
+func _occupied_stands(actor: String) -> Array[Vector3]:
+	var occupied: Array[Vector3] = []
+	for other in figures:
+		if other == actor: continue
+		occupied.append(figures[other].position)
+		if paths.has(other): occupied.append(paths[other].endpoint)
+	return occupied
+
+func _dispatch(action: Dictionary, replans := 0) -> void:
 	var model := figures.get(action.actor) as Node3D
 	if model == null: bridge.Fail(int(action.execution), "navigation_actor_missing"); return
 	var position := model.position
 	var plan: Dictionary = {}
 	var meta: Dictionary = action.meta
+	var occupied := _occupied_stands(action.actor)
 	if meta.get("target", "") != "":
 		var other := figures.get(meta.target) as Node3D
-		if other != null:
-			var approach: Vector3 = space.nearby_floor_point(other.position + Vector3(0.8, 0.0, 0.0))
-			plan = space.find_route(position, approach)
-			if not plan.is_empty(): plan["target"] = approach
+		if other != null: plan = space.plan_social(position, other.position, occupied)
 	else:
-		plan = space.plan_use(position, str(meta.get("obj", "")), rules.actions[meta.action], int(meta.get("slot", 0)))
+		plan = space.plan_use(position, str(meta.get("obj", "")), rules.actions[meta.action], int(meta.get("slot", 0)), occupied)
 	if plan.is_empty(): bridge.Fail(int(action.execution), "navigation_unreachable"); return
 	var endpoint: Vector3 = plan.target
 	if not bridge.SetTarget(int(action.execution), endpoint.x, endpoint.y, endpoint.z, float(plan.length), 2.4):
 		bridge.Fail(int(action.execution), "navigation_target_rejected")
 		return
-	paths[action.actor] = {"execution": int(action.execution), "route": plan.path, "meta": meta, "label": action.label}
+	paths[action.actor] = {"execution": int(action.execution), "route": plan.path, "endpoint": endpoint, "request": action, "replans": replans}
 
 func _move(seconds: float) -> void:
 	for actor in paths.keys():
@@ -543,6 +549,16 @@ func _move(seconds: float) -> void:
 		model.set_motion(true)
 		var position := model.position
 		var budget := seconds * 2.4
+		if Routes.path_length(position, movement.route) <= budget + 0.6:
+			var partner := figures.get(movement.request.meta.get("target", "")) as Node3D
+			var stale := not Routes.stand_is_free(movement.endpoint, _occupied_stands(actor))
+			stale = stale or (partner != null and not space.social_slot_valid(movement.endpoint, partner.position))
+			if stale:
+				paths.erase(actor)
+				model.set_motion(false)
+				if movement.replans < 3: _dispatch(movement.request, movement.replans + 1)
+				else: bridge.Fail(movement.execution, "navigation_unreachable")
+				continue
 		while budget > 0.0 and not movement.route.is_empty():
 			var waypoint: Vector3 = movement.route[0]
 			var gap := position.distance_to(waypoint)
@@ -557,6 +573,8 @@ func _move(seconds: float) -> void:
 		if model.has_method("set_motion") and movement.route.is_empty(): model.set_motion(false)
 		bridge.Progress(movement.execution, position.x, position.y, position.z, Routes.path_length(position, movement.route))
 		if movement.route.is_empty():
+			var partner := figures.get(movement.request.meta.get("target", "")) as Node3D
+			if partner != null: model.look_at(Vector3(partner.position.x, position.y, partner.position.z), Vector3.UP, true)
 			if not bridge.Arrive(movement.execution, position.x, position.y, position.z): bridge.Fail(movement.execution, "arrival_rejected")
 			paths.erase(actor)
 

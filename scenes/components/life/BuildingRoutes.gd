@@ -4,6 +4,10 @@ extends RefCounted
 const Grid := preload("BuildingSpace.gd")
 const HEIGHT_EPS := 0.075
 const STAIR_RESUME_EPS := 0.12
+const STAND_CLEARANCE := 0.55
+const SOCIAL_MIN := 0.75
+const SOCIAL_OPTIMAL := 1.0
+const SOCIAL_MAX := 1.3
 
 var floors: Array[Grid] = []
 var ports: Array[Dictionary] = []
@@ -220,7 +224,40 @@ func find_route(from: Vector3, to: Vector3) -> Dictionary:
 				queue[i] = {"path": route.path + edge.path, "length": length}
 	return best
 
-func plan_use(from: Vector3, id: String, action: Dictionary, slot: int) -> Dictionary:
+static func stand_is_free(point: Vector3, occupied: Array) -> bool:
+	for other: Vector3 in occupied:
+		if absf(point.y - other.y) < Grid.MIN_PASSAGE_HEIGHT and _xz(point).distance_squared_to(_xz(other)) < STAND_CLEARANCE * STAND_CLEARANCE:
+			return false
+	return true
+
+func social_slot_valid(at: Vector3, partner: Vector3) -> bool:
+	var floor := floor_at(partner)
+	if floor < 0 or floor_at(at) != floor: return false
+	var distance := at.distance_to(partner)
+	return distance >= SOCIAL_MIN - 0.01 and distance <= SOCIAL_MAX + 0.01 and floors[floor].line_clear(_xz(at), _xz(partner))
+
+func plan_social(from: Vector3, partner: Vector3, occupied: Array) -> Dictionary:
+	var floor := floor_at(partner)
+	if floor < 0: return {}
+	var best := {}
+	var best_score := INF
+	# Generate legal slots on rings around the recipient. Favor the desired
+	# conversational distance, then the actual route instead of Euclidean travel.
+	for radius in [SOCIAL_OPTIMAL, SOCIAL_MIN, SOCIAL_MAX]:
+		var proximity_penalty: float = absf(radius - SOCIAL_OPTIMAL) * 2.0
+		for octant in range(8):
+			var angle := TAU * octant / 8.0
+			var at := Vector3(partner.x + cos(angle) * radius, floors[floor].layer_y, partner.z + sin(angle) * radius)
+			if from.distance_to(at) + proximity_penalty >= best_score: continue
+			if not stand_is_free(at, occupied) or not social_slot_valid(at, partner): continue
+			var route := find_route(from, at)
+			if route.is_empty() or float(route.length) + proximity_penalty >= best_score: continue
+			best = route
+			best["target"] = at
+			best_score = float(route.length) + proximity_penalty
+	return best
+
+func plan_use(from: Vector3, id: String, action: Dictionary, slot: int, occupied: Array = []) -> Dictionary:
 	if not object_floors.has(id): return {}
 	var f: int = object_floors[id]
 	var grid := floors[f]
@@ -228,6 +265,7 @@ func plan_use(from: Vector3, id: String, action: Dictionary, slot: int) -> Dicti
 	var best := {}
 	for point in grid.use_points(obj, action, slot):
 		var at := Vector3(point.approach.x, grid.layer_y, point.approach.y)
+		if not stand_is_free(at, occupied): continue
 		var route := find_route(from, at)
 		if not route.is_empty() and route.length < float(best.get("length", INF)):
 			best = route

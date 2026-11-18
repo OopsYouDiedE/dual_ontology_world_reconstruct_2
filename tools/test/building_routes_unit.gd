@@ -15,6 +15,7 @@ func check(pass_check: bool, description: String) -> void:
 
 func run() -> void:
 	var rooms: Array = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_rooms.json"))
+	test_social_slots(rooms)
 	var authored: Dictionary = rooms.filter(func(room): return room.id == "F01")[0]
 	var state := State.new()
 	check(state.restore(JSON.stringify(authored)), "load the shipped F01 hall")
@@ -64,6 +65,29 @@ func run() -> void:
 	check(routes.rejected_stairs.has("stair_F01_central_flight"), "a wall crossing the middle of the flight blocks the link")
 	test_bridge(state.data, start)
 	quit(0 if failures == 0 else 1)
+
+func test_social_slots(rooms: Array) -> void:
+	var state := State.new()
+	var original: Dictionary = rooms.filter(func(room): return room.id == "R01")[0]
+	check(state.restore(JSON.stringify(original)), "load the shipped R01 quarters")
+	var routes := Routes.new()
+	routes.setup(state.data, 0)
+	var partner := Vector3(0.5, 0, -2.65)
+	var first := routes.plan_social(Vector3(1.65, 0, -1.9), partner, [partner])
+	check(not first.is_empty() and routes.social_slot_valid(first.target, partner), "R01 social approach ends within talking distance, with a clear line")
+	if first.is_empty(): return
+	var second := routes.plan_social(Vector3(1.65, 0, -1.3), partner, [partner, first.target])
+	check(not second.is_empty() and Routes.stand_is_free(second.target, [first.target]), "the second R01 visitor selects a distinct stand even before the first arrives")
+	var repeated := routes.plan_social(Vector3(1.65, 0, -1.9), partner, [partner])
+	check(repeated.get("target") == first.target, "releasing the reservation restores the optimal stand deterministically")
+	check(routes.plan_social(Vector3(1.65, 0, -1.9), partner + Vector3.UP * 2.0, []).is_empty(), "a recipient off the floor cannot be approached by projecting down")
+	var with_wall := state.data.duplicate(true)
+	with_wall.walls.append({"baseY": 0.0, "height": 2.5, "thickness": 0.24,
+		"points": [[-3.9, 0.0, -3.55], [3.9, 0.0, -3.55]], "openings": []})
+	routes.setup(with_wall, 0)
+	check(not routes.social_slot_valid(Vector3(1.8, 0, -3.0), Vector3(1.8, 0, -4.08)), "a partition blocks speech between otherwise nearby stands")
+	check(routes.plan_social(Vector3(1.8, 0, -3.0), Vector3(1.8, 0, -4.08), []).is_empty(), "the sealed partition leaves no reachable social stand")
+	check(Routes.stand_is_free(first.target + Vector3.UP * 2.0, [first.target]), "an overlapping footprint on another floor does not claim the stand")
 
 func test_bridge(building: Dictionary, start: Vector3) -> void:
 	var fixture := building.duplicate(true)

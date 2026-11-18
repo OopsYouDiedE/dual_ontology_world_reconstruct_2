@@ -9,7 +9,7 @@
 | `room` | `R05`、`B-P`、`2F-cross-M` | 直接进入指定房间；检查布置、局部动线、证物和提示的视线。离开该房间后，本次测试只允许观察或提交结论，跨房步骤不能给房内检查作证。 |
 | `interaction` | `kitchen-props`、`corridor-characters`、`wardrobe` | 前两项运行游戏内的厨房道具、走廊人物，`wardrobe` 是组件近景。检查命中、可观察状态、取消／重试与动作反馈。 |
 | `ui` | `title` | 正式书桌标题界面；沿玩家实际点击路径检查标题、菜单、返回、英文标识、控件边界与排版。独立存档可用于继续检查新游戏界面。 |
-| `design` | `building`、`lighting`、`expressions`、`mocap` | 直接启动工作台，检查控制、预览和诊断。`diagnostic` 支持 `monitor`、`reload`，建筑矩阵还支持 `previous_case`、`next_case`。动作捕捉工作台使用项目内指定的参考动作；`focus_catalog` 会标明它是否就绪。工作台内部诊断文字沿用工具自身语言。 |
+| `design` | `building`、`lighting`、`expressions`、`mocap` | 直接启动工作台，检查控制、预览和诊断。`diagnostic` 支持 `monitor`、`reload`，建筑矩阵和照明工作台还支持 `previous_case`、`next_case`；照明工作台也支持 `render_camera_sweep`，见 [R05 渲染验证](../../docs/r05-render-route.md)。动作捕捉工作台使用项目内指定的参考动作；`focus_catalog` 会标明它是否就绪。工作台内部诊断文字沿用工具自身语言。 |
 | `story` | `wake-bedroom`、`kitchen-reconstruction`、`shaft-question` | 直接加载指定分段夹具与其快照；核对起点，再用普通输入推进到预期节点。每个节点单独启动、单独结算。 |
 
 连续剧情使用 `story / day-one-live`，由正式标题一路玩到第二天。见 [完整剧情测试](../evaluation/day-one-route.md)。

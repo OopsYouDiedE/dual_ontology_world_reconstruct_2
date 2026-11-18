@@ -29,6 +29,7 @@ var _matrix_index := 0
 var _world: Node3D
 var _viewport: SubViewport
 var _suite_running := false
+var _render_route: RefCounted
 signal fixture_ready
 
 func _argument(key: String, fallback := "") -> String:
@@ -79,6 +80,7 @@ func _load_fixture(path: String) -> void:
 		content.remove_child(child)
 		child.queue_free()
 	subject = null
+	_render_route = null
 	_world = null
 	_viewport = null
 	error = ""
@@ -129,6 +131,9 @@ func _build_story() -> void:
 	subject = story
 	content.add_child(story)
 	if story.fixture_error != "": _fail(story.fixture_error); return
+	if loader.configuration.get("mode") == "lighting" and "--dv-focused-workbench" in OS.get_cmdline_user_args():
+		_render_route = preload("res://tools/testing/RenderRoutePreview.gd").new()
+		_render_route.setup(story)
 	var actors := {"detective": story.det.position}
 	for id in story.figures:
 		actors[id] = story.figures[id].position
@@ -294,9 +299,18 @@ func mcp_diagnostic(action: String) -> bool:
 			content.offset_bottom = -82.0 if _monitor_visible else 0.0
 			_event({"phase": "monitor_visibility", "visible": _monitor_visible, "policy": "manual_diagnostic_view"})
 		"reload": _load_fixture(config_path)
+		"render_camera_sweep":
+			if _render_route == null: return false
+			_render_route.sweep_camera()
 		"previous_case", "next_case":
-			if _world == null: return false
-			_build_matrix_case(_matrix_index + (1 if action == "next_case" else -1))
+			var direction := 1 if action == "next_case" else -1
+			if _render_route != null:
+				_render_route.apply_case(_render_route.index + direction)
+				_event({"phase": "render_route_case", "settings": _render_route.snapshot()})
+			elif _world != null:
+				_build_matrix_case(_matrix_index + direction)
+			else:
+				return false
 		_: return false
 	return true
 
@@ -341,4 +355,4 @@ func wait_for_shutdown() -> void:
 	if monitor._worker_pid > 0 and OS.is_process_running(monitor._worker_pid): push_error("Audio worker did not finalize before shutdown")
 
 func mcp_observe() -> Dictionary:
-	return {"test_fixture": true, "configuration": loader.configuration, "output_directory": output_dir, "error": error, "suite": suite, "suite_running": _suite_running, "matrix_index": _matrix_index if _world != null else -1, "elapsed_s": _elapsed, "monitor_visible": monitor.visible if monitor != null else false, "snapshot": subject.test_snapshot() if is_instance_valid(subject) and subject.has_method("test_snapshot") else {}, "metrics": monitor.latest if monitor != null else {}, "acceptance": "pending_independent_review"}
+	return {"test_fixture": true, "render_route": _render_route.snapshot() if _render_route != null else {}, "configuration": loader.configuration, "output_directory": output_dir, "error": error, "suite": suite, "suite_running": _suite_running, "matrix_index": _matrix_index if _world != null else -1, "elapsed_s": _elapsed, "monitor_visible": monitor.visible if monitor != null else false, "snapshot": subject.test_snapshot() if is_instance_valid(subject) and subject.has_method("test_snapshot") else {}, "metrics": monitor.latest if monitor != null else {}, "acceptance": "pending_independent_review"}

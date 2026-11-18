@@ -1,24 +1,33 @@
 # Rogue room view
 
-Instantiate `RogueRoomView.tscn` under a `Control`. Give it available area (e.g. `SIZE_EXPAND_FILL` vertically in a `VBoxContainer`). The room uses an isolated 384×216 SubViewport, nearest-neighbor upscaling, and Forward+ SDFGI. Host renderer selection remains the project's responsibility.
+`RogueRoomView.tscn` displays a walkable perspective projection of authored FreeSO lot data with the original detective rig/controller. Its 3D viewport uses Forward+ SDFGI at the displayed 3D frame size. The **Overhead plan** button opens a high-contrast, full-resolution native tile plan; on a two-floor blueprint, the floor selector includes the upper gallery. Movement pauses while the plan is open.
+
+## Run integration
 
 ```gdscript
-var view = preload("res://scenes/rogue_view/RogueRoomView.tscn").instantiate()
 view.exit_selected.connect(travel) # zero-based index in exits
-add_child(view)
+view.landmark_inspected.connect(reveal_puzzle)
 
-# snapshot_path is assigned by the caller for the current lot.
-var status: Error = view.set_freeso_room(room_label, exits, snapshot_path, 1)
-if status != OK:
-    # The view has already switched to the topology map. The caller can log status.
-    pass
+view.set_instance_id(current_room_id)
+view.set_blueprint_room(title, exits, xml_path)
+if has_snapshot:
+    view.set_freeso_room(title, exits, json_path)
+view.set_inspection_target(encounter_pending)
 ```
 
-- `set_room(label: String, exits: Array)`: explicitly shows **Topology navigation map**, clearing any previous VM data.
-- `set_freeso_room(label: String, exits: Array, path: String, level: int = 1) -> Error`: reads the caller-selected JSON file. Use `res://`, `user://`, or an absolute path. Call again after the publisher replaces the file; the view neither launches the VM nor watches files.
-- `set_freeso_snapshot(label: String, exits: Array, snapshot: Dictionary, level: int = 1) -> Error`: same operation when the caller already decoded JSON. Both APIs support calls before `_ready()`; failed calls clear the VM data and render the topology map for the provided label/exits.
-- Exits are strings or dictionaries with a `label` field. In the VM view they are separate travel buttons. In the topology map they appear as symbolic doors. Both emit `exit_selected(index: int)` in input order. No mapping from VM walls/doors to rogue exits is inferred.
+- Call `set_instance_id` before presentation. Reusing the ID preserves the player pose during encounter/HUD changes; a new ID starts at the next authored entry. The entry point is up to two walkable tiles inside its open threshold, checking native walls and furniture anchors.
+- `set_blueprint_room(title, exits, xml_path) -> Error` reads upstream `XmlHouseData`. Invalid or missing sources fall back to a text heading and the supplied topology links, without substitute geometry. `set_freeso_room` / `set_freeso_snapshot` display bridge data; on failure they restore the last valid blueprint for this room instance if available. Both accept calls before `_ready()`.
+- `set_inspection_target(active)` enables inspection during a pending encounter with no available travel exits. The current landmark gets a ground ring. Use the project's `interact` action (**E / controller A**) or click a projected target while within reach and with line of sight. Both play the original interaction animation and emit `landmark_inspected`. Run can also provide its accessible Inspect room button.
+- `exit_selected(index)` is emitted by a projected threshold interaction or its travel link. Authored exit thresholds take priority; the open entry can serve as a return route. Links beyond the number of authored thresholds stay available in the HUD. `player_observation()` reports exact position, velocity, grounded state, animation/action, prompt, target positions, projected click positions and `available_interact`.
 
-## Native snapshot contract
+## Data provenance
 
-Read `freeso.lot-snapshot.v1` as emitted by `tools/freeso_bridge/SnapshotBridge.cs`. `lot.walls[].mask` contains the six native edge/diagonal bits; `lot.floors[].pattern` identifies occupied floor tiles. Placed avatars use `x16` and `y16` in sixteenths of a tile. Levels are 1-based. The displayed room is one lot floor. The academy-wide connection graph has no shared world-coordinate or floor requirement.
+Blueprint floors and wall segments use zero-based architectural levels; XML objects use one-based levels and native hexadecimal GUIDs. The adjacent authored `plan_landmarks.json` names existing objects and open thresholds. A window callout only applies when a native object row matches its GUID, cell, floor and direction and the host wall edge exists. The projection cuts that wall visually and fits a frame and transparent glazing while retaining wall collision. Historical reserve comments do not create windows.
+
+A VM snapshot uses `freeso.lot-snapshot.v1` from the bridge. Avatars and objects use native sub-tile positions (`x16`/`y16`); unplaced, hidden and contained furniture is omitted. Multi-tile furniture groups prefer the reported native base object. Academy art dresses recognized authored XML shells and depicts known GUIDs at their source anchors; VM snapshots use generic GUID art without a template shell. These are projections of the lot data; FreeSO remains responsible for native catalog assets and simulation.
+
+## Check
+
+```powershell
+<Godot-4.7.2-mono-console.exe> --headless --path . --script res://scenes/rogue_view/tests/freeso_snapshot_test.gd
+```

@@ -1,0 +1,60 @@
+{
+  "foyer": [
+    {"role": "entry", "label": "Entry threshold", "x": 7, "y": 17, "level": 0, "edge": "TopLeft"},
+    {"role": "exit", "label": "Exit threshold", "x": 9, "y": 8, "level": 0, "edge": "TopRight"},
+    {"role": "exit", "label": "Exit threshold", "x": 22, "y": 8, "level": 0, "edge": "TopRight"},
+    {"role": "landmark", "label": "Reception desk", "x": 10, "y": 12, "level": 0},
+    {"role": "landmark", "label": "Side seating", "x": 8, "y": 18, "level": 0},
+    {"role": "window", "label": "Golden View (small)", "x": 12, "y": 8, "level": 1, "edge": "TopRight", "guid": "0x28FED160", "dir": 0},
+    {"role": "window", "label": "Golden View (small)", "x": 16, "y": 8, "level": 1, "edge": "TopRight", "guid": "0x28FED160", "dir": 0},
+    {"role": "window", "label": "Golden View (small)", "x": 19, "y": 8, "level": 1, "edge": "TopRight", "guid": "0x28FED160", "dir": 0},
+    {"role": "window", "label": "Golden View (small)", "x": 7, "y": 12, "level": 0, "edge": "TopLeft", "guid": "0x28FED160", "dir": 6},
+    {"role": "window", "label": "Golden View (small)", "x": 7, "y": 12, "level": 1, "edge": "TopLeft", "guid": "0x28FED160", "dir": 6}
+  ],
+  "kitchen": [
+    {"role": "entry", "label": "Entry threshold", "x": 13, "y": 17, "level": 0, "edge": "TopLeft"},
+    {"role": "landmark", "label": "Stove", "x": 14, "y": 13, "level": 0},
+    {"role": "landmark", "label": "Prep counter", "x": 15, "y": 13, "level": 0},
+    {"role": "landmark", "label": "Prep counter", "x": 16, "y": 13, "level": 0},
+    {"role": "landmark", "label": "Prep counter", "x": 17, "y": 13, "level": 0}
+  ],
+  "living_hall": [
+    {"role": "entry", "label": "Entry threshold", "x": 12, "y": 12, "level": 0, "edge": "TopRight"},
+    {"role": "exit", "label": "Exit threshold", "x": 19, "y": 12, "level": 0, "edge": "TopRight"},
+    {"role": "landmark", "label": "Record station", "x": 13, "y": 12, "level": 0},
+    {"role": "landmark", "label": "Record station", "x": 15, "y": 12, "level": 0},
+    {"role": "landmark", "label": "Record station", "x": 17, "y": 12, "level": 0},
+    {"role": "landmark", "label": "Central stand", "x": 16, "y": 17, "level": 0}
+  ],
+  "lecture": [
+    {"role": "entry", "label": "Entry threshold", "x": 12, "y": 11, "level": 0, "edge": "TopRight"},
+    {"role": "exit", "label": "Exit threshold", "x": 19, "y": 11, "level": 0, "edge": "TopRight"},
+    {"role": "landmark", "label": "Lectern", "x": 16, "y": 12, "level": 0}
+  ],
+  "clinic": [
+    {"role": "entry", "label": "Entry threshold", "x": 16, "y": 12, "level": 0, "edge": "TopRight"},
+    {"role": "landmark", "label": "Treatment bed", "x": 13, "y": 14, "level": 0},
+    {"role": "landmark", "label": "Treatment bed", "x": 13, "y": 18, "level": 0},
+    {"role": "landmark", "label": "Treatment bed", "x": 19, "y": 14, "level": 0},
+    {"role": "landmark", "label": "Treatment bed", "x": 19, "y": 18, "level": 0}
+  ],
+  "dining": [
+    {"role": "entry", "label": "Entry threshold", "x": 10, "y": 10, "level": 0, "edge": "TopRight"},
+    {"role": "exit", "label": "Exit threshold", "x": 21, "y": 10, "level": 0, "edge": "TopRight"},
+    {"role": "landmark", "label": "Dining table", "x": 12, "y": 13, "level": 0},
+    {"role": "landmark", "label": "Dining table", "x": 12, "y": 18, "level": 0},
+    {"role": "landmark", "label": "Dining table", "x": 19, "y": 13, "level": 0},
+    {"role": "landmark", "label": "Dining table", "x": 19, "y": 18, "level": 0}
+  ],
+  "valve_gallery": [
+    {"role": "entry", "label": "Entry threshold", "x": 12, "y": 17, "level": 0, "edge": "TopLeft"},
+    {"role": "landmark", "label": "Service cabinet", "x": 13, "y": 14, "level": 0},
+    {"role": "landmark", "label": "Service cabinet", "x": 16, "y": 14, "level": 0},
+    {"role": "landmark", "label": "Service cabinet", "x": 18, "y": 14, "level": 0}
+  ],
+  "service_stair": [
+    {"role": "entry", "label": "Entry threshold", "x": 14, "y": 13, "level": 0, "edge": "TopRight"},
+    {"role": "exit", "label": "Exit threshold", "x": 17, "y": 13, "level": 0, "edge": "TopRight"},
+    {"role": "landmark", "label": "Maintenance cabinet", "x": 15, "y": 14, "level": 0}
+  ]
+}

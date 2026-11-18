@@ -5,10 +5,12 @@ from collections import deque
 from datetime import timedelta
 import json
 from pathlib import Path
+from hashlib import sha256
 import sys
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from PIL import Image
 from rogue_smoke import ROOT, data
 
 
@@ -29,7 +31,10 @@ class Expedition:
         self.pid = initial["pid"]
         self.artifacts = Path(initial["log"]).parent
         self.trace = []
+        self.blueprints = {}
         self.record("initial", initial)
+        self.record_blueprint(initial)
+        self.visited = {self.state["room"]}
 
     def record(self, name, result):
         check(result["pid"] == self.pid and result["renderer"] == RENDERER and result["scene"] == SCENE,
@@ -41,8 +46,15 @@ class Expedition:
         self.trace.append({"event": name, "state": state, "screenshot": result.get("screenshot")})
         (self.artifacts / "regression.json").write_text(json.dumps(self.trace, indent=2), encoding="utf-8")
 
-    async def click(self, label):
-        buttons = [b for b in self.state["buttons"] if b["label"] == label]
+    async def step(self, name, **args):
+        result = data(await self.client.call_tool("step", {"session_id": self.session_id,
+            "screenshot": False, **args}))
+        self.record(name, result)
+        return result
+
+    async def click(self, label, *, destination=None, screenshot=False):
+        buttons = [b for b in self.state["buttons"] if b["label"] == label
+                   and (destination is None or b.get("destination") == destination)]
         check(len(buttons) == 1, f"Expected one visible button {label!r}: {self.state}")
         button = buttons[0]
         x, y = button["x"], button["y"]
@@ -50,33 +62,57 @@ class Expedition:
             await self.capture("off-screen button")
             raise RuntimeError(f"Button outside {self.viewport} in {self.state['room']}: {button}; "
                                f"evidence: {self.artifacts / 'regression.json'}")
-        result = data(await self.client.call_tool("step", {"session_id": self.session_id,
-            "operation": "click", "x": x, "y": y, "screenshot": False}))
-        self.record(f"click {label} @ ({x:g}, {y:g})", result)
+        return await self.step(f"click {label} @ ({x:g}, {y:g})", operation="click",
+                               x=x, y=y, screenshot=screenshot)
 
     async def capture(self, name):
         result = data(await self.client.call_tool("observe", {"session_id": self.session_id, "screenshot": True}))
         check(result.get("screenshot"), f"Missing screenshot for {name}")
         self.record(name, result)
+        return result
+
+    def record_blueprint(self, result):
+        state = result["state"]
+        template = state.get("template")
+        check(state.get("presentation") == "blueprint" and template,
+              f"Expected a blueprint on first room frame: {state}")
+        if template not in self.blueprints:
+            path = result.get("screenshot")
+            check(path, f"Missing first-frame screenshot for {template}")
+            with Image.open(path) as image:
+                # Compare room interiors, excluding title, top HUD and bottom buttons.
+                w, h = image.size
+                crop = image.crop((w // 4, h // 4, 3 * w // 4, 3 * h // 4)).convert("RGB")
+                digest = sha256(crop.tobytes()).hexdigest()
+            self.blueprints[template] = {"screenshot": path, "room_crop_sha256": digest}
 
     def doors(self):
         doors = {}
         for room in self.state["exits"]:
-            prefix = room + " · "
-            matches = [b["label"] for b in self.state["buttons"] if b["label"].startswith(prefix)]
-            check(len(matches) == 1, f"Live exit {room!r} has no unique clickable button")
+            matches = [b["label"] for b in self.state["buttons"] if b.get("destination") == room]
+            check(len(matches) == 1, f"Live exit {room!r} has no unique clickable destination: {self.state['buttons']}")
             doors[room] = matches[0]
         return doors
 
     async def move(self, room):
         previous = self.state
-        await self.click(self.doors()[room])
+        result = await self.click(self.doors()[room], destination=room, screenshot=room not in self.visited)
         check(self.state["room"] == room and self.state["moves"] == previous["moves"] + 1,
               f"Door to {room} did not advance exactly one move: {self.state}")
         check(self.state["journal"] == previous["journal"], "Travel changed the journal")
+        if room not in self.visited:
+            self.record_blueprint(result)
+            self.visited.add(room)
 
     async def resolve(self, *, wrong=False, assign=False):
+        objective = self.state
+        check(objective["prompt"].strip() and any(b["label"] == "Inspect room" for b in objective["buttons"])
+              and not any(b["label"] in ANSWERS.values() for b in objective["buttons"]),
+              f"New encounter should expose an inspection objective before puzzle choices: {objective}")
+        await self.click("Inspect room")
         before = self.state
+        for key in ("room", "moves", "health", "journal"):
+            check(before[key] == objective[key], f"Inspection changed {key}")
         labels = [button["label"] for button in before["buttons"]]
         options = [label for label in labels if not label.startswith("Assign ")]
         safe = safe_option(before["prompt"], options)
@@ -103,11 +139,30 @@ class Expedition:
 # Player-visible clue excerpts and their expected answers, independent of the
 # game's shuffled option order and encounter seed implementation.
 ANSWERS = {
-    "your whisper comes back from the tiled stairs": "Take the tiled stairs",
-    "your reflection blinks when you do": "Take the hand mirror",
-    "today's ink is still wet": "Stamp today's slip",
-    "stays above the chimney": "Walk toward the fixed light",
-    "the middle rings twice": "Board the middle carriage",
+    "steam reaches its spout": "Use the kettle whistle",
+    "wall anchor stays still": "Brace the chain at its wall anchor",
+    "fresh ring of soot": "Check the burner with the soot ring",
+    "taps the tray in time": "Signal with the chalk on the tray",
+    "blackboard stays aligned": "Align with the blackboard edge",
+    "fresh chalk fills": "Copy the fresh chalk number",
+    "order is clean dressing": "Set out a clean dressing first",
+    "medical desk stays flush": "Take your bearing from the medical desk",
+    "packet still has its seal": "Take the sealed dressing packet",
+    "plate touches the counter on the second tap": "Collect the plate on the second tap",
+    "serving counter stays square": "Cross beside the fixed serving counter",
+    "wet plate ring": "Set the plate at the place with the drip trail",
+    "second knock as the gauge settles": "Wait for the second knock at the return",
+    "bracket bolted to the stone": "Mark the bolted pipe bracket",
+    "wet line runs along the bypass": "Trace the wet bypass return",
+    "cable stops rattling": "Cross when the food-lift cable falls quiet",
+    "stays level with its mortar line": "Take your bearing from the stone landing",
+    "leaves a tread mark": "Follow the flour tread on the stair",
+    "left flight match the moving feet": "Take the flight whose steps match the feet",
+    "gallery still meets the same wall corner": "Use the fixed gallery corner",
+    "fresh scuffs leading up": "Follow the freshly scuffed treads",
+    "as the last tally arrives": "Reconcile when the fourth tally arrives",
+    "centered on the same floor joint": "Meet at the table over the floor joint",
+    "match the amended total": "Use the correction backed by the slip",
 }
 
 
@@ -253,7 +308,23 @@ async def lose(run):
     await run.capture("defeat after three mistakes")
 
 
-async def regression(seed):
+async def verify_movement(run, action):
+    before = run.state
+    initial = before.get("player_observation")
+    check(isinstance(initial, dict), f"Missing player_observation: {before}")
+    moving = await run.step("move in the foyer", operation="action", action=action, frames=18, screenshot=True)
+    after = moving["state"]["player_observation"]
+    check(after["position"] != initial["position"], f"Movement did not change the player position: {after}")
+    check(moving.get("screenshot"), "Missing rendered movement screenshot")
+    settled = await run.step("settled after movement", operation="wait", frames=24, screenshot=True)
+    resting = settled["state"]["player_observation"]
+    check(initial.get("animation") and resting.get("animation") == initial["animation"] and settled.get("screenshot"),
+          f"Animation did not return to its initial state after release: {resting}")
+    for key in ("room", "moves", "health", "journal"):
+        check(run.state[key] == before[key], f"Local movement unexpectedly changed expedition {key}")
+
+
+async def regression(seed, move_action):
     params = StdioServerParameters(command=sys.executable, cwd=str(ROOT),
         args=["-B", str(ROOT / "mcp/game/server.py"), "--service", "input", "--expected-project-root", str(ROOT)])
     async with stdio_client(params) as (reader, writer):
@@ -269,15 +340,19 @@ async def regression(seed):
                 check(initial["seed"] == seed and initial["phase"] == "approach" and initial["health"] == 9
                       and initial["moves"] == 0 and not any(initial[k] for k in ("roster", "party", "journal"))
                       and run.doors(), f"Invalid initial expedition: {initial}; see {opened['log']}")
+                await verify_movement(run, move_action)
                 graph = await reach_camp(run)
                 await select_party(run)
                 selected = run.state["party"][:]
                 assigned = await win(run, graph)
                 won = run.state
+                check(len(run.blueprints) >= 2 and len({e["room_crop_sha256"] for e in run.blueprints.values()}) >= 2,
+                      f"Expected distinct rendered rooms from different templates: {run.blueprints}")
                 await run.click("Replay seed")
                 check(run.state["seed"] == seed and all(run.state[k] == initial[k] for k in RESET_FIELDS),
                       f"Same-seed replay did not restore the approach: {run.state}")
                 await run.capture("same-seed replay")
+                run.visited = {run.state["room"]}
                 await lose(run)
                 dead = run.state
                 await run.click("New expedition")
@@ -287,7 +362,7 @@ async def regression(seed):
                 await run.capture("new expedition")
                 return {"passed": True, "seed": seed, "victory_moves": won["moves"],
                         "learned_rules": len(won["journal"]), "party": selected, "assigned": assigned,
-                        "death_moves": dead["moves"], "new_seed": new["seed"],
+                        "death_moves": dead["moves"], "blueprints": run.blueprints, "new_seed": new["seed"],
                         "evidence": str(run.artifacts / "regression.json")}
             finally:
                 data(await client.call_tool("close", {"session_id": opened["session_id"]}))
@@ -296,5 +371,6 @@ async def regression(seed):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--move-action", default="move_up", help="InputMap movement action for the foyer check")
     args = parser.parse_args()
-    print(json.dumps(asyncio.run(regression(args.seed)), indent=2))
+    print(json.dumps(asyncio.run(regression(args.seed, args.move_action)), indent=2))

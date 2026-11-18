@@ -1,5 +1,6 @@
 extends SceneTree
 
+const FIELD_DESIGNS := ["kitchen", "lecture", "clinic", "dining", "valve_gallery", "service_stair"]
 const HOUSE_MAP = preload("res://scenes/rogue/HouseMap.cs")
 
 func _initialize() -> void:
@@ -20,6 +21,7 @@ func _test_bridge() -> String:
 	var expedition_graphs := {}
 	var arrivals := {}
 	var recruit_counts := {}
+	var goal_designs := {}
 	var doubled_layer_edge_counts := {}
 	var max_before_camp := 0
 	var seeds: Array[int] = [-9223372036854775807 - 1, -1, 9223372036854775807]
@@ -36,6 +38,10 @@ func _test_bridge() -> String:
 			return "Wrong endpoint IDs at seed %d" % seed
 		if not house.exits("unknown").is_empty() or house.template_id("unknown") != "":
 			return "Unexpected results for unknown room"
+		if house.template_id(start) != "foyer" or house.template_id(camp) != "living_hall" \
+				or house.template_id(goal) not in ["lecture", "valve_gallery"]:
+			return "Unexpected endpoint design at seed %d" % seed
+		goal_designs[house.template_id(goal)] = true
 		var full := _distances(house, start)
 		var before := _distances(house, start, camp)
 		var after := _distances(house, goal, camp)
@@ -56,12 +62,22 @@ func _test_bridge() -> String:
 			previous_depth = before[room]
 			if _distances(house, start, room).has(camp):
 				return "Camp can bypass recruit %s at seed %d" % [room, seed]
+		var approach_designs := {}
+		var expedition_designs := {}
 		var branched := false
 		var widths := {}
 		var forward_edges := {}
 		for room in full:
 			if house.template_id(room).is_empty() or typeof(house.exits(room)) != TYPE_PACKED_STRING_ARRAY:
 				return "Wrong template or exit type at %s" % room
+			if room not in [start, camp, goal]:
+				var design: String = house.template_id(room)
+				if design not in FIELD_DESIGNS:
+					return "Unexpected room design %s at seed %d" % [design, seed]
+				if before.has(room):
+					approach_designs[design] = true
+				else:
+					expedition_designs[design] = true
 			var depth: int = full[room]
 			widths[depth] = widths.get(depth, 0) + 1
 			var listed := {}
@@ -77,6 +93,9 @@ func _test_bridge() -> String:
 					if before.has(other):
 						forward_count += 1
 			branched = branched or forward_count > 1
+		if approach_designs.size() != FIELD_DESIGNS.size() \
+				or expedition_designs.size() != mini(after.size() - 1, FIELD_DESIGNS.size()):
+			return "Room design variety regressed at seed %d" % seed
 		if not branched:
 			return "Approach must have a forward branch at seed %d" % seed
 		for depth in widths:
@@ -99,6 +118,8 @@ func _test_bridge() -> String:
 	if approach_graphs.size() < 16 or expedition_graphs.size() < 16 or arrivals.size() < 5 \
 			or not recruit_counts.has(1) or not recruit_counts.has(2):
 		return "Too little seeded variety in topology, arrival depth, or recruit count"
+	if goal_designs.size() != 2:
+		return "Expected both goal designs across stress seeds"
 	# The same allowed 2×2 adjacency shape must collapse to sparse and dense door sets.
 	if doubled_layer_edge_counts.size() != 3 or not doubled_layer_edge_counts.has(2) \
 			or not doubled_layer_edge_counts.has(3) or not doubled_layer_edge_counts.has(4):

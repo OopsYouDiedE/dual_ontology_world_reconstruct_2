@@ -4,8 +4,7 @@ using Godot;
 public partial class HouseMap : RefCounted
 {
     private const string Start = "foyer", Camp = "camp", Goal = "observatory";
-    private static readonly string[] ApproachTemplates = ["gallery", "library", "kitchen", "conservatory", "stairwell"];
-    private static readonly string[] ExpeditionTemplates = ["archive", "reservoir", "greenhouse", "attic", "mirror_hall"];
+    private static readonly string[] RoomDesigns = ["kitchen", "lecture", "clinic", "dining", "valve_gallery", "service_stair"];
     private Layout? _layout;
 
     public bool generate(long seed)
@@ -31,7 +30,7 @@ public partial class HouseMap : RefCounted
         var rng = new SeededChoices(seed);
         var templates = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            [Start] = "foyer", [Camp] = "base_camp", [Goal] = "observatory",
+            [Start] = "foyer", [Camp] = "living_hall",
         };
 
         // Count both endpoints in this budget. Reserve at least one side room so every seed can branch.
@@ -42,14 +41,20 @@ public partial class HouseMap : RefCounted
         var recruitDepths = depths.Take(recruitCount).ToHashSet();
         int sideRooms = 1 + rng.Next(Math.Min(20 - arrivalDepth, depths.Length - recruitCount));
         var expandedDepths = depths.Skip(recruitCount).Take(sideRooms).ToHashSet();
-        var approach = MakeLayers(Start, Camp, "approach", arrivalDepth - 2, expandedDepths, ApproachTemplates);
+        var approach = MakeLayers(Start, Camp, "approach", arrivalDepth - 2, expandedDepths);
         var recruits = recruitDepths.Order().Select(depth => approach[depth][0]).ToArray();
 
         int expeditionDepths = 4 + rng.Next(5);
         int[] expeditionCandidates = Enumerable.Range(1, expeditionDepths).ToArray();
         rng.Shuffle(expeditionCandidates);
         var expedition = MakeLayers(Camp, Goal, "expedition", expeditionDepths,
-            expeditionCandidates.Take(1 + rng.Next(3)).ToHashSet(), ExpeditionTemplates);
+            expeditionCandidates.Take(1 + rng.Next(3)).ToHashSet());
+
+        // Keep template draws separate from the topology stream so existing seed layouts do not depend on the design catalog.
+        var designs = new SeededChoices(seed ^ 0xA0761D6478BD642FUL);
+        AssignDesigns(approach);
+        AssignDesigns(expedition);
+        templates.Add(Goal, designs.Next(2) == 0 ? "lecture" : "valve_gallery");
 
         // The seed selects layer membership and gate locations, never a door state.
         // Camp is the sole room shared by the sections; only consecutive layers can touch.
@@ -72,7 +77,7 @@ public partial class HouseMap : RefCounted
         return graph is null ? null : new Layout(graph, templates, recruits);
 
         string[][] MakeLayers(string first, string last, string prefix, int depthCount,
-            HashSet<int> expanded, string[] catalog)
+            HashSet<int> expanded)
         {
             var roomIds = Enumerable.Range(1, depthCount + expanded.Count).ToArray();
             rng.Shuffle(roomIds);
@@ -87,10 +92,27 @@ public partial class HouseMap : RefCounted
                 {
                     string room = FormattableString.Invariant($"{prefix}_{roomIds[cursor++]:00}");
                     layers[depth][i] = room;
-                    templates.Add(room, catalog[rng.Next(catalog.Length)]);
                 }
             }
             return layers;
+        }
+
+        void AssignDesigns(string[][] section)
+        {
+            // Deal each design once per cycle; avoid a duplicate across the shuffle boundary.
+            int[] deck = Enumerable.Range(0, RoomDesigns.Length).ToArray();
+            int cursor = deck.Length, last = -1;
+            foreach (string room in section.Skip(1).SkipLast(1).SelectMany(layer => layer))
+            {
+                if (cursor == deck.Length)
+                {
+                    designs.Shuffle(deck);
+                    if (deck[0] == last) (deck[0], deck[1]) = (deck[1], deck[0]);
+                    cursor = 0;
+                }
+                last = deck[cursor++];
+                templates.Add(room, RoomDesigns[last]);
+            }
         }
     }
 

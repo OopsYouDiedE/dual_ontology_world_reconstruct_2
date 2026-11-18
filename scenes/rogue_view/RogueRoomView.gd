@@ -1,14 +1,18 @@
 extends Control
-## Isolated Forward+ room. Instantiate RogueRoomView.tscn under a Control.
+## Walkable, read-only projection of native FreeSO lot data.
 
 signal exit_selected(index: int)
+signal landmark_inspected
 
 const FreeSoSnapshot = preload("res://scenes/rogue_view/FreeSoSnapshot.gd")
-
-const EXIT_LAYER := 1 << 7
-const EXIT_PITCH := 2.55
-const MAX_COLUMNS := 5
-const ROW_PITCH := 4.6
+const Blueprint = preload("res://scenes/rogue_view/NativeBlueprint.gd")
+const Silhouette = preload("res://scenes/rogue_view/CatalogSilhouette.gd")
+const Plan = preload("res://scenes/rogue_view/NativeLotPlan.gd")
+const PLAYER_SCENE := "res://scenes/rogue_player/RoguePlayer.tscn"
+const ACADEMY_ART := "res://scenes/academy_art/AcademyArt.gd"
+const ACADEMY_TEMPLATES := ["foyer", "kitchen", "living_hall", "lecture", "clinic", "dining", "valve_gallery", "service_stair"]
+const INTERACT := &"interact"
+const REACH := 1.85
 
 @onready var _viewport: SubViewport = $RoomViewport
 @onready var _geometry: Node3D = $RoomViewport/Geometry
@@ -17,206 +21,645 @@ const ROW_PITCH := 4.6
 @onready var _pixels: TextureRect = $Frame/Pixels
 
 var _lot: Dictionary = {}
+var _blueprint: Dictionary = {}
+var _blueprint_path := ""
+var _blueprint_stamp := -1
 var _lot_level := 1
-var _lot_navigation: HFlowContainer
-var _lot_avatars: Node3D
+var _template := ""
+var _art: Script
+var _mode := ""
+var _instance_id := ""
+var _player: CharacterBody3D
+var _avatar_root: Node3D
+var _object_root: Node3D
 var _room_label := ""
 var _exits: Array = []
-var _nameplates: Array[Label] = []
-var _pending_clicks: Array[Vector2] = []
+var _inspection_active := false
+var _plan_open := false
+var _plan: Control
+var _panel: VBoxContainer
+var _heading: Label
+var _prompt: Label
+var _navigation: HFlowContainer
+var _displayed_exits: Array = []
+var _plan_button: Button
+var _level_button: Button
+var _plan_level := 1
+var _upper_plan: Dictionary = {}
+var _focus_ring: MeshInstance3D
+var _targets: Array[Dictionary] = []
+var _clicks: Array[Vector2] = []
+var _keyboard_interact := false
+var _can_interact := false
+var _walkable_cells := {}
+
+
+const Lighting = preload("res://scenes/rogue_view/render/RoomLighting.gd")
+const TileShader = preload("res://scenes/rogue_view/render/AcademyTile.gdshader")
+var _lights: Node3D
+var _hour := 12.0
+
+func set_hour(hour: float) -> void:
+	_hour = hour
+	if is_instance_valid(_lights): _lights.apply(_hour, "ember" if _template == "kitchen" else "ordinary")
+
+func _tile_surface(tint: Color, wall_surface: bool) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = TileShader
+	mat.set_shader_parameter("wall", wall_surface)
+	mat.set_shader_parameter("glaze", tint)
+	return mat
+
+func _resize_render_target() -> void:
+	var display := _pixels.get_global_transform_with_canvas().get_scale().abs() * _pixels.size
+	_viewport.size = Vector2i(display.round()).max(Vector2i.ONE)
 
 func _ready() -> void:
+	_pixels.resized.connect(_resize_render_target)
+	_resize_render_target.call_deferred()
+	if not InputMap.has_action(INTERACT):
+		InputMap.add_action(INTERACT)
+		var key := InputEventKey.new()
+		key.physical_keycode = KEY_E
+		InputMap.action_add_event(INTERACT, key)
+		var pad := InputEventJoypadButton.new()
+		pad.button_index = JOY_BUTTON_A
+		InputMap.action_add_event(INTERACT, pad)
+	if ResourceLoader.exists(ACADEMY_ART): _art = load(ACADEMY_ART) as Script
+	_title.hide()
 	_pixels.gui_input.connect(_on_pixels_input)
-	_lot_navigation = HFlowContainer.new()
-	_lot_navigation.alignment = FlowContainer.ALIGNMENT_CENTER
-	_lot_navigation.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_pixels.add_child(_lot_navigation)
-	_lot_navigation.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_lot_navigation.offset_left = 8
-	_lot_navigation.offset_right = -8
-	_lot_navigation.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_lot_navigation.offset_top = -8
-	_lot_navigation.offset_bottom = -8
+	_plan = Plan.new()
+	_plan.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$Frame.add_child(_plan)
+	_panel = VBoxContainer.new()
+	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_panel)
+	_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_panel.offset_left = 16
+	_panel.offset_top = 8
+	_panel.offset_right = -16
+	_panel.offset_bottom = -8
+	var bar := HBoxContainer.new()
+	_panel.add_child(bar)
+	_heading = Label.new()
+	_heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_heading.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_heading.add_theme_font_size_override("font_size", 19)
+	_heading.add_theme_constant_override("outline_size", 7)
+	bar.add_child(_heading)
+	_plan_button = Button.new()
+	_plan_button.focus_mode = Control.FOCUS_NONE
+	_plan_button.pressed.connect(func():
+		_plan_open = not _plan_open
+		_keyboard_interact = false
+		_clicks.clear()
+		_refresh_ui()
+	)
+	bar.add_child(_plan_button)
+	_level_button = Button.new()
+	_level_button.focus_mode = Control.FOCUS_NONE
+	_level_button.pressed.connect(func():
+		_plan_level = 2 if _plan_level == 1 else 1
+		_refresh_ui()
+	)
+	bar.add_child(_level_button)
+	var spacer := Control.new()
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_panel.add_child(spacer)
+	_prompt = Label.new()
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt.add_theme_constant_override("outline_size", 6)
+	_panel.add_child(_prompt)
+	_navigation = HFlowContainer.new()
+	_navigation.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_navigation.alignment = FlowContainer.ALIGNMENT_CENTER
+	_panel.add_child(_navigation)
 	_rebuild()
 
 
-## Exit entries can be strings or dictionaries with a `label` field.
-## The signal reports the original zero-based index. Safe before adding to the tree.
+## Call before rendering a room. Same ID preserves the controlled player's pose.
+func set_instance_id(room_id: String) -> void:
+	if room_id == _instance_id:
+		return
+	_instance_id = room_id
+	_inspection_active = false
+	_plan_open = false
+	_blueprint.clear()
+	_upper_plan.clear()
+	_plan_level = 1
+	_blueprint_path = ""
+	_blueprint_stamp = -1
+	_template = ""
+	_lot = {}
+	_mode = ""
+	_clicks.clear()
+	_keyboard_interact = false
+	_drop_player()
+
+
 func set_room(label: String, exits: Array) -> void:
-	_lot.clear()
-	_room_label = label
-	_exits = exits.duplicate(true)
-	_pending_clicks.clear()
-	if is_node_ready():
-		_rebuild()
+	_apply(label, exits, {}, "", 1)
 
 
-## Load a snapshot for this presentation. Failure switches to the topology map.
-func set_freeso_room(label: String, exits: Array, path: String, level: int = 1) -> Error:
-	var result := FreeSoSnapshot.read_file(path, level)
-	return _use_freeso_room(label, exits, level, result)
-
-
-## Apply a snapshot already decoded from JSON. Safe before adding to the tree.
-func set_freeso_snapshot(label: String, exits: Array, snapshot: Dictionary, level: int = 1) -> Error:
-	return _use_freeso_room(label, exits, level, FreeSoSnapshot.decode(snapshot, level))
-
-
-func _use_freeso_room(label: String, exits: Array, level: int, result: Dictionary) -> Error:
-	var lot: Dictionary = result.get("lot", {})
-	var same_architecture: bool = not lot.is_empty() and not _lot.is_empty() and _lot_level == level \
-		and lot.width == _lot.width and lot.height == _lot.height and lot.segments == _lot.segments and lot.floors == _lot.floors
-	var avatar_update_only: bool = same_architecture and label == _room_label and exits == _exits
-	_room_label = label
-	_exits = exits.duplicate(true)
-	_lot_level = level
-	_lot = lot
-	_pending_clicks.clear()
-	if is_node_ready():
-		if avatar_update_only:
-			_update_lot_avatars()
-		else:
-			_rebuild()
+func set_blueprint_room(title: String, exits: Array, xml_path: String) -> Error:
+	var stamp := int(FileAccess.get_modified_time(xml_path)) if FileAccess.file_exists(xml_path) else -1
+	var result := {"error": OK}
+	if _blueprint.is_empty() or _blueprint_path != xml_path or _blueprint_stamp != stamp:
+		result = Blueprint.read(xml_path)
+		_blueprint = result.get("lot", {})
+		_blueprint_path = xml_path
+		_blueprint_stamp = stamp
+		_upper_plan = Blueprint.read(xml_path, 2).get("lot", {}) if not _blueprint.is_empty() else {}
+	_template = xml_path.get_file().get_basename() if xml_path.begins_with("res://content/academy_lots/") else ""
+	_apply(title, exits, _blueprint, "blueprint" if not _blueprint.is_empty() else "", 1)
 	return result.error
 
 
+func set_freeso_room(label: String, exits: Array, path: String, level: int = 1) -> Error:
+	return _use_snapshot(label, exits, FreeSoSnapshot.read_file(path, level), level)
+
+
+func set_freeso_snapshot(label: String, exits: Array, snapshot: Dictionary, level: int = 1) -> Error:
+	return _use_snapshot(label, exits, FreeSoSnapshot.decode(snapshot, level), level)
+
+
+func _use_snapshot(label: String, exits: Array, result: Dictionary, level: int) -> Error:
+	if result.error != OK:
+		_apply(label, exits, _blueprint, "blueprint" if not _blueprint.is_empty() else "", 1)
+		return result.error
+	_apply(label, exits, result.lot, "snapshot", level)
+	return OK
+
+
+func _apply(label: String, exits: Array, lot: Dictionary, mode: String, level: int) -> void:
+	var same_ground: bool = _mode == mode and _lot_level == level and _lot.get("segments") == lot.get("segments") and _lot.get("patterns") == lot.get("patterns") and _lot.get("windows") == lot.get("windows")
+	var changed_objects: bool = _lot.get("objects") != lot.get("objects")
+	var changed_avatars: bool = _lot.get("avatars") != lot.get("avatars")
+	_room_label = label
+	_exits = exits.duplicate(true)
+	_mode = mode
+	_lot = lot
+	_lot_level = level
+	if not is_node_ready():
+		return
+	if not same_ground:
+		_rebuild()
+		return
+	if changed_objects and is_instance_valid(_object_root):
+		_rebuild_objects()
+	if changed_avatars and is_instance_valid(_avatar_root):
+		_update_lot_avatars()
+	_refresh_targets()
+	_refresh_ui()
+
+
+func set_inspection_target(active: bool) -> void:
+	_inspection_active = active
+	if is_node_ready():
+		_refresh_targets()
+		_update_prompt()
+
+
 func _rebuild() -> void:
-	_lot_avatars = null
 	for child in _geometry.get_children():
 		_geometry.remove_child(child)
 		child.queue_free()
-	for plate in _nameplates:
-		_viewport.remove_child(plate)
-		plate.queue_free()
-	_nameplates.clear()
-	for button in _lot_navigation.get_children():
-		_lot_navigation.remove_child(button)
-		button.queue_free()
-	_lot_navigation.visible = not _lot.is_empty()
-	if _lot_navigation.visible:
-		_title.text = "FreeSO VM snapshot · Floor %d\n%s" % [_lot_level, _room_label]
-		_rebuild_lot()
-		return
-	_title.text = "Topology navigation map\n%s" % _room_label
-
-	var columns := clampi(_exits.size(), 1, MAX_COLUMNS)
-	var rows := maxi(1, ceili(float(_exits.size()) / MAX_COLUMNS))
-	var width := maxf(8.0, columns * EXIT_PITCH + 2.0)
-	var depth := 7.0 + (rows - 1) * ROW_PITCH
-	var center_z := (rows - 1) * ROW_PITCH * 0.5
-	_camera.position = Vector3(0, 11, center_z + 10)
-	_camera.look_at(Vector3(0, 0.8, center_z))
-	_camera.size = maxf(maxf(8.7, (width + 1.0) * 9.0 / 16.0), depth * 0.76 + 3.9)
-
-	var basalt := _material(Color("344254"))
-	var stone := _material(Color("53657a"))
-	var trim := _material(Color("8694a1"))
-	var slate := _material(Color("202c3e"))
-	var copper := _material(Color("ae8053"))
-	var lamp := _material(Color("ffa958"), Color("ff9a43"))
-	_box(Vector3(0, -0.28, center_z), Vector3(width, 0.5, depth), basalt)
-	for x in range(ceili(width)):
-		for z in range(ceili(depth)):
-			var tile := stone if (x + z * 7) % 5 == 0 else basalt
-			_box(Vector3(x - (ceili(width) - 1) * 0.5, -0.039, z + center_z - (ceili(depth) - 1) * 0.5),
-					Vector3(0.96, 0.09, 0.96), tile)
-	_box(Vector3(0, 0.95, center_z - depth * 0.5), Vector3(width, 2.5, 0.42), stone)
-	for side in [-1.0, 1.0]:
-		var x: float = side * (width * 0.5 - 0.14)
-		_box(Vector3(x, 0.3, center_z), Vector3(0.4, 0.75, depth), stone)
-		_box(Vector3(x, 0.72, center_z), Vector3(0.54, 0.15, depth), trim)
-		_box(Vector3(x, 1.24, center_z - depth * 0.5 + 0.6), Vector3(0.7, 2.6, 0.7), stone)
-		_box(Vector3(x, 2.61, center_z - depth * 0.5 + 0.6), Vector3(0.87, 0.22, 0.87), lamp)
-		_light(Vector3(x * 0.84, 2.65, center_z - depth * 0.5 + 1.2), Color("ffc385"), 2.1, 7.0)
-	_light(Vector3(0, 6.0, center_z + 2.0), Color("9ebcff"), 3.6, maxf(13.0, depth))
-
-	for index in _exits.size():
-		@warning_ignore("integer_division")
-		var row := index / MAX_COLUMNS
-		var row_count := mini(MAX_COLUMNS, _exits.size() - row * MAX_COLUMNS)
-		var x := (index % MAX_COLUMNS - (row_count - 1) * 0.5) * EXIT_PITCH
-		var door := Vector3(x, 0, row * ROW_PITCH - 0.75)
-		_box(door + Vector3(0, 0.1, 0.58), Vector3(1.85, 0.2, 1.65), stone)
-		_box(door + Vector3(0, 1.12, -0.1), Vector3(1.42, 2.16, 0.34), slate)
-		for side in [-1.0, 1.0]:
-			_box(door + Vector3(side * 0.78, 1.14, 0), Vector3(0.24, 2.28, 0.52), trim)
-		_box(door + Vector3(0, 2.28, 0), Vector3(1.85, 0.28, 0.56), trim)
-		_box(door + Vector3(0.41, 1.05, 0.11), Vector3(0.16, 0.13, 0.16), copper)
-		_box(door + Vector3(0, 2.51, 0), Vector3(0.54, 0.13, 0.32), lamp)
-		var nameplate := Label.new()
-		nameplate.text = _exit_label(index)
-		nameplate.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		nameplate.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		nameplate.add_theme_font_size_override(&"font_size", 10)
-		nameplate.add_theme_color_override(&"font_color", Color("ffe2b0"))
-		nameplate.add_theme_color_override(&"font_outline_color", Color("121a28"))
-		nameplate.add_theme_constant_override(&"outline_size", 4)
-		var spacing := EXIT_PITCH * _viewport.size.y / _camera.size
-		var caption_point := _camera.unproject_position(door + Vector3(0, 0.23, 0.62))
-		nameplate.position = (caption_point - Vector2((spacing - 2) * 0.5, 7)).round()
-		nameplate.size.x = floorf(spacing - 2)
-		_viewport.add_child(nameplate)
-		_nameplates.append(nameplate)
-		var target := StaticBody3D.new()
-		target.position = door + Vector3(0, 1.23, 0)
-		target.collision_layer = EXIT_LAYER
-		target.collision_mask = 0
-		target.set_meta(&"exit_index", index)
-		var hitbox := CollisionShape3D.new()
-		var shape := BoxShape3D.new()
-		shape.size = Vector3(1.85, 2.6, 0.6)
-		hitbox.shape = shape
-		target.add_child(hitbox)
-		var threshold := CollisionShape3D.new()
-		var threshold_shape := BoxShape3D.new()
-		threshold_shape.size = Vector3(1.85, 0.25, 1.65)
-		threshold.shape = threshold_shape
-		threshold.position = Vector3(0, -1.08, 0.58)
-		target.add_child(threshold)
-		_geometry.add_child(target)
+	_walkable_cells.clear()
+	_avatar_root = null
+	_object_root = null
+	_focus_ring = null
+	if _lot.is_empty():
+		_drop_player()
+	else:
+		_rebuild_architecture()
+		_spawn_if_needed()
+	_refresh_targets()
+	_refresh_ui()
 
 
-func _rebuild_lot() -> void:
-	var width: float = _lot.width
-	var height: float = _lot.height
-	var center := Vector3(width * 0.5, 0.4, height * 0.5)
-	_camera.position = center + Vector3(0, 13, 10)
-	_camera.look_at(center)
-	_camera.size = maxf(width * 0.67, height * 0.88 + 2.8)
-	if _lot_level == 1:
-		_box(Vector3(center.x, -0.12, center.z), Vector3(width, 0.22, height), _material(Color("394653")))
+func _rebuild_architecture() -> void:
+	var static_body := StaticBody3D.new()
+	_geometry.add_child(static_body)
 	var tile := BoxMesh.new()
-	tile.size = Vector3(1, 0.06, 1)
-	var flooring := SurfaceTool.new()
-	flooring.begin(Mesh.PRIMITIVE_TRIANGLES)
+	tile.size = Vector3(1, 0.15, 1)
+	var batches := {}
+	var floor_bounds := Rect2i()
 	for cell: Vector2i in _lot.floors:
-		flooring.append_from(tile, 0, Transform3D(Basis.IDENTITY, Vector3(cell.x + 0.5, -0.02, cell.y + 0.5)))
-	_commit_static_mesh(flooring, _material(Color("657078")))
-
-	# Values are tile coordinates projected onto the XZ plane. One VM tile is one unit.
-	var wall_box := BoxMesh.new()
-	wall_box.size = Vector3(1, 1.2, 0.12)
+		var pattern: int = _lot.patterns.get(cell, 0)
+		if not batches.has(pattern):
+			var surface := SurfaceTool.new()
+			surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+			batches[pattern] = surface
+		var pos := Vector3(cell.x + 0.5, -0.075, cell.y + 0.5)
+		batches[pattern].append_from(tile, 0, Transform3D(Basis.IDENTITY, pos))
+		var area := Rect2i(cell, Vector2i.ONE)
+		floor_bounds = area if not floor_bounds.has_area() else floor_bounds.merge(area)
+		if pattern != 65535:
+			_walkable_cells[cell] = true
+			_add_shape(static_body, pos, tile.size)
+	for pattern: int in batches:
+		_commit_static_mesh(batches[pattern], _tile_surface(Plan.floor_color(pattern).darkened(0.22), false))
+	var wall := BoxMesh.new()
+	wall.size = Vector3(1, 2.45, 0.13)
 	var walls := SurfaceTool.new()
 	walls.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for segment: Vector4i in _lot.segments:
-		var start := Vector2(segment.x, segment.y)
-		var finish := Vector2(segment.z, segment.w)
-		var middle := (start + finish) * 0.5
-		var direction := finish - start
-		var basis := Basis(Vector3.UP, -direction.angle()) * Basis.from_scale(Vector3(direction.length(), 1, 1))
-		walls.append_from(wall_box, 0, Transform3D(basis, Vector3(middle.x, 0.6, middle.y)))
-	_commit_static_mesh(walls, _material(Color("948c7d")))
-	_lot_avatars = Node3D.new()
-	_geometry.add_child(_lot_avatars)
+	for edge: Vector4i in _lot.segments:
+		var a := Vector2(edge.x, edge.y)
+		var b := Vector2(edge.z, edge.w)
+		var d := b - a
+		var middle := (a + b) * 0.5
+		var position := Vector3(middle.x, wall.size.y * 0.5, middle.y)
+		var basis := Basis(Vector3.UP, -d.angle())
+		if _lot.get("windows", {}).has(edge):
+			_build_window(position, basis, d.length())
+		else:
+			walls.append_from(wall, 0, Transform3D(basis * Basis.from_scale(Vector3(d.length(), 1, 1)), position))
+		_add_shape(static_body, position, Vector3(d.length(), wall.size.y, wall.size.z), basis)
+	_commit_static_mesh(walls, _tile_surface(Color("aa997e"), true))
+	_avatar_root = Node3D.new()
+	_object_root = Node3D.new()
+	_geometry.add_child(_avatar_root)
+	_geometry.add_child(_object_root)
 	_update_lot_avatars()
-	_light(Vector3(center.x, maxf(width, height) * 0.8 + 2.0, center.z + 1), Color("ffe5cb"), 5.0, maxf(width, height) * 2.0 + 6.0)
-	# Rogue travel remains an explicit overlay; VM architecture provides no rogue exit mapping.
-	for index in _exits.size():
-		var button := Button.new()
-		button.text = _exit_label(index)
-		button.tooltip_text = "Rogue navigation: " + button.text
-		button.pressed.connect(func(): exit_selected.emit(index))
-		_lot_navigation.add_child(button)
+	_rebuild_objects()
+	var center := Vector3(floor_bounds.get_center().x, 0.0, floor_bounds.get_center().y)
+	_camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+	_camera.position = center + Vector3(1, 10, 8)
+	_camera.look_at(center)
+	_lights = Lighting.new()
+	_geometry.add_child(_lights)
+	_lights.build(_lot, center)
+	set_hour(_hour)
+	if _art != null and _mode == "blueprint" and _template in ACADEMY_TEMPLATES:
+		_art.dress_shell(_geometry, _template, _lot)
+
+
+func _build_window(wall_center: Vector3, basis: Basis, width: float) -> void:
+	var anchor := Node3D.new()
+	_geometry.add_child(anchor)
+	anchor.transform = Transform3D(basis, Vector3(wall_center.x, 0, wall_center.z))
+	var plaster := _material(Color("aeb8b5"))
+	var frame := _material(Color("43362f"))
+	var glass := _material(Color(0.39, 0.74, 0.89, 0.30))
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.roughness = 0.18
+	_window_part(anchor, Vector3(0, 0.40, 0), Vector3(width, 0.80, 0.13), plaster)
+	_window_part(anchor, Vector3(0, 2.285, 0), Vector3(width, 0.33, 0.13), plaster)
+	for x in [-width * 0.45, width * 0.45, 0.0]:
+		_window_part(anchor, Vector3(x, 1.46, 0), Vector3(0.09, 1.32, 0.19), frame)
+	for y in [0.83, 1.46, 2.09]:
+		_window_part(anchor, Vector3(0, y, 0), Vector3(width, 0.07, 0.21), frame)
+	_window_part(anchor, Vector3(0, 1.46, 0), Vector3(width - 0.12, 1.24, 0.018), glass)
+
+
+static func _window_part(anchor: Node3D, point: Vector3, dimensions: Vector3, material: Material) -> void:
+	var mesh := BoxMesh.new()
+	mesh.size = dimensions
+	mesh.material = material
+	var part := MeshInstance3D.new()
+	part.mesh = mesh
+	part.position = point
+	anchor.add_child(part)
+
+
+func _rebuild_objects() -> void:
+	for child in _object_root.get_children():
+		_object_root.remove_child(child)
+		child.queue_free()
+	for item: Dictionary in _lot.objects:
+		if item.role == "window": continue
+		var anchor := Node3D.new()
+		_object_root.add_child(anchor)
+		anchor.position = _world(item.position)
+		anchor.rotation.y = item.yaw
+		anchor.set_meta("native_guid", item.guid)
+		var role: String = item.role
+		var marker := MeshInstance3D.new()
+		var body := BoxMesh.new()
+		var word := String(item.label).to_lower()
+		body.size = Vector3(0.74, 0.70, 0.66)
+		if "table" in word or "desk" in word or "counter" in word: body.size = Vector3(0.94, 0.76, 0.64)
+		if "shelf" in word or "cabinet" in word or "bookcase" in word: body.size = Vector3(0.82, 1.48, 0.40)
+		if role in ["entry", "exit"] or item.get("annotation_only", false): body.size = Vector3(0.76, 0.035, 0.76)
+		body.material = _material(Color("5ba47f") if role == "entry" else Color("ce9b58") if role == "exit" else Color("866d55"))
+		var populated := false
+		if not item.get("annotation_only", false) and _art != null:
+			populated = _art.populate_object(anchor, _template if _mode == "blueprint" else "", item)
+		if not populated:
+			populated = Silhouette.populate(anchor, int(item.guid))
+		if not populated:
+			marker.mesh = body
+			marker.position.y = body.size.y * 0.5
+			anchor.add_child(marker)
+		else:
+			marker.free()
+
+
+func _spawn_if_needed() -> void:
+	if is_instance_valid(_player):
+		var current_cell := Vector2i(floori(_player.position.x), floori(_player.position.z))
+		if not _walkable_cells.has(current_cell) or _player.position.y < -0.75:
+			if not _walkable_cells.is_empty(): _player.spawn_at(_spawn_point())
+		return
+	if _walkable_cells.is_empty() or not ResourceLoader.exists(PLAYER_SCENE):
+		return
+	var scene := load(PLAYER_SCENE) as PackedScene
+	if scene == null:
+		return
+	_player = scene.instantiate() as CharacterBody3D
+	_viewport.add_child(_player)
+	var point := _spawn_point()
+	_player.orbit_by(Vector2(0.0, -41.0))
+	_player.zoom_by(2.4)
+	_player.spawn_at(point, _spawn_yaw(point))
+
+
+func _drop_player() -> void:
+	if is_instance_valid(_player):
+		_viewport.remove_child(_player)
+		_player.queue_free()
+	_player = null
+
+
+func _spawn_point() -> Vector3:
+	for object: Dictionary in _lot.objects:
+		if object.role == "entry":
+			var interior: Vector2 = object.get("interior", object.position)
+			var start := _nearest_walkable(interior)
+			var step := Vector2i((interior - Vector2(object.position)).normalized().round())
+			var cell := Vector2i(floori(start.x), floori(start.z))
+			for i in 2:
+				var next := cell + step
+				if not _is_clear_cell(next) or _has_wall_between(cell, next): break
+				cell = next
+			return _world(Vector2(cell) + Vector2(0.5, 0.5))
+	# A genuine floor tile is a safe fallback when an imported snapshot has no entry annotation.
+	var bounds := Rect2i(_lot.floors[0], Vector2i.ONE)
+	for cell: Vector2i in _lot.floors:
+		bounds = bounds.merge(Rect2i(cell, Vector2i.ONE))
+	return _nearest_walkable(Vector2(bounds.get_center()))
+
+
+func _spawn_yaw(_point: Vector3) -> float:
+	for item: Dictionary in _lot.objects:
+		if item.role == "entry" and item.has("interior"):
+			var inward: Vector2 = item.interior - item.position
+			if inward.length_squared() > 0.01:
+				return atan2(-inward.x, -inward.y)
+	return NAN
+
+
+func _nearest_walkable(point: Vector2) -> Vector3:
+	var best := INF
+	var result := Vector3.ZERO
+	for cell: Vector2i in _walkable_cells:
+		if not _is_clear_cell(cell): continue
+		var center := Vector2(cell) + Vector2(0.5, 0.5)
+		var distance := center.distance_squared_to(point)
+		if distance < best:
+			best = distance
+			result = _world(center)
+	if best == INF and not _walkable_cells.is_empty():
+		var first: Vector2i = _walkable_cells.keys()[0]
+		return _world(Vector2(first) + Vector2(0.5, 0.5))
+	return result
+
+
+func _is_clear_cell(cell: Vector2i) -> bool:
+	if not _walkable_cells.has(cell): return false
+	var center := Vector2(cell) + Vector2(0.5, 0.5)
+	for item: Dictionary in _lot.objects:
+		if not item.get("annotation_only", false) and item.role not in ["window", "entry", "exit"] and center.distance_to(item.position) < 0.48:
+			return false
+	for edge: Vector4i in _lot.segments:
+		if edge.x != edge.z and edge.y != edge.w and Vector2(edge.x + edge.z, edge.y + edge.w) * 0.5 == center:
+			return false
+	return true
+
+
+func _has_wall_between(from: Vector2i, to: Vector2i) -> bool:
+	if from == to: return false
+	var edge: Vector4i
+	if from.x != to.x:
+		var x := maxi(from.x, to.x)
+		edge = Vector4i(x, from.y, x, from.y + 1)
+	else:
+		var y := maxi(from.y, to.y)
+		edge = Vector4i(from.x, y, from.x + 1, y)
+	return edge in _lot.segments
+
+
+func _refresh_targets() -> void:
+	_targets.clear()
+	_can_interact = false
+	if _lot.is_empty() or not is_instance_valid(_player):
+		return
+	var focus: Dictionary = {}
+	var portals: Array[Dictionary] = []
+	var entrances: Array[Dictionary] = []
+	for item: Dictionary in _lot.objects:
+		if item.role == "exit": portals.append(item)
+		if item.role == "entry": entrances.append(item)
+		if item.role in ["focal", "inspect"] and (focus.is_empty() or focus.role not in ["focal", "inspect"]): focus = item
+		elif focus.is_empty() and item.role not in ["entry", "exit", "window"]: focus = item
+	if _inspection_active and _exits.is_empty() and not focus.is_empty():
+		_targets.append({"kind": "inspect", "position": _world(focus.position), "label": _item_name(focus, "Landmark")})
+	if portals.size() < _exits.size():
+		portals.append_array(entrances)
+	for i in mini(portals.size(), _exits.size()):
+		_targets.append({"kind": "exit", "index": i, "position": _portal_position(portals[i]), "label": _exit_label(i)})
+	if not is_instance_valid(_focus_ring):
+		_focus_ring = MeshInstance3D.new()
+		var ring := TorusMesh.new()
+		ring.inner_radius = 0.46
+		ring.outer_radius = 0.51
+		ring.material = _material(Color("74c9b0"), Color("569986"))
+		_focus_ring.mesh = ring
+		_geometry.add_child(_focus_ring)
+	_focus_ring.visible = not _targets.is_empty() and _targets[0].kind == "inspect"
+	if _focus_ring.visible: _focus_ring.position = _targets[0].position + Vector3.UP * 0.06
+
+
+func _portal_position(portal: Dictionary) -> Vector3:
+	var center := _nearest_walkable(portal.get("interior", portal.position))
+	return _world(portal.position).lerp(center, 0.25)
+
+
+func _refresh_ui() -> void:
+	var has_lot := not _lot.is_empty()
+	var plan_mode := has_lot and (_plan_open or not is_instance_valid(_player))
+	_pixels.visible = has_lot and not plan_mode
+	_plan.visible = plan_mode
+	_level_button.visible = plan_mode and _mode == "blueprint" and not _upper_plan.is_empty()
+	_level_button.text = "Floor %d · switch" % _plan_level
+	_plan.set_lot(_upper_plan if _level_button.visible and _plan_level == 2 else _lot)
+	_plan_button.visible = has_lot and is_instance_valid(_player)
+	_plan_button.text = "Walk view" if _plan_open else "Overhead plan"
+	var heading := "Topology navigation · no native lot available"
+	if has_lot:
+		heading = "Native lot plan" if plan_mode else "Native lot · Walk view"
+		if _mode == "snapshot":
+			var source := "Live FreeSO VM" if _lot.source_kind == "live-vm" else "Saved FreeSO VM"
+			heading += " · %s, floor %d" % [source, _lot_level]
+	_heading.text = "%s  |  %s" % [heading, _room_label]
+	if is_instance_valid(_player): _player.set_controls_enabled(not plan_mode)
+	if _displayed_exits != _exits:
+		_displayed_exits = _exits.duplicate(true)
+		for button in _navigation.get_children():
+			_navigation.remove_child(button)
+			button.queue_free()
+		for i in _exits.size():
+			var button := Button.new()
+			button.text = _exit_label(i)
+			button.tooltip_text = "Travel · " + button.text
+			button.focus_mode = Control.FOCUS_NONE
+			button.pressed.connect(func(): exit_selected.emit(i))
+			_navigation.add_child(button)
+	_update_prompt()
+
+
+func _nearest_target() -> Dictionary:
+	var result := {}
+	var distance := INF
+	if not is_instance_valid(_player): return result
+	for target in _targets:
+		var next := _flat_distance(target.position)
+		if next < distance:
+			result = target
+			distance = next
+	return result
+
+
+func _flat_distance(point: Vector3) -> float:
+	return Vector2(point.x, point.z).distance_to(Vector2(_player.position.x, _player.position.z))
+
+
+func _update_prompt() -> void:
+	var target := _nearest_target()
+	if _plan_open or not is_instance_valid(_player):
+		_prompt.text = "Travel links" if not _exits.is_empty() else ""
+	elif target.is_empty():
+		_prompt.text = "WASD · Move     Q / R or right-drag · Orbit"
+	else:
+		var verb := "Inspect" if target.kind == "inspect" else "Travel"
+		_prompt.text = "E / A / Click · %s %s" % [verb, target.label] if _can_interact else "Approach · " + target.label
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(_player) and not _plan_open and event.is_action_pressed(INTERACT):
+		_keyboard_interact = true
+		get_viewport().set_input_as_handled()
+
+
+func _on_pixels_input(event: InputEvent) -> void:
+	if not is_instance_valid(_player) or _plan_open:
+		return
+	if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
+		_player.orbit_by(event.relative)
+		_pixels.accept_event()
+	elif event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT and _pixels.size.x > 0 and _pixels.size.y > 0:
+			_clicks.append(event.position / _pixels.size * Vector2(_viewport.size))
+		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and _player.has_method("zoom_by"):
+			_player.zoom_by(1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1.0)
+		_pixels.accept_event()
+
+
+func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(_player) or _plan_open:
+		return
+	if _player.position.y < -2 and not _walkable_cells.is_empty():
+		_player.spawn_at(_spawn_point())
+	var nearest := _nearest_target()
+	_can_interact = _is_reachable(nearest)
+	_update_prompt()
+	if _keyboard_interact:
+		_keyboard_interact = false
+		if _activate(nearest):
+			_clicks.clear()
+			return
+	var camera: Camera3D = _player.camera()
+	if camera == null:
+		_clicks.clear()
+		return
+	while not _clicks.is_empty():
+		var point: Vector2 = _clicks.pop_front()
+		for target in _targets:
+			var center: Vector3 = target.position + Vector3.UP * 0.5
+			if not camera.is_position_behind(center) and camera.unproject_position(center).distance_to(point) <= 22 and _activate(target):
+				_clicks.clear()
+				return
+
+
+func _is_reachable(target: Dictionary) -> bool:
+	if target.is_empty() or _flat_distance(target.position) > REACH:
+		return false
+	# Check native walls and line of sight before firing a nearby interaction.
+	var start := _player.position + Vector3.UP * 0.65
+	var destination: Vector3 = target.position + Vector3.UP * 0.65
+	if start.distance_squared_to(destination) > 0.01:
+		var query := PhysicsRayQueryParameters3D.create(start, destination, 1)
+		if not _viewport.find_world_3d().direct_space_state.intersect_ray(query).is_empty():
+			return false
+	return true
+
+
+func _activate(target: Dictionary) -> bool:
+	if not _is_reachable(target): return false
+	_player.play_action("interact")
+	if target.kind == "inspect":
+		set_inspection_target(false)
+		landmark_inspected.emit()
+	else:
+		exit_selected.emit(target.index)
+	return true
+
+
+func player_observation() -> Dictionary:
+	var player: Dictionary = _player.snapshot() if is_instance_valid(_player) else {}
+	var targets := []
+	for target in _targets:
+		var info := target.duplicate()
+		var p: Vector3 = target.position
+		info.position = [p.x, p.y, p.z]
+		if is_instance_valid(_player) and not _plan_open:
+			var camera: Camera3D = _player.camera()
+			var anchor := p + Vector3.UP * 0.5
+			if camera != null and not camera.is_position_behind(anchor):
+				var projected := camera.unproject_position(anchor) / Vector2(_viewport.size) * _pixels.size + _pixels.global_position
+				info.screen_position = [projected.x, projected.y]
+		targets.append(info)
+	if is_instance_valid(_player):
+		var p := _player.position
+		player.position = [p.x, p.y, p.z]
+	var velocity: Variant = player.get("velocity")
+	if velocity is Vector3: player.velocity = [velocity.x, velocity.y, velocity.z]
+	player["action"] = player.get("animation", "")
+	player["prompt"] = _prompt.text if is_instance_valid(_prompt) else ""
+	player["nearest_prompt"] = player.prompt
+	player["targets"] = targets
+	player["available_interact"] = not _plan_open and _can_interact
+	player["view"] = "plan" if is_instance_valid(_plan) and _plan.visible else _mode
+	return player
+
+
+static func _world(point: Vector2) -> Vector3:
+	return Vector3(point.x, 0.0, point.y)
+
+
+static func _item_name(item: Dictionary, fallback: String) -> String:
+	var title: String = item.label
+	return fallback if title.is_empty() else title
+
+
+static func _add_shape(body: StaticBody3D, point: Vector3, size: Vector3, basis := Basis.IDENTITY) -> void:
+	var shape := BoxShape3D.new()
+	shape.size = size
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	collision.transform = Transform3D(basis, point)
+	body.add_child(collision)
 
 
 func _commit_static_mesh(surface: SurfaceTool, material: Material) -> void:
@@ -232,20 +675,20 @@ func _commit_static_mesh(surface: SurfaceTool, material: Material) -> void:
 
 func _update_lot_avatars() -> void:
 	var positions: PackedVector2Array = _lot.avatars
-	while _lot_avatars.get_child_count() > positions.size():
-		var last := _lot_avatars.get_child(-1)
-		_lot_avatars.remove_child(last)
+	while _avatar_root.get_child_count() > positions.size():
+		var last := _avatar_root.get_child(-1)
+		_avatar_root.remove_child(last)
 		last.queue_free()
 	var silhouette := CapsuleMesh.new()
 	silhouette.radius = 0.19
 	silhouette.height = 0.88
 	silhouette.material = _material(Color("eab46e"), Color("986034"))
 	for i in positions.size():
-		if i == _lot_avatars.get_child_count():
+		if i == _avatar_root.get_child_count():
 			var marker := MeshInstance3D.new()
 			marker.mesh = silhouette
-			_lot_avatars.add_child(marker)
-		var marker := _lot_avatars.get_child(i) as MeshInstance3D
+			_avatar_root.add_child(marker)
+		var marker := _avatar_root.get_child(i) as MeshInstance3D
 		marker.position = Vector3(positions[i].x, 0.44, positions[i].y)
 
 
@@ -259,24 +702,6 @@ func _exit_label(index: int) -> String:
 	return text
 
 
-func _on_pixels_input(event: InputEvent) -> void:
-	if _lot.is_empty() and event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if Rect2(Vector2.ZERO, _pixels.size).has_point(event.position):
-			_pending_clicks.append(event.position / _pixels.size * Vector2(_viewport.size))
-			_pixels.accept_event()
-
-
-func _physics_process(_delta: float) -> void:
-	while not _pending_clicks.is_empty():
-		var point: Vector2 = _pending_clicks.pop_front()
-		var origin := _camera.project_ray_origin(point)
-		var end := origin + _camera.project_ray_normal(point) * _camera.far
-		var query := PhysicsRayQueryParameters3D.create(origin, end, EXIT_LAYER)
-		var hit := _viewport.find_world_3d().direct_space_state.intersect_ray(query)
-		if not hit.is_empty():
-			exit_selected.emit(int(hit.collider.get_meta(&"exit_index")))
-
-
 func _material(color: Color, emission := Color.BLACK) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
@@ -286,24 +711,32 @@ func _material(color: Color, emission := Color.BLACK) -> StandardMaterial3D:
 		material.emission = emission
 	return material
 
-
-func _box(pos: Vector3, dimensions: Vector3, material: StandardMaterial3D) -> MeshInstance3D:
-	var mesh := BoxMesh.new()
-	mesh.size = dimensions
-	mesh.material = material
-	var instance := MeshInstance3D.new()
-	instance.mesh = mesh
-	instance.position = pos
-	instance.gi_mode = GeometryInstance3D.GI_MODE_STATIC
-	_geometry.add_child(instance)
-	return instance
-
-
-func _light(pos: Vector3, color: Color, energy: float, radius: float) -> void:
-	var light := OmniLight3D.new()
-	light.position = pos
-	light.light_color = color
-	light.light_energy = energy
-	light.omni_range = radius
-	light.shadow_enabled = true
-	_geometry.add_child(light)
+## The camp AI and the player use the same floor, furniture and wall edges.
+func camp_layout(names: Array) -> Dictionary:
+	var graph := {}
+	for cell: Vector2i in _walkable_cells:
+		if _is_clear_cell(cell): graph[cell] = []
+	for cell: Vector2i in graph:
+		for dir: Vector2i in [Vector2i.LEFT, Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN]:
+			if graph.has(cell + dir) and not _has_wall_between(cell, cell + dir): graph[cell].append(cell + dir)
+	var objects := []
+	var taken := {}
+	for item: Dictionary in _lot.get("objects", []):
+		var need: String = {0x06ea4309:"hunger", 0x68ea432a:"fatigue", 0x5dea43f0:"social"}.get(item.guid, "")
+		if need.is_empty(): continue
+		var cell := Vector2i(item.position)
+		for dir: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP]:
+			var stand := cell + dir
+			if graph.has(stand) and not taken.has(stand) and not _has_wall_between(cell, stand):
+				taken[stand] = true
+				var title: String = {"hunger":"Meal table", "fatigue":"Armchair", "social":"Common table seat"}[need]
+				objects.append({"id":"%s (%d,%d)" % [title,cell.x,cell.y], "stand":stand, "need":need, "duration":12, "relief":55})
+				break
+	var people := []
+	if is_instance_valid(_player): taken[Vector2i(_player.position.x, _player.position.z)] = true
+	for cell: Vector2i in graph:
+		if people.size() == names.size(): break
+		if taken.has(cell): continue
+		var index := people.size()
+		people.append({"id":names[index], "cell":cell,"needs":{"hunger":75 if index % 3 == 0 else 20,"fatigue":75 if index % 3 == 1 else 20,"social":75 if index % 3 == 2 else 20}})
+	return {"graph":graph, "objects":objects, "people":people}

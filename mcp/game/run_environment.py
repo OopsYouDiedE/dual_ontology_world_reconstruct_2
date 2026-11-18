@@ -11,12 +11,9 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "mcp"))
-import capture_provenance as provenance
 
 
 async def main(local_copy, with_blender):
-    provenance.assert_runtime_root(ROOT)
     parameters = StdioServerParameters(command=sys.executable,
         args=[str(ROOT / "mcp/game/server.py"), "--service", "environment"], cwd=str(ROOT), env=os.environ.copy())
     async with stdio_client(parameters) as (reader, writer):

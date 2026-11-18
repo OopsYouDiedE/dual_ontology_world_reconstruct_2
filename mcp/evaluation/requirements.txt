@@ -1,4 +1,0 @@
-mcp>=1.30,<2
-PyYAML>=6,<7
-jsonschema>=4,<5
-psutil>=6,<8

@@ -1,7 +1,0 @@
-# Blind account — wake-retest-20261118-ceaca7d
-
-The detective sat upright on a bed in a wood-paneled bedroom and said, “Let's look around for clues.” After I advanced the line, the camera pulled back and the detective stood beside the bed. Yellow markers highlighted several objects and the door. I tried clicking the wardrobe and floor without an immediate visible response. The bed prompt appeared. Interacting moved the camera close to the bed, where the blanket had folded back to expose the sheet. I did not see a clear hand-to-blanket action or a discernible clue in the close-up. Returning required the accept input; the bed remained uncovered.
-
-I clicked the door marker. After a short interval the detective approached it and reached toward it, saying, “Someone's in the corridor.” Advancing the line changed the scene to a corridor with three people, numbered doors, and a red runner. I stopped at that transition. Their identities, the nature of the clue, and the reason someone is in the corridor are unknown from this observation.
-
-The bed inspection and door transition were reached. Other bedroom objects were not examined before the transition. Interaction guidance was ambiguous: object clicks seemed delayed and the close-up exit displayed a check mark without an explicit key label. Physical-motion judgment is limited to sampled frames; I saw the door-reaching pose but did not observe a hand physically move the blanket.

@@ -8,9 +8,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="scenes/**/*.cs" />
-    <ProjectReference Include="core/dv/DuelView.Dv.csproj" />
-    <ProjectReference Include="core/reasoning/DuelView.Reasoning.csproj" />
-    <ProjectReference Include="core/runtime/DuelView.Runtime.csproj" />
+    <Compile Include="scenes/rogue/**/*.cs" />
+    <ProjectReference Include="core/rogue_topology/DuelView.RogueTopology.csproj" />
   </ItemGroup>
 </Project>

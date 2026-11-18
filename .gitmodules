@@ -1,0 +1,4 @@
+[submodule "vendor/FreeSO"]
+	path = vendor/FreeSO
+	url = https://github.com/riperiperi/FreeSO.git
+	shallow = true

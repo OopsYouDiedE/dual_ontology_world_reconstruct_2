@@ -1,21 +1,15 @@
 .godot/
 .runtime/
+.pytest_cache/
 artifacts/
-*.tmp
-*.bak
 **/bin/
 **/obj/
 **/__pycache__/
 **/.venv/
 *.pyc
 *.log
+*.tmp
 .env
 .env.*
 !.env.example
-tools/building_construction/candidates/life-*.dv
-
-# Local transcription outputs
 outputs/subtitles/
-
-# Generated workspace inventory (tools/testing/build_project_map.py)
-/project-map.html

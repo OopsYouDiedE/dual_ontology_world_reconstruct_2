@@ -47,16 +47,17 @@ func _poem_branch(branch: String) -> bool:
 	for i in e.d.beats.size():
 		if str(e.d.beats[i].id) == "d1_poem_hint": hint = i
 	if hint < 0: return false
-	e.s.t = float(e.T(1, 13, 15))
+	e.s.chapter = 2
+	e.s.t = float(e.T(2, 12, 15))
 	e.s.room = "2F-cross-M"
 	e.s.beat_cursor = hint
 	e.process_beats()
 	if str(e.s.pending_choice.get("beat_id", "")) != "d1_poem_hint": return false
 	e.choose("d1_poem_hint", branch)
-	e.s.t = float(e.T(1, 13, 35))
+	e.s.t = float(e.T(2, 12, 35))
 	e.process_beats()
 	if str(e.s.current_beat) != "d1_poem": return false
-	e.s.t = float(e.T(1, 15, 30))
+	e.s.t = float(e.T(2, 13, 20))
 	e.process_beats()
 	return str(e.s.current_beat) == "d1_institutes"
 
@@ -255,17 +256,19 @@ func _initialize() -> void:
 				game.eng.resolve_conflict(cid, str(CONFLICT_ANSWERS[cid]))
 				handled_conflict[cid] = true
 
-		if not game.eng.s.pending_choice.is_empty() and str(game.eng.s.pending_choice.get("beat_id", "")) == "d1_poem_hint" and not handled_choice:
-			if game.modal.visible and str(game._modal_key) == "cho:d1_poem_hint":
-				print("[DEV DIAGNOSTIC] 选择黑板诗 expose 分支。")
-				game._dismiss_modal()
-				game.eng.choose("d1_poem_hint", "expose")
-				handled_choice = true
-
-		if str(game.eng.s.current_beat) == "d1_plan":
+		var bid := str(game.eng.s.pending_choice.get("beat_id", ""))
+		var orders := {"d1_route":"su", "d1_relay_c":"hold", "d1_plan":"latch"}
+		if orders.has(bid) and game.modal.visible and str(game._modal_key) == "cho:" + bid:
+			game._dismiss_modal()
+			game.eng.choose(bid, orders[bid])
+			handled_choice = bid == "d1_plan"
+		if handled_choice:
 			reached_plan = true
 			break
 
+		if seeded_kitchen and not game.eng.s.story_gate.is_empty() and not game._story_busy() and not game._transit_active():
+			var destination := str(game.eng.s.story_gate.room)
+			if destination != str(game.eng.s.room): game.eng.enter_room(destination)
 		var can_advance: bool = seeded_kitchen and game.eng.s.pending_deduction.is_empty() and game.eng.s.pending_conflict == "" and game.eng.s.pending_choice.is_empty() and game.eng.s.hold.is_empty() and game.eng.s.postponed.is_empty() and game.eng.s.story_gate.is_empty() and not game.eng.s.waiting and not game._story_busy() and (game.kitchen == null or not game.kitchen.active or replay_done)
 		if can_advance:
 			print("[DEV DIAGNOSTIC] 下一节拍：", game.eng.s.current_beat, " ->")
@@ -296,7 +299,7 @@ func _initialize() -> void:
 	_check(replay_done, "首题复演接入原厨房组件")
 	_check(handled_ded.size() == 5, "第一天五项推演均完成 (%d/5)" % handled_ded.size())
 	_check(handled_conflict.size() == 6, "第一天六项争执均完成 (%d/6)" % handled_conflict.size())
-	_check(handled_choice, "黑板诗主流程抉择已处理")
+	_check(handled_choice, "首班风窗搭档已选定")
 	_check(reached_plan and bool(game.eng.s.flags.get("day2_plan", false)), "主流程抵达 d1_plan 并写入翌日分工")
 	for branch in ["stakeout", "expose", "indulge"]:
 		_check(_poem_branch(branch), "黑板诗 %s 路线汇回 d1_institutes" % branch)

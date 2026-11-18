@@ -5,12 +5,12 @@
   "room": "B-102",
   "entry": "exploration",
   "time": {
-    "day": 1,
-    "hour": 15,
-    "minute": 30
+    "day": 2,
+    "hour": 13,
+    "minute": 20
   },
   "playing": false,
-  "before_beat": "d1_dumpling",
+  "before_beat": "d2_plan",
   "mock": {
     "flags": {
       "service_map": true

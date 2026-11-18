@@ -35,14 +35,15 @@ func _ready_for_rest(engine) -> void:
 
 func _poem_branch(branch: String) -> void:
 	var engine = Engine_.new(Data.get_data())
-	engine.s.t = float(engine.T(1, 13, 15))
+	engine.s.chapter = 2
+	engine.s.t = float(engine.T(2, 12, 15))
 	engine.s.room = "2F-cross-M"
 	engine.s.beat_cursor = _beat_index(engine, "d1_poem_hint")
 	engine.process_beats()
 	_check(str(engine.s.pending_choice.get("beat_id", "")) == "d1_poem_hint", "%s：黑板诗抉择正常出现" % branch)
 	engine.choose("d1_poem_hint", branch)
 	_check(str(engine.s.choices.get("poem", "")) == branch, "%s：抉择写入状态" % branch)
-	engine.s.t = float(engine.T(1, 13, 35))
+	engine.s.t = float(engine.T(2, 12, 35))
 	engine.process_beats()
 	_check(str(engine.s.current_beat) == "d1_poem", "%s：汇入黑板诗事件" % branch)
 	var poem: Dictionary = {}
@@ -52,7 +53,7 @@ func _poem_branch(branch: String) -> void:
 			break
 	var lines: Array = engine.effective_beat_lines(poem)
 	_check(not lines.is_empty(), "%s：黑板诗分支有台词" % branch)
-	engine.s.t = float(engine.T(1, 15, 30))
+	engine.s.t = float(engine.T(2, 13, 20))
 	engine.process_beats()
 	_check(str(engine.s.current_beat) == "d1_institutes", "%s：三条路线汇回四院讲义事件" % branch)
 
@@ -95,18 +96,27 @@ func _initialize() -> void:
 	unconsumed._complete_chapter_one()
 	_check(not bool(unconsumed.s.chapter_complete), "d1_plan 未消费时不能直接完成第一章")
 	unconsumed.process_beats()
+	_check(not unconsumed.s.chapter_complete and not unconsumed.s.pending_choice.is_empty(), "交班前等待玩家选人")
+	unconsumed.choose("d1_plan", "frame")
+	unconsumed.process_beats()
 	_check(bool(unconsumed.s.chapter_complete) and str(unconsumed.s.current_beat) == "d1_plan" and bool(unconsumed.s.flags.get("day2_plan", false)), "process_beats 消费 d1_plan 后完成第一章")
 	var unconsumed_tick = Engine_.new(data)
 	unconsumed_tick.s.t = float(unconsumed_tick.CHAPTER_ONE_END_T)
 	unconsumed_tick.s.beat_cursor = plan_index
 	unconsumed_tick.s.playing = true
 	unconsumed_tick.tick(1.0)
+	_check(not unconsumed_tick.s.chapter_complete and not unconsumed_tick.s.pending_choice.is_empty(), "交班前等待玩家选人")
+	unconsumed_tick.choose("d1_plan", "frame")
+	unconsumed_tick.process_beats()
 	_check(bool(unconsumed_tick.s.chapter_complete) and str(unconsumed_tick.s.current_beat) == "d1_plan", "tick 消费 d1_plan 后完成第一章")
 	var unconsumed_jump = Engine_.new(data)
 	unconsumed_jump.s.t = float(unconsumed_jump.CHAPTER_ONE_END_T)
 	unconsumed_jump.s.beat_cursor = plan_index
 	unconsumed_jump.s.playing = true
 	unconsumed_jump.next_beat()
+	_check(not unconsumed_jump.s.chapter_complete and not unconsumed_jump.s.pending_choice.is_empty(), "交班前等待玩家选人")
+	unconsumed_jump.choose("d1_plan", "frame")
+	unconsumed_jump.process_beats()
 	_check(bool(unconsumed_jump.s.chapter_complete) and str(unconsumed_jump.s.current_beat) == "d1_plan", "next_beat 消费 d1_plan 后完成第一章")
 
 	var pending = Engine_.new(data)

@@ -33,7 +33,7 @@
 
 ## 剧情流程与验证
 
-主线按 [`dual_world.json`](../assets/data/dual_world/dual_world.json) 的时间线推进。`DualEngine` 逐拍处理房间限制、取证门槛、选择和分支；界面负责把这些状态呈现为对话、现场交互、复演和转场。第一天的结算在 **22:00** 后、晚间分工已落实且待办清空时出现。玩家点 `Chapter 2` 后，第二天从 R05 接续。
+主线合并[四区开场](../assets/data/dual_world/opening.json)与 [`dual_world.json`](../assets/data/dual_world/dual_world.json) 的时间线推进。`DualEngine` 逐拍处理房间限制、取证门槛、选择和分支；界面负责把这些状态呈现为对话、现场交互、复演和转场。第一天的结算在 **22:00** 后、晚间分工已落实且待办清空时出现。玩家点 `Chapter 2` 后，第二天从 R05 接续。
 
 ### 按交接点检查
 

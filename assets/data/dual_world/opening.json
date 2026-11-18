@@ -1,0 +1,1103 @@
+{
+  "legacy_day_one_order": [
+    "d1_wake",
+    "d1_deduce_drag",
+    "d1_inspect",
+    "d1_deduce_cloth",
+    "d1_cloth",
+    "d1_route",
+    "d1_deduce_cuffs",
+    "d1_accuse",
+    "d1_deduce_window",
+    "d1_window",
+    "d1_meeting",
+    "d1_contract",
+    "d1_q1",
+    "d1_q2",
+    "d1_q3",
+    "d1_deduce_truth",
+    "d1_trap",
+    "d1_poem_hint",
+    "d1_poem",
+    "d1_institutes",
+    "d1_dumpling",
+    "d1_plan"
+  ],
+  "beats": [
+    {
+      "id": "d1_wake",
+      "at": 420,
+      "day": 1,
+      "room": "R05",
+      "title": "清晨 · R05 床上醒来",
+      "lines": [
+        [
+          "detective",
+          "……这是哪儿？天亮了。我叫什么，我还记得——可入学以来的事，一件也想不起来。"
+        ],
+        [
+          "detective",
+          "手背上这几道抓痕，又是怎么来的？"
+        ],
+        [
+          "detective",
+          "先下床，把这间屋子看一遍。也许能找到一点线索。"
+        ]
+      ],
+      "present": [
+        "detective"
+      ]
+    },
+    {
+      "id": "d1_deduce_drag",
+      "at": 480,
+      "day": 1,
+      "room": "B-P",
+      "title": "乙区小厨房 · 摊开笔记",
+      "lines": [
+        [
+          "detective",
+          "（笔记）大家都丢了入学以来的记忆。先把各自房里找到的东西摆到桌上，只记录，不推断。"
+        ]
+      ],
+      "deduction": "ded_drag",
+      "present": [
+        "detective"
+      ],
+      "requires_room": true,
+      "waiters": [
+        "huo",
+        "shen",
+        "su"
+      ]
+    },
+    {
+      "id": "d1_inspect",
+      "at": 490,
+      "day": 1,
+      "room": "B-P",
+      "title": "逆向拖痕",
+      "lines": [
+        [
+          "detective",
+          "拖痕朝内，闭门器回弹与袖口受力一致——有人被拖回了门内。"
+        ],
+        [
+          "su",
+          "被拖回来？我听见的是「开门逃生」。你是说，有人不让我出去？",
+          "confront"
+        ],
+        [
+          "detective",
+          "门外的风是往里灌的。你当时站在哪一侧？"
+        ],
+        [
+          "shen",
+          "先别吵，门底那块布还没看呢。"
+        ]
+      ],
+      "present": [
+        "detective",
+        "su",
+        "shen"
+      ],
+      "openConflict": "c_door",
+      "unlock_terms": [
+        "save",
+        "open"
+      ]
+    },
+    {
+      "id": "d1_deduce_cloth",
+      "at": 515,
+      "day": 1,
+      "room": "B-P",
+      "title": "灶边",
+      "lines": [
+        [
+          "detective",
+          "（笔记）趁大伙还在乙区小厨房，把挂钩上的湿抹布和门槛水迹合起来看清楚。"
+        ]
+      ],
+      "deduction": "ded_cloth",
+      "present": [
+        "detective"
+      ],
+      "waiters": [
+        "shen",
+        "su",
+        "huo"
+      ]
+    },
+    {
+      "id": "d1_cloth",
+      "at": 525,
+      "day": 1,
+      "room": "B-P",
+      "title": "挂钩上的抹布",
+      "lines": [
+        [
+          "shen",
+          "布是我浸的，塞在门底。"
+        ],
+        [
+          "detective",
+          "可它现在挂在钩上，还在滴水。门槛到这儿，一路没有水迹。"
+        ],
+        [
+          "shen",
+          "……那你是说我记错了？"
+        ]
+      ],
+      "present": [
+        "shen",
+        "detective"
+      ],
+      "openConflict": "c_wetcloth"
+    },
+    {
+      "id": "d1_route",
+      "at": 555,
+      "day": 1,
+      "room": "B-P",
+      "title": "The first call",
+      "lines": [
+        [
+          "quer",
+          "Wing A, at the tube. My map shows a service stair. I can trace it from here."
+        ],
+        [
+          "ward",
+          "Let me see that map first."
+        ],
+        [
+          "quer",
+          "I will read it to you. The map stays with me."
+        ],
+        [
+          "su",
+          "I can listen here. Who should answer her?"
+        ]
+      ],
+      "present": [
+        "quer",
+        "lucian"
+      ],
+      "offstage": [
+        "quer",
+        "lucian",
+        "ward"
+      ],
+      "flag": "service_map",
+      "remote": true,
+      "choice": {
+        "id": "relayPartner",
+        "prompt": "Who takes the first relay?",
+        "auto": "su",
+        "options": [
+          {
+            "id": "su",
+            "label": "Ask Su Ling to repeat the sound she hears."
+          },
+          {
+            "id": "huo",
+            "label": "Ask Huo to test the pipe with two taps."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d1_relay_c",
+      "at": 650,
+      "day": 1,
+      "room": "B-P",
+      "title": "The figure at the window",
+      "lines": [
+        [
+          "ruan",
+          "Wing C. Elena is beside me. Moran can still see her beyond the glass."
+        ],
+        [
+          "selma",
+          "Stay by the grille, Moran. I will check from the side."
+        ]
+      ],
+      "remote": true,
+      "offstage": [
+        "ruan",
+        "selma"
+      ],
+      "branch_choice": "relayPartner",
+      "branches": {
+        "su": {
+          "lines": [
+            [
+              "su",
+              "I heard her answer from inside. Tell us who is at the window."
+            ],
+            [
+              "ruan",
+              "Wing C. Elena is beside me. Moran can still see her beyond the glass."
+            ],
+            [
+              "selma",
+              "Stay by the grille, Moran. I will check from the side."
+            ]
+          ]
+        },
+        "huo": {
+          "lines": [
+            [
+              "huo",
+              "Two taps came back through this pipe. Wing C, read back your location."
+            ],
+            [
+              "ruan",
+              "Wing C. Elena is beside me. Moran can still see her beyond the glass."
+            ],
+            [
+              "selma",
+              "Stay by the grille, Moran. I will check from the side."
+            ]
+          ]
+        }
+      },
+      "choice": {
+        "id": "slingOrder",
+        "prompt": "Where should Shen leave the sling for the next relay?",
+        "auto": "hold",
+        "options": [
+          {
+            "id": "hold",
+            "label": "Hold it by the pipe until the caller confirms the landing."
+          },
+          {
+            "id": "send",
+            "label": "Arrange a pickup at the central landing when the doors open."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d1_relay_d",
+      "at": 770,
+      "day": 1,
+      "room": "B-P",
+      "title": "A warning and a missed reply",
+      "lines": [
+        [
+          "mora",
+          "His arm is dressed. Bring a sling to the landing."
+        ],
+        [
+          "shen",
+          "Which landing? The line has gone quiet."
+        ],
+        [
+          "demon",
+          "Give your wing and wait for a reply. They can still hear you."
+        ],
+        [
+          "mora",
+          "Wing D, inner landing. I will wait."
+        ],
+        [
+          "shen",
+          "Wing D, inner landing. I have the sling."
+        ]
+      ],
+      "remote": true,
+      "offstage": [
+        "mora",
+        "demon"
+      ],
+      "branch_choice": "slingOrder",
+      "branches": {
+        "hold": {
+          "lines": [
+            [
+              "mora",
+              "His arm is dressed. Bring a sling to the landing."
+            ],
+            [
+              "shen",
+              "Which landing? The line has gone quiet."
+            ],
+            [
+              "demon",
+              "Give your wing and wait for a reply. They can still hear you."
+            ],
+            [
+              "mora",
+              "Wing D, inner landing. I will wait."
+            ],
+            [
+              "shen",
+              "Wing D, inner landing. I have the sling."
+            ]
+          ]
+        },
+        "send": {
+          "lines": [
+            [
+              "mora",
+              "Wing D calling. You booked the central landing. We need the sling at the inner landing."
+            ],
+            [
+              "demon",
+              "Give your wing and wait for a reply before sending anyone across. The sling can wait."
+            ],
+            [
+              "shen",
+              "Wing D, inner landing. I will carry it from the central landing myself."
+            ],
+            [
+              "mora",
+              "Confirmed. I can support his arm until then."
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "d1_safe_route",
+      "at": 895,
+      "day": 1,
+      "room": "B-P",
+      "title": "The posted way through",
+      "lines": [
+        [
+          "demon",
+          "Last night the gauge read backwards. Leave the pressure door shut. When your wing opens, take the main landing to the central hall."
+        ],
+        [
+          "quer",
+          "I checked the A-side landing against my map. I will meet you there when our door opens."
+        ],
+        [
+          "huo",
+          "I will check our ratchet. Que, call when you reach the landing."
+        ]
+      ],
+      "remote": true,
+      "offstage": [
+        "quer",
+        "demon"
+      ]
+    },
+    {
+      "id": "d1_deduce_cuffs",
+      "at": 1000,
+      "day": 1,
+      "room": "A-P",
+      "title": "甲区走廊",
+      "lines": [
+        [
+          "quer",
+          "There you are. The hatch is here; the cuffs are on the tray. Look at both before you ask me for the map."
+        ]
+      ],
+      "deduction": "ded_cuffs",
+      "present": [
+        "detective"
+      ],
+      "waiters": [
+        "ward",
+        "quer",
+        "lucian"
+      ],
+      "requires_room": true
+    },
+    {
+      "id": "d1_accuse",
+      "at": 1010,
+      "day": 1,
+      "room": "A-P",
+      "title": "甲区检修间",
+      "lines": [
+        [
+          "ward",
+          "手铐被打开、钥匙失踪、通风篦有新撬痕。按程序，我先扣押工具。"
+        ],
+        [
+          "quer",
+          "我手腕还肿着，你倒先问钥匙。"
+        ],
+        [
+          "lucian",
+          "二位且慢！拔剑之前，先听我一言——"
+        ]
+      ],
+      "present": [
+        "ward",
+        "quer",
+        "lucian"
+      ],
+      "openConflict": "c_handcuff"
+    },
+    {
+      "id": "d1_deduce_window",
+      "at": 1030,
+      "day": 1,
+      "room": "C-P",
+      "title": "丙区窗前",
+      "lines": [
+        [
+          "detective",
+          "（笔记）丙区观察窗内侧铁网被砸凹，窗外却擦得干净——合起来推一遍。"
+        ]
+      ],
+      "deduction": "ded_window",
+      "present": [
+        "detective"
+      ],
+      "waiters": [
+        "moran",
+        "selma",
+        "ruan"
+      ],
+      "requires_room": true
+    },
+    {
+      "id": "d1_window",
+      "at": 1040,
+      "day": 1,
+      "room": "C-P",
+      "title": "观察窗",
+      "lines": [
+        [
+          "moran",
+          "窗外那个人在求救！你们把我绑起来，还把窗擦干净了？"
+        ],
+        [
+          "selma",
+          "我听见的是屋里有人喊。不把你拖开，铁网就被你砸穿了。"
+        ],
+        [
+          "ruan",
+          "两截绷带叠得倒很齐。"
+        ]
+      ],
+      "present": [
+        "moran",
+        "selma",
+        "ruan"
+      ],
+      "openConflict": "c_window"
+    },
+    {
+      "id": "d1_meeting",
+      "at": 1070,
+      "day": 1,
+      "room": "2F-cross-M",
+      "title": "四区对账",
+      "lines": [
+        [
+          "mora",
+          "The sling was waiting at our landing. So that was you on the pipe, Shen."
+        ],
+        [
+          "ward",
+          "甲区：手铐被人打开，钥匙不见，有人从外面把门合死了。"
+        ],
+        [
+          "huo",
+          "乙区：棘轮反扣、曲柄销在我工具箱，门底还塞过湿布。"
+        ],
+        [
+          "ruan",
+          "丙区：伊莲娜左踝扭伤，外侧偏心轮卡死，窗外有人求救。"
+        ],
+        [
+          "margaret",
+          "丁区：压差计显示室外危险，可门是从里面撬的。"
+        ],
+        [
+          "detective",
+          "四份报告摆在一起，先抄原话。"
+        ]
+      ],
+      "present": [
+        "ward",
+        "huo",
+        "ruan",
+        "margaret",
+        "detective"
+      ],
+      "unlock_terms": [
+        "prima"
+      ],
+      "variants": {
+        "slingOrder": {
+          "send": {
+            "lines": [
+              [
+                "shen",
+                "Here is the sling. I went back for it at the central landing."
+              ],
+              [
+                "mora",
+                "Thank you. Hold his arm while I fit it."
+              ],
+              [
+                "ward",
+                "甲区：手铐被人打开，钥匙不见，有人从外面把门合死了。"
+              ],
+              [
+                "huo",
+                "乙区：棘轮反扣、曲柄销在我工具箱，门底还塞过湿布。"
+              ],
+              [
+                "ruan",
+                "丙区：伊莲娜左踝扭伤，外侧偏心轮卡死，窗外有人求救。"
+              ],
+              [
+                "margaret",
+                "丁区：压差计显示室外危险，可门是从里面撬的。"
+              ],
+              [
+                "detective",
+                "四份报告摆在一起，先抄原话。"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "d1_contract",
+      "at": 1080,
+      "day": 1,
+      "room": "2F-cross-M",
+      "title": "中央石柱",
+      "lines": [
+        [
+          "gu",
+          "The posted route has to be passable. And if someone faces a lethal danger unawares, the custodian must intervene."
+        ],
+        [
+          "gu",
+          "去发问前先看清中央石柱第八条：「代管者对在册学员所作之一切事实陈述，其字面语义在客观现实中不得为假。」"
+        ],
+        [
+          "detective",
+          "（笔记）字面不得为假——那就把待会儿的每一句答复原原本本记下来。"
+        ]
+      ],
+      "present": [
+        "gu",
+        "detective"
+      ],
+      "grant": "k_contract"
+    },
+    {
+      "id": "d1_q1",
+      "at": 1090,
+      "day": 1,
+      "room": "1F-Shaft-Monitor",
+      "title": "传声管问答 · 之一",
+      "lines": [
+        [
+          "detective",
+          "代管者，昨夜有人替我们关上了门吗？"
+        ],
+        [
+          "demon",
+          "四区的门，最终都是由在下合上的。字面无虚。",
+          "truth"
+        ],
+        [
+          "ward",
+          "听见没有！它承认了！有人把十六个人锁在里面！",
+          "confront"
+        ],
+        [
+          "huo",
+          "合死外闩是清场后的复位，跟抢险时的反扣不是一回事。"
+        ],
+        [
+          "su",
+          "「替我们」——谁允许它替我们决定了？"
+        ]
+      ],
+      "present": [
+        "detective",
+        "demon",
+        "ward",
+        "huo",
+        "su"
+      ],
+      "demon": true,
+      "unlock_terms": [
+        "close"
+      ]
+    },
+    {
+      "id": "d1_q2",
+      "at": 1098,
+      "day": 1,
+      "room": "1F-Shaft-Monitor",
+      "title": "传声管问答 · 之二",
+      "lines": [
+        [
+          "detective",
+          "昨夜有人求救吗？"
+        ],
+        [
+          "demon",
+          "昨夜没有任何人在求救。字面无虚。",
+          "truth"
+        ],
+        [
+          "moran",
+          "那我亲眼看见的窗外那个人，是我在说谎？",
+          "confront"
+        ],
+        [
+          "selma",
+          "我听见的是屋里有人喊。所以我也在说谎？"
+        ],
+        [
+          "su",
+          "可我明明听见有人喊「开门」……原来连我的耳朵也不算数。"
+        ]
+      ],
+      "present": [
+        "detective",
+        "demon",
+        "moran",
+        "selma",
+        "su"
+      ],
+      "demon": true
+    },
+    {
+      "id": "d1_q3",
+      "at": 1106,
+      "day": 1,
+      "room": "1F-Shaft-Monitor",
+      "title": "传声管问答 · 之三",
+      "lines": [
+        [
+          "detective",
+          "关门的时候，谁在场？"
+        ],
+        [
+          "demon",
+          "关门时，在下始终在场。字面无虚。",
+          "truth"
+        ],
+        [
+          "ward",
+          "在场就是门外走廊——23:32 卢西安就在那儿。是他。"
+        ],
+        [
+          "detective",
+          "在场是这间房；那我或霍铎才该被怀疑。"
+        ],
+        [
+          "ruan",
+          "记录上也有名字。先别急着认人。"
+        ]
+      ],
+      "present": [
+        "detective",
+        "demon",
+        "ward",
+        "ruan"
+      ],
+      "demon": true
+    },
+    {
+      "id": "d1_deduce_truth",
+      "at": 1115,
+      "day": 1,
+      "room": "1F-Shaft-Monitor",
+      "title": "传声管旁",
+      "lines": [
+        [
+          "detective",
+          "（笔记）石柱第八条、三句答复和四区记录都齐了——回中翼对账前，先把原句逐字并拢。"
+        ]
+      ],
+      "deduction": "ded_truth",
+      "present": [
+        "detective"
+      ],
+      "waiters": [
+        "ward",
+        "su",
+        "ruan"
+      ]
+    },
+    {
+      "id": "d1_trap",
+      "at": 1130,
+      "day": 1,
+      "room": "2F-cross-M",
+      "title": "初次对质",
+      "lines": [
+        [
+          "ward",
+          "三句答复，四份记录，没有一份对得上。按程序，工具、钥匙、清册先封存。"
+        ],
+        [
+          "quer",
+          "工具是我的，我不交。要查就查记录。"
+        ],
+        [
+          "moran",
+          "谁擦的窗，谁别再看我的速写本。"
+        ],
+        [
+          "su",
+          "……我只是想知道，那句「开门」到底是谁说的。"
+        ],
+        [
+          "demon",
+          "（传声管）诸位若还有疑问，在下随时恭候。"
+        ]
+      ],
+      "present": [
+        "ward",
+        "quer",
+        "moran",
+        "su",
+        "demon"
+      ],
+      "demon": true,
+      "openConflict": "c_demon",
+      "mustChoose": true
+    },
+    {
+      "id": "d1_dumpling",
+      "at": 1170,
+      "day": 1,
+      "room": "F03",
+      "title": "傍晚 · 岁寒包饺子",
+      "lines": [
+        [
+          "shen",
+          "Set two bowls by the stove. The last pair are still helping Bertrand down."
+        ],
+        [
+          "shen",
+          "（传声管）都别愣着了！面已经醒好——今晚包饺子，十六个人一起吃！"
+        ],
+        [
+          "quer",
+          "擀皮我来。卢西安再吟一句，就拿热饼堵他的嘴。"
+        ],
+        [
+          "lucian",
+          "别堵嘴呀，先分一点糖给我调蘸水，待会儿还你！"
+        ],
+        [
+          "mora",
+          "Wing D calling. I have the medical key. Keep two bowls warm while I change his dressing."
+        ],
+        [
+          "su",
+          "我坐暖处吃就好。安静一会儿。"
+        ],
+        [
+          "quer",
+          "Half a stick of blue chalk on his cuff. I wonder what Lucian is writing."
+        ]
+      ],
+      "present": [
+        "shen",
+        "quer",
+        "huo",
+        "mora",
+        "su",
+        "lucian"
+      ],
+      "openConflict": "c_borrow",
+      "offstage": [
+        "mora"
+      ]
+    },
+    {
+      "id": "d1_plan",
+      "at": 1295,
+      "day": 1,
+      "room": "F03",
+      "title": "First shift at the wind corridor",
+      "lines": [
+        [
+          "margaret",
+          "Que can check the latch with me. Huo can walk the frame with me instead. Which pair goes ahead?"
+        ],
+        [
+          "shen",
+          "I will keep the supply list here until they call."
+        ]
+      ],
+      "present": [
+        "detective",
+        "margaret"
+      ],
+      "flag": "day2_plan",
+      "choice": {
+        "id": "windPair",
+        "prompt": "Who takes the first inspection?",
+        "auto": "latch",
+        "options": [
+          {
+            "id": "latch",
+            "label": "Que and Margaret: inspect the latch."
+          },
+          {
+            "id": "frame",
+            "label": "Huo and Margaret: measure the frame."
+          }
+        ]
+      }
+    },
+    {
+      "id": "d1_poem_hint",
+      "at": 2175,
+      "day": 2,
+      "room": "2F-cross-M",
+      "title": "午后 · 口袋里的半截蓝粉笔",
+      "present": [
+        "quer",
+        "gu",
+        "detective"
+      ],
+      "lines": [
+        [
+          "quer",
+          "侦探，我刚瞧见卢西安揣着半截普鲁士蓝粉笔，神神秘秘往 T01 公共讲堂溜过去了。"
+        ],
+        [
+          "gu",
+          "十有八九又想去黑板上编什么「远古神谕」。你打算怎么治他？"
+        ]
+      ],
+      "choice": {
+        "id": "poem",
+        "prompt": "怎么处理卢西安正准备写的「黑板神谕」？",
+        "auto": "expose",
+        "options": [
+          {
+            "id": "stakeout",
+            "label": "提前去讲堂守着，等他动笔抓现行",
+            "note": "",
+            "set": {
+              "poem": "stakeout"
+            },
+            "correct": true
+          },
+          {
+            "id": "expose",
+            "label": "等他喊人来看时，把典故年代、起笔高度和粉笔灰摆出来",
+            "note": "",
+            "set": {
+              "poem": "expose"
+            },
+            "correct": true
+          },
+          {
+            "id": "indulge",
+            "label": "看破不说破，恐慌里留个故事松口气",
+            "note": "",
+            "set": {
+              "poem": "indulge"
+            },
+            "correct": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "d1_poem",
+      "at": 2195,
+      "day": 2,
+      "room": "T01",
+      "title": "The chalkboard poem",
+      "demon": true,
+      "branch_choice": "poem",
+      "present": [
+        "lucian",
+        "gu",
+        "quer",
+        "detective",
+        "demon"
+      ],
+      "lines": [
+        [
+          "lucian",
+          "诸位！讲堂黑板上——凭空出现了远古先知的灭世神谕！"
+        ],
+        [
+          "gu",
+          "亚历山大体十四行？三百年后的格律冒充远古，老夫考据半生头一回见！"
+        ],
+        [
+          "quer",
+          "今早我看见他口袋里揣着半截蓝粉笔。"
+        ],
+        [
+          "demon",
+          "（白手套轻叩黑板）第七行平仄失调，第十一行意象尚可。——代管者谨注。",
+          "truth"
+        ],
+        [
+          "gu",
+          "Meet me in the central hall before we visit Ruan. I have the institute notes."
+        ]
+      ],
+      "branches": {
+        "stakeout": {
+          "lines": [
+            [
+              "lucian",
+              "「第十一行：钟摆吞尽旧时霜……」好句，真有远古先知的气派——"
+            ],
+            [
+              "quer",
+              "抓到现行啦！蓝粉笔还捏在指头缝里呢，「远古先知」先生！"
+            ],
+            [
+              "lucian",
+              "咳！我只是看粉笔槽空着，替讲堂试一试板书手感！"
+            ],
+            [
+              "demon",
+              "（白手套轻叩黑板）第七行平仄失调，第十一行意象尚可。——代管者谨注。",
+              "truth"
+            ],
+            [
+              "gu",
+              "Meet me in the central hall before we visit Ruan. I have the institute notes."
+            ]
+          ]
+        },
+        "expose": {
+          "lines": [
+            [
+              "lucian",
+              "诸位！讲堂黑板上——凭空出现了远古先知的灭世神谕！"
+            ],
+            [
+              "gu",
+              "亚历山大体十四行？三百年后的格律冒充远古，老夫考据半生头一回见！"
+            ],
+            [
+              "quer",
+              "起笔高度正好一米七五，你右袖口还沾着一圈普鲁士蓝粉笔灰呢。"
+            ],
+            [
+              "demon",
+              "（白手套轻叩黑板）第七行平仄失调，第十一行意象尚可。——代管者谨注。",
+              "truth"
+            ],
+            [
+              "gu",
+              "Meet me in the central hall before we visit Ruan. I have the institute notes."
+            ]
+          ]
+        },
+        "indulge": {
+          "lines": [
+            [
+              "lucian",
+              "诸位请看，黑板上这十四行无名古诗，倒像是在替我们宽心……"
+            ],
+            [
+              "detective",
+              "（走过讲台时不动声色替他拂去袖口的蓝粉笔灰）意象不错，大家看完心里倒松快些。"
+            ],
+            [
+              "gu",
+              "（捻须忍笑）就是这位远古先知的格律新潮了点。"
+            ],
+            [
+              "demon",
+              "（白手套轻叩黑板）第七行平仄失调，第十一行意象尚可。——代管者谨注。",
+              "truth"
+            ],
+            [
+              "gu",
+              "Meet me in the central hall before we visit Ruan. I have the institute notes."
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "id": "d1_institutes",
+      "at": 2240,
+      "day": 2,
+      "room": "2F-cross-M",
+      "title": "The institute notes",
+      "present": [
+        "gu",
+        "su",
+        "detective"
+      ],
+      "lines": [
+        [
+          "gu",
+          "一楼文契、星仪、白塔、铁工四院的备件与讲义都能翻看了。"
+        ],
+        [
+          "su",
+          "早上看不透的袖口结晶、门槛水迹和传声管回声，补齐源质常识就能重新判读。"
+        ]
+      ]
+    }
+  ],
+  "wing_open_at": {
+    "A": 1000,
+    "B": 1000,
+    "C": 1030,
+    "D": 1060
+  },
+  "meal_arrivals": {
+    "A": 1170,
+    "B": 1170,
+    "C": 1180,
+    "D": 1190
+  },
+  "legacy_day_one_times": [
+    420,
+    480,
+    490,
+    515,
+    525,
+    555,
+    580,
+    590,
+    620,
+    630,
+    665,
+    675,
+    685,
+    693,
+    701,
+    708,
+    720,
+    795,
+    815,
+    930,
+    1050,
+    1295
+  ],
+  "meal_stations": {
+    "F05": [
+      "gu",
+      "lucian",
+      "su",
+      "elena"
+    ],
+    "F04": [
+      "selma",
+      "mora",
+      "bertrand",
+      "veronica"
+    ]
+  }
+}

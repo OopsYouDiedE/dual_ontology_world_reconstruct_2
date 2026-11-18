@@ -160,7 +160,61 @@ func all_beats() -> int:
 	check(not str(engine.s.ending).is_empty(), "day 5 resolves an ending")
 	return engine.d.beats.size()
 
+func opening_contract() -> void:
+	var e := Engine_.new()
+	e.s.room = "B-P"
+	e.s.flags.service_map = true
+	for row in [[999, false, false, false], [1000, true, false, false], [1030, true, true, false], [1060, true, true, true]]:
+		e.s.t = row[0]
+		for i in 3:
+			var target: String = ["A-P", "C-P", "D-P"][i]
+			check((not e.path_to(target).is_empty()) == row[i+1], "route to %s at %s" % [target, row[0]])
+	e.s.t = 1000
+	e.s.beat_cursor = e.d.beat_index_by_id.d1_deduce_cuffs
+	e.process_beats()
+	check(e.s.room == "B-P" and e.s.story_gate.get("room") == "A-P", "wait for the first physical meeting")
+	for order in ["hold", "send"]:
+		e.new_game(false)
+		e.s.t = 650
+		e.s.room = "R05"
+		e.s.beat_cursor = e.d.beat_index_by_id.d1_relay_c
+		e.process_beats()
+		check(e.s.room == "R05" and not e.actors_in_room("B-P").has("ruan"), "remote witness stays in Wing C")
+		e.choose("d1_relay_c", order)
+		e.s.t = 770
+		e.process_beats()
+		check(e.load_dict(e.save_dict()) and e.s.choices.slingOrder == order, "retain dispatch order")
+		var first: Array = e.effective_beat_lines(e.d.beat_by_id.d1_meeting)[0]
+		check(first[0] == ("shen" if order == "send" else "mora"), "handoff reflects sling delivery")
+	e.new_game(false)
+	e.s.t = 1170
+	check(not e.actors_in_room("F03").has("margaret"), "Wing D still in transit at first sitting")
+	e.s.t = 1190
+	check(e.actors_in_room("F03").has("margaret") and e.actors_in_room("F04").has("mora"), "last group reaches supper")
+	for option in ["latch", "frame"]:
+		e.new_game(false)
+		e.s.t = 1295
+		e.s.beat_cursor = e.d.beat_index_by_id.d1_plan
+		e.process_beats()
+		e.choose("d1_plan", option)
+		e.next_beat()
+		check(e.load_dict(e.save_dict()) and e.continue_chapter(), "night roster survives chapter transition")
+		e.next_beat()
+		check(e.s.current_beat == "d2_wind" and e.actors_in_room("Wind-Corridor").has("quer" if option == "latch" else "huo"), "assigned partner reports on site")
+		var lead: Array = e.effective_beat_lines(e.d.beat_by_id.d2_wind)[0]
+		check(lead[0] == ("quer" if option == "latch" else "huo"), "night roster assigns next morning's lead")
+	var legacy := e.save_dict()
+	legacy.erase("opening_revision")
+	legacy.t = 600
+	legacy.room = "A-P"
+	legacy.beat_cursor = 8
+	check(e.load_dict(legacy) and not e.path_to("B-P").is_empty(), "old visit keeps its return route")
+	legacy.t = 1880
+	legacy.erase("beat_cursor")
+	check(e.load_dict(legacy) and e.d.beats[e.s.beat_cursor].id == "d2_wind" and e.s.flags.legacy_opening_done.has("d1_poem"), "clock-only save preserves resolved day-one scenes")
+
 func run() -> void:
+	opening_contract()
 	launch_contract()
 	var fixtures := fixture_contract()
 	gate_dispatch()

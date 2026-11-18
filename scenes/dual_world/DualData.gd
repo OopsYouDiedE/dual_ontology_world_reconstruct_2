@@ -5,6 +5,10 @@ extends RefCounted
 
 const PATH := "res://assets/data/dual_world/dual_world.json"
 
+const OPENING := "res://assets/data/dual_world/opening.json"
+var opening: Dictionary
+var legacy_order: Array = []
+
 static var _cache: RefCounted = null
 
 var raw: Dictionary = {}
@@ -67,7 +71,15 @@ func load_file(path: String) -> bool:
 	conflicts = raw.get("CONFLICTS", [])
 	deductions = raw.get("DEDUCTIONS", [])
 	phases = raw.get("PHASES", [])
-	beats = raw.get("BEATS", [])
+	var schedule: Variant = JSON.parse_string(FileAccess.get_file_as_string(OPENING))
+	if not schedule is Dictionary or not schedule.has("beats"):
+		push_error("DualData: invalid opening schedule")
+		return false
+	opening = schedule
+	legacy_order = opening.legacy_day_one_order.duplicate()
+	for beat in raw.BEATS: legacy_order.append(beat.id)
+	beats = opening.beats + raw.BEATS
+	beats.sort_custom(func(a, b): return a.at < b.at)
 	relation_pairs = raw.get("RELATION_PAIRS", [])
 	endings = raw.get("ENDINGS", {})
 	timeline = raw.get("TIMELINE", [])

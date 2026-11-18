@@ -38,7 +38,7 @@ func _fresh_state() -> Dictionary:
 	for p in d.relation_pairs:
 		rel[Data.pair_key(p[0], p[1])] = {"trust": 62, "damage": 0, "permanent": false, "grievances": []}
 	return {
-		"version": 2, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
+		"version": 2, "opening_revision": 1, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
 		"day": 1, "room": "R05", "author_view": false, "chapter": 1, "chapter_complete": false,
 		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
 		"pending_deduction": {}, "postponed": {}, "current_beat": "", "story_gate": {},
@@ -82,11 +82,45 @@ func load_dict(st: Dictionary) -> bool:
 	if not s.has("unlocked_terms") or typeof(s["unlocked_terms"]) != TYPE_DICTIONARY:
 		s["unlocked_terms"] = {}
 	_migrate_chapter_state(not st.has("chapter") or not st.has("chapter_complete"))
+	if not st.has("opening_revision"):
+		var old_cursor := int(st.get("beat_cursor", 0))
+		if not st.has("beat_cursor"):
+			for i in d.legacy_order.size():
+				var at: float = d.opening.legacy_day_one_times[i] if i < d.opening.legacy_day_one_times.size() else d.beat_by_id[d.legacy_order[i]].at
+				if at >= float(s.t): break
+				old_cursor += 1
+		_migrate_opening_cursor(old_cursor)
 	_refresh_waiting()
 	if bool(s.chapter_complete): s.waiting = false
 	set_door_flags()
 	changed.emit("load")
 	return true
+
+
+## Version 2 stored an ordinal. Preserve resolved and pending work when old
+## afternoon scenes move to day two. New saves use the current schedule.
+func _migrate_opening_cursor(cursor: int) -> void:
+	var done := d.legacy_order.slice(0, clampi(cursor, 0, d.legacy_order.size())) as Array
+	if s.day == 1:
+		s.flags["legacy_open_wings"] = 4 if s.t >= T(1, 11) else (3 if s.t >= T(1, 9, 20) or s.flags.has("service_map") else 0)
+	var moved := {}
+	for id in d.opening.legacy_day_one_order:
+		if done.has(id) and int(d.beat_by_id[id].day) == 2: moved[id] = true
+	if not moved.is_empty(): s.flags["legacy_opening_done"] = moved
+	s.beat_cursor = d.beats.size()
+	for i in d.beats.size():
+		var id: String = d.beats[i].id
+		if not d.legacy_order.has(id):
+			if cursor > d.legacy_order.find("d1_deduce_cuffs"): continue
+		elif done.has(id): continue
+		s.beat_cursor = i
+		break
+
+
+func _skip_migrated_beats() -> void:
+	var done: Dictionary = s.flags.get("legacy_opening_done", {})
+	while int(s.beat_cursor) < d.beats.size() and done.has(d.beats[int(s.beat_cursor)].id):
+		s.beat_cursor += 1
 
 
 func _chapter_for_time(t: float) -> int:
@@ -246,10 +280,10 @@ func set_door_flags() -> void:
 	var c := clock()
 	var f: Dictionary = s.flags
 	s.doors = {
-		"zone.0": t >= T(1, 9, 20) or f.has("service_map"),
-		"zone.1": t >= T(1, 9, 20) or f.has("service_map"),
-		"zone.2": t >= T(1, 9, 20) or f.has("service_map"),
-		"zone.3": t >= T(1, 11, 0),
+		"zone.0": t >= float(d.opening.wing_open_at.A) or int(f.get("legacy_open_wings", 0)) > 0,
+		"zone.1": t >= float(d.opening.wing_open_at.B) or int(f.get("legacy_open_wings", 0)) > 1,
+		"zone.2": t >= float(d.opening.wing_open_at.C) or int(f.get("legacy_open_wings", 0)) > 2,
+		"zone.3": t >= float(d.opening.wing_open_at.D) or int(f.get("legacy_open_wings", 0)) > 3,
 		"service_map": f.has("service_map"),
 		"demon": true,
 		"wind": c.day >= 2 and c.hour >= 9.0 and c.hour < 17.0,
@@ -815,6 +849,7 @@ func _beat_location_ready(beat: Dictionary) -> bool:
 
 func _apply_beat(b: Dictionary) -> void:
 	s.beat_cursor += 1
+	_skip_migrated_beats()
 	s.current_beat = b.id
 	if b.has("room") and d.room_by_id.has(b.room) and not b.get("remote", false) and s.room != b.room and not s.author_view:
 		s.room = b.room  # 剧情推进时主角自动跟随到场（隔墙/远程事件不瞬移主角）
@@ -1024,7 +1059,7 @@ func room_occupants() -> Dictionary:
 			put.call(str(pid), str(s.room))
 	var last: Dictionary = {}
 	for i in range(int(s.beat_cursor) - 1, -1, -1):
-		if float(d.beats[i].at) > float(s.t): continue
+		if float(d.beats[i].at) > float(s.t) or s.flags.get("legacy_opening_done", {}).has(d.beats[i].id) and d.beats[i].id != s.current_beat: continue
 		var beat := _resolve_beat(d.beats[i])
 		if not beat.has("lines"): continue
 		last = beat
@@ -1046,14 +1081,18 @@ func room_occupants() -> Dictionary:
 			continue
 		var r: String = a.home
 		# 开场：侦探在 R05 床上醒来（四人里最晚）；其余三人已在乙区小厨房。
-		if s.t < T(1, 8, 30):
-			r = "R05" if a.id == "detective" else ("B-P" if a.home in ["R06", "R07", "R08"] else a.home)
-		elif h >= 12.0 and h < 17.0 and s.t >= T(1, 11, 0):
-			r = "T01" if s.day == 1 else "2F-cross-M"
+		if s.day == 1:
+			var wing: String = d.room_by_id[a.home].zone
+			if s.t >= float(d.opening.meal_arrivals[wing]) and h < 22.0:
+				r = "F03"
+				for station in d.opening.meal_stations:
+					if a.id in d.opening.meal_stations[station]: r = station; break
+			elif a.id != "detective" and (wing == "B" or h >= 8.5):
+				r = wing + "-P"
+		elif h >= 12.0 and h < 17.0 or h >= 7.2 and h < 11.5:
+			r = "2F-cross-M"
 		elif h >= 17.5 and h < 21.0:
 			r = "F03"
-		elif h >= 7.2 and h < 11.5 and s.t >= T(1, 11, 0):
-			r = "2F-cross-M"
 		put.call(a.id, r)
 	return occ
 
@@ -1080,7 +1119,7 @@ func music_state() -> Dictionary:
 	if s.ending != "": mood = "truth"
 	elif demon: mood = "demon"
 	elif s.pending_conflict != "" or not s.pending_choice.is_empty(): mood = "confrontation"
-	elif s.t >= T(1, 17, 30) and s.t < T(1, 21) and s.day == 1: mood = "dumpling"
+	elif s.t >= float(d.opening.meal_arrivals.B) and s.t < T(1, 22) and s.day == 1: mood = "dumpling"
 	elif c.hour >= 20.0 or c.hour < 6.0: mood = "night"
 	elif s.day >= 2 and c.hour >= 9.0 and c.hour < 17.0: mood = "daily"
 	var tension := (0.5 if s.irreparable else 0.0) + (0.3 if s.pending_conflict != "" else 0.0)

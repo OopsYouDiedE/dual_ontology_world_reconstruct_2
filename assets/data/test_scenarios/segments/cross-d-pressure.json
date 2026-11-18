@@ -6,8 +6,8 @@
   "entry": "exploration",
   "time": {
     "day": 1,
-    "hour": 10,
-    "minute": 50
+    "hour": 17,
+    "minute": 35
   },
   "playing": false,
   "before_beat": "d1_meeting",

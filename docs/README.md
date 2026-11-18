@@ -4,6 +4,7 @@
 | --- | --- |
 | 准备工具链、构建项目 | [仓库 README](../README.md#工具链与构建) |
 | 启动开发场景、定位源码、验证剧情交接 | [开发手册](development.md) · [剧情交接表](development.md#按交接点检查) |
+| 设计四区开场、组队指挥与三十五日长线 | [四区开场与协作结构](opening-structure.md) |
 | 修改建筑墙网、门窗与派生楼面 | [建筑房间拓扑](building-topology.md) |
 | 了解学园规则怪谈提案、试玩夜点名 | [设计提案](prototypes/night-rollcall/design.md) · [Night Roll Call](prototypes/night-rollcall/index.html) |
 | 查找设计原稿、工程迁移记录与复评包 | [历史档案](archive/README.md) |

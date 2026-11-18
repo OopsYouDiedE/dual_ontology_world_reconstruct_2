@@ -40,12 +40,19 @@ static func make_hint(parent: Control, text: String, shown := false) -> Label:
 	hint.text = text
 	hint.add_theme_font_size_override("font_size", 14)
 	hint.add_theme_color_override("font_color", Color("#f2e6c8"))
-	hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
-	hint.add_theme_constant_override("outline_size", 6)
+	var plate := StyleBoxFlat.new()
+	plate.bg_color = Color("#211a15f5")
+	plate.border_color = Color("#826649")
+	plate.set_border_width_all(1)
+	plate.set_corner_radius_all(4)
+	plate.set_content_margin_all(6)
+	plate.content_margin_left = 10
+	plate.content_margin_right = 10
+	hint.add_theme_stylebox_override("normal", plate)
 	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	hint.offset_left = 18.0
 	# Keep the tutorial text above the field navigation / Return to Title panel.
-	hint.offset_top = -96.0
+	hint.offset_top = -108.0
 	hint.offset_bottom = -72.0
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint.visible = shown
@@ -61,7 +68,7 @@ func _build_field_navigation() -> void:
 	_route_panel.offset_bottom = -18.0
 	_route_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_route_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_route_panel.add_theme_stylebox_override("panel", host._style(Color("#211911e8"), Color("#7c6642"), 6, 7))
+	_route_panel.add_theme_stylebox_override("panel", host._style(Color("#211a15f5"), Color("#826649"), 6, 8))
 	var body := VBoxContainer.new()
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_route_panel.add_child(body)
@@ -76,7 +83,7 @@ func _build_field_navigation() -> void:
 	bar.add_theme_constant_override("separation", 8)
 	body.add_child(bar)
 	_map_button = host._btn(bar, "Map", _toggle_map, "Choose a reachable room")
-	_case_button = host._btn(bar, "Case File", _toggle_case_file)
+	_case_button = host._btn(bar, "Case File", _toggle_case_file, "Browse evidence, deductions and the log")
 	# Detached fixtures have no title shell to return to.
 	_title_button = host._btn(bar, "Return to Title", host._close, "Save progress and return to the title")
 	_title_button.visible = is_instance_valid(shell)

@@ -122,6 +122,9 @@ var next_btn: Button
 var right_tabs: TabContainer
 var tab_log: RichTextLabel
 var tab_ev: RichTextLabel
+var evidence_picker: OptionButton
+var _evidence_sig: Array = []
+var _file_buttons: Array[Button] = []
 var tab_know: RichTextLabel
 var tab_lex: RichTextLabel
 var tab_rel: RichTextLabel
@@ -614,21 +617,65 @@ func _build_ui() -> void:
 	sc.add_child(left_actions)
 	# ── 右侧：案卷抽屉（默认收起） ──
 	drawer = PanelContainer.new()
-	drawer.add_theme_stylebox_override("panel", _style(Color(0.09, 0.07, 0.05, 0.95), LINE, 6, 8))
-	drawer.anchor_left = 1.0
-	drawer.anchor_right = 1.0
-	drawer.anchor_top = 0.0
-	drawer.anchor_bottom = 1.0
-	drawer.offset_left = -400
-	drawer.offset_right = -12
-	drawer.offset_top = 12
+	drawer.name = "FieldCaseFile"
+	var file_theme := theme.duplicate() as Theme
+	var file_font := FontVariation.new()
+	file_font.base_font = SANS_FONT
+	file_font.variation_opentype = {"wght": 450}
+	file_theme.default_font = file_font
+	for kind in ["Button", "Label", "OptionButton"]:
+		file_theme.set_font("font", kind, file_font)
+	file_theme.set_font("normal_font", "RichTextLabel", file_font)
+	file_theme.set_font_size("normal_font_size", "RichTextLabel", 16)
+	file_theme.set_color("default_color", "RichTextLabel", Color("#faedd6"))
+	drawer.theme = file_theme
+	drawer.add_theme_stylebox_override("panel", _style(Color("#211a15fa"), Color("#826649"), 6, 16))
+	drawer.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+	drawer.offset_left = -544
+	drawer.offset_right = -16
+	drawer.offset_top = 16
 	drawer.offset_bottom = -104
 	drawer.visible = false
 	center.add_child(drawer)
+	var file := VBoxContainer.new()
+	file.add_theme_constant_override("separation", 12)
+	drawer.add_child(file)
+	var file_title := Label.new()
+	file_title.text = "Case File"
+	file_title.add_theme_font_override("font", SERIF_FONT)
+	file_title.add_theme_font_size_override("font_size", 27)
+	file_title.add_theme_color_override("font_color", Color("#f0d49c"))
+	file.add_child(file_title)
+	file.add_child(HSeparator.new())
+	var spread := HBoxContainer.new()
+	spread.add_theme_constant_override("separation", 12)
+	spread.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	file.add_child(spread)
+	var index_scroll := ScrollContainer.new()
+	index_scroll.custom_minimum_size.x = 128
+	index_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	spread.add_child(index_scroll)
+	var index := VBoxContainer.new()
+	index.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	index.add_theme_constant_override("separation", 5)
+	index_scroll.add_child(index)
+	spread.add_child(VSeparator.new())
 	right_tabs = TabContainer.new()
-	drawer.add_child(right_tabs)
-	tab_log = _add_tab("Log")
-	tab_ev = _add_tab("Evidence")
+	right_tabs.tabs_visible = false
+	right_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_tabs.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	spread.add_child(right_tabs)
+	var evidence_page := VBoxContainer.new()
+	evidence_page.name = "Evidence"
+	evidence_page.add_theme_constant_override("separation", 12)
+	right_tabs.add_child(evidence_page)
+	evidence_picker = OptionButton.new()
+	evidence_picker.clip_text = true
+	evidence_picker.fit_to_longest_item = false
+	evidence_picker.item_selected.connect(func(_item: int): _show_evidence_entry())
+	evidence_page.add_child(evidence_picker)
+	tab_ev = _rich(false)
+	evidence_page.add_child(tab_ev)
 	var case_scroll := ScrollContainer.new()
 	case_scroll.name = "Deductions"
 	case_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -637,6 +684,7 @@ func _build_ui() -> void:
 	tab_case.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tab_case.add_theme_constant_override("separation", 6)
 	case_scroll.add_child(tab_case)
+	tab_log = _add_tab("Log")
 	tab_know = _add_tab("Knowledge")
 	var lex_box := VBoxContainer.new()
 	lex_box.name = "Terms"
@@ -652,6 +700,21 @@ func _build_ui() -> void:
 	tab_rel = _add_tab("Relations")
 	tab_contract = _add_tab("Contract")
 	tab_author = _add_tab("Debug")
+	var file_group := ButtonGroup.new()
+	for page in right_tabs.get_children():
+		if page == tab_know: index.add_child(HSeparator.new())
+		var tab_index := right_tabs.get_tab_idx_from_control(page)
+		var button := Button.new()
+		button.text = str(page.name)
+		button.toggle_mode = true
+		button.button_group = file_group
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.clip_text = true
+		button.pressed.connect(func(): right_tabs.current_tab = tab_index)
+		index.add_child(button)
+		_file_buttons.append(button)
+	right_tabs.tab_changed.connect(_sync_file_index)
+	_sync_file_index(0)
 	_apply_author_tabs()
 	# ── 底部：台词字幕 + 操作提示 ──
 	room_hint = Label.new()
@@ -745,15 +808,22 @@ func _toggle_drawer() -> void:
 	drawer.visible = not drawer.visible
 	drawer_btn.button_pressed = drawer.visible
 	if room_hint != null:
-		room_hint.offset_right = -416 if drawer.visible else -16
+		room_hint.offset_right = drawer.offset_left - 12.0 if drawer.visible else -16
 	_dirty = true
+
+
+func _sync_file_index(index: int) -> void:
+	if index >= 0 and index < _file_buttons.size():
+		_file_buttons[index].set_pressed_no_signal(true)
 
 
 ## 「调试」页只在作者视角下出现。
 func _apply_author_tabs() -> void:
 	var idx := right_tabs.get_tab_idx_from_control(tab_author)
-	if idx >= 0: right_tabs.set_tab_hidden(idx, not eng.s.author_view)
+	if idx < 0: return
 	if not eng.s.author_view and right_tabs.current_tab == idx: right_tabs.current_tab = 0
+	right_tabs.set_tab_hidden(idx, not eng.s.author_view)
+	_file_buttons[idx].visible = eng.s.author_view
 
 
 func _on_menu(id: int) -> void:
@@ -2484,6 +2554,50 @@ func _refresh_case_tab() -> void:
 		tab_case.add_child(e)
 
 
+func _refresh_evidence_index() -> void:
+	var s: Dictionary = eng.s
+	var signature: Array = [s.evidence.keys(), s.knowledge.keys(), s.author_view, TranslationServer.get_locale()]
+	if signature == _evidence_sig: return
+	_evidence_sig = signature
+	var previous := "" if evidence_picker.selected < 0 else str(evidence_picker.get_selected_metadata())
+	evidence_picker.clear()
+	var selected := 0
+	for eid in s.evidence:
+		var entry: Dictionary = data.evidence_by_id[eid]
+		var index := evidence_picker.item_count
+		evidence_picker.add_item("%02d  %s" % [index + 1, tr(str(entry.label))])
+		evidence_picker.set_item_metadata(index, eid)
+		if str(eid) == previous: selected = index
+	evidence_picker.visible = evidence_picker.item_count > 0
+	if evidence_picker.visible: evidence_picker.select(selected)
+	_show_evidence_entry()
+
+
+func _show_evidence_entry() -> void:
+	tab_ev.clear()
+	if evidence_picker.selected < 0:
+		tab_ev.add_text("No evidence collected yet.")
+		return
+	var eid := str(evidence_picker.get_selected_metadata())
+	var entry: Dictionary = data.evidence_by_id[eid]
+	var reading: Dictionary = eng.read_evidence(eid)
+	tab_ev.push_color(Color("#e9c98a"))
+	tab_ev.push_font(SERIF_FONT, 21)
+	tab_ev.add_text(tr(str(entry.label)))
+	tab_ev.pop()
+	tab_ev.pop()
+	tab_ev.push_color(MUTED)
+	tab_ev.add_text("\n" + tr(str(data.room_by_id[entry.room].label)))
+	tab_ev.pop()
+	tab_ev.add_text("\n\n" + tr(str(reading.text)))
+	if not reading.correct:
+		tab_ev.push_color(Color("#e9c98a"))
+		tab_ev.add_text("\n\nMore knowledge may clarify this evidence.")
+		if eng.s.author_view:
+			tab_ev.add_text("\nAuthor · Missing: " + ", ".join(reading.need.map(func(k): return tr(str(data.know_by_id[k].title)))))
+		tab_ev.pop()
+
+
 func _refresh_right() -> void:
 	var s: Dictionary = eng.s
 	var author: bool = s.author_view
@@ -2502,18 +2616,7 @@ func _refresh_right() -> void:
 		tab_log.append_text("[color=#d6c6a6]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, str(l.get("display", tr(str(l.text))))])
 	tab_log.scroll_to_line(maxi(0, tab_log.get_line_count() - 1))
 	_refresh_case_tab()
-	# 证物
-	tab_ev.clear()
-	if s.evidence.is_empty(): tab_ev.append_text("[color=#d6c6a6]No evidence collected yet.[/color]")
-	for eid in s.evidence:
-		var e: Dictionary = data.evidence_by_id[eid]
-		var r: Dictionary = eng.read_evidence(eid)
-		tab_ev.append_text("[color=#e9c98a][b]%s[/b][/color]  [color=#d6c6a6]%s[/color]\n%s\n" % [tr(str(e.label)), tr(str(data.room_by_id[e.room].label)), tr(str(r.text))])
-		if not r.correct:
-			tab_ev.append_text("[color=#ea9c8c]· More knowledge may clarify this evidence.[/color]\n")
-			if author:
-				tab_ev.append_text("[color=#6b3fa0]Author · Missing: %s[/color]\n" % ", ".join(r.need.map(func(k): return tr(str(data.know_by_id[k].title)))))
-		tab_ev.append_text("\n")
+	_refresh_evidence_index()
 	# 知识
 	tab_know.clear()
 	tab_know.append_text("[color=#d6c6a6]Prima knowledge can reveal new readings of evidence.[/color]\n\n")

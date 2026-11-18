@@ -3,6 +3,7 @@ extends RefCounted
 const RIG_FIX := preload("res://scenes/components/characters/RigWeightFix.gd")
 const ANIM_LIB_HELPER := preload("res://scenes/components/characters/KayKitAnimationLibrary.gd")
 const CHIBI_SHADER := preload("res://scenes/components/rendering/ChibiFigurineSurface.gdshader")
+const CHIBI_DOUBLE_SIDED := preload("res://scenes/components/rendering/ChibiFigurineDoubleSided.gdshader")
 const SOURCE_RIG_PATH := "res://assets/imported/kaykit/animations/Rig_Medium_General.glb"
 
 const NOMINAL_ACTOR_HEIGHT := 1.32
@@ -768,33 +769,33 @@ static func _arm_silhouette_correction(direction: Vector3, chest_delta: Basis, a
 	return alignment.inverse() * chest_delta * correction * chest_delta.inverse() * alignment
 
 static func _apply_chibi_figurine_materials(model: Node3D, resolved_path: String) -> void:
-	if CHIBI_SHADER == null:
-		return
 	for child in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh_node := child as MeshInstance3D
-		if mesh_node == null or mesh_node.mesh == null:
+		if mesh_node.mesh == null or mesh_node.material_override != null:
 			continue
-		var surface_count := mesh_node.mesh.get_surface_count()
-		for s in range(surface_count):
-			var mat := mesh_node.get_active_material(s)
-			if mat == null or mat is ShaderMaterial:
+		for surface in range(mesh_node.mesh.get_surface_count()):
+			var source := mesh_node.get_active_material(surface) as BaseMaterial3D
+			if source == null or source.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
 				continue
-			if mat is BaseMaterial3D:
-				var base_mat := mat as BaseMaterial3D
-				var tex := base_mat.albedo_texture
-				var col := base_mat.albedo_color
-				var cache_key := "%s::%s::%d" % [resolved_path, String(mesh_node.name), s]
-				var shader_mat: ShaderMaterial = null
-				if _figurine_material_cache.has(cache_key):
-					shader_mat = _figurine_material_cache[cache_key] as ShaderMaterial
-				if shader_mat == null:
-					shader_mat = ShaderMaterial.new()
-					shader_mat.shader = CHIBI_SHADER
-					if tex != null:
-						shader_mat.set_shader_parameter("albedo_texture", tex)
-					shader_mat.set_shader_parameter("albedo_tint", Color(col.r, col.g, col.b, 1.0))
-					_figurine_material_cache[cache_key] = shader_mat
-				mesh_node.set_surface_override_material(s, shader_mat)
+			if source.shading_mode != BaseMaterial3D.SHADING_MODE_PER_PIXEL or source.emission_enabled:
+				continue
+			# Keep authored specialty surfaces on the source material.
+			if source.cull_mode == BaseMaterial3D.CULL_FRONT or source.normal_enabled or source.next_pass != null:
+				continue
+			var key := "%s::%s::%d" % [resolved_path, str(model.get_path_to(mesh_node)), surface]
+			var finish := _figurine_material_cache.get(key) as ShaderMaterial
+			if finish == null:
+				finish = ShaderMaterial.new()
+				finish.shader = CHIBI_DOUBLE_SIDED if source.cull_mode == BaseMaterial3D.CULL_DISABLED else CHIBI_SHADER
+				if source.albedo_texture != null:
+					finish.set_shader_parameter("albedo_texture", source.albedo_texture)
+				finish.set_shader_parameter("albedo_tint", source.albedo_color)
+				finish.set_shader_parameter("use_vertex_color", source.vertex_color_use_as_albedo)
+				finish.set_shader_parameter("uv_scale", Vector2(source.uv1_scale.x, source.uv1_scale.y))
+				finish.set_shader_parameter("uv_offset", Vector2(source.uv1_offset.x, source.uv1_offset.y))
+				finish.set_shader_parameter("surface_roughness", clampf(source.roughness, 0.77, 0.95))
+				_figurine_material_cache[key] = finish
+			mesh_node.set_surface_override_material(surface, finish)
 
 static func _apply_kaykit_three_head_proportion(model: Node3D, skel: Skeleton3D, resolved_path: String) -> void:
 	var head_idx := skel.find_bone("head")

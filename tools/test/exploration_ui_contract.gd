@@ -113,6 +113,25 @@ func _run() -> void:
 	game.tab_log.text = "stale journal sentinel"
 	game._refresh()
 	check(game.tab_log.get_parsed_text() != "stale journal sentinel", "opening drawer refreshes current journal even when empty")
+	check(game._file_buttons[0].text == "Evidence" and game._file_buttons[0].button_pressed, "case file opens on its evidence index")
+	check(not game._file_buttons.back().visible, "case file keeps author tools hidden")
+	var saved_evidence: Dictionary = game.eng.s.evidence.duplicate(true)
+	game.eng.s.evidence.clear()
+	game._refresh_evidence_index()
+	check(not game.evidence_picker.visible and game.tab_ev.get_parsed_text() == "No evidence collected yet.", "empty evidence has no picker")
+	game.eng.s.evidence["e_m_pillar"] = {}
+	game.eng.s.evidence["e_m_record"] = {}
+	game._refresh_evidence_index()
+	check(game.evidence_picker.item_count == 2 and game.tab_ev.get_parsed_text().contains("Article 8"), "case file shows the selected evidence reading")
+	game.evidence_picker.select(1)
+	game.evidence_picker.item_selected.emit(1)
+	check(game.tab_ev.get_parsed_text().contains("More knowledge may clarify"), "switching entries shows the second clue and its interpretation hint")
+	game._file_buttons[1].pressed.emit()
+	game._file_buttons[0].pressed.emit()
+	game._refresh_evidence_index()
+	check(game._file_buttons[0].button_pressed and game.evidence_picker.get_selected_metadata() == "e_m_record", "switching sections preserves the selected clue")
+	game.eng.s.evidence = saved_evidence
+	game._refresh_evidence_index()
 	game._set_view("room")
 	game._sync_exploration_ui()
 	var controller: Node = game.opening if is_instance_valid(game.opening) and game.opening.active else game.kitchen

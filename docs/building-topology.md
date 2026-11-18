@@ -15,3 +15,24 @@
 房间预设保存完整闭合外围墙，默认显示全部墙段。F01 的中间平台与上层回廊作为独立楼面保留，不对这些楼面另行封闭围墙。
 
 “显示／隐藏”窗口按类别、单段墙和单个地面、楼梯、栏杆、家具控制 3D 可见性。墙段的门窗随该段显示；相邻两段均隐藏时，共用装饰柱也隐藏。此状态独立于建筑数据，不改变二维蓝图、房间拓扑或撤销快照。实体与线框遵循相同可见性；JSON、YAML 和 Godot 候选均输出完整结构。“全部显示”恢复所有构件；载入预设时也恢复全显。
+
+## 生成器参考选型
+
+**主参考：FreeSO 的建造验证与预览流程。** 保留本项目以墙中线、墙厚和门窗为输入的连续几何；用现有 `ArchitectState` / `RoomTopology` 派生房间与楼面，用 `AutoFurnish` 做室内摆放。FreeSO 的地块瓦片可帮助理解区域分类和建造约束，建筑数据和编辑器继续走 Godot、现有 JSON／YAML 和候选场景导出。
+
+| 项目 | 核对到的实现 | 取舍 |
+| --- | --- | --- |
+| FreeSO | [`VMArchitecture`](https://github.com/riperiperi/FreeSO/blob/4c6b3e8f5835b228723caea3c9f683c62f244f73/TSOClient/tso.simantics/VMArchitecture.cs#L377-L479) 在临时墙、地板上试跑编辑命令，再恢复正式状态；[`VMRoomMap`](https://github.com/riperiperi/FreeSO/blob/4c6b3e8f5835b228723caea3c9f683c62f244f73/TSOClient/tso.simantics/Model/VMRoomMap.cs#L25) 通过瓦片泛洪派生空间和室内外分类。 | 主参考。采用候选隔离、预览与提交分离；区域分类由本项目墙网派生。 |
+| [Simitone](https://github.com/riperiperi/Simitone/tree/4906db3156616bfaffc10ce0963cf08062975fef) | 以 FreeSO 为子模块，提供单机前端和地块操作界面。 | 次参考，仅用于建筑交互、三维查看。 |
+| [FreeSims](https://github.com/francot514/FreeSims/blob/50eaa1140a2f8b01e33048f6b8af50c396881142/SimsVille/SimsAntics/model/VMRoomMap.cs#L31) | 同样使用 `WallTile` / `FloorTile` 和泛洪房间图。 | 可交叉阅读区域识别；主参考已有同类实现及完整预览流程。 |
+| [My Simulation](https://github.com/simtactics/mysimulation/blob/e9d7d736ebf5bdf013c57dba59531b9c411581a1/README.md) | Zig／Raylib 客户端、NioTSO 格式库、FreeSO API 后端。 | 适合研究客户端和格式接入，略过本次建筑选型。 |
+| [lifeRestart](https://github.com/VickScarlet/remake/tree/d20aa815cf2f92d489302e64ae13ba39d3d17d63) | 人生属性、天赋和事件数据。 | 生活模拟参考。 |
+| [LifeReloaded](https://github.com/EmbraceAGI/LifeReloaded/blob/78a04791e46e499c1582e677470870579ffc0d9c/README.md) | 语言模型驱动的人生剧情。 | 叙事生成参考。 |
+
+### 第一版试作
+
+1. 输入房间功能、面积范围、必须相邻或直连的空间、入口与确定性种子。先在单层上排房和走廊，再把候选转换成建筑器现有的墙、门窗和楼层记录。
+2. 在隔离的候选状态里派生闭环和楼面，分别检查房间邻接、门洞连接和实际可行走路线。家具放入后再检验一次通行。预览通过后，整组作为一次撤销操作提交；保留预设、证物布局与既有 ID。
+3. 先用一层带走廊的测试平面验收：断墙取消闭环、移除隔墙合并房间、开门改变连通但保留闭环、家具避开门区，取消候选保持正式状态。多层再用 `F01` 的分叉梯和回廊检查楼梯落点与跨层动线。
+
+FreeSO 在此仅用作机制参考；实现使用本仓库代码和资产。

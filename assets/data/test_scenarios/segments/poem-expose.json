@@ -10,8 +10,8 @@
     "minute": 35
   },
   "playing": false,
+  "before_beat": "d1_poem",
   "mock": {
-    "beat_cursor": 18,
     "flags": {
       "service_map": true
     },

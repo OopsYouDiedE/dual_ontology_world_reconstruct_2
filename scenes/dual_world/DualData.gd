@@ -28,6 +28,8 @@ var deductions: Array = []
 var deduction_by_id: Dictionary = {}
 var phases: Array = []
 var beats: Array = []
+var beat_by_id: Dictionary = {}
+var beat_index_by_id: Dictionary = {}
 var relation_pairs: Array = []
 var endings: Dictionary = {}
 var timeline: Array = []
@@ -72,6 +74,12 @@ func load_file(path: String) -> bool:
 	contract = raw.get("CONTRACT", [])
 	map_groups = raw.get("MAP_GROUPS", [])
 	rig_spec = raw.get("RIG_SPEC", {})
+	for index in [room_by_id, actor_by_id, know_by_id, evidence_by_id, evidence_by_room,
+		conflict_by_id, deduction_by_id, beat_by_id, beat_index_by_id]:
+		index.clear()
+	for i in beats.size():
+		beat_by_id[beats[i].id] = beats[i]
+		beat_index_by_id[beats[i].id] = i
 	for r in rooms: room_by_id[r.id] = r
 	for a in actors: actor_by_id[a.id] = a
 	for k in knowledge: know_by_id[k.id] = k

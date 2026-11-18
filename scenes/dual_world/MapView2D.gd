@@ -117,13 +117,13 @@ func _notification(what: int) -> void:
 
 
 func _day_label(value: float) -> String:
-	if value < 5.0 or value >= 20.0: return "夜"
-	if value < 7.0: return "拂晓"
-	if value < 11.0: return "上午"
-	if value < 13.5: return "正午"
-	if value < 17.0: return "午后"
-	if value < 20.0: return "黄昏"
-	return "夜"
+	if value < 5.0 or value >= 20.0: return "Night"
+	if value < 7.0: return "Dawn"
+	if value < 11.0: return "Morning"
+	if value < 13.5: return "Midday"
+	if value < 17.0: return "Afternoon"
+	if value < 20.0: return "Dusk"
+	return "Night"
 
 
 func _draw() -> void:
@@ -136,7 +136,7 @@ func _draw() -> void:
 		var col := Color(str(g.color))
 		draw_rect(rc, Color(col, 0.55))
 		draw_rect(rc, Color(BRASS, 0.18), false, 1.0)
-		draw_string(font, rc.position + Vector2(6, 16), str(g.label), HORIZONTAL_ALIGNMENT_LEFT, rc.size.x - 8, 13, Color("#e6d7b8"))
+		draw_string(font, rc.position + Vector2(6, 16), tr(str(g.label)), HORIZONTAL_ALIGNMENT_LEFT, rc.size.x - 8, 13, Color("#e6d7b8"))
 	# 门之间的路径：一律虚线；上锁用暗红
 	for dr in data.doors:
 		var ra: Dictionary = data.room_by_id.get(dr.a, {})
@@ -155,7 +155,7 @@ func _draw() -> void:
 		var border := Color("#e9c98a") if is_here else (Color("#4f9dde") if r.id == selected else Color(BRASS, 0.5))
 		if is_here: draw_rect(rc2, Color("#e9c98a", 0.18))
 		draw_rect(rc2, border, false, 3.5 if is_here else (2.5 if r.id == selected else 1.0))
-		var label := str(r.label)
+		var label := tr(str(r.label))
 		draw_string(font, rc2.position + Vector2(4, 15), label, HORIZONTAL_ALIGNMENT_LEFT, rc2.size.x - 6, 12, Color("#efe6d6"))
 		# 证物进度
 		var evs: Array = data.evidence_by_room.get(r.id, [])
@@ -163,7 +163,7 @@ func _draw() -> void:
 			var got := 0
 			for e in evs:
 				if engine.s.evidence.has(e.id): got += 1
-			draw_string(font, rc2.position + Vector2(4, rc2.size.y - 5), "证 %d/%d" % [got, evs.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#e9c98a") if got < evs.size() else Color("#a8c89a"))
+			draw_string(font, rc2.position + Vector2(4, rc2.size.y - 5), "Clues %d/%d" % [got, evs.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#e9c98a") if got < evs.size() else Color("#a8c89a"))
 		# 人物小圆点：侦探画得更大并带金圈（玩家一眼找到「我」在哪）
 		var list: Array = occ.get(r.id, [])
 		for i in list.size():
@@ -179,5 +179,5 @@ func _draw() -> void:
 	# 夜色暗幕：与时间同步（2D 也体现光线变化）
 	var dark := Geo.darkness(hour)
 	if dark > 0.0:
-		draw_rect(Rect2(Vector2.ZERO, size), Color(0.04, 0.05, 0.12, dark * 0.85))
-	draw_string(font, Vector2(10, size.y - 10), "金框=当前位置 · 点击选中 · 双击进入 · 拖拽平移 · 滚轮缩放　%s" % _day_label(hour), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#d8c9a8"))
+		draw_rect(Rect2(Vector2.ZERO, size), Color(0.04, 0.05, 0.12, dark * 0.17))
+	draw_string(font, Vector2(10, size.y - 10), "Gold: You are here  ·  Double-click to enter  ·  Drag to pan  ·  Scroll to zoom  ·  %s" % _day_label(hour), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#d8c9a8"))

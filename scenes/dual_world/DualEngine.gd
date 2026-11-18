@@ -33,11 +33,11 @@ func T(day: int, hour: int, minute: int = 0) -> int:
 
 
 # ───────────────────────── 新局 / 存读档 ─────────────────────────
-func new_game(announce := true) -> void:
+func _fresh_state() -> Dictionary:
 	var rel := {}
 	for p in d.relation_pairs:
 		rel[Data.pair_key(p[0], p[1])] = {"trust": 62, "damage": 0, "permanent": false, "grievances": []}
-	s = {
+	return {
 		"version": 2, "t": T(1, 7, 0), "playing": true, "speed": DEFAULT_SPEED, "waiting": false, "hold": {},
 		"day": 1, "room": "R05", "author_view": false, "chapter": 1, "chapter_complete": false,
 		"beat_cursor": 0, "pending_choice": {}, "pending_conflict": "", "conflict_queue": [],
@@ -48,8 +48,12 @@ func new_game(announce := true) -> void:
 		"inspected": {}, "ending": "", "final_choice": "", "selected_actor": "detective",
 		"selected_evidence": "", "unlocked_terms": {},
 	}
+
+
+func new_game(announce := true) -> void:
+	s = _fresh_state()
 	set_door_flags()
-	_log("system", "《安眠者有福 · 门的这一侧》—— 第一天清晨。侦探在 R05 居室的床上醒来——四人里醒得最晚。", [])
+	_log("system", "《安眠者有福 · 门的这一侧》—— 第一天清晨。侦探在 R05 居室的床上醒来——四人里醒得最晚。", [], "Day 1: The detective wakes in R05, last among the four.")
 	if announce:
 		_debug("new", "新局：源质知识为空；第一章的错误动机由缺知识驱动。")
 		changed.emit("new")
@@ -60,14 +64,25 @@ func save_dict() -> Dictionary:
 
 
 func load_dict(st: Dictionary) -> bool:
-	if st.is_empty() or not st.has("t"):
-		return false
+	if not (typeof(st.get("t")) in [TYPE_INT, TYPE_FLOAT]) or not is_finite(float(st.t)): return false
+	var defaults := _fresh_state()
+	for key in defaults:
+		if not st.has(key): continue
+		# JSON does not preserve integer versus float; the other structural types
+		# are part of the existing save contract. Future or legacy extra keys survive.
+		var expected := typeof(defaults[key])
+		var actual := typeof(st[key])
+		if (actual != expected and not (actual in [TYPE_INT, TYPE_FLOAT] and expected in [TYPE_INT, TYPE_FLOAT])):
+			if key == "unlocked_terms": continue # repaired below for legacy saves
+			return false
 	new_game(false)
-	for k in st: s[k] = st[k]
+	s.merge(st.duplicate(true), true)
+	s.beat_cursor = clampi(int(s.beat_cursor), 0, d.beats.size())
+	s.found_count = s.evidence.size()
 	if not s.has("unlocked_terms") or typeof(s["unlocked_terms"]) != TYPE_DICTIONARY:
 		s["unlocked_terms"] = {}
 	_migrate_chapter_state(not st.has("chapter") or not st.has("chapter_complete"))
-	s.waiting = not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty()
+	_refresh_waiting()
 	if bool(s.chapter_complete): s.waiting = false
 	set_door_flags()
 	changed.emit("load")
@@ -119,11 +134,9 @@ func _chapter_one_completion_ready() -> bool:
 		return false
 	if float(s.t) < float(CHAPTER_ONE_END_T):
 		return false
-	var plan_index := -1
-	for i in d.beats.size():
-		if str(d.beats[i].id) == "d1_plan":
-			plan_index = i
-			break
+	var plan_index := int(d.beat_index_by_id.get("d1_plan", -1))
+	if not _next_beat_in_chapter().is_empty():
+		return false
 	if plan_index < 0 or int(s.get("beat_cursor", 0)) <= plan_index:
 		return false
 	if not bool(s.get("flags", {}).get("day2_plan", false)):
@@ -148,7 +161,7 @@ func _complete_chapter_one() -> void:
 	s.hold = {}
 	s.postponed = {}
 	s.story_gate = {}
-	_log("system", "第一天晚间收束。第一章完成，众人按作息休息。", [])
+	_log("system", "第一天晚间收束。第一章完成，众人按作息休息。", [], "Chapter 1 complete. Everyone retires for the night.")
 	_debug("chapter", "第一章完成，等待明确继续到第二天。")
 	changed.emit("chapter")
 
@@ -188,8 +201,10 @@ func _debug(kind: String, text: String) -> void:
 	if s.debug_log.size() > 300: s.debug_log.pop_front()
 
 
-func _log(kind: String, text: String, who: Array) -> void:
-	s.log.append({"t": s.t, "kind": kind, "text": text, "who": who})
+func _log(kind: String, text: String, who: Array, display := "") -> void:
+	var item := {"t": s.t, "kind": kind, "text": text, "who": who}
+	if not display.is_empty(): item["display"] = display
+	s.log.append(item)
 	if s.log.size() > 420: s.log.pop_front()
 
 
@@ -297,7 +312,7 @@ func enter_room(id: String, silent := false) -> bool:
 	s.inspected[id] = true
 	if not silent:
 		var extra := "（经 %d 段接驳）" % (path.size() - 2) if path.size() > 2 else ""
-		_log("move", "进入 %s%s" % [d.room_by_id[id].label, extra], [s.selected_actor])
+		_log("move", "进入 %s%s" % [d.room_by_id[id].label, extra], [s.selected_actor], "Entered %s." % tr(str(d.room_by_id[id].label)))
 		sfx.emit("door")
 	changed.emit("room")
 	return true
@@ -327,7 +342,7 @@ func grant_knowledge(id: String, why := "") -> bool:
 	if not d.know_by_id.has(id) or s.knowledge.has(id): return false
 	var kd: Dictionary = d.know_by_id[id]
 	s.knowledge[id] = {"at": s.t, "why": why}
-	_log("knowledge", "【新知 · %s】%s" % [kd.title, kd.text], [])
+	_log("knowledge", "【新知 · %s】%s" % [kd.title, kd.text], [], "Knowledge: %s. %s" % [tr(str(kd.title)), tr(str(kd.text))])
 	_debug("knowledge", "【%s】%s（来源：%s）" % [kd.title, kd.text, why if why != "" else "调查"])
 	notice("Knowledge gained: %s" % tr(str(kd.title)))
 	sfx.emit("page")
@@ -353,7 +368,7 @@ func _recheck_evidence_knowledge() -> void:
 				s.beliefs[a][eid] = "truth"
 			if not was_correct:
 				s.case_notes.append({"eid": eid, "at": s.t, "text": e.truth, "reread": true})
-				_log("evidence", "【证物改读 · %s】%s" % [e.label, e.truth], who)
+				_log("evidence", "【证物改读 · %s】%s" % [e.label, e.truth], who, "Revised reading: %s. %s" % [tr(str(e.label)), tr(str(e.truth))])
 				_debug("evidence", "%s → 补齐知识后改读为客观读法：%s" % [e.label, e.truth])
 			for k in e.get("grants", []):
 				if not s.knowledge.has(k): newly_granted.append([str(k), str(e.label)])
@@ -395,7 +410,7 @@ func inspect_evidence(eid: String, visual_presented := false) -> bool:
 	s.evidence[eid]["correct"] = r.correct
 	# 仅在首次调查或知识补齐改读时写入玩家日志，避免复查同一证物刷屏重复记录
 	if first or (r.correct and not prev_correct):
-		_log("evidence", "【%s】%s" % [e.label, r.text], e.get("actors", []))
+		_log("evidence", "【%s】%s" % [e.label, r.text], e.get("actors", []), "%s: %s" % [tr(str(e.label)), tr(str(r.text))])
 	if not visual_presented:
 		say("detective", r.text, "truth" if r.correct else "think")
 		sfx.emit("pen")
@@ -462,7 +477,7 @@ func open_deduction(did: String, next := "") -> void:
 		if next != "": s.postponed["next"] = next
 	s.pending_deduction = {"id": did, "next": next}
 	s.waiting = true
-	_log("beat", "摊开案卷 · %s" % d.deduction_by_id[did].title, [s.selected_actor])
+	_log("beat", "摊开案卷 · %s" % d.deduction_by_id[did].title, [s.selected_actor], "Deduction: %s" % tr(str(d.deduction_by_id[did].title)))
 	_debug("deduction", "推演开启 %s（争执前必经的一步）" % did)
 	sfx.emit("page")
 	changed.emit("deduction")
@@ -471,8 +486,10 @@ func open_deduction(did: String, next := "") -> void:
 func solve_deduction(did: String, hyp_id: String, picked: Array = []) -> void:
 	if s.pending_deduction.is_empty() or s.pending_deduction.id != did: return
 	var dd: Dictionary = d.deduction_by_id[did]
-	var pool: Array = picked if not picked.is_empty() else dd.evidence.filter(func(e): return s.evidence.has(e))
-	var relevant: Array = pool.filter(func(e): return dd.evidence.has(e))
+	var relevant: Array = []
+	for evidence_id in dd.evidence:
+		if s.evidence.has(evidence_id) and (picked.is_empty() or picked.has(evidence_id)) and not relevant.has(evidence_id):
+			relevant.append(evidence_id)
 	var need_min := int(dd.get("minEvidence", 2))
 	var solved: bool = hyp_id == dd.correct and relevant.size() >= need_min
 	s.deductions[did] = "solved" if solved else "wrong"
@@ -480,7 +497,7 @@ func solve_deduction(did: String, hyp_id: String, picked: Array = []) -> void:
 	var nxt: String = s.pending_deduction.next
 	s.pending_deduction = {}
 	_refresh_waiting()
-	_log("deduce", "案卷推演 · %s → %s" % [dd.title, "已解开" if solved else "暂留空白"], [s.selected_actor])
+	_log("deduce", "案卷推演 · %s → %s" % [dd.title, "已解开" if solved else "暂留空白"], [s.selected_actor], "%s: %s" % [tr(str(dd.title)), "Solved" if solved else "Unresolved"])
 	_debug("deduction", "%s → %s（假设 %s，证物 %d/%d 件）" % [did, s.deductions[did], hyp_id, relevant.size(), need_min])
 	if solved:
 		notice("Deduction solved: %s" % tr(str(dd.title)))
@@ -526,9 +543,10 @@ func retry_conflict_deduction(cid: String) -> bool:
 func postpone_deduction() -> bool:
 	if s.pending_deduction.is_empty(): return false
 	s.postponed = s.pending_deduction.duplicate()
+	s.postponed["room"] = str(s.room)
 	s.pending_deduction = {}
 	_refresh_waiting()
-	_log("system", "【先去取证】%s 先放一放，证物齐了再回来推演。" % d.deduction_by_id[s.postponed.id].title, [])
+	_log("system", "【先去取证】%s 先放一放，证物齐了再回来推演。" % d.deduction_by_id[s.postponed.id].title, [], "Collect clues before resuming %s." % tr(str(d.deduction_by_id[s.postponed.id].title)))
 	_debug("deduction", "推演 %s 被推迟，等待取证" % s.postponed.id)
 	changed.emit("hold")
 	return true
@@ -542,7 +560,8 @@ func deduction_progress(did: String) -> Dictionary:
 
 
 func _refresh_waiting() -> void:
-	s.waiting = not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty()
+	# While collecting clues, defer both the follow-up choice and any conflict.
+	s.waiting = s.postponed.is_empty() and (not s.pending_choice.is_empty() or s.pending_conflict != "" or not s.pending_deduction.is_empty())
 
 
 ## 争执里的正解，只有先完成对应推演才出现在侦探眼前。
@@ -568,7 +587,7 @@ func open_conflict(cid: String) -> void:
 	if not s.conflict_queue.has(cid): s.conflict_queue.append(cid)
 	s.pending_conflict = s.conflict_queue[0]
 	s.waiting = true
-	_log("confront", "争执 · %s" % c.title, c.parties)
+	_log("confront", "争执 · %s" % c.title, c.parties, "Dispute: %s" % tr(str(c.title)))
 	_debug("conflict", "%s（%s）：%s %s" % [c.title, cid, c.get("wrong", ""), c.get("note", "")])
 	sfx.emit("error")
 	changed.emit("conflict")
@@ -597,7 +616,7 @@ func resolve_conflict(cid: String, option_id: String, defer := false) -> void:
 	var wrong: bool = defer or option_id != c.correct
 	if defer and not c.get("permanent", false):
 		_pop_conflict(cid)
-		_log("say", "【%s】先搁下，这一页留白。" % c.title, c.parties)
+		_log("say", "【%s】先搁下，这一页留白。" % c.title, c.parties, "%s: left open." % tr(str(c.title)))
 		_debug("conflict", "%s：被搁置，未拆解" % c.title)
 		changed.emit("conflict")
 		return
@@ -606,7 +625,7 @@ func resolve_conflict(cid: String, option_id: String, defer := false) -> void:
 	var label := "先搁下"
 	for o in c.options:
 		if o.id == option_id: label = o.label
-	_log("say", "%s · %s" % [c.title, label], c.parties)
+	_log("say", "%s · %s" % [c.title, label], c.parties, "%s: %s" % [tr(str(c.title)), tr(label)])
 	_debug("conflict", "%s → %s（%s）；词义 %s，判定 %s" % [c.title, "误判" if wrong else "正确", option_id if option_id != "" else "defer", c.word, c.correct])
 	var a: String = c.parties[0]
 	var b: String = c.parties[1]
@@ -646,19 +665,18 @@ func resolve_conflict(cid: String, option_id: String, defer := false) -> void:
 
 
 func choose(beat_id: String, option_id: String) -> void:
-	var beat: Dictionary = {}
-	for b in d.beats:
-		if b.id == beat_id: beat = b
-	if beat.is_empty() or not beat.has("choice"): return
-	# 幂等保护：只有当前挂起的抉择才能结算
-	if s.pending_choice.is_empty() or str(s.pending_choice.get("beat_id", "")) != beat_id: return
+	if not s.postponed.is_empty() or not s.pending_deduction.is_empty(): return
+	var beat: Dictionary = d.beat_by_id.get(beat_id, {})
+	if beat.is_empty() or str(s.pending_choice.get("beat_id", "")) != beat_id: return
+	# Use the exact effective choice shown at dispatch, including any variant patch.
+	var choice: Dictionary = s.pending_choice.get("choice", beat.get("choice", {}))
 	var opt: Dictionary = {}
-	for o in beat.choice.options:
-		if o.id == option_id: opt = o
+	for o in choice.get("options", []):
+		if o.id == option_id: opt = o; break
 	if opt.is_empty(): return
-	s.choices[beat.choice.id] = option_id
+	s.choices[choice.id] = option_id
 	for k in opt.get("set", {}): s.flags[k] = opt.set[k]
-	if beat.choice.id == "final": s.final_choice = option_id
+	if choice.id == "final": s.final_choice = option_id
 	for tr in opt.get("trust", []):
 		if tr is Array and tr.size() >= 3:
 			var rel := _rel(str(tr[0]), str(tr[1]))
@@ -668,7 +686,7 @@ func choose(beat_id: String, option_id: String) -> void:
 	s.pending_choice = {}
 	_refresh_waiting()
 	var resolved_beat := _resolve_beat(beat)
-	_log("choice", "%s → %s" % [resolved_beat.title, opt.label], [s.selected_actor])
+	_log("choice", "%s → %s" % [resolved_beat.title, opt.label], [s.selected_actor], "%s: %s" % [tr(str(resolved_beat.title)), tr(str(opt.label))])
 	_debug("choice", "%s / %s %s" % [resolved_beat.title, option_id, "（设计中为正解）" if opt.get("correct", false) else ""])
 	var after_lines: Array = opt.get("after_lines", [])
 	if after_lines.is_empty():
@@ -677,7 +695,7 @@ func choose(beat_id: String, option_id: String) -> void:
 		for ln in after_lines:
 			var who: String = str(ln[0])
 			var nm: String = "" if who == "narrator" else d.actor_name(who) + "："
-			_log("say", nm + str(ln[1]), [who])
+			_log("say", nm + str(ln[1]), [who], ("" if who == "narrator" else tr(d.actor_name(who)) + ": ") + tr(str(ln[1])))
 			say(who, str(ln[1]), str(ln[2]) if ln.size() > 2 else "")
 	sfx.emit("error" if opt.get("correct", true) == false else "click")
 	changed.emit("choice")
@@ -694,44 +712,33 @@ func effective_beat_branch(b: Dictionary) -> Dictionary:
 
 
 func effective_beat_lines(b: Dictionary) -> Array:
-	var br := effective_beat_branch(b)
-	if not br.is_empty() and br.has("lines"):
-		return br.lines
-	return b.get("lines", [])
+	return _resolve_beat(b).get("lines", [])
+
+
+func _next_beat_in_chapter() -> Dictionary:
+	var cursor := int(s.beat_cursor)
+	if cursor < 0 or cursor >= d.beats.size(): return {}
+	var beat: Dictionary = d.beats[cursor]
+	return {} if _is_chapter_one() and float(beat.at) > CHAPTER_ONE_END_T else beat
 
 
 func next_beat() -> void:
 	if _is_chapter_one() and bool(s.get("chapter_complete", false)):
 		notice("Chapter 1 is complete. Choose Chapter 2 to continue.")
 		return
-	# 先消费当前时刻已经抵达的第一章节拍（尤其是 d1_plan），再寻找下一节拍。
-	# 否则开发跳拍停在 21:35 时会绕过收束节拍，直接把章节标为完成。
-	if _is_chapter_one():
-		process_beats()
-		if bool(s.get("chapter_complete", false)):
-			changed.emit("jump")
-			return
 	if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty() or not s.get("postponed", {}).is_empty():
 		notice("Finish the current investigation or choice first.")
 		return
-	if _is_chapter_one():
-		for b in d.beats:
-			if float(b.at) > float(s.t) + 0.01 and float(b.at) <= CHAPTER_ONE_END_T:
-				s.t = float(b.at)
-				process_beats()
-				changed.emit("jump")
-				return
+	var next := _next_beat_in_chapter()
+	if not next.is_empty():
+		s.t = maxf(float(s.t), float(next.at))
+	elif _is_chapter_one():
 		s.t = float(CHAPTER_ONE_END_T)
-		process_beats()
-		changed.emit("jump")
+	else:
+		finish()
 		return
-	for b in d.beats:
-		if b["at"] > s.t + 0.01:
-			s.t = float(b["at"])
-			process_beats()
-			changed.emit("jump")
-			return
-	finish()
+	process_beats()
+	changed.emit("jump")
 
 
 func jump_day(day: int) -> void:
@@ -776,111 +783,101 @@ func _resolve_beat(b: Dictionary) -> Dictionary:
 	return out
 
 
+## Apply at most one beat. The presentation owns the time between beats.
 func process_beats() -> void:
-	if _is_chapter_one() and bool(s.get("chapter_complete", false)): return
-	if s.waiting: return
-	var fired := 0
-	while s.beat_cursor < d.beats.size() and d.beats[s.beat_cursor]["at"] <= s.t:
-		var b: Dictionary = _resolve_beat(d.beats[s.beat_cursor])
-		if _is_chapter_one() and float(b.at) >= CHAPTER_TWO_START_T: break
-		# 场景门：标记为现场到达型的节拍不会把玩家瞬移到房间；时间停住，等玩家亲自走到场景。
-		if b.get("requires_room", false) and not s.author_view and str(b.get("room", "")) != str(s.room):
-			var target_room := str(b.get("room", ""))
-			if str(s.get("story_gate", {}).get("beat", "")) != str(b.id):
-				s.story_gate = {"beat": b.id, "room": target_room}
-				s.t = float(b.at)
-				var destination := tr(str(d.room_by_id[target_room].label)) if d.room_by_id.has(target_room) else "the scene"
-				notice("Go to " + destination)
-			break
-		if not s.get("story_gate", {}).is_empty() and str(s.story_gate.get("beat", "")) == str(b.id):
-			s.story_gate = {}
-		# 搜证门槛：推演节拍触发前，侦探必须亲自在现场拿到足够的相关证物。
-		if _hold_for_evidence(b): break
-		s.beat_cursor += 1
-		s.current_beat = b.id
-		if b.has("room") and d.room_by_id.has(b.room) and not b.get("remote", false) and s.room != b.room and not s.author_view:
-			s.room = b.room  # 剧情推进时主角自动跟随到场（隔墙/远程事件不瞬移主角）
-		var where: String = " · " + d.room_by_id[b.room].label if b.has("room") and d.room_by_id.has(b.room) else ""
-		var lines := effective_beat_lines(b)
-		var cast := _beat_speakers(b)
-		_log("beat", "【%s】%s" % [b.title, where], cast)
-		for ln in lines:
-			var who: String = ln[0]
-			var nm: String = "" if who == "narrator" else d.actor_name(who) + "："
-			_log("say", nm + str(ln[1]), [who])
-			say(who, ln[1], str(ln[2]) if ln.size() > 2 else "")
-		var br := effective_beat_branch(b)
-		for td in br.get("trust_delta", []):
-			if td.size() >= 3:
-				var rel := _rel(str(td[0]), str(td[1]))
-				var delta := int(td[2])
-				rel.trust = clampi(int(rel.trust) + delta, 0, 100)
-				if delta < 0:
-					rel.damage = int(rel.damage) - delta
-					rel.grievances.append({
-						"who": str(td[0]), "other": str(td[1]), "one_sided": true, "at": s.t,
-						"text": "%s认为在「%s」的处置上被当作诱饵替自己做了决定。" % [d.actor_name(str(td[0])), b.title]
-					})
-		for tw in b.get("unlock_terms", []): unlock_term(str(tw))
-		if b.has("grant"): grant_knowledge(b.grant, b.title)
-		if b.has("flag"): s.flags[b.flag] = true
-		if b.has("deduction") and not s.deductions.has(b.deduction): open_deduction(b.deduction)
-		if b.has("openConflict") and not s.conflicts.has(b.openConflict): open_conflict(b.openConflict)
-		if b.has("choice"):
-			s.pending_choice = {"beat_id": b.id, "choice": b.choice}
-			s.waiting = true
-		if b.get("mustChoose", false) and not s.conflicts.has("c_demon") and not s.conflict_queue.has("c_demon"):
-			open_conflict("c_demon")
-		fired += 1
-		# 一次只交付一个场景：字幕读完后再继续时间线，禁止同一帧跨房间连播多幕。
-		break
+	if s.waiting or (_is_chapter_one() and bool(s.get("chapter_complete", false))): return
+	var beat := _next_beat_in_chapter()
+	var applied := false
+	if not beat.is_empty() and float(beat.at) <= float(s.t):
+		var resolved := _resolve_beat(beat)
+		if _beat_location_ready(resolved) and not _hold_for_evidence(resolved):
+			_apply_beat(resolved)
+			applied = true
 	s.day = clock().day
 	set_door_flags()
-	if _chapter_one_completion_ready():
-		_complete_chapter_one()
-	if fired > 0: changed.emit("beat")
+	if _chapter_one_completion_ready(): _complete_chapter_one()
+	if applied: changed.emit("beat")
 
 
-## 以「游戏分钟」推进（真实秒 × 倍率）。有待决事项时时间冻结，直到玩家处理。
+func _beat_location_ready(beat: Dictionary) -> bool:
+	var target := str(beat.get("room", ""))
+	var held_id := str(s.get("story_gate", {}).get("beat", ""))
+	if bool(beat.get("requires_room", false)) and not s.author_view and target != str(s.room):
+		if held_id != str(beat.id):
+			s.story_gate = {"beat": beat.id, "room": target}
+			s.t = float(beat.at)
+			var destination := tr(str(d.room_by_id[target].label)) if d.room_by_id.has(target) else "the scene"
+			notice("Go to " + destination)
+		return false
+	if held_id == str(beat.id): s.story_gate = {}
+	return true
+
+
+func _apply_beat(b: Dictionary) -> void:
+	s.beat_cursor += 1
+	s.current_beat = b.id
+	if b.has("room") and d.room_by_id.has(b.room) and not b.get("remote", false) and s.room != b.room and not s.author_view:
+		s.room = b.room  # 剧情推进时主角自动跟随到场（隔墙/远程事件不瞬移主角）
+	var where: String = " · " + d.room_by_id[b.room].label if b.has("room") and d.room_by_id.has(b.room) else ""
+	var lines: Array = b.get("lines", [])
+	var cast := _beat_speakers(b)
+	_log("beat", "【%s】%s" % [b.title, where], cast, tr(str(b.title)))
+	for ln in lines:
+		var who: String = ln[0]
+		var nm: String = "" if who == "narrator" else d.actor_name(who) + "："
+		_log("say", nm + str(ln[1]), [who], ("" if who == "narrator" else tr(d.actor_name(who)) + ": ") + tr(str(ln[1])))
+		say(who, ln[1], str(ln[2]) if ln.size() > 2 else "")
+	for td in b.get("trust_delta", []):
+		if td.size() >= 3:
+			var rel := _rel(str(td[0]), str(td[1]))
+			var delta := int(td[2])
+			rel.trust = clampi(int(rel.trust) + delta, 0, 100)
+			if delta < 0:
+				rel.damage = int(rel.damage) - delta
+				rel.grievances.append({
+					"who": str(td[0]), "other": str(td[1]), "one_sided": true, "at": s.t,
+					"text": "%s认为在「%s」的处置上被当作诱饵替自己做了决定。" % [d.actor_name(str(td[0])), b.title]
+				})
+	for tw in b.get("unlock_terms", []): unlock_term(str(tw))
+	if b.has("grant"): grant_knowledge(b.grant, b.title)
+	if b.has("flag"): s.flags[b.flag] = true
+	if b.has("deduction") and not s.deductions.has(b.deduction): open_deduction(b.deduction)
+	if b.has("openConflict") and not s.conflicts.has(b.openConflict): open_conflict(b.openConflict)
+	if b.has("choice"):
+		s.pending_choice = {"beat_id": b.id, "choice": b.choice}
+		s.waiting = true
+	if b.get("mustChoose", false) and not s.conflicts.has("c_demon") and not s.conflict_queue.has("c_demon"):
+		open_conflict("c_demon")
+
+
+## Advance simulation or resolve a pending boundary, once per update.
 func tick(dt: float) -> void:
 	if not s.playing or s.waiting or s.ending != "": return
 	if _is_chapter_one() and bool(s.get("chapter_complete", false)): return
-	if _is_chapter_one() and float(s.t) >= CHAPTER_ONE_END_T:
+	if not s.get("story_gate", {}).is_empty() or not s.get("hold", {}).is_empty():
 		process_beats()
 		return
-	if not s.get("story_gate", {}).is_empty():
-		if str(s.room) != str(s.story_gate.get("room", "")): return
-		s.story_gate = {}
-		process_beats()
-		if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty(): return
-	if not s.get("hold", {}).is_empty():  # 等侦探搜证：时间不走，每帧复核门槛
-		process_beats()
-		# 门槛解除后若已弹出推演/争执/抉择或进入新门禁，必须立刻返回，禁止同帧推进时间穿透到下一节拍
-		if s.waiting or not s.get("hold", {}).is_empty() or not s.get("story_gate", {}).is_empty(): return
-	if not s.get("postponed", {}).is_empty():  # 玩家主动推迟了推演：证物够了再弹回来
+	if not s.get("postponed", {}).is_empty():
 		var pp: Dictionary = s.postponed
 		var gp := gate_status(str(pp.id))
-		if not (gp.ok or gp.stuck): return
-		s.postponed = {}
-		open_deduction(str(pp.id), str(pp.get("next", "")))
+		if gp.ok or gp.stuck:
+			var scene_room := str(pp.get("room", d.deduction_by_id[pp.id].room))
+			if s.room != scene_room and not path_to(scene_room).is_empty(): enter_room(scene_room, true)
+			s.postponed = {}
+			open_deduction(str(pp.id), str(pp.get("next", "")))
 		return
-	if s.t >= END_T:
+	var horizon := float(CHAPTER_ONE_END_T if _is_chapter_one() else END_T)
+	var next := _next_beat_in_chapter()
+	if not next.is_empty() and float(next.at) <= float(s.t):
+		process_beats()
+		return
+	if float(s.t) >= horizon and not _is_chapter_one():
 		finish()
 		return
-	var horizon := float(END_T)
-	if _is_chapter_one(): horizon = minf(horizon, float(CHAPTER_ONE_END_T))
-	var next_t := minf(horizon, s.t + dt * s.speed)
-	# 高倍速（如 ×60/×240）下精确停靠在下一未触发节拍时刻，避免跳过风窗或连撞多拍
-	if s.beat_cursor < d.beats.size():
-		var beat_at := float(d.beats[s.beat_cursor]["at"])
-		if s.t < beat_at and next_t > beat_at:
-			next_t = beat_at
-	s.t = next_t
+	if not next.is_empty(): horizon = minf(horizon, float(next.at))
+	s.t = minf(horizon, float(s.t) + dt * float(s.speed))
 	set_door_flags()
 	process_beats()
-	if _is_chapter_one() and float(s.t) >= CHAPTER_ONE_END_T:
-		return
-	if s.t >= END_T and not s.waiting: finish()
 
 
 # ───────────────────────── 搜证门槛 / 自动搜证 ─────────────────────────
@@ -916,7 +913,7 @@ func _hold_for_evidence(b: Dictionary) -> bool:
 		if s.room != room:
 			s.room = room
 			s.inspected[room] = true
-			_log("move", "赶到 %s" % d.room_by_id[room].label, [s.selected_actor])
+			_log("move", "赶到 %s" % d.room_by_id[room].label, [s.selected_actor], "Arrived at %s." % tr(str(d.room_by_id[room].label)))
 			sfx.emit("door")
 			changed.emit("room")
 	var g := gate_status(b.deduction, s.room)
@@ -926,12 +923,12 @@ func _hold_for_evidence(b: Dictionary) -> bool:
 	if g.stuck:
 		# 再没有能取到的证物了：不让游戏卡死，凭现有线索推演（推演本身会因证物不足判错）
 		s.hold = {}
-		_log("system", "【线索有限】能取到的相关证物都已查过，只能凭现有线索推演。", [])
+		_log("system", "【线索有限】能取到的相关证物都已查过，只能凭现有线索推演。", [], "All reachable clues collected. Review the available evidence.")
 		return false
 	s.t = minf(float(s.t), float(b["at"]))
 	if hold.get("beat", "") != b.id:
 		s.hold = {"beat": b.id, "deduction": b.deduction}
-		_log("system", "【先搜证】%s：手头相关证物 %d/%d 件，推演前先到现场查看。" % [d.deduction_by_id[b.deduction].title, g.have, g.need], [])
+		_log("system", "【先搜证】%s：手头相关证物 %d/%d 件，推演前先到现场查看。" % [d.deduction_by_id[b.deduction].title, g.have, g.need], [], "Collect clues for %s: %d/%d." % [tr(str(d.deduction_by_id[b.deduction].title)), g.have, g.need])
 		_debug("gate", "推演 %s 被挂起：证物 %d/%d" % [b.deduction, g.have, g.need])
 		notice("Collect %d more clues for %s." % [g.need - g.have, tr(str(d.deduction_by_id[b.deduction].title))])
 		changed.emit("hold")
@@ -997,7 +994,7 @@ func search_step() -> bool:
 ## 五天所有场景统一按当前生效分支台词的实际说话者确定镜头内角色。
 func _beat_speakers(b: Dictionary) -> Array:
 	var out: Array = []
-	for ln in effective_beat_lines(b):
+	for ln in b.get("lines", []):
 		if ln.size() < 2: continue
 		var who := str(ln[0])
 		if who != "narrator" and d.actor_by_id.has(who) and not out.has(who): out.append(who)
@@ -1013,14 +1010,11 @@ func room_occupants() -> Dictionary:
 	var busy := {}
 	# 挂起在现场等待搜证／到达时，对应现场等候的当事人留在现场房间
 	var hold_beat_id := str(s.get("hold", {}).get("beat", s.get("story_gate", {}).get("beat", "")))
-	if hold_beat_id != "":
-		for b in d.beats:
-			if str(b.id) == hold_beat_id:
-				var target_rm := str(b.get("room", ""))
-				for wid in b.get("waiters", []):
-					busy[str(wid)] = true
-					put.call(str(wid), target_rm)
-				break
+	if d.beat_by_id.has(hold_beat_id):
+		var held := _resolve_beat(d.beat_by_id[hold_beat_id])
+		for wid in held.get("waiters", []):
+			busy[str(wid)] = true
+			put.call(str(wid), str(held.get("room", "")))
 	# 争执弹窗激活时，争执当事人留在当前房间
 	if s.pending_conflict != "" and d.conflict_by_id.has(s.pending_conflict):
 		var cf: Dictionary = d.conflict_by_id[s.pending_conflict]
@@ -1029,8 +1023,12 @@ func room_occupants() -> Dictionary:
 			busy[str(pid)] = true
 			put.call(str(pid), str(s.room))
 	var last: Dictionary = {}
-	for b in d.beats:
-		if b["at"] <= s.t and b.has("lines") and d.beats.find(b) < s.beat_cursor: last = _resolve_beat(b)
+	for i in range(int(s.beat_cursor) - 1, -1, -1):
+		if float(d.beats[i].at) > float(s.t): continue
+		var beat := _resolve_beat(d.beats[i])
+		if not beat.has("lines"): continue
+		last = beat
+		break
 	# 只显示当前场景真正开口的角色；名单不再把整张地图/全体角色瞬间搬来。
 	# 场景人物在短暂交谈后回到自己的日常位置，不会在错误房间滞留数小时。
 	if not last.is_empty() and s.t - float(last["at"]) < float(last.get("duration", 25)):
@@ -1066,24 +1064,27 @@ func actors_in_room(room: String) -> Array:
 
 
 func current_demon() -> bool:
-	var last: Dictionary = {}
-	for b in d.beats:
-		if b["at"] <= s.t and b.get("demon", false) and d.beats.find(b) < s.beat_cursor: last = b
-	return not last.is_empty() and s.t - last["at"] < 95
+	for i in range(int(s.beat_cursor) - 1, -1, -1):
+		var beat: Dictionary = d.beats[i]
+		var elapsed := float(s.t) - float(beat.at)
+		if elapsed >= 95: break
+		if elapsed >= 0 and _resolve_beat(beat).get("demon", false): return true
+	return false
 
 
 ## 音乐状态：程序化配乐据此改变调性、速度与织体。
 func music_state() -> Dictionary:
 	var c := clock()
 	var mood := "investigation"
+	var demon := current_demon()
 	if s.ending != "": mood = "truth"
-	elif current_demon(): mood = "demon"
+	elif demon: mood = "demon"
 	elif s.pending_conflict != "" or not s.pending_choice.is_empty(): mood = "confrontation"
 	elif s.t >= T(1, 17, 30) and s.t < T(1, 21) and s.day == 1: mood = "dumpling"
 	elif c.hour >= 20.0 or c.hour < 6.0: mood = "night"
 	elif s.day >= 2 and c.hour >= 9.0 and c.hour < 17.0: mood = "daily"
 	var tension := (0.5 if s.irreparable else 0.0) + (0.3 if s.pending_conflict != "" else 0.0)
-	return {"mood": mood, "hour": c.hour, "demon": current_demon(), "tension": tension}
+	return {"mood": mood, "hour": c.hour, "demon": demon, "tension": tension}
 
 
 # ───────────────────────── 结局 ─────────────────────────

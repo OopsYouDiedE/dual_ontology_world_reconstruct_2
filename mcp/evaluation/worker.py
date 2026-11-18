@@ -22,6 +22,7 @@ import common as c
 
 sys.path.insert(0, str(c.ROOT / "tools/testing"))
 import test_results  # noqa: E402
+from survey_plan import resolve_case  # noqa: E402
 
 sys.path.insert(0, str(c.ROOT / "mcp/game"))
 from concurrency_observer import ConcurrencyObserver  # noqa: E402
@@ -40,7 +41,7 @@ def survey_cases(root, segments=None):
             raise ValueError("Invalid scene survey case id")
         if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,63}", str(row.get("segment_id", ""))):
             raise ValueError("Invalid scene survey segment id")
-        if row["id"] in seen or not isinstance(row.get("fixture"), dict):
+        if row["id"] in seen:
             raise ValueError("Duplicate or malformed scene survey case")
         seen.add(row["id"])
     if segments is not None:
@@ -51,7 +52,7 @@ def survey_cases(root, segments=None):
         if unknown:
             raise ValueError("Unknown scene survey segment: " + ", ".join(unknown))
         cases = [row for row in cases if row["segment_id"] in set(segments)]
-    return cases
+    return [resolve_case(case, root) for case in cases]
 
 
 def newest_fixture(root, name):
@@ -216,7 +217,7 @@ class Evaluation:
                       "source_fingerprint_before": c.source_fingerprint(),
                       "godot": str(self.godot), "godot_sha256": c.sha256(self.godot),
                       "acceptance_eligible": False, "acceptance_scored": False,
-                      "notice": "测试结果记录测量范围、证据与七项评分。",
+                      "notice": "开发检查记录复现范围、证据与失败阶段；正式评分另行采集。",
                       "jobs": {job: {"state": "planned", "segment_id": segment}
                                for job, segment in planned_jobs(self.launch["profile"], self.launch["rendered"], self.launch.get("segments"))},
                       "observed_concurrency": {"peak_live_hosts": 0, "witness": []}, "errors": []}
@@ -380,7 +381,7 @@ class Evaluation:
         elif job == "story-visual":
             script = "res://tools/test/mainline_survey.gd"
             headless = False
-            cases = c.read_json(self.root / "assets/data/test_scenarios/mainline_survey.json")
+            cases = survey_cases(self.root)
             cases = [row for row in cases if row.get("segment_id") == "wake"][:1]
             if not cases:
                 raise ValueError("Wake scenario missing from survey plan")
@@ -414,7 +415,7 @@ class Evaluation:
         if script:
             command += ["--script", script]
         else:
-            command += ["res://tools/testing/StoryTest.tscn"]
+            user.insert(0, "--dv-workbench")
         command += ["--", *user]
         return command, headless, timeout, output
 

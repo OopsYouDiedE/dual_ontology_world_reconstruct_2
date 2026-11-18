@@ -14,6 +14,7 @@ extends Node
 ##     空格 / 回车可跳过字幕。结束后把引擎房间切到 B-P，接上原有「乙区小厨房 · 摊开笔记」推演节拍。
 
 const Figure := preload("res://scenes/dual_world/ProceduralFigure.gd")
+const RoomPaint := preload("res://scenes/components/world/RoomPaint.gd")
 
 const LEN := 20.0            # 走廊长度（x）
 const DEPTH := 3.4           # 走廊进深（z，+z 朝向镜头）
@@ -70,7 +71,7 @@ var _detective_tag: Label3D
 var _detective_tag_was_visible := true
 
 
-func begin(h: Control, to_room: String) -> void:
+func begin(h: Control, to_room: String, already_joined := false) -> void:
 	host = h
 	_to_room = to_room
 	active = true
@@ -86,11 +87,19 @@ func begin(h: Control, to_room: String) -> void:
 			_detective_tag = child
 			_detective_tag_was_visible = child.visible
 			child.visible = false
-	host._fade(1.0, 0.3, _setup_stage)
+	if not already_joined:
+		host._fade(1.0, 0.3, _setup_stage)
+		return
+	_setup_stage(false)
+	host.det_pos = PLAYER_SPOT
+	host.det.position = Vector3(PLAYER_SPOT.x, 0, PLAYER_SPOT.y)
+	_focus = Vector3(PLAYER_SPOT.x, 0.75, DEPTH * 0.5)
+	_enter_free()
+	_apply_camera()
 
 
 # ───────────────────────── 舞台 ─────────────────────────
-func _setup_stage() -> void:
+func _setup_stage(reveal := true) -> void:
 	_saved_visible = host.room_mesh.visible
 	_sun_was_on = host.sun.visible
 	host.sun.visible = false            # 走廊是室内：关掉昼夜系统的直射阳光，只用自己的灯
@@ -136,7 +145,7 @@ func _setup_stage() -> void:
 	_apply_camera()
 	phase = "exit"
 	_pt = 0.0
-	host._fade(0.0, 0.5)
+	if reveal: host._fade(0.0, 0.5)
 
 
 func _mat(c: Color, emit := 0.0) -> StandardMaterial3D:
@@ -150,7 +159,7 @@ func _mat(c: Color, emit := 0.0) -> StandardMaterial3D:
 	return m
 
 
-func _box(pos: Vector3, size: Vector3, c: Color, emit := 0.0) -> MeshInstance3D:
+func _box(pos: Vector3, size: Vector3, c: Color, emit := 0.0, solid := true) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = size
@@ -158,9 +167,10 @@ func _box(pos: Vector3, size: Vector3, c: Color, emit := 0.0) -> MeshInstance3D:
 	mi.material_override = _mat(c, emit)
 	mi.position = pos
 	_root.add_child(mi)
-	var shape := BoxShape3D.new()
-	shape.size = size
-	_add_surface_collision(mi, shape)
+	if solid:
+		var shape := BoxShape3D.new()
+		shape.size = size
+		_add_surface_collision(mi, shape)
 	return mi
 
 
@@ -246,11 +256,21 @@ func _plant(at: Vector3) -> void:
 
 func _build_corridor() -> void:
 	# 地板：木拼 + 长条地毯
-	_box(Vector3(LEN * 0.5, -0.06, DEPTH * 0.5), Vector3(LEN + 1.2, 0.12, DEPTH + 0.4), Color("#5d4430"))
-	_box(Vector3(LEN * 0.5, 0.005, DEPTH * 0.5), Vector3(LEN - 0.6, 0.02, 1.25), Color("#6b2f2a"))
-	_box(Vector3(LEN * 0.5, 0.012, DEPTH * 0.5), Vector3(LEN - 0.6, 0.01, 0.12), Color("#c2a35b"))
+	var floor_color := Color("#635447")
+	var floor := _box(Vector3(LEN * 0.5, -0.06, DEPTH * 0.5), Vector3(LEN + 1.2, 0.12, DEPTH + 0.4), floor_color)
+	floor.material_override = RoomPaint.finish_material(floor_color, 0, 0.45)
+	var runner_color := Color("#653539")
+	var runner := _box(Vector3(LEN * 0.5, 0.005, DEPTH * 0.5), Vector3(LEN - 0.6, 0.02, 1.25), runner_color)
+	runner.material_override = RoomPaint.finish_material(runner_color, 2, 0.42)
+	# Slim binding running along both edges, leaving the walk line unobstructed.
+	for offset in [-0.55, 0.55]:
+		_box(Vector3(LEN * 0.5, 0.014, DEPTH * 0.5 + offset), Vector3(LEN - 0.65, 0.009, 0.035), Color("#b49a6e"), 0.0, false)
 	# 北墙（带门）、西端墙、东端拱门、南侧矮墙（剖面，镜头一侧）
-	_box(Vector3(LEN * 0.5, 1.5, -0.12), Vector3(LEN + 0.4, 3.0, 0.24), Color("#8f785a"))
+	var plaster := Color("#a3937b")
+	var north_wall := _box(Vector3(LEN * 0.5, 1.5, -0.12), Vector3(LEN + 0.4, 3.0, 0.24), plaster)
+	north_wall.material_override = RoomPaint.finish_material(plaster, 1, 0.2)
+	_box(Vector3(LEN * 0.5, 0.59, 0.013), Vector3(LEN, 0.9, 0.028), Color("#554137"), 0.0, false)
+	_box(Vector3(LEN * 0.5, 1.08, 0.035), Vector3(LEN, 0.08, 0.065), Color("#6c523e"), 0.0, false)
 	_box(Vector3(LEN * 0.5, 0.14, 0.02), Vector3(LEN, 0.28, 0.06), Color("#4a3426"))        # 踢脚线
 	_box(Vector3(-0.12, 1.5, 0.35), Vector3(0.24, 3.0, 1.1), Color("#85704f"))
 	_box(Vector3(-0.12, 1.5, DEPTH - 0.35), Vector3(0.24, 3.0, 1.1), Color("#85704f"))
@@ -262,8 +282,9 @@ func _build_corridor() -> void:
 	_box(Vector3(LEN + 0.12, 1.5, 0.45), Vector3(0.24, 3.0, 0.9), Color("#85704f"))
 	_box(Vector3(LEN + 0.12, 1.5, DEPTH - 0.45), Vector3(0.24, 3.0, 0.9), Color("#85704f"))
 	_box(Vector3(LEN + 0.12, 2.65, DEPTH * 0.5), Vector3(0.24, 0.7, DEPTH), Color("#85704f"))
-	var opening := _box(Vector3(LEN + 0.55, 1.1, DEPTH * 0.5), Vector3(0.1, 2.2, DEPTH - 0.9), Color("#ffb347"), 1.5)
+	var opening := _box(Vector3(LEN + 0.55, 1.1, DEPTH * 0.5), Vector3(0.1, 2.2, DEPTH - 0.9), Color("#70493c"), 0.06)
 	opening.name = "KitchenOpening"
+	_paint_entry_trim()
 	_box(Vector3(LEN * 0.5, 0.22, DEPTH + 0.14), Vector3(LEN + 0.4, 0.44, 0.2), Color("#6b5238"))
 	# 区域路标不再用 3D 悬浮大字（贴在画面边缘会被斜着截断），改写进左下角 HUD 提示
 	# 寝室门：深色门框 + 门扇。每个房间的门都带锁：只有侦探自己的 R05 能打开（刚被他推开），
@@ -285,12 +306,17 @@ func _build_corridor() -> void:
 			_label(str(d[0]), Vector3(x, 2.6, 0.2), 0.0042, Color("#e0b7a8"))
 	# 门间：窗（晨光）、长凳、盆栽，让走廊不空
 	for wx in [5.0, 9.0, 13.0]:
-		_box(Vector3(wx, 1.7, 0.03), Vector3(0.9, 0.9, 0.06), Color("#b9d0e0"), 0.45)
+		_box(Vector3(wx, 1.7, 0.03), Vector3(0.9, 0.9, 0.06), Color("#8daab4"), 0.09)
+		var rail := Color("#4f4438")
+		for offset in [-0.43, 0.0, 0.43]:
+			_box(Vector3(wx + offset, 1.7, 0.072), Vector3(0.045, 0.89, 0.025), rail, 0.0, false)
+			_box(Vector3(wx, 1.7 + offset, 0.072), Vector3(0.89, 0.045, 0.025), rail, 0.0, false)
 	_box(Vector3(9.0, 0.28, 0.45), Vector3(1.5, 0.12, 0.42), Color("#5a3d26"))
 	_box(Vector3(8.4, 0.12, 0.45), Vector3(0.1, 0.24, 0.36), Color("#3b2819"))
 	_box(Vector3(9.6, 0.12, 0.45), Vector3(0.1, 0.24, 0.36), Color("#3b2819"))
 	_plant(Vector3(13.0, 0.0, 0.4))
-	# 灯：三盏暖色顶灯 + 厨房方向的暖光 + 窗口晨光
+	# The roof is cut away. Put the visible fixtures on the wall and retain the
+	# diffuse overhead light positions so the walking lane stays evenly lit.
 	for lx in [4.0, 10.0, 16.0]:
 		var l := OmniLight3D.new()
 		l.position = Vector3(lx, 2.6, DEPTH * 0.5)
@@ -300,14 +326,34 @@ func _build_corridor() -> void:
 		l.shadow_enabled = false
 		_root.add_child(l)
 		_lights.append(l)
-		_box(Vector3(lx, 2.92, DEPTH * 0.5), Vector3(0.5, 0.08, 0.5), Color("#ffe6b0"), 2.0)
+		_box(Vector3(lx, 2.1, 0.02), Vector3(0.18, 0.39, 0.06), Color("#71503b"), 0.0, false)
+		_box(Vector3(lx, 2.07, 0.12), Vector3(0.24, 0.05, 0.24), Color("#8b6848"), 0.0, false)
+		_box(Vector3(lx, 2.18, 0.14), Vector3(0.21, 0.18, 0.18), Color("#d3aa73"), 0.34, false)
 	var kl := OmniLight3D.new()
 	kl.position = Vector3(LEN - 0.6, 1.4, DEPTH * 0.5)
-	kl.light_color = Color("#ff9d3c")
-	kl.light_energy = 2.2
+	kl.light_color = Color("#ffc084")
+	kl.light_energy = 1.5
 	kl.omni_range = 6.0
 	_root.add_child(kl)
 	_lights.append(kl)
+
+
+func _paint_entry_trim() -> void:
+	# Dress the existing opening with a stone arch. No change to the exit marker
+	# or the collision shapes used by the corridor path and sightline checks.
+	var trim := Color("#9e785a")
+	var center := DEPTH * 0.5
+	var spring := 1.57
+	var radius := 0.81
+	for side in [-1.0, 1.0]:
+		_box(Vector3(LEN - 0.035, spring * 0.5, center + side * radius), Vector3(0.15, spring, 0.13), trim, 0.0, false)
+	for i in 12:
+		var a := PI * float(i) / 12.0
+		var b := PI * float(i + 1) / 12.0
+		var p := Vector3(LEN - 0.035, spring + sin(a) * radius, center + cos(a) * radius)
+		var q := Vector3(LEN - 0.035, spring + sin(b) * radius, center + cos(b) * radius)
+		var block := _box((p + q) * 0.5, Vector3(0.15, p.distance_to(q) + 0.018, 0.13), trim.lightened(0.035 * float(i % 2)), 0.0, false)
+		block.rotation.x = atan2(q.z - p.z, q.y - p.y)
 
 
 # ───────────────────────── 站位 ─────────────────────────
@@ -618,7 +664,7 @@ func _build_overlay() -> void:
 	host.center.add_child(_prompt)
 	_hint = Label.new()
 	_hint.set_meta("text_category", "prompt")
-	_hint.text = "Click to inspect"
+	_hint.text = "WASD Move  |  Click to inspect"
 	_hint.add_theme_font_size_override("font_size", 14)
 	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
 	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
@@ -769,7 +815,8 @@ func _step_free(delta: float) -> void:
 	var vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if vec.length() >= 0.05 and not _enter_pending:
 		_busy_item = -1
-		_move_det(vec.normalized() * float(host.WALK_SPEED) * delta, vec)
+		var direction: Vector2 = host.screen_direction(vec, _az)
+		_move_det(direction * float(host.WALK_SPEED) * delta, direction)
 	elif _busy_item >= 0:
 		var stand := _item_stand(_busy_item)
 		if host.det_pos.distance_to(stand) > 0.12:

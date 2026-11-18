@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "bedroom-exploration",
+  "mode": "story",
+  "room": "R05",
+  "entry": "exploration",
+  "time": {
+    "day": 1,
+    "hour": 7,
+    "minute": 15
+  },
+  "playing": false,
+  "before_beat": "d1_deduce_drag",
+  "mock": {
+    "flags": {
+      "service_map": true
+    }
+  }
+}

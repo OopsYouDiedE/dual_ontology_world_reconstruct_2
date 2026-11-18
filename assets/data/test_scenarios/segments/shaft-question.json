@@ -10,8 +10,8 @@
     "minute": 25
   },
   "playing": false,
+  "before_beat": "d1_q1",
   "mock": {
-    "beat_cursor": 12,
     "flags": {
       "service_map": true
     }

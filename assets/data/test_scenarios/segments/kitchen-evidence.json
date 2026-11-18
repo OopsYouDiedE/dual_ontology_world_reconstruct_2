@@ -9,8 +9,8 @@
     "minute": 0
   },
   "playing": false,
+  "before_beat": "d1_deduce_drag",
   "mock": {
-    "beat_cursor": 2,
     "flags": {
       "service_map": true
     }

@@ -135,16 +135,35 @@ func run_case(config: Dictionary) -> void:
 		if not finished:
 			row.issues.append("Reconstruction did not finish within 16 seconds")
 			row.stalls.append({"phase":"reconstruction","reason":row.issues[-1],"state":state()})
+	elif config.get("controller", "") == "opening":
+		progress("bedroom_wake", "d1_wake")
+		game.skip_subtitles = true
+		var cutoff := Time.get_ticks_msec() + 22000
+		while is_instance_valid(game.opening) and game.opening.phase != "free" and Time.get_ticks_msec() < cutoff:
+			await process_frame
+		var awake: bool = is_instance_valid(game.opening) and game.opening.phase == "free"
+		row.actions.append({"action":"production_bedroom_wake", "completed":awake, "state":state()})
+		if not awake:
+			row.issues.append("Bedroom did not reach free movement")
+			row.stalls.append({"phase":"bedroom_wake", "reason":row.issues[-1], "state":state()})
+		row.images.append(await capture(id,"02-awake"))
 	elif config.get("controller", "") == "corridor":
 		for wanted in ["door_r06", "npc_shen"]:
 			progress("corridor_interaction", wanted)
 			for i in game.gathering._items.size():
 				if str(game.gathering._items[i].id) == wanted:
 					game.gathering.interact(i)
-					await wait_seconds(2.5)
-					row.actions.append({"action":"interact","id":wanted,"state":state()})
+					var cutoff := Time.get_ticks_msec() + 7500
+					while game.gathering._busy_item == i and Time.get_ticks_msec() < cutoff:
+						await process_frame
+					var seen: bool = game.gathering._items[i].seen
+					if not seen: row.issues.append("Corridor inspection stalled: " + wanted)
+					row.actions.append({"action":"interact","id":wanted,"completed":seen,"state":state()})
+					await wait_seconds(0.25)
 					row.images.append(await capture(id,"02-" + wanted))
 					game._sub_queue.clear(); game._sub_until = 0.0
+					await process_frame
+					break
 	elif config.has("beat"):
 		progress("story_beat", str(config.beat))
 		game.eng.process_beats()

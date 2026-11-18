@@ -79,7 +79,7 @@ def main() -> int:
         parser.error("Supply a positive --duration or a --suite")
     executable = provenance.host_executable(ROOT / ".runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe")
     command = [executable, "--path", str(ROOT), "--headless" if args.headless else "--minimized",
-               "res://tools/testing/StoryTest.tscn", "--", "--scenario=" + str(config),
+               "--", "--dv-workbench", "--scenario=" + str(config),
                "--test-output=" + str(directory), "--test-auto-quit=true"]
     if args.suite:
         command += ["--test-suite=" + args.suite]

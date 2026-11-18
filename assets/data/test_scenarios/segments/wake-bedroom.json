@@ -3,17 +3,13 @@
   "id": "wake-bedroom",
   "mode": "story",
   "room": "R05",
-  "entry": "exploration",
+  "entry": "wake",
   "time": {
     "day": 1,
     "hour": 7,
-    "minute": 15
+    "minute": 0
   },
-  "playing": false,
-  "mock": {
-    "beat_cursor": 1,
-    "flags": {
-      "service_map": true
-    }
-  }
+  "playing": true,
+  "before_beat": "d1_wake",
+  "mock": {}
 }

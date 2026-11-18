@@ -113,6 +113,7 @@ var editor_box: Control
 var editor: Control
 var left_text: RichTextLabel
 var left_actions: VBoxContainer
+var left_routes: VBoxContainer
 var left_evidence: VBoxContainer   # 「本房证物」：独立于出口滚动区，永远在第一屏
 var left_note: Label               # 房间描述（默认折叠）
 var left_note_btn: Button
@@ -197,6 +198,9 @@ var det: Node3D
 var det_pos := Vector2.ZERO
 var _door_passage: Dictionary = {}
 var det_path: Array = []
+var _walk_goal := Vector2.INF
+var _walk_best := INF
+var _walk_stalled := 0.0
 var det_done := Callable()
 var _inspect_intent := ""
 var _det_talk := ""
@@ -249,11 +253,10 @@ func _ready() -> void:
 	eng.said.connect(_on_said)
 	eng.sfx.connect(func(k: String): score.sfx(k))
 	set_process(true)
-	if resume_path != "":
-		if _read_save(resume_path):
-			_toast("Game loaded. Resume when ready.")
-		else:
-			_toast("Could not load save. Starting over.")
+	var loaded_save := false
+	if not resume_path.is_empty():
+		loaded_save = _read_save(resume_path)
+		_toast("Game loaded." if loaded_save else "Could not load save. Starting over.")
 	# 正式游戏默认进 3D 房间（单房间俯视角）：侦探在房间里走动；2D 地图是辅助视图
 	_set_view("room")
 	checkpoints = Checkpoint.new()
@@ -264,8 +267,20 @@ func _ready() -> void:
 		push_error(checkpoints.error)
 		get_tree().quit(2)
 		return
-	if resume_path == "" and not checkpoints.restored: _start_opening()
+	if not checkpoints.restored:
+		if loaded_save: _resume_story_presentation()
+		else: _start_opening()
 	_dirty = true
+
+
+func _resume_story_presentation() -> void:
+	if instant_story or eng.s.chapter_complete or eng.s.ending != "": return
+	if int(eng.s.chapter) == 1:
+		if str(eng.s.room) == "R05" and int(eng.s.beat_cursor) <= 1:
+			_attach_opening(true)
+		elif str(eng.s.room) == KitchenExploration.ROOM and not eng.s.deductions.has("ded_drag"):
+			start_kitchen_exploration(false)
+	eng.s.playing = true
 
 
 func _exit_tree() -> void:
@@ -273,33 +288,37 @@ func _exit_tree() -> void:
 
 
 func _start_opening() -> void:
-	_stop_opening()
 	if not show_intro or instant_story: return
+	if not _attach_opening(false): _begin_intro()
+
+
+func _attach_opening(already_awake: bool) -> bool:
+	_stop_opening()
 	opening = WakeOpening.new()
 	add_child(opening)
-	if not opening.begin(self):
-		_stop_opening()
-		_begin_intro()
+	if opening.begin(self, already_awake): return true
+	_stop_opening()
+	return false
 
 
 ## 第二幕入口：第一幕里亲自走出寝室门后调用（WakeOpening._step_free）。
-func start_gathering(to_room: String) -> void:
+func start_gathering(to_room: String, already_joined := false) -> void:
 	if gathering != null: return
 	if opening != null and opening.active: opening.handoff()
 	gathering = CorridorGathering.new()
 	add_child(gathering)
-	gathering.begin(self, to_room)
+	gathering.begin(self, to_room, already_joined)
 
 
 ## 第四幕入口：走廊里主动走进厨房拱门后调用（CorridorGathering._swap_to_room）。
 ## 返回 true 表示厨房探索接管了界面与镜头。
-func start_kitchen_exploration() -> bool:
+func start_kitchen_exploration(walk_in := true) -> bool:
 	if kitchen != null:
 		if kitchen.active: kitchen.end()
 		kitchen.queue_free()
 	kitchen = KitchenExploration.new()
 	add_child(kitchen)
-	if kitchen.begin(self): return true
+	if kitchen.begin(self, walk_in): return true
 	kitchen.queue_free()
 	kitchen = null
 	return false
@@ -583,6 +602,9 @@ func _build_ui() -> void:
 	left_evidence = VBoxContainer.new()
 	left_evidence.add_theme_constant_override("separation", 3)
 	left_body.add_child(left_evidence)
+	left_routes = VBoxContainer.new()
+	left_routes.add_theme_constant_override("separation", 3)
+	left_body.add_child(left_routes)
 	var sc := ScrollContainer.new()
 	sc.custom_minimum_size = Vector2(0, 112)
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -905,7 +927,9 @@ func _set_view(v: String, animate := false) -> void:
 		if not (animate and _room_loaded != "" and not instant_story): _ensure_room()
 		else: _fit_camera()
 	if v == "editor": _open_editor(eng.s.room if map_view.selected == "" else map_view.selected)
-	if v == "map": map_view.center_on(eng.s.room)
+	if v == "map":
+		map_view.center_on(eng.s.room)
+		_refresh_left()
 	_sync_exploration_ui()
 	_dirty = true
 
@@ -1081,7 +1105,10 @@ func _load_game(slot: int) -> void:
 	if not FileAccess.file_exists(sp):
 		_toast("Save slot is empty")
 		return
-	if _read_save(sp): _toast("Loaded slot %d (paused)" % slot)
+	if _read_save(sp):
+		_resume_story_presentation()
+		_toast("Loaded slot %d" % slot)
+	else: _toast("Could not load slot %d" % slot)
 
 
 # ───────────────────────── 3D：单房间 ─────────────────────────
@@ -1306,6 +1333,13 @@ func _free_slots(n: int, reserved := Vector2.INF) -> Array:
 						ok = false
 						break
 			if ok: cands.append(c)
+	if _room_loaded == "B2-valve" and _lowpoly_ok and n == 5:
+		# Put the witnesses along the pipe wall so the front aisle reaches the clue.
+		var player := Vector2(1.05, 2.55) if reserved == Vector2.INF else reserved
+		var authored := [Vector2(2.55, 2.25), Vector2(4.05, 2.55), Vector2(5.55, 1.95), Vector2(7.35, 2.25)]
+		if (reserved != Vector2.INF or cands.any(func(p: Vector2): return p.is_equal_approx(player))) and authored.all(func(c: Vector2):
+			return cands.any(func(p: Vector2): return p.is_equal_approx(c)) and not _blocks_entry_lane(c) and c.distance_to(player) >= ACTOR_MIN_DISTANCE):
+			return [player] + authored
 	var player_target := mid
 	if n > 1 and _lowpoly_ok and lowpoly != null:
 		var entry: Dictionary = lowpoly.door_for(Vector2.ZERO)
@@ -1765,6 +1799,9 @@ func _route(from: Vector2, to: Vector2) -> Array:
 
 func _go(points: Array, done := Callable()) -> void:
 	det_path = points
+	_walk_goal = Vector2.INF
+	_walk_best = INF
+	_walk_stalled = 0.0
 	det_done = done
 	if not points.is_empty(): _begin_wake_up()
 
@@ -1794,6 +1831,7 @@ func _walk_step(delta: float) -> void:
 				det_pos = candidate
 				step -= minf(step, travelled)
 		det.position = Vector3(det_pos.x, 0.0, det_pos.y)
+		if not det_path.is_empty(): _watch_walk_progress(delta)
 	if not det_path.is_empty():
 		det.set_pose("walk")
 	elif det.pose == "lie":
@@ -1807,6 +1845,36 @@ func _walk_step(delta: float) -> void:
 	if moving and det_path.is_empty(): _dirty = true
 
 
+## A dynamic obstruction can invalidate a planned route. Preserve collisions
+## and finish only committed room transitions under a fade; stop unsent inspections.
+func _watch_walk_progress(delta: float) -> void:
+	var target: Vector2 = det_path[0]
+	var distance := det_pos.distance_to(target)
+	if target != _walk_goal or distance < _walk_best - 0.015:
+		_walk_goal = target
+		_walk_best = distance
+		_walk_stalled = 0.0
+		return
+	_walk_stalled += delta
+	if _walk_stalled < 1.25: return
+	det_path.clear()
+	det_done = Callable()
+	_door_passage.clear()
+	_inspect_intent = ""
+	if _transit_active():
+		if _transit.phase == "exit":
+			_transit_exit_done()
+		elif _transit.phase == "enter":
+			_transit.phase = "settle"
+			_fade(1.0, 0.16, func():
+				_det_to_home()
+				_transit_done()
+				_fade(0.0, 0.22))
+	else:
+		_toast("Path blocked. Move closer and try again.")
+	_dirty = true
+
+
 ## 3D 里点证物光柱 / 左侧点证物：侦探先走到跟前，再查看。
 func _inspect_walk(eid: String) -> void:
 	if view != "room" or instant_story or _transit_active() or not room_mesh.evidence_nodes.has(eid) or _room_loaded != eng.s.room:
@@ -1816,7 +1884,9 @@ func _inspect_walk(eid: String) -> void:
 	var target := Vector2(n.global_position.x, n.global_position.z)
 	var kind: String = interactions.kind_for(eid)
 	var approach := preload("res://scenes/components/interaction/InteractionApproach.gd").plan(self, target, kind, det_pos)
-	if not approach.ok: return
+	if not approach.ok:
+		_toast("No clear approach. Move closer and try again.")
+		return
 	_inspect_intent = eid
 	if approach.already_near: _inspect_arrived(eid)
 	else: _go(approach.path, func(): _inspect_arrived(eid))
@@ -1977,6 +2047,10 @@ func _transit_swap() -> void:
 
 func _transit_done() -> void:
 	_transit = {}
+	# Map, normal doors and staged corridor entry all present the first
+	# kitchen investigation in the room. A normal doorway has already animated.
+	if int(eng.s.chapter) == 1 and str(eng.s.room) == KitchenExploration.ROOM and not eng.s.deductions.has("ded_drag") and (kitchen == null or not kitchen.active):
+		start_kitchen_exploration(false)
 	_dirty = true
 
 
@@ -2078,8 +2152,6 @@ func _process(delta: float) -> void:
 		_dirty = false
 		_panel_cd = 0.2
 		_refresh()
-	elif view == "map" and Engine.get_process_frames() % 30 == 0:
-		_refresh_left()
 
 
 # ───────────────────────── 面板 ─────────────────────────
@@ -2224,12 +2296,34 @@ func _manual_move_step(delta: float) -> void:
 ## 屏幕方向（x 右、y 下，Input.get_vector 的约定）→ 地面方向（x, z）。
 ## 相机在 (sin az, ·, cos az) 一侧看向房间，因此屏幕「上」是 -(sin az, cos az)，屏幕「右」是 (cos az, -sin az)。
 func _screen_to_world(v: Vector2) -> Vector2:
-	var fwd := Vector2(-sin(az), -cos(az))
-	var right := Vector2(cos(az), -sin(az))
+	return screen_direction(v, az)
+
+
+static func screen_direction(v: Vector2, azimuth: float) -> Vector2:
+	var fwd := Vector2(-sin(azimuth), -cos(azimuth))
+	var right := Vector2(cos(azimuth), -sin(azimuth))
 	return (right * v.x + fwd * -v.y).normalized()
 
 
 ## 当前目标（左卡顶部）：把「等待搜证」翻译成玩家能执行的下一步。
+func _active_investigation() -> String:
+	if not eng.s.hold.is_empty(): return str(eng.s.hold.deduction)
+	if not eng.s.postponed.is_empty(): return str(eng.s.postponed.id)
+	return str(eng.s.pending_deduction.get("id", ""))
+
+
+func _investigation_rooms() -> Array[String]:
+	var result: Array[String] = []
+	var gate_room := str(eng.s.story_gate.get("room", ""))
+	if data.room_by_id.has(gate_room): return [gate_room]
+	var did := _active_investigation()
+	if data.deduction_by_id.has(did):
+		for eid in eng.deduction_progress(did).missing:
+			var id := str(data.evidence_by_id[eid].room)
+			if not id in result: result.append(id)
+	return result
+
+
 func _objective_text() -> String:
 	var s: Dictionary = eng.s
 	if s.ending != "":
@@ -2244,22 +2338,13 @@ func _objective_text() -> String:
 		return "Get up, inspect the bedroom and leave through the door."
 	if s.t < 480.0 and str(s.room) == "B-P" and s.beat_cursor <= 1:
 		return "Inspect the kitchen clues, then reconstruct the sequence."
-	var hold: Dictionary = s.get("hold", {})
-	var did := ""
-	if not hold.is_empty(): did = str(hold.deduction)
-	elif not s.get("postponed", {}).is_empty(): did = str(s.postponed.id)
-	elif not s.pending_deduction.is_empty(): did = str(s.pending_deduction.id)
+	var did := _active_investigation()
 	if did != "" and data.deduction_by_id.has(did):
 		var g: Dictionary = eng.deduction_progress(did)
 		var dd: Dictionary = data.deduction_by_id[did]
 		if int(g.have) >= int(g.need):
 			return "Ready to deduce: %s (%d/%d clues)." % [tr(str(dd.title)), int(g.have), int(g.need)]
-		var rooms: Array = []
-		for eid in g.get("missing", []):
-			var lb := tr(str(data.room_by_id[data.evidence_by_id[eid].room].label))
-			if not rooms.has(lb): rooms.append(lb)
-		var where := ("Visit: " + ", ".join(rooms)) if not rooms.is_empty() else "Clues collected"
-		return "Collect clues for %s: %d/%d\n%s" % [tr(str(dd.title)), int(g.have), int(g.need), where]
+		return "Collect clues for %s: %d/%d" % [tr(str(dd.title)), int(g.have), int(g.need)]
 	if not s.pending_conflict.is_empty() or not s.pending_choice.is_empty():
 		return "Resolve the current choice."
 	if s.doors.get("wind", false):
@@ -2278,7 +2363,10 @@ func _refresh_left() -> void:
 	var rid: String = eng.s.room
 	var r: Dictionary = data.room_by_id[rid]
 	left_text.clear()
-	left_text.append_text("[color=#bfe0ae][b]Objective[/b][/color]\n[color=#f4ead4]%s[/color]\n\n" % _objective_text())
+	var clock: Dictionary = eng.clock()
+	left_text.append_text("[color=#d6c6a6]Day %d · %s[/color]\n" % [clock.day, clock.text])
+	var objective := _objective_text()
+	left_text.append_text("[color=#bfe0ae][b]Objective[/b][/color]\n[color=#f4ead4]%s[/color]\n\n" % objective)
 	left_text.append_text("[color=#f2d493][b]%s[/b][/color]  [color=#d6c6a6]%s · %s Wing[/color]\n" % [tr(str(r.label)), r.floor, r.zone])
 	left_note.text = tr(str(r.note))
 	var here: Array = eng.actors_in_room(rid).filter(func(i): return str(i) != "detective")
@@ -2311,8 +2399,22 @@ func _refresh_left() -> void:
 				b2.add_theme_color_override("font_color", Color("#ffe3a3"))
 			else:
 				b2.add_theme_color_override("font_color", Color("#a8d09a"))
-			b2.pressed.connect(func(): _inspect_walk(str(e.id)))
+			b2.pressed.connect(func():
+				if view == "map": _set_view("room")
+				_inspect_walk(str(e.id)))
 			left_evidence.add_child(b2)
+	for c in left_routes.get_children():
+		left_routes.remove_child(c)
+		c.queue_free()
+	if view == "map":
+		for goal in _investigation_rooms():
+			if goal == rid: continue
+			var label := "Go to " + tr(str(data.room_by_id[goal].label))
+			var route := _btn(left_routes, label, func(): _on_room_activated(goal))
+			route.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			route.clip_text = true
+			route.tooltip_text = label
+			route.disabled = eng.path_to(goal).is_empty()
 	for c in left_actions.get_children():
 		left_actions.remove_child(c)
 		c.queue_free()
@@ -2332,7 +2434,7 @@ func _refresh_left() -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.clip_text = true
 		b.focus_mode = Control.FOCUS_NONE
-		b.pressed.connect(func(): eng.enter_room(other))
+		b.pressed.connect(func(): _on_room_activated(other))
 		left_actions.add_child(b)
 
 
@@ -2395,7 +2497,7 @@ func _refresh_right() -> void:
 			"confront": col = "#ea9c8c"
 			"knowledge": col = "#d1b3ef"
 			"evidence": col = "#a8c89a"
-		tab_log.append_text("[color=#d6c6a6]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, tr(str(l.text))])
+		tab_log.append_text("[color=#d6c6a6]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, str(l.get("display", tr(str(l.text))))])
 	tab_log.scroll_to_line(maxi(0, tab_log.get_line_count() - 1))
 	_refresh_case_tab()
 	# 证物
@@ -2516,6 +2618,7 @@ func _modal_shell(title: String, sub: String) -> VBoxContainer:
 		s.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		v.add_child(s)
 	modal.visible = true
+	_sync_exploration_ui()
 	return v
 
 
@@ -2538,6 +2641,7 @@ func _sync_modal() -> void:
 	elif s.ending != "" and not _ending_dismissed: key = "end:" + s.ending
 	elif bool(s.get("chapter_complete", false)) and not _chapter_dismissed: key = "chapter:1"
 	elif not s.pending_deduction.is_empty(): key = "ded:" + str(s.pending_deduction.id)
+	elif not s.postponed.is_empty(): key = ""
 	elif s.pending_conflict != "": key = "con:" + str(s.pending_conflict)
 	elif not s.pending_choice.is_empty(): key = "cho:" + str(s.pending_choice.beat_id)
 	if key == _modal_key: return
@@ -2768,6 +2872,20 @@ func _modal_choice() -> void:
 		v.add_child(b)
 
 
+func _show_summary_case() -> void:
+	_chapter_dismissed = bool(eng.s.chapter_complete)
+	_ending_dismissed = not str(eng.s.ending).is_empty()
+	_dismiss_modal()
+	exploration_ui.show_summary_case()
+
+
+func restore_summary() -> void:
+	_chapter_dismissed = false
+	_ending_dismissed = false
+	_dirty = true
+	_sync_modal()
+
+
 func _modal_chapter() -> void:
 	_write_auto()
 	_write_save(chapter_save_path(1))
@@ -2775,10 +2893,7 @@ func _modal_chapter() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	body.add_child(row)
-	_btn(row, "Case File", func():
-		_chapter_dismissed = true
-		_dismiss_modal()
-		if not drawer.visible: _toggle_drawer())
+	_btn(row, "Case File", _show_summary_case)
 	_btn(row, "Chapter 2", func():
 		_dismiss_modal()
 		_cine = true
@@ -2818,10 +2933,7 @@ func _modal_ending() -> void:
 		_start_opening())
 	b_restart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b_restart.custom_minimum_size = Vector2(140, 38)
-	var b_case := _btn(row, "Case File", func():
-		_ending_dismissed = true
-		_dismiss_modal()
-		if not drawer.visible: _toggle_drawer())
+	var b_case := _btn(row, "Case File", _show_summary_case)
 	b_case.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b_case.custom_minimum_size = Vector2(140, 38)
 	var b_back := _btn(row, "Title", func(): _close())

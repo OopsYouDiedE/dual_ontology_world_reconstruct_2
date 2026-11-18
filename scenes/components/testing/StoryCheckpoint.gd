@@ -4,7 +4,6 @@ extends Node
 const Source := preload("res://mcp/CaptureSource.gd")
 const PROJECT := "dual_ontology_world_reconstruct_2"
 const FORMAT := "story-checkpoint-v1"
-const DEFAULT_PATH := "res://.runtime/checkpoints/latest.json"
 const HOST_FIELDS := ["az", "pitch", "dist", "det_pos", "det_path", "_door_passage", "_transit", "_wake_timer", "_wake_total", "_wake_y0", "_wake_from", "_wake_to", "_wake_bed", "_wake_custom", "_wake_edge", "_sub_clock", "_sub_until", "_sub_queue", "_speaker", "_det_talk", "_cine", "skip_subtitles", "_chapter_dismissed", "_ending_dismissed"]
 const OPENING_FIELDS := ["phase", "focus", "chrome_shown", "_pt", "_clock", "_talk_seen", "_talk_idle", "_busy_item", "_pending_exit", "_all_seen_said", "_free_t", "_head"]
 const CORRIDOR_FIELDS := ["phase", "_pt", "_clock", "_line", "_focus", "_az", "_pitch", "_dist", "_target", "_joined", "_busy_item", "_free_t", "_enter_pending"]
@@ -20,7 +19,7 @@ var _task := -1
 var _sequence := 0
 var _write_result := OK
 var _stop_file := ""
-var automatic := true
+var automatic := false
 var finalized := false
 var recovery_path := ""
 var _resumed_fade: Dictionary = {}
@@ -40,9 +39,9 @@ func bind(content: Control) -> void:
 		error = "Checkpoint host identity rejected"
 		get_tree().quit(2)
 		return
-	output_path = Source.project_output(argument("--dv-checkpoint-output", DEFAULT_PATH))
-	automatic = argument("--dv-checkpoint-auto", "true") == "true"
-	_stop_file = Source.project_output(argument("--dv-checkpoint-stop", "res://.runtime/checkpoints/interrupt.request"))
+	output_path = Source.project_output(argument("--dv-checkpoint-output"))
+	automatic = not output_path.is_empty() and argument("--dv-checkpoint-auto", "true") == "true"
+	_stop_file = Source.project_output(argument("--dv-checkpoint-stop"))
 	get_tree().auto_accept_quit = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("lifecycle_hosts")
@@ -52,6 +51,7 @@ func bind(content: Control) -> void:
 	if not resume.is_empty(): restored = restore_file(resume)
 
 func _input(event: InputEvent) -> void:
+	if output_path.is_empty(): return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F6:
 		save_now(output_path.get_base_dir() + "/manual-" + str(Time.get_unix_time_from_system()).replace(".", "-") + ".json")
 		get_viewport().set_input_as_handled()
@@ -179,6 +179,10 @@ func _read_exact(path: String) -> Dictionary:
 		error = "Checkpoint presentation types invalid"; return {}
 	if p.controller != "room" and not p.get("controller_state") is Dictionary:
 		error = "Checkpoint controller state missing"; return {}
+	if p.controller in ["opening", "kitchen"]:
+		var controller_room := "R05" if p.controller == "opening" else "B-P"
+		if p.room_loaded != controller_room or value.engine.get("room") != controller_room:
+			error = "Checkpoint controller is outside its room"; return {}
 	if not p.ui.get("fade_rect") is Dictionary or not p.ui.fade_rect.get("modulate") is Color or (p.host.has("_transit") and not p.host._transit is Dictionary):
 		error = "Checkpoint fade presentation invalid"; return {}
 	# While a transit is active the rules may already describe the destination
@@ -271,10 +275,8 @@ func restore_file(path: String) -> bool:
 	match str(p.controller):
 		"opening":
 			host.det.set_pose("lie")
-			host.show_intro = true
-			host._start_opening()
+			host._attach_opening(p.controller_state.phase == "free")
 			controller = host.opening
-			if p.controller_state.phase == "free": controller._enter("free")
 		"corridor":
 			host.start_gathering(str(p.get("to_room", "B-P")))
 			controller = host.gathering

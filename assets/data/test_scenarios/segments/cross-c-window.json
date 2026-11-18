@@ -10,8 +10,8 @@
     "minute": 20
   },
   "playing": false,
+  "before_beat": "d1_deduce_window",
   "mock": {
-    "beat_cursor": 8,
     "flags": {
       "service_map": true
     }

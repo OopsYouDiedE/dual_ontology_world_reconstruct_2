@@ -87,32 +87,29 @@ func _title_setup() -> void:
 	book_ui.closed.connect(_book_closed)
 	title_ui = TITLE_UI_SCENE.instantiate()
 	add_child(title_ui)
-	title_ui.new_game_requested.connect(func(): open_life())
+	title_ui.life_requested.connect(func(): open_life())
+	title_ui.continue_life_requested.connect(_continue_life)
 	title_ui.continue_requested.connect(_continue_game)
 	title_ui.book_requested.connect(_open_book_page)
 	title_ui.quit_requested.connect(_quit)
 	title_ui.builder_requested.connect(open_building)
-	title_ui.campaign_requested.connect(open_campaign)
-	title_ui.dual_world_requested.connect(func(): open_dual_world())
-	if bridge == null:
-		for np in ["Menu/LifeTestButton", "Menu/CampaignButton", "Menu/RecordsButton"]:
-			var btn := title_ui.get_node_or_null(np)
-			if btn != null: btn.visible = false
-	title_ui.show_title(has_progress(), true)
+	title_ui.new_game_requested.connect(func(): open_dual_world())
+	_show_title(true)
 	var settings := get_node_or_null("/root/GameSettings")
 	if settings != null and settings.has_signal("settings_requested"):
 		settings.connect("settings_requested", _settings_requested)
-	if bridge != null and ClassDB.class_exists("CSharpScript"):
+	if bridge != null and "--dv-campaign-lab" in OS.get_cmdline_user_args():
 		var cp_script: Script = load("res://scenes/main/CampaignPanel.gd")
 		if cp_script != null:
 			campaign_panel = cp_script.new()
 			add_child(campaign_panel)
-			campaign_panel.closed.connect(func(): title_ui.show_title(has_progress()))
+			campaign_panel.closed.connect(func(): _show_title())
+			open_campaign.call_deferred()
 
 func _open_book_page(page_id: String) -> void:
 	if is_instance_valid(campaign_panel) and campaign_panel.visible:
 		campaign_panel.hide()
-		title_ui.show_title(has_progress())
+		_show_title()
 		return
 	if book_ui.is_open:
 		book_ui.goto_page(page_id)
@@ -135,12 +132,12 @@ func _book_closed() -> void:
 		stage.set_active(false)
 		builder.show()
 	else:
-		title_ui.show_title(has_progress())
+		_show_title()
 
 func _settings_requested() -> void:
 	if is_instance_valid(campaign_panel) and campaign_panel.visible:
 		campaign_panel.hide()
-		title_ui.show_title(has_progress())
+		_show_title()
 		return
 	if book_ui.is_open and book_ui.page_id() == "settings": book_ui.close()
 	else: _open_book_page("settings")
@@ -175,31 +172,39 @@ func begin_shutdown() -> void:
 func wait_for_shutdown() -> void:
 	await get_tree().process_frame
 
-func _continue_game() -> void:
-	var candidates := [_auto_path()]
-	for index in range(1, 7): candidates.append(_slot_path(str(index)))
-	var selected_path := ""
+func _show_title(first := false) -> void:
+	title_ui.set_life_menu(bridge != null, not _latest_life_save().is_empty())
+	title_ui.show_title(not _latest_save(_dual_world_saves()).is_empty(), first)
+
+
+static func _latest_save(paths: Array) -> String:
+	var selected := ""
 	var latest := -1
-	for path in candidates:
-		if FileAccess.file_exists(path):
-			var modified := FileAccess.get_modified_time(path)
-			if modified > latest:
-				latest = modified
-				selected_path = path
-	# 正式游戏（双本体）存档：自动存档与手动槽位，取最新的一份。
-	var dual_path := ""
-	var dual_latest := -1
-	for path in _dual_world_saves():
-		if FileAccess.file_exists(path):
-			var modified := FileAccess.get_modified_time(path)
-			if modified > dual_latest:
-				dual_latest = modified
-				dual_path = path
-	if not dual_path.is_empty() and (dual_latest >= latest or bridge == null):
-		open_dual_world(dual_path)
-		return
-	if selected_path.is_empty() or bridge == null: return
-	_load_save(selected_path)
+	for path in paths:
+		if not FileAccess.file_exists(path): continue
+		var modified := FileAccess.get_modified_time(path)
+		if modified > latest:
+			selected = path
+			latest = modified
+	return selected
+
+
+func _continue_game() -> void:
+	var path := _latest_save(_dual_world_saves())
+	if not path.is_empty(): open_dual_world(path)
+
+
+func _latest_life_save() -> String:
+	if bridge == null: return ""
+	var slots := [_auto_path()]
+	for index in range(1, 7): slots.append(_slot_path(str(index)))
+	return _latest_save(slots)
+
+
+func _continue_life() -> void:
+	var path := _latest_life_save()
+	if not path.is_empty(): _load_save(path)
+
 
 func _button(parent: Node, text: String, callback: Callable) -> Button:
 	var button := Button.new()
@@ -214,16 +219,18 @@ func open_building() -> void:
 	title_ui.hide_title(0.0)
 	stage.set_active(false)
 	if not is_instance_valid(builder):
-		builder = preload("res://tools/building_construction/BuildingSimulator.tscn").instantiate()
+		# The builder can launch a title preview; load on demand to avoid preloading a cycle.
+		var scene := load("res://tools/building_construction/BuildingSimulator.tscn") as PackedScene
+		if scene == null: return
+		builder = scene.instantiate()
 		add_child(builder)
 	builder.show()
 
 func open_campaign() -> void:
-	if active or is_instance_valid(builder) and builder.visible: return
+	if not is_instance_valid(campaign_panel) or active or is_instance_valid(builder) and builder.visible: return
 	book_ui.close_immediately()
 	title_ui.hide_title(0.0)
-	if is_instance_valid(campaign_panel):
-		campaign_panel.open_campaign()
+	campaign_panel.open_campaign()
 
 ## 双本体整合入口：2D 完整地图 / 3D 单房间 / 2D 蓝图编辑器，规则核心为纯 GDScript 的 DualEngine。
 func open_dual_world(resume_path := "") -> void:
@@ -244,7 +251,7 @@ func close_dual_world() -> void:
 		dual_world.queue_free()
 	dual_world = null
 	stage.set_active(true)
-	title_ui.show_title(has_progress())
+	_show_title()
 	Sound.music("main_theme", 1.5)
 
 func open_life(building: Dictionary = {}) -> void:
@@ -607,17 +614,8 @@ func close_life() -> void:
 	if is_instance_valid(builder): builder.show()
 	else:
 		stage.set_active(true)
-		title_ui.show_title(has_progress())
+		_show_title()
 		Sound.music("main_theme")
-
-func has_progress() -> bool:
-	for path in _dual_world_saves():
-		if FileAccess.file_exists(path): return true
-	if bridge == null: return false
-	if FileAccess.file_exists(_auto_path()): return true
-	for index in range(1, 7):
-		if FileAccess.file_exists(_slot_path(str(index))): return true
-	return false
 
 func can_save() -> bool:
 	return active and bridge != null

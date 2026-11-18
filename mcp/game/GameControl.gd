@@ -1,5 +1,7 @@
 extends Node
 
+const Launch := preload("res://scenes/main/LaunchRoute.gd")
+
 var server := TCPServer.new()
 var peer: StreamPeerTCP
 var buffer := PackedByteArray()
@@ -38,8 +40,8 @@ func _ready() -> void:
 			focused_output = preload("res://mcp/CaptureSource.gd").project_output(argument.trim_prefix("--dv-focused-output="))
 		elif argument.begins_with("--dv-scenario="): scenario_path = argument.trim_prefix("--dv-scenario=")
 		elif argument.begins_with("--dv-assessment-plan="): assessment_plan_path = argument.trim_prefix("--dv-assessment-plan=")
-	if port == 0: set_process(false); return
 	assessment_output_directory = focused_state if not focused_state.is_empty() else "res://.runtime/segment-sessions/" + str(OS.get_process_id())
+	if port == 0: set_process(false); return
 	var source := preload("res://mcp/CaptureSource.gd").identity(get_tree(), launch_scene)
 	var root_path := str(source.project_root).replace("\\", "/").simplify_path().trim_suffix("/")
 	var required_root := expected_root.replace("\\", "/").simplify_path().trim_suffix("/")
@@ -226,8 +228,6 @@ func _handle(request: Dictionary) -> void:
 		await RenderingServer.frame_post_draw
 		captured_frames.append({"frame": 0, "image": get_viewport().get_texture().get_image(), "ticks_us": Time.get_ticks_usec()})
 		_sample_motion(offsets, captured_frames)
-	if operation in ["click", "drag", "input_action"] and is_instance_valid(main) and main.has_method("begin_segment_input"):
-		main.begin_segment_input()
 	match operation:
 		"next_case":
 			if scenario_path.is_empty() or assessment_case_index + 1 >= assessment_cases.size():
@@ -237,7 +237,7 @@ func _handle(request: Dictionary) -> void:
 			if FileAccess.get_sha256(str(next.scenario_path)) != str(next.scenario_sha256):
 				_reply(identity, {}, "Scenario changed after assessment launch")
 				return
-			var changed := get_tree().change_scene_to_file("res://mcp/game/SegmentEntry.tscn")
+			var changed := get_tree().change_scene_to_file(Launch.SEGMENT)
 			if changed != OK:
 				_reply(identity, {}, "Scenario transition failed: " + error_string(changed))
 				return
@@ -340,7 +340,7 @@ func _handle(request: Dictionary) -> void:
 		return
 	var result: Dictionary = main.mcp_observe() if main.has_method("mcp_observe") else {"scene": main.scene_file_path}
 	if not scenario_path.is_empty():
-		result["scenario_ready"] = main.scene_file_path == "res://mcp/game/SegmentEntry.tscn" and str(main.get("fixture_error")).is_empty()
+		result["scenario_ready"] = main.scene_file_path == Launch.SEGMENT and str(main.get("fixture_error")).is_empty()
 		result["scenario_error"] = str(main.get("fixture_error"))
 	result.merge(_checkpoint_status(main), true)
 	var controls: Array = []

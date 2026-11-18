@@ -34,7 +34,9 @@ func build(ds: Dictionary, found_evidence: Dictionary = {}) -> void:
 		if c.has_meta("lowpoly_room") and bool(c.get_meta("lowpoly_room")):
 			lp = c
 			remove_child(c)
-	for c in get_children(): c.queue_free()
+	for c in get_children():
+		remove_child(c)
+		c.queue_free()
 	if lp != null:
 		add_child(lp)
 	lamps.clear()

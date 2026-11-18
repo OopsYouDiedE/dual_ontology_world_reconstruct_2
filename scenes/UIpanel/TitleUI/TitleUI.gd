@@ -2,13 +2,13 @@ extends Control
 ## 标题界面：右侧书名与菜单，左侧留给书房 3D 场景。点击桌上的书由 Main 判定。
 ## 只发出意图信号，由 Main 决定开局、读档或打开书本检视器的哪一页。
 
-signal new_game_requested
+signal life_requested
+signal continue_life_requested
 signal continue_requested
 signal book_requested(page_id: String)
 signal quit_requested
 signal builder_requested
-signal campaign_requested
-signal dual_world_requested
+signal new_game_requested
 
 const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.ttf")
 const BODY_FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
@@ -23,7 +23,7 @@ const EMBER := Color("e0794a")
 @onready var rule: TextureRect = $Menu/Rule
 @onready var life_test_button: Button = $Menu/LifeTestButton
 @onready var continue_button: Button = $Menu/ContinueButton
-@onready var records_button: Button = $Menu/RecordsButton
+@onready var continue_life_button: Button = $Menu/ContinueLifeButton
 @onready var settings_button: Button = $Menu/SettingsButton
 @onready var quit_button: Button = $Menu/QuitButton
 @onready var hint: Label = $Hint
@@ -36,7 +36,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	theme = _build_theme()
-	for control in [$Menu/TitleLabel, $Menu/StartButton, continue_button, records_button, $Menu/CampaignButton, $Menu/BuilderButton, life_test_button, settings_button, quit_button, hint]:
+	for control in [$Menu/TitleLabel, $Menu/StartButton, continue_button, continue_life_button, $Menu/BuilderButton, life_test_button, settings_button, quit_button, hint]:
 		control.text = tr(control.text)
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
@@ -46,21 +46,23 @@ func _ready() -> void:
 	line.width = 256
 	line.height = 2
 	rule.texture = line
-	life_test_button.pressed.connect(_emit.bind(new_game_requested))
+	life_test_button.pressed.connect(_emit.bind(life_requested))
 	continue_button.pressed.connect(_emit.bind(continue_requested))
-	records_button.pressed.connect(func(): _emit_book("journal"))
+	continue_life_button.pressed.connect(_emit.bind(continue_life_requested))
 	settings_button.pressed.connect(func(): _emit_book("settings"))
 	quit_button.pressed.connect(_emit.bind(quit_requested))
 	$Menu/BuilderButton.pressed.connect(_emit.bind(builder_requested))
-	$Menu/CampaignButton.pressed.connect(_emit.bind(campaign_requested))
-	$Menu/StartButton.pressed.connect(_emit.bind(dual_world_requested))
-	for button: Button in [life_test_button, continue_button, records_button, $Menu/CampaignButton, $Menu/StartButton, $Menu/BuilderButton, settings_button, quit_button]:
+	$Menu/StartButton.pressed.connect(_emit.bind(new_game_requested))
+	for button: Button in [life_test_button, continue_button, continue_life_button, $Menu/StartButton, $Menu/BuilderButton, settings_button, quit_button]:
 		button.mouse_entered.connect(func(): Sound.sfx("ui_click", -18.0, 1.4))
 	modulate.a = 0.0
 	hide()
-
-## 显示标题。first=true 时从全黑淡入。
 	_install_title_polish()
+
+
+func set_life_menu(available: bool, can_resume: bool) -> void:
+	life_test_button.visible = available
+	continue_life_button.visible = available and can_resume
 
 
 func show_title(can_continue: bool, first := false) -> void:

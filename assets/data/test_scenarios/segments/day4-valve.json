@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "id": "day4-valve",
+  "mode": "story",
+  "room": "B2-control",
+  "entry": "exploration",
+  "time": { "day": 4, "hour": 17, "minute": 29 },
+  "playing": false,
+  "before_beat": "d4_quake",
+  "mock": { "flags": { "service_map": true, "day2_plan": true } }
+}

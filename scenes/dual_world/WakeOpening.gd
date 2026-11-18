@@ -67,9 +67,10 @@ var _name_tag: Label3D = null
 var _head := Vector3.ZERO  # yaw, pitch, roll（平滑后的实际值）
 
 
-func begin(h: Control) -> bool:
+func begin(h: Control, already_awake := false) -> bool:
 	host = h
-	if host.det == null or host.det.pose != "lie" or host.view != "room": return false
+	if host.det == null or host.view != "room" or str(host.eng.s.room) != "R05": return false
+	if not already_awake and host.det.pose != "lie": return false
 	_rig = host.det.wake_rig()
 	if _rig == null: return false
 	_name_tag = _find_tag()
@@ -81,7 +82,13 @@ func begin(h: Control) -> bool:
 	_hide_chrome()
 	_build_markers()
 	_build_overlay()
-	_enter("black")
+	if already_awake:
+		host.det.set_pose("stand")
+		host.det.position = Vector3(host.det_pos.x, 0.0, host.det_pos.y)
+		host.fade_rect.modulate.a = 0.0
+		_enter("free")
+	else:
+		_enter("black")
 	_snap_camera()
 	return true
 

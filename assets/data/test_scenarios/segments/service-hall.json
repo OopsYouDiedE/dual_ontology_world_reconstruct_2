@@ -10,8 +10,8 @@
     "minute": 41
   },
   "playing": false,
+  "before_beat": "d1_accuse",
   "mock": {
-    "beat_cursor": 7,
     "flags": {
       "service_map": true
     }

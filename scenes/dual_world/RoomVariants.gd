@@ -13,6 +13,10 @@ const COOL_TINT := Color(0.80, 1.0, 1.35)   # >1 的蓝通道：把暖橙护墙�
 static func apply(identity: String, inst: Node3D) -> void:
 	match identity:
 		"C-P": _variant_cp(inst)
+		"B2-valve":
+			# Stow the crate off the entry landing, outside the two door lanes.
+			var crate := inst.get_node_or_null("Instances/b2_valve_gallery_maintenance_crate_01") as Node3D
+			if crate != null: crate.position = Vector3(3.53, crate.position.y, -0.64)
 
 
 static func _variant_cp(inst: Node3D) -> void:

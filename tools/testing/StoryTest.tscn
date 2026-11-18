@@ -8,4 +8,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
-default_config = "res://assets/data/test_scenarios/wake.yaml"
+default_config = "res://assets/data/test_scenarios/segments/wake-bedroom.json"

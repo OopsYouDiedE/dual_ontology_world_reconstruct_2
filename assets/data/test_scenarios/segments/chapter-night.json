@@ -10,8 +10,8 @@
     "minute": 0
   },
   "playing": false,
+  "before_beat": "d2_wind",
   "mock": {
-    "beat_cursor": 22,
     "flags": {
       "service_map": true,
       "day2_plan": true

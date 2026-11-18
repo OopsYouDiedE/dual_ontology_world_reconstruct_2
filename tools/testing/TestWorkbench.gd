@@ -10,7 +10,7 @@ const Receipt := preload("res://mcp/CaptureReceipt.gd")
 const Prop := preload("res://scenes/components/interaction/InteractiveProp3D.gd")
 const Mocap := preload("res://tools/mocap/MocapPreview.gd")
 const ExpressionPreview := preload("res://tools/testing/ExpressionPreview.gd")
-@export_file("*.yaml", "*.json") var default_config := "res://assets/data/test_scenarios/wake.yaml"
+@export_file("*.yaml", "*.json") var default_config := "res://assets/data/test_scenarios/segments/wake-bedroom.json"
 var loader := Scenario.new()
 var content: Control
 var monitor: Control
@@ -91,7 +91,7 @@ func _load_fixture(path: String) -> void:
 	monitor.node_id = str(configuration.get("id", mode))
 	_event({"phase": "load", "configuration": configuration, "source": path, "sha256": FileAccess.get_sha256(path)})
 	match mode:
-		"story", "lighting": _build_story()
+		"story", "lighting", "deduction": _build_story()
 		"interaction": _build_interaction(str(configuration.get("kind", "wardrobe")))
 		"building": _build_matrix_case(0)
 		"mocap":

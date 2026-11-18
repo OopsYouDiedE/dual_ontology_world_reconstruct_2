@@ -118,18 +118,15 @@ func _play() -> void:
 func _finished() -> void:
 	if not active: return
 	_playing = false
-	_status.text = "Check"
+	_status.text = "Order the four actions"
 	_render()
 
 func _confirm_order() -> void:
 	if not active or _playing: return
 	if _order != EXPECTED:
-		_status.text = "Watch Again"
+		_status.text = "Try again or replay the scene"
 		return
-	var picked: Array = []
-	for evidence in ["e_b_sleeve","e_b_drag","e_b_water","e_b_ratchet"]:
-		if host.eng.s.evidence.has(evidence): picked.append(evidence)
-	if picked.size()<4:
+	if not bool(host.eng.deduction_progress("ded_drag").can_answer):
 		_status.text = "Inspect"
 		return
 	var h := host
@@ -137,7 +134,7 @@ func _confirm_order() -> void:
 	_finish()
 	if h.kitchen != null and h.kitchen._order_replay == self: h.kitchen._order_replay = null
 	h._dismiss_modal()
-	h.eng.solve_deduction("ded_drag","in",picked)
+	h.eng.solve_deduction("ded_drag", "in")
 	queue_free()
 
 func _finish() -> void:

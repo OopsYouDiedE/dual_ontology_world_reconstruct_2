@@ -16,7 +16,7 @@ from review.core import Store, atomic_write
 ROOT = runtime.ROOT
 SCENARIOS = ROOT / "assets/data/test_scenarios"
 RUNS = {}
-ROOMS = {"R05": "wake-bedroom", "B-P": "kitchen-evidence", "A-P": "service-maintenance",
+ROOMS = {"R05": "bedroom-exploration", "B-P": "kitchen-evidence", "A-P": "service-maintenance",
          "C-P": "cross-c-window", "D-P": "cross-d-pressure", "2F-cross-M": "cross-central",
          "F01": "service-hall", "service_stair_M": "service-stair", "2F-North-Stair": "shaft-north-stair"}
 WORKBENCH = {"wardrobe": "interaction", "expressions": "expressions", "building": "building",

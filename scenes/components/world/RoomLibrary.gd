@@ -41,7 +41,11 @@ static func rooms() -> Array[String]:
 static func instantiate(identity: String) -> Node3D:
 	if not prepare() or not identity in room_ids: return null
 	var scene := load(cache_path + "scenes/rooms/" + identity + ".tscn") as PackedScene
-	return scene.instantiate() as Node3D if scene != null else null
+	if scene == null: return null
+	var room := scene.instantiate() as Node3D
+	var plaque := room.get_node_or_null("RoomPlaque") as Label3D
+	if plaque != null: plaque.text = TranslationServer.translate(plaque.text)
+	return room
 
 static func available(identity: String) -> bool:
 	return prepare() and identity in room_ids

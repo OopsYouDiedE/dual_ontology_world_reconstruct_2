@@ -74,6 +74,7 @@ func attach(parent: Node3D, rid: String, design: Dictionary) -> bool:
 	_extract_features(mesh_items, inst.position)
 	_spawn_indoor_lamps(inst, bc)
 	parent.add_child(inst)
+	preload("res://scenes/components/world/RoomPaint.gd").apply(rid, inst)
 	_doors.clear()
 	_collect_doors(inst)
 	preload("res://scenes/components/world/WindowAtmosphere.gd").install_room(inst, center())

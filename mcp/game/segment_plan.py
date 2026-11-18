@@ -35,9 +35,12 @@ def make_plan(root, segment, observer, test_id, *, skip_audio=False):
         if row['segment_id'] != segment:
             continue
         case = row['id']
-        scenario = SCENARIOS / 'segments' / (case + '.json')
-        if case == 'wake-bedroom':
-            scenario = SCENARIOS / 'wake.yaml'
+        scenario = Path(row['scenario_path'].removeprefix('res://'))
+        if (root / scenario).resolve().parent != (root / SCENARIOS / 'segments').resolve():
+            raise ValueError(f'Plan case must use a project segment: {case}')
+        fixture = json.loads((root / scenario).read_text(encoding='utf-8-sig'))
+        if not isinstance(fixture, dict) or fixture.get('id') != case or fixture.get('mode', 'story') != 'story':
+            raise ValueError(f'Plan case must match the named story fixture: {case}')
         reference = REFERENCES / (case + '.png')
         receipt = REFERENCES / (case + '.provenance.json')
         if case in CHAPTER_REFERENCES:

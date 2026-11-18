@@ -74,14 +74,6 @@ text = "New Game"
 layout_mode = 2
 text = "继续游戏"
 
-[node name="RecordsButton" type="Button" parent="Menu"]
-layout_mode = 2
-text = "Journal"
-
-[node name="CampaignButton" type="Button" parent="Menu"]
-layout_mode = 2
-text = "Campaign Prototype"
-
 [node name="BuilderButton" type="Button" parent="Menu"]
 layout_mode = 2
 text = "Building Editor"
@@ -89,6 +81,11 @@ text = "Building Editor"
 [node name="LifeTestButton" type="Button" parent="Menu"]
 layout_mode = 2
 text = "Life Simulation"
+
+[node name="ContinueLifeButton" type="Button" parent="Menu"]
+visible = false
+layout_mode = 2
+text = "Resume Life Simulation"
 
 [node name="SettingsButton" type="Button" parent="Menu"]
 layout_mode = 2

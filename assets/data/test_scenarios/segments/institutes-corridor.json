@@ -10,8 +10,8 @@
     "minute": 30
   },
   "playing": false,
+  "before_beat": "d1_dumpling",
   "mock": {
-    "beat_cursor": 20,
     "flags": {
       "service_map": true
     }

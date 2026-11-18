@@ -1,7 +1,7 @@
 extends Node
 ## 第四幕：B-P 乙区小厨房自由探索（与第一幕卧室、第三幕走廊同一套交互）。
 ##
-## 修正前的问题（见 docs/厨房场景修正说明.md）：
+## 修正前的问题（见 docs/archive/reviews/厨房场景修正说明.md）：
 ##   · 厨房一进来就退回「完整界面」：顶栏 + 左卡 + 证物列表 + 7 根黄色光柱，没有 E 提示和操作提示，
 ##     与前面「点发光物件 / 靠近按 E / Esc 切换界面」的玩法断了层。
 ##   · 镜头在换场后被硬切成接近垂直俯视（pitch 1.25）、方位 az=0.65，WASD 却按世界坐标移动，
@@ -45,7 +45,7 @@ var _hint: Label
 var _order_replay: Node = null
 
 
-func begin(h: Control) -> bool:
+func begin(h: Control, walk_in := true) -> bool:
 	host = h
 	if host.view != "room" or str(host.eng.s.room) != ROOM or host.room_mesh == null: return false
 	active = true
@@ -55,7 +55,8 @@ func begin(h: Control) -> bool:
 	_build_markers()
 	_build_overlay()
 	_hide_floor_pillars()
-	_place_at_door()
+	if walk_in: _place_at_door()
+	else: _enter_free()
 	host.az = ENTER_AZ
 	host.pitch = ENTER_PITCH
 	host.dist = ENTER_DIST
@@ -238,7 +239,7 @@ func _build_markers() -> void:
 		var marker := Node3D.new()
 		_markers_root.add_child(marker)
 		var label := tr(str(SHORT_LABELS.get(eid,e.label)))
-		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, label, {"font": host.SANS_FONT})
+		var parts: Dictionary = preload("res://scenes/components/interaction/ExplorationMarker.gd").create(marker, label, {"font": host.SANS_FONT, "radius": 0.095, "height": 0.22, "tag_position": Vector3(0.0, 0.19, 0.0)})
 		var gem: MeshInstance3D = parts["gem"]
 		var mat: StandardMaterial3D = parts["mat"]
 		var tag: Label3D = parts["tag"]

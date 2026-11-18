@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "day5-morning",
+  "mode": "story",
+  "room": "N01",
+  "entry": "exploration",
+  "time": {
+    "day": 5,
+    "hour": 9,
+    "minute": 0
+  },
+  "playing": false,
+  "before_beat": "d5_morning",
+  "mock": {
+    "flags": {
+      "service_map": true,
+      "day2_plan": true
+    }
+  }
+}

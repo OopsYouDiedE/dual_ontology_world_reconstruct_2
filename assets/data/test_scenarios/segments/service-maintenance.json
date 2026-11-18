@@ -10,8 +10,8 @@
     "minute": 40
   },
   "playing": false,
+  "before_beat": "d1_deduce_cuffs",
   "mock": {
-    "beat_cursor": 6,
     "flags": {
       "service_map": true
     }

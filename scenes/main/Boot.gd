@@ -1,35 +1,36 @@
 extends Control
 
-const MAIN_SCENE := "res://scenes/main/Main.tscn"
+const Launch := preload("res://scenes/main/LaunchRoute.gd")
 const PROBE_SCRIPT := "res://scenes/main/LifeBridge.cs"
 const FONT := preload("res://assets/external/NotoSerifSC/NotoSerifSC.ttf")
 
 func _ready() -> void:
-	for argument in OS.get_cmdline_user_args():
-		if argument == "--dv-focused-workbench":
-			get_tree().change_scene_to_file.call_deferred("res://tools/testing/StoryTest.tscn")
-			return
-		if argument.begins_with("--dv-scenario="):
-			get_tree().change_scene_to_file.call_deferred("res://mcp/game/SegmentEntry.tscn")
-			return
-		if argument.begins_with("--dv-snapshot="):
-			get_tree().change_scene_to_file.call_deferred("res://scenes/dual_world/DualWorldMain.tscn")
-			return
-	var problem := _diagnose()
+	var route := Launch.resolve(OS.get_cmdline_user_args())
+	var problem := str(route.get("error", ""))
+	if problem.is_empty() and route.mode in ["title", "--dv-campaign-lab"]:
+		problem = _diagnose(route.mode == "--dv-campaign-lab")
 	if problem.is_empty():
-		get_tree().change_scene_to_file.call_deferred(MAIN_SCENE)
+		_enter.call_deferred(route.scene)
 		return
 	push_error(problem)
 	_show(problem)
 
-func _diagnose() -> String:
+func _enter(scene: String) -> void:
+	var status := get_tree().change_scene_to_file(scene)
+	if status != OK:
+		var message := "Could not open %s (%s)." % [scene, error_string(status)]
+		push_error(message)
+		_show(message)
+
+
+func _diagnose(campaign_lab: bool) -> String:
 	# 正式游戏（DualWorldMain）为纯 GDScript，标准版 Godot 可直接进入标题页与正篇；
 	# 仅当在 .NET 版 Godot 下且 C# 程序集编译损坏时才提示修复编译。
 	if not ClassDB.class_exists("CSharpScript"):
-		return ""
+		return "The campaign lab requires Godot .NET and a compiled C# assembly." if campaign_lab else ""
 	var probe: Script = load(PROBE_SCRIPT)
 	if probe == null or not probe.can_instantiate():
-		return "C# 程序集尚未编译成功，无法创建 LifeBridge。\n\n常见原因：NuGet 还原失败（NU1301 本地源不存在）、未安装 .NET SDK 8、或编译出错。\n\n处理：在项目根执行 tools/build/build.sh（Windows 用 tools/build/Build.ps1），修好报错后重新运行。"
+		return "The C# assembly could not load. Build the project with tools/build/Build.ps1 (Windows) or tools/build/build.sh (Linux) using the .NET 8 SDK, then launch again."
 	return ""
 
 func _show(message: String) -> void:
@@ -46,7 +47,7 @@ func _show(message: String) -> void:
 	column.add_theme_constant_override("separation", 18)
 	center.add_child(column)
 	var heading := Label.new()
-	heading.text = "无法启动 · 安眠者有福"
+	heading.text = "Could Not Start · Blessed Are the Sleeping"
 	heading.add_theme_font_override("font", FONT)
 	heading.add_theme_font_size_override("font_size", 34)
 	heading.add_theme_color_override("font_color", Color("e0794a"))
@@ -59,7 +60,7 @@ func _show(message: String) -> void:
 	body.add_theme_color_override("font_color", Color("eadcbd"))
 	column.add_child(body)
 	var quit := Button.new()
-	quit.text = "退出"
+	quit.text = "Quit"
 	quit.add_theme_font_override("font", FONT)
 	quit.pressed.connect(func(): get_tree().quit(1))
 	column.add_child(quit)

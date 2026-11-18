@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from survey_plan import resolve_case
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'mcp'))
@@ -24,6 +25,7 @@ def main():
     if args.segment:
         cases = [c for c in cases if c['segment_id'] in args.segment]
     if not cases: parser.error('No matching story segments')
+    cases = [resolve_case(case, ROOT) for case in cases]
     output = provenance.project_path(args.output or 'artifacts/acceptance/mainline-survey-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'), ROOT)
     output.mkdir(parents=True, exist_ok=False)
     local_plan = output / 'plan.json'

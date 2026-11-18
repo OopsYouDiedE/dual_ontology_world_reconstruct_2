@@ -63,12 +63,14 @@ def main() -> int:
     command = [executable, "--path", str(ROOT)]
     if args.headless:
         command += ["--headless"]
-    command += ["res://scenes/dual_world/DualWorldMain.tscn", "--",
+    command += ["--",
                 "--dv-checkpoint-output=" + str(directory / "latest.json"),
                 "--dv-checkpoint-stop=" + str(directory / "interrupt.request"),
                 "--dv-save-slot=checkpoint-" + directory.name]
     if snapshot:
         command.append("--dv-snapshot=" + str(snapshot))
+    else:
+        command.append("--dv-story-direct")
     identity = provenance.project_identity(ROOT)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     receipt = {"source_identity": identity, "revision": revision, "command": command,

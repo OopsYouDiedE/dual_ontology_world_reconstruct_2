@@ -5,7 +5,7 @@ const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
 const Geo = preload("BuildingConstruction/Shared/ArchitectGeometry.gd")
 
 const TEMPLATES = {
-	"bedroom":{"label":"卧室","items":[
+	"bedroom":{"label":"Bedroom","items":[
 		{"kind":"bed","slot":"wall_long","params":{}},
 		{"kind":"nightstand","slot":"beside_first","side":-1,"params":{}},
 		{"kind":"nightstand","slot":"beside_first","side":1,"params":{}},
@@ -16,7 +16,7 @@ const TEMPLATES = {
 		{"kind":"painting","slot":"hang","params":{"mount_y":1.65}},
 		{"kind":"wall_lantern","slot":"hang","params":{"lamp_height":2.3}},
 	]},
-	"study":{"label":"书房","items":[
+	"study":{"label":"Study","items":[
 		{"kind":"table","slot":"wall_long","params":{}},
 		{"kind":"chair","slot":"before_prev","params":{}},
 		{"kind":"banker_lamp","slot":"on_prev2","params":{}},
@@ -27,7 +27,7 @@ const TEMPLATES = {
 		{"kind":"painting","slot":"hang","params":{"mount_y":1.65}},
 		{"kind":"wall_lantern","slot":"hang","params":{"lamp_height":2.3}},
 	]},
-	"living":{"label":"起居室","items":[
+	"living":{"label":"Living Room","items":[
 		{"kind":"sofa","slot":"wall_long","params":{}},
 		{"kind":"round_table","slot":"before_prev","params":{"table_r":0.45,"table_h":0.45}},
 		{"kind":"bench","slot":"wall","params":{}},
@@ -37,7 +37,7 @@ const TEMPLATES = {
 		{"kind":"painting","slot":"hang","params":{"mount_y":1.65}},
 		{"kind":"wall_lantern","slot":"hang","params":{"lamp_height":2.3}},
 	]},
-	"dining":{"label":"餐厅","items":[
+	"dining":{"label":"Dining Room","items":[
 		{"kind":"table","slot":"center","params":{"table_w":2.2,"table_d":1.0}},
 		{"kind":"chair","slot":"around_prev","side":0,"params":{}},
 		{"kind":"chair","slot":"around_prev","side":1,"params":{}},
@@ -48,7 +48,7 @@ const TEMPLATES = {
 		{"kind":"pendant_lamp","slot":"ceiling_center","params":{}},
 		{"kind":"wall_lantern","slot":"hang","params":{"lamp_height":2.3}},
 	]},
-	"storage":{"label":"储藏室","items":[
+	"storage":{"label":"Storage Room","items":[
 		{"kind":"bookshelf","slot":"wall_long","params":{}},
 		{"kind":"bookshelf","slot":"wall","params":{}},
 		{"kind":"chest","slot":"wall","params":{}},

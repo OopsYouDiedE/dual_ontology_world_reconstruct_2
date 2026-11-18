@@ -1,60 +1,60 @@
 {
   "version": 1,
   "categories": {
-    "Walls": "墙壁",
-    "Floors": "地板",
-    "Stairs": "楼梯",
-    "Railings": "栏杆",
-    "Doors": "门",
-    "Windows": "窗户",
-    "Tables": "桌子",
-    "Lighting": "灯具",
-    "Chairs": "椅子",
-    "Cabinets": "柜子",
-    "Beds": "床铺",
-    "Props": "摆件与设备",
-    "Outdoor": "庭院"
+    "Walls": "Wall",
+    "Floors": "Floor",
+    "Stairs": "Stairs",
+    "Railings": "Railing",
+    "Doors": "Door",
+    "Windows": "Window",
+    "Tables": "Table",
+    "Lighting": "Lighting",
+    "Chairs": "Chair",
+    "Cabinets": "Cabinet",
+    "Beds": "Bed",
+    "Props": "Props and Equipment",
+    "Outdoor": "Outdoor"
   },
   "items": [
     {
       "id": "SmartWall3D",
       "category": "Walls",
-      "label": "墙壁",
+      "label": "Wall",
       "path": "res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd",
       "parametric": true
     },
     {
       "id": "SmartFloorZone3D",
       "category": "Floors",
-      "label": "地板",
+      "label": "Floor",
       "path": "res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd",
       "parametric": true
     },
     {
       "id": "SmartStair3D",
       "category": "Stairs",
-      "label": "楼梯",
+      "label": "Stairs",
       "path": "res://tools/building_construction/BuildingConstruction/Stairs/SmartStair3D.gd",
       "parametric": true
     },
     {
       "id": "SmartRailing3D",
       "category": "Railings",
-      "label": "栏杆",
+      "label": "Railing",
       "path": "res://tools/building_construction/BuildingConstruction/Railings/SmartRailing3D.gd",
       "parametric": true
     },
     {
       "id": "HingedDoor3D",
       "category": "Doors",
-      "label": "门",
+      "label": "Door",
       "path": "res://tools/building_construction/BuildingConstruction/Doors/HingedDoor3D.gd",
       "parametric": true
     },
     {
       "id": "HingedWindow3D",
       "category": "Windows",
-      "label": "窗户",
+      "label": "Window",
       "path": "res://tools/building_construction/BuildingConstruction/Windows/HingedWindow3D.gd",
       "parametric": true
     },
@@ -93,7 +93,7 @@
     {
       "id": "RecipeTable",
       "category": "Tables",
-      "label": "原版雕花桌",
+      "label": "Original Carved Table",
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeTable.gd",
       "parametric": true,
       "source": "kit/furniture.py::table"
@@ -101,7 +101,7 @@
     {
       "id": "RecipeChair",
       "category": "Chairs",
-      "label": "原版扶手椅",
+      "label": "Original Armchair",
       "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeChair.gd",
       "parametric": true,
       "source": "kit/furniture.py::chair"
@@ -109,7 +109,7 @@
     {
       "id": "RecipeBench",
       "category": "Chairs",
-      "label": "原版长椅",
+      "label": "Original Bench",
       "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeBench.gd",
       "parametric": true,
       "source": "kit/furniture.py::bench"
@@ -149,7 +149,7 @@
     {
       "id": "RecipeWallLantern",
       "category": "Lighting",
-      "label": "原版壁灯",
+      "label": "Original Wall Lantern",
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeWallLantern.gd",
       "parametric": true,
       "source": "kit/lighting.py::wall_lantern"
@@ -157,7 +157,7 @@
     {
       "id": "RecipeBankerLamp",
       "category": "Lighting",
-      "label": "原版银行家台灯",
+      "label": "Original Banker Lamp",
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeBankerLamp.gd",
       "parametric": true,
       "source": "kit/lighting.py::banker_lamp"
@@ -165,7 +165,7 @@
     {
       "id": "RecipePendantLamp",
       "category": "Lighting",
-      "label": "原版吊灯",
+      "label": "Original Pendant Lamp",
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipePendantLamp.gd",
       "parametric": true,
       "source": "kit/lighting.py::pendant_lamp"
@@ -629,7 +629,7 @@
     {
       "id": "RecipeArchedWindow",
       "category": "Windows",
-      "label": "原版拱窗",
+      "label": "Original Arched Window",
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeArchedWindow.gd",
       "parametric": true,
       "source": "kit/openings.py::arched_window"
@@ -637,7 +637,7 @@
     {
       "id": "RecipeClosedDoor",
       "category": "Doors",
-      "label": "原版平顶门",
+      "label": "Original Rectangular Door",
       "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeClosedDoor.gd",
       "parametric": true,
       "source": "kit/openings.py::closed_door"
@@ -645,7 +645,7 @@
     {
       "id": "RecipeRectangularWindow",
       "category": "Windows",
-      "label": "原版矩形窗",
+      "label": "Original Rectangular Window",
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeRectangularWindow.gd",
       "parametric": true,
       "source": "kit/variants.py::rectangular_window"
@@ -653,7 +653,7 @@
     {
       "id": "RecipeRoundWindow",
       "category": "Windows",
-      "label": "原版圆窗",
+      "label": "Original Round Window",
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeRoundWindow.gd",
       "parametric": true,
       "source": "kit/variants.py::round_window"
@@ -661,7 +661,7 @@
     {
       "id": "RecipeArchedClosedDoor",
       "category": "Doors",
-      "label": "原版拱门",
+      "label": "Original Archway",
       "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeArchedClosedDoor.gd",
       "parametric": true,
       "source": "kit/variants.py::arched_closed_door"
@@ -669,7 +669,7 @@
     {
       "id": "RecipeWallPath",
       "category": "Walls",
-      "label": "原版路径墙体",
+      "label": "Original Path Wall",
       "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeWallPath.gd",
       "parametric": true,
       "source": "kit/architecture.py::wall_path"
@@ -677,7 +677,7 @@
     {
       "id": "RecipeStaircase",
       "category": "Stairs",
-      "label": "原版路径楼梯",
+      "label": "Original Path Stair",
       "path": "res://tools/building_construction/BuildingConstruction/Stairs/RecipeStaircase.gd",
       "parametric": true,
       "source": "kit/architecture.py::staircase"
@@ -685,7 +685,7 @@
     {
       "id": "RecipeRailing",
       "category": "Railings",
-      "label": "原版栏杆",
+      "label": "Original Railing",
       "path": "res://tools/building_construction/BuildingConstruction/Railings/RecipeRailing.gd",
       "parametric": true,
       "source": "kit/architecture.py::railing"
@@ -693,7 +693,7 @@
     {
       "id": "RecipeStraightFlight",
       "category": "Stairs",
-      "label": "原版精确直跑楼梯",
+      "label": "Original Straight Stair",
       "path": "res://tools/building_construction/BuildingConstruction/Stairs/RecipeStraightFlight.gd",
       "parametric": true,
       "source": "kit/stair_exact.py::straight_flight"
@@ -701,7 +701,7 @@
     {
       "id": "RecipeTiledFloor",
       "category": "Floors",
-      "label": "原版拼花地板",
+      "label": "Original Parquet Floor",
       "path": "res://tools/building_construction/BuildingConstruction/Floors/RecipeTiledFloor.gd",
       "parametric": true,
       "source": "kit/flooring.py::tiled_floor"

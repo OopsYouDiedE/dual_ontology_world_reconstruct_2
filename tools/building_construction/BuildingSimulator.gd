@@ -14,9 +14,10 @@ const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
 const Furnish = preload("AutoFurnish.gd")
 const RoomLibrary = preload("res://scenes/components/world/RoomLibrary.gd")
 const SANS_FONT := preload("res://assets/external/NotoSansSC/NotoSansSC[wght].ttf")
-const STYLES = {"classical":"古典护墙板（踢脚＋腰线＋顶线）","dado":"半高木护墙","stone":"原石砌块墙","plain":"素面粉刷墙"}
-const OPENINGS = {"arched_window":"半圆拱窗","rectangular_window":"矩形多格窗","round_window":"圆形牛眼窗","double_door":"双开实木大门","closed_door":"单开平顶木门","arched_closed_door":"单开拱顶木门","portal_arch":"敞开式拱形门洞"}
-const FLOOR_STYLES = {"octagonal_tile":"八角拼花砖","parquet_wood":"胡桃木拼花","stone_slab":"原石大板","plain_grout":"素面灰石"}
+const DisplayNames = preload("ArchitectDisplayNames.gd")
+const STYLES = {"classical":"Classical Trim","dado":"Half-Height Paneling","stone":"Rough Stone Blocks","plain":"Plain Plaster"}
+const OPENINGS = {"arched_window":"Arched Window","rectangular_window":"Rectangular Multi-Pane Window","round_window":"Round Window","double_door":"Double Wooden Door","closed_door":"Wooden Door","arched_closed_door":"Arched Wooden Door","portal_arch":"Open Archway"}
+const FLOOR_STYLES = {"octagonal_tile":"Octagonal Tile","parquet_wood":"Walnut Parquet","stone_slab":"Stone Slabs","plain_grout":"Plain Gray Stone"}
 var state = State.new()
 var tool = "select"
 var drawing: Array = []
@@ -84,8 +85,8 @@ func update_cursor(point: Vector2) -> void:
 	if cursor_label==null: return
 	var text = "X %.2f   Z %.2f" % [point.x,point.y]
 	var room = state.room_at(point)
-	if room>=0: text += "   ·   房间 %d（%.1f m²）" % [room+1,state.layer().roomFaces[room].get("area",0.0)]
-	text += "   ·   吸附 %s" % ("自由" if state.grid_snap<=0 else "%.2f m" % state.grid_snap)
+	if room>=0: text += "   ·   Room %d (%.1f m²)" % [room+1,state.layer().roomFaces[room].get("area",0.0)]
+	text += "   ·   Snap %s" % ("Off" if state.grid_snap<=0 else "%.2f m" % state.grid_snap)
 	cursor_label.text = text
 
 func _ready() -> void:
@@ -157,10 +158,13 @@ func check(parent: Node, text: String, value: bool, callback: Callable) -> Check
 func text_field(parent: Node, title: String, value: String, callback: Callable) -> void:
 	label(parent,title)
 	var edit = LineEdit.new()
-	edit.text = value
+	var shown := DisplayNames.english(value)
+	edit.text = shown
 	parent.add_child(edit)
-	edit.text_submitted.connect(callback)
-	edit.focus_exited.connect(func(): callback.call(edit.text))
+	edit.text_submitted.connect(func(name):
+		if name != shown: callback.call(name))
+	edit.focus_exited.connect(func():
+		if edit.text != shown: callback.call(edit.text))
 func page(tabs: TabContainer, title: String) -> VBoxContainer:
 	var scroll = ScrollContainer.new()
 	scroll.name = title
@@ -184,26 +188,26 @@ func _make_ui() -> void:
 	add_child(root)
 	var header = HBoxContainer.new()
 	root.add_child(header)
-	label(header,"ArchBuilder · 建筑构建器")
-	button(header,"双联视口",func(): blueprint.show(); view3.show())
-	button(header,"仅 2D",func(): blueprint.show(); view3.hide())
-	button(header,"仅 3D",func(): blueprint.hide(); view3.show())
+	label(header,"ArchBuilder")
+	button(header,"Split View",func(): blueprint.show(); view3.show())
+	button(header,"2D Only",func(): blueprint.show(); view3.hide())
+	button(header,"3D Only",func(): blueprint.hide(); view3.show())
 	button(header,"Generate Layout",preview_generated_layout,"Preview a new single-storey layout")
 	header.add_child(VSeparator.new())
-	button(header,"撤销",func(): if state.undo(-1): refresh(),"Ctrl+Z")
-	button(header,"重做",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
+	button(header,"Undo",func(): if state.undo(-1): refresh(),"Ctrl+Z")
+	button(header,"Redo",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
 	header.add_child(VSeparator.new())
 	# 文件操作收进菜单：顶栏只留常用按钮，避免 20 个按钮挤一行（实机截图问题）。
 	var file_menu = MenuButton.new()
-	file_menu.text = "文件 ▾"
-	file_menu.tooltip_text = "导入 / 保存 / 导出（JSON、YAML、Godot 场景）"
+	file_menu.text = "File ▾"
+	file_menu.tooltip_text = "Import, save, or export JSON, YAML, or a Godot scene."
 	var fmp = file_menu.get_popup()
-	fmp.add_item("导入 JSON／YAML…", 0)
-	fmp.add_item("保存 JSON…", 1)
-	fmp.add_item("保存 YAML…", 2)
-	fmp.add_item("导出 Godot 场景…", 3)
+	fmp.add_item("Import JSON or YAML…", 0)
+	fmp.add_item("Save JSON…", 1)
+	fmp.add_item("Save YAML…", 2)
+	fmp.add_item("Export Godot Scene…", 3)
 	fmp.add_separator()
-	fmp.add_item("清空场景（可撤销）", 4)
+	fmp.add_item("Clear Scene (Undoable)", 4)
 	fmp.id_pressed.connect(func(id: int):
 		if id == 0: open_file("import")
 		elif id == 1: open_file("json")
@@ -211,10 +215,10 @@ func _make_ui() -> void:
 		elif id == 3: open_file("scene")
 		elif id == 4: clear_dialog())
 	header.add_child(file_menu)
-	button(header,"角色模型",func():
+	button(header,"Character Models",func():
 		var gallery = preload("res://tools/characters/CharacterGallery.tscn").instantiate()
 		add_child(gallery))
-	button(header,"生活模拟",func():
+	button(header,"Life Simulation",func():
 		state.sync_rooms()
 		var main = get_tree().current_scene
 		if main.has_method("open_life"): main.open_life(state.data.duplicate(true))
@@ -230,27 +234,27 @@ func _make_ui() -> void:
 	body.add_child(center)
 	var actions = HBoxContainer.new()
 	center.add_child(actions)
-	for spec in [["select","选择 V"],["wall","绘墙 W"],["floor","地板"],["opening","门窗 O"],["railing","栏杆"],["prop","家具 P"]]:
+	for spec in [["select","Select (V)"],["wall","Wall (W)"],["floor","Floor"],["opening","Opening (O)"],["railing","Railing"],["prop","Furniture (P)"]]:
 		var tool_button = Button.new()
 		tool_button.text = spec[1]
 		tool_button.toggle_mode = true
 		tool_button.button_pressed = spec[0]=="select"
-		tool_button.tooltip_text = "Esc 回到选择工具"
+		tool_button.tooltip_text = "Press Esc to return to Select."
 		tool_button.pressed.connect(func(): set_tool(spec[0]))
 		actions.add_child(tool_button)
 		tool_buttons[spec[0]] = tool_button
 	actions.add_child(VSeparator.new())
-	choice(actions,"吸附",{"0":"自由","0.1":"0.10m","0.2":"0.20m","0.5":"0.50m","1":"1m"},"0.2",func(v): state.grid_snap = float(v))
-	button(actions,"居中 (F)",reset_views,"把当前建筑移到画面中央")
+	choice(actions,"Snap",{"0":"Off","0.1":"0.10m","0.2":"0.20m","0.5":"0.50m","1":"1m"},"0.2",func(v): state.grid_snap = float(v))
+	button(actions,"Center (F)",reset_views,"Center the building in the view.")
 	var view_menu = MenuButton.new()
-	view_menu.text = "视图 ▾"
-	view_menu.tooltip_text = "线框 / 完成闭合 / 开放折线 / 显示隐藏"
+	view_menu.text = "View ▾"
+	view_menu.tooltip_text = "Wireframe, path tools, and visibility."
 	var vmp = view_menu.get_popup()
-	vmp.add_item("线框开关", 0)
-	vmp.add_item("完成／闭合当前折线", 1)
-	vmp.add_item("开放折线（保留开口）", 2)
-	vmp.add_item("显示／隐藏构件…", 3)
-	vmp.add_item("剖面：隐藏朝相机墙（开）", 4)
+	vmp.add_item("Toggle Wireframe", 0)
+	vmp.add_item("Close Current Path", 1)
+	vmp.add_item("Finish Open Path", 2)
+	vmp.add_item("Show or Hide Components…", 3)
+	vmp.add_item("Cutaway: On", 4)
 	vmp.id_pressed.connect(func(id: int):
 		if id == 0: wireframe = not wireframe; update_wireframe()
 		elif id == 1: finish_path(tool!="railing")
@@ -258,7 +262,7 @@ func _make_ui() -> void:
 		elif id == 3: show_visibility()
 		elif id == 4:
 			auto_cutaway = not auto_cutaway
-			vmp.set_item_text(4, "剖面：隐藏朝相机墙（%s）" % ("开" if auto_cutaway else "关"))
+			vmp.set_item_text(4, "Cutaway: %s" % ("On" if auto_cutaway else "Off"))
 			apply_visibility())
 	actions.add_child(view_menu)
 	cursor_label = label(actions,"")
@@ -317,51 +321,51 @@ func _make_ui() -> void:
 	tabs.custom_minimum_size.y = 410
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side.add_child(tabs)
-	var floors = page(tabs,"地面")
+	var floors = page(tabs,"Floors")
 	layer_select = OptionButton.new()
 	floors.add_child(layer_select)
 	layer_select.item_selected.connect(func(index):
 		state.data.activeLayerId = layer_select.get_item_metadata(index)
 		if auto_y: sync_wall("baseY",state.layer().y)
 		refresh_layers())
-	button(floors,"新增楼层",func(): state.new_layer(); state.remember(); refresh_layers())
-	ui_fields.layer_y = number(floors,"楼层高度 (m)",0,func(v):
+	button(floors,"Add Floor",func(): state.new_layer(); state.remember(); refresh_layers())
+	ui_fields.layer_y = number(floors,"Floor Height (m)",0,func(v):
 		state.layer().y = v
 		if auto_y: sync_wall("baseY",v)
 		commit())
-	ui_fields.floor_style = choice(floors,"地板铺装",FLOOR_STYLES,"octagonal_tile",func(v): state.layer().style = v; commit())
-	button(floors,"在 2D 放线绘制地板",func(): set_tool("floor"))
-	label(floors,"高度相差 ≤0.3m 的地板会自动合并，不会重叠")
-	var walls = page(tabs,"墙体")
-	check(walls,"自动跟随图层标高",true,func(v): auto_y = v; if v: sync_wall("baseY",state.layer().get("y",0)))
-	choice(walls,"立面风格",STYLES,"classical",func(v): wall_params.style = v)
-	for spec in [["height","墙高 (m)",0.1],["thickness","墙厚 (m)",0.02],["baseY","起始高度 (m)",0.1]]:
+	ui_fields.floor_style = choice(floors,"Floor Finish",FLOOR_STYLES,"octagonal_tile",func(v): state.layer().style = v; commit())
+	button(floors,"Draw Floor in 2D",func(): set_tool("floor"))
+	label(floors,"Nearby floors merge within 0.3 m.")
+	var walls = page(tabs,"Walls")
+	check(walls,"Match Floor Elevation",true,func(v): auto_y = v; if v: sync_wall("baseY",state.layer().get("y",0)))
+	choice(walls,"Wall Finish",STYLES,"classical",func(v): wall_params.style = v)
+	for spec in [["height","Wall Height (m)",0.1],["thickness","Wall Thickness (m)",0.02],["baseY","Base Height (m)",0.1]]:
 		var key = spec[0]
 		ui_fields[key] = number(walls,spec[1],wall_params[key],func(v): sync_wall(key,v),spec[2])
-	label(walls,"墙两侧自动贴合房间；端点与交点共用节点")
-	check(walls,"转角与端点生成独立装饰立柱",true,func(v): wall_params.hasPillars = v)
-	button(walls,"在 2D 手动放线绘墙",func(): set_tool("wall"))
-	button(walls,"闭合墙环",func(): finish_path(true))
-	button(walls,"开放墙体折线",func(): finish_path(false))
-	button(walls,"沿地板边界生成贴合墙体",func():
+	label(walls,"Adjacent rooms share wall junctions.")
+	check(walls,"Decorative Corner and End Columns",true,func(v): wall_params.hasPillars = v)
+	button(walls,"Draw Walls in 2D",func(): set_tool("wall"))
+	button(walls,"Close Wall Loop",func(): finish_path(true))
+	button(walls,"Finish Open Wall",func(): finish_path(false))
+	button(walls,"Build Walls Around Floor",func():
 		var draft: RefCounted = state.fork_candidate()
 		if draft.auto_walls(wall_params): preview_build(draft, "Walls from Floor")
-		else: status.text = "请先绘制地板；已有墙网房间请直接编辑墙体")
+		else: status.text = "Draw a floor first, or edit the existing walls directly.")
 	var layout := page(tabs,"Layout")
 	number(layout,"Seed",layout_seed,func(v): layout_seed = int(v),1,0,2147483647)
 	number(layout,"Room pairs",layout_pairs,func(v): layout_pairs = int(v),1,1,4)
 	label(layout,"Generate rooms on both sides of one shared hall.")
 	button(layout,"Preview New Layout",preview_generated_layout)
-	var openings = page(tabs,"门窗")
-	choice(openings,"构件样式",OPENINGS,opening_params.type,func(v):
+	var openings = page(tabs,"Openings")
+	choice(openings,"Opening Type",OPENINGS,opening_params.type,func(v):
 		opening_params.type = v
 		opening_params.bottom = 0.85 if "window" in v else 0.0
 		ui_fields.op_bottom.set_value_no_signal(opening_params.bottom)
 		ui_fields.op_rise.get_parent().visible = "arched" in v)
-	for spec in [["width","洞宽 (m)"],["height","洞高 (m)"],["bottom","离地高 (m)"],["rise","拱高 (m)"]]:
+	for spec in [["width","Width (m)"],["height","Height (m)"],["bottom","Height Above Floor (m)"],["rise","Arch Rise (m)"]]:
 		var key = spec[0]
 		ui_fields["op_"+key] = number(openings,spec[1],opening_params[key],func(v): opening_params[key] = v)
-	button(openings,"点击墙段安装门窗",func(): set_tool("opening"))
+	button(openings,"Place Opening on Wall",func(): set_tool("opening"))
 	var stairs = page(tabs,"Stairs")
 	for key in ["rise","run","risers","width","yaw"]:
 		number(stairs,{"rise":"Rise (m)","run":"Run (m)","risers":"Steps","width":"Width (m)","yaw":"Rotation (deg)"}[key],stair_params[key],func(v): stair_params[key] = v,1 if key=="risers" else 0.1,1 if key=="risers" else (-360.0 if key=="yaw" else 0.1), 360.0 if key=="yaw" else 10000.0, 1.0 if key=="risers" else 0.01)
@@ -370,19 +374,19 @@ func _make_ui() -> void:
 	number(stairs,"Railing height (m)",0.9,func(v): rail_params.height = v)
 	number(stairs,"Post spacing (m)",0.18,func(v): rail_params.spacing = v,0.02,0.02)
 	button(stairs,"Draw Railing in 2D",func(): set_tool("railing"))
-	var props = page(tabs,"陈设")
-	choice(props,"原版家具／灯具",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
+	var props = page(tabs,"Furniture")
+	choice(props,"Original Furniture and Lighting",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
 	prop_fields = VBoxContainer.new()
 	props.add_child(prop_fields)
 	refresh_prop_fields()
-	number(props,"位置 X",0,func(v): prop_position.x = v)
-	number(props,"位置 Z",0,func(v): prop_position.y = v)
-	number(props,"朝向角度",0,func(v): prop_yaw = v,15)
-	button(props,"按参数放置原版家具",func(): prop_entry = {}; place_prop(prop_position))
-	button(props,"在 2D 放置原版家具",func(): prop_entry = {}; set_tool("prop"))
-	label(props,"原生组件库（可搜索）")
+	number(props,"Position X",0,func(v): prop_position.x = v)
+	number(props,"Position Z",0,func(v): prop_position.y = v)
+	number(props,"Rotation (deg)",0,func(v): prop_yaw = v,15)
+	button(props,"Preview Furniture at Coordinates",func(): prop_entry = {}; place_prop(prop_position))
+	button(props,"Place Original Furniture in 2D",func(): prop_entry = {}; set_tool("prop"))
+	label(props,"Native Component Library")
 	var filter = LineEdit.new()
-	filter.placeholder_text = "搜索组件…"
+	filter.placeholder_text = "Search components…"
 	filter.clear_button_enabled = true
 	filter.text_changed.connect(func(text): component_filter = text; refresh_component_list())
 	props.add_child(filter)
@@ -394,8 +398,8 @@ func _make_ui() -> void:
 	props.add_child(component_list)
 	refresh_component_list()
 	# Original web furniture remains the default selection.
-	button(props,"在 2D 点选放置组件",func(): set_tool("prop"))
-	button(props,"打开组件库",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
+	button(props,"Place Component in 2D",func(): set_tool("prop"))
+	button(props,"Open Component Library",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
 	var furnish_page = page(tabs,"Furnish")
 	var furnish_help = label(furnish_page,"Preview furniture by room type. Placement keeps furniture inside the room and clear of doorways and other objects.")
 	furnish_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -411,34 +415,34 @@ func _make_ui() -> void:
 	furnish_report = label(furnish_page,"")
 	furnish_report.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	furnish_report.custom_minimum_size.x = 300
-	var presets = page(tabs,"房间")
-	label(presets,"已导入旧编辑器的 %d 个房间（含家具）" % rooms.size())
+	var presets = page(tabs,"Rooms")
+	label(presets,"%d furnished room presets" % rooms.size())
 	var room_select = OptionButton.new()
 	room_select.custom_minimum_size.x = 260
 	room_select.clip_text = true
 	presets.add_child(room_select)
-	for room in rooms: room_select.add_item(str(room.id)+" · "+str(room.name))
+	for room in rooms: room_select.add_item(str(room.id)+" · "+DisplayNames.name_of(room))
 	if rooms.size()>1: room_select.select(1)
-	button(presets,"载入已设计房间",func():
+	button(presets,"Load Room Preset",func():
 		if state.restore(JSON.stringify(rooms[room_select.selected])):
 			hidden_parts.clear()
 			state.remember()
 			refresh()
 			reset_views())
-	label(presets,"原版房间美术（保留碰撞与交互槽）")
+	label(presets,"Original Room Art")
 	var art_select := OptionButton.new()
 	presets.add_child(art_select)
 	for identity in RoomLibrary.rooms(): art_select.add_item(identity)
-	button(presets,"查看原版房间",func(): show_art_room(art_select.get_item_text(art_select.selected)))
-	button(presets,"返回参数化建筑",clear_art_room)
+	button(presets,"View Original Room",func(): show_art_room(art_select.get_item_text(art_select.selected)))
+	button(presets,"Back to Editable Building",clear_art_room)
 	outline = ItemList.new()
 	outline.custom_minimum_size.y = 125
 	side.add_child(outline)
 	outline.item_selected.connect(func(index): state.selected = outline.get_item_metadata(index).duplicate(); refresh_inspector())
 	var edit_actions = HBoxContainer.new()
 	side.add_child(edit_actions)
-	button(edit_actions,"独立参数窗口（E）",show_parameters)
-	button(edit_actions,"删除",delete_selected)
+	button(edit_actions,"Properties (E)",show_parameters)
+	button(edit_actions,"Delete",delete_selected)
 	var scroll = ScrollContainer.new()
 	scroll.custom_minimum_size.y = 220
 	side.add_child(scroll)
@@ -465,7 +469,7 @@ func set_tool(value: String) -> void:
 	if tool=="wall" and auto_y: sync_wall("baseY",state.layer().get("y",0))
 	update_status()
 func update_status() -> void:
-	status.text = {"select":"选择：左键点选/拖拽 · 双击节点或按 E 编辑 · Delete 删除 · Ctrl+Z 撤销 · F 居中", "wall":"绘墙：依次点击节点；点击起点或 Enter 闭合；开放折线按钮保留开口", "floor":"绘地板：依次点击顶点，点击起点或 Enter 完成", "opening":"安装门窗：点击已有墙段；选择模式下可沿墙拖动", "railing":"绘栏杆：依次点击节点，Enter 完成", "prop":"在 2D 点击放置当前组件"}.get(tool,tool)+"  |  节点："+str(drawing.size())
+	status.text = {"select":"Select or drag with the left mouse button. Double-click a node or press E to edit. Delete removes, Ctrl+Z undoes, F centers.", "wall":"Place wall nodes. Click the start or press Enter to close, or choose Finish Open Path.", "floor":"Place floor vertices. Click the start or press Enter to finish.", "opening":"Click a wall to place an opening. In Select mode, drag it along the wall.", "railing":"Place railing nodes and press Enter to finish.", "prop":"Click in 2D to place the selected component."}.get(tool,tool)+"  |  Nodes: "+str(drawing.size())
 func display_state() -> RefCounted:
 	return pending_build if pending_build != null else state
 
@@ -544,13 +548,13 @@ func finish_path(close: bool) -> void:
 		var closed = close and drawing.size()>=3
 		if closed: points.append(points[0].duplicate())
 		var wall = wall_params.duplicate(true)
-		wall.merge({"id":draft.uid("wall"),"name":"墙体 #"+str(draft.data.walls.size()+1),"points":points,"closed":closed,"openings":[]},true)
+		wall.merge({"id":draft.uid("wall"),"name":"Wall #"+str(draft.data.walls.size()+1),"points":points,"closed":closed,"openings":[]},true)
 		draft.data.walls.append(wall)
 	elif tool=="railing":
 		var points = []
 		for p in drawing: points.append([p[0],active.get("y",0),p[1]])
 		var rail = rail_params.duplicate()
-		rail.merge({"id":draft.uid("rail"),"name":"木栏杆 #"+str(draft.data.railings.size()+1),"points":points})
+		rail.merge({"id":draft.uid("rail"),"name":"Wood Railing #"+str(draft.data.railings.size()+1),"points":points})
 		draft.data.railings.append(rail)
 	var title := {"wall": "Wall Path", "floor": "Floor Outline", "railing": "Railing"}
 	var candidate_title: String = title[tool]
@@ -573,7 +577,7 @@ func spawn_stair() -> void:
 	if pending_build != null or state.layer().is_empty(): return
 	var draft: RefCounted = state.fork_candidate()
 	var stair = stair_params.duplicate(true)
-	stair.merge({"id":draft.uid("st"),"name":"直跑梯 #"+str(draft.data.stairs.size()+1),"x":1.2,"y":draft.layer().get("y",0),"z":1.2,"nosing":0.03})
+	stair.merge({"id":draft.uid("st"),"name":"Straight Stair #"+str(draft.data.stairs.size()+1),"x":1.2,"y":draft.layer().get("y",0),"z":1.2,"nosing":0.03})
 	draft.data.stairs.append(stair)
 	draft.selected = {"kind":"stair","index":draft.data.stairs.size()-1}
 	preview_build(draft, "Place Stair", -1, false, "Geometry preview only. Landing access is not checked.")
@@ -659,7 +663,7 @@ func clear_art_room() -> void:
 func show_art_room(identity: String) -> void:
 	var replacement := RoomLibrary.instantiate(identity)
 	if replacement == null:
-		status.text = "房间载入失败：" + identity
+		status.text = "Could not load room: " + identity
 		return
 	clear_art_room()
 	art_room = replacement
@@ -676,7 +680,7 @@ func show_art_room(identity: String) -> void:
 		target = bounds.get_center()
 		distance = maxf(bounds.size.length(), 8.0)
 		_update_camera()
-	status.text = "原版房间 " + identity + " · %d 个实例 · 只读美术视图；参数化建筑可继续编辑。" % art_room.get_child_count()
+	status.text = "Original room " + identity + " · %d instances · Read-only art view. Building edits are still available." % art_room.get_child_count()
 func rebuild() -> void:
 	var shown := display_state()
 	shown.sync_rooms()
@@ -775,7 +779,7 @@ func visibility_check(parent: Node, caption: String, key: String) -> void:
 func show_visibility() -> void:
 	if is_instance_valid(visibility_window): visibility_window.queue_free()
 	visibility_window = Window.new()
-	visibility_window.title = "3D 显示／隐藏"
+	visibility_window.title = "3D Visibility"
 	visibility_window.size = Vector2i(490,650)
 	visibility_window.close_requested.connect(func(): visibility_window.hide())
 	add_child(visibility_window)
@@ -785,17 +789,17 @@ func show_visibility() -> void:
 	var box = VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(box)
-	label(box,"仅影响 3D 视图；完整结构始终保留并导出。")
-	button(box,"全部显示",func(): hidden_parts.clear(); apply_visibility(); show_visibility())
-	for category in {"walls":"墙体（含门窗）","layers":"地面","stairs":"楼梯","railings":"栏杆","props":"家具与灯具"}:
-		visibility_check(box,{"walls":"墙体（含门窗）","layers":"地面","stairs":"楼梯","railings":"栏杆","props":"家具与灯具"}[category],category)
+	label(box,"Only affects the 3D preview. Exports always include the full building.")
+	button(box,"Show All",func(): hidden_parts.clear(); apply_visibility(); show_visibility())
+	for category in {"walls":"Walls and Openings","layers":"Floors","stairs":"Stairs","railings":"Railing","props":"Furniture and Lighting"}:
+		visibility_check(box,{"walls":"Walls and Openings","layers":"Floors","stairs":"Stairs","railings":"Railing","props":"Furniture and Lighting"}[category],category)
 	for wall in state.data.walls:
 		label(box,str(wall.name))
 		for i in range(wall.points.size()-1):
-			visibility_check(box,"墙段 %d · %s → %s" % [i+1,str(wall.points[i]),str(wall.points[i+1])],str(wall.id)+"/Segment_"+str(i))
-	for spec in [["layers","地面"],["stairs","楼梯"],["railings","栏杆"],["props","家具与灯具"]]:
+			visibility_check(box,"Wall Segment %d · %s → %s" % [i+1,str(wall.points[i]),str(wall.points[i+1])],str(wall.id)+"/Segment_"+str(i))
+	for spec in [["layers","Floors"],["stairs","Stairs"],["railings","Railing"],["props","Furniture and Lighting"]]:
 		label(box,spec[1])
-		for item in state.data[spec[0]]: visibility_check(box,str(item.get("name",item.id)),str(item.id))
+		for item in state.data[spec[0]]: visibility_check(box,DisplayNames.name_of(item),str(item.id))
 	visibility_window.popup_centered()
 
 func view_mesh_shown(node: Node3D) -> bool:
@@ -839,7 +843,7 @@ func refresh_layers() -> void:
 	refresh_furnish_rooms()
 	layer_select.clear()
 	for item in state.data.layers:
-		layer_select.add_item(item.name+" · Y="+str(item.y))
+		layer_select.add_item(DisplayNames.name_of(item)+" · Y="+str(item.y))
 		layer_select.set_item_metadata(layer_select.item_count-1,item.id)
 		if item.id==state.data.activeLayerId: layer_select.select(layer_select.item_count-1)
 	if not state.layer().is_empty(): ui_fields.layer_y.set_value_no_signal(state.layer().y)
@@ -850,16 +854,16 @@ func refresh_outline() -> void:
 	for li in range(state.data.layers.size()):
 		for pi in range(state.data.layers[li].polygons.size()):
 			var face = state.data.layers[li].roomFaces[pi] if state.data.layers[li].has("roomFaces") and pi<state.data.layers[li].roomFaces.size() else {}
-			outline.add_item("房间 · "+state.data.layers[li].name+" #"+str(pi+1)+("  %.1f m²" % face.area if face.has("area") else ""))
+			outline.add_item("Room · "+DisplayNames.name_of(state.data.layers[li])+" #"+str(pi+1)+("  %.1f m²" % face.area if face.has("area") else ""))
 			outline.set_item_metadata(outline.item_count-1,{"kind":"floorPoly","layerIndex":li,"polyIndex":pi})
 	for spec in [["walls","wall","wallIndex"],["stairs","stair","index"],["railings","railing","railIndex"],["props","prop","index"]]:
 		for i in range(state.data[spec[0]].size()):
 			var item = state.data[spec[0]][i]
-			outline.add_item(("⚠ " if spec[0]=="props" and conflicts.has(i) else "")+str(item.get("name",item.id)))
+			outline.add_item(("⚠ " if spec[0]=="props" and conflicts.has(i) else "")+DisplayNames.name_of(item))
 			outline.set_item_metadata(outline.item_count-1,{"kind":spec[1],spec[2]:i})
 			if spec[0]=="walls":
 				for oi in range(item.openings.size()):
-					outline.add_item("  └ 门窗 · "+str(OPENINGS.get(item.openings[oi].type, item.openings[oi].type)))
+					outline.add_item("  └ Opening · "+str(OPENINGS.get(item.openings[oi].type, item.openings[oi].type)))
 					outline.set_item_metadata(outline.item_count-1,{"kind":"opening","wallIndex":i,"opIndex":oi})
 func refresh_furnish_rooms() -> void:
 	if furnish_room==null: return
@@ -931,50 +935,50 @@ func refresh_inspector() -> void:
 	fill_parameters(inspector)
 func fill_parameters(parent: Node) -> void:
 	var s = state.selected
-	if s.is_empty(): label(parent,"选择墙体、节点或门窗查看参数"); return
-	label(parent,"选中："+str(s.kind))
+	if s.is_empty(): label(parent,"Select a component to view its properties."); return
+	label(parent,"Selected: "+str(s.kind))
 	if s.kind in ["wall","wallNode"]:
 		var wall = state.data.walls[s.wallIndex]
-		text_field(parent,"名称",wall.name,func(v): wall.name = v; commit_light())
-		choice(parent,"立面风格",STYLES,wall.get("style","classical"),func(v): wall.style = v; commit_light())
+		text_field(parent,"Name",wall.name,func(v): wall.name = v; commit_light())
+		choice(parent,"Wall Finish",STYLES,wall.get("style","classical"),func(v): wall.style = v; commit_light())
 		for key in ["height","thickness"]:
-			number(parent,"墙高" if key=="height" else "墙厚",wall[key],func(v): wall[key] = v; commit_light(),0.1 if key=="height" else 0.02,0.05)
-		number(parent,"整墙标高 Y",wall.get("baseY",0),func(v): state.set_wall_y(wall,v); commit())
-		check(parent,"装饰立柱",wall.get("hasPillars",true),func(v): wall.hasPillars = v; commit_light())
+			number(parent,"Wall Height" if key=="height" else "Wall Thickness",wall[key],func(v): wall[key] = v; commit_light(),0.1 if key=="height" else 0.02,0.05)
+		number(parent,"Wall Elevation Y",wall.get("baseY",0),func(v): state.set_wall_y(wall,v); commit())
+		check(parent,"Decorative Columns",wall.get("hasPillars",true),func(v): wall.hasPillars = v; commit_light())
 		var indices = [s.ptIndex] if s.kind=="wallNode" else range(wall.points.size()-(1 if wall.closed else 0))
 		for index in indices:
-			label(parent,"节点 #"+str(index+1))
+			label(parent,"Node #"+str(index+1))
 			for axis in range(3):
 				number(parent,["X","Y","Z"][axis],wall.points[index][axis],func(v): state.set_node(wall,index,axis,v); commit_light())
 	elif s.kind=="opening":
 		var wall = state.data.walls[s.wallIndex]
 		var op = wall.openings[s.opIndex]
-		choice(parent,"门窗类型",OPENINGS,op.type,func(v): op.type = v; commit_light())
-		for spec in [["segment","所在墙段（从 0 起）"],["center","沿墙中心距离"],["width","洞宽"],["height","洞高"],["bottom","离地高"],["rise","拱高"]]:
+		choice(parent,"Opening Type",OPENINGS,op.type,func(v): op.type = v; commit_light())
+		for spec in [["segment","Wall Segment (Starts at 0)"],["center","Distance Along Wall"],["width","Opening Width"],["height","Opening Height"],["bottom","Height Above Floor"],["rise","Arch Rise"]]:
 			var key = spec[0]
 			number(parent,spec[1],op.get(key,0.4),func(v): op[key] = int(v) if key=="segment" else v; commit_light(),1 if key=="segment" else 0.1,0,wall.points.size()-2 if key=="segment" else 10000)
 	elif s.kind in ["floorPoly","floorNode"]:
 		var layer = state.data.layers[s.layerIndex]
-		text_field(parent,"图层名称",layer.name,func(v): layer.name = v; commit_light())
-		number(parent,"图层标高",layer.y,func(v): layer.y = v; commit_light())
-		choice(parent,"铺装风格",FLOOR_STYLES,layer.style,func(v): layer.style = v; commit_light())
+		text_field(parent,"Floor Name",layer.name,func(v): layer.name = v; commit_light())
+		number(parent,"Floor Elevation",layer.y,func(v): layer.y = v; commit_light())
+		choice(parent,"Floor Finish",FLOOR_STYLES,layer.style,func(v): layer.style = v; commit_light())
 		if s.kind=="floorNode":
 			var pt = layer.roomFaces[s.polyIndex].nodes[s.ptIndex] if layer.has("roomFaces") else layer.polygons[s.polyIndex][s.ptIndex]
 			for axis in range(2): number(parent,["X","Z"][axis],pt[axis],func(v):
 				state.move_room_node(s.layerIndex,s.polyIndex,s.ptIndex,v if axis==0 else pt[0],v if axis==1 else pt[1]); commit_light())
 	elif s.kind in ["railing","railingNode"]:
 		var rail = state.data.railings[s.railIndex]
-		number(parent,"栏杆高度",rail.height,func(v): rail.height = v; commit_light(),0.1,0.12)
-		number(parent,"立杆间距",rail.get("spacing",0.18),func(v): rail.spacing = v; commit_light(),0.02,0.02)
+		number(parent,"Railing Height",rail.height,func(v): rail.height = v; commit_light(),0.1,0.12)
+		number(parent,"Post Spacing",rail.get("spacing",0.18),func(v): rail.spacing = v; commit_light(),0.02,0.02)
 		if s.kind=="railingNode":
 			for axis in range(3): number(parent,["X","Y","Z"][axis],rail.points[s.ptIndex][axis],func(v): rail.points[s.ptIndex][axis] = v; commit_light())
 	elif s.kind in ["stair","prop"]:
 		var item = state.data.stairs[s.index] if s.kind=="stair" else state.data.props[s.index]
-		text_field(parent,"名称",item.get("name",item.id),func(v): item.name = v; commit_light())
+		text_field(parent,"Name",item.get("name",item.id),func(v): item.name = v; commit_light())
 		for key in (["x","y","z","yaw","rise","run","risers","width","nosing"] if s.kind=="stair" else ["x","y","z","yaw"]):
 			number(parent,key,item.get(key,0),func(v): item[key] = v; commit_light(),1 if key=="risers" else 0.1,1 if key=="risers" else -10000)
 		if s.kind=="prop":
-			if conflicts.has(s.index): label(parent,"⚠ 与其他家具重叠" if conflicts[s.index]=="overlap" else "⚠ 位于房间之外")
+			if conflicts.has(s.index): label(parent,"⚠ Overlaps Other Furniture" if conflicts[s.index]=="overlap" else "⚠ Outside the Room")
 			var mount_field = Footprint.MOUNT_FIELD.get(str(item.kind),"")
 			for field in prop_presets.get(item.kind,{"fields":[]}).fields:
 				number(parent,field.label,item.params.get(field.id,field.val),func(v):
@@ -991,12 +995,12 @@ func fill_parameters(parent: Node) -> void:
 						number(parent,str(key),value,func(v): item.params[key] = v; commit_light(),0.1)
 					elif value is bool:
 						check(parent,str(key),value,func(v): item.params[key] = v; commit_light())
-		if s.kind=="stair": choice(parent,"扶手",{"both":"双侧","left":"左侧","right":"右侧","none":"无"},item.get("railingPos","both"),func(v): item.railingPos = v; commit_light())
+		if s.kind=="stair": choice(parent,"Handrail",{"both":"Both Sides","left":"Left","right":"Right","none":"None"},item.get("railingPos","both"),func(v): item.railingPos = v; commit_light())
 func show_parameters() -> void:
 	if state.selected.is_empty(): return
 	if is_instance_valid(modal): modal.queue_free()
 	modal = Window.new()
-	modal.title = "独立参数编辑"
+	modal.title = "Component Properties"
 	modal.size = Vector2i(420,620)
 	modal.close_requested.connect(func(): modal.queue_free())
 	add_child(modal)
@@ -1007,12 +1011,12 @@ func show_parameters() -> void:
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(column)
 	fill_parameters(column)
-	button(column,"关闭",func(): modal.queue_free())
+	button(column,"Close",func(): modal.queue_free())
 	modal.popup_centered()
 func open_file(action: String) -> void:
 	file_action = action
 	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE if action=="import" else FileDialog.FILE_MODE_SAVE_FILE
-	file_dialog.filters = PackedStringArray(["*.tscn ; Godot 场景"] if action=="scene" else (["*.yaml ; ArchBuilder YAML"] if action=="yaml" else ["*.json,*.yaml,*.yml ; ArchBuilder JSON / YAML"]))
+	file_dialog.filters = PackedStringArray(["*.tscn ; Godot Scene"] if action=="scene" else (["*.yaml ; ArchBuilder YAML"] if action=="yaml" else ["*.json,*.yaml,*.yml ; ArchBuilder JSON / YAML"]))
 	file_dialog.current_dir = ProjectSettings.globalize_path("res://tools/building_construction/candidates")
 	file_dialog.current_file = "BuildingCandidate.tscn" if action=="scene" else ("BuildingCandidate.yaml" if action=="yaml" else "BuildingCandidate.json")
 	file_dialog.popup_centered(Vector2i(850,600))
@@ -1022,10 +1026,10 @@ func _file_selected(path: String) -> void:
 			state.remember()
 			refresh()
 			reset_views()
-		else: status.text = "JSON／YAML 场景格式无效"
+		else: status.text = "Invalid JSON or YAML scene."
 	elif file_action in ["json","yaml"]:
 		var file = FileAccess.open(path,FileAccess.WRITE)
-		if file: file.store_string(preload("ArchitectYaml.gd").dump(state.data)+"\n" if file_action=="yaml" else JSON.stringify(state.data,"  ")); status.text = "已保存："+path
+		if file: file.store_string(preload("ArchitectYaml.gd").dump(state.data)+"\n" if file_action=="yaml" else JSON.stringify(state.data,"  ")); status.text = "Saved: "+path
 	else:
 		var copy = candidates.duplicate()
 		copy.visible = true
@@ -1041,10 +1045,10 @@ func _file_selected(path: String) -> void:
 		if error==OK: error = packed.pack(copy)
 		if error==OK: error = ResourceSaver.save(packed,path)
 		copy.free()
-		status.text = "已导出候选："+path if error==OK else "导出失败："+error_string(error)
+		status.text = "Exported preview: "+path if error==OK else "Export failed: "+error_string(error)
 func clear_dialog() -> void:
 	var dialog = ConfirmationDialog.new()
-	dialog.dialog_text = "清空当前场景？可以撤销。"
+	dialog.dialog_text = "Clear this scene? You can undo this change."
 	add_child(dialog)
 	dialog.confirmed.connect(func():
 		state.data = {"activeLayerId":null,"layers":[],"walls":[],"stairs":[],"railings":[],"props":[]}

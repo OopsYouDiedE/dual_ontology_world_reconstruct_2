@@ -26,11 +26,11 @@ var target := Vector3.ZERO
 func _ready() -> void:
 	var file := FileAccess.open(CATALOG_PATH, FileAccess.READ)
 	if file == null:
-		push_error("无法打开建筑目录")
+		push_error("Could not open the building catalog.")
 		return
 	var parsed = JSON.parse_string(file.get_as_text())
 	if not parsed is Dictionary:
-		push_error("建筑目录格式错误")
+		push_error("Invalid building catalog.")
 		return
 	catalog = parsed
 	candidates = Node3D.new()
@@ -87,7 +87,7 @@ func _make_ui() -> void:
 	var column := VBoxContainer.new()
 	panel.add_child(column)
 	var heading := Label.new()
-	heading.text = "建筑模拟器"
+	heading.text = "Component Library"
 	column.add_child(heading)
 	category = OptionButton.new()
 	column.add_child(category)
@@ -97,24 +97,24 @@ func _make_ui() -> void:
 	items = ItemList.new()
 	items.custom_minimum_size = Vector2(250, 230)
 	column.add_child(items)
-	_button(column, "选择模式／取消放置（Esc）", _cancel)
+	_button(column, "Select / Cancel Placement (Esc)", _cancel)
 	var actions := HBoxContainer.new()
 	column.add_child(actions)
-	_button(actions, "撤销", func(): _restore(history_index - 1))
-	_button(actions, "重做", func(): _restore(history_index + 1))
-	_button(actions, "删除", _delete_selected)
+	_button(actions, "Undo", func(): _restore(history_index - 1))
+	_button(actions, "Redo", func(): _restore(history_index + 1))
+	_button(actions, "Delete", _delete_selected)
 	outline = ItemList.new()
 	outline.custom_minimum_size = Vector2(250, 150)
 	column.add_child(outline)
 	outline.item_selected.connect(func(index: int): _select(candidates.get_child(index)))
-	_button(column, "保存候选", _save_candidate)
-	_button(column, "打开候选", _open_candidate)
-	_button(column, "组件总览", _show_catalog)
-	_button(column, "保存实机截图", _capture)
+	_button(column, "Save Candidate", _save_candidate)
+	_button(column, "Open Candidate", _open_candidate)
+	_button(column, "Show All Components", _show_catalog)
+	_button(column, "Save Screenshot", _capture)
 	status = Label.new()
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.custom_minimum_size.x = 250
-	status.text = "单位：米。选组件后点击网格放置；右键旋转，Shift＋右键平移，滚轮缩放，R 转向。"
+	status.text = "Units are meters. Select a component and click the grid to place it. Right-drag to orbit, Shift+right-drag to pan, scroll to zoom, or press R to rotate the component."
 	column.add_child(status)
 	var right := PanelContainer.new()
 	right.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -145,12 +145,12 @@ func _refresh(index: int) -> void:
 func _select_item(index: int) -> void:
 	selected_path = str(entries[index].path)
 	selected_defaults = entries[index].get("defaults", {})
-	status.text = "点击地面放置：" + str(entries[index].label)
+	status.text = "Click the floor to place: " + str(entries[index].label)
 
 func _cancel() -> void:
 	selected_path = ""
 	items.deselect_all()
-	status.text = "选择模式：点击对象或左侧对象列表。"
+	status.text = "Select an object in the view or in the list."
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
@@ -178,7 +178,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_DELETE: _delete_selected()
 			KEY_R:
 				rotation_y = fposmod(rotation_y + 90.0, 360.0)
-				status.text = "放置朝向：%d°" % rotation_y
+				status.text = "Placement angle: %d°" % rotation_y
 
 func _update_camera() -> void:
 	camera.position = target + Vector3(sin(orbit.x) * cos(orbit.y), sin(orbit.y), cos(orbit.x) * cos(orbit.y)) * distance
@@ -192,7 +192,7 @@ func _place(mouse: Vector2) -> void:
 		return
 	var instance := Components.create(selected_path)
 	if instance == null:
-		status.text = "无法加载组件：" + selected_path
+		status.text = "Could not load component: " + selected_path
 		return
 	for key in selected_defaults:
 		instance.set(key, selected_defaults[key])
@@ -202,7 +202,7 @@ func _place(mouse: Vector2) -> void:
 	instance.rotation_degrees.y = rotation_y
 	_remember()
 	_select(instance)
-	status.text = "已放置 " + instance.name
+	status.text = "Placed " + instance.name
 
 func _pick(mouse: Vector2) -> void:
 	var origin := camera.project_ray_origin(mouse)
@@ -222,8 +222,8 @@ func _select(node: Node3D) -> void:
 	var title := Label.new()
 	title.text = str(node.name)
 	inspector.add_child(title)
-	_vector_field("位置", "position", node.position)
-	_vector_field("角度", "rotation_degrees", node.rotation_degrees)
+	_vector_field("Position", "position", node.position)
+	_vector_field("Rotation", "rotation_degrees", node.rotation_degrees)
 	for property in node.get_property_list():
 		if property.usage & PROPERTY_USAGE_SCRIPT_VARIABLE == 0 or property.usage & PROPERTY_USAGE_EDITOR == 0:
 			continue
@@ -320,7 +320,7 @@ func _refresh_outline() -> void:
 func _snapshot() -> PackedScene:
 	var packed := PackedScene.new()
 	if packed.pack(candidates) != OK:
-		push_error("无法保存建筑候选")
+		push_error("Could not save the building candidate.")
 		return null
 	return packed
 
@@ -361,25 +361,25 @@ func _save_candidate() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(CANDIDATE_PATH.get_base_dir()))
 	var packed := _snapshot()
 	if packed != null and ResourceSaver.save(packed, CANDIDATE_PATH) == OK:
-		status.text = "已保存候选：" + CANDIDATE_PATH
+		status.text = "Saved candidate: " + CANDIDATE_PATH
 	else:
-		status.text = "候选保存失败"
+		status.text = "Could not save candidate."
 
 func _open_candidate() -> void:
 	if not FileAccess.file_exists(CANDIDATE_PATH):
-		status.text = "尚无已保存候选"
+		status.text = "No saved candidate."
 		return
 	var packed := ResourceLoader.load(CANDIDATE_PATH, "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
 	if packed != null:
 		_replace(packed)
 		_remember()
-		status.text = "已打开候选：" + CANDIDATE_PATH
+		status.text = "Opened candidate: " + CANDIDATE_PATH
 
 func _show_catalog() -> void:
 	_cancel()
 	var index := 0
 	for entry in catalog.items:
-		status.text = "生成组件总览：%d / %d" % [index + 1, catalog.items.size()]
+		status.text = "Generating component overview: %d / %d" % [index + 1, catalog.items.size()]
 		var instance := Components.create(str(entry.path))
 		if instance == null: continue
 		for key in entry.get("defaults", {}): instance.set(key, entry.defaults[key])
@@ -393,10 +393,10 @@ func _show_catalog() -> void:
 	distance = 100
 	_update_camera()
 	_remember()
-	status.text = "已生成 %d 个组件。右键转动，Shift＋右键平移；保存候选可保留当前布置。" % index
+	status.text = "Generated %d components. Right-drag to orbit, Shift+right-drag to pan. Save the candidate to keep this layout." % index
 
 func _capture() -> void:
 	await RenderingServer.frame_post_draw
 	var path := "res://.runtime/building_catalog/BuildingSimulator.png"
 	var saved := preload("res://mcp/CaptureReceipt.gd").save(get_viewport().get_texture().get_image(), path, get_tree(), "manual-component-capture")
-	status.text = "已保存实机截图：" + path if saved else "截图保存失败"
+	status.text = "Saved screenshot: " + path if saved else "Could not save screenshot."

@@ -140,7 +140,7 @@ func _draw() -> void:
 	if active.has("roomFaces"):
 		for ri in range(active.roomFaces.size()):
 			var face = active.roomFaces[ri]
-			label_at("房间 %d · %.1f m²" % [ri+1,face.get("area",0.0)],screen(Vector2(face.centroid[0],face.centroid[1]))+Vector2(0,-14),Color("e9d8b4"),12)
+			label_at("Room %d · %.1f m²" % [ri+1,face.get("area",0.0)],screen(Vector2(face.centroid[0],face.centroid[1]))+Vector2(0,-14),Color("e9d8b4"),12)
 	# Dimensions of the selected wall and of the segment being drawn.
 	if state.selected.get("kind","") in ["wall","wallNode"]:
 		var sel = state.data.walls[state.selected.wallIndex]

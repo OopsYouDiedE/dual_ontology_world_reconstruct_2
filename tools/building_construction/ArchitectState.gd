@@ -38,7 +38,7 @@ func layer() -> Dictionary:
 	return data.layers[0] if not data.layers.is_empty() else {}
 func new_layer() -> void:
 	var y = data.layers.size()*3.6
-	var item = {"id":uid("fl"),"name":"标高 %.1fm" % y,"y":y,"style":"octagonal_tile","polygons":[]}
+	var item = {"id":uid("fl"),"name":"Elevation %.1f m" % y,"y":y,"style":"octagonal_tile","polygons":[]}
 	data.layers.append(item)
 	data.activeLayerId = item.id
 func remember() -> void:
@@ -79,12 +79,12 @@ func restore(text: String) -> bool:
 func sanitize(parsed: Dictionary) -> void:
 	for item in parsed.layers:
 		if not item.has("id"): item.id = uid("fl")
-		if not item.has("name"): item.name = "标高 %.1fm" % float(item.y)
+		if not item.has("name"): item.name = "Elevation %.1f m" % float(item.y)
 		if not item.has("polygons") or not item.polygons is Array: item.polygons = []
 		if not item.has("style"): item.style = "octagonal_tile"
 	for wall in parsed.walls:
 		if not wall.has("id"): wall.id = uid("wall")
-		if not wall.has("name"): wall.name = "墙体 "+str(wall.id)
+		if not wall.has("name"): wall.name = "Wall "+str(wall.id)
 		wall.closed = bool(wall.get("closed",false))
 		wall.height = clampf(float(wall.height),0.3,40.0)
 		wall.thickness = clampf(float(wall.thickness),0.02,3.0)
@@ -303,11 +303,11 @@ func free_opening_center(wall: Dictionary, segment: int, wanted: float, width: f
 func add_opening(point: Vector2, params: Dictionary) -> bool:
 	message = ""
 	var hit = nearest_wall(point,0.9)
-	if hit.is_empty(): message = "附近没有墙段"; return false
+	if hit.is_empty(): message = "No wall segment nearby."; return false
 	var wall = data.walls[hit.wallIndex]
 	var center = free_opening_center(wall,hit.segIndex,hit.centerDist,params.width,hit.len)
 	if center<0:
-		message = "该墙段放不下（宽 %.2f m，墙长 %.2f m）或已被门窗占满" % [params.width,hit.len]
+		message = "Opening does not fit this segment (%.2f m wide, segment %.2f m long) or overlaps another opening." % [params.width,hit.len]
 		return false
 	var opening = params.duplicate(true)
 	opening.id = uid("op")
@@ -370,7 +370,7 @@ func auto_walls(params: Dictionary) -> bool:
 			points.append([pt[0],active.y,pt[1]])
 		points.append(points[0].duplicate())
 		var wall = params.duplicate(true)
-		wall.merge({"id":uid("wall"),"name":"自动外墙 · "+active.name+" · "+str(generated.size()+1),"generatedLayerId":active.id,"points":points,"closed":true,"baseY":active.y,"openings":[]},true)
+		wall.merge({"id":uid("wall"),"name":"Generated Exterior Wall ·"+active.name+" · "+str(generated.size()+1),"generatedLayerId":active.id,"points":points,"closed":true,"baseY":active.y,"openings":[]},true)
 		generated.append(wall)
 	if generated.is_empty(): return false
 	data.walls = data.walls.filter(func(w): return w.get("generatedLayerId")!=active.id)

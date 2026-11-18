@@ -1,6 +1,7 @@
 extends SceneTree
 const State := preload("res://tools/building_construction/ArchitectState.gd")
 const Plan := preload("res://tools/building_construction/RoomPlan.gd")
+const DisplayNames := preload("res://tools/building_construction/ArchitectDisplayNames.gd")
 const Space := preload("res://scenes/components/life/BuildingSpace.gd")
 var failures := 0
 
@@ -17,8 +18,17 @@ func _setup(data: Dictionary) -> RefCounted:
 func _run() -> void:
 	var original := State.new()
 	var rooms: Array = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_rooms.json"))
+	var han := RegEx.create_from_string("\\p{Han}")
+	var english_names := true
+	var names_intact := true
 	for room in rooms:
-		if room.id == "B-P": original.restore(JSON.stringify(room))
+		var authored := JSON.stringify(room)
+		for item in [room] + room.layers + room.walls + room.stairs + room.railings + room.props:
+			if han.search(DisplayNames.name_of(item)) != null: english_names = false
+		if JSON.stringify(room) != authored: names_intact = false
+		if room.id == "B-P": original.restore(authored)
+	check(english_names and names_intact, "all shipped presets and components show English aliases without mutating the data")
+	check(DisplayNames.english("Custom Studio") == "Custom Studio", "custom names stay intact")
 	original.remember()
 	var prior := JSON.stringify(original.data)
 	var draft := original.fork_candidate()

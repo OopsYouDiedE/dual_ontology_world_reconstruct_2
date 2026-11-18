@@ -18,6 +18,29 @@ public partial class LifeBridge : Node
     private string auditDirectory="";
     private readonly Dictionary<string,string> disabledReasons=[];
     private JsonObject notes=new();
+    private GodotObject? objectRouteSpace;
+    private Godot.Collections.Dictionary? objectRouteActions;
+    private readonly Dictionary<(double X,double Z,string Object,string Action,int Slot),double?> objectRoutes=[];
+
+    public void SetObjectRouteSpace(GodotObject space,Godot.Collections.Dictionary actions)
+    {
+        objectRouteSpace=space;
+        objectRouteActions=actions;
+        BindObjectRouteProbe();
+    }
+    private void BindObjectRouteProbe()
+    {
+        objectRoutes.Clear();
+        session?.ConfigureLifeObjectRoute(objectRouteSpace is not null?ProbeObjectRoute:null);
+    }
+    private double? ProbeObjectRoute(PhysicalPlacement from,string obj,string action,int slot)
+    {
+        var key=(from.X,from.Z,obj,action,slot);
+        if(objectRoutes.TryGetValue(key,out var cached))return cached;
+        var result=objectRouteSpace!.Call("object_route_length",from.X,from.Z,obj,action,slot,objectRouteActions!);
+        var distance=result.VariantType==Variant.Type.Float?result.AsDouble():double.PositiveInfinity;
+        return objectRoutes[key]=double.IsFinite(distance)&&distance>=0?distance:null;
+    }
     private static string Encode(object? value)=>JsonSerializer.Serialize(value);
     private static string Read(string path)=>System.IO.File.ReadAllText(ProjectSettings.GlobalizePath(path));
     private static CharacterSessionDefinition Prepare(string source,string buildingJson)
@@ -59,6 +82,9 @@ public partial class LifeBridge : Node
         if(session is null||definition is null)return Encode(new {error="尚未开局"});
         try
         {
+            // The installed grid is immutable. Reuse routes for stationary actors,
+            // including the eligibility list shown by SnapshotValue.
+            if(objectRoutes.Count>=2048)objectRoutes.Clear();
             var before=session.ContentTime;
             if(!CampaignProgress.Evaluate(definition.Declaration,session).Completed)session.StepPhysical(seconds);
             var dispatch=new List<object>();
@@ -199,6 +225,7 @@ public partial class LifeBridge : Node
             var restored=replacement.Create();restored.RestoreState(saved);
             CharacterContentRevisions.AssertStatePreserved(saved,restored.SaveState());
             definition=replacement;session=restored;contentPath=path;sourceManifest=Read(path);customBuilding=false;
+            BindObjectRouteProbe();
             decisions.Clear();
             foreach(var execution in saved.Executions)
                 if(session.DecisionFor(execution.Execution) is { } decision)decisions.Add(execution.Execution,decision);
@@ -209,7 +236,7 @@ public partial class LifeBridge : Node
     public void Close()
     {
         if(session is null)return;
-        System.IO.File.WriteAllText(System.IO.Path.Combine(auditDirectory,"final.json"),Observe());session=null;decisions.Clear();
+        System.IO.File.WriteAllText(System.IO.Path.Combine(auditDirectory,"final.json"),Observe());session=null;decisions.Clear();objectRoutes.Clear();objectRouteSpace=null;objectRouteActions=null;
     }
     public override void _ExitTree()=>Close();
 }

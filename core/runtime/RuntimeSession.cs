@@ -456,7 +456,7 @@ public sealed partial class RuntimeSession
         if(Incapacitated(actor))return false;
         if(!KnowledgeEligible(action))return false;
         if(!MechanicEligible(actor,action))return false;
-        if(!LifeEligible(actor,action))return false;
+        if(!LifeEligible(actor,action)||!HasLifeObjectRoute(actor,action))return false;
         if(strategyBindings.TryGetValue(action.Id,out var strategy) && strategy.LastAttemptRevision==actors[actor].KnowledgeRevision)return false;
         if(!TimeEligible(action))return false;
         var minimum=action.Declaration.Get("minimum_travel_distance_m");

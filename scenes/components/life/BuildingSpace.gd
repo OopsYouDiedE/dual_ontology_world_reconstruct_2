@@ -278,12 +278,25 @@ func use_points(obj: Dictionary, act: Dictionary, slot := 0) -> Array:
 		if not is_solid_at(use_point.approach): free.append(use_point)
 	return free
 
+func object_route_length(x: float, z: float, object_id: String, action: String, slot: int, actions: Dictionary) -> float:
+	if not object_by_id.has(object_id) or not actions.has(action): return INF
+	return float(plan_use(Vector2(x, z), object_by_id[object_id], actions[action], slot).get("length", INF))
+
 func plan_use(from: Vector2, obj: Dictionary, act: Dictionary, slot := 0) -> Dictionary:
+	if is_solid_at(from): return {}
 	var best := {}
 	var best_len := INF
 	for use_point in use_points(obj, act, slot):
-		var path := find_path(from, use_point.approach)
-		if path.is_empty() and from.distance_to(use_point.approach) > 0.4: continue
+		var approach: Vector2 = use_point.approach
+		var path := find_path(from, approach)
+		# An empty grid path can mean either the same cell or disconnected cells.
+		if path.is_empty() and _cell_of(from) != _cell_of(approach): continue
+		if not path.is_empty() and not line_clear(from, path.front()):
+			var first := _cell_of(from)
+			path.push_front(_cell_center(first.x, first.y))
+		var last: Vector2 = from if path.is_empty() else path.back()
+		if not line_clear(last, approach): continue
+		if not last.is_equal_approx(approach): path.append(approach)
 		var length := path_length(from, path)
 		if length < best_len:
 			best_len = length

@@ -328,6 +328,14 @@ public sealed class DecisionScheduler
         slot.Selection=[];slot.Cursor=0;slot.Best=null;slot.BestScore=double.NegativeInfinity;
     }
 
+    internal void InvalidateSelections()
+    {
+        foreach(var slot in slots)
+        {
+            slot.Selection=[];slot.Cursor=0;slot.Best=null;slot.BestScore=double.NegativeInfinity;
+        }
+    }
+
     private static void ValidateTime(double now)
     {
         if (!double.IsFinite(now) || now < 0) throw new ArgumentOutOfRangeException(nameof(now));

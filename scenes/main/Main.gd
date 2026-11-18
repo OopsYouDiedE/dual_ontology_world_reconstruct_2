@@ -276,6 +276,7 @@ func _present_life(restored: bool) -> void:
 	for index in range(rules.building.layers.size()):
 		if not rules.building.layers[index].get("roomFaces", []).is_empty(): layer_index = index; break
 	space.setup(rules.building, layer_index, rules.capacities)
+	bridge.SetObjectRouteSpace(space, rules.actions)
 	if is_instance_valid(title_ui): title_ui.hide_title()
 	book_ui.close_immediately()
 	stage.set_active(false)

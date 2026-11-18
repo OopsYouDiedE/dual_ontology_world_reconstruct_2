@@ -76,6 +76,30 @@ public sealed partial class RuntimeSession
     {
         var hash=2166136261u;foreach(var character in text)hash=unchecked((hash^character)*16777619u);return hash;
     }
+    private Func<PhysicalPlacement,string,string,int,double?>? lifeObjectRoute;
+
+    // The physical host owns pathfinding. Null from the probe means no usable route;
+    // a session without a physical probe keeps its original logical distance model.
+    public void ConfigureLifeObjectRoute(Func<PhysicalPlacement,string,string,int,double?>? probe)
+    {
+        if(!IsLifeSession)throw new InvalidOperationException("A life route probe requires a life session.");
+        lifeObjectRoute=probe;
+        Scheduler.InvalidateSelections();
+    }
+
+    private bool HasLifeObjectRoute(string actor,ActionCandidate candidate)
+    {
+        var meta=candidate.Declaration.Get("life");
+        return lifeObjectRoute is null || meta.Get("obj").Text().Length==0 || LifeObjectRoute(actor,meta) is not null;
+    }
+
+    private double? LifeObjectRoute(string actor,JsonElement meta)
+    {
+        if(!placements.TryGetValue(actor,out var from))return null;
+        var distance=lifeObjectRoute?.Invoke(from,meta.Get("obj").Text(),meta.Get("action").Text(),(int)meta.Get("slot").Number());
+        return distance is double value && double.IsFinite(value) && value>=0 ? value : null;
+    }
+
     private double LifePlanBias(string actor,ActionCandidate candidate)
     {
         if(!IsLifeSession||!actors.ContainsKey(actor))return 0;
@@ -92,8 +116,10 @@ public sealed partial class RuntimeSession
         {
             bias+=(LifeHash(actor+"|"+obj)%1000/1000.0-0.5)*2*config.Get("tie_jitter").Number();
             var target=candidate.Declaration.Get("motor").Get("target").Items().Select(value=>value.Number()).ToArray();
-            if(target.Length==3&&placements.TryGetValue(actor,out var from))
-                bias-=Math.Sqrt(Math.Pow(from.X-target[0],2)+Math.Pow(from.Z-target[2],2))*config.Get("distance_per_m").Number();
+            var distance=lifeObjectRoute is not null ? LifeObjectRoute(actor,meta)
+                : target.Length==3&&placements.TryGetValue(actor,out var from)
+                    ? Math.Sqrt(Math.Pow(from.X-target[0],2)+Math.Pow(from.Z-target[2],2)) : (double?)null;
+            bias-=distance.GetValueOrDefault()*config.Get("distance_per_m").Number();
         }
         return bias;
     }

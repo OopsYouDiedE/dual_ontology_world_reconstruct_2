@@ -611,6 +611,13 @@ func _process(delta: float) -> void:
 			var result: Dictionary = JSON.parse_string(bridge.Step(seconds))
 			if result.has("error"): status_text = result.error; paused = true; break
 			snapshot = result.snapshot
+			# The snapshot is sampled before host movement. Apply it before walking,
+			# so rendering and the next route both use the just-reported position.
+			for profile in snapshot.get("actors", []):
+				var model := figures.get(profile.id) as Node3D
+				if model == null: continue
+				var placement: Dictionary = profile.placement
+				model.position = Vector3(placement.X, placement.Y, placement.Z)
 			_move(float(result.elapsed_seconds))
 			for action in result.dispatch: _dispatch(action)
 			# F4：Step 返回值里已带 snapshot，不再额外 Observe()（每次多序列化 + 解析一整份历史快照）
@@ -619,11 +626,9 @@ func _process(delta: float) -> void:
 	for actor in snapshot.get("actors", []):
 		if not figures.has(actor.id): continue
 		figures[actor.id].pause_animation(paused)
-		var placement: Dictionary = actor.placement
-		figures[actor.id].position = Vector3(placement.X, placement.Y, placement.Z)
 		var text: String = _life_text(actor.name)
 		if actor.activity != null:
-			text += "\n" + actor.activity.Phase
+			text += "\n" + _life_phase(str(actor.activity.Phase))
 		captions[actor.id].text = text
 		captions[actor.id].position = figures[actor.id].position + Vector3(0, 1.65, 0)
 	var hour := fmod(float(snapshot.get("time", 420)), 1440.0) / 60.0
@@ -648,14 +653,35 @@ func _life_text(raw: Variant) -> String:
 		return "Keep Promise: " + _life_text(label.trim_prefix(LIFE_PROMISE_PREFIX))
 	return label
 
+func _life_phase(phase: String) -> String:
+	var labels := {"approaching": "Approaching", "moving": "Moving", "working": "Busy", "cancelling": "Stopping"}
+	return labels.get(phase, phase.replace("_", " ").capitalize())
+
+func _life_actor_name(id: String) -> String:
+	for profile in rules.agents:
+		if profile.id == id: return _life_text(profile.name)
+	return id.replace("_", " ").capitalize()
+
+func _life_outcome(reason: String) -> String:
+	var labels := {
+		"completed": "Completed", "cancelled": "Cancelled",
+		"standing_resource_busy": "The spot or object is in use",
+		"navigation_unreachable": "Could not reach the destination",
+		"arrival_rejected": "Could not start on arrival",
+		"navigation_target_rejected": "The destination became unavailable",
+		"navigation_actor_missing": "The character is absent",
+		"life_condition_changed": "Conditions changed", "objective_condition_failed": "The action requirements were not met",
+		"actor_incapacitated": "The character could not act",
+	}
+	return labels.get(reason, _life_text(reason).replace("_", " ").capitalize())
+
 func _life_query(query: Dictionary) -> String:
 	var id := str(query.id)
 	var separator := id.find("_")
 	if separator > 0 and id.substr(0, separator) in ["source", "ask", "offer", "stock", "motive"]:
 		var other := id.substr(separator + 1)
 		var template := str(query.label).replace(other, "${other}")
-		var profile: Array = rules.agents.filter(func(agent): return agent.id == other)
-		var name := _life_text(profile[0].name) if not profile.is_empty() else other.capitalize()
+		var name := _life_actor_name(other)
 		return _life_text(template).replace("${other}", name)
 	return _life_text(query.label)
 
@@ -685,22 +711,22 @@ func _refresh() -> void:
 	text += "\nRelationships (Affinity / Trust / Tension)\n"
 	var audit: Dictionary = snapshot.get("audit", {})
 	for relation in audit.get("relations", []):
-		if relation.from == selected: text += "%s: %.1f / %.1f / %.1f %s\n" % [relation.to, relation.affinity, relation.trust, relation.tension, _life_text(relation.stage)]
+		if relation.from == selected: text += "%s: %.1f / %.1f / %.1f %s\n" % [_life_actor_name(relation.to), relation.affinity, relation.trust, relation.tension, _life_text(relation.stage)]
 	detail.text = text
-	# F4：事件文本只在 mechanics / receipts 数量变化时重建，不再每 0.3 秒遍历全部历史
+	# Refresh when the rolling history advances, including after it reaches its cap.
 	var mech: Array = snapshot.get("mechanics", [])
 	var rcpt: Array = snapshot.get("receipts", [])
-	var events_key := "%d|%d" % [mech.size(), rcpt.size()]
+	var events_key := "%d|%s|%d|%s" % [mech.size(), str(mech.back()) if not mech.is_empty() else "", rcpt.size(), str(rcpt.back().Execution) if not rcpt.is_empty() else ""]
 	if events_key != _events_key:
 		_events_key = events_key
 		var log_text := "Events and Outcomes\n"
 		for event in mech:
 			if event.Kind == "life_response":
 				var response: Dictionary = event.Details
-				log_text += "%s → %s · %s\n%s · %s\n\n" % [response.requester, response.responder, _life_text(rules.social.categories[response.category].label), _life_text(rules.social.mode_labels[response.mode]), "Delivered" if response.delivered else "Pending"]
+				log_text += "%s → %s · %s\n%s · %s\n\n" % [_life_actor_name(response.requester), _life_actor_name(response.responder), _life_text(rules.social.categories[response.category].label), _life_text(rules.social.mode_labels[response.mode]), "Delivered" if response.delivered else "Pending"]
 			elif event.Kind == "life_seating":
-				log_text += "%s · Seating promise: %s\n\n" % [event.Details.requester, "Kept" if event.Success else "Expired"]
-		for receipt in rcpt.slice(-8): log_text += "%s · %s\n" % [receipt.Actor, receipt.Reason]
+				log_text += "%s · Seating promise: %s\n\n" % [_life_actor_name(event.Details.requester), "Kept" if event.Success else "Expired"]
+		for receipt in rcpt.slice(-8): log_text += "%s · %s\n" % [_life_actor_name(receipt.Actor), _life_outcome(receipt.Reason)]
 		events.text = log_text
 	if not status_text.is_empty(): status_label.text = status_text
 	elif not audit.is_empty(): status_label.text = "Stock %.0f · Carried %.0f · Consumed %.0f · Total supply %.0f" % [audit.stock, audit.carried, audit.consumed, audit.supplied]

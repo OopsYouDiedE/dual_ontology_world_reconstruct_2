@@ -288,20 +288,7 @@ func _build_overlay() -> void:
 	_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_prompt.visible = false
 	host.center.add_child(_prompt)
-	_hint = Label.new()
-	_hint.set_meta("text_category", "prompt")
-	_hint.text = "WASD Move"
-	_hint.add_theme_font_size_override("font_size", 14)
-	_hint.add_theme_color_override("font_color", Color("#f2e6c8"))
-	_hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
-	_hint.add_theme_constant_override("outline_size", 6)
-	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_hint.offset_left = 18
-	_hint.offset_top = -30
-	_hint.offset_bottom = -8
-	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hint.visible = false
-	host.center.add_child(_hint)
+	_hint = host.ExplorationUiState.make_hint(host.center, "WASD Move")
 
 
 func _build_markers() -> void:

@@ -175,7 +175,7 @@ func _load(path: String) -> AudioStream:
 ## Release playback before the audio server and scene tree are destroyed.
 func release_audio() -> void:
 	_clear_music_context()
-	if _procedural != null: _procedural.set_enabled(false)
+	if is_instance_valid(_procedural): _procedural.begin_shutdown()
 	if _fade:
 		_fade.kill()
 		_fade = null

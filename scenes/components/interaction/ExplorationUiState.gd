@@ -34,6 +34,25 @@ static func hide_chrome(owner_host: Control) -> void:
 	if is_instance_valid(owner_host.drawer_btn): owner_host.drawer_btn.button_pressed = false
 
 
+static func make_hint(parent: Control, text: String, shown := false) -> Label:
+	var hint := Label.new()
+	hint.set_meta("text_category", "prompt")
+	hint.text = text
+	hint.add_theme_font_size_override("font_size", 14)
+	hint.add_theme_color_override("font_color", Color("#f2e6c8"))
+	hint.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.95))
+	hint.add_theme_constant_override("outline_size", 6)
+	hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	hint.offset_left = 18.0
+	# Keep the tutorial text above the field navigation / Return to Title panel.
+	hint.offset_top = -96.0
+	hint.offset_bottom = -72.0
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint.visible = shown
+	parent.add_child(hint)
+	return hint
+
+
 func _build_field_navigation() -> void:
 	_route_panel = PanelContainer.new()
 	_route_panel.name = "FieldNavigation"

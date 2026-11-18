@@ -1871,6 +1871,8 @@ func _watch_walk_progress(delta: float) -> void:
 				_transit_done()
 				_fade(0.0, 0.22))
 	else:
+		if is_instance_valid(opening) and opening.active: opening.cancel_walk()
+		if is_instance_valid(kitchen) and kitchen.active: kitchen.cancel_walk()
 		_toast("Path blocked. Move closer and try again.")
 	_dirty = true
 

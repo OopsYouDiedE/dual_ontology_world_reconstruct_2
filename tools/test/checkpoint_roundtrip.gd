@@ -124,6 +124,4 @@ func run() -> void:
 	check(not game.checkpoints.restore_file(path + ".corrupt") and game.gathering.phase == prior, "corrupt snapshot rejected before scene mutation")
 	print("CHECKPOINT_RESULT " + JSON.stringify({"failures": failures, "elapsed_ms": Time.get_ticks_msec() - started, "acceptance_scored": false}))
 	game._stop_exploration()
-	game.queue_free()
-	await process_frame
-	quit(0 if failures.is_empty() else 1)
+	await preload("res://scenes/components/shared/HostLifecycle.gd").quit(self, 0 if failures.is_empty() else 1)

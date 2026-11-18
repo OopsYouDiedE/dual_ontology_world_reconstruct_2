@@ -58,6 +58,7 @@ var _started := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	add_to_group("lifecycle_hosts")
 
 
 func start() -> void:
@@ -66,11 +67,12 @@ func start() -> void:
 	var gen := AudioStreamGenerator.new()
 	gen.mix_rate = RATE
 	gen.buffer_length = 0.3
-	_player = AudioStreamPlayer.new()
+	if not is_instance_valid(_player):
+		_player = AudioStreamPlayer.new()
+		_player.bus = &"Music" if AudioServer.get_bus_index(&"Music") != -1 else &"Master"
+		add_child(_player)
 	_player.stream = gen
-	_player.bus = &"Music" if AudioServer.get_bus_index(&"Music") != -1 else &"Master"
 	_player.volume_db = linear_to_db(maxf(volume, 0.0001))
-	add_child(_player)
 	_player.play()
 	_pb = _player.get_stream_playback()
 	_rev.resize(5681)
@@ -78,9 +80,26 @@ func start() -> void:
 
 
 func stop() -> void:
-	if _player != null: _player.stop()
 	_started = false
 	_n = 0
+	if is_instance_valid(_player):
+		_player.stop()
+		_player.stream = null
+	_pb = null
+
+
+func begin_shutdown() -> void:
+	enabled = false
+	stop()
+
+
+func wait_for_shutdown() -> void:
+	# HostLifecycle drains the shared audio driver after all hosts stop.
+	pass
+
+
+func _exit_tree() -> void:
+	stop()
 
 
 func set_state(st: Dictionary) -> void:

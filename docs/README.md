@@ -2,10 +2,10 @@
 
 | 想做什么 | 从这里开始 |
 | --- | --- |
-| 构建、启动、定位源码 | [仓库 README](../README.md)、[运行时与目录](runtime.md) |
-| 修改剧情或验跨场景交接 | [剧情流程与验证](story-validation.md) |
-| 修改建筑、门窗与派生楼面 | [建筑房间拓扑](building-topology.md) |
-| 研究规则怪谈方向、试玩夜点名 | [新设计方向](academy-horror-direction.md)、[Night Roll Call](prototypes/night-rollcall/index.html) |
-| 找历史原稿和结论 | [档案索引](archive/README.md) |
+| 准备工具链、构建项目 | [仓库 README](../README.md#工具链与构建) |
+| 启动开发场景、定位源码、验证剧情交接 | [开发手册](development.md) · [剧情交接表](development.md#按交接点检查) |
+| 修改建筑墙网、门窗与派生楼面 | [建筑房间拓扑](building-topology.md) |
+| 了解学园规则怪谈提案、试玩夜点名 | [设计提案](prototypes/night-rollcall/design.md) · [Night Roll Call](prototypes/night-rollcall/index.html) |
+| 查找设计原稿、工程迁移记录与复评包 | [历史档案](archive/README.md) |
 
-操作参数由各 MCP 手册维护：[游戏操作](../mcp/game/README.md) · [评估批次](../mcp/evaluation/README.md) · [评审发布](../mcp/review/README.md)。本目录保留现行开发说明与静态插图；实机记录写入 `artifacts/`，一次性工具输出写入 `.runtime/`。
+MCP 操作见[游戏定点测试](../mcp/game/README.md)、[评估批次](../mcp/evaluation/README.md)和[评审发布](../mcp/review/README.md)。实机记录写入 `artifacts/`，一次性工具输出写入 `.runtime/`。

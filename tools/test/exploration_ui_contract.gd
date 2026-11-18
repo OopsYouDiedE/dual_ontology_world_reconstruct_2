@@ -130,6 +130,14 @@ func _run() -> void:
 	game._file_buttons[0].pressed.emit()
 	game._refresh_evidence_index()
 	check(game._file_buttons[0].button_pressed and game.evidence_picker.get_selected_metadata() == "e_m_record", "switching sections preserves the selected clue")
+	game._file_close.pressed.emit()
+	check(not game.drawer.visible and not game.drawer_btn.button_pressed, "case file close button clears the drawer and its toggle")
+	game._toggle_drawer()
+	var escape := InputEventAction.new()
+	escape.action = "ui_cancel"
+	escape.pressed = true
+	game._unhandled_input(escape)
+	check(not game.drawer.visible and not game.drawer_btn.button_pressed, "cancel clears the drawer and its toggle")
 	game.eng.s.evidence = saved_evidence
 	game._refresh_evidence_index()
 	game._set_view("room")

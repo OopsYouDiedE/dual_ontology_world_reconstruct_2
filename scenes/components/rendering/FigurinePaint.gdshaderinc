@@ -18,10 +18,12 @@ void fragment() {
 
 void light() {
 	float facing = dot(NORMAL, LIGHT);
-	float diffuse = smoothstep(-0.22, 0.92, facing);
-	DIFFUSE_LIGHT += LIGHT_COLOR * ATTENUATION * (diffuse * 0.44);
+	float diffuse = smoothstep(-0.30, 0.91, facing);
+	DIFFUSE_LIGHT += LIGHT_COLOR * ATTENUATION * (diffuse * 0.46);
 
 	vec3 half_dir = normalize(VIEW + LIGHT);
 	float lobe = pow(max(dot(NORMAL, half_dir), 0.0), mix(28.0, 10.0, surface_roughness));
-	SPECULAR_LIGHT += LIGHT_COLOR * ATTENUATION * lobe * diffuse * 0.012;
+	// Broad, faint sheen on lit surfaces; never add an emissive outline.
+	float grazing = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.0);
+	SPECULAR_LIGHT += LIGHT_COLOR * ATTENUATION * lobe * diffuse * mix(0.009, 0.017, grazing);
 }

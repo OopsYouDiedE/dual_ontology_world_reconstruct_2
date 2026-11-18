@@ -150,11 +150,15 @@ func _toggle_case_file() -> void:
 		host.restore_summary()
 
 
+func close_case_file() -> bool:
+	if not _case_open: return false
+	_toggle_case_file()
+	return true
+
+
 func _set_case_open(open: bool) -> void:
 	_case_open = open
-	host.drawer.visible = open
-	host.drawer_btn.set_pressed_no_signal(open)
-	host._dirty = true
+	host._set_drawer_visible(open)
 
 
 func open_book(page: String) -> bool:

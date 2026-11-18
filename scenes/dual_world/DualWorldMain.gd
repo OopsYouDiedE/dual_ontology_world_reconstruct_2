@@ -35,6 +35,12 @@ const TITLE_FONT := preload("res://assets/external/yujisyuku/YujiSyuku-Regular.t
 const DESIGN_FILE := "designs.json"
 const SAVE_FILE := "save_%d.json"
 const AUTO_FILE := "auto.json"
+const FILE_VELLUM := preload("res://assets/textures/case_file/vellum.webp")
+const FILE_INK := Color("#302219")
+const FILE_MUTED := Color("#604d39")
+const FILE_ACCENT := Color("#74451f")
+const FILE_SOLVED := Color("#365431")
+const FILE_WRONG := Color("#843d30")
 const INK := Color("#221c15")
 const PAPER := Color("#eae0c4")
 const BRASS := Color("#b89758")
@@ -125,6 +131,7 @@ var tab_ev: RichTextLabel
 var evidence_picker: OptionButton
 var _evidence_sig: Array = []
 var _file_buttons: Array[Button] = []
+var _file_close: Button
 var tab_know: RichTextLabel
 var tab_lex: RichTextLabel
 var tab_rel: RichTextLabel
@@ -348,6 +355,10 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_echo() and (event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel")) and drawer.visible and not modal.visible:
+		_close_case_file()
+		get_viewport().set_input_as_handled()
+		return
 	if not event.is_echo() and (event.is_action_pressed("notebook") or event.is_action_pressed("settings") or ((event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel")) and not modal.visible)):
 		var page := "settings" if event.is_action_pressed("settings") else "journal"
 		if _open_exploration_book(page):
@@ -627,9 +638,24 @@ func _build_ui() -> void:
 		file_theme.set_font("font", kind, file_font)
 	file_theme.set_font("normal_font", "RichTextLabel", file_font)
 	file_theme.set_font_size("normal_font_size", "RichTextLabel", 16)
-	file_theme.set_color("default_color", "RichTextLabel", Color("#faedd6"))
+	file_theme.set_color("default_color", "RichTextLabel", FILE_INK)
+	file_theme.set_color("font_color", "Label", FILE_INK)
+	file_theme.set_color("font_selected_color", "RichTextLabel", Color.WHITE)
+	file_theme.set_color("selection_color", "RichTextLabel", FILE_ACCENT)
+	var selected_style := _style(Color("#5e421f"), Color("#906736"), 4, 8)
+	selected_style.border_width_left = 4
+	selected_style.border_color = Color("#c28f4b")
+	file_theme.set_stylebox("pressed", "FileIndexButton", selected_style)
+	file_theme.set_stylebox("hover_pressed", "FileIndexButton", selected_style)
+	file_theme.set_type_variation("FileIndexButton", "Button")
+	file_theme.set_font("font", "FileIndexButton", SERIF_FONT)
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var color := Color("#e8d5b5") if state == "normal" else Color("#f3e4cd")
+		file_theme.set_stylebox(state, "OptionButton", _style(color, Color("#9c805e"), 4, 8))
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+		file_theme.set_color(state, "OptionButton", FILE_INK)
 	drawer.theme = file_theme
-	drawer.add_theme_stylebox_override("panel", _style(Color("#211a15fa"), Color("#826649"), 6, 16))
+	drawer.add_theme_stylebox_override("panel", _style(Color("#291b13"), Color("#96724d"), 8, 14))
 	drawer.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
 	drawer.offset_left = -544
 	drawer.offset_right = -16
@@ -640,12 +666,22 @@ func _build_ui() -> void:
 	var file := VBoxContainer.new()
 	file.add_theme_constant_override("separation", 12)
 	drawer.add_child(file)
+	var file_header := HBoxContainer.new()
+	file.add_child(file_header)
 	var file_title := Label.new()
 	file_title.text = "Case File"
 	file_title.add_theme_font_override("font", SERIF_FONT)
 	file_title.add_theme_font_size_override("font_size", 27)
 	file_title.add_theme_color_override("font_color", Color("#f0d49c"))
-	file.add_child(file_title)
+	file_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	file_header.add_child(file_title)
+	_file_close = Button.new()
+	_file_close.text = "×"
+	_file_close.tooltip_text = "Close Case File (Esc)"
+	_file_close.accessibility_name = "Close Case File"
+	_file_close.custom_minimum_size = Vector2(38, 38)
+	_file_close.pressed.connect(_close_case_file)
+	file_header.add_child(_file_close)
 	file.add_child(HSeparator.new())
 	var spread := HBoxContainer.new()
 	spread.add_theme_constant_override("separation", 12)
@@ -659,12 +695,23 @@ func _build_ui() -> void:
 	index.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	index.add_theme_constant_override("separation", 5)
 	index_scroll.add_child(index)
-	spread.add_child(VSeparator.new())
+	var leaf := PanelContainer.new()
+	leaf.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	leaf.add_theme_stylebox_override("panel", _style(Color("#dec4a0"), Color("#9c805e"), 4, 2))
+	spread.add_child(leaf)
+	var vellum := TextureRect.new()
+	vellum.texture = FILE_VELLUM
+	vellum.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	vellum.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	leaf.add_child(vellum)
 	right_tabs = TabContainer.new()
 	right_tabs.tabs_visible = false
 	right_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right_tabs.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	spread.add_child(right_tabs)
+	var leaf_margin := StyleBoxEmpty.new()
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		leaf_margin.set_content_margin(side, 14)
+	right_tabs.add_theme_stylebox_override("panel", leaf_margin)
+	leaf.add_child(right_tabs)
 	var evidence_page := VBoxContainer.new()
 	evidence_page.name = "Evidence"
 	evidence_page.add_theme_constant_override("separation", 12)
@@ -705,6 +752,7 @@ func _build_ui() -> void:
 		if page == tab_know: index.add_child(HSeparator.new())
 		var tab_index := right_tabs.get_tab_idx_from_control(page)
 		var button := Button.new()
+		button.theme_type_variation = "FileIndexButton"
 		button.text = str(page.name)
 		button.toggle_mode = true
 		button.button_group = file_group
@@ -791,7 +839,7 @@ func _build_ui() -> void:
 	modal.visible = false
 	add_child(modal)
 	for c in data.contract:
-		tab_contract.append_text("[color=#e9c98a]%s[/color]  %s\n\n" % [c[0], c[1]])
+		tab_contract.append_text("[color=#74451f]%s[/color]  %s\n\n" % [c[0], c[1]])
 
 
 func _add_tab(name_: String) -> RichTextLabel:
@@ -805,8 +853,17 @@ func _toggle_drawer() -> void:
 	if view == "room" and not instant_story:
 		_open_exploration_book("journal")
 		return
-	drawer.visible = not drawer.visible
-	drawer_btn.button_pressed = drawer.visible
+	_set_drawer_visible(not drawer.visible)
+
+
+func _close_case_file() -> void:
+	if is_instance_valid(exploration_ui) and exploration_ui.close_case_file(): return
+	_set_drawer_visible(false)
+
+
+func _set_drawer_visible(open: bool) -> void:
+	drawer.visible = open
+	drawer_btn.set_pressed_no_signal(open)
 	if room_hint != null:
 		room_hint.offset_right = drawer.offset_left - 12.0 if drawer.visible else -16
 	_dirty = true
@@ -2534,7 +2591,7 @@ func _refresh_case_tab() -> void:
 		var tag := "Pending" if st == "" else ("Solved" if st == "solved" else "Incorrect")
 		l.text = "%s — %s (evidence %d/%d)" % [tr(str(dd.title)), tag, have, int(dd.get("minEvidence", 2))]
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.add_theme_color_override("font_color", Color("#a8c89a") if st == "solved" else (Color("#ea9c8c") if st == "wrong" else TEXT))
+		l.add_theme_color_override("font_color", FILE_SOLVED if st == "solved" else (FILE_WRONG if st == "wrong" else FILE_INK))
 		tab_case.add_child(l)
 		if st == "wrong":
 			var b := Button.new()
@@ -2550,7 +2607,7 @@ func _refresh_case_tab() -> void:
 		var e := Label.new()
 		e.text = "No deductions yet. Collect evidence to begin."
 		e.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		e.add_theme_color_override("font_color", MUTED)
+		e.add_theme_color_override("font_color", FILE_MUTED)
 		tab_case.add_child(e)
 
 
@@ -2581,21 +2638,25 @@ func _show_evidence_entry() -> void:
 	var eid := str(evidence_picker.get_selected_metadata())
 	var entry: Dictionary = data.evidence_by_id[eid]
 	var reading: Dictionary = eng.read_evidence(eid)
-	tab_ev.push_color(Color("#e9c98a"))
-	tab_ev.push_font(SERIF_FONT, 21)
+	tab_ev.push_color(FILE_ACCENT)
+	tab_ev.push_font(SERIF_FONT, 23)
 	tab_ev.add_text(tr(str(entry.label)))
 	tab_ev.pop()
 	tab_ev.pop()
-	tab_ev.push_color(MUTED)
+	tab_ev.push_color(FILE_MUTED)
 	tab_ev.add_text("\n" + tr(str(data.room_by_id[entry.room].label)))
 	tab_ev.pop()
 	tab_ev.add_text("\n\n" + tr(str(reading.text)))
 	if not reading.correct:
-		tab_ev.push_color(Color("#e9c98a"))
+		tab_ev.push_color(FILE_ACCENT)
 		tab_ev.add_text("\n\nMore knowledge may clarify this evidence.")
 		if eng.s.author_view:
 			tab_ev.add_text("\nAuthor · Missing: " + ", ".join(reading.need.map(func(k): return tr(str(data.know_by_id[k].title)))))
 		tab_ev.pop()
+
+
+func _file_name_bb(id: String) -> String:
+	return "[b]%s[/b]" % tr(str(data.actor_by_id.get(id, {}).get("name", id)))
 
 
 func _refresh_right() -> void:
@@ -2607,29 +2668,29 @@ func _refresh_right() -> void:
 		var l: Dictionary = s.log[i]
 		var t: float = l.t
 		var tm := "%02d:%02d" % [int(fposmod(t, 1440.0) / 60.0), int(fmod(t, 60.0))]
-		var col := "#efe6d6"
+		var col := "#302219"
 		match str(l.kind):
-			"beat": col = "#e9c98a"
-			"confront": col = "#ea9c8c"
-			"knowledge": col = "#d1b3ef"
-			"evidence": col = "#a8c89a"
-		tab_log.append_text("[color=#d6c6a6]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, str(l.get("display", tr(str(l.text))))])
+			"beat": col = "#74451f"
+			"confront": col = "#843d30"
+			"knowledge": col = "#584378"
+			"evidence": col = "#365431"
+		tab_log.append_text("[color=#604d39]D%d %s[/color] [color=%s]%s[/color]\n" % [int(t / 1440.0) + 1, tm, col, str(l.get("display", tr(str(l.text))))])
 	tab_log.scroll_to_line(maxi(0, tab_log.get_line_count() - 1))
 	_refresh_case_tab()
 	_refresh_evidence_index()
 	# 知识
 	tab_know.clear()
-	tab_know.append_text("[color=#d6c6a6]Prima knowledge can reveal new readings of evidence.[/color]\n\n")
+	tab_know.append_text("[color=#604d39]Prima knowledge can reveal new readings of evidence.[/color]\n\n")
 	for k in data.knowledge:
 		if s.knowledge.has(k.id):
-			tab_know.append_text("[color=#d1b3ef][b]%s[/b][/color]\n%s\n\n" % [tr(str(k.title)), tr(str(k.text))])
+			tab_know.append_text("[color=#584378][b]%s[/b][/color]\n%s\n\n" % [tr(str(k.title)), tr(str(k.text))])
 		elif author:
-			tab_know.append_text("[color=#6b3fa0](Missing) %s — Unlock: %s[/color]\n\n" % [tr(str(k.title)), tr(str(k.unlock))])
+			tab_know.append_text("[color=#584378](Missing) %s — Unlock: %s[/color]\n\n" % [tr(str(k.title)), tr(str(k.unlock))])
 	# 词义
 	var term := str(term_pick.get_item_metadata(maxi(0, term_pick.selected)))
 	var td: Dictionary = data.terms[term]
 	tab_lex.clear()
-	tab_lex.append_text("[color=#e9c98a][b]%s[/b][/color]\n[color=#d6c6a6]%s[/color]\n\n" % [tr(str(td.word)), tr(str(td.note)) if author else "The same word can mean different things to different people."])
+	tab_lex.append_text("[color=#74451f][b]%s[/b][/color]\n[color=#604d39]%s[/color]\n\n" % [tr(str(td.word)), tr(str(td.note)) if author else "The same word can mean different things to different people."])
 	var shown := 0
 	var term_unlocked: bool = bool(s.get("unlocked_terms", {}).get(term, false))
 	for a in data.actors:
@@ -2652,9 +2713,9 @@ func _refresh_right() -> void:
 					break
 		if known:
 			shown += 1
-			tab_lex.append_text("%s: %s\n" % [_name_bb(str(a.id)), tr(str(data.sense_label(str(a.id), term)))])
+			tab_lex.append_text("%s: %s\n" % [_file_name_bb(str(a.id)), tr(str(data.sense_label(str(a.id), term)))])
 	if shown == 0:
-		tab_lex.append_text("[color=#d6c6a6]No differences in meaning have emerged yet.[/color]")
+		tab_lex.append_text("[color=#604d39]No differences in meaning have emerged yet.[/color]")
 	# 关系
 	tab_rel.clear()
 	for k in s.relations:
@@ -2663,19 +2724,19 @@ func _refresh_right() -> void:
 		var filled := clampi(int(rel.trust / 10.0), 0, 10)
 		var bar := "█".repeat(filled) + "░".repeat(10 - filled)
 		var bad_rel := int(rel.trust) < 40 or bool(rel.get("permanent", false))
-		tab_rel.append_text("%s ↔ %s  [color=%s]%s %d%s[/color]\n" % [_name_bb(pr[0]), _name_bb(pr[1]), "#ea9c8c" if bad_rel else "#a8c89a", bar, int(rel.trust), "  Permanently damaged" if rel.permanent else ""])
+		tab_rel.append_text("%s ↔ %s  [color=%s]%s %d%s[/color]\n" % [_file_name_bb(pr[0]), _file_name_bb(pr[1]), "#843d30" if bad_rel else "#365431", bar, int(rel.trust), "  Permanently damaged" if rel.permanent else ""])
 		for g in rel.grievances:
-			tab_rel.append_text("[color=#d6c6a6]    %s[/color]\n" % tr(str(g.text)))
+			tab_rel.append_text("[color=#604d39]    %s[/color]\n" % tr(str(g.text)))
 	if s.irreparable:
-		tab_rel.append_text("\n[color=#ea9c8c]Some relationships were permanently damaged on the first day.[/color]")
+		tab_rel.append_text("\n[color=#843d30]Some relationships were permanently damaged on the first day.[/color]")
 	# 调试
 	tab_author.clear()
 	if not author:
-		tab_author.append_text("[color=#d6c6a6]Enable Author View to see diagnostic details.[/color]")
+		tab_author.append_text("[color=#604d39]Enable Author View to see diagnostic details.[/color]")
 	else:
 		for i in range(maxi(0, s.debug_log.size() - 60), s.debug_log.size()):
 			var dl: Dictionary = s.debug_log[i]
-			tab_author.append_text("[color=#6b3fa0][%s][/color] %s\n" % [dl.kind, dl.text])
+			tab_author.append_text("[color=#584378][%s][/color] %s\n" % [dl.kind, dl.text])
 
 
 # ───────────────────────── 模态：推演 / 争执 / 抉择 / 结局 ─────────────────────────

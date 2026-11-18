@@ -6,4 +6,5 @@ if(args.FirstOrDefault()=="--story-authoring-view") { Environment.ExitCode=Scena
 if(args.FirstOrDefault()=="--export-spatial-data") { Environment.ExitCode=SpatialPublication.Run(args); return; }
 if(args.FirstOrDefault()=="--fit-seating") { Environment.ExitCode=SeatingFit.Run(args); return; }
 if(args.FirstOrDefault()=="--verify-character-actions") { Environment.ExitCode=NativeCli.ValidateContent(); return; }
+if(args.FirstOrDefault()=="--compare-emergence") { Environment.ExitCode=NativeCli.CompareEmergence(args.Skip(1).ToArray()); return; }
 NativeCli.Run();

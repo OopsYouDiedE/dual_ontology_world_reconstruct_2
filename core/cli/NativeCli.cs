@@ -6,7 +6,7 @@ using DuelView.Runtime;
 
 // Production text adapter for the same independent Core used by Main.
 // Room transitions are timed formal actions; CLI does not claim Godot collision evidence.
-internal sealed class NativeCli : IDisposable
+internal sealed partial class NativeCli : IDisposable
 {
     const string DefaultContent="assets/data/scenarios/campaign.dv";
     static readonly JsonSerializerOptions Json=new(){Encoder=JavaScriptEncoder.UnsafeRelaxedJsonEscaping};
@@ -63,10 +63,10 @@ internal sealed class NativeCli : IDisposable
         var data=JsonSerializer.SerializeToElement(value);
         return Text(Get(data,"actor"))==viewer?Get(data,"accepted").ValueKind!=JsonValueKind.Undefined?RuntimeSession.ProjectMechanicDetails("suggestion",data,viewer):value:null;
     }
-    NativeCli(JsonElement options)
+    NativeCli(JsonElement options, CharacterSessionDefinition? prepared=null, double? horizon=null)
     {
         var path=Text(Get(options,"content_path"),DefaultContent);
-        definition=new(File.ReadAllText(PathOf(path)),File.ReadAllText("assets/data/98-runtime-session.data.dv"));
+        definition=prepared??new(File.ReadAllText(PathOf(path)),File.ReadAllText("assets/data/98-runtime-session.data.dv"));
         content=definition.Declaration;
         viewer=Text(Get(options,"viewer"),Text(Get(content,"viewer")));
         if(!Actors.Any(a=>Text(Get(a,"id"))==viewer))throw new InvalidDataException("Unknown viewer.");
@@ -74,7 +74,7 @@ internal sealed class NativeCli : IDisposable
         session.ConfigureLifeSeed((int)Num(Get(options,"seed"),1));
         foreach(var item in Items(Get(content,"deductions")))session.ConfigureDeduction(File.ReadAllText(PathOf(Text(Get(item,"source")))),item);
         foreach(var item in Items(Get(content,"strategy_activities")))session.ConfigureStrategy(File.ReadAllText(PathOf(Text(Get(item,"source")))),item);
-        end=Num(Get(Get(content,"run"),"end_minutes"));
+        end=Math.Min(horizon??double.PositiveInfinity,Num(Get(Get(content,"run"),"end_minutes")));
         if(end<=session.ContentTime)throw new InvalidDataException("Invalid DV run horizon.");
         automaticViewer=Text(Get(options,"controller"))=="ai";
         if(!automaticViewer)session.SetAutonomy(viewer,false);
@@ -235,6 +235,7 @@ internal sealed class NativeCli : IDisposable
             }
             executions.Add((r.Action,interaction,start,r.Time));
         }
+        if (lab is not null) { lab.Record(r, outcome); return; }
         var row=new Dictionary<string,object?> { ["receipt_index"]=version,["focus"]=focus,["interaction_slot"]=interaction,
             ["version"]=version,["chapter"]=(int)(start/60/1440)+1,["day"]=(int)(start/60/1440)+1,["start_time"]=start/60,["duration"]=(r.Time-start)/60,["actor"]=r.Actor,["action"]=r.Action,
             ["label"]=execution is null?"":Text(Get(execution.Action.Declaration,"label")),
@@ -269,6 +270,11 @@ internal sealed class NativeCli : IDisposable
     object Advance(int steps)
     {
         var before=version;var beforeSuccessful=successfulActions;var beforeCancelled=recoverableCancellations;
+        AdvanceCore(steps);
+        return Observe((int)(version-before),successfulActions-beforeSuccessful,recoverableCancellations-beforeCancelled);
+    }
+    void AdvanceCore(int steps)
+    {
         // Batching speeds up wall time, never skips simulation boundaries or action costs.
         for(var n=0;n<Math.Clamp(steps,1,100)*300&&Active;n++)
         {
@@ -276,7 +282,8 @@ internal sealed class NativeCli : IDisposable
             while(session.TryAction(out var decision))
             {
                 started[decision!.Execution]=decision;
-                decisionAudits[decision.Execution]=session.DecisionAudit(decision);
+                if (lab is null) decisionAudits[decision.Execution]=session.DecisionAudit(decision);
+                else lab.Dispatch(session,decision);
                 if(decision.Options is { } options)firstOptions.TryAdd(decision.Action.Id,options);
                 var drive=session.EvaluateDrive(decision.Actor,decision.Action.Id);
                 decisionDrives[decision.Execution]=drive;firstDrives.TryAdd(decision.Action.Id,drive);
@@ -306,10 +313,14 @@ internal sealed class NativeCli : IDisposable
         }
         // Commit actions due exactly at the authored horizon without advancing the clock.
         if(!Active){session.Step(0,false,false);while(session.TryActionOutcome(out var outcome))actionOutcomes[outcome!.Execution]=outcome;while(session.TryReceipt(out var receipt))Receipt(receipt!);RecordAffects();WriteEvidenceCoverage();if(!string.IsNullOrEmpty(receiptPath))File.WriteAllText(Path.ChangeExtension(receiptPath,"acceptance.json"),Encode(Assessment()));}
-        return Observe((int)(version-before),successfulActions-beforeSuccessful,recoverableCancellations-beforeCancelled);
     }
     void RecordAffects()
     {
+        if (lab is not null)
+        {
+            affectEvents.AddRange(session.DrainAffectEvents());
+            return;
+        }
         foreach(var actorDefinition in Actors)
         {
             var actor=Text(Get(actorDefinition,"id"));var evidence=session.Evidence(actor);

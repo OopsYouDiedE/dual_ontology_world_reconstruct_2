@@ -12,6 +12,7 @@
     <Compile Include="../../tools/story/ScenarioAuthoring.cs" Link="Story/ScenarioAuthoring.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="NativeCli.cs" />
+    <Compile Include="EmergenceBatch.cs" />
     <Compile Include="AppendAuditLog.cs" />
     <Compile Include="ReadableEventLog.cs" />
     <Compile Include="SpatialPublication.cs" />

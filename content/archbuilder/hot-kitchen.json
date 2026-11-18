@@ -1,0 +1,352 @@
+{
+  "activeLayerId": "hot-kitchen",
+  "layers": [
+    {
+      "id": "hot-kitchen",
+      "name": "Hot Kitchen / serving passage / cold store",
+      "y": 0,
+      "style": "octagonal_tile",
+      "polygons": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            8,
+            7
+          ],
+          [
+            0,
+            7
+          ]
+        ],
+        [
+          [
+            0,
+            -2
+          ],
+          [
+            8,
+            -2
+          ],
+          [
+            8,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        [
+          [
+            4,
+            -5
+          ],
+          [
+            8,
+            -5
+          ],
+          [
+            8,
+            -2
+          ],
+          [
+            4,
+            -2
+          ]
+        ]
+      ]
+    }
+  ],
+  "walls": [
+    {
+      "id": "Kitchen west",
+      "name": "Kitchen west",
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          7
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": []
+    },
+    {
+      "id": "Kitchen east",
+      "name": "Kitchen east",
+      "points": [
+        [
+          8,
+          0,
+          0
+        ],
+        [
+          8,
+          0,
+          7
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": []
+    },
+    {
+      "id": "Entry wall",
+      "name": "Entry wall",
+      "points": [
+        [
+          0,
+          0,
+          7
+        ],
+        [
+          8,
+          0,
+          7
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": [
+        {
+          "id": "entry",
+          "segment": 0,
+          "center": 4,
+          "width": 1.5,
+          "bottom": 0,
+          "height": 2.4,
+          "type": "portal_arch"
+        }
+      ]
+    },
+    {
+      "id": "Serving partition",
+      "name": "Serving partition",
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          8,
+          0,
+          0
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": [
+        {
+          "id": "hatch",
+          "segment": 0,
+          "center": 3.4,
+          "width": 2.25,
+          "bottom": 1,
+          "height": 1.32,
+          "type": "rectangular_window"
+        },
+        {
+          "id": "passage",
+          "segment": 0,
+          "center": 6.35,
+          "width": 1.45,
+          "bottom": 0,
+          "height": 2.55,
+          "type": "portal_arch"
+        }
+      ]
+    },
+    {
+      "id": "Passage west",
+      "name": "Passage west",
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          -2
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": []
+    },
+    {
+      "id": "Passage east",
+      "name": "Passage east",
+      "points": [
+        [
+          8,
+          0,
+          0
+        ],
+        [
+          8,
+          0,
+          -2
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": []
+    },
+    {
+      "id": "Cold store partition",
+      "name": "Cold store partition",
+      "points": [
+        [
+          0,
+          0,
+          -2
+        ],
+        [
+          8,
+          0,
+          -2
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": [
+        {
+          "id": "cold-door",
+          "segment": 0,
+          "center": 6.4,
+          "width": 1.65,
+          "bottom": 0,
+          "height": 2.48,
+          "type": "closed_door"
+        }
+      ]
+    },
+    {
+      "id": "Cold store west",
+      "name": "Cold store west",
+      "points": [
+        [
+          4,
+          0,
+          -2
+        ],
+        [
+          4,
+          0,
+          -5
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": []
+    },
+    {
+      "id": "Cold store east",
+      "name": "Cold store east",
+      "points": [
+        [
+          8,
+          0,
+          -2
+        ],
+        [
+          8,
+          0,
+          -5
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": []
+    },
+    {
+      "id": "Cold store rear",
+      "name": "Cold store rear",
+      "points": [
+        [
+          4,
+          0,
+          -5
+        ],
+        [
+          8,
+          0,
+          -5
+        ]
+      ],
+      "height": 3.15,
+      "thickness": 0.18,
+      "style": "classical",
+      "hasPillars": false,
+      "openings": []
+    }
+  ],
+  "props": [
+    {
+      "id": "range",
+      "name": "range",
+      "kind": "cabinet",
+      "x": 0.9,
+      "y": 0,
+      "z": 2.2,
+      "yaw": 0,
+      "params": {}
+    },
+    {
+      "id": "prep",
+      "name": "prep",
+      "kind": "table",
+      "x": 3.35,
+      "y": 0,
+      "z": 2.75,
+      "yaw": 0,
+      "params": {}
+    },
+    {
+      "id": "storage",
+      "name": "storage",
+      "kind": "cabinet",
+      "x": 7,
+      "y": 0,
+      "z": -4.45,
+      "yaw": 0,
+      "params": {}
+    }
+  ],
+  "stairs": [],
+  "railings": []
+}

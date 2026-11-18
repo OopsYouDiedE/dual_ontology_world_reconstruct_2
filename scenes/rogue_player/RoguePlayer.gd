@@ -145,3 +145,8 @@ func _update_camera(delta: float) -> void:
 	else:
 		_camera_range = lerpf(_camera_range, safe_range, 1.0 - exp(-8.0 * delta))
 	_camera.look_at_from_position(focus + direction * _camera_range, focus, Vector3.UP)
+
+## Initial framing preset; movement and subsequent camera input stay unchanged.
+func set_room_camera(pitch: float, distance: float) -> void:
+	_pitch = clampf(pitch,0.18,1.45)
+	_distance = clampf(distance,3.0,14.0)

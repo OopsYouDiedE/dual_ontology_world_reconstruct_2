@@ -54,6 +54,9 @@ var _can_interact := false
 var _walkable_cells := {}
 
 
+const Kitchen = preload("res://scenes/rogue_view/render/HotKitchen.gd")
+var _kitchen
+var _kitchen_plan := {}
 const Lighting = preload("res://scenes/rogue_view/render/RoomLighting.gd")
 const TileShader = preload("res://scenes/rogue_view/render/AcademyTile.gdshader")
 var _lights: Node3D
@@ -163,6 +166,12 @@ func set_room(label: String, exits: Array) -> void:
 
 
 func set_blueprint_room(title: String, exits: Array, xml_path: String) -> Error:
+	if xml_path == "res://content/academy_lots/kitchen.xml":
+		if _kitchen_plan.is_empty(): _kitchen_plan = Kitchen.read_plan()
+		if _kitchen_plan.is_empty(): return ERR_INVALID_DATA
+		_template = "kitchen"
+		_apply(title, exits, Kitchen.layout(_kitchen_plan), "blueprint", 1)
+		return OK
 	var stamp := int(FileAccess.get_modified_time(xml_path)) if FileAccess.file_exists(xml_path) else -1
 	var result := {"error": OK}
 	if _blueprint.is_empty() or _blueprint_path != xml_path or _blueprint_stamp != stamp:
@@ -225,6 +234,7 @@ func _rebuild() -> void:
 	for child in _geometry.get_children():
 		_geometry.remove_child(child)
 		child.queue_free()
+	_kitchen = null
 	_walkable_cells.clear()
 	_avatar_root = null
 	_object_root = null
@@ -239,6 +249,12 @@ func _rebuild() -> void:
 
 
 func _rebuild_architecture() -> void:
+	if _template == "kitchen" and not _kitchen_plan.is_empty():
+		for cell in _lot.floors: _walkable_cells[cell] = true
+		_kitchen = Kitchen.new()
+		_geometry.add_child(_kitchen)
+		_kitchen.build(_kitchen_plan, _lot.floors)
+		return
 	var static_body := StaticBody3D.new()
 	_geometry.add_child(static_body)
 	var tile := BoxMesh.new()
@@ -328,7 +344,7 @@ func _rebuild_objects() -> void:
 		_object_root.remove_child(child)
 		child.queue_free()
 	for item: Dictionary in _lot.objects:
-		if item.role == "window": continue
+		if item.role == "window" or item.get("layout_only", false): continue
 		var anchor := Node3D.new()
 		_object_root.add_child(anchor)
 		anchor.position = _world(item.position)
@@ -372,6 +388,7 @@ func _spawn_if_needed() -> void:
 	var point := _spawn_point()
 	_player.orbit_by(Vector2(0.0, -41.0))
 	_player.zoom_by(2.4)
+	if is_instance_valid(_kitchen): _player.set_room_camera(0.20,3.0)
 	_player.spawn_at(point, _spawn_yaw(point))
 
 
@@ -383,6 +400,7 @@ func _drop_player() -> void:
 
 
 func _spawn_point() -> Vector3:
+	if is_instance_valid(_kitchen): return Kitchen.SPAWN
 	for object: Dictionary in _lot.objects:
 		if object.role == "entry":
 			var interior: Vector2 = object.get("interior", object.position)
@@ -469,6 +487,7 @@ func _refresh_targets() -> void:
 		portals.append_array(entrances)
 	for i in mini(portals.size(), _exits.size()):
 		_targets.append({"kind": "exit", "index": i, "position": _portal_position(portals[i]), "label": _exit_label(i)})
+	if is_instance_valid(_kitchen): _targets.append_array(_kitchen.targets())
 	if not is_instance_valid(_focus_ring):
 		_focus_ring = MeshInstance3D.new()
 		var ring := TorusMesh.new()
@@ -542,7 +561,7 @@ func _update_prompt() -> void:
 	elif target.is_empty():
 		_prompt.text = "WASD · Move     Q / R or right-drag · Orbit"
 	else:
-		var verb := "Inspect" if target.kind == "inspect" else "Travel"
+		var verb := "Inspect" if target.kind == "inspect" else ("Operate" if target.kind == "fixture" else "Travel")
 		_prompt.text = "E / A / Click · %s %s" % [verb, target.label] if _can_interact else "Approach · " + target.label
 
 
@@ -607,6 +626,10 @@ func _is_reachable(target: Dictionary) -> bool:
 
 func _activate(target: Dictionary) -> bool:
 	if not _is_reachable(target): return false
+	if target.kind == "fixture":
+		if not is_instance_valid(_kitchen) or not _kitchen.toggle(target.id, _player.global_position): return false
+		_player.play_action("interact")
+		return true
 	_player.play_action("interact")
 	if target.kind == "inspect":
 		set_inspection_target(false)
@@ -639,6 +662,9 @@ func player_observation() -> Dictionary:
 	player["prompt"] = _prompt.text if is_instance_valid(_prompt) else ""
 	player["nearest_prompt"] = player.prompt
 	player["targets"] = targets
+	if is_instance_valid(_kitchen):
+		player["fixtures"] = _kitchen.closed.duplicate()
+		player["fixtures_moving"] = _kitchen.moving.keys()
 	player["available_interact"] = not _plan_open and _can_interact
 	player["view"] = "plan" if is_instance_valid(_plan) and _plan.visible else _mode
 	return player

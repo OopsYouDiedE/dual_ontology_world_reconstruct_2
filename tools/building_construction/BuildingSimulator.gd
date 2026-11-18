@@ -1,6 +1,8 @@
 extends Control
 ## Native Godot host for the original Web ArchBuilder wall workflow.
 const State = preload("ArchitectState.gd")
+const RoomPlan = preload("RoomPlan.gd")
+const Space = preload("res://scenes/components/life/BuildingSpace.gd")
 const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
 const Geo = preload("BuildingConstruction/Shared/ArchitectGeometry.gd")
 const Wall = preload("BuildingConstruction/Walls/WallPathGeometry.gd")
@@ -65,6 +67,10 @@ var furnish_report: Label
 var component_list: ItemList
 var component_filter = ""
 var art_room: Node3D
+var pending_build: RefCounted
+var pending_window: ConfirmationDialog
+var layout_seed := 47
+var layout_pairs := 2
 
 func _process(_dt: float) -> void:
 	# Drag handlers only request a rebuild; it runs at most once per frame.
@@ -115,7 +121,7 @@ func label(parent: Node, text: String) -> Label:
 	item.text = text
 	parent.add_child(item)
 	return item
-func number(parent: Node, text: String, value: float, callback: Callable, step := 0.1, minimum := -10000.0, maximum := 10000.0) -> SpinBox:
+func number(parent: Node, text: String, value: float, callback: Callable, step := 0.1, minimum := -10000.0, maximum := 10000.0, decimal_step := 0.0) -> SpinBox:
 	var row = HBoxContainer.new()
 	parent.add_child(row)
 	var caption = label(row,text)
@@ -124,7 +130,7 @@ func number(parent: Node, text: String, value: float, callback: Callable, step :
 	item.min_value = minimum
 	item.max_value = maximum
 	# HTML number inputs retain arbitrary source values; step only affects arrows.
-	item.step = 0.0
+	item.step = decimal_step
 	item.custom_arrow_step = step
 	item.value = value
 	item.custom_minimum_size.x = 125
@@ -182,6 +188,7 @@ func _make_ui() -> void:
 	button(header,"双联视口",func(): blueprint.show(); view3.show())
 	button(header,"仅 2D",func(): blueprint.show(); view3.hide())
 	button(header,"仅 3D",func(): blueprint.hide(); view3.show())
+	button(header,"Generate Layout",preview_generated_layout,"Preview a new single-storey layout")
 	header.add_child(VSeparator.new())
 	button(header,"撤销",func(): if state.undo(-1): refresh(),"Ctrl+Z")
 	button(header,"重做",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
@@ -337,8 +344,14 @@ func _make_ui() -> void:
 	button(walls,"闭合墙环",func(): finish_path(true))
 	button(walls,"开放墙体折线",func(): finish_path(false))
 	button(walls,"沿地板边界生成贴合墙体",func():
-		if state.auto_walls(wall_params): refresh()
+		var draft: RefCounted = state.fork_candidate()
+		if draft.auto_walls(wall_params): preview_build(draft, "Walls from Floor")
 		else: status.text = "请先绘制地板；已有墙网房间请直接编辑墙体")
+	var layout := page(tabs,"Layout")
+	number(layout,"Seed",layout_seed,func(v): layout_seed = int(v),1,0,2147483647)
+	number(layout,"Room pairs",layout_pairs,func(v): layout_pairs = int(v),1,1,4)
+	label(layout,"Generate rooms on both sides of one shared hall.")
+	button(layout,"Preview New Layout",preview_generated_layout)
 	var openings = page(tabs,"门窗")
 	choice(openings,"构件样式",OPENINGS,opening_params.type,func(v):
 		opening_params.type = v
@@ -349,14 +362,14 @@ func _make_ui() -> void:
 		var key = spec[0]
 		ui_fields["op_"+key] = number(openings,spec[1],opening_params[key],func(v): opening_params[key] = v)
 	button(openings,"点击墙段安装门窗",func(): set_tool("opening"))
-	var stairs = page(tabs,"梯栏")
+	var stairs = page(tabs,"Stairs")
 	for key in ["rise","run","risers","width","yaw"]:
-		number(stairs,{"rise":"总高","run":"水平总长","risers":"踏步数","width":"梯宽","yaw":"朝向角度"}[key],stair_params[key],func(v): stair_params[key] = v,1 if key=="risers" else 0.1,1 if key=="risers" else 0.01)
-	choice(stairs,"楼梯扶手",{"both":"双侧","left":"左侧","right":"右侧","none":"无"},"both",func(v): stair_params.railingPos = v)
-	button(stairs,"放置直跑楼梯",spawn_stair)
-	number(stairs,"独立栏杆高度",0.9,func(v): rail_params.height = v)
-	number(stairs,"栏杆立杆间距",0.18,func(v): rail_params.spacing = v,0.02,0.02)
-	button(stairs,"在 2D 放线绘制栏杆",func(): set_tool("railing"))
+		number(stairs,{"rise":"Rise (m)","run":"Run (m)","risers":"Steps","width":"Width (m)","yaw":"Rotation (deg)"}[key],stair_params[key],func(v): stair_params[key] = v,1 if key=="risers" else 0.1,1 if key=="risers" else (-360.0 if key=="yaw" else 0.1), 360.0 if key=="yaw" else 10000.0, 1.0 if key=="risers" else 0.01)
+	choice(stairs,"Stair handrail",{"both":"Both sides","left":"Left","right":"Right","none":"None"},"both",func(v): stair_params.railingPos = v)
+	button(stairs,"Preview Straight Stair",spawn_stair)
+	number(stairs,"Railing height (m)",0.9,func(v): rail_params.height = v)
+	number(stairs,"Post spacing (m)",0.18,func(v): rail_params.spacing = v,0.02,0.02)
+	button(stairs,"Draw Railing in 2D",func(): set_tool("railing"))
 	var props = page(tabs,"陈设")
 	choice(props,"原版家具／灯具",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
 	prop_fields = VBoxContainer.new()
@@ -383,18 +396,18 @@ func _make_ui() -> void:
 	# Original web furniture remains the default selection.
 	button(props,"在 2D 点选放置组件",func(): set_tool("prop"))
 	button(props,"打开组件库",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
-	var furnish_page = page(tabs,"自动布置")
-	var furnish_help = label(furnish_page,"按房间类型沿墙摆放家具：背靠墙面、避开门洞、互不重叠，全部在范围内，可 Ctrl+Z 撤销。")
+	var furnish_page = page(tabs,"Furnish")
+	var furnish_help = label(furnish_page,"Preview furniture by room type. Placement keeps furniture inside the room and clear of doorways and other objects.")
 	furnish_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	furnish_help.custom_minimum_size.x = 300
-	choice(furnish_page,"房间类型",Furnish.template_names(),furnish_template,func(v): furnish_template = v)
-	label(furnish_page,"目标房间（由墙体围合）")
+	choice(furnish_page,"Room type",Furnish.template_names(),furnish_template,func(v): furnish_template = v)
+	label(furnish_page,"Enclosed room")
 	furnish_room = OptionButton.new()
 	furnish_page.add_child(furnish_room)
-	furnish_clear = check(furnish_page,"先清除该房间内现有家具",true,func(_v): pass)
-	button(furnish_page,"布置所选房间",func(): furnish_rooms([furnish_room.selected]))
-	button(furnish_page,"布置当前图层全部房间",func(): furnish_rooms(range(furnish_room.item_count)))
-	button(furnish_page,"清除所选房间内的家具",clear_room_props)
+	furnish_clear = check(furnish_page,"Replace existing furniture in selected rooms",true,func(_v): pass)
+	button(furnish_page,"Preview Selected Room",func(): furnish_rooms([furnish_room.selected]))
+	button(furnish_page,"Preview All Rooms on Floor",func(): furnish_rooms(range(furnish_room.item_count)))
+	button(furnish_page,"Preview Clearing Selected Room",clear_room_props)
 	furnish_report = label(furnish_page,"")
 	furnish_report.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	furnish_report.custom_minimum_size.x = 300
@@ -453,30 +466,96 @@ func set_tool(value: String) -> void:
 	update_status()
 func update_status() -> void:
 	status.text = {"select":"选择：左键点选/拖拽 · 双击节点或按 E 编辑 · Delete 删除 · Ctrl+Z 撤销 · F 居中", "wall":"绘墙：依次点击节点；点击起点或 Enter 闭合；开放折线按钮保留开口", "floor":"绘地板：依次点击顶点，点击起点或 Enter 完成", "opening":"安装门窗：点击已有墙段；选择模式下可沿墙拖动", "railing":"绘栏杆：依次点击节点，Enter 完成", "prop":"在 2D 点击放置当前组件"}.get(tool,tool)+"  |  节点："+str(drawing.size())
+func display_state() -> RefCounted:
+	return pending_build if pending_build != null else state
+
+func preview_generated_layout() -> void:
+	if pending_build != null: return
+	var draft: RefCounted = state.fork_candidate()
+	if not draft.restore(JSON.stringify(RoomPlan.build(layout_seed,layout_pairs))): return
+	preview_build(draft, "New Layout · Seed %d" % layout_seed, 2 * layout_pairs + 1, true)
+
+func preview_opening(point: Vector2) -> void:
+	if pending_build != null: return
+	var draft: RefCounted = state.fork_candidate()
+	if draft.add_opening(point,opening_params): preview_build(draft, "Door or Window")
+	else: status.text = draft.message
+
+func preview_build(draft: RefCounted, title: String, expected_rooms := -1, fit_view := false, details := "") -> void:
+	if pending_build != null: return
+	draft.sync_rooms()
+	var space := Space.new()
+	var active: Dictionary = draft.layer()
+	var access := {"groups": 0, "unusable": 0, "grid_limit": false}
+	if not active.is_empty():
+		space.setup(draft.data,draft.data.layers.find(active))
+		access = space.room_access()
+	var text := "%d enclosed %s · %d %s" % [space.rooms.size(),
+		"space" if space.rooms.size() == 1 else "spaces",access.groups,
+		"connected group" if access.groups == 1 else "connected groups"]
+	if access.unusable > 0: text += " · %d without standing room" % access.unusable
+	if access.grid_limit: text += " · navigation grid limit exceeded"
+	if not details.is_empty(): text += "\n" + details
+	if fit_view: text += "\nApplying replaces the current draft. Undo restores it."
+	var can_apply: bool = not access.grid_limit and (expected_rooms < 0 or (space.rooms.size() == expected_rooms and access.groups == 1 and access.unusable == 0))
+	if not can_apply: text += "\nThis candidate did not pass validation."
+	clear_art_room()
+	pending_build = draft
+	rebuild()
+	if fit_view: reset_views(true)
+	blueprint.queue_redraw()
+	pending_window = ConfirmationDialog.new()
+	pending_window.title = title
+	pending_window.dialog_text = text
+	pending_window.ok_button_text = "Apply Build"
+	pending_window.cancel_button_text = "Discard Preview"
+	pending_window.exclusive = true
+	add_child(pending_window)
+	pending_window.get_ok_button().disabled = not can_apply
+	pending_window.confirmed.connect(func(): close_build_preview(can_apply,fit_view))
+	pending_window.canceled.connect(func(): close_build_preview(false,fit_view))
+	pending_window.popup_centered(Vector2i(465,128))
+
+func close_build_preview(apply: bool, fit_view: bool) -> void:
+	if pending_build == null: return
+	var accepted: bool = apply and state.accept_candidate(pending_build)
+	pending_build = null
+	pending_window.hide()
+	pending_window.queue_free()
+	pending_window = null
+	refresh()
+	if fit_view: reset_views(accepted)
+	status.text = "Build applied · one undo step" if accepted else "Build preview discarded · draft unchanged"
+
 func finish_path(close: bool) -> void:
-	if drawing.size()<2: return
-	var active = state.layer()
+	if pending_build != null or drawing.size()<2: return
+	if tool == "floor" and drawing.size() < 3: return
+	if tool not in ["floor", "wall", "railing"]: return
+	var draft: RefCounted = state.fork_candidate()
+	var active: Dictionary = draft.layer()
 	if tool=="floor":
 		if drawing.size()>=3:
 			var points = []
 			for p in drawing: points.append([p[0],p[1]])
-			state.add_floor(points)
+			draft.add_floor(points)
 	elif tool=="wall":
 		var points = []
 		for p in drawing: points.append([p[0],p[2],p[1]])
 		var closed = close and drawing.size()>=3
 		if closed: points.append(points[0].duplicate())
 		var wall = wall_params.duplicate(true)
-		wall.merge({"id":state.uid("wall"),"name":"墙体 #"+str(state.data.walls.size()+1),"points":points,"closed":closed,"openings":[]},true)
-		state.data.walls.append(wall)
+		wall.merge({"id":draft.uid("wall"),"name":"墙体 #"+str(draft.data.walls.size()+1),"points":points,"closed":closed,"openings":[]},true)
+		draft.data.walls.append(wall)
 	elif tool=="railing":
 		var points = []
 		for p in drawing: points.append([p[0],active.get("y",0),p[1]])
 		var rail = rail_params.duplicate()
-		rail.merge({"id":state.uid("rail"),"name":"木栏杆 #"+str(state.data.railings.size()+1),"points":points})
-		state.data.railings.append(rail)
+		rail.merge({"id":draft.uid("rail"),"name":"木栏杆 #"+str(draft.data.railings.size()+1),"points":points})
+		draft.data.railings.append(rail)
+	var title := {"wall": "Wall Path", "floor": "Floor Outline", "railing": "Railing"}
+	var candidate_title: String = title[tool]
 	set_tool("select")
-	commit()
+	preview_build(draft,candidate_title)
 func insert_floor_node(point: Vector2, tolerance: float) -> void:
 	for li in range(state.data.layers.size()):
 		for pi in range(state.data.layers[li].polygons.size()):
@@ -491,11 +570,13 @@ func insert_floor_node(point: Vector2, tolerance: float) -> void:
 					commit()
 					return
 func spawn_stair() -> void:
+	if pending_build != null or state.layer().is_empty(): return
+	var draft: RefCounted = state.fork_candidate()
 	var stair = stair_params.duplicate(true)
-	stair.merge({"id":state.uid("st"),"name":"直跑梯 #"+str(state.data.stairs.size()+1),"x":1.2,"y":state.layer().get("y",0),"z":1.2,"nosing":0.03})
-	state.data.stairs.append(stair)
-	state.selected = {"kind":"stair","index":state.data.stairs.size()-1}
-	commit()
+	stair.merge({"id":draft.uid("st"),"name":"直跑梯 #"+str(draft.data.stairs.size()+1),"x":1.2,"y":draft.layer().get("y",0),"z":1.2,"nosing":0.03})
+	draft.data.stairs.append(stair)
+	draft.selected = {"kind":"stair","index":draft.data.stairs.size()-1}
+	preview_build(draft, "Place Stair", -1, false, "Geometry preview only. Landing access is not checked.")
 func refresh_component_list() -> void:
 	component_list.clear()
 	for entry in catalog.items:
@@ -517,10 +598,12 @@ func snap_prop(item: Dictionary, point: Vector2) -> void:
 	Footprint.against_wall(item,hit.point,hit.normal,hit.half)
 
 func place_prop(point: Vector2) -> void:
-	var layer_y = float(state.layer().get("y",0))
+	if pending_build != null or state.layer().is_empty(): return
+	var draft: RefCounted = state.fork_candidate()
+	var layer_y = float(draft.layer().get("y",0))
 	var item: Dictionary
 	if prop_entry.is_empty():
-		item = {"id":state.uid("prop"),"name":prop_presets[web_prop_kind].name,"kind":web_prop_kind,"x":state.snap(point.x),"y":layer_y,"z":state.snap(point.y),"yaw":prop_yaw,"params":prop_params.duplicate(true)}
+		item = {"id":draft.uid("prop"),"name":prop_presets[web_prop_kind].name,"kind":web_prop_kind,"x":draft.snap(point.x),"y":layer_y,"z":draft.snap(point.y),"yaw":prop_yaw,"params":prop_params.duplicate(true)}
 		# Hanging heights are preset offsets above the active floor (the stored value is absolute, like the room data).
 		var mount_field = Footprint.MOUNT_FIELD.get(web_prop_kind,"")
 		if mount_field!="" and prop_params.has(mount_field):
@@ -528,10 +611,10 @@ func place_prop(point: Vector2) -> void:
 			item.params[mount_field] = item.y
 		if not Input.is_key_pressed(KEY_ALT): snap_prop(item,point)
 	else:
-		item = {"id":state.uid("prop"),"name":prop_entry.label,"kind":"native_recipe","path":prop_entry.path,"x":state.snap(point.x),"y":layer_y,"z":state.snap(point.y),"yaw":prop_yaw,"params":prop_params.duplicate(true)}
-	state.data.props.append(item)
-	state.selected = {"kind":"prop","index":state.data.props.size()-1}
-	commit()
+		item = {"id":draft.uid("prop"),"name":prop_entry.label,"kind":"native_recipe","path":prop_entry.path,"x":draft.snap(point.x),"y":layer_y,"z":draft.snap(point.y),"yaw":prop_yaw,"params":prop_params.duplicate(true)}
+	draft.data.props.append(item)
+	draft.selected = {"kind":"prop","index":draft.data.props.size()-1}
+	preview_build(draft, "Place Furniture or Fixture")
 
 func prop_names() -> Dictionary:
 	var names = {}
@@ -595,14 +678,15 @@ func show_art_room(identity: String) -> void:
 		_update_camera()
 	status.text = "原版房间 " + identity + " · %d 个实例 · 只读美术视图；参数化建筑可继续编辑。" % art_room.get_child_count()
 func rebuild() -> void:
-	state.sync_rooms()
+	var shown := display_state()
+	shown.sync_rooms()
 	# Only items whose data changed are rebuilt; untouched parts keep their meshes (big win while dragging).
 	var used = {}
-	for item in state.data.layers: sync_part("layers",item,func(i): return Floor.build(i),used)
-	for item in state.data.walls: sync_part("walls",item,func(i): return Wall.build(i),used)
-	for item in state.data.stairs: sync_part("stairs",item,func(i): return Stair.build(i),used)
-	for item in state.data.railings: sync_part("railings",item,func(i): return Railing.build(i),used)
-	for item in state.data.props: sync_part("props",item,build_prop,used)
+	for item in shown.data.layers: sync_part("layers",item,func(i): return Floor.build(i),used)
+	for item in shown.data.walls: sync_part("walls",item,func(i): return Wall.build(i),used)
+	for item in shown.data.stairs: sync_part("stairs",item,func(i): return Stair.build(i),used)
+	for item in shown.data.railings: sync_part("railings",item,func(i): return Railing.build(i),used)
+	for item in shown.data.props: sync_part("props",item,build_prop,used)
 	for key in part_cache.keys():
 		if used.has(key): continue
 		var stale = part_cache[key].node
@@ -785,7 +869,7 @@ func refresh_furnish_rooms() -> void:
 	if active.has("roomFaces"):
 		for i in range(active.roomFaces.size()):
 			var face = active.roomFaces[i]
-			furnish_room.add_item("房间 %d · %.1f m² · 邻接 %d" % [i+1,face.get("area",0.0),face.get("neighbors",[]).size()])
+			furnish_room.add_item("Room %d · %.1f m² · %d neighbors" % [i+1,face.get("area",0.0),face.get("neighbors",[]).size()])
 	if furnish_room.item_count>0: furnish_room.select(clampi(keep,0,furnish_room.item_count-1))
 
 func active_layer_index() -> int:
@@ -794,40 +878,49 @@ func active_layer_index() -> int:
 	return 0
 
 func furnish_rooms(indices: Array) -> void:
-	var layer_index = active_layer_index()
-	var layer = state.data.layers[layer_index]
-	if not layer.has("roomFaces") or layer.roomFaces.is_empty() or indices.is_empty() or furnish_room.item_count==0:
-		furnish_report.text = "当前图层没有由墙体围成的房间。先绘制闭合墙环。"
+	if pending_build != null: return
+	var layer_index := active_layer_index()
+	var draft: RefCounted = state.fork_candidate()
+	var layer: Dictionary = draft.layer()
+	var faces: Array = layer.get("roomFaces", [])
+	if faces.is_empty() or indices.is_empty() or furnish_room.item_count == 0:
+		furnish_report.text = "Draw an enclosed room on this floor first."
 		return
+	var selected_rooms: Array[int] = []
+	for ri in indices:
+		if ri >= 0 and ri < faces.size() and ri not in selected_rooms: selected_rooms.append(ri)
+	if selected_rooms.is_empty(): return
+	var removed := 0
 	if furnish_clear.button_pressed:
-		var doomed = {}
-		for ri in indices:
-			for pi in state.props_in_room(layer_index,ri): doomed[pi] = true
-		var order = doomed.keys()
+		var doomed := {}
+		for ri in selected_rooms:
+			for pi in draft.props_in_room(layer_index,ri): doomed[pi] = true
+		var order := doomed.keys()
 		order.sort()
 		order.reverse()
-		for pi in order: state.data.props.remove_at(pi)
-	var total = 0
-	var failed = []
-	for ri in indices:
-		var existing = state.data.props.filter(func(prop): return state.prop_layer_index(prop)==layer_index)
-		var added = Furnish.furnish(furnish_template,layer.roomFaces[ri],float(layer.y),state.data.walls,existing,prop_presets)
-		state.data.props.append_array(added)
+		for pi in order: draft.data.props.remove_at(pi)
+		removed = order.size()
+	var total := 0
+	for ri in selected_rooms:
+		var existing: Array = draft.data.props.filter(func(prop): return draft.prop_layer_index(prop) == layer_index)
+		var added: Array = Furnish.furnish(furnish_template, faces[ri], float(layer.y), draft.data.walls, existing, prop_presets)
+		draft.data.props.append_array(added)
 		total += added.size()
-		if added.size()<4: failed.append(ri+1)
-	state.selected = {}
-	commit()
-	furnish_report.text = "已布置 %d 件家具（%s）。" % [total,Furnish.TEMPLATES[furnish_template].label]+("  房间 %s 过小，只放下少量家具。" % str(failed) if not failed.is_empty() else "")
+	if total == 0:
+		furnish_report.text = "No furniture fits the selected rooms."
+		return
+	draft.selected = {}
+	preview_build(draft, "Auto Furnish", -1, false, "%d new fixtures · %d existing fixtures removed" % [total, removed])
 
 func clear_room_props() -> void:
-	var layer_index = active_layer_index()
-	if furnish_room.item_count==0: return
-	var found = state.props_in_room(layer_index,furnish_room.selected)
+	if pending_build != null or furnish_room.item_count == 0: return
+	var draft: RefCounted = state.fork_candidate()
+	var found: Array = draft.props_in_room(active_layer_index(),furnish_room.selected)
+	if found.is_empty(): return
 	found.reverse()
-	for pi in found: state.data.props.remove_at(pi)
-	state.selected = {}
-	commit()
-	furnish_report.text = "已清除 %d 件家具。" % found.size()
+	for pi in found: draft.data.props.remove_at(pi)
+	draft.selected = {}
+	preview_build(draft, "Clear Room Furniture", -1, false, "%d existing fixtures removed" % found.size())
 
 func clear_children(parent: Node) -> void:
 	for child in parent.get_children():
@@ -967,23 +1060,24 @@ func _on_blueprint_resized() -> void:
 		reset_views()
 
 
-func reset_views() -> void:
+func reset_views(fit_plan := false) -> void:
+	var shown := display_state()
 	var min_x = INF
 	var max_x = -INF
 	var min_z = INF
 	var max_z = -INF
 	var max_y = 3.6
-	for layer in state.data.layers:
+	for layer in shown.data.layers:
 		for poly in layer.polygons:
 			for pt in poly:
 				min_x = min(min_x,pt[0]); max_x = max(max_x,pt[0])
 				min_z = min(min_z,pt[1]); max_z = max(max_z,pt[1])
-	for wall in state.data.walls:
+	for wall in shown.data.walls:
 		max_y = max(max_y,wall.get("baseY",0)+wall.get("height",3.6))
 		for pt in wall.points:
 			min_x = min(min_x,pt[0]); max_x = max(max_x,pt[0])
 			min_z = min(min_z,pt[2]); max_z = max(max_z,pt[2])
-	for prop in state.data.props:
+	for prop in shown.data.props:
 		min_x = min(min_x,prop.x-0.5); max_x = max(max_x,prop.x+0.5)
 		min_z = min(min_z,prop.z-0.5); max_z = max(max_z,prop.z+0.5)
 	if not is_finite(min_x): min_x = -4.0; max_x = 4.0; min_z = -7.0; max_z = 0.0; max_y = 3.6
@@ -998,6 +1092,12 @@ func reset_views() -> void:
 	var delta = Vector3(dist*0.85,dist*0.72-target_y,dist*0.95)
 	distance = delta.length()
 	orbit = Vector2(atan2(delta.x,delta.z),asin(delta.y/distance))
+	if fit_plan:
+		var aspect := float(viewport3.size.x) / maxf(float(viewport3.size.y),1.0)
+		var half_vertical := deg_to_rad(camera.fov * 0.5)
+		var half_fit := minf(half_vertical, atan(tan(half_vertical) * aspect))
+		var radius := Vector3((max_x-min_x)*0.5,maxf(target_y,max_y-target_y),(max_z-min_z)*0.5).length()
+		distance = maxf(distance, radius * 1.12 / sin(maxf(half_fit,0.05)))
 	_update_camera()
 func _update_camera() -> void:
 	camera.position = target+Vector3(sin(orbit.x)*cos(orbit.y),sin(orbit.y),cos(orbit.x)*cos(orbit.y))*distance
@@ -1034,6 +1134,7 @@ func duplicate_selected() -> void:
 	commit()
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if pending_build != null: return
 	if not event is InputEventKey or not event.pressed: return
 	if get_viewport().gui_get_focus_owner() is LineEdit: return
 	var command = event.is_command_or_control_pressed()

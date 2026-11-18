@@ -83,7 +83,7 @@ func _input(event: InputEvent) -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO,size),Color("101318"))
 	if editor==null: return
-	var state = editor.state
+	var state = editor.display_state()
 	var step = maxf(state.grid_snap,0.2)
 	while step*zoom<16: step *= 2
 	var top = world(Vector2.ZERO)
@@ -229,7 +229,7 @@ func hit_test(point: Vector2) -> Dictionary:
 	return {}
 
 func _gui_input(event: InputEvent) -> void:
-	if editor==null: return
+	if editor==null or editor.pending_build != null: return
 	var state = editor.state
 	if event is InputEventMouseButton:
 		var point = world(event.position)
@@ -266,9 +266,7 @@ func _gui_input(event: InputEvent) -> void:
 						var y = editor.wall_params.baseY if editor.tool=="wall" else state.layer().get("y",0)
 						editor.drawing.append([sx,sz,y])
 						editor.update_status()
-				"opening":
-					if state.add_opening(point,editor.opening_params): editor.refresh()
-					else: editor.status.text = state.message
+				"opening": editor.preview_opening(point)
 				"prop": editor.place_prop(point)
 				_:
 					state.selected = hit_test(point)

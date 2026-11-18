@@ -8,6 +8,26 @@ var selected: Dictionary = {}
 var history: Array[String] = []
 var history_index = -1
 var grid_snap = 0.2
+var candidate_source: int = 0
+var candidate_base := ""
+
+func fork_candidate() -> RefCounted:
+	var draft: RefCounted = get_script().new()
+	draft.candidate_source = get_instance_id()
+	draft.candidate_base = JSON.stringify(data)
+	draft.data = data.duplicate(true)
+	draft.selected = selected.duplicate(true)
+	draft.grid_snap = grid_snap
+	return draft
+
+func accept_candidate(draft: RefCounted) -> bool:
+	if draft == null or draft.get_script() != get_script(): return false
+	if draft.candidate_source != get_instance_id() or draft.candidate_base != JSON.stringify(data): return false
+	data = draft.data.duplicate(true)
+	selected = draft.selected.duplicate(true)
+	draft.candidate_source = 0
+	remember()
+	return true
 
 func uid(prefix: String) -> String: return prefix+"_"+str(Time.get_ticks_usec())+"_"+str(randi()%10000)
 func snap(value: float) -> float:

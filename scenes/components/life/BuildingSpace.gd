@@ -1,6 +1,9 @@
 extends RefCounted
 const Footprint = preload("res://tools/building_construction/BuildingConstruction/Props/PropFootprint.gd")
 
+const CLEARANCE := 0.12
+const MIN_PASSAGE_HEIGHT := 1.75
+const MAX_CELLS := 200_000
 const DOORS := ["double_door", "closed_door", "arched_closed_door", "portal_arch"]
 const SEAT_LIFT := {"chair": 0.45, "sofa": 0.42, "bench": 0.45, "bed": 0.55}
 const SEATS := ["chair", "sofa", "bench"]
@@ -20,6 +23,8 @@ var objects: Array = []
 var object_by_id: Dictionary = {}
 var bounds := Rect2()
 var capacities: Dictionary = {}
+var surfaces: Array = []
+var grid_limit_exceeded := false
 
 func setup(building: Dictionary, layer_idx := 0, declared_capacities: Dictionary = {}) -> void:
 	data = building
@@ -28,6 +33,7 @@ func setup(building: Dictionary, layer_idx := 0, declared_capacities: Dictionary
 	var layer: Dictionary = building.layers[layer_index]
 	layer_y = float(layer.y)
 	rooms.clear()
+	surfaces.clear()
 	for face in layer.get("roomFaces", []):
 		var ring := PackedVector2Array()
 		var lo := Vector2(INF, INF)
@@ -38,6 +44,10 @@ func setup(building: Dictionary, layer_idx := 0, declared_capacities: Dictionary
 			lo = Vector2(minf(lo.x, vertex.x), minf(lo.y, vertex.y))
 			hi = Vector2(maxf(hi.x, vertex.x), maxf(hi.y, vertex.y))
 		rooms.append({"index": rooms.size(), "polygon": ring, "box": Rect2(lo, hi - lo), "centroid": Vector2(face.centroid[0], face.centroid[1]), "area": float(face.get("area", 0.0)), "kind": "room"})
+		surfaces.append(_surface(face.get("nodes", face.polygon)))
+	if surfaces.is_empty():
+		for polygon in layer.get("polygons", []):
+			if polygon.size() >= 3: surfaces.append(_surface(polygon))
 	_collect_objects()
 	_infer_room_kinds()
 	_build_grid()
@@ -107,46 +117,57 @@ func _cell_of(point: Vector2) -> Vector2i:
 	return Vector2i(clampi(int(floor((point.x - origin.x) / cell)), 0, nx - 1), clampi(int(floor((point.y - origin.y) / cell)), 0, ny - 1))
 
 func is_solid_at(point: Vector2) -> bool:
+	if not Rect2(origin, Vector2(nx, ny) * cell).has_point(point): return true
 	var grid_cell := _cell_of(point)
 	return solid[grid_cell.y * nx + grid_cell.x] == 1
 
+func _surface(points: Array) -> Dictionary:
+	var polygon := PackedVector2Array()
+	var box := Rect2(Vector2(points[0][0], points[0][1]), Vector2.ZERO)
+	for item in points:
+		var point := Vector2(item[0], item[1])
+		polygon.append(point)
+		box = box.expand(point)
+	return {"polygon": polygon, "box": box}
+
 func _build_grid() -> void:
-	var lo := Vector2(INF, INF)
-	var hi := Vector2(-INF, -INF)
-	for room in rooms:
-		lo = Vector2(minf(lo.x, room.box.position.x), minf(lo.y, room.box.position.y))
-		hi = Vector2(maxf(hi.x, room.box.end.x), maxf(hi.y, room.box.end.y))
-	if not is_finite(lo.x):
-		lo = Vector2(-4, -4); hi = Vector2(4, 4)
-	origin = lo - Vector2(1.5, 1.5)
-	var size := hi - lo + Vector2(3.0, 3.0)
-	nx = int(ceil(size.x / cell))
-	ny = int(ceil(size.y / cell))
-	bounds = Rect2(lo, hi - lo)
+	bounds = Rect2()
+	for surface in surfaces:
+		bounds = surface.box if not bounds.has_area() else bounds.merge(surface.box)
+	origin = bounds.position - Vector2(1.5, 1.5)
+	var grid_size := (bounds.size + Vector2(3.0, 3.0)) / cell
+	grid_limit_exceeded = not grid_size.is_finite() or grid_size.x * grid_size.y > MAX_CELLS
+	if grid_limit_exceeded:
+		nx = 1
+		ny = 1
+		solid = PackedByteArray([1])
+		astar = null
+		return
+	nx = int(ceil(grid_size.x))
+	ny = int(ceil(grid_size.y))
 	solid.resize(nx * ny)
 	solid.fill(1)
-	for row_index in range(ny):
-		for column_index in range(nx):
-			if room_at(_cell_center(column_index, row_index)) >= 0: solid[row_index * nx + column_index] = 0
-	var walls_here: Array = []
+	for surface in surfaces:
+		var low := _cell_of(surface.box.position)
+		var high := _cell_of(surface.box.end)
+		for row in range(low.y, high.y + 1):
+			for col in range(low.x, high.x + 1):
+				if Geometry2D.is_point_in_polygon(_cell_center(col, row), surface.polygon): solid[row * nx + col] = 0
 	for wall in data.walls:
-		if absf(float(wall.get("baseY", wall.points[0][1])) - layer_y) < 0.3: walls_here.append(wall)
-	for wall in walls_here:
-		var pts: Array = []
+		if absf(float(wall.get("baseY", wall.points[0][1])) - layer_y) >= 0.3: continue
+		var pts: Array[Vector2] = []
 		for point in wall.points: pts.append(Vector2(point[0], point[2]))
-		if wall.get("closed", false) and pts.size() > 2 and pts[0].distance_to(pts[pts.size() - 1]) > 0.01: pts.append(pts[0])
-		var half := float(wall.thickness) * 0.5 + 0.12
-		for segment_index in range(pts.size() - 1):
-			_stamp_segment(pts[segment_index], pts[segment_index + 1], half)
-	for wall in walls_here:
-		var pts: Array = []
-		for point in wall.points: pts.append(Vector2(point[0], point[2]))
+		if wall.get("closed", false) and pts.size() > 2 and not pts[0].is_equal_approx(pts[-1]): pts.append(pts[0])
+		var portals: Dictionary = {}
 		for op in wall.get("openings", []):
-			if not DOORS.has(str(op.type)): continue
-			var segment_index := int(op.segment)
-			if segment_index < 0 or segment_index >= pts.size() - 1: continue
-			var along: Vector2 = (pts[segment_index + 1] - pts[segment_index]).normalized()
-			_open_gap(pts[segment_index] + along * float(op.center), along, float(op.width) * 0.5 - 0.06, float(wall.thickness) * 0.5 + 0.35)
+			if not DOORS.has(str(op.type)) or float(op.get("bottom", 0.0)) > CLEARANCE or float(op.get("height", 0.0)) < MIN_PASSAGE_HEIGHT: continue
+			var half_width := float(op.width) * 0.5 - CLEARANCE
+			if half_width <= 0.0: continue
+			var idx := int(op.segment)
+			if not portals.has(idx): portals[idx] = []
+			portals[idx].append(Vector2(float(op.center) - half_width, float(op.center) + half_width))
+		for idx in range(pts.size() - 1):
+			_stamp_segment(pts[idx], pts[idx + 1], float(wall.thickness) * 0.5 + CLEARANCE, portals.get(idx, []))
 	for obj in objects:
 		if not Footprint.blocks(obj.prop): continue
 		var corners := Footprint.corners(obj.prop, 0.12)
@@ -167,25 +188,55 @@ func _build_grid() -> void:
 		for column_index in range(nx):
 			if solid[row_index * nx + column_index] == 1: astar.set_point_solid(Vector2i(column_index, row_index), true)
 
-func _stamp_segment(start_point: Vector2, end_point: Vector2, half: float) -> void:
+# An opening is a hole in its own wall segment only. It never clears
+# unsupported floor, furniture, or the collision from a crossing wall.
+func _stamp_segment(start_point: Vector2, end_point: Vector2, half: float, portals: Array) -> void:
+	if start_point.is_equal_approx(end_point): return
+	var along := start_point.direction_to(end_point)
 	var box := Rect2(start_point, Vector2.ZERO).expand(end_point).grow(half)
 	var c0 := _cell_of(box.position)
 	var c1 := _cell_of(box.end)
-	for row_index in range(c0.y, c1.y + 1):
-		for column_index in range(c0.x, c1.x + 1):
-			var point := _cell_center(column_index, row_index)
-			var nearest_point := Geometry2D.get_closest_point_to_segment(point, start_point, end_point)
-			if point.distance_to(nearest_point) < half: solid[row_index * nx + column_index] = 1
+	for row in range(c0.y, c1.y + 1):
+		for col in range(c0.x, c1.x + 1):
+			var index := row * nx + col
+			if solid[index] != 0: continue
+			var point := _cell_center(col, row)
+			if point.distance_to(Geometry2D.get_closest_point_to_segment(point, start_point, end_point)) >= half: continue
+			var distance := (point - start_point).dot(along)
+			var inside_portal := false
+			for span: Vector2 in portals:
+				if distance >= span.x and distance <= span.y:
+					inside_portal = true
+					break
+			if not inside_portal: solid[index] = 1
 
-func _open_gap(center: Vector2, along: Vector2, half_width: float, half_depth: float) -> void:
-	var across := Vector2(-along.y, along.x)
-	var box := Rect2(center, Vector2.ZERO).grow(maxf(half_width, half_depth) + 0.3)
-	var c0 := _cell_of(box.position)
-	var c1 := _cell_of(box.end)
-	for row_index in range(c0.y, c1.y + 1):
-		for column_index in range(c0.x, c1.x + 1):
-			var depth := _cell_center(column_index, row_index) - center
-			if absf(depth.dot(along)) <= half_width and absf(depth.dot(across)) <= half_depth: solid[row_index * nx + column_index] = 0
+func room_access() -> Dictionary:
+	var missing := 0
+	var groups: Array[Vector2i] = []
+	if astar == null: return {"groups": 0, "unusable": rooms.size(), "grid_limit": grid_limit_exceeded}
+	for room in rooms:
+		var best := Vector2i(-1, -1)
+		var distance := INF
+		var low := _cell_of(room.box.position)
+		var high := _cell_of(room.box.end)
+		for row in range(low.y, high.y + 1):
+			for col in range(low.x, high.x + 1):
+				if solid[row * nx + col] != 0: continue
+				var point := _cell_center(col, row)
+				var d: float = point.distance_squared_to(room.centroid)
+				if d >= distance or not Geometry2D.is_point_in_polygon(point, room.polygon): continue
+				best = Vector2i(col, row)
+				distance = d
+		if best.x < 0:
+			missing += 1
+			continue
+		var already_reached := false
+		for representative in groups:
+			if not astar.get_id_path(representative, best).is_empty():
+				already_reached = true
+				break
+		if not already_reached: groups.append(best)
+	return {"groups": groups.size(), "unusable": missing, "grid_limit": false}
 
 func nearest_free(point: Vector2, radius := 8) -> Vector2:
 	var grid_cell := _cell_of(point)
@@ -210,6 +261,7 @@ func line_clear(start_point: Vector2, end_point: Vector2) -> bool:
 	return true
 
 func find_path(from: Vector2, to: Vector2) -> Array:
+	if astar == null or not from.is_finite() or not to.is_finite(): return []
 	var start_point := nearest_free(from)
 	var end_point := nearest_free(to, 2)
 	if start_point == Vector2.INF or end_point == Vector2.INF: return []
@@ -237,6 +289,7 @@ func path_length(from: Vector2, path: Array) -> float:
 	return total
 
 func random_free_point(rng: RandomNumberGenerator, room_index := -1) -> Vector2:
+	if rooms.is_empty(): return Vector2.INF
 	for attempt in range(40):
 		var room: Dictionary = rooms[room_index] if room_index >= 0 else rooms[rng.randi() % rooms.size()]
 		var point := Vector2(rng.randf_range(room.box.position.x, room.box.end.x), rng.randf_range(room.box.position.y, room.box.end.y))

@@ -24,6 +24,9 @@ func _process(_delta: float) -> void:
 	if not FileAccess.file_exists(path):
 		return
 	var source := FileAccess.get_file_as_string(path)
+	# Windows can expose a just-renamed inbox before its handle is readable.
+	if source.is_empty():
+		return
 	if DirAccess.remove_absolute(path) != OK:
 		return
 	var request: Variant = JSON.parse_string(source)

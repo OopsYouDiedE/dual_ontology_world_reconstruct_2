@@ -24,6 +24,10 @@ dotnet build DualOntologyWorldReconstruct2.csproj
 
 热厨的[白模、叠绘提示和复现命令](docs/design/kitchen-paintover/README.md)用于固定入口视角，再据图调节三维场景、物件动作和光照。
 
+## 大楼梯厅美术实验
+
+从正常入口附加 `-- --architecture-lab` 可打开独立样板，查看 Blue Prince 参考构图、第一人称和可交互机关。见[操作、几何节点生成与验收](scenes/blue_prince_lab/README.md)。
+
 ## 检查
 
 ```powershell

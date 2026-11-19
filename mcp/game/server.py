@@ -33,7 +33,7 @@ def readiness():
 
 
 class Run:
-    def __init__(self, seed):
+    def __init__(self, seed, architecture_lab=False):
         godot = Path(environment.resolve_godot()).resolve()
         if os.name == "nt" and godot.name.lower().endswith("_console.exe"):
             godot = godot.with_name(godot.name[:-len("_console.exe")] + ".exe")
@@ -58,6 +58,8 @@ class Run:
         command = [str(godot), "--path", str(ROOT), "--rendering-method", "forward_plus",
                    "--language", "en", "--max-fps", "60", "--windowed", "--position", "-32000,-32000",
                    "--log-file", str(self.log), SCENE, "--", f"--rogue-mcp-dir={self.directory}", f"--run-seed={seed}"]
+        if architecture_lab:
+            command.append("--architecture-lab")
         with (self.directory / "process.log").open("wb") as log:
             self.process = subprocess.Popen(command, cwd=ROOT, env=env, stdin=subprocess.DEVNULL,
                                             stdout=log, stderr=subprocess.STDOUT,
@@ -134,7 +136,7 @@ def game_server():
         return readiness()
 
     @server.tool(structured_output=False)
-    def on(seed: int = 1, screenshot: bool = True):
+    def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False):
         """Open scenes/rogue/Run.tscn directly in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:
@@ -143,7 +145,7 @@ def game_server():
             state = readiness()
             if not state["ready"]:
                 raise ValueError("; ".join(state["reasons"]))
-            candidate = Run(seed)
+            candidate = Run(seed, architecture_lab)
             try:
                 result = candidate.request("observe", screenshot=screenshot, timeout=40)
             except BaseException:

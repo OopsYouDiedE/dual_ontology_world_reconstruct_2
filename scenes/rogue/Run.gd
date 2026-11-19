@@ -2,6 +2,7 @@ extends Control
 ## A single seeded expedition. Revisits never regenerate rooms or pay rewards twice.
 const House = preload("res://scenes/rogue/HouseMap.cs")
 const Room = preload("res://scenes/rogue_view/RogueRoomView.tscn")
+var architecture_lab: Node3D
 var house
 var run_seed: int
 var current := ""
@@ -29,13 +30,23 @@ var camp_ready := false
 var camp_active := false
 var camp_seconds := 0.0
 var camp_actors
-var camp_watch := Label.new()
-var stats := Label.new()
-var instruction := Label.new()
-var choices := HFlowContainer.new()
+var camp_watch: Label
+var stats: Label
+var instruction: Label
+var choices: HFlowContainer
 var destinations := PackedStringArray()
 
 func _ready() -> void:
+	if "--architecture-lab" in OS.get_cmdline_user_args():
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var script: GDScript = load("res://scenes/blue_prince_lab/Hall.gd")
+		architecture_lab = script.new()
+		add_child(architecture_lab)
+		return
+	camp_watch = Label.new()
+	stats = Label.new()
+	instruction = Label.new()
+	choices = HFlowContainer.new()
 	var layout := VBoxContainer.new()
 	add_child(layout)
 	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -126,6 +137,7 @@ func _inspect() -> void:
 	_refresh()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(architecture_lab): return
 	if InputMap.has_action("notebook") and event.is_action_pressed("notebook") and not ended:
 		if reading: _refresh()
 		else: _read_guide()
@@ -253,6 +265,7 @@ func travel(index: int) -> void:
 	_refresh()
 
 func mcp_observe() -> Dictionary:
+	if is_instance_valid(architecture_lab): return architecture_lab.snapshot()
 	var buttons := []
 	for b in choices.get_children():
 		if b is Button:

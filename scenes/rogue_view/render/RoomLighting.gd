@@ -40,6 +40,19 @@ func apply(hour: float, mood: String) -> void:
 	for lamp in lamps:
 		lamp.light_color = Color("ffb77a") if mood == "ember" else Color("ffdfbc")
 		lamp.light_energy = 1.0 if mood == "ember" else 3.2
+		match mood:
+			"shelter":
+				lamp.light_color = Color("ffc68d")
+				lamp.light_energy = 3.6
+			"rain":
+				lamp.light_color = Color("a7c7c4")
+				lamp.light_energy = 1.55
+			"rewrite":
+				lamp.light_color = Color("e49581")
+				lamp.light_energy = 1.65
+			"echo":
+				lamp.light_color = Color("aec2e4")
+				lamp.light_energy = 1.9
 	for fire in hearths:
 		fire.light_energy = 2.2 if mood == "ember" else 0.4
 	var daylight := smoothstep(0.0,1.0,maxf(0.0,cos((fposmod(hour,24.0)-12.0)*PI/12.0)))

@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="scenes/rogue/**/*.cs" />

@@ -23,7 +23,9 @@ public partial class HouseMap : RefCounted
     public string template_id(string room) => _layout?.Templates.GetValueOrDefault(room) ?? "";
     public string[] recruit_rooms() => _layout?.Recruits.ToArray() ?? [];
 
-    private sealed record Layout(TopologyLayout Graph, Dictionary<string, string> Templates, string[] Recruits);
+    public string room_stage(string room) => _layout?.Stages.GetValueOrDefault(room) ?? "";
+
+    private sealed record Layout(TopologyLayout Graph, Dictionary<string, string> Templates, string[] Recruits, Dictionary<string, string> Stages);
 
     private static Layout? CreateLayout(ulong seed)
     {
@@ -34,7 +36,7 @@ public partial class HouseMap : RefCounted
         };
 
         // Count both endpoints in this budget. Reserve at least one side room so every seed can branch.
-        int arrivalDepth = 10 + rng.Next(10);
+        int arrivalDepth = 11 + rng.Next(9);
         int recruitCount = 1 + rng.Next(2);
         int[] depths = Enumerable.Range(1, arrivalDepth - 2).ToArray();
         rng.Shuffle(depths);
@@ -43,6 +45,11 @@ public partial class HouseMap : RefCounted
         var expandedDepths = depths.Skip(recruitCount).Take(sideRooms).ToHashSet();
         var approach = MakeLayers(Start, Camp, "approach", arrivalDepth - 2, expandedDepths);
         var recruits = recruitDepths.Order().Select(depth => approach[depth][0]).ToArray();
+        var stages = new Dictionary<string, string>(StringComparer.Ordinal);
+        // Every path to the hall visits all three set pieces, even when a layer branches.
+        foreach (string room in approach[3]) stages.Add(room, "echo");
+        foreach (string room in approach[5]) stages.Add(room, "rain");
+        foreach (string room in approach[7]) stages.Add(room, "rewrite");
 
         int expeditionDepths = 4 + rng.Next(5);
         int[] expeditionCandidates = Enumerable.Range(1, expeditionDepths).ToArray();
@@ -74,7 +81,7 @@ public partial class HouseMap : RefCounted
         }
         var problem = new TopologyProblem(Start, Goal, slots, links) { RequireAllRoomsReachable = true };
         var graph = TopologySolver.Solve(problem, seed);
-        return graph is null ? null : new Layout(graph, templates, recruits);
+        return graph is null ? null : new Layout(graph, templates, recruits, stages);
 
         string[][] MakeLayers(string first, string last, string prefix, int depthCount,
             HashSet<int> expanded)

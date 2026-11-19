@@ -1,13 +1,12 @@
 extends RefCounted
 ## Template-specific encounters; the journal records three shared field rules.
 
-const NAMES := ["Mara", "Elias", "June", "Rowan", "Iris"]
+const NAMES := ["Mara", "Elias", "June", "Rowan"]
 const SKILLS := {
 	"Mara": "Sound mapping: separates the source of a sound from its echoes.",
 	"Elias": "Close observation: catches reflections, moisture, and shifts in alignment.",
 	"June": "Records and traces: checks what was physically left behind.",
 	"Rowan": "Cartography: takes bearings from landmarks fixed to the building.",
-	"Iris": "Timing: counts the beats and puts actions in the right order.",
 }
 
 const RULES := [
@@ -43,7 +42,7 @@ const ROOMS := {
 			"Watch the lecturer’s chalk tray",
 			"Chalk taps the tray in time with the lecturer’s hand. The upper seats echo before each tap; the blackboard answers one beat late.",
 			["Signal with the chalk on the tray", "Answer the upper seats", "Tap back on the blackboard"],
-			"Iris", "Use the sound that coincides with the hand.",
+			"Elias", "Use the sound that coincides with the hand.",
 		],
 		[
 			"Sight along the tiered seats and blackboard",
@@ -63,7 +62,7 @@ const ROOMS := {
 			"Inspect the dressing station",
 			"At the medical desk, the order is clean dressing, change, then used dressing into the sealed bag. A voice at the cot is already calling for disposal before the change.",
 			["Set out a clean dressing first", "Seal the disposal bag first", "Carry the used dressing back to the clean desk"],
-			"Iris", "The used-dressing step belongs after the change.",
+			"Elias", "The used-dressing step belongs after the change.",
 		],
 		[
 			"Check the cot and medical desk",
@@ -83,7 +82,7 @@ const ROOMS := {
 			"Check the serving hatch beside the long table",
 			"At the serving hatch the plate touches the counter on the second tap. The long table rattles a beat early and the kitchen doorway echoes late.",
 			["Collect the plate on the second tap", "Follow the table rattle", "Answer the doorway echo"],
-			"Iris", "Time the pickup to the plate arriving on the counter.",
+			"Elias", "Time the pickup to the plate arriving on the counter.",
 		],
 		[
 			"Sight the long table from the service counter",
@@ -163,7 +162,7 @@ const ROOMS := {
 			"Watch the four-zone reconciliation table",
 			"At the living-hall table, three tallies are set down. The fourth call comes while the last place is still empty. A second call comes as the last tally arrives.",
 			["Reconcile when the fourth tally arrives", "Reconcile at the first call", "File the three tallies as complete"],
-			"Iris", "Count the tallies on the table, then act.",
+			"Elias", "Count the tallies on the table, then act.",
 		],
 		[
 			"Sight the gathering table from the four zone entrances",

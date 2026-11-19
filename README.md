@@ -4,10 +4,10 @@
 
 ## 一局怎么玩
 
-- 玩家独自进入学院。通往大本营的路上会遇到 1–2 名同行者，他们自动入队。初次抵达营地约经过 10–20 个不同房间（含入口与营地）；折返会增加移动次数。
-- 营地可休整、了解专长，选 0–3 名同伴出发。探险时玩家担任队长：读房间里的线索、选择全队行动，也可以把符合专长的任务交给一名队员。每名队员回营休整后可再次出手。
-- 用原来的第三人称操控走进房间，靠近现场按交互键调查，再决定全队的行动。例如，热厨里要比对水汽与哨声；行动后可翻阅记录的规则。错误选择扣 3 点生命，同一房间只结算一次。抵达最终房间并记录三条不同规则即可唤醒学院；通关或死亡后可重玩同一种子或另开新局。
-- 学院是一张超自然连接图。门连接到哪个空间由本局种子和房间连接约束决定；两个地块的外墙、楼层与现实距离无需对得上。
+- 第一人称，从一张印刷规则卡开始。**Tab** 收起或翻开；**WASD** 移动，点击场景控制视角，**Esc** 释放鼠标，**E** 交互。
+- 玩家独自出发，在到达公共大厅前会遇到 1–2 名幸存者；解开房间后可邀请同行，也可以独自离开。前段会遇见回声走廊、时间雨和试图改写保命规则的馆长。照印刷版可保命；读懂环境证据可以抢到更多补给。死亡时能自写或编辑一条留给下任队长的规则边注。
+- 名单共四名 NPC；在大厅手动招募未入队的人，招募与出征分开，出征可带至多三名。安排疗伤、用探索补给升级设施，或在滑块拼图中连接通向观测台的可选路线；常规路线一直开放。
+- 查看[夜行学院重构说明](docs/design/night-expedition.md)，了解完整操作、系统和测试。
 
 ## 开发运行
 
@@ -33,7 +33,7 @@ dotnet build DualOntologyWorldReconstruct2.csproj
 ```powershell
 dotnet run --project core/rogue_topology/tests/DuelView.RogueTopology.Tests.csproj
 & .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe --headless --path . -s res://tools/test/house_map_bridge_unit.gd
-& .runtime/python/Scripts/python.exe tools/testing/rogue_run_e2e.py --seed 1
+& .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe --headless --path . -s res://tools/test/night_expedition.gd -- --no-rule-save
 ```
 
-[实机 MCP](mcp/game/README.md) 从正式入口启动真实 Forward+ 窗口；测试通过界面点击操作，报告与截图写入 `.runtime/rogue-mcp/`。
+[实机 MCP](mcp/game/README.md) 从正式入口启动真实 Forward+ 窗口；可通过界面点击检查画面，报告与截图写入 `.runtime/rogue-mcp/`。旧版 `rogue_run_e2e.py` 按第三人称流程编写，不是当前规则怪谈入口的回归测试。

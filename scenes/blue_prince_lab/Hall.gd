@@ -7,10 +7,12 @@ const Lamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 const Door := preload("res://scenes/blue_prince_lab/doors/Door.tscn")
 const Cabinet := preload("res://scenes/blue_prince_lab/doors/Cabinet.tscn")
 const Stairs := preload("res://scenes/blue_prince_lab/stairs/Stairs.tscn")
-const Helm := preload("res://scenes/blue_prince_lab/Helm.gd")
-const VIEWS := ["Entrance", "Mechanisms", "Landing", "Airflow"]
-const FRAMES := [Vector3(0.0, 1.65, 7.88), Vector3(-0.95, 1.69, -0.15), Vector3(0.20, 3.30, -7.32), Vector3(-0.02, 2.58, -1.48)]
-const LOOK := [Vector3(0.0, 2.85, -6.0), Vector3(-3.6, 1.48, -0.62), Vector3(0.03, 2.94, -9.3), Vector3(-3.76, 2.65, -2.26)]
+const Tourbillon := preload("res://scenes/blue_prince_lab/Tourbillon.gd")
+const VIEWS := ["Entrance", "Mechanisms", "Landing", "Airflow", "Tourbillon"]
+const FRAMES := [Vector3(0,1.34,7.88), Vector3(-0.95,1.69,-0.15), Vector3(0.20,2.10,-16.00),
+	Vector3(-0.02,2.58,-1.48), Vector3(0.44,1.65,-12.49)]
+const LOOK := [Vector3(0,4.48,-9.25), Vector3(-3.60,1.48,-0.62), Vector3(0.03,2.30,-21.40),
+	Vector3(-3.76,2.65,-2.26), Vector3(0.01,1.24,-15.18)]
 const EYE := 1.63
 var walker := CharacterBody3D.new()
 var walk_camera := Camera3D.new()
@@ -28,34 +30,42 @@ var elapsed := 0.0
 var door: Node3D
 var cabinet: Node3D
 var gears: Node3D
-var helm: Node3D
+var tourbillon: Node3D
 var lamp: Node3D
 var env: Environment
+var ink: MeshInstance3D
+var toon := true
+var styled: Array[ShaderMaterial] = []
+var decor: Node3D
 
 func _ready() -> void:
 	name = "ArchitectureLab"
 	add_child(Shell.new())
 	_light_room()
-	stairs = _place(Stairs, Vector3(0, 0, -4.23))
-	door = _place(Door, Vector3(0, 1.65, -9.13))
-	cabinet = _place(Cabinet, Vector3(-4.30, 0, 0.64), PI / 2.0)
-	gears = _place(Gears, Vector3(-4.30, 0.83, -1.73), PI / 2.0)
-	helm = Helm.new()
-	helm.position = Vector3(0, 0.006, -0.50)
-	add_child(helm)
-	_register("Open or close the stair door", door, Vector3(0, 1.1, 0.24))
+	stairs = _place(Stairs, Vector3(0, 0, -17.05))
+	door = Door.instantiate()
+	door.position = Vector3(0,0.015,-9.13)
+	door.set("hall_finish", true)
+	add_child(door)
+	cabinet = _place(Cabinet, Vector3(-4.27,0,1.45), PI / 2.0)
+	gears = _place(Gears, Vector3(-4.31,0.86,-1.92), PI / 2.0)
+	tourbillon = Tourbillon.new()
+	tourbillon.position = Vector3(0,0.006,-15.18)
+	add_child(tourbillon)
+	_register("Open or close the hall door", door, Vector3(0, 1.1, 0.24))
 	_register("Open or close the cabinet", cabinet, Vector3(0, 0.86, 0.38))
 	_register("Start or stop the gear train", gears, Vector3(0, 0.73, 0.36))
-	_register("Turn the helm", helm, Vector3(0, 1.20, 0.26))
-	for z: float in [4.60, -3.02]:
+	_register("Start or stop the tourbillon", tourbillon, Vector3(0, 1.20, 0.26))
+	for z: float in [-5.78, -2.78]:
 		var b := _place(Banner, Vector3(-4.36, 3.31, z), PI / 2.0)
 		b.set("wall_setback", 0.12)
 		wind_sources.append(b)
-	lamp = _place(Lamp, Vector3(-2.65, 4.59, -1.25))
+	lamp = _place(Lamp, Vector3(-2.65,4.52,-2.21))
 	wind_sources.append(lamp)
-	for z: float in [6.25, 2.95, -0.35, -3.65, -6.95]:
-		for side: float in [-1.0, 1.0]:
-			_sconce(Vector3(side * 3.43, 2.86, z + 0.16), side, z != -0.35)
+	decor = preload("res://scenes/blue_prince_lab/HallDecor.gd").new()
+	add_child(decor)
+	_collect_styled(self)
+	_setup_ink()
 	_setup_cameras()
 	_setup_hud()
 	show_view(0)
@@ -64,10 +74,10 @@ func _ready() -> void:
 			var capture := preload("res://scenes/blue_prince_lab/Blueprint.gd")
 			capture.save_meshes({"Banners":wind_sources.slice(0, 2), "Oil Lamp":[lamp],
 				"Gears":[gears], "Room Door":[door], "Cabinet":[cabinet],
-				"Stairs":[stairs], "Helm":[helm]}, arg.trim_prefix("--lab-components="))
+				"Stairs":[stairs], "Tourbillon":[tourbillon], "Hall decor":[decor]}, arg.trim_prefix("--lab-components="))
 
 	var batching := preload("res://scenes/blue_prince_lab/MeshBatches.gd")
-	for piece: Node3D in [door, cabinet, gears, helm, lamp]:
+	for piece: Node3D in [door, cabinet, gears, tourbillon, lamp, decor]:
 		batching.collapse(piece)
 
 func _place(scene: PackedScene, p: Vector3, yaw := 0.0) -> Node3D:
@@ -84,32 +94,84 @@ func _light_room() -> void:
 	var world_environment := WorldEnvironment.new()
 	env = Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("91a9bd")
+	env.background_color = Color("8f9ba6")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color("b5c4e1")
-	env.ambient_light_energy = 0.56
+	env.ambient_light_color = Color("c5d2de")
+	env.ambient_light_energy = 0.31
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.ssao_enabled = true
-	env.ssao_radius = 0.85
-	env.ssao_intensity = 1.15
+	env.ssao_radius = 0.39
+	env.ssao_intensity = 1.63
+	env.ssao_power = 1.37
 	env.sdfgi_enabled = "--lab-gi" in OS.get_cmdline_user_args()
 	env.sdfgi_min_cell_size = 0.16
 	env.sdfgi_use_occlusion = true
+	env.sdfgi_energy = 0.67
+	env.sdfgi_bounce_feedback = 0.28
 	env.glow_enabled = true
-	env.glow_intensity = 0.24
+	env.glow_intensity = 0.29
+	env.glow_hdr_threshold = 1.20
+	env.adjustment_enabled = true
+	env.adjustment_contrast = 1.10
+	env.adjustment_saturation = 0.95
 	world_environment.environment = env
 	add_child(world_environment)
 	# This exterior sun reaches the interior through the east wall apertures.
 	var day := DirectionalLight3D.new()
-	day.rotation_degrees = Vector3(-24, 71, 0)
+	day.rotation_degrees = Vector3(-8, 71, 0)
 	day.light_color = Color("d6e6fa")
-	day.light_energy = 1.12
+	day.light_energy = 0.21
 	day.shadow_enabled = true
 	day.directional_shadow_max_distance = 33.0
 	add_child(day)
-	# A permanent warm threshold lamp sets the destination value behind the stair.
-	_omni(Vector3(0, 4.05, -8.22), Color("ffd29b"), 1.2, 5.25, true)
-	_omni(Vector3(-3.3, 2.83, -1.0), Color("f9c991"), 0.53, 3.25, false)
+	# Broad cool interior fill defines stone planes; warm accents stay on the glass and oak.
+	_omni(Vector3(0,4.18,-6.20), Color("e0ecff"), 1.18, 7.3, false)
+	_omni(Vector3(-1.9,3.52,6.42), Color("d6edff"), 1.24, 10.4, true)
+	_spot(Vector3(0,3.54,-6.1), Vector3(0,3.99,-9.14), Color("e1efff"), 2.10, 8.2)
+	for side: float in [-1.0, 1.0]:
+		_omni(Vector3(side*4.07,1.41,4.69), Color("ffbd81"), 0.78, 2.65, false)
+		_omni(Vector3(side*4.23,1.54,1.32), Color("e8ae72"), 0.54, 2.45, false)
+		_omni(Vector3(side*2.5,2.8,-15.0), Color("efd3ab"), 0.62, 5.65, false)
+	_omni(Vector3(-0.7,2.58,-13.12), Color("ffecd2"), 1.5, 4.8, true)
+	_omni(Vector3(0,3.77,-20.9), Color("e0e4df"), 0.75, 5.8, true)
+
+func _spot(p: Vector3, target: Vector3, tone: Color, power: float, distance: float) -> void:
+	var light := SpotLight3D.new()
+	light.position = p
+	light.light_color = tone
+	light.light_energy = power
+	light.spot_range = distance
+	light.spot_angle = 44.0
+	light.spot_angle_attenuation = 0.7
+	add_child(light)
+	light.look_at(target)
+
+func _collect_styled(n: Node) -> void:
+	if n is MeshInstance3D and n.material_override is ShaderMaterial:
+		var mat: ShaderMaterial = n.material_override
+		if mat.shader.resource_path.get_file() in ["HallFinish.gdshader", "HallDoor.gdshader"] and not styled.has(mat):
+			styled.append(mat)
+	for child in n.get_children():
+		_collect_styled(child)
+
+func _toggle_toon() -> void:
+	toon = not toon
+	for mat in styled:
+		mat.set_shader_parameter("toon_on",toon)
+
+func _setup_ink() -> void:
+	ink = MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(2,2)
+	ink.mesh = quad
+	ink.extra_cull_margin = 200.0
+	ink.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	ink.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://scenes/blue_prince_lab/HallInk.gdshader")
+	mat.render_priority = 100
+	ink.material_override = mat
+	add_child(ink)
 
 func _omni(p: Vector3, tone: Color, energy: float, radius: float, shadows: bool) -> void:
 	var light := OmniLight3D.new()
@@ -119,49 +181,6 @@ func _omni(p: Vector3, tone: Color, energy: float, radius: float, shadows: bool)
 	light.omni_range = radius
 	light.shadow_enabled = shadows
 	add_child(light)
-
-func _sconce(p: Vector3, side: float, fills: bool) -> void:
-	var iron := StandardMaterial3D.new()
-	iron.albedo_color = Color("78674d")
-	iron.roughness = 0.45
-	iron.metallic = 0.52
-	var arm := BoxMesh.new()
-	arm.size = Vector3(0.28, 0.044, 0.047)
-	_mesh(arm, iron, p - Vector3(side * 0.04, 0.12, 0.0))
-	var base := CylinderMesh.new()
-	base.top_radius = 0.11
-	base.bottom_radius = 0.056
-	base.height = 0.10
-	base.radial_segments = 8
-	_mesh(base, iron, p - Vector3(side * 0.17, 0.08, 0.0))
-	var glass := CylinderMesh.new()
-	glass.top_radius = 0.073
-	glass.bottom_radius = 0.084
-	glass.height = 0.26
-	glass.radial_segments = 8
-	var milk := StandardMaterial3D.new()
-	milk.albedo_color = Color("ffe2ab")
-	milk.emission_enabled = true
-	milk.emission = Color("ffe0a2")
-	milk.emission_energy_multiplier = 1.25
-	var center := p - Vector3(side * 0.17, -0.08, 0.0)
-	_mesh(glass, milk, center, false)
-	var top := CylinderMesh.new()
-	top.top_radius = 0.038
-	top.bottom_radius = 0.092
-	top.height = 0.074
-	top.radial_segments = 8
-	_mesh(top, iron, center + Vector3.UP * 0.159)
-	if fills: _omni(center - Vector3(side * 0.22, 0.0, 0.0), Color("ffd6a3"), 0.72, 4.0, false)
-
-func _mesh(mesh: Mesh, material: Material, pos: Vector3, shadows := true) -> void:
-	var piece := MeshInstance3D.new()
-	piece.mesh = mesh
-	piece.material_override = material
-	piece.position = pos
-	if not shadows: piece.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	piece.gi_mode = GeometryInstance3D.GI_MODE_STATIC
-	add_child(piece)
 
 func _setup_cameras() -> void:
 	walker.position = Vector3(-0.35, 0.05, 7.77)
@@ -193,7 +212,9 @@ func _setup_hud() -> void:
 		_button(VIEWS[i], show_view.bind(i))
 	_button("Walk", _walk)
 	_button("Gust", func(): winds = not winds)
-	_button("SDFGI", func(): env.sdfgi_enabled = not env.sdfgi_enabled)
+	_toggle_button("Toon", toon, _toggle_toon)
+	_toggle_button("Ink", ink.visible, func(): ink.visible = not ink.visible)
+	_toggle_button("SDFGI", env.sdfgi_enabled, func(): env.sdfgi_enabled = not env.sdfgi_enabled)
 	_button("Hide UI", _toggle_hud)
 	notice.position = Vector2(16, 52)
 	notice.add_theme_color_override("font_shadow_color", Color("161c26"))
@@ -204,6 +225,15 @@ func _button(title: String, callback: Callable) -> void:
 	var button := Button.new()
 	button.text = title
 	button.focus_mode = Control.FOCUS_NONE
+	button.pressed.connect(callback)
+	controls.add_child(button)
+
+func _toggle_button(title: String, enabled: bool, callback: Callable) -> void:
+	var button := Button.new()
+	button.text = title
+	button.focus_mode = Control.FOCUS_NONE
+	button.toggle_mode = true
+	button.button_pressed = enabled
 	button.pressed.connect(callback)
 	controls.add_child(button)
 
@@ -230,6 +260,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_2: show_view(1)
 			KEY_3: show_view(2)
 			KEY_4: show_view(3)
+			KEY_5: show_view(4)
 			KEY_F: _walk() if active_view >= 0 else show_view(0)
 			KEY_ESCAPE: show_view(0)
 			KEY_H: _toggle_hud()
@@ -247,6 +278,7 @@ func _select(point: Vector2, max_range: float) -> Dictionary:
 	var best := {}
 	var radius := 76.0
 	for target: Dictionary in use_targets:
+		if not _in_zone(target): continue
 		var p: Vector3 = target.node.to_global(target.anchor)
 		if camera.is_position_behind(p) or camera.global_position.distance_to(p) > max_range: continue
 		var d := camera.unproject_position(p).distance_to(point)
@@ -254,6 +286,14 @@ func _select(point: Vector2, max_range: float) -> Dictionary:
 			best = target
 			radius = d
 	return best
+
+func _in_zone(target: Dictionary) -> bool:
+	# The closed hall door occludes the separate tourbillon station and vice versa.
+	if target.node == tourbillon:
+		return active_view in [2, 4] or (active_view == -1 and walker.position.z < -9.3)
+	if target.node != door and (active_view in [2, 4] or (active_view == -1 and walker.position.z < -9.3)):
+		return false
+	return true
 
 func _use(target: Dictionary) -> void:
 	if not target.is_empty(): target.node.interact()
@@ -283,15 +323,26 @@ func snapshot() -> Dictionary:
 		buttons[button.text] = [center.x, center.y]
 	var camera := get_viewport().get_camera_3d()
 	for t: Dictionary in use_targets:
+		if not _in_zone(t): continue
 		var p: Vector3 = t.node.to_global(t.anchor)
 		if camera.is_position_behind(p): continue
 		var point := camera.unproject_position(p)
 		if get_viewport().get_visible_rect().has_point(point):
 			targets.append({"name":t.title, "x":point.x, "y":point.y})
-	return {"mode":"architecture_lab", "view":VIEWS[active_view] if active_view >= 0 else "Walk",
-		"wind":winds, "sdfgi":env.sdfgi_enabled, "targets":targets, "buttons":buttons,
+	var landmarks := {}
+	if active_view == 0:
+		var frame_points := {"threshold":Vector3(0,0,-9.13),
+			"runner_far_left":Vector3(-1.17,0.03,-9.13), "first_pendant":Vector3(-2.24,4.27,3.21),
+			"near_column_base":Vector3(-3.43,0.14,3.0), "first_bust_crown":Vector3(-3.65,2.682,4)}
+		var viewport := get_viewport().get_visible_rect().size
+		for key in frame_points:
+			var pixel := camera.unproject_position(frame_points[key]) / viewport
+			landmarks[key] = [pixel.x, pixel.y]
+	return {"mode":"architecture_lab", "entrance_landmarks":landmarks, "view":VIEWS[active_view] if active_view >= 0 else "Walk",
+		"wind":winds, "toon":toon, "ink":ink.visible, "sdfgi":env.sdfgi_enabled, "targets":targets, "buttons":buttons,
 		"banner_deflection":wind_sources[1].tip_deflection(), "pendulum_radians":lamp.get_node("Pendulum").basis.get_rotation_quaternion().get_angle(),
 		"gear_running":gears.get("is_running"), "gear_angle":gears.get("driver_angle"),
-		"helm_angle":helm.get("angle"), "door_open":door.get("is_open"), "cabinet_open":cabinet.get("is_open"),
+		"tourbillon_running":tourbillon.running,
+		"tourbillon_angles":[tourbillon.angles.x,tourbillon.angles.y,tourbillon.angles.z], "door_open":door.get("is_open"), "cabinet_open":cabinet.get("is_open"),
 		"fps":Engine.get_frames_per_second(), "draw_calls":RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 		"player":[walker.position.x,walker.position.y,walker.position.z]}

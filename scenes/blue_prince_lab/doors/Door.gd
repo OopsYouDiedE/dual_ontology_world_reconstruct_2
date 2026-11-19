@@ -6,10 +6,12 @@ const OPENING_HEIGHT := 2.60
 const LEAF_WIDTH := 1.426
 const LEAF_HEIGHT := 2.568
 
+@export var hall_finish := false
+
 func _ready() -> void:
-	var frame := finish("354250")
-	var trim := finish("586777")
-	var wood := finish("405266")
+	var frame := finish("535e63" if hall_finish else "354250")
+	var trim := finish("8b9498" if hall_finish else "586777")
+	var wood := finish("7c878b" if hall_finish else "405266")
 	var recess := finish("263647")
 	var edge := finish("63768a")
 	var field := finish("495f73")
@@ -34,9 +36,20 @@ func _ready() -> void:
 	block(leaf, Vector3(LEAF_WIDTH, LEAF_HEIGHT, 0.064), Vector3(LEAF_WIDTH / 2, LEAF_HEIGHT / 2, -0.037), wood)
 	shape(leaf, Vector3(LEAF_WIDTH, LEAF_HEIGHT, 0.108), Vector3(LEAF_WIDTH / 2, LEAF_HEIGHT / 2, -0.037))
 	for face in [-1.0, 1.0]:
-		for x in [0.425, 1.001]:
-			panel(leaf, Vector3(x, 1.83, -0.037 + face * 0.032), 0.52, 1.11, face, recess, edge, field)
-			panel(leaf, Vector3(x, 0.54, -0.037 + face * 0.032), 0.52, 0.77, face, recess, edge, field)
+		if hall_finish and face > 0.0:
+			var motif := MeshInstance3D.new()
+			var quad := QuadMesh.new()
+			quad.size = Vector2(1.31, 2.46)
+			motif.mesh = quad
+			var material := ShaderMaterial.new()
+			material.shader = preload("res://scenes/blue_prince_lab/HallDoor.gdshader")
+			motif.material_override = material
+			motif.position = Vector3(LEAF_WIDTH / 2.0, LEAF_HEIGHT / 2.0, -0.001)
+			leaf.add_child(motif)
+		else:
+			for x in [0.425, 1.001]:
+				panel(leaf, Vector3(x, 1.83, -0.037 + face * 0.032), 0.52, 1.11, face, recess, edge, field)
+				panel(leaf, Vector3(x, 0.54, -0.037 + face * 0.032), 0.52, 0.77, face, recess, edge, field)
 		knob(leaf, Vector3(1.346, 1.075, -0.037 + face * 0.034), face, brass)
 		shape(leaf, Vector3(0.05, 0.05, 0.05), Vector3(1.346, 1.09, -0.037 + face * 0.059))
 	for y in [0.34, 1.37, 2.23]:

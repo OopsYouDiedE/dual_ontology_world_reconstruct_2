@@ -1,9 +1,14 @@
 shader_type spatial;
+render_mode specular_disabled;
+
+#include "res://scenes/blue_prince_lab/HallToon.gdshaderinc"
 
 uniform vec4 pigment : source_color = vec4(0.5, 0.54, 0.6, 1.0);
 uniform float grain = 0.07;
 uniform float surface_roughness = 0.8;
 uniform float runner = 0.0;
+uniform float wood = 0.0;
+uniform float emission_gain = 0.0;
 varying vec3 point_world;
 
 float hash(vec3 p) {
@@ -26,16 +31,21 @@ void vertex() {
 }
 
 void fragment() {
-	float mottling = 0.7 * field(point_world * 2.8) + 0.3 * field(point_world * 27.0);
+	float broad = field(point_world * vec3(1.7, 1.2, 1.7));
+	vec3 offset = vec3(broad * 0.51, broad * 0.29, -broad * 0.45);
+	float mottling = 0.68 * field(point_world * 2.65 + offset) + 0.24 * broad
+		+ 0.08 * field(point_world * vec3(15.0, 6.0, 15.0));
 	vec3 tone = pigment.rgb * (1.0 + grain * (mottling - 0.5) * 2.0);
 	if (runner > 0.5) {
-		float edge = abs(point_world.x);
-		float rule = step(1.04, edge) * (1.0 - step(1.07, edge));
-		float band = step(1.13, edge) * (1.0 - step(1.19, edge));
-		vec2 repeat_cell = abs(fract(point_world.xz * vec2(8.0, 3.0)) - 0.5);
-		float motif = (1.0 - step(0.3, repeat_cell.x + repeat_cell.y)) * band;
-		tone *= 1.0 + 0.30 * rule - 0.24 * band + 0.38 * motif;
+		float stroke = field(point_world * vec3(16.0,5.0,1.3));
+		float worn = smoothstep(0.79,1.17,abs(point_world.x) + 0.043 * (broad - 0.5));
+		tone *= (0.89 + 0.16 * stroke) * (1.0 - 0.18 * worn);
+	}
+	if (wood > 0.5) {
+		float stroke = field(point_world * vec3(8.0,0.65,47.0));
+		tone *= 0.74 + 0.44 * stroke;
 	}
 	ALBEDO = tone;
+	EMISSION = pigment.rgb * emission_gain;
 	ROUGHNESS = surface_roughness;
 }

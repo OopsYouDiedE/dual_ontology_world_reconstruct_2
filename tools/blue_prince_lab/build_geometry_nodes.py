@@ -4,6 +4,7 @@ Blender 4.2: blender -b -t 4 --python tools/blue_prince_lab/build_geometry_nodes
     .runtime/hall-recipe.json .runtime/hall-components.json .runtime/academy-hall.blend
 """
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -116,6 +117,29 @@ def put_wedges(collection, rows, name, mat):
     return obj
 
 
+def put_courses(collection, rows, label, mat):
+    """Rebuild each moulding from the same radial profile and azimuth as the runtime."""
+    vertices, faces = [], []
+    for row in rows:
+        start = len(vertices)
+        n = row['sides']
+        xc, yc, zc = row['p']
+        count = len(row['profile'])
+        for i in range(n):
+            angle = math.tau * (i + 0.5) / n
+            for radius, y in row['profile']:
+                vertices.append(axes((xc + radius * math.cos(angle), yc + y, zc + radius * math.sin(angle))))
+        for i in range(n):
+            a, b = start + i * count, start + ((i + 1) % n) * count
+            for k in range(count - 1):
+                faces.append((a + k, a + k + 1, b + k + 1, b + k))
+    obj = object_mesh(collection, f'{label} | octagonal courses', vertices, faces)
+    tree, source, output = nodes_for(f'{label} | Profile course finish')
+    tree.links.new(set_material(tree, source.outputs['Geometry'], mat), output.inputs['Geometry'])
+    obj.modifiers.new('Course finish', 'NODES').node_group = tree
+    return obj
+
+
 def put_component(collection, label, pieces):
     inputs = bpy.data.collections.new(f'{label} | generated mesh sources')
     collection.children.link(inputs)
@@ -154,6 +178,9 @@ def main():
         mat = material(label, rgb)
         boxes = [box for box in recipe['boxes'] if box['material'] == label]
         wedges = [arch for arch in recipe['arches'] if arch['material'] == label]
+        courses = [course for course in recipe.get('courses', []) if course['material'] == label]
+        if courses:
+            generated.append(put_courses(hall, courses, label, mat))
         if boxes:
             generated.append(put_boxes(hall, boxes, label, mat))
         if wedges:

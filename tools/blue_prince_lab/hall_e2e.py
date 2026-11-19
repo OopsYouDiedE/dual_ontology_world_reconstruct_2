@@ -42,13 +42,39 @@ def check():
 
     try:
         request()
-        assert state['mode'] == 'architecture_lab', state
+        assert state['mode'] == 'architecture_lab' and state['toon'] and state['ink'] and not state['sdfgi'], state
+        wait(120)
         wait(90)
         metrics['base'] = {k: state[k] for k in ('fps', 'draw_calls')}
+        composition = state['entrance_landmarks']
+        assert abs(composition['threshold'][1] - 0.714) < 0.013, composition
+        assert abs(composition['runner_far_left'][0] - 0.469) < 0.012, composition
+        assert abs(composition['first_pendant'][0] - 0.293) < 0.025, composition
         frame('entrance')
-        target('Turn the helm')
-        wait(46)
-        assert 0.76 < state['helm_angle'] < 0.81, state
+        button('Ink')
+        assert not state['ink'], state
+        frame('no_ink')
+        button('Toon')
+        assert not state['toon'] and not state['ink'], state
+        frame('continuous_diffuse')
+        button('Toon')
+        button('Ink')
+        assert state['toon'] and state['ink'], state
+        button('Tourbillon')
+        initial = state['tourbillon_angles']
+        frame('tourbillon_initial')
+        target('Start or stop the tourbillon')
+        wait(65)
+        assert state['tourbillon_running'], state
+        delta = [after - before for before, after in zip(initial, state['tourbillon_angles'])]
+        assert delta[0] > 0.16 and delta[1] > 0.27 and delta[2] < -0.5, state
+        assert abs(delta[0] * 22 - delta[1] * 13) < 0.001, delta
+        assert abs(delta[0] * 22 + delta[2] * 7) < 0.001, delta
+        frame('tourbillon_running')
+        target('Start or stop the tourbillon')
+        stopped = state['tourbillon_angles']
+        wait(8)
+        assert not state['tourbillon_running'] and state['tourbillon_angles'] == stopped, state
         button('Mechanisms')
         target('Open or close the cabinet')
         target('Start or stop the gear train')
@@ -65,27 +91,39 @@ def check():
         assert state['wind'] and state['pendulum_radians'] > 0.02 and state['banner_deflection'] > rest + 0.12, state
         frame('gust')
         button('Gust')
-        button('Landing')
-        target('Open or close the stair door')
+        button('Walk')
+
+        def walk_to(z, min_final_z=None):
+            for _ in range(8):
+                if state['player'][2] < z + 0.08:
+                    break
+                frames = max(1, min(85, round((state['player'][2] - z) * 60 / 3.3)))
+                move('move_up', frames)
+            if min_final_z is not None:
+                assert min_final_z < state['player'][2] < z + 0.10, state
+
+        walk_to(-8.68, -9.13)
+        move('move_up', 14)
+        assert -9.14 < state['player'][2] < -8.5, state
+        button('Entrance')
+        target('Open or close the hall door')
         wait(48)
         assert state['door_open'], state
         frame('open_door')
         button('Walk')
-        move('move_left', 13)
-        for _ in range(4):
-            if state['player'][2] < -3.2:
-                break
-            frames = max(1, min(110, round((state['player'][2] + 3.5) * 60 / 3.3)))
-            move('move_up', frames)
-        assert -4.3 < state['player'][2] < -3.2, state
-        move('move_right', 18)
-        for _ in range(4):
-            if state['player'][2] < -9.5:
-                break
-            frames = max(1, min(105, round((state['player'][2] + 9.8) * 60 / 3.3)))
-            move('move_up', frames)
-        assert state['player'][2] < -9.5 and 1.61 < state['player'][1] < 1.7, state
+        walk_to(-10.7, -13.0)
+        move('move_left', 15)
+        walk_to(-16.12, -17.02)
+        move('move_right', 16)
+        walk_to(-22.25, -22.95)
+        assert 1.61 < state['player'][1] < 1.70, state
+        frame('climbed_stairs')
+        button('Landing')
+        frame('stairs')
         button('Entrance')
+        target('Open or close the hall door')
+        wait(48)
+        assert not state['door_open'], state
         frame('entrance_after_interaction')
         button('SDFGI')
         wait(120)
@@ -96,7 +134,7 @@ def check():
         wait(12)
         button('Hide UI')
         frame('clean')
-        report = {'ok': True, 'session': run.id, 'metrics': metrics, 'views': views, 'log': str(run.log)}
+        report = {'ok': True, 'session': run.id, 'metrics': metrics, 'composition': composition, 'views': views, 'log': str(run.log)}
         (run.directory / 'architecture-report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         print(json.dumps(report, indent=2))
     except Exception:

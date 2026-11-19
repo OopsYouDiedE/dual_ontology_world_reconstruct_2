@@ -9,10 +9,12 @@ if (!(Test-Path -LiteralPath $worktree -PathType Container) -or
 }
 $client = Join-Path $worktree 'TSOClient/tso.client'
 $screen = Join-Path $client 'UI/Screens/SandboxGameScreen.cs'
+$loading = Join-Path $client 'UI/Screens/LoadingScreen.cs'
+$cas = Join-Path $client 'UI/Screens/PersonSelectionEdit.cs'
 $project = Join-Path $client 'FSO.Client.csproj'
 $queue = Join-Path $worktree 'TSOClient/tso.simantics/Engine/VMQueuedAction.cs'
 $selector = Join-Path $worktree 'TSOClient/tso.simantics/Primitives/VMFindBestAction.cs'
-foreach ($path in @($screen, $project, $queue, $selector)) {
+foreach ($path in @($screen, $loading, $cas, $project, $queue, $selector)) {
     $item = Get-Item -LiteralPath $path
     while ($item -and $item.FullName.StartsWith($runtime, [StringComparison]::OrdinalIgnoreCase)) {
         if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Refusing linked patch path: $($item.FullName)" }
@@ -77,6 +79,72 @@ foreach ($name in @('LiveTickHook.cs', 'SnapshotBridge.cs')) {
     }
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination $destination -Force
 }
+$loadingText = [IO.File]::ReadAllText($loading)
+$loginCall = 'FSOFacade.Controller.ShowLogin();'
+$startupCall = 'DuelViewEnterStartupScreen();'
+$startupAnchor = '        private void AnimateLabel(string previousLabel, string newLabel)'
+$startupHook = @'
+        private static bool DuelViewBlueprintOpened;
+
+        private void DuelViewEnterStartupScreen()
+        {
+            var academyPath = System.Environment.GetEnvironmentVariable("FREESO_ACADEMY_BLUEPRINT_PATH");
+            if (!DuelViewBlueprintOpened && !string.IsNullOrEmpty(academyPath))
+            {
+                DuelViewBlueprintOpened = true;
+                if (GlobalSettings.Default.DebugBody == 0) FSOFacade.Controller.ShowPersonCreation(null);
+                else FSOFacade.Controller.EnterSandboxMode(academyPath, false);
+            }
+            else FSOFacade.Controller.ShowLogin();
+        }
+
+        private void AnimateLabel(string previousLabel, string newLabel)
+'@
+$startupCount = [regex]::Matches($loadingText, [regex]::Escape($startupCall)).Count
+if ($startupCount -eq 0 -and !$loadingText.Contains('DuelViewBlueprintOpened')) {
+    if ([regex]::Matches($loadingText, [regex]::Escape($loginCall)).Count -ne 2) {
+        throw "Pinned FreeSO preload transitions changed: $loading"
+    }
+    $loadingText = $loadingText.Replace($loginCall, $startupCall)
+} elseif ($startupCount -ne 2 -or !$loadingText.Contains('DuelViewBlueprintOpened')) {
+    throw "Academy startup hook is incomplete: $loading"
+}
+$loadingText = Add-Hook $loadingText $startupAnchor $startupHook 'DuelViewBlueprintOpened' $loading
+
+$cacheAnchor = '                using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/") + filename.Substring(0, filename.Length - 4) + ".fsov")))'
+$cacheHook = @'
+                // Use the supplied native XML even if a local save shares its filename.
+                if (DuelViewIsAcademyBlueprint(path)) throw new FileNotFoundException();
+                using (var file = new BinaryReader(File.OpenRead(Path.Combine(FSOEnvironment.UserDir, "LocalHouse/") + filename.Substring(0, filename.Length - 4) + ".fsov")))
+'@
+$jobAnchor = "                        jobLevel = short.Parse(path.Substring(path.IndexOf('0'), 2));"
+$jobHook = '                        if (DuelViewIsAcademyBlueprint(path)) jobLevel = -1;' + [Environment]::NewLine + '                        else ' + $jobAnchor.TrimStart()
+$resetAnchor = '        public void BlueprintReset(string path)'
+$resetHook = @'
+        private static bool DuelViewIsAcademyBlueprint(string path)
+        {
+            var academyPath = Environment.GetEnvironmentVariable("FREESO_ACADEMY_BLUEPRINT_PATH");
+            return !string.IsNullOrEmpty(academyPath) && Path.IsPathRooted(path)
+                && string.Equals(Path.GetFullPath(path), academyPath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void BlueprintReset(string path)
+'@
+$screenText = Add-Hook $screenText $cacheAnchor $cacheHook 'if (DuelViewIsAcademyBlueprint(path)) throw' $screen
+$screenText = Add-Hook $screenText $jobAnchor $jobHook 'if (DuelViewIsAcademyBlueprint(path)) jobLevel' $screen
+$screenText = Add-Hook $screenText $resetAnchor $resetHook 'private static bool DuelViewIsAcademyBlueprint' $screen
+
+$casText = [IO.File]::ReadAllText($cas)
+$casAnchor = '                GlobalShowDialog(new UISandboxSelector(), true);'
+$casHook = @'
+                var academyPath = System.Environment.GetEnvironmentVariable("FREESO_ACADEMY_BLUEPRINT_PATH");
+                if (!string.IsNullOrEmpty(academyPath)) FSOFacade.Controller.EnterSandboxMode(academyPath, false);
+                else GlobalShowDialog(new UISandboxSelector(), true);
+'@
+$casText = Add-Hook $casText $casAnchor $casHook 'FREESO_ACADEMY_BLUEPRINT_PATH' $cas
+
+[IO.File]::WriteAllText($cas, $casText)
+[IO.File]::WriteAllText($loading, $loadingText)
 [IO.File]::WriteAllText($screen, $screenText)
 [IO.File]::WriteAllText($project, $projectText)
 [IO.File]::WriteAllText($queue, $queueText)

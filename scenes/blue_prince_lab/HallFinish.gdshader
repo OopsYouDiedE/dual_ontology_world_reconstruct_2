@@ -10,6 +10,7 @@ uniform float wood = 0.0;
 uniform float emission_gain = 0.0;
 uniform float pale_wash = 0.0;
 uniform float vault_fill = 0.0;
+uniform bool shaft_flat = false;
 varying vec3 point_world;
 
 float hash(vec3 p) {
@@ -41,7 +42,10 @@ void fragment() {
 	if (runner > 0.5) {
 		float stroke = field(point_world * vec3(16.0,5.0,1.3));
 		float worn = smoothstep(0.79,1.17,abs(point_world.x) + 0.043 * (broad - 0.5));
-		tone *= (0.87 + 0.11 * stroke + 0.15 * wash) * (1.0 - 0.19 * worn);
+		float approach = smoothstep(2.3, 8.0, point_world.z);
+		float seam = smoothstep(1.141, 1.168, abs(point_world.x));
+		tone *= (0.87 + 0.11 * stroke + 0.15 * wash) * (1.0 - 0.20 * worn)
+			* (1.0 - 0.31 * approach) * (1.0 - 0.58 * seam);
 	}
 	if (wood > 0.5) {
 		float stroke = field(point_world * vec3(8.0,0.65,47.0));
@@ -51,5 +55,13 @@ void fragment() {
 	float falloff = 1.0 - smoothstep(2.6, 6.6, point_world.y);
 	EMISSION = pigment.rgb * emission_gain + tone * vault_fill * smoothstep(4.95,6.2,point_world.y)
 		+ pale_wash * (0.34 + 0.66 * falloff) * mix(0.93, 1.07, wash) * vec3(0.60, 0.79, 0.94);
+	if (shaft_flat && toon_on) {
+		vec3 world_normal = normalize(mat3(INV_VIEW_MATRIX) * NORMAL);
+		vec3 key = normalize(vec3(-sign(point_world.x) * 0.985, 0.0, 0.17));
+		float band = smoothstep(0.245, 0.295, dot(world_normal, key));
+		vec3 cel = mix(vec3(0.54, 0.66, 0.77), vec3(0.94, 1.00, 1.05), band);
+		ALBEDO = vec3(0.0);
+		EMISSION = mix(pigment.rgb, tone, 0.34) * cel * 0.70;
+	}
 	ROUGHNESS = surface_roughness;
 }

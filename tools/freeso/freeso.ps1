@@ -4,6 +4,7 @@ param(
     [string]$AssetRoot,
     [string]$MSBuild,
     [string]$RoomId,
+    [string]$BlueprintId,
     [string]$LotDirectory,
     [string]$NuGet
 )
@@ -14,6 +15,7 @@ $source = Join-Path $root 'vendor/FreeSO'
 $runtime = Join-Path $root '.runtime/freeso'
 $out = Join-Path $runtime 'client'
 $hookReceipt = Join-Path $out '.snapshot-hook'
+$blueprintReceipt = Join-Path $out '.academy-blueprint-hook'
 $installer = Join-Path $root 'tools/freeso_bridge/install-hook.ps1'
 $exe = Join-Path $out 'FreeSO.exe'
 $solution = Join-Path $source 'TSOClient/FreeSO.sln'
@@ -35,7 +37,7 @@ function Export-TrackedTree([string]$Repo, [string]$Revision, [string]$Destinati
     Run git @('-C', $Repo, 'archive', '--format=tar', "--output=$Archive", $Revision)
     Run tar.exe @('-xf', $Archive, '-C', $Destination)
 }
-function New-ClientStartInfo([string]$Executable, [string]$WorkingDirectory, [string]$SnapshotPath) {
+function New-ClientStartInfo([string]$Executable, [string]$WorkingDirectory, [string]$SnapshotPath, [string]$BlueprintPath) {
     $start = [Diagnostics.ProcessStartInfo]::new()
     $start.FileName = $Executable
     $start.WorkingDirectory = $WorkingDirectory
@@ -45,7 +47,12 @@ function New-ClientStartInfo([string]$Executable, [string]$WorkingDirectory, [st
     if ($SnapshotPath) {
         $start.EnvironmentVariables['FREESO_VM_SNAPSHOT_PATH'] = $SnapshotPath
     }
+    $start.EnvironmentVariables.Remove('FREESO_ACADEMY_BLUEPRINT_PATH')
+    if ($BlueprintPath) { $start.EnvironmentVariables['FREESO_ACADEMY_BLUEPRINT_PATH'] = $BlueprintPath }
     return $start
+}
+function IsSafeId([string]$Id) {
+    $Id -cmatch '\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z' -and $Id -notmatch '\A(?:CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])\z'
 }
 function ClientProblems {
     foreach ($file in @('FreeSO.exe','FSO.Client.dll','FSO.SimAntics.dll','Monogame/WindowsGL/MonoGame.Framework.dll')) {
@@ -56,7 +63,7 @@ function ClientProblems {
 
 $snapshotPath = $null
 if ($PSBoundParameters.ContainsKey('RoomId')) {
-    if ($RoomId -cnotmatch '\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z' -or $RoomId -match '^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])\z') {
+    if (!(IsSafeId $RoomId)) {
         [Console]::Error.WriteLine('RoomId must be 1-64 ASCII letters, digits, hyphens or underscores, starting with a letter or digit and not a reserved Windows device name.')
         exit 1
     }
@@ -68,6 +75,31 @@ if ($PSBoundParameters.ContainsKey('RoomId')) {
 } elseif ($PSBoundParameters.ContainsKey('LotDirectory')) {
     [Console]::Error.WriteLine('LotDirectory requires RoomId.')
     exit 1
+}
+$blueprintPath = $null
+if ($PSBoundParameters.ContainsKey('BlueprintId')) {
+    if (!(IsSafeId $BlueprintId)) {
+        [Console]::Error.WriteLine('BlueprintId must be a safe 1-64 character template ID, without extension.')
+        exit 1
+    }
+    $blueprintPath = Join-Path $root "content/academy_lots/$BlueprintId.xml"
+    if (!(IsFile $blueprintPath)) {
+        $launchProblems.Add("Academy blueprint missing: $blueprintPath")
+    } else {
+        try {
+            $xmlSettings = [Xml.XmlReaderSettings]::new()
+            $xmlSettings.DtdProcessing = [Xml.DtdProcessing]::Prohibit
+            $reader = [Xml.XmlReader]::Create($blueprintPath, $xmlSettings)
+            try {
+                [void]$reader.MoveToContent()
+                if ($reader.Name -cne 'house' -or $reader.NamespaceURI) { throw 'Expected unqualified FreeSO <house> root.' }
+                while ($reader.Read()) {}
+            } finally { $reader.Dispose() }
+        } catch { $launchProblems.Add("Invalid academy blueprint: $blueprintPath ($($_.Exception.Message))") }
+    }
+    if (!(IsFile $blueprintReceipt) -or (Get-Content -LiteralPath $blueprintReceipt -Raw).Trim() -ne $pin) {
+        $launchProblems.Add('BlueprintId requires a client built with the academy blueprint hook. Run Build first.')
+    }
 }
 if (!(Get-Command tar.exe -CommandType Application -ErrorAction SilentlyContinue)) { $buildProblems.Add('Windows tar.exe is required to extract the isolated build tree.') }
 if (!(IsFile $installer)) { $buildProblems.Add('FreeSO live hook installer is missing: tools/freeso_bridge/install-hook.ps1') }
@@ -119,7 +151,7 @@ if (!(IsFile $receipt) -or (Get-Content -LiteralPath $receipt -Raw).Trim() -ne $
 try {
     switch ($Action) {
         'Check' {
-            $result = [ordered]@{revision=$pin; assetRoot=$located; snapshotPath=$snapshotPath; buildReady=($problems.Count + $buildProblems.Count -eq 0); launchReady=($problems.Count + $launchProblems.Count -eq 0); sourceIssues=@($problems.ToArray()); buildIssues=@($buildProblems.ToArray()); launchIssues=@($launchProblems.ToArray())}
+            $result = [ordered]@{revision=$pin; assetRoot=$located; snapshotPath=$snapshotPath; blueprintPath=$blueprintPath; buildReady=($problems.Count + $buildProblems.Count -eq 0); launchReady=($problems.Count + $launchProblems.Count -eq 0); sourceIssues=@($problems.ToArray()); buildIssues=@($buildProblems.ToArray()); launchIssues=@($launchProblems.ToArray())}
             $result | ConvertTo-Json -Compress
             if (!$result.launchReady) { exit 2 }
         }
@@ -140,7 +172,7 @@ try {
                 }
                 & $installer -UpstreamWorktree $tree | Out-Host
                 New-Item -ItemType Directory -Force -Path $out | Out-Null
-                foreach ($marker in @($receipt,$hookReceipt)) { if (IsFile $marker) { Remove-Item -LiteralPath $marker } }
+                foreach ($marker in @($receipt,$hookReceipt,$blueprintReceipt)) { if (IsFile $marker) { Remove-Item -LiteralPath $marker } }
                 $buildSolution = Join-Path $tree 'TSOClient/FreeSO.sln'
                 Push-Location (Join-Path $tree 'Other/libs/FSOMonoGame')
                 try { Run (Join-Path (Get-Location).Path 'protobuild.exe') @('--generate') } finally { Pop-Location }
@@ -148,6 +180,7 @@ try {
                 Run $MSBuild @($buildSolution,'/restore','/t:FSO_IDE','/p:Configuration=Release','/p:Platform=Any CPU',"/p:OutDir=$out/",'/nologo')
                 $missing = @(ClientProblems)
                 if ($missing.Count) { throw ($missing -join "`n") }
+                Set-Content -LiteralPath $blueprintReceipt -Value $pin -Encoding Ascii
                 Set-Content -LiteralPath $hookReceipt -Value $pin -Encoding Ascii
                 Set-Content -LiteralPath $receipt -Value $pin -Encoding Ascii
             } finally {
@@ -164,10 +197,10 @@ try {
         'Launch' {
             if ($problems.Count + $launchProblems.Count) { throw (($problems.ToArray() + $launchProblems.ToArray()) -join "`n") }
             if ($snapshotPath) { [IO.Directory]::CreateDirectory((Split-Path $snapshotPath -Parent)) | Out-Null }
-            $start = New-ClientStartInfo $exe $out $snapshotPath
+            $start = New-ClientStartInfo $exe $out $snapshotPath $blueprintPath
             $process = [Diagnostics.Process]::Start($start)
             try {
-                [ordered]@{pid=$process.Id; revision=$pin; executable=$exe; snapshotPath=$snapshotPath} | ConvertTo-Json -Compress
+                [ordered]@{pid=$process.Id; revision=$pin; executable=$exe; snapshotPath=$snapshotPath; blueprintPath=$blueprintPath} | ConvertTo-Json -Compress
             } finally { $process.Dispose() }
         }
     }

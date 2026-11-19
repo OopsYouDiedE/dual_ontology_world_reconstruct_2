@@ -8,8 +8,8 @@ sys.path.insert(0, str(ROOT / 'mcp/game'))
 from server import Run
 
 
-def check():
-    run = Run(1, architecture_lab=True)
+def check(a26_preview=False):
+    run = Run(1, architecture_lab=True, hall_a26_preview=a26_preview)
     views = {}
     metrics = {}
     state = {}
@@ -65,33 +65,19 @@ def check():
         button('Toon')
         button('Ink')
         assert state['toon'] and state['ink'], state
-        workroom_rest = state['tourbillon_angles']
-        button('Hall Exhibit')
-        hall_rest = state['hall_exhibit_angles']
-        target('Start or stop the hall exhibit')
-        wait(65)
-        assert state['hall_exhibit_running'] and not state['tourbillon_running'], state
-        assert state['tourbillon_angles'] == workroom_rest, state
-        hall_delta = [after - before for before, after in zip(hall_rest, state['hall_exhibit_angles'])]
-        assert hall_delta[0] > 0.16 and hall_delta[1] > 0.27 and hall_delta[2] < -0.5, hall_delta
-        frame('hall_exhibit_running')
-        target('Start or stop the hall exhibit')
-        assert not state['hall_exhibit_running'], state
-        button('Tourbillon')
-        initial = state['tourbillon_angles']
-        frame('tourbillon_initial')
-        target('Start or stop the tourbillon')
-        wait(65)
-        assert state['tourbillon_running'], state
-        delta = [after - before for before, after in zip(initial, state['tourbillon_angles'])]
-        assert delta[0] > 0.16 and delta[1] > 0.27 and delta[2] < -0.5, state
-        assert abs(delta[0] * 22 - delta[1] * 13) < 0.001, delta
-        assert abs(delta[0] * 22 + delta[2] * 7) < 0.001, delta
-        frame('tourbillon_running')
-        target('Start or stop the tourbillon')
-        stopped = state['tourbillon_angles']
-        wait(8)
-        assert not state['tourbillon_running'] and state['tourbillon_angles'] == stopped, state
+        assert state['exhibit_parts'] == (13 if a26_preview else 0), state
+        if a26_preview:
+            button('A26 Exhibit')
+            frame('a26_rest')
+            target('Inspect A26 assembly')
+            wait(61)
+            assert state['exhibit_exploded'] and abs(state['exhibit_blend'] - 1.0) < 0.001, state
+            frame('a26_exploded')
+            target('Inspect A26 assembly')
+            wait(61)
+            assert not state['exhibit_exploded'] and abs(state['exhibit_blend']) < 0.001, state
+        else:
+            assert 'A26 Exhibit' not in state['buttons'], state
         button('Mechanisms')
         target('Open or close the cabinet')
         target('Start or stop the gear train')
@@ -119,6 +105,9 @@ def check():
             if min_final_z is not None:
                 assert min_final_z < state['player'][2] < z + 0.10, state
 
+        if a26_preview:
+            walk_to(-3.1, -3.66)
+            move('move_right', 16)
         walk_to(-8.68, -9.13)
         move('move_up', 14)
         assert -9.14 < state['player'][2] < -8.5, state
@@ -162,4 +151,4 @@ def check():
 
 
 if __name__ == '__main__':
-    check()
+    check(a26_preview="--a26-preview" in sys.argv[1:])

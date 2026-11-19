@@ -33,7 +33,7 @@ def readiness():
 
 
 class Run:
-    def __init__(self, seed, architecture_lab=False):
+    def __init__(self, seed, architecture_lab=False, *, hall_a26_preview=False):
         godot = Path(environment.resolve_godot()).resolve()
         if os.name == "nt" and godot.name.lower().endswith("_console.exe"):
             godot = godot.with_name(godot.name[:-len("_console.exe")] + ".exe")
@@ -60,6 +60,8 @@ class Run:
                    "--log-file", str(self.log), SCENE, "--", f"--rogue-mcp-dir={self.directory}", f"--run-seed={seed}"]
         if architecture_lab:
             command.append("--architecture-lab")
+            if hall_a26_preview:
+                command.append("--hall-a26-preview")
         with (self.directory / "process.log").open("wb") as log:
             self.process = subprocess.Popen(command, cwd=ROOT, env=env, stdin=subprocess.DEVNULL,
                                             stdout=log, stderr=subprocess.STDOUT,

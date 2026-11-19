@@ -9,6 +9,7 @@ using FSO.SimAntics;
 using FSO.SimAntics.Marshals;
 using FSO.SimAntics.Engine;
 using FSO.SimAntics.Model.TSOPlatform;
+using FSO.SimAntics.Model;
 
 namespace DuelView.FreeSOBridge
 {
@@ -24,7 +25,7 @@ namespace DuelView.FreeSOBridge
         public static void ExportLive(VM vm, string output, IDictionary<short, ushort> observedFreewill = null)
         {
             if (vm == null) throw new ArgumentNullException("vm");
-            Export(vm.Save(false), output, "live-vm", null, observedFreewill);
+            Export(vm.Save(false), output, "live-vm", null, observedFreewill, vm);
         }
 
         // For trusted local FreeSO saves only. Upstream Deserialize allocates from file counts.
@@ -96,7 +97,64 @@ namespace DuelView.FreeSOBridge
             };
         }
 
-        private static void Export(VMMarshal state, string output, string kind, string digest, IDictionary<short, ushort> observedFreewill = null)
+        private static bool IsPlaced(LotTilePos pos, VMArchitectureMarshal architecture)
+        {
+            return pos != LotTilePos.OUT_OF_WORLD && pos.Level >= 1 && pos.Level <= architecture.Stories
+                && pos.TileX >= 0 && pos.TileX < architecture.Width && pos.TileY >= 0 && pos.TileY < architecture.Height;
+        }
+
+        private static double? ObjectHeading(int direction)
+        {
+            // VMGameObject.RadianDirection: one compass bit per 45 degrees, wrapped at PI.
+            for (int i = 0; i < 8; i++)
+                if (direction == (1 << i)) return (i > 4 ? i - 8 : i) * Math.PI / 4.0;
+            return null;
+        }
+
+        private static List<object> Objects(VMMarshal state, VM vm)
+        {
+            var groups = new Dictionary<short, VMMultitileGroupMarshal>();
+            if (state.MultitileGroups != null)
+                foreach (var group in state.MultitileGroups)
+                    if (group != null && group.Objects != null)
+                        foreach (var id in group.Objects) groups[id] = group;
+
+            var liveObjects = new Dictionary<short, VMGameObject>();
+            if (vm != null)
+                foreach (var entity in vm.Entities)
+                    if (entity is VMGameObject) liveObjects[entity.ObjectID] = (VMGameObject)entity;
+
+            var result = new List<object>();
+            foreach (var entity in state.Entities)
+            {
+                var obj = entity as VMGameObjectMarshal;
+                if (obj == null) continue;
+                VMMultitileGroupMarshal group;
+                groups.TryGetValue(obj.ObjectID, out group);
+                VMGameObject live;
+                liveObjects.TryGetValue(obj.ObjectID, out live);
+                var pos = obj.Position;
+                var direction = (int)obj.Direction;
+                var name = live != null ? live.Name : (group == null ? null : group.Name);
+                var heading = ObjectHeading(direction);
+                var hiddenIndex = (int)VMStackObjectVariable.Hidden;
+                result.Add(new {
+                    object_id = obj.ObjectID, persist_id = obj.PersistID, guid = obj.GUID, master_guid = obj.MasterGUID,
+                    name = String.IsNullOrWhiteSpace(name) ? null : name,
+                    x16 = pos.x, y16 = pos.y, level = pos.Level,
+                    placed = IsPlaced(pos, state.Context.Architecture),
+                    direction, heading_radians = heading,
+                    group_id = group == null ? (short?)null : group.Objects[0],
+                    group_base_object_id = live == null || live.MultitileGroup == null || live.MultitileGroup.BaseObject == null
+                        ? (short?)null : live.MultitileGroup.BaseObject.ObjectID,
+                    container_object_id = obj.Container,
+                    hidden = obj.ObjectData != null && obj.ObjectData.Length > hiddenIndex && obj.ObjectData[hiddenIndex] != 0
+                });
+            }
+            return result;
+        }
+
+        private static void Export(VMMarshal state, string output, string kind, string digest, IDictionary<short, ushort> observedFreewill = null, VM vm = null)
         {
             var architecture = state.Context.Architecture;
             var clock = state.Context.Clock;
@@ -121,6 +179,7 @@ namespace DuelView.FreeSOBridge
                 }
             }
             var avatars = new List<object>();
+            var objects = Objects(state, vm);
             var tsoLot = state.PlatformState as VMTSOLotState;
             for (int i = 0; i < state.Entities.Length; i++)
             {
@@ -131,8 +190,7 @@ namespace DuelView.FreeSOBridge
                 avatars.Add(new {
                     object_id = avatar.ObjectID, persist_id = avatar.PersistID, guid = avatar.GUID,
                     x16 = pos.x, y16 = pos.y, level = pos.Level,
-                    placed = pos != LotTilePos.OUT_OF_WORLD && pos.Level >= 1 && pos.Level <= architecture.Stories
-                        && pos.TileX >= 0 && pos.TileX < architecture.Width && pos.TileY >= 0 && pos.TileY < architecture.Height,
+                    placed = IsPlaced(pos, architecture),
                     heading_radians = avatar.RadianDirection,
                     lot_membership = Membership(tsoLot, avatar.PersistID),
                     activity = Activity(state, i, avatar.ObjectID, observedFreewill)
@@ -145,7 +203,7 @@ namespace DuelView.FreeSOBridge
                     pid = kind == "live-vm" ? (int?)ProcessId : null },
                 tick = clock.Ticks,
                 lot = new { width = architecture.Width, height = architecture.Height, stories = architecture.Stories, walls, floors },
-                avatars
+                avatars, objects
             };
             var json = new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue }.Serialize(document);
             output = Path.GetFullPath(output);

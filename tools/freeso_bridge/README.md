@@ -38,7 +38,7 @@ for avatar in result.snapshot.avatars:
 - `schema`: `freeso.lot-snapshot.v1`. `source.kind`: `fsov` or `live-vm`. `source` also carries `format_version`, snapshot `sha256` (null for live), and `ts1`. `tick` is the FreeSO VM clock tick.
 - `lot`: `width`, `height`, `stories`; sparse `walls` and `floors` in level-major then row-major order. `x`, `y` are zero-based; `level` is one-based. Wall `mask` is the original `WallSegments` bitset, `segments` the original enum string, `patterns` = TL/TR/BL/BR and `styles` = TL/TR. Floor `pattern` is the original ID. Missing cells have no wall bits or have floor pattern zero, respectively. Preserve diagonal bits and deduplicate shared edges at rendering time, not during data transport.
 - `avatars`: actual `VMAvatarMarshal` rows. `object_id` is VM-local; `persist_id` may be zero. `guid`, `heading_radians`, and signed `x16`/`y16`/`level` are native values. Keep `placed:false` rows for diagnostics but do not spawn them. Godot maps to `(x16/16, (level-1)*2.95, y16/16)`; heading remains in FreeSO convention.
-- This format transfers saved wall and floor grids and avatar poses. Object-generated doors/windows, furnishings, terrain, outfits, animation and routing are outside v1.
+- This format transfers wall/floor grids, native game-object rows and avatar poses. Asset meshes, object-generated door openings, terrain geometry, outfits, animation and routing are outside this contract.
 
 
 Verified source revision: `4c6b3e8f5835b228723caea3c9f683c62f244f73` (`TSOClient/tso.simantics/Marshals/{VMMarshal,VMArchitectureMarshal,VMEntityMarshal}.cs`, `tso.simantics/VM.cs`, `tso.world/Model/LotTilePos.cs`, `tso.client/UI/Screens/SandboxGameScreen.cs`).
@@ -70,3 +70,18 @@ Every exported avatar can carry `lot_membership` and `activity`. For a residenti
 `action.autonomous_priority` reports the native priority enum, which scripted pushes can also set. The stronger optional `action.freewill_evidence` is `vm_find_best_action` only when the patched VM actually enqueued that same action object through its native `VMFindBestAction` primitive and it is active at sampling time. The observation is process-local: it is intentionally absent from `.fsov` bytes and network state, and becomes `null` if the bridge did not observe that selection in this VM. A one-second sample can miss brief interactions. The hook neither changes resident control settings nor runs a planner.
 
 To verify freewill, use a real running sandbox whose assets and resident BHAVs invoke `VMFindBestAction` (with native autonomy enabled where the lot/game supports it), and let a Sim select an interaction without issuing a command. Observe a changing native `tick` and an active row with `freewill_evidence: "vm_find_best_action"`. A manually commanded action can have valid native activity without freewill evidence. If the local sandbox, lot, or network mode does not run that primitive in the client VM, display the activity and leave freewill unverified; do not synthesize a fallback.
+
+## Furnishings and action landmarks
+
+New exports include an additive top-level `objects` array in `freeso.lot-snapshot.v1`. Read with `snapshot.get("objects", [])` for compatibility with older exports. Each row represents a native `VMGameObject`, including multipart components, contained objects, and hidden/out-of-world systems. Game objects and avatars share the VM-local ID space.
+
+| Field | Native source and use |
+|---|---|
+| `object_id`, `persist_id`, `guid`, `master_guid` | Marshal IDs. `guid` and `master_guid` are numeric unsigned 32-bit values; `master_guid` is zero where absent. Use `object_id` to join an avatar action's `callee_object_id` or `stack_object_id` to a row within the same snapshot. |
+| `name` | Native live `VMEntity.Name` (group name, resource catalog title/label, or native GUID fallback). Offline `.fsov` uses the saved group name; when empty or absent, the field is null. |
+| `x16`, `y16`, `level`, `placed` | Native `LotTilePos`, in sixteenths of a tile with one-based levels. `placed` validates lot coordinates and excludes the out-of-world sentinel. `LotSnapshot.object_position(row)` returns the matching Godot position. |
+| `direction`, `heading_radians` | Native one-hot compass bitmask and its signed angle (north zero, clockwise positive). Invalid directions retain their raw mask with null heading. `LotSnapshot.object_yaw(row)` returns nullable Godot yaw for a model pointing along `-Z` at yaw zero. |
+| `group_id`, `group_base_object_id` | First member ID in the saved group is a per-snapshot grouping key, not necessarily its base. The actual upstream `MultitileGroup.BaseObject` ID is emitted for live exports; null means unavailable. |
+| `container_object_id`, `hidden` | Native containment ID (zero means none) and the native `Hidden` variable. Contained objects retain their VM position, not an independently computed shelf/hand mesh transform. |
+
+For freestanding furniture markers, start with `placed && !hidden && container_object_id == 0`. For a single marker per group, prefer its actual base when usable or select one suitable visible member as a rendering choice. Keep the full object table for action target lookup, since an action can target a different group part or an object that is not rendered. The bridge does not infer furniture categories or synthesize geometry. Source fields were checked against pinned `VMGameObjectMarshal`, `VMEntity`, `VMMultitileGroupMarshal`, `VMMultitileGroup`, and `Direction`.

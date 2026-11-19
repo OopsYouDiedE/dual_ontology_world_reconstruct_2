@@ -13,7 +13,7 @@ func _ready() -> void:
 			figure.name = "Founder"
 			figure.position = Vector3(side * (3.90 if i == 0 else 3.69), 0.0, LOCATIONS[i])
 			figure.rotation.y = -side * (0.83 + 0.08 * i)
-			figure.scale = Vector3(0.76, 0.95, 0.81) if i == 0 else Vector3(0.85, 0.97, 0.89)
+			figure.scale = Vector3(0.64, 0.99, 0.72) if i == 0 else Vector3(0.85, 0.97, 0.89)
 			add_child(figure)
 			_bust(figure, i + (0 if side < 0.0 else 3))
 		_pointing_hand(side)
@@ -107,9 +107,9 @@ func _pendant(n: Node3D) -> void:
 		_rod(n, shoulder, top, METAL)
 	var light := OmniLight3D.new()
 	light.light_color = Color("ffdda7")
-	light.light_energy = 0.58
-	light.omni_range = 6.7
-	light.omni_attenuation = 1.11
+	light.light_energy = 0.17
+	light.omni_range = 3.0
+	light.omni_attenuation = 2.25
 	n.add_child(light)
 
 func _rod(n: Node3D, from: Vector3, to: Vector3, color: Color) -> void:
@@ -163,6 +163,7 @@ func _piece(n: Node3D, p: Vector3, mesh: Mesh, color: Color, light := false) -> 
 		mat.shader = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 		mat.set_shader_parameter("pigment", color)
 		mat.set_shader_parameter("grain", 0.065 if not light else 0.0)
+		mat.set_shader_parameter("two_tone", color == FACE or color == TRIM)
 		mat.set_shader_parameter("emission_gain", 2.2 if light else 0.0)
 		_materials[color] = mat
 	var instance := MeshInstance3D.new()

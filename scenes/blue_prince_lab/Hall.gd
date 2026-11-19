@@ -7,12 +7,12 @@ const Lamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 const Door := preload("res://scenes/blue_prince_lab/doors/Door.tscn")
 const Cabinet := preload("res://scenes/blue_prince_lab/doors/Cabinet.tscn")
 const Stairs := preload("res://scenes/blue_prince_lab/stairs/Stairs.tscn")
-const Tourbillon := preload("res://scenes/blue_prince_lab/Tourbillon.gd")
-const VIEWS := ["Entrance", "Mechanisms", "Landing", "Airflow", "Tourbillon", "Hall Exhibit"]
+const A26Exhibit := preload("res://scenes/blue_prince_lab/A26Exhibit.gd")
+const VIEWS := ["Entrance", "Mechanisms", "Landing", "Airflow", "A26 Exhibit"]
 const FRAMES := [Vector3(0,1.07,7.88), Vector3(-0.95,1.69,-0.15), Vector3(0.20,2.10,-16.00),
-	Vector3(-0.02,2.58,-1.48), Vector3(0.44,1.65,-12.49), Vector3(-0.78,1.32,1.72)]
+	Vector3(-0.02,2.58,-1.48), Vector3(-1.30,1.88,1.85)]
 const LOOK := [Vector3(0,5.35,-9.25), Vector3(-3.60,1.48,-0.62), Vector3(0.03,2.30,-21.40),
-	Vector3(-3.76,2.65,-2.26), Vector3(0.01,1.24,-15.18), Vector3(0.64,0.95,-1.35)]
+	Vector3(-3.76,2.65,-2.26), Vector3(0,1.36,-1.55)]
 const EYE := 1.63
 var walker := CharacterBody3D.new()
 var walk_camera := Camera3D.new()
@@ -30,8 +30,7 @@ var elapsed := 0.0
 var door: Node3D
 var cabinet: Node3D
 var gears: Node3D
-var tourbillon: Node3D
-var hall_exhibit: Node3D
+var hall_exhibit: A26Exhibit
 var lamp: Node3D
 var env: Environment
 var ink: MeshInstance3D
@@ -50,20 +49,19 @@ func _ready() -> void:
 	add_child(door)
 	cabinet = _place(Cabinet, Vector3(-4.27,0,1.45), PI / 2.0)
 	gears = _place(Gears, Vector3(-4.31,0.86,-1.92), PI / 2.0)
-	tourbillon = Tourbillon.new()
-	tourbillon.position = Vector3(0,0.006,-15.18)
-	add_child(tourbillon)
-	hall_exhibit = Tourbillon.new()
-	hall_exhibit.name = "HallExhibit"
-	hall_exhibit.illustrated = true
-	hall_exhibit.position = Vector3(0.84, 0.033, -1.35)
-	hall_exhibit.scale = Vector3.ONE * 0.73
-	add_child(hall_exhibit)
-	_register("Start or stop the hall exhibit", hall_exhibit, Vector3(0, 1.20, 0.26))
+	if "--hall-a26-preview" in OS.get_cmdline_user_args():
+		var exhibit := A26Exhibit.new()
+		if exhibit.load_local():
+			hall_exhibit = exhibit
+			hall_exhibit.position = Vector3(0, 0.031, -1.55)
+			add_child(hall_exhibit)
+			_register("Inspect A26 assembly", hall_exhibit, Vector3(0, 1.32, 0.25))
+		else:
+			exhibit.free()
+			push_warning("A26 exhibit unavailable; leaving the main axis clear.")
 	_register("Open or close the hall door", door, Vector3(0, 1.1, 0.24))
 	_register("Open or close the cabinet", cabinet, Vector3(0, 0.86, 0.38))
 	_register("Start or stop the gear train", gears, Vector3(0, 0.73, 0.36))
-	_register("Start or stop the tourbillon", tourbillon, Vector3(0, 1.20, 0.26))
 	for z: float in [-5.78, -2.78]:
 		var b := _place(Banner, Vector3(-4.36, 3.31, z), PI / 2.0)
 		b.set("wall_setback", 0.12)
@@ -82,10 +80,10 @@ func _ready() -> void:
 			var capture := preload("res://scenes/blue_prince_lab/Blueprint.gd")
 			capture.save_meshes({"Banners":wind_sources.slice(0, 2), "Oil Lamp":[lamp],
 				"Gears":[gears], "Room Door":[door], "Cabinet":[cabinet],
-				"Stairs":[stairs], "Tourbillon":[tourbillon], "Hall Exhibit":[hall_exhibit], "Hall decor":[decor]}, arg.trim_prefix("--lab-components="))
+				"Stairs":[stairs], "Hall decor":[decor]}, arg.trim_prefix("--lab-components="))
 
 	var batching := preload("res://scenes/blue_prince_lab/MeshBatches.gd")
-	for piece: Node3D in [door, cabinet, gears, tourbillon, hall_exhibit, lamp, decor]:
+	for piece: Node3D in [door, cabinet, gears, lamp, decor]:
 		batching.collapse(piece)
 
 func _place(scene: PackedScene, p: Vector3, yaw := 0.0) -> Node3D:
@@ -105,7 +103,7 @@ func _light_room() -> void:
 	env.background_color = Color("8f9ba6")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("c5d2de")
-	env.ambient_light_energy = 0.31
+	env.ambient_light_energy = 0.42
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.ssao_enabled = true
 	env.ssao_radius = 0.39
@@ -141,13 +139,13 @@ func _light_room() -> void:
 	day.directional_shadow_max_distance = 33.0
 	add_child(day)
 	# Long cool fills illuminate the stone without making a projected circle on the portal.
-	_omni(Vector3(0,3.45,-4.10), Color("e0edff"), 1.14, 11.3, false, 0.69)
-	_omni(Vector3(-1.9,3.75,6.15), Color("d6edff"), 1.13, 11.4, true, 1.14)
+	_omni(Vector3(0,3.45,-4.10), Color("e0edff"), 0.76, 11.3, false, 0.69)
+	_omni(Vector3(-1.9,3.75,6.15), Color("d6edff"), 0.69, 11.4, true, 1.14)
 	_omni(Vector3(0,2.30,1.12), Color("f5dfba"), 0.37, 6.60, false, 1.22)
 	for side: float in [-1.0, 1.0]:
 		_omni(Vector3(side*2.24,3.32,-5.22), Color("dcecf9"), 0.53, 8.6, false, 0.85)
-		_omni(Vector3(side*4.18,1.91,4.18), Color("ffca8f"), 0.53, 4.60, false, 1.13)
-		_omni(Vector3(side*4.25,1.77,0.84), Color("ebbf91"), 0.30, 4.40, false, 1.18)
+		_omni(Vector3(side*4.18,1.91,4.18), Color("ffca8f"), 0.27, 4.60, false, 1.13)
+		_omni(Vector3(side*4.25,1.77,0.84), Color("ebbf91"), 0.15, 4.40, false, 1.18)
 		_omni(Vector3(side*2.5,2.8,-15.0), Color("efd3ab"), 0.62, 5.65, false)
 	_omni(Vector3(-0.7,2.58,-13.12), Color("ffecd2"), 1.5, 4.8, true)
 	_omni(Vector3(0,3.77,-20.9), Color("e0e4df"), 0.75, 5.8, true)
@@ -190,7 +188,7 @@ func _omni(p: Vector3, tone: Color, energy: float, radius: float, shadows: bool,
 	add_child(light)
 
 func _setup_cameras() -> void:
-	walker.position = Vector3(-0.35, 0.05, 7.77)
+	walker.position = Vector3(-1.20 if hall_exhibit != null else -0.35, 0.05, 7.77)
 	walker.floor_snap_length = 0.24
 	walker.floor_max_angle = deg_to_rad(49.0)
 	walker.safe_margin = 0.003
@@ -214,7 +212,7 @@ func _setup_hud() -> void:
 	hud.add_child(controls)
 	controls.position = Vector2(16, 14)
 	controls.add_theme_constant_override("separation", 8)
-	for i in range(VIEWS.size()):
+	for i in range(VIEWS.size() if hall_exhibit != null else VIEWS.size()-1):
 		_button(VIEWS[i], show_view.bind(i))
 	_button("Walk", _walk)
 	_button("Gust", func(): winds = not winds)
@@ -268,8 +266,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_2: show_view(1)
 			KEY_3: show_view(2)
 			KEY_4: show_view(3)
-			KEY_5: show_view(4)
-			KEY_6: show_view(5)
+			KEY_6:
+				if hall_exhibit != null: show_view(4)
 			KEY_F: _walk() if active_view >= 0 else show_view(0)
 			KEY_ESCAPE: show_view(0)
 			KEY_H: _toggle_hud()
@@ -297,12 +295,9 @@ func _select(point: Vector2, max_range: float) -> Dictionary:
 	return best
 
 func _in_zone(target: Dictionary) -> bool:
-	# The closed hall door occludes the separate tourbillon station and vice versa.
 	if target.node == hall_exhibit:
-		return active_view in [0, 5] or (active_view == -1 and walker.position.z >= -9.3)
-	if target.node == tourbillon:
-		return active_view in [2, 4] or (active_view == -1 and walker.position.z < -9.3)
-	if target.node != door and (active_view in [2, 4] or (active_view == -1 and walker.position.z < -9.3)):
+		return active_view in [0, 4] or (active_view == -1 and walker.position.z >= -9.3)
+	if target.node != door and (active_view == 2 or (active_view == -1 and walker.position.z < -9.3)):
 		return false
 	return true
 
@@ -314,6 +309,9 @@ func _physics_process(delta: float) -> void:
 	var wind := Vector3(6.0, 0.45, 2.1) * (1.0 + 0.30 * sin(elapsed * 3.1)) if winds else Vector3.ZERO
 	for component in wind_sources:
 		component.set_wind(wind)
+	if active_view == 4:
+		notice.text = "A26 / TRIAXIAL TOURBILLON MODEL II   ·   Click to separate or gather the original printed parts.   ·   CC BY-NC"
+		return
 	if active_view >= 0:
 		notice.text = "THE ACADEMY   /   GRAND STAIR HALL     ·     Click a prop in the frame, or walk the hall."
 		return
@@ -353,8 +351,9 @@ func snapshot() -> Dictionary:
 		"wind":winds, "toon":toon, "ink":ink.visible, "glow":env.glow_enabled, "sdfgi":env.sdfgi_enabled, "targets":targets, "buttons":buttons,
 		"banner_deflection":wind_sources[1].tip_deflection(), "pendulum_radians":lamp.get_node("Pendulum").basis.get_rotation_quaternion().get_angle(),
 		"gear_running":gears.get("is_running"), "gear_angle":gears.get("driver_angle"),
-		"tourbillon_running":tourbillon.running, "hall_exhibit_running":hall_exhibit.running,
-		"hall_exhibit_angles":[hall_exhibit.angles.x,hall_exhibit.angles.y,hall_exhibit.angles.z],
-		"tourbillon_angles":[tourbillon.angles.x,tourbillon.angles.y,tourbillon.angles.z], "door_open":door.get("is_open"), "cabinet_open":cabinet.get("is_open"),
+		"exhibit_parts":hall_exhibit.parts.size() if hall_exhibit != null else 0,
+		"exhibit_exploded":hall_exhibit.exploded if hall_exhibit != null else false,
+		"exhibit_blend":hall_exhibit.blend if hall_exhibit != null else 0.0,
+		"door_open":door.get("is_open"), "cabinet_open":cabinet.get("is_open"),
 		"fps":Engine.get_frames_per_second(), "draw_calls":RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 		"player":[walker.position.x,walker.position.y,walker.position.z]}

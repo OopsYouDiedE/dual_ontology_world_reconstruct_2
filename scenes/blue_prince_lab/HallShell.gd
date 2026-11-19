@@ -1,14 +1,17 @@
 extends Node3D
 ## Repeated bays keep the reference perspective legible at 720p. World units are metres.
 const FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
-const BAY_Z := [3.0, -0.55, -4.10, -7.65]
+const BAY_Z := [3.0, -1.55, -5.62]
+const STRUCTURAL_ARCH_Z := [2.72, -1.55]
+const END_HALL_START := -3.05
+const END_WIDTH := 4.52
 const BACK := -9.25
 const SPRING := 5.10
 const UPPER_HALL := SPRING + 0.16
 const ARCH_RADIUS := 3.35
 const KEY_COLORS := {
 	"plaster": Color("778289"), "panel": Color("56626a"), "vault": Color("7a8995"),
-	"stone": Color("989fa4"), "ivory": Color("b3babd"), "edge": Color("75818c"),
+	"stone": Color("989fa4"), "shaft": Color("a6b2bc"), "ivory": Color("b3babd"), "edge": Color("75818c"),
 	"skirt": Color("535d64"), "floor_a": Color("81919d"), "floor_b": Color("8697a0"),
 	"floor_c": Color("8899a4"), "grout": Color("333e42"), "carpet": Color("b28d5d"),
 	"reveal": Color("3e484f"), "blue": Color("435159"), "oak": Color("6b5f4d"),
@@ -36,10 +39,14 @@ func _ready() -> void:
 		var material := ShaderMaterial.new()
 		material.shader = FINISH
 		material.set_shader_parameter("pigment", KEY_COLORS[material_key])
-		material.set_shader_parameter("grain", 0.25 if material_key in ["stone", "vault", "plaster", "carpet", "fan_a", "fan_b"] else 0.095)
+		material.set_shader_parameter("grain", 0.25 if material_key in ["stone", "shaft", "vault", "plaster", "carpet", "fan_a", "fan_b"] else 0.095)
 		material.set_shader_parameter("runner", 1.0 if material_key == "carpet" else 0.0)
 		material.set_shader_parameter("wood", 1.0 if material_key in ["oak", "linen"] else 0.0)
 		material.set_shader_parameter("surface_roughness", 0.50 if material_key.begins_with("floor_") else 0.83)
+		if material_key == "shaft":
+			material.set_shader_parameter("shaft_flat", true)
+		if material_key == "plaster":
+			material.set_shader_parameter("two_tone", true)
 		if material_key.begins_with("floor_"):
 			material.set_shader_parameter("stone_sheen", 0.064)
 		if material_key in ["coffer", "vault"]:
@@ -96,56 +103,71 @@ func _build_floor() -> void:
 	_box(Vector3(0, 0.019, -0.28), Vector3(2.34, 0.022, 17.71), "carpet")
 
 func _build_vault() -> void:
-	_arch(Vector3(0, SPRING, -0.38), 0, ARCH_RADIUS, ARCH_RADIUS + 0.24, 18.20, 30, "vault", false)
+	var front_length := 8.72 - END_HALL_START
+	_arch(Vector3(0, SPRING, 8.72 - front_length * 0.5), 0.0, ARCH_RADIUS, ARCH_RADIUS + 0.22,
+		front_length, 44, "coffer", false)
 	for side: float in [-1.0, 1.0]:
-		_solid(Vector3(side * 4.00, SPRING + 0.09, -0.4), Vector3(1.38, 0.20, 18.16), "plaster")
-	for z: float in BAY_Z:
-		_rib(z, SPRING, ARCH_RADIUS)
-		# Individual ceiling panels link the ribs along the length of each bay.
-		for i in range(1, 8):
-			var theta := PI * i / 8.0
-			var p := Vector3(cos(theta) * 3.33, SPRING + sin(theta) * 3.33, z + 1.775)
-			_box(p, Vector3(0.060, 0.052, 3.23), "reveal")
-		if z < 2.0:
-			_arch(Vector3(0, SPRING, z + 1.775), 0, ARCH_RADIUS - 0.16, ARCH_RADIUS + 0.01, 0.15, 32, "edge", false)
-			_arch(Vector3(0, SPRING, z + 1.775), 0, ARCH_RADIUS - 0.19, ARCH_RADIUS - 0.16, 0.21, 32, "stone", false)
-			for band in range(8):
-				var tone := "coffer" if band in [0, 2, 5, 7] else "vault"
-				_ceiling_field(z + 1.775, band, tone)
+		_solid(Vector3(side * 4.0, SPRING + 0.09, 8.72 - front_length * 0.5),
+			Vector3(1.38, 0.20, front_length), "plaster")
+	for i in range(STRUCTURAL_ARCH_Z.size()):
+		_build_entry_arch(STRUCTURAL_ARCH_Z[i], 1.06 if i == 0 else 0.91)
+	# A single broad rear shell without ribs, keystones or panel breaks down its length.
+	var back_depth := END_HALL_START - BACK
+	_elliptic_ring(Vector3(0, SPRING, BACK + back_depth * 0.5), END_WIDTH, ARCH_RADIUS + 0.09,
+		0.0, 0.18, back_depth, "vault")
+	_seal_vault_transition()
 	for z: float in [8.66, BACK + 0.015]:
+		var width := END_WIDTH if z < 0.0 else ARCH_RADIUS
+		var height := ARCH_RADIUS + 0.11 if z < 0.0 else ARCH_RADIUS
 		var p := Vector3(0, SPRING, z)
-		for i in range(30):
-			var a := PI * float(i) / 30.0
-			var b := PI * float(i + 1) / 30.0
-			_prism([Vector2.ZERO, Vector2(cos(a), sin(a)) * ARCH_RADIUS,
-				Vector2(cos(b), sin(b)) * ARCH_RADIUS], p, 0, 0.24, "plaster")
+		for i in range(48):
+			var a := PI * float(i) / 48.0
+			var b := PI * float(i + 1) / 48.0
+			_prism([Vector2.ZERO, Vector2(cos(a)*width, sin(a)*height),
+				Vector2(cos(b)*width, sin(b)*height)], p, 0, 0.24, "plaster")
 
-func _ceiling_field(z: float, band: int, tone: String) -> void:
-	var a := PI * band / 8.0 + 0.028
-	var b := PI * (band + 1.0) / 8.0 - 0.028
-	for i in range(4):
-		var u := Vector2.from_angle(lerpf(a,b,i/4.0))
-		var v := Vector2.from_angle(lerpf(a,b,(i+1)/4.0))
-		_prism([u*3.245,u*3.32,v*3.32,v*3.245], Vector3(0,SPRING,z), 0.0, 2.62, tone)
+func _seal_vault_transition() -> void:
+	# Close the spandrel where the narrow coffered vault opens into the broad shell.
+	for i in range(48):
+		var a := Vector2.from_angle(PI * float(i) / 48.0)
+		var b := Vector2.from_angle(PI * float(i + 1) / 48.0)
+		var outer := Vector2(END_WIDTH + 0.03, ARCH_RADIUS + 0.11)
+		_prism([a*ARCH_RADIUS, a*outer, b*outer, b*ARCH_RADIUS],
+			Vector3(0,SPRING,END_HALL_START), 0.0, 0.22, "vault")
 
-func _rib(z: float, spring: float, radius: float) -> void:
-	# Ring courses meet radially. Each course owns a different axial projection;
-	# the ledges and returns are faces that receive light, not lines on the face.
-	var courses := [
-		[-0.43, -0.34, 0.57, "vault_rib"],
-		[-0.34, -0.30, 0.62, "vault_crown"],
-		[-0.30, -0.23, 0.44, "edge"],
-		[-0.23, -0.10, 0.51, "vault_rib"],
-		[-0.10, -0.045, 0.65, "vault_crown"],
-		[-0.045, 0.04, 0.46, "edge"],
+func _build_entry_arch(z: float, span: float) -> void:
+	# Three successive setbacks cut toward the recessed bay. Broad soffits carry
+	# the load visually; the narrower courses are real lip/return geometry.
+	var rings := [
+		[-0.43, -0.33, 1.90, "vault_rib"],
+		[-0.33, -0.27, 2.21, "edge"],
+		[-0.27, -0.14, 1.70, "vault_rib"],
+		[-0.14, -0.08, 2.48, "vault_crown"],
+		[-0.08, 0.03, 2.65, "edge"],
 	]
-	for course: Array in courses:
-		_arch(Vector3(0, spring, z), 0, radius + course[0], radius + course[1],
-			course[2] * 2.0, 32, course[3], false)
-	# The crown boss projects below the soffit, with three rectangular stone steps.
-	for step: Array in [[0.91, 0.090, 1.25, 0.43, "edge"], [0.78, 0.080, 1.40, 0.49, "vault_rib"],
-			[0.65, 0.065, 1.51, 0.55, "vault_crown"]]:
-		_box(Vector3(0, spring + radius - step[3], z), Vector3(step[0], step[1], step[2]), step[4])
+	for ring: Array in rings:
+		_arch(Vector3(0, SPRING, z), 0.0, ARCH_RADIUS + ring[0], ARCH_RADIUS + ring[1],
+			span * ring[2], 40, ring[3], false)
+	# Axial ribs run through the opening. The wall of each recess is the radial
+	# height difference between these ribs and the curved backing behind them.
+	for i in range(1, 12):
+		var center := PI * i / 12.0
+		var a := center - 0.019
+		var b := center + 0.019
+		var u := Vector2.from_angle(a)
+		var v := Vector2.from_angle(b)
+		_prism([u*2.79,u*2.98,v*2.98,v*2.79], Vector3(0,SPRING,z), 0.0, span * 1.88, "vault_rib")
+		_prism([u*2.77,u*2.80,v*2.80,v*2.77], Vector3(0,SPRING,z), 0.0, span * 1.67, "vault_crown")
+
+func _elliptic_ring(p: Vector3, width: float, height: float, inner: float, outer: float,
+		depth: float, key: String) -> void:
+	for i in range(48):
+		var a := PI * float(i) / 48.0
+		var b := PI * float(i + 1) / 48.0
+		var u := Vector2.from_angle(a)
+		var v := Vector2.from_angle(b)
+		_prism([u*Vector2(width+inner,height+inner),u*Vector2(width+outer,height+outer),
+			v*Vector2(width+outer,height+outer),v*Vector2(width+inner,height+inner)], p, 0.0, depth, key)
 
 func _portal(radius: float, spring: float, scale_factor: float) -> void:
 	# All courses share a rear bed in the wall and continue down the jambs.
@@ -190,27 +212,32 @@ func _build_masonry() -> void:
 			for z: float in [1.29, -2.28]:
 				_curtain(side, z)
 	# Nested frames retain three different silhouettes and physical jamb depths.
-	_portal(2.85, 4.94, 1.12)
-	_portal(1.63, 4.15, 0.94)
+	# The broad outlines at the back sit in one wall plane, rather than
+	# projecting into the hall as extra transverse vaults.
+	_elliptic_ring(Vector3(0, SPRING, -9.004), 3.92, 2.98, -0.045, 0.020, 0.036, "edge")
+	_elliptic_ring(Vector3(0, SPRING, -8.995), 3.92, 2.98, 0.020, 0.074, 0.035, "vault_rib")
+	for side: float in [-1.0, 1.0]:
+		_box(Vector3(side*3.92, SPRING * 0.5, -9.003), Vector3(0.074,SPRING,0.045), "edge")
+	_portal(1.94, 4.03, 0.54)
 	_portal(0.93, 2.71, 0.60)
 	# Segmented stone fields give the cold focus a readable boundary beyond the light pool.
-	var fan_center := Vector3(0, 4.15, -9.054)
+	var fan_center := Vector3(0, 4.03, -9.054)
 	for i in range(20):
 		var a := PI * float(i) / 20.0
 		var b := PI * float(i + 1) / 20.0
 		var tone := "fan_b" if i >= 7 and i < 13 else "fan_a"
-		_prism([Vector2.ZERO, Vector2.from_angle(a) * 1.63,
-			Vector2.from_angle(b) * 1.63], fan_center, 0, 0.046, tone)
+		_prism([Vector2.ZERO, Vector2.from_angle(a) * 1.94,
+			Vector2.from_angle(b) * 1.94], fan_center, 0, 0.046, tone)
 	for i in range(3):
 		var a := PI * (i + 1) / 4.0
 		var v := Vector2.from_angle(a)
 		var d := Vector2(-v.y, v.x) * 0.013
-		_prism([v * 0.21 - d, v * 1.60 - d, v * 1.60 + d, v * 0.21 + d],
+		_prism([v * 0.21 - d, v * 1.91 - d, v * 1.91 + d, v * 0.21 + d],
 			fan_center + Vector3.BACK * 0.028, 0, 0.02, "fan_seam")
-	_prism([Vector2(-1.63,-1.45), Vector2(1.63,-1.45), Vector2(1.63,0), Vector2(-1.63,0)],
+	_prism([Vector2(-1.94,-1.33), Vector2(1.94,-1.33), Vector2(1.94,0), Vector2(-1.94,0)],
 		fan_center, 0, 0.046, "fan_a")
 	for side: float in [-1.0, 1.0]:
-		_box(Vector3(side * 1.272, 1.54, -9.054), Vector3(0.715, 2.32, 0.046), "fan_a")
+		_box(Vector3(side * 1.424, 1.54, -9.054), Vector3(1.020, 2.32, 0.046), "fan_a")
 	_prism([Vector2(-0.70,0),Vector2(0.70,0),Vector2(0.46,0.34),Vector2(-0.46,0.34)],
 		Vector3(0,2.72,-8.93), 0.0, 0.078, "ivory")
 	for side: float in [-1.0, 1.0]:
@@ -267,7 +294,7 @@ func _pier(side: float, z: float) -> void:
 		for shift: float in [-0.44, 0.0, 0.44]:
 			_box(p + Vector3(shift, 0.145, face * 0.739), Vector3(0.36, 0.117, 0.029), "reveal")
 			_box(p + Vector3(face * 0.744, 0.145, shift), Vector3(0.029, 0.117, 0.36), "reveal")
-	_round(p, [[0.70,0.29], [0.70,0.34], [0.60,0.40], [0.54,0.50], [0.48,SPRING-0.34]], "stone")
+	_round(p, [[0.70,0.29], [0.70,0.34], [0.60,0.40], [0.54,0.50], [0.48,SPRING-0.34]], "shaft")
 	for h: float in [0.57, 0.75, 0.94, 1.16, 1.39]:
 		var r := lerpf(0.54, 0.48, (h-0.50)/(SPRING-0.84))
 		_round(p, [[r-0.004,h-0.024], [r+0.022,h-0.019], [r+0.022,h+0.015], [r-0.004,h+0.030]], "edge")

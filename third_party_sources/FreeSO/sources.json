@@ -1,0 +1,16 @@
+{
+  "revision": "4c6b3e8f5835b228723caea3c9f683c62f244f73",
+  "blobs": {
+    "TSOClient/tso.world/Components/WallComponent.cs": "b160ff029bd1006da5586ca3e2b4b6c469b78b87",
+    "TSOClient/tso.world/Components/ObjectComponent.cs": "a718a61423d33217822e1f4f43c8990f3e900dbf",
+    "TSOClient/tso.world/Model/WallTile.cs": "28b67a17e10ec2905eb83d8dc7d0b3347bcff4be",
+    "TSOClient/tso.world/RC/WallComponentRC.cs": "42f1bf38ab2047a567d004b9592e5a89c2aa1672",
+    "TSOClient/tso.world/RC/WallVertexRC.cs": "1123ea6d0073684fdf9d64dac7110dc89f9a2ef0",
+    "TSOClient/tso.world/Components/FloorComponent.cs": "910ef33a22ca423aafb842e57943038e7cf041cf",
+    "TSOClient/tso.world/Components/RoofComponent.cs": "a5ed2aa9155175f5aab619c4506a957395b375f8",
+    "TSOClient/tso.world/FSO.LotView.csproj": "742bfb7be4d5b9cf6153a60e14c087f5d1081dac",
+    "TSOClient/tso.simantics/Entities/VMGameObject.cs": "8878181e30ddfd2500387f29d9c479a92c31a674",
+    "LICENSE.md": "3759302a477065dc446f76eb374e72e6c770431c",
+    "TSOClient/tso.world/Utils/DGRPRenderer.cs": "b3f97d345bd9feaef39f5be7292ee2ee6397c08a"
+  }
+}

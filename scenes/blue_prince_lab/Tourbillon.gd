@@ -16,14 +16,24 @@ var _middle := Node3D.new()
 var _inner := Node3D.new()
 var _balance := Node3D.new()
 var _escape := Node3D.new()
-var _gold := _finish(Color("ba9460"), 0.51, 0.36)
-var _light_gold := _finish(Color("e1c79a"), 0.50, 0.35)
-var _blue := _finish(Color("668294"), 0.62, 0.35)
-var _steel := _finish(Color("adb9bc"), 0.54, 0.37)
-var _dark := _finish(Color("39444a"), 0.37, 0.65)
-var _jewel := _finish(Color("a44750"), 0.18, 0.38)
+var illustrated := false
+var _gold: Material
+var _light_gold: Material
+var _blue: Material
+var _steel: Material
+var _dark: Material
+var _jewel: Material
+
+func _setup_finishes() -> void:
+	_gold = _finish(Color("ba9460"), 0.51, 0.36)
+	_light_gold = _finish(Color("e1c79a"), 0.50, 0.35)
+	_blue = _finish(Color("668294"), 0.62, 0.35)
+	_steel = _finish(Color("adb9bc"), 0.54, 0.37)
+	_dark = _finish(Color("39444a"), 0.37, 0.65)
+	_jewel = _finish(Color("a44750"), 0.18, 0.38)
 
 func _ready() -> void:
+	_setup_finishes()
 	_outer.name = "OuterCage"
 	_middle.name = "MiddleCage"
 	_inner.name = "InnerCage"
@@ -134,7 +144,14 @@ func _build_regulator() -> void:
 		_rod(_escape, Vector3(cos(a)*0.061,0,sin(a)*0.061),
 			Vector3(cos(a+0.057)*0.088,0,sin(a+0.057)*0.088), 0.007, _steel)
 
-func _finish(tone: Color, metal: float, roughness: float) -> StandardMaterial3D:
+func _finish(tone: Color, metal: float, roughness: float) -> Material:
+	if illustrated:
+		var painted := ShaderMaterial.new()
+		painted.shader = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+		painted.set_shader_parameter("pigment", tone)
+		painted.set_shader_parameter("stone_sheen", metal * 0.21)
+		painted.set_shader_parameter("surface_roughness", maxf(roughness, 0.50))
+		return painted
 	var m := StandardMaterial3D.new()
 	m.albedo_color = tone
 	m.metallic = metal

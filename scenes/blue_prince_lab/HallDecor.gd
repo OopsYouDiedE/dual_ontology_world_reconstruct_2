@@ -3,7 +3,7 @@ extends Node3D
 const TRIM := Color("788187")
 const FACE := Color("aab4ba")
 const EDGE := Color("4e5d67")
-const METAL := Color("6d6049")
+const METAL := Color("827152")
 const LOCATIONS := [4.0, 0.42, -3.13]
 
 func _ready() -> void:
@@ -11,16 +11,40 @@ func _ready() -> void:
 		for i in range(LOCATIONS.size()):
 			var figure := Node3D.new()
 			figure.name = "Founder"
-			figure.position = Vector3(side * (3.65 if i == 0 else 3.69), 0.0, LOCATIONS[i])
+			figure.position = Vector3(side * (3.90 if i == 0 else 3.69), 0.0, LOCATIONS[i])
 			figure.rotation.y = -side * (0.83 + 0.08 * i)
-			figure.scale = Vector3.ONE * (0.92 if i == 0 else 0.97)
+			figure.scale = Vector3(0.76, 0.95, 0.81) if i == 0 else Vector3(0.85, 0.97, 0.89)
 			add_child(figure)
-			_bust(figure, i)
+			_bust(figure, i + (0 if side < 0.0 else 3))
+		_pointing_hand(side)
 		for z: float in [3.21, -0.36, -3.91]:
 			var fixture := Node3D.new()
-			fixture.position = Vector3(side * (2.24 if z > 0.0 else 1.91), 4.27 if z > 0.0 else 4.06, z)
+			fixture.position = Vector3(side * (2.56 if z > 0.0 else 1.91), 4.64 if z > 0.0 else 4.50, z)
 			add_child(fixture)
 			_pendant(fixture)
+
+func _pointing_hand(side: float) -> void:
+	var hand := Node3D.new()
+	hand.name = "StoneWayfinder"
+	hand.position = Vector3(side * 1.42, 1.014, -8.58)
+	hand.rotation.y = side * PI * 0.5
+	add_child(hand)
+	_block(hand, Vector3(0,0.038,0.025), Vector3(0.47,0.076,0.18), TRIM)
+	# Hand along local -Z; the pointed index faces the doorway on both plinths.
+	_finger(hand, Vector3(0,0.13,0.177), Vector3(0,0.15,0.044), 0.108,0.080)
+	_finger(hand, Vector3(0,0.15,0.053), Vector3(0,0.18,-0.122), 0.079,0.089)
+	_finger(hand, Vector3(side*0.048,0.207,-0.07), Vector3(side*0.046,0.219,-0.295),0.036,0.028)
+	_finger(hand, Vector3(side*0.046,0.219,-0.285), Vector3(side*0.039,0.204,-0.393),0.028,0.010)
+	for i in range(3):
+		var x: float = side * (0.009 - 0.041 * i)
+		var knuckle := Vector3(x, 0.166 - i * 0.015, -0.192 + i * 0.013)
+		_finger(hand, Vector3(x,0.175 + i * 0.006,-0.07), knuckle,0.031,0.029)
+		_finger(hand, knuckle, Vector3(x,0.113,-0.122 + i * 0.013),0.028,0.017)
+	_finger(hand, Vector3(side*0.057,0.133,0.011), Vector3(side*0.112,0.117,-0.092),0.038,0.025)
+
+func _finger(n: Node3D, a: Vector3, b: Vector3, base: float, tip: float) -> void:
+	var piece := _cylinder(n, (a+b)*0.5, tip, base, a.distance_to(b) + 0.012, FACE, 8)
+	piece.quaternion = Quaternion(Vector3.UP, a.direction_to(b))
 
 func _bust(n: Node3D, variant: int) -> void:
 	_lathe(n, [[0.48,0.0],[0.48,0.09],[0.45,0.13],[0.45,0.16],[0.40,0.20]], TRIM, 12)
@@ -35,7 +59,8 @@ func _bust(n: Node3D, variant: int) -> void:
 		[1.97,0.55,0.26,0.0],[2.03,0.48,0.23,-0.01],[2.13,0.22,0.16,0.01],
 		[2.28,0.141,0.137,0.005]], FACE)
 	var head := Node3D.new()
-	head.rotation.y = -0.07 + 0.18 * variant
+	head.rotation.y = -0.15 + 0.13 * (variant % 3)
+	head.scale.x = 0.92 + 0.06 * (variant % 4)
 	n.add_child(head)
 	_form(head, [[2.13,0.132,0.139,0.018],[2.205,0.143,0.158,0.051],
 		[2.29,0.180,0.17,0.034],[2.39,0.202,0.172,0.018],[2.52,0.200,0.180,0.002],
@@ -49,7 +74,7 @@ func _bust(n: Node3D, variant: int) -> void:
 		eye.rotation.y = side * 0.23
 		_cylinder(head, Vector3(side*0.192,2.391,0.008), 0.032, 0.036, 0.097, TRIM, 6)
 		var lapel := _block(n, Vector3(side*0.17,1.999,0.202), Vector3(0.105,0.29,0.05), TRIM)
-		lapel.rotation.z = -side * (0.48 + variant * 0.13)
+		lapel.rotation.z = -side * (0.48 + (variant % 3) * 0.13)
 	_block(head, Vector3(0,2.292,0.198), Vector3(0.085,0.009,0.020), EDGE)
 	_block(n, Vector3(0,1.32,0.450), Vector3(0.33,0.086,0.049), FACE)
 	var body := StaticBody3D.new()
@@ -82,13 +107,13 @@ func _pendant(n: Node3D) -> void:
 		_rod(n, shoulder, top, METAL)
 	var light := OmniLight3D.new()
 	light.light_color = Color("ffdda7")
-	light.light_energy = 0.83
-	light.omni_range = 5.4
-	light.omni_attenuation = 1.4
+	light.light_energy = 0.58
+	light.omni_range = 6.7
+	light.omni_attenuation = 1.11
 	n.add_child(light)
 
 func _rod(n: Node3D, from: Vector3, to: Vector3, color: Color) -> void:
-	var piece := _cylinder(n, (from+to)*0.5, 0.017, 0.017, from.distance_to(to), color, 5)
+	var piece := _cylinder(n, (from+to)*0.5, 0.014, 0.014, from.distance_to(to), color, 5)
 	piece.quaternion = Quaternion(Vector3.UP, from.direction_to(to))
 
 func _block(n: Node3D, p: Vector3, size: Vector3, color: Color) -> MeshInstance3D:
@@ -138,7 +163,7 @@ func _piece(n: Node3D, p: Vector3, mesh: Mesh, color: Color, light := false) -> 
 		mat.shader = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 		mat.set_shader_parameter("pigment", color)
 		mat.set_shader_parameter("grain", 0.065 if not light else 0.0)
-		mat.set_shader_parameter("emission_gain", 1.32 if light else 0.0)
+		mat.set_shader_parameter("emission_gain", 2.2 if light else 0.0)
 		_materials[color] = mat
 	var instance := MeshInstance3D.new()
 	instance.mesh = mesh

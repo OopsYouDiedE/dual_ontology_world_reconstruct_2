@@ -119,7 +119,7 @@ def put_wedges(collection, rows, name, mat):
 
 def put_courses(collection, rows, label, mat):
     """Rebuild each moulding from the same radial profile and azimuth as the runtime."""
-    vertices, faces = [], []
+    vertices, faces, hard_edges = [], [], set()
     for row in rows:
         start = len(vertices)
         n = row['sides']
@@ -131,12 +131,33 @@ def put_courses(collection, rows, label, mat):
                 vertices.append(axes((xc + radius * math.cos(angle), yc + y, zc + radius * math.sin(angle))))
         for i in range(n):
             a, b = start + i * count, start + ((i + 1) % n) * count
+            for k in range(count):
+                hard_edges.add(tuple(sorted((a + k, b + k))))
             for k in range(count - 1):
                 faces.append((a + k, a + k + 1, b + k + 1, b + k))
-    obj = object_mesh(collection, f'{label} | octagonal courses', vertices, faces)
+    obj = object_mesh(collection, f'{label} | radial courses', vertices, faces)
+    for poly in obj.data.polygons:
+        poly.use_smooth = True
+    for edge in obj.data.edges:
+        edge.use_edge_sharp = tuple(sorted(edge.vertices)) in hard_edges
     tree, source, output = nodes_for(f'{label} | Profile course finish')
     tree.links.new(set_material(tree, source.outputs['Geometry'], mat), output.inputs['Geometry'])
     obj.modifiers.new('Course finish', 'NODES').node_group = tree
+    return obj
+
+
+def put_drapes(collection, rows, mat):
+    vertices, faces = [], []
+    for row in rows:
+        start = len(vertices)
+        vertices.extend(axes(v) for v in row['vertices'])
+        faces.extend(tuple(start + i for i in reversed(face)) for face in row['faces'])
+    obj = object_mesh(collection, 'Linen | curved pleat surfaces', vertices, faces)
+    for poly in obj.data.polygons:
+        poly.use_smooth = True
+    tree, source, output = nodes_for('Linen | Drapery finish')
+    tree.links.new(set_material(tree, source.outputs['Geometry'], mat), output.inputs['Geometry'])
+    obj.modifiers.new('Drapery finish', 'NODES').node_group = tree
     return obj
 
 
@@ -185,6 +206,8 @@ def main():
             generated.append(put_boxes(hall, boxes, label, mat))
         if wedges:
             generated.append(put_wedges(hall, wedges, label, mat))
+        if label == "linen" and recipe.get("drapes"):
+            generated.append(put_drapes(hall, recipe["drapes"], mat))
     for label, component in pieces.items():
         assert component, f'No exported geometry in {label}'
         generated.append(put_component(assembly, label, component))

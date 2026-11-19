@@ -42,15 +42,20 @@ def check():
 
     try:
         request()
-        assert state['mode'] == 'architecture_lab' and state['toon'] and state['ink'] and not state['sdfgi'], state
+        assert state['mode'] == 'architecture_lab' and state['toon'] and state['ink'] and state['glow'] and not state['sdfgi'], state
         wait(120)
         wait(90)
         metrics['base'] = {k: state[k] for k in ('fps', 'draw_calls')}
         composition = state['entrance_landmarks']
-        assert abs(composition['threshold'][1] - 0.714) < 0.013, composition
+        assert abs(composition['threshold'][1] - 0.736) < 0.010, composition
         assert abs(composition['runner_far_left'][0] - 0.469) < 0.012, composition
-        assert abs(composition['first_pendant'][0] - 0.293) < 0.025, composition
+        assert abs(composition['first_pendant'][0] - 0.302) < 0.012, composition
         frame('entrance')
+        button('Glow')
+        assert not state['glow'], state
+        frame('no_glow')
+        button('Glow')
+        assert state['glow'], state
         button('Ink')
         assert not state['ink'], state
         frame('no_ink')
@@ -60,6 +65,18 @@ def check():
         button('Toon')
         button('Ink')
         assert state['toon'] and state['ink'], state
+        workroom_rest = state['tourbillon_angles']
+        button('Hall Exhibit')
+        hall_rest = state['hall_exhibit_angles']
+        target('Start or stop the hall exhibit')
+        wait(65)
+        assert state['hall_exhibit_running'] and not state['tourbillon_running'], state
+        assert state['tourbillon_angles'] == workroom_rest, state
+        hall_delta = [after - before for before, after in zip(hall_rest, state['hall_exhibit_angles'])]
+        assert hall_delta[0] > 0.16 and hall_delta[1] > 0.27 and hall_delta[2] < -0.5, hall_delta
+        frame('hall_exhibit_running')
+        target('Start or stop the hall exhibit')
+        assert not state['hall_exhibit_running'], state
         button('Tourbillon')
         initial = state['tourbillon_angles']
         frame('tourbillon_initial')

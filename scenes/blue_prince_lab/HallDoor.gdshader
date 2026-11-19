@@ -10,7 +10,8 @@ void fragment() {
 	float cusp = 0.115 + 2.55 * pow(max(0.0, p.y - 0.46), 2.0);
 	float foot = 0.025 + 0.215 * pow(p.x, 0.57);
 	float split = min(abs(p.x - 0.016), min(abs(p.x - cusp), abs(p.y - foot)));
-	float inset = smoothstep(0.001,0.008,split);
+	float aa = clamp(fwidth(split) * 0.58, 0.002, 0.012);
+	float inset = smoothstep(max(0.0,0.005-aa), 0.006+aa, split);
 	float brush = 0.019 * sin(UV.x * 177.0 + sin(UV.y * 11.0)) + 0.014 * sin(UV.x * 469.0);
 	float field = p.x > cusp ? 0.90 : 1.0;
 	ALBEDO = mix(vec3(0.16,0.19,0.20),pigment.rgb * field + brush,inset);

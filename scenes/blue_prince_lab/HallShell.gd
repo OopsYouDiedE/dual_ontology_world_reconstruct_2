@@ -3,7 +3,8 @@ extends Node3D
 const FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 const BAY_Z := [3.0, -0.55, -4.10, -7.65]
 const BACK := -9.25
-const SPRING := 4.48
+const SPRING := 5.10
+const UPPER_HALL := SPRING + 0.16
 const ARCH_RADIUS := 3.35
 const KEY_COLORS := {
 	"plaster": Color("778289"), "panel": Color("56626a"), "vault": Color("7a8995"),
@@ -12,12 +13,13 @@ const KEY_COLORS := {
 	"floor_c": Color("8899a4"), "grout": Color("333e42"), "carpet": Color("b28d5d"),
 	"reveal": Color("3e484f"), "blue": Color("435159"), "oak": Color("6b5f4d"),
 	"ink": Color("333b40"), "linen": Color("585044"),
-	"fan_a": Color("a2b4be"), "fan_b": Color("b5c4ca"), "fan_seam": Color("586970")
+	"coffer": Color("647485"), "vault_rib": Color("85939f"), "vault_crown": Color("a0abb2"), "fan_a": Color("9eafba"), "fan_b": Color("aabac2"), "fan_seam": Color("586970")
 }
 var _batches: Dictionary = {}
 var _boxes: Array[Dictionary] = []
 var _arches: Array[Dictionary] = []
 var _courses: Array[Dictionary] = []
+var _drapes: Array[Dictionary] = []
 var _unit_box := BoxMesh.new()
 
 func _ready() -> void:
@@ -34,28 +36,36 @@ func _ready() -> void:
 		var material := ShaderMaterial.new()
 		material.shader = FINISH
 		material.set_shader_parameter("pigment", KEY_COLORS[material_key])
-		material.set_shader_parameter("grain", 0.11 if material_key in ["vault", "plaster", "carpet", "oak", "linen", "fan_a", "fan_b"] else 0.076)
+		material.set_shader_parameter("grain", 0.25 if material_key in ["stone", "vault", "plaster", "carpet", "fan_a", "fan_b"] else 0.095)
 		material.set_shader_parameter("runner", 1.0 if material_key == "carpet" else 0.0)
 		material.set_shader_parameter("wood", 1.0 if material_key in ["oak", "linen"] else 0.0)
-		material.set_shader_parameter("surface_roughness", 0.65 if material_key.begins_with("floor_") else 0.83)
+		material.set_shader_parameter("surface_roughness", 0.50 if material_key.begins_with("floor_") else 0.83)
+		if material_key.begins_with("floor_"):
+			material.set_shader_parameter("stone_sheen", 0.064)
+		if material_key in ["coffer", "vault"]:
+			material.set_shader_parameter("vault_fill", 0.10)
+		if material_key in ["fan_a", "fan_b"]:
+			material.set_shader_parameter("pale_wash", 0.17)
+		if material_key in ["linen", "stone", "ivory"]:
+			material.set_shader_parameter("toon_strength", 0.71)
 		instance.material_override = material
 		add_child(instance)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--hall-recipe="):
 			var file := FileAccess.open(arg.trim_prefix("--hall-recipe="), FileAccess.WRITE)
 			if file != null:
-				file.store_string(JSON.stringify({"boxes": _boxes, "arches": _arches, "courses": _courses,
+				file.store_string(JSON.stringify({"boxes": _boxes, "arches": _arches, "courses": _courses, "drapes": _drapes,
 					"materials": KEY_COLORS.keys().map(func(key: String): return [key, KEY_COLORS[key].to_html(false)])}))
 
 func _build_wall_shell() -> void:
 	_solid(Vector3(0, -0.15, -0.39), Vector3(9.78, 0.30, 18.54), "grout")
-	_solid(Vector3(0, 2.32, 8.72), Vector3(9.78, 4.64, 0.30), "plaster")
+	_solid(Vector3(0, UPPER_HALL * 0.5, 8.72), Vector3(9.78, UPPER_HALL, 0.30), "plaster")
 	for side: float in [-1.0, 1.0]:
-		_solid(Vector3(side * 2.82, 2.32, BACK), Vector3(4.16, 4.64, 0.36), "plaster")
-	_solid(Vector3(0, 3.62, BACK), Vector3(1.49, 2.10, 0.36), "plaster")
-	_solid(Vector3(-4.76, 2.32, -0.36), Vector3(0.32, 4.64, 18.4), "plaster")
+		_solid(Vector3(side * 2.82, UPPER_HALL * 0.5, BACK), Vector3(4.16, UPPER_HALL, 0.36), "plaster")
+	_solid(Vector3(0, (UPPER_HALL + 2.57) * 0.5, BACK), Vector3(1.49, UPPER_HALL - 2.57, 0.36), "plaster")
+	_solid(Vector3(-4.76, UPPER_HALL * 0.5, -0.36), Vector3(0.32, UPPER_HALL, 18.4), "plaster")
 	_solid(Vector3(4.76, 1.77, -0.36), Vector3(0.32, 3.54, 18.4), "plaster")
-	_solid(Vector3(4.76, 4.49, -0.36), Vector3(0.32, 0.31, 18.4), "plaster")
+	_solid(Vector3(4.76, (4.37 + UPPER_HALL) * 0.5, -0.36), Vector3(0.32, UPPER_HALL - 4.37, 18.4), "plaster")
 	# High exterior apertures sit above the wood bays, out of the hero composition.
 	var end := -9.60
 	for z: float in [-5.85, -2.32, 1.23, 4.77]:
@@ -88,7 +98,7 @@ func _build_floor() -> void:
 func _build_vault() -> void:
 	_arch(Vector3(0, SPRING, -0.38), 0, ARCH_RADIUS, ARCH_RADIUS + 0.24, 18.20, 30, "vault", false)
 	for side: float in [-1.0, 1.0]:
-		_solid(Vector3(side * 4.00, 4.57, -0.4), Vector3(1.38, 0.20, 18.16), "plaster")
+		_solid(Vector3(side * 4.00, SPRING + 0.09, -0.4), Vector3(1.38, 0.20, 18.16), "plaster")
 	for z: float in BAY_Z:
 		_rib(z, SPRING, ARCH_RADIUS)
 		# Individual ceiling panels link the ribs along the length of each bay.
@@ -100,7 +110,7 @@ func _build_vault() -> void:
 			_arch(Vector3(0, SPRING, z + 1.775), 0, ARCH_RADIUS - 0.16, ARCH_RADIUS + 0.01, 0.15, 32, "edge", false)
 			_arch(Vector3(0, SPRING, z + 1.775), 0, ARCH_RADIUS - 0.19, ARCH_RADIUS - 0.16, 0.21, 32, "stone", false)
 			for band in range(8):
-				var tone := "reveal" if band in [0, 2, 5, 7] else "edge"
+				var tone := "coffer" if band in [0, 2, 5, 7] else "vault"
 				_ceiling_field(z + 1.775, band, tone)
 	for z: float in [8.66, BACK + 0.015]:
 		var p := Vector3(0, SPRING, z)
@@ -122,19 +132,19 @@ func _rib(z: float, spring: float, radius: float) -> void:
 	# Ring courses meet radially. Each course owns a different axial projection;
 	# the ledges and returns are faces that receive light, not lines on the face.
 	var courses := [
-		[-0.43, -0.34, 0.57, "stone"],
-		[-0.34, -0.30, 0.62, "ivory"],
+		[-0.43, -0.34, 0.57, "vault_rib"],
+		[-0.34, -0.30, 0.62, "vault_crown"],
 		[-0.30, -0.23, 0.44, "edge"],
-		[-0.23, -0.10, 0.51, "stone"],
-		[-0.10, -0.045, 0.65, "ivory"],
+		[-0.23, -0.10, 0.51, "vault_rib"],
+		[-0.10, -0.045, 0.65, "vault_crown"],
 		[-0.045, 0.04, 0.46, "edge"],
 	]
 	for course: Array in courses:
 		_arch(Vector3(0, spring, z), 0, radius + course[0], radius + course[1],
 			course[2] * 2.0, 32, course[3], false)
 	# The crown boss projects below the soffit, with three rectangular stone steps.
-	for step: Array in [[0.91, 0.090, 1.25, 0.43, "edge"], [0.78, 0.080, 1.40, 0.49, "stone"],
-			[0.65, 0.065, 1.51, 0.55, "ivory"]]:
+	for step: Array in [[0.91, 0.090, 1.25, 0.43, "edge"], [0.78, 0.080, 1.40, 0.49, "vault_rib"],
+			[0.65, 0.065, 1.51, 0.55, "vault_crown"]]:
 		_box(Vector3(0, spring + radius - step[3], z), Vector3(step[0], step[1], step[2]), step[4])
 
 func _portal(radius: float, spring: float, scale_factor: float) -> void:
@@ -180,11 +190,11 @@ func _build_masonry() -> void:
 			for z: float in [1.29, -2.28]:
 				_curtain(side, z)
 	# Nested frames retain three different silhouettes and physical jamb depths.
-	_portal(2.85, 4.39, 1.12)
-	_portal(1.63, 3.78, 0.94)
-	_portal(0.93, 2.62, 0.60)
+	_portal(2.85, 4.94, 1.12)
+	_portal(1.63, 4.15, 0.94)
+	_portal(0.93, 2.71, 0.60)
 	# Segmented stone fields give the cold focus a readable boundary beyond the light pool.
-	var fan_center := Vector3(0, 3.78, -9.054)
+	var fan_center := Vector3(0, 4.15, -9.054)
 	for i in range(20):
 		var a := PI * float(i) / 20.0
 		var b := PI * float(i + 1) / 20.0
@@ -197,8 +207,10 @@ func _build_masonry() -> void:
 		var d := Vector2(-v.y, v.x) * 0.013
 		_prism([v * 0.21 - d, v * 1.60 - d, v * 1.60 + d, v * 0.21 + d],
 			fan_center + Vector3.BACK * 0.028, 0, 0.02, "fan_seam")
-	_prism([Vector2(-1.63,-0.96), Vector2(1.63,-0.96), Vector2(1.63,0), Vector2(-1.63,0)],
+	_prism([Vector2(-1.63,-1.45), Vector2(1.63,-1.45), Vector2(1.63,0), Vector2(-1.63,0)],
 		fan_center, 0, 0.046, "fan_a")
+	for side: float in [-1.0, 1.0]:
+		_box(Vector3(side * 1.272, 1.54, -9.054), Vector3(0.715, 2.32, 0.046), "fan_a")
 	_prism([Vector2(-0.70,0),Vector2(0.70,0),Vector2(0.46,0.34),Vector2(-0.46,0.34)],
 		Vector3(0,2.72,-8.93), 0.0, 0.078, "ivory")
 	for side: float in [-1.0, 1.0]:
@@ -206,8 +218,6 @@ func _build_masonry() -> void:
 		_box(p + Vector3.UP * 0.10, Vector3(0.57,0.20,0.60), "edge")
 		_box(p + Vector3.UP * 0.53, Vector3(0.38,0.82,0.44), "stone")
 		_box(p + Vector3.UP * 0.96, Vector3(0.55,0.10,0.59), "ivory")
-		_prism([Vector2(-0.255,0),Vector2(0.255,0),Vector2(0.24,0.235),Vector2(0,0.354),Vector2(-0.24,0.235)],
-			p + Vector3.UP * 1.014, 0.0, 0.18, "stone")
 	for i in range(-5, 6):
 		if abs(i) < 2: continue
 		_box(Vector3(i * 0.70, 0.47, -9.00), Vector3(0.61, 0.68, 0.13), "panel")
@@ -215,54 +225,76 @@ func _build_masonry() -> void:
 	for side: float in [-1.0, 1.0]:
 		_box(Vector3(side * 2.55, 0.88, -8.989), Vector3(3.32, 0.108, 0.13), "stone")
 
+func _drape_point(side: float, z: float, u: float, v: float) -> Vector3:
+	var phase := TAU * (5.3 * u + 0.37 * (1.0 - v) + 0.07 * sin(TAU * u))
+	var depth := (0.045 + 0.043 * (1.0 - v)) * cos(phase) + 0.021 * sin(phase * 2.0 + 0.9)
+	var hem := 0.14 + 0.034 * sin(phase)
+	return Vector3(side * (4.29 + 0.18 * u - depth - 0.15 * sin(v * PI)),
+		lerpf(hem, UPPER_HALL - 0.02, v), z + side * ((u - 0.5) * 1.95 + 0.14 * (1.0 - v)))
+
 func _curtain(side: float, z: float) -> void:
-	# Closed extruded pleats, angled toward the aisle and exported with the masonry recipe.
-	const WIDTH := 1.69
-	for i in range(18):
-		var u := float(i) / 18.0 * WIDTH
-		var v := float(i + 1) / 18.0 * WIDTH
-		var depth := cos(float(i) * TAU / 3.0) * 0.06
-		var next_depth := cos(float(i + 1) * TAU / 3.0) * 0.06
-		var run := 0.19 * (v - u) - (next_depth - depth)
-		var slope := atan2(run, v - u)
-		var half := Vector2(v - u, run).length() * 0.505
-		var hem := 0.13 + 0.035 * sin(float(i) * 0.81)
-		var p := Vector3(side * (4.37 + 0.19 * (u + v) * 0.5), 0, z + side * (u + v - WIDTH) * 0.5)
-		p.x -= side * (depth + next_depth) * 0.5
-		_prism([Vector2(-half, hem), Vector2(half, hem), Vector2(half, 4.60), Vector2(-half, 4.60)],
-			p, -side * PI * 0.5 + slope, 0.030, "linen")
+	const ACROSS := 54
+	const DOWN := 12
+	var batch := _batch("linen__drape")
+	var points: Array[Vector3] = []
+	var normals: Array[Vector3] = []
+	var faces: Array = []
+	for y in range(DOWN + 1):
+		for x in range(ACROSS + 1):
+			var u := float(x) / ACROSS
+			var v := float(y) / DOWN
+			points.append(_drape_point(side, z, u, v))
+			var du := _drape_point(side, z, u + 0.001, v) - _drape_point(side, z, u - 0.001, v)
+			var dv := _drape_point(side, z, u, v + 0.001) - _drape_point(side, z, u, v - 0.001)
+			normals.append(du.cross(dv).normalized())
+	for y in range(DOWN):
+		for x in range(ACROSS):
+			var lo := y * (ACROSS + 1) + x
+			var hi := lo + ACROSS + 1
+			var face := [lo, hi, hi + 1, lo + 1]
+			faces.append(face)
+			for idx in [lo, hi, hi + 1, lo, hi + 1, lo + 1]:
+				batch.set_normal(normals[idx])
+				batch.add_vertex(points[idx])
+	_drapes.append({"vertices": points.map(_xyz), "faces": faces})
 
 func _pier(side: float, z: float) -> void:
 	var p := Vector3(side * 3.43, 0, z)
-	_solid(p + Vector3.UP * 0.14, Vector3(1.62, 0.28, 1.55), "stone")
-	for h: float in [0.038, 0.25]:
-		_box(p + Vector3.UP * h, Vector3(1.68, 0.052, 1.61), "edge")
+	_solid(p + Vector3.UP * 0.145, Vector3(1.48, 0.29, 1.47), "stone")
+	for h: float in [0.038, 0.265]:
+		_box(p + Vector3.UP * h, Vector3(1.54, 0.052, 1.53), "edge")
 	for face: float in [-1.0, 1.0]:
-		for shift: float in [-0.47, 0.0, 0.47]:
-			_box(p + Vector3(shift, 0.142, face * 0.781), Vector3(0.40, 0.117, 0.036), "reveal")
-			_box(p + Vector3(face * 0.818, 0.142, shift), Vector3(0.036, 0.117, 0.40), "reveal")
-	_round(p, [[0.75, 0.27], [0.75, 0.33], [0.68, 0.38], [0.63, 0.48], [0.62, 4.23]], "stone")
-	for h: float in [0.55, 0.76, 0.98, 1.22, 1.47, 1.73, 3.51, 4.16]:
-		_round(p, [[0.622,h-0.027],[0.654,h-0.021],[0.654,h+0.017],[0.622,h+0.036]], "edge")
-	_round(p, [[0.622,4.12],[0.68,4.27],[0.80,4.36],[0.80,4.50]], "ivory")
-	_round(p, [[0.70,4.33],[0.82,4.36],[0.82,4.39]], "ink")
-	_box(p + Vector3.UP * 4.48, Vector3(1.67, 0.12, 1.34), "stone")
+		for shift: float in [-0.44, 0.0, 0.44]:
+			_box(p + Vector3(shift, 0.145, face * 0.739), Vector3(0.36, 0.117, 0.029), "reveal")
+			_box(p + Vector3(face * 0.744, 0.145, shift), Vector3(0.029, 0.117, 0.36), "reveal")
+	_round(p, [[0.70,0.29], [0.70,0.34], [0.60,0.40], [0.54,0.50], [0.48,SPRING-0.34]], "stone")
+	for h: float in [0.57, 0.75, 0.94, 1.16, 1.39]:
+		var r := lerpf(0.54, 0.48, (h-0.50)/(SPRING-0.84))
+		_round(p, [[r-0.004,h-0.024], [r+0.022,h-0.019], [r+0.022,h+0.015], [r-0.004,h+0.030]], "edge")
+	_round(p, [[0.479,SPRING-0.37], [0.55,SPRING-0.23], [0.68,SPRING-0.13], [0.70,SPRING+0.02]], "ivory")
+	_box(p + Vector3.UP * SPRING, Vector3(1.47, 0.11, 1.36), "stone")
 
 func _round(p: Vector3, profile: Array, key: String) -> void:
 	var batch := _batch(key + "__prism")
-	var n := 8
+	var n := 32
 	for i in range(n):
 		var a := (i + 0.5) * TAU / n
 		var b := (i + 1.5) * TAU / n
+		var u := Vector3(cos(a),0,sin(a))
+		var v := Vector3(cos(b),0,sin(b))
 		for j in range(profile.size() - 1):
 			var lo: Array = profile[j]
 			var hi: Array = profile[j+1]
-			var v0 := p + Vector3(cos(a)*lo[0],lo[1],sin(a)*lo[0])
-			var v1 := p + Vector3(cos(b)*lo[0],lo[1],sin(b)*lo[0])
-			var v2 := p + Vector3(cos(b)*hi[0],hi[1],sin(b)*hi[0])
-			var v3 := p + Vector3(cos(a)*hi[0],hi[1],sin(a)*hi[0])
-			_triangle(batch, v0, v1, v2)
-			_triangle(batch, v0, v2, v3)
+			var slope := Vector2(hi[1] - lo[1], lo[0] - hi[0]).normalized()
+			var nu := u*slope.x + Vector3.UP*slope.y
+			var nv := v*slope.x + Vector3.UP*slope.y
+			var v0: Vector3 = p + u*lo[0] + Vector3.UP*lo[1]
+			var v1: Vector3 = p + v*lo[0] + Vector3.UP*lo[1]
+			var v2: Vector3 = p + v*hi[0] + Vector3.UP*hi[1]
+			var v3: Vector3 = p + u*hi[0] + Vector3.UP*hi[1]
+			for vertex in [[v0,nu],[v1,nv],[v2,nv],[v0,nu],[v2,nv],[v3,nu]]:
+				batch.set_normal(vertex[1])
+				batch.add_vertex(vertex[0])
 	_courses.append({"p": _xyz(p), "profile": profile, "sides": n, "material": key})
 
 func _solid(p: Vector3, size: Vector3, key: String) -> void:

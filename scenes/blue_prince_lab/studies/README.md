@@ -27,18 +27,25 @@ Judged the manufacturer and entrant photos by silhouette at room distance, legib
 
 `Meridian` is the existing control name. It now shows a reconstruction from Halter’s oblique and profile photographs. The stepped bezel, chapter ring, blued peripheral pointers, blue swing, pierced silver bridge, gold balance, hairspring, ruby and crown are separate visible features. Only the dial lettering uses a texture. The inner, middle and outer pivots take 40 seconds, 6 minutes and 30 minutes per turn. The balance oscillates at 3 Hz; the peripheral minute and hour hands complete their own turns in one and twelve hours. The watch starts on entry; click the centre to pause and resume at the same pose. Internal parts hidden in the photographs are approximations; motion is kinematic.
 
+### Movement inspection
+
+Choose **Inspect train** for a fixed close camera above the crystal. Click the centre to pause/resume, or press **.** to freeze and advance 1/48 second. The same movement runs in the hall and observatory floor wells. The stationary dial remains the reference; bridge screws and jewels inherit their respective carriages. The gold balance and the impulse jewel share a staff, and the four-turn spring winds from its collet to a stud on the inner bridge.
+
+The visible train is a kinematic reconstruction, with tooth counts chosen for the published carriage periods. In the middle frame the fixed 54T bevel drives a 9T cross-axis pinion; its coaxial 24T wheel meshes with the 16T inner carriage wheel. On that carriage, the 8T planet rolls around a stationary 32T sun and its 16T wheel drives an 8T pinion on the 15T escape wheel. On each balance centre crossing the two pallet stones exchange lock and the escape wheel advances half a tooth. Between releases all driven shafts hold their angle. Motion is sampled from one clock; hidden barrel gearing, torque and elastic contact are outside the reconstruction.
+
 | Godot mesh-buffer measurement (highest detail) | Triangles | Material surfaces |
 | --- | ---: | ---: |
-| Complete watch, including dial lettering and crystal | **8,266** | **13** |
-| Moving assembly alone | **3,336** | Included above |
-| Enforced ceilings | 8,500 complete / 3,500 moving | 16 complete |
+| Complete watch, including dial lettering and crystal | **11,280** | **21** |
+| Moving assembly alone | **7,132** | Included above |
+| Enforced ceilings | 11,500 complete / 7,200 moving | 22 complete |
 
-The count excludes the stand and room. The older local 59,898-triangle A26 print model depicts a different assembly and is not used to construct this watch.
+The count includes the spring ribbon, all train arbors, hands and the crystal, and excludes the stand and room. The bezel is a single stepped shell to avoid buried cylinder faces. The older local 59,898-triangle A26 print model depicts a different assembly and is not used to construct this watch.
 
 ## Capture and verification
 
 ```powershell
 & .runtime/python/Scripts/python.exe tools/blue_prince_lab/look_studies_e2e.py --clean
+& .runtime/python/Scripts/python.exe tools/blue_prince_lab/meridian_macro_e2e.py
 ```
 
 The check uses the normal game entry and live MCP bridge. It verifies the shared stair camera and opposite directions, opening the ledger by clicking it, the mechanism's three-axis start and stop, and the mesh budget. The `--clean` captures are real 1280x720 Forward+ with SDFGI enabled and the HUD hidden. PNGs and the report are written under `.runtime/rogue-mcp/`.

@@ -25,17 +25,17 @@ func run() -> void:
 		check(mounted != null, template + ": missing watch")
 		if mounted:
 			var watch = mounted.get_child(0)
-			var before: Vector3 = watch.angles
+			var before: float = watch.elapsed
 			await process_frame
 			await process_frame
 			await physics_frame
 			await physics_frame
-			check(watch.running and watch.angles != before and watch.position.y < 0, "watch pose")
+			check(watch.running and watch.elapsed > before and watch.position.y < 0, "watch pose")
 			# A known interval checks the three gear ratios, balance frequency and both hands.
 			var angles: Vector3 = watch.angles
 			var phase: float = watch.beat
 			var hands := Vector2(watch.minute.rotation.z, watch.hour.rotation.z)
-			var dt := .125
+			var dt := 1./6. # one release, whatever the initial bank phase
 			watch._process(dt)
 			check((watch.angles-angles).is_equal_approx(Vector3(TAU/1800.,-TAU/360.,TAU/40.)*dt), "cage ratios")
 			check(is_equal_approx(watch.oscillator.rotation.z, 2.7*sin(phase+TAU*3.*dt)), "balance rate")

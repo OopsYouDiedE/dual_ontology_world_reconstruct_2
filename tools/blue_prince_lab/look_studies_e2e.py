@@ -63,8 +63,8 @@ def check(lab):
     assert lab.state['view'] == 'Ledger' and lab.state['shot'] != archive
     lab.button('Meridian')
     rest = lab.state['meridian']
-    assert 0 < rest['triangles'] <= rest['triangle_budget'] == 8500 and 0 < rest['moving_triangles'] <= 3500, rest
-    assert 0 < rest['surfaces'] <= rest['surface_budget'] == 16 and rest['running'], rest
+    assert 0 < rest['triangles'] <= rest['triangle_budget'] == 11500 and 0 < rest['moving_triangles'] <= rest['moving_budget'] == 7200, rest
+    assert 0 < rest['surfaces'] <= rest['surface_budget'] == 22 and rest['running'], rest
     target = next(t for t in lab.state['targets'] if t['name'] == 'Start or stop Meridian')
     lab.wait(52)
     moving = lab.state['meridian']

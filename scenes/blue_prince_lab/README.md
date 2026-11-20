@@ -38,7 +38,7 @@ Use the gallery buttons to select a camera. Enable SDFGI and press `H` to hide t
 | Garden Gate | Round iron opening and side grilles, capped low wall, irregular path stones, firs and three layers of ridgelines. |
 | Forest Camp | Foreground conifers frame an open tent, guy ropes, fire ring, hanging pot and a curved approach. |
 | Attic | Boarded gable, solid rafters and eight-spoke round window. A warm exterior source casts the window bars across individual floorboards; a separate cool interior fill keeps the chair and red wagon legible. |
-| Meridian | An 8.3 m dial tilted 18° over a stepped landing. The same movement sits under walkable glass in eligible Public Hall and Observatory lots. |
+| Meridian | An 8.3 m dial tilted 18° over a stepped landing. Use **Inspect train** for the close-up and **.** to step 1/48 s. The same movement sits under walkable glass in eligible Public Hall and Observatory lots. |
 | Draft | A solid panelled door and tiled floor behind a blueprint strip. Hover over the illustrated room cards; click to choose; Tab folds the sheet. |
 | Security | Nineteen modelled CRT cabinets, two keyboards with individual keys, a wall clock and a mug. Eight feeds are stills from our own scenes; the phosphor sweep is animated. |
 | Inspect | Developing trays and hanging prints in red safelight. Move the lens over the portrait or handwritten note; the wheel changes magnification from 1.25× to 3.5×. |

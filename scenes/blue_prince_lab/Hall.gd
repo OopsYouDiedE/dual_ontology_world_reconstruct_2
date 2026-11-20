@@ -22,6 +22,7 @@ var walker := CharacterBody3D.new()
 var walk_camera := Camera3D.new()
 var shot_camera := Camera3D.new()
 var active_view := 0
+var macro_view := false
 var portrait := false
 var notice := Label.new()
 var controls := HBoxContainer.new()
@@ -46,7 +47,14 @@ var toon := true
 var styled: Array[ShaderMaterial] = []
 var decor: Node3D
 
+const FRAME_ACTION := &"meridian_inspect_frame"
+
 func _ready() -> void:
+	if not InputMap.has_action(FRAME_ACTION):
+		InputMap.add_action(FRAME_ACTION)
+		var key := InputEventKey.new()
+		key.physical_keycode = KEY_PERIOD
+		InputMap.action_add_event(FRAME_ACTION, key)
 	name = "ArchitectureLab"
 	add_child(Shell.new())
 	_light_room()
@@ -245,6 +253,7 @@ func _setup_hud() -> void:
 	interface_controls.position = Vector2(16,82)
 	for i in Gallery.NAMES.size():
 		_button(Gallery.NAMES[i], show_view.bind(REFERENCE_START + i), study_controls if i<4 else interface_controls)
+	_button("Inspect train", _inspect_train, interface_controls)
 	notice.position = Vector2(16, 119)
 	notice.add_theme_color_override("font_shadow_color", Color("161c26"))
 	notice.add_theme_constant_override("shadow_outline_size", 4)
@@ -266,7 +275,20 @@ func _toggle_button(title: String, enabled: bool, callback: Callable) -> void:
 	button.pressed.connect(callback)
 	controls.add_child(button)
 
+func _inspect_train() -> void:
+	var enable := not macro_view
+	show_view(STUDY_START + Studies.Shot.MERIDIAN)
+	macro_view = enable
+	if macro_view: _frame_train()
+
+func _frame_train() -> void:
+	var watch := studies.meridian
+	shot_camera.fov = 33
+	shot_camera.global_position = watch.to_global(Vector3(.56, .74, 1.37))
+	shot_camera.look_at(watch.to_global(Vector3(.09,.045,-.02)), watch.global_basis.y.normalized())
+
 func show_view(index: int) -> void:
+	macro_view = false
 	gallery.clear_set(env)
 	active_view = index
 	if index >= REFERENCE_START:
@@ -287,6 +309,7 @@ func show_view(index: int) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _walk() -> void:
+	macro_view = false
 	gallery.clear_set(env)
 	studies.clear()
 	active_view = -1
@@ -298,6 +321,9 @@ func _toggle_hud() -> void:
 	hud.visible = not portrait
 
 func _unhandled_input(event: InputEvent) -> void:
+	if macro_view and event.is_action_pressed(FRAME_ACTION):
+		studies.meridian.step_inspection()
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.physical_keycode:
 			KEY_1: show_view(0)
@@ -372,6 +398,7 @@ func _physics_process(delta: float) -> void:
 		notice.text = ["SERVICE STAIRS   /   BASELINE", "SERVICE STAIRS   /   ANOMALY",
 			"ACADEMY RECORDS   /   Click the ledger to read it.", "EVIDENCE   /   NIGHT REGISTER",
 			"DEEP SPACE   /   Running at real time. Click to pause or resume."][active_view - STUDY_START]
+		if macro_view: notice.text = "MOVEMENT   /   Click centre: run or pause    ·    Period: advance 1/48 s"
 		return
 	if active_view == 4:
 		notice.text = "A26 / TRIAXIAL TOURBILLON MODEL II   ·   Click to separate or gather the original printed parts.   ·   CC BY-NC"
@@ -417,6 +444,8 @@ func snapshot() -> Dictionary:
 	mechanism["triangle_budget"] = studies.meridian.TRIANGLE_BUDGET
 	mechanism["surface_budget"] = studies.meridian.SURFACE_BUDGET
 	mechanism["running"] = studies.meridian.running
+	mechanism["moving_budget"] = studies.meridian.MOVING_BUDGET
+	mechanism["train"] = [studies.meridian.transfer.rotation.z, studies.meridian.planet.rotation.z, studies.meridian.escape.rotation.z, studies.meridian.lever.rotation.z]
 	mechanism["beat"] = studies.meridian.beat
 	mechanism["minute_pointer"] = studies.meridian.minute.rotation.z
 	mechanism["angles"] = _axes(studies.meridian.angles)

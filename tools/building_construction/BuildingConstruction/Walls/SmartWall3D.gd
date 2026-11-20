@@ -109,21 +109,50 @@ func clear_openings() -> void:
 	openings.clear()
 	_queue_rebuild()
 
+## Opening coordinates are in the insert's CLOSED local X/Y plane, independent
+## of the animated sash/leaf transform. Legacy hinged children use the same datum.
+static func outline(child: Node3D) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	if child.has_meta(&"assembly_outline"): return child.get_meta(&"assembly_outline")
+	var mesh_root := child.get_node_or_null("Generated")
+	if mesh_root and mesh_root.has_meta(&"opening_profile_json"):
+		for point in JSON.parse_string(mesh_root.get_meta(&"opening_profile_json")):
+			points.append(Vector2(point[0],point[1]))
+	return points
+
+static func aperture(child: Node3D) -> Rect2:
+	if "leaf_width" in child:
+		return Rect2(-0.035, 0, child.leaf_width + 0.07, child.leaf_height + 0.025)
+	if "sash_width" in child:
+		return Rect2(-0.025, -0.015, child.sash_width + 0.05, child.sash_height + 0.04)
+	match str(child.get_meta(&"assembly_id", "")):
+		"HallDoor": return Rect2(-0.81, 0, 1.62, 2.7)
+		"RecipeClosedDoor", "RecipeRectangularWindow": return Rect2(-float(child.width) / 2, 0, child.width, child.height)
+	var poly := outline(child)
+	if poly.is_empty(): return Rect2()
+	var rect := Rect2(poly[0], Vector2.ZERO)
+	for point in poly: rect = rect.expand(point)
+	return rect
+
+func opening_for(child: Node3D) -> Dictionary:
+	var rect := aperture(child)
+	if not rect.has_area(): return {}
+	var dir := (end_point - start_point).normalized()
+	var a := child.transform * Vector3(rect.position.x, rect.position.y, 0) - start_point
+	var b := child.transform * Vector3(rect.end.x, rect.end.y, 0) - start_point
+	var polygon := PackedVector2Array()
+	for point in outline(child):
+		var projected := child.transform * Vector3(point.x,point.y,0) - start_point
+		polygon.append(Vector2(projected.dot(dir),projected.y))
+	return {"profile":polygon,"from":minf(a.dot(dir), b.dot(dir)), "to":maxf(a.dot(dir), b.dot(dir)),
+		"bottom":minf(a.y,b.y), "top":maxf(a.y,b.y)}
+
 func detect_child_openings() -> Array[Dictionary]:
 	var detected: Array[Dictionary] = []
-	var wall_dir := end_point - start_point
-	var wall_length := wall_dir.length()
-	if wall_length < 0.001: return detected
-	var wall_norm := wall_dir.normalized()
 	for child in get_children():
-		if child is Node3D and (child.has_method("get_leaf_width") or child.name.contains("Door") or child.name.contains("Window")):
-			var child_pos: Vector3 = child.position
-			var proj_dist: float = (child_pos - start_point).dot(wall_norm)
-			if proj_dist >= -0.2 and proj_dist <= wall_length + 0.2:
-				var w: float = child.get("leaf_width") if "leaf_width" in child else 0.9
-				var h: float = child.get("leaf_height") if "leaf_height" in child else 2.1
-				var bottom_h: float = child_pos.y
-				detected.append({"from":proj_dist - w * 0.5,"to":proj_dist + w * 0.5,"bottom":bottom_h,"top":bottom_h + h})
+		if child is Node3D and not child.is_queued_for_deletion():
+			var op := opening_for(child)
+			if not op.is_empty(): detected.append(op)
 	return detected
 
 func rebuild() -> void:
@@ -152,8 +181,10 @@ func rebuild() -> void:
 
 	# Clear previous generated meshes and shapes
 	for c in visual_root.get_children():
+		c.get_parent().remove_child(c)
 		c.queue_free()
 	for c in collision_root.get_children():
+		c.get_parent().remove_child(c)
 		c.queue_free()
 
 	var effective_height := cutaway_elevation if cutaway_enabled else wall_height
@@ -168,6 +199,7 @@ func rebuild() -> void:
 		var t: float = clampf(float(op.to), 0.0, length)
 		if t > f:
 			valid_openings.append({
+				"profile":op.get("profile",PackedVector2Array()),
 				"from": f,
 				"to": t,
 				"bottom": clampf(float(op.bottom), 0.0, effective_height),
@@ -178,34 +210,43 @@ func rebuild() -> void:
 	# Generate wall blocks
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
 
 	var col_faces := PackedVector3Array()
-	var current_x: float = 0.0
-
+	# Sweep vertical slices so stacked or overlapping openings share one void
+	# in render geometry, collision and the cutaway lid.
+	var cuts: Array[float] = [0.0, length]
 	for op in valid_openings:
-		# Segment to the left of opening
-		if op.from > current_x + 0.01:
-			_generate_box_segment(st, col_faces, current_x, op.from, 0.0, effective_height, dir, normal)
+		cuts.append(op.from)
+		cuts.append(op.to)
+		if op.profile.is_empty(): _generate_opening_frame(visual_root, op, dir, normal)
+		else:
+			var poly: PackedVector2Array = op.profile
+			for j in poly.size():
+				var p := poly[j]; var q := poly[(j+1)%poly.size()]
+				cuts.append(clampf(p.x,0,length))
+				if (p.y-effective_height)*(q.y-effective_height)<0:
+					cuts.append(clampf(lerpf(p.x,q.x,(effective_height-p.y)/(q.y-p.y)),0,length))
+	cuts.sort()
+	for i in range(1, cuts.size()):
+		var a := cuts[i-1]
+		var b := cuts[i]
+		if b-a < 0.0001: continue
+		var voids := valid_openings.filter(func(op): return op.from < b and op.to > a and op.top > op.bottom)
+		voids.sort_custom(func(left,right): return left.bottom < right.bottom)
+		var y := Vector2.ZERO
+		for op in voids:
+			var left := _span(op,a,effective_height); var right := _span(op,b,effective_height)
+			var lower := Vector2(left.x,right.x).max(y)
+			if lower.distance_squared_to(y)>0.00000001:
+				_generate_box_segment(st,col_faces,a,b,y.x,lower.x,dir,normal,y.y,lower.y)
+			y = y.max(Vector2(left.y,right.y))
+		if minf(y.x,y.y) < effective_height:
+			_generate_box_segment(st,col_faces,a,b,y.x,effective_height,dir,normal,y.y,effective_height)
+			if cutaway_enabled: _build_cutaway_cap(visual_root, a, b, effective_height, dir, normal)
 
-		# Below opening (e.g. window sill)
-		if op.bottom > 0.01:
-			_generate_box_segment(st, col_faces, op.from, op.to, 0.0, op.bottom, dir, normal)
-
-		# Above opening (lintel / over-door)
-		if op.top < effective_height - 0.01:
-			_generate_box_segment(st, col_faces, op.from, op.to, op.top, effective_height, dir, normal)
-
-		# Opening frame trim
-		_generate_opening_frame(visual_root, op, dir, normal)
-
-		current_x = op.to
-
-	# Final segment to the right of last opening
-	if current_x < length - 0.01:
-		_generate_box_segment(st, col_faces, current_x, length, 0.0, effective_height, dir, normal)
-
-	st.generate_normals()
-	var wall_mesh := st.commit()
+	if not col_faces.is_empty(): st.generate_normals()
+	var wall_mesh := st.commit() if not col_faces.is_empty() else null
 	var wall_instance := MeshInstance3D.new()
 	wall_instance.name = "WallMesh"
 	wall_instance.mesh = wall_mesh
@@ -216,10 +257,6 @@ func rebuild() -> void:
 	# Skirting board mesh
 	if skirting_enabled and skirting_height > 0.0:
 		_build_skirting(visual_root, valid_openings, length, dir, normal)
-
-	# Cutaway Cap (if enabled)
-	if cutaway_enabled:
-		_build_cutaway_cap(visual_root, length, effective_height, dir, normal)
 
 	# StaticBody CollisionShape
 	if col_faces.size() >= 3:
@@ -233,15 +270,27 @@ func rebuild() -> void:
 	_update_materials()
 	wall_rebuilt.emit()
 
-func _generate_box_segment(st: SurfaceTool, col: PackedVector3Array, x0: float, x1: float, y0: float, y1: float, dir: Vector3, normal: Vector3) -> void:
+# The kit's round and arched profiles are convex in each vertical slice.
+func _span(op: Dictionary, x: float, height: float) -> Vector2:
+	var poly: PackedVector2Array = op.profile
+	if poly.is_empty(): return Vector2(op.bottom,op.top)
+	var low := INF; var high := -INF
+	for j in poly.size():
+		var a := poly[j]; var b := poly[(j+1)%poly.size()]
+		if absf(b.x-a.x)<0.00001 or x < minf(a.x,b.x)-0.00001 or x > maxf(a.x,b.x)+0.00001: continue
+		var y := clampf(lerpf(a.y,b.y,clampf((x-a.x)/(b.x-a.x),0,1)),0,height)
+		low = minf(low,y); high = maxf(high,y)
+	return Vector2(low,high) if low<=high else Vector2(op.bottom,op.top)
+
+func _generate_box_segment(st: SurfaceTool, col: PackedVector3Array, x0: float, x1: float, y0: float, y1: float, dir: Vector3, normal: Vector3, low_right: float, high_right: float) -> void:
 	var hw := wall_thickness * 0.5
 	var p0 := start_point + dir * x0 - normal * hw + Vector3.UP * y0
-	var p1 := start_point + dir * x1 - normal * hw + Vector3.UP * y0
-	var p2 := start_point + dir * x1 + normal * hw + Vector3.UP * y0
+	var p1 := start_point + dir * x1 - normal * hw + Vector3.UP * low_right
+	var p2 := start_point + dir * x1 + normal * hw + Vector3.UP * low_right
 	var p3 := start_point + dir * x0 + normal * hw + Vector3.UP * y0
 	var q0 := p0 + Vector3.UP * (y1 - y0)
-	var q1 := p1 + Vector3.UP * (y1 - y0)
-	var q2 := p2 + Vector3.UP * (y1 - y0)
+	var q1 := p1 + Vector3.UP * (high_right - low_right)
+	var q2 := p2 + Vector3.UP * (high_right - low_right)
 	var q3 := p3 + Vector3.UP * (y1 - y0)
 
 	_add_quad(st, col, p0, p1, q1, q0) # Front face (-normal)
@@ -267,28 +316,30 @@ func _add_quad(st: SurfaceTool, col: PackedVector3Array, a: Vector3, b: Vector3,
 	col.append(d)
 
 func _generate_opening_frame(parent: Node3D, op: Dictionary, dir: Vector3, normal: Vector3) -> void:
-	var frame_node := Node3D.new()
-	frame_node.name = "Frame_%.1f_%.1f" % [op.from, op.to]
-	var center_x: float = (op.from + op.to) * 0.5
-	var center_y: float = (op.bottom + op.top) * 0.5
-	var pos := start_point + dir * center_x + Vector3.UP * center_y
-	frame_node.position = pos
-
-	var mesh_inst := MeshInstance3D.new()
-	mesh_inst.name = "FrameMesh"
-	var box := BoxMesh.new()
-	var w: float = op.to - op.from + 0.06
-	var h: float = op.top - op.bottom + 0.06
-	box.size = Vector3(w, h, wall_thickness + 0.04)
-	mesh_inst.mesh = box
-	if skirting_material != null:
-		mesh_inst.material_override = skirting_material
-	frame_node.add_child(mesh_inst)
-	parent.add_child(frame_node)
+	const TRIM := 0.03
+	var width := float(op.to) - float(op.from)
+	var height := float(op.top) - float(op.bottom)
+	if height <= 0.0: return
+	var cx := (float(op.from) + float(op.to)) * 0.5
+	var cy := (float(op.bottom) + float(op.top)) * 0.5
+	# Trim sits on the solid side of the opening; no raised threshold for doors.
+	var strips := [Vector4(op.from - TRIM/2, cy, TRIM, height), Vector4(op.to + TRIM/2, cy, TRIM, height)]
+	if not cutaway_enabled or op.top < cutaway_elevation:
+		strips.append(Vector4(cx, op.top + TRIM/2, width + 2*TRIM, TRIM))
+	if op.bottom > TRIM: strips.append(Vector4(cx, op.bottom - TRIM/2, width + 2*TRIM, TRIM))
+	for strip: Vector4 in strips:
+		var bar := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(strip.z, strip.w, wall_thickness + 0.04)
+		bar.mesh = mesh
+		bar.material_override = skirting_material
+		bar.transform = Transform3D(Basis(dir, Vector3.UP, normal), start_point + dir * strip.x + Vector3.UP * strip.y)
+		parent.add_child(bar)
 
 func _build_skirting(parent: Node3D, openings_list: Array[Dictionary], length: float, dir: Vector3, normal: Vector3) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
 	var dummy_col := PackedVector3Array()
 
 	var cur_x := 0.0
@@ -296,10 +347,11 @@ func _build_skirting(parent: Node3D, openings_list: Array[Dictionary], length: f
 		if op.bottom <= 0.05: # Opening reaches floor, skip skirting
 			if op.from > cur_x + 0.01:
 				_build_skirting_strip(st, dummy_col, cur_x, op.from, dir, normal)
-			cur_x = op.to
+			cur_x = maxf(cur_x, op.to)
 	if cur_x < length - 0.01:
 		_build_skirting_strip(st, dummy_col, cur_x, length, dir, normal)
 
+	if dummy_col.is_empty(): return
 	st.generate_normals()
 	var mesh := st.commit()
 	var inst := MeshInstance3D.new()
@@ -318,8 +370,7 @@ func _build_skirting_strip(st: SurfaceTool, col: PackedVector3Array, x0: float, 
 	var a1 := start_point + dir * x1 + normal * hw
 	var b1 := a1 + normal * sw
 	var b0 := a0 + normal * sw
-	_add_quad(st, col, a0, a1, a1 + Vector3.UP * sh, a0 + Vector3.UP * sh)
-	_add_quad(st, col, b0, b1, b1 + Vector3.UP * sh, b0 + Vector3.UP * sh)
+	_add_quad(st, col, b1, b0, b0 + Vector3.UP * sh, b1 + Vector3.UP * sh)
 	_add_quad(st, col, a0 + Vector3.UP * sh, a1 + Vector3.UP * sh, b1 + Vector3.UP * sh, b0 + Vector3.UP * sh)
 
 	# Side 2 (-normal)
@@ -327,24 +378,25 @@ func _build_skirting_strip(st: SurfaceTool, col: PackedVector3Array, x0: float, 
 	var c1 := start_point + dir * x1 - normal * hw
 	var d1 := c1 - normal * sw
 	var d0 := c0 - normal * sw
-	_add_quad(st, col, c1, c0, c0 + Vector3.UP * sh, c1 + Vector3.UP * sh)
-	_add_quad(st, col, d1, d0, d0 + Vector3.UP * sh, d1 + Vector3.UP * sh)
-	_add_quad(st, col, c0 + Vector3.UP * sh, c1 + Vector3.UP * sh, d1 + Vector3.UP * sh, d0 + Vector3.UP * sh)
+	_add_quad(st, col, d0, d1, d1 + Vector3.UP * sh, d0 + Vector3.UP * sh)
+	_add_quad(st, col, c1 + Vector3.UP * sh, c0 + Vector3.UP * sh, d0 + Vector3.UP * sh, d1 + Vector3.UP * sh)
 
-func _build_cutaway_cap(parent: Node3D, length: float, elevation: float, dir: Vector3, normal: Vector3) -> void:
+func _build_cutaway_cap(parent: Node3D, x0: float, x1: float, elevation: float, dir: Vector3, normal: Vector3) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
 	var dummy := PackedVector3Array()
 	var hw := wall_thickness * 0.5
-	var p0 := start_point - normal * hw + Vector3.UP * elevation
-	var p1 := start_point + dir * length - normal * hw + Vector3.UP * elevation
-	var p2 := start_point + dir * length + normal * hw + Vector3.UP * elevation
-	var p3 := start_point + normal * hw + Vector3.UP * elevation
+	var p0 := start_point + dir * x0 - normal * hw + Vector3.UP * elevation
+	var p1 := start_point + dir * x1 - normal * hw + Vector3.UP * elevation
+	var p2 := start_point + dir * x1 + normal * hw + Vector3.UP * elevation
+	var p3 := start_point + dir * x0 + normal * hw + Vector3.UP * elevation
 	_add_quad(st, dummy, p0, p1, p2, p3)
 	st.generate_normals()
 	var cap_mesh := st.commit()
 	var cap_inst := MeshInstance3D.new()
 	cap_inst.name = "CutawayCap"
+	cap_inst.position.y = 0.001
 	cap_inst.mesh = cap_mesh
 	if cutaway_cap_material != null:
 		cap_inst.material_override = cutaway_cap_material

@@ -157,6 +157,11 @@ func rebuild() -> void:
 		var next := (i + 1) % polygon.size()
 		var a_2d := polygon[i]
 		var b_2d := polygon[next]
+		# The perimeter must wind outwards for both clockwise and CCW zones.
+		if Geometry2D.is_polygon_clockwise(polygon):
+			var swap := a_2d
+			a_2d = b_2d
+			b_2d = swap
 		var t0 := Vector3(a_2d.x, 0.0, a_2d.y)
 		var t1 := Vector3(b_2d.x, 0.0, b_2d.y)
 		var b1 := Vector3(b_2d.x, -floor_thickness, b_2d.y)
@@ -165,10 +170,10 @@ func rebuild() -> void:
 		var side_dir := (t1 - t0).normalized()
 		var side_norm := Vector3(side_dir.z, 0, -side_dir.x)
 		st.set_normal(side_norm)
-		st.add_vertex(t0); st.add_vertex(t1); st.add_vertex(b1)
-		st.add_vertex(t0); st.add_vertex(b1); st.add_vertex(b0)
-		col_faces.append(t0); col_faces.append(t1); col_faces.append(b1)
-		col_faces.append(t0); col_faces.append(b1); col_faces.append(b0)
+		st.add_vertex(t0); st.add_vertex(b1); st.add_vertex(t1)
+		st.add_vertex(t0); st.add_vertex(b0); st.add_vertex(b1)
+		col_faces.append(t0); col_faces.append(b1); col_faces.append(t1)
+		col_faces.append(t0); col_faces.append(b0); col_faces.append(b1)
 
 	var floor_mesh := st.commit()
 	var floor_inst := MeshInstance3D.new()

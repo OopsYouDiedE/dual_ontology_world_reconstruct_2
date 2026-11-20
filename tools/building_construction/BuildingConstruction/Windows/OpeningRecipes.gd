@@ -120,6 +120,7 @@ static func gen_arched_window(v_name, v_mats, v_width = 1.4, v_height = 3.0, v_r
 	v_rows = tmp_22[1]
 	v_root = Geo.gen_group(v_name, [0, 0, 0], 0, v_parent)
 	v_root["kind"] = "arched_window"
+	v_root["opening_profile_json"] = JSON.stringify(v_points)
 	v_root["clear_width"] = v_width
 	v_root["clear_height"] = v_height
 	v_root["arch_rise"] = v_rise

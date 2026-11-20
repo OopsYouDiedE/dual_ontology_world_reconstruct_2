@@ -1,6 +1,8 @@
 extends Node3D
 
 const CATALOG_PATH := "res://tools/building_construction/catalog.json"
+const Assembly = preload("BuildingConstruction/Shared/ComponentAssembly.gd")
+const Socket = preload("BuildingConstruction/Shared/MechanismSocket.gd")
 const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
 const CANDIDATE_PATH := "res://tools/building_construction/candidates/BuildingCandidate.tscn"
 
@@ -10,14 +12,17 @@ var category: OptionButton
 var items: ItemList
 var status: Label
 var entries: Array = []
+var activity_layer: Control
+var activity_choices: Dictionary
 var catalog: Dictionary
 var selected_path := ""
-var selected_defaults: Dictionary = {}
+var selected_entry: Dictionary = {}
 var selected: Node3D
 var outline: ItemList
 var inspector: VBoxContainer
 var history: Array[PackedScene] = []
 var history_index := -1
+var reverse_end := false
 var rotation_y := 0.0
 var orbit := Vector2(-0.7, 0.8)
 var distance := 18.0
@@ -33,6 +38,10 @@ func _ready() -> void:
 		push_error("Invalid building catalog.")
 		return
 	catalog = parsed
+	var button_path := "res://scenes/physical_button/PhysicalButton.gd"
+	if ResourceLoader.exists(button_path):
+		catalog.items.append({"id":"PhysicalButton","category":"Mechanisms","mount":"control","label":"Panel pushbutton","path":button_path})
+	activity_choices = Socket.choices()
 	candidates = Node3D.new()
 	candidates.name = "BuilderCandidates"
 	add_child(candidates)
@@ -53,6 +62,10 @@ func _ready() -> void:
 	_update_camera()
 	_make_grid()
 	_make_ui()
+	var overlay := CanvasLayer.new(); overlay.layer = 8; add_child(overlay)
+	activity_layer = Control.new(); overlay.add_child(activity_layer)
+	activity_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	activity_layer.hide()
 	_remember()
 
 func _make_grid() -> void:
@@ -106,7 +119,7 @@ func _make_ui() -> void:
 	outline = ItemList.new()
 	outline.custom_minimum_size = Vector2(250, 150)
 	column.add_child(outline)
-	outline.item_selected.connect(func(index: int): _select(candidates.get_child(index)))
+	outline.item_selected.connect(func(index: int): _select(outline.get_item_metadata(index)))
 	_button(column, "Save Candidate", _save_candidate)
 	_button(column, "Open Candidate", _open_candidate)
 	_button(column, "Show All Components", _show_catalog)
@@ -114,7 +127,7 @@ func _make_ui() -> void:
 	status = Label.new()
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.custom_minimum_size.x = 250
-	status.text = "Units are meters. Select a component and click the grid to place it. Right-drag to orbit, Shift+right-drag to pan, scroll to zoom, or press R to rotate the component."
+	status.text = "Select a component and click its support. R: turn. F: swap end or stair-rail side. Right-drag: orbit. Shift+right-drag: pan. Scroll: zoom."
 	column.add_child(status)
 	var right := PanelContainer.new()
 	right.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -144,8 +157,8 @@ func _refresh(index: int) -> void:
 
 func _select_item(index: int) -> void:
 	selected_path = str(entries[index].path)
-	selected_defaults = entries[index].get("defaults", {})
-	status.text = "Click the floor to place: " + str(entries[index].label)
+	selected_entry = entries[index]
+	status.text = "%s · %s mount. Click a support or joint; R rotates, F swaps run ends." % [selected_entry.label, selected_entry.mount]
 
 func _cancel() -> void:
 	selected_path = ""
@@ -153,6 +166,7 @@ func _cancel() -> void:
 	status.text = "Select an object in the view or in the list."
 
 func _unhandled_input(event: InputEvent) -> void:
+	if activity_layer.visible: return
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		if Input.is_key_pressed(KEY_SHIFT):
 			target += (-camera.global_basis.x * event.relative.x + camera.global_basis.y * event.relative.y) * distance * 0.0015
@@ -176,6 +190,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		match event.keycode:
 			KEY_ESCAPE: _cancel()
 			KEY_DELETE: _delete_selected()
+			KEY_F:
+				reverse_end = not reverse_end
+				status.text = "Joining the %s end of the next run." % ("last" if reverse_end else "first")
 			KEY_R:
 				rotation_y = fposmod(rotation_y + 90.0, 360.0)
 				status.text = "Placement angle: %d°" % rotation_y
@@ -187,34 +204,41 @@ func _update_camera() -> void:
 func _place(mouse: Vector2) -> void:
 	if selected_path.is_empty():
 		return
-	var point = Plane(Vector3.UP, 0.0).intersects_ray(camera.project_ray_origin(mouse), camera.project_ray_normal(mouse))
-	if point == null:
+	var origin := camera.project_ray_origin(mouse)
+	var ray := camera.project_ray_normal(mouse)
+	var hit := _hit(origin,ray)
+	var point = hit.position if hit else Plane(Vector3.UP,0.0).intersects_ray(origin,ray)
+	if point == null: return
+	var host := Assembly.component(hit.collider,candidates) if hit else null
+	var instance := _make_part(selected_entry)
+	if not instance: return
+	candidates.add_child(instance,true)
+	var issue := Assembly.place(instance,candidates,host,point,hit.normal if hit else Vector3.UP,rotation_y,reverse_end)
+	if not issue.is_empty():
+		instance.get_parent().remove_child(instance)
+		instance.free()
+		status.text = issue
 		return
-	var instance := Components.create(selected_path)
-	if instance == null:
-		status.text = "Could not load component: " + selected_path
-		return
-	for key in selected_defaults:
-		instance.set(key, selected_defaults[key])
-	candidates.add_child(instance, true)
-	instance.owner = candidates
-	instance.position = (point as Vector3).snapped(Vector3(0.25, 0.25, 0.25))
-	instance.rotation_degrees.y = rotation_y
 	_remember()
 	_select(instance)
-	status.text = "Placed " + instance.name
+	status.text = "Placed %s%s" % [selected_entry.label, " on " + str(host.name) if host else ""]
+
+func _make_part(entry: Dictionary) -> Node3D:
+	var part := Components.create(str(entry.path))
+	if part:
+		Assembly.tag(part,entry)
+		for key in entry.get("defaults",{}): part.set(key,entry.defaults[key])
+	else: status.text = "Could not load " + str(entry.label)
+	return part
+
+func _hit(origin: Vector3, ray: Vector3) -> Dictionary:
+	return get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(origin,origin+ray*500))
 
 func _pick(mouse: Vector2) -> void:
-	var origin := camera.project_ray_origin(mouse)
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + camera.project_ray_normal(mouse) * 200)
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if hit.is_empty():
-		return
-	var node := hit.collider as Node
-	while node != null and node.get_parent() != candidates:
-		node = node.get_parent()
-	if node is Node3D:
-		_select(node)
+	var hit := _hit(camera.project_ray_origin(mouse),camera.project_ray_normal(mouse))
+	if hit:
+		var node := Assembly.component(hit.collider,candidates)
+		if node: _select(node)
 
 func _select(node: Node3D) -> void:
 	selected = node
@@ -222,12 +246,34 @@ func _select(node: Node3D) -> void:
 	var title := Label.new()
 	title.text = str(node.name)
 	inspector.add_child(title)
+	_activity_fields(node)
+	if node.has_method("interact"):
+		_button(inspector,"Operate",node.interact)
+	if node.has_method("set_angle_checked"):
+		_button(inspector,"Swing leaf",func():
+			var open_angle: float = Socket.open_angle(node)
+			node.set_angle_checked(open_angle if is_zero_approx(node.current_angle) else 0.0))
+	if node.has_method("set_wind"):
+		_button(inspector,"Apply breeze",func(): node.set_wind(node.global_basis * Vector3(1,0,1)))
+		_button(inspector,"Still air",func(): node.set_wind(Vector3.ZERO))
+	# Pinned fittings keep their mount and dimensions until removed. Moving a
+	# free assembly root carries its subtree. Replacing its geometry needs a refit.
+	if node.get_parent() != candidates:
+		var hint := Label.new()
+		hint.text = "Mounted on: " + str(node.get_parent().name)
+		inspector.add_child(hint)
+		_refresh_outline()
+		return
 	_vector_field("Position", "position", node.position)
 	_vector_field("Rotation", "rotation_degrees", node.rotation_degrees)
+	if not Assembly.members(node).is_empty():
+		_refresh_outline()
+		return
 	for property in node.get_property_list():
 		if property.usage & PROPERTY_USAGE_SCRIPT_VARIABLE == 0 or property.usage & PROPERTY_USAGE_EDITOR == 0:
 			continue
 		var key: String = property.name
+		if key in ["recipe_module","recipe_function","recipe_parameters"]: continue
 		var value = node.get(key)
 		if value is Vector3:
 			_vector_field(key, key, value)
@@ -244,6 +290,40 @@ func _select(node: Node3D) -> void:
 				var parsed = text if value is String else JSON.parse_string(text)
 				if parsed != null: _change(key, parsed))
 	_refresh_outline()
+
+func _socket(node: Node3D) -> Node:
+	var socket := node.get_node_or_null("MechanismSocket")
+	if not socket:
+		socket = Socket.new(); socket.name = "MechanismSocket"
+		node.add_child(socket); socket.owner = candidates
+	return socket
+
+func _activity_fields(node: Node3D) -> void:
+	var socket := node.get_node_or_null("MechanismSocket")
+	var activity: String = socket.activity if socket else ""
+	var picker := OptionButton.new(); inspector.add_child(picker)
+	for key in activity_choices:
+		picker.add_item(activity_choices[key]); picker.set_item_metadata(picker.item_count-1,key)
+		if key == activity: picker.select(picker.item_count-1)
+	picker.item_selected.connect(func(i:int):
+		_socket(node).configure(picker.get_item_metadata(i)); _remember(); _select(node))
+	if not activity.is_empty():
+		_button(inspector,"Open activity",func():
+			if socket.activate(activity_layer):
+				activity_layer.show(); socket.dismissed.connect(activity_layer.hide,CONNECT_ONE_SHOT))
+	var button := node.has_method("pulse") and Assembly.id(node) == "PhysicalButton"
+	if button: _button(inspector,"Press button",func(): _socket(node).press())
+	if button or not activity.is_empty() or node.has_signal("running_changed") or node.has_signal("open_changed"):
+		var outputs := OptionButton.new(); inspector.add_child(outputs)
+		outputs.add_item("Output: unconnected"); outputs.set_item_metadata(0,null)
+		for other in Assembly.members(candidates):
+			if other == node: continue
+			if not (other.has_method("set_open") or other.has_method("set_angle_checked") or (("is_running" in other or "running" in other) and other.has_method("interact"))): continue
+			outputs.add_item("Output: " + str(candidates.get_path_to(other))); outputs.set_item_metadata(outputs.item_count-1,other)
+			if socket and not socket.target.is_empty() and socket.get_node_or_null(socket.target) == other: outputs.select(outputs.item_count-1)
+		outputs.item_selected.connect(func(i:int):
+			var output: Node = outputs.get_item_metadata(i); var port := _socket(node)
+			port.target = port.get_path_to(output) if output else NodePath(); _remember())
 
 func _clear_inspector() -> void:
 	for child in inspector.get_children():
@@ -312,10 +392,11 @@ func _change(key: String, value: Variant) -> void:
 
 func _refresh_outline() -> void:
 	outline.clear()
-	for child in candidates.get_children():
-		outline.add_item(str(child.name))
-		if child == selected:
-			outline.select(outline.item_count - 1)
+	for child in Assembly.members(candidates):
+		var depth := candidates.get_path_to(child).get_name_count()-1
+		outline.add_item("    ".repeat(depth) + str(child.name))
+		outline.set_item_metadata(outline.item_count-1,child)
+		if child == selected: outline.select(outline.item_count-1)
 
 func _snapshot() -> PackedScene:
 	var packed := PackedScene.new()
@@ -342,6 +423,13 @@ func _replace(packed: PackedScene) -> void:
 	candidates.queue_free()
 	candidates = packed.instantiate() as Node3D
 	add_child(candidates)
+	# Candidates saved before mount metadata existed are flat catalog instances.
+	for child in candidates.get_children():
+		if child.get_script() and Assembly.id(child).is_empty():
+			for entry in catalog.items:
+				if child.get_script().resource_path == entry.path:
+					Assembly.tag(child,entry)
+					break
 	_refresh_outline()
 
 func _restore(index: int) -> void:
@@ -351,7 +439,15 @@ func _restore(index: int) -> void:
 
 func _delete_selected() -> void:
 	if is_instance_valid(selected):
-		candidates.remove_child(selected)
+		var parent := selected.get_parent()
+		# Remove incoming links before recycling a component name.
+		for peer in Assembly.members(candidates):
+			var port := peer.get_node_or_null("MechanismSocket")
+			if port and not port.target.is_empty():
+				var sink: Node = port.get_node_or_null(port.target)
+				if sink and (sink == selected or selected.is_ancestor_of(sink)): port.target = NodePath()
+		parent.remove_child(selected)
+		if parent is SmartWall3D: parent.rebuild()
 		selected.queue_free()
 		selected = null
 		_clear_inspector()
@@ -380,9 +476,8 @@ func _show_catalog() -> void:
 	var index := 0
 	for entry in catalog.items:
 		status.text = "Generating component overview: %d / %d" % [index + 1, catalog.items.size()]
-		var instance := Components.create(str(entry.path))
+		var instance := _make_part(entry)
 		if instance == null: continue
-		for key in entry.get("defaults", {}): instance.set(key, entry.defaults[key])
 		candidates.add_child(instance, true)
 		instance.owner = candidates
 		instance.position = Vector3((index % 12) * 7.0, 0, (index / 12) * 7.0)

@@ -75,8 +75,10 @@ func _queue_rebuild() -> void:
 
 func rebuild() -> void:
 	_rebuild_pending = false
-	var total_rise := end_point.y - start_point.y
-	var horizontal_vec := Vector3(end_point.x - start_point.x, 0, end_point.z - start_point.z)
+	var foot := start_point if start_point.y <= end_point.y else end_point
+	var head := end_point if start_point.y <= end_point.y else start_point
+	var total_rise := head.y - foot.y
+	var horizontal_vec := Vector3(head.x - foot.x, 0, head.z - foot.z)
 	var run_length := horizontal_vec.length()
 	if run_length < 0.2 or absf(total_rise) < 0.1:
 		return
@@ -111,6 +113,7 @@ func rebuild() -> void:
 	# 1. Build Treads & Risers Mesh
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
 	var dummy_col := PackedVector3Array()
 
 	for i in range(step_count):
@@ -121,23 +124,33 @@ func rebuild() -> void:
 		var x1 := float(i + 1) * step_depth
 
 		# Riser (vertical face)
-		var r_b0 := start_point + dir * x0 - normal * half_width + Vector3.UP * step_start_h
-		var r_b1 := start_point + dir * x0 + normal * half_width + Vector3.UP * step_start_h
-		var r_t1 := start_point + dir * x0 + normal * half_width + Vector3.UP * step_top_h
-		var r_t0 := start_point + dir * x0 - normal * half_width + Vector3.UP * step_top_h
-		_add_quad(st, dummy_col, r_b0, r_b1, r_t1, r_t0)
+		var r_b0 := foot + dir * x0 - normal * half_width + Vector3.UP * step_start_h
+		var r_b1 := foot + dir * x0 + normal * half_width + Vector3.UP * step_start_h
+		var r_t1 := foot + dir * x0 + normal * half_width + Vector3.UP * step_top_h
+		var r_t0 := foot + dir * x0 - normal * half_width + Vector3.UP * step_top_h
+		_add_quad(st, dummy_col, r_b0, r_t0, r_t1, r_b1)
 
 		# Tread (horizontal surface with nosing overhang)
-		var t_f0 := start_point + dir * (x0 - tread_nosing) - normal * half_width + Vector3.UP * step_top_h
-		var t_f1 := start_point + dir * (x0 - tread_nosing) + normal * half_width + Vector3.UP * step_top_h
-		var t_b1 := start_point + dir * x1 + normal * half_width + Vector3.UP * step_top_h
-		var t_b0 := start_point + dir * x1 - normal * half_width + Vector3.UP * step_top_h
+		var t_f0 := foot + dir * (x0 - tread_nosing) - normal * half_width + Vector3.UP * step_top_h
+		var t_f1 := foot + dir * (x0 - tread_nosing) + normal * half_width + Vector3.UP * step_top_h
+		var t_b1 := foot + dir * x1 + normal * half_width + Vector3.UP * step_top_h
+		var t_b0 := foot + dir * x1 - normal * half_width + Vector3.UP * step_top_h
 		_add_quad(st, dummy_col, t_f0, t_b0, t_b1, t_f1)
 
 		# Tread front lip
 		var lip_b0 := t_f0 - Vector3.UP * tread_thickness
 		var lip_b1 := t_f1 - Vector3.UP * tread_thickness
-		_add_quad(st, dummy_col, lip_b0, lip_b1, t_f1, t_f0)
+		_add_quad(st, dummy_col, lip_b0, t_f0, t_f1, lip_b1)
+
+		# Close the flanks down to the base of the existing solid ramp collider.
+		var l0 := foot + dir*x0 - normal*half_width
+		var l1 := foot + dir*x1 - normal*half_width
+		var r0 := foot + dir*x0 + normal*half_width
+		var r1 := foot + dir*x1 + normal*half_width
+		_add_quad(st,dummy_col,l0,l1,t_b0,r_t0)
+		_add_quad(st,dummy_col,r1,r0,r_t1,t_b1)
+		_add_quad(st,dummy_col,l0,r0,r1,l1)
+		if i == step_count-1: _add_quad(st,dummy_col,l1,r1,t_b1,t_b0)
 
 	st.generate_normals()
 	var stair_mesh := st.commit()
@@ -149,12 +162,12 @@ func rebuild() -> void:
 	visual_root.add_child(stair_inst)
 
 	# 2. Ramp Collision Body (smooth wedge)
-	var p_bot_l := start_point - normal * half_width
-	var p_bot_r := start_point + normal * half_width
-	var p_top_l := start_point + dir * run_length - normal * half_width + Vector3.UP * total_rise
-	var p_top_r := start_point + dir * run_length + normal * half_width + Vector3.UP * total_rise
-	var p_base_top_l := start_point + dir * run_length - normal * half_width
-	var p_base_top_r := start_point + dir * run_length + normal * half_width
+	var p_bot_l := foot - normal * half_width
+	var p_bot_r := foot + normal * half_width
+	var p_top_l := foot + dir * run_length - normal * half_width + Vector3.UP * total_rise
+	var p_top_r := foot + dir * run_length + normal * half_width + Vector3.UP * total_rise
+	var p_base_top_l := foot + dir * run_length - normal * half_width
+	var p_base_top_r := foot + dir * run_length + normal * half_width
 
 	var ramp_faces := PackedVector3Array([
 		# Top slope

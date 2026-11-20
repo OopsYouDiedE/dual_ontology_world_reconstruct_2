@@ -12,8 +12,9 @@ func _click(at: Vector2) -> void:
 		await process_frame
 
 func _main() -> void:
-	var game := Run.instantiate()
+	var game := Run.new()
 	root.add_child(game)
+	game.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if not await _approach(game, 2):
 		quit(1)
 		return

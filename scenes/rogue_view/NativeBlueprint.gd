@@ -10,7 +10,10 @@ static func read(path: String, level: int = 1) -> Dictionary:
 	if file.get_length() > 8 * 1024 * 1024:
 		return {"error": ERR_FILE_CORRUPT}
 	var xml := XMLParser.new()
-	if xml.open_buffer(file.get_buffer(file.get_length())) != OK:
+	# XMLParser reports a trailing CRLF as a read error on some Windows checkouts.
+	# Parse the same logical XML regardless of Git's line endings.
+	var source := file.get_as_text().replace("\r\n", "\n")
+	if xml.open_buffer(source.to_utf8_buffer()) != OK:
 		return {"error": ERR_PARSE_ERROR}
 	var stack: PackedStringArray = []
 	var side := 0

@@ -3,6 +3,18 @@ extends Control
 
 signal exit_selected(index: int)
 signal landmark_inspected
+signal crossing_selected(group: int)
+signal witness_selected(id: String)
+
+const CrossingFixture := preload("res://scenes/rogue_crossing/Fixture.gd")
+const ServiceDoor := preload("res://assets/architecture/night_crossing/service_door.glb")
+var campaign_view := false
+var _crossing: Node3D
+var _witness_targets: Array[Dictionary] = []
+var field_model: Callable
+var routes_released := false
+var _route_hardware := []
+
 
 signal lane_selected(index: int)
 
@@ -199,6 +211,11 @@ func set_instance_id(room_id: String) -> void:
 	_night_open = false
 	_clicks.clear()
 	_keyboard_interact = false
+	if is_instance_valid(_crossing):
+		_crossing.hide()
+		_crossing.queue_free()
+	_crossing = null
+	_witness_targets.clear()
 	_drop_player()
 
 
@@ -278,10 +295,12 @@ func _rebuild() -> void:
 	_kitchen = null
 	_lights = null
 	_night_root = null
+	_crossing = null
 	_echo_glass = null
 	_gate_root = null
 	_gate_positions.clear()
 	_gate_labels.clear()
+	_route_hardware.clear()
 	_lanes.clear()
 	_walkable_cells.clear()
 	_avatar_root = null
@@ -515,6 +534,9 @@ func _nearest_walkable(point: Vector2) -> Vector3:
 func _is_clear_cell(cell: Vector2i) -> bool:
 	if not _walkable_cells.has(cell): return false
 	var center := Vector2(cell) + Vector2(0.5, 0.5)
+	if campaign_view and is_instance_valid(_crossing):
+		var local := _crossing.to_local(_world(center))
+		if absf(local.x) < 1.52 and absf(local.z) < .63: return false
 	for item: Dictionary in _lot.objects:
 		if not item.get("annotation_only", false) and item.role not in ["window", "entry", "exit"] and center.distance_to(item.position) < 0.48:
 			return false
@@ -549,6 +571,8 @@ func _refresh_targets() -> void:
 		if item.role == "entry": entrances.append(item)
 		if item.role in ["focal", "inspect"] and (focus.is_empty() or focus.role not in ["focal", "inspect"]): focus = item
 		elif focus.is_empty() and item.role not in ["entry", "exit", "window"]: focus = item
+	if is_instance_valid(_crossing): _targets.append_array(_crossing.targets)
+	_targets.append_array(_witness_targets)
 	if _inspection_active and _exits.is_empty():
 		if is_instance_valid(_night_root):
 			_targets.append({"kind": "inspect", "position": _night_anchor, "label": "the threshold"})
@@ -559,14 +583,15 @@ func _refresh_targets() -> void:
 			_targets.append({"kind": "lane", "index": i, "position": _lanes[i], "label": "brass strip" if i == 0 else "red strip"})
 	if portals.size() < _exits.size():
 		portals.append_array(entrances)
-	if expedition_view:
+	if expedition_view and (not campaign_view or is_instance_valid(_crossing)):
 		_sync_gates(portals)
 		for i in _gate_positions:
 			_targets.append({"kind": "exit", "index": i, "position": _gate_positions[i], "label": _exit_label(i)})
-	else:
+	elif not expedition_view:
 		for i in mini(portals.size(), _exits.size()):
 			_targets.append({"kind": "exit", "index": i, "position": _portal_position(portals[i]), "label": _exit_label(i)})
 	if is_instance_valid(_kitchen): _targets.append_array(_kitchen.targets())
+	if campaign_view: return
 	if not is_instance_valid(_focus_ring):
 		_focus_ring = MeshInstance3D.new()
 		var ring := TorusMesh.new()
@@ -600,7 +625,8 @@ func _refresh_ui() -> void:
 		if _mode == "snapshot":
 			var source := "Live FreeSO VM" if _lot.source_kind == "live-vm" else "Saved FreeSO VM"
 			heading += " · %s, floor %d" % [source, _lot_level]
-	_heading.text = "%s  |  %s" % [heading, _room_label]
+	_heading.text = _room_label if campaign_view and not plan_mode else "%s  |  %s" % [heading, _room_label]
+	_navigation.visible = not campaign_view
 	if is_instance_valid(_player): _player.set_controls_enabled(not plan_mode and not _modal)
 	if _displayed_exits != _exits:
 		_displayed_exits = _exits.duplicate(true)
@@ -642,8 +668,11 @@ func _update_prompt() -> void:
 	elif target.is_empty():
 		_prompt.text = "WASD · Move   |   Click to look / Esc to release" if expedition_view else "WASD · Move     Q / R or right-drag · Orbit"
 	else:
-		var verb := "Inspect" if target.kind == "inspect" else ("Operate" if target.kind == "fixture" else "Travel")
-		_prompt.text = "E / A / Click · %s %s" % [verb, target.label] if _can_interact else "Approach · " + target.label
+		if campaign_view and target.kind == "exit" and not routes_released:
+			_prompt.text = "Sealed passage · " + target.label
+			return
+		var verb := "Inspect" if target.kind == "inspect" else ("Examine" if target.kind in ["crossing", "fixture"] else ("Speak to" if target.kind == "witness" else "Travel"))
+		_prompt.text = ("E · %s %s" if campaign_view else "E / A / Click · %s %s") % [verb, target.label] if _can_interact else "Approach · " + target.label
 
 
 func _input(event: InputEvent) -> void:
@@ -721,13 +750,18 @@ func _is_reachable(target: Dictionary) -> bool:
 
 
 func _activate(target: Dictionary) -> bool:
+	if campaign_view and target.get("kind") == "exit" and not routes_released: return false
 	if not _is_reachable(target): return false
 	if target.kind == "fixture":
 		if not is_instance_valid(_kitchen) or not _kitchen.toggle(target.id, _player.global_position): return false
 		_player.play_action("interact")
 		return true
 	_player.play_action("interact")
-	if target.kind == "inspect":
+	if target.kind == "crossing":
+		crossing_selected.emit(target.index)
+	elif target.kind == "witness":
+		witness_selected.emit(target.id)
+	elif target.kind == "inspect":
 		set_inspection_target(false)
 		landmark_inspected.emit()
 	elif target.kind == "lane":
@@ -746,7 +780,7 @@ func player_observation() -> Dictionary:
 		info.position = [p.x, p.y, p.z]
 		if is_instance_valid(_player) and not _plan_open:
 			var camera: Camera3D = _player.camera()
-			var anchor := p + Vector3.UP * 0.5
+			var anchor := p + Vector3.UP * (1.18 if target.kind == "crossing" else 0.5)
 			if camera != null and not camera.is_position_behind(anchor):
 				var projected := camera.unproject_position(anchor) / Vector2(_viewport.size) * _pixels.size + _pixels.global_position
 				info.screen_position = [projected.x, projected.y]
@@ -859,12 +893,54 @@ func camp_layout(names: Array) -> Dictionary:
 				break
 	var people := []
 	if is_instance_valid(_player): taken[Vector2i(_player.position.x, _player.position.z)] = true
-	for cell: Vector2i in graph:
+	var seats: Array = graph.keys()
+	if campaign_view and not names.is_empty():
+		seats = _hall_floor_positions(graph, taken, names.size())
+	for cell: Vector2i in seats:
 		if people.size() == names.size(): break
 		if taken.has(cell): continue
 		var index := people.size()
 		people.append({"id":names[index], "cell":cell,"needs":{"hunger":75 if index % 3 == 0 else 20,"fatigue":75 if index % 3 == 1 else 20,"social":75 if index % 3 == 2 else 20}})
 	return {"graph":graph, "objects":objects, "people":people}
+
+
+## Keep the witness aisle clear and distribute initial jobs across the actual Hall floor.
+func _hall_floor_positions(graph: Dictionary, reserved: Dictionary, count: int) -> Array[Vector2i]:
+	var positions: Array[Vector2i] = []
+	if not is_instance_valid(_crossing): return positions
+	var room_cells: Array[Vector2i] = []
+	var origin := _player.position
+	var first := Vector2i(floori(origin.x), floori(origin.z))
+	if not graph.has(first):
+		var adjusted := _nearest_walkable(Vector2(origin.x, origin.z))
+		first = Vector2i(floori(adjusted.x), floori(adjusted.z))
+	var queue: Array[Vector2i] = [first]
+	var visited := {first:true}
+	for idx in 512:
+		if idx == queue.size(): break
+		var cell := queue[idx]
+		for next: Vector2i in graph.get(cell, []):
+			if visited.has(next): continue
+			visited[next] = true
+			queue.append(next)
+		if reserved.has(cell) or not graph.has(cell): continue
+		var local := _crossing.to_local(_world(Vector2(cell) + Vector2(.5,.5)))
+		if absf(local.x) < 1.7 and local.z > -.62 and local.z < 2.0: continue
+		room_cells.append(cell)
+	for i in mini(count, room_cells.size()):
+		var chosen := 0
+		var best := -INF
+		for j in room_cells.size():
+			var candidate := room_cells[j]
+			var from_desk := Vector2(candidate).distance_to(Vector2(first))
+			var score := -from_desk if i == 0 else minf(from_desk, 5.0)
+			for other in positions: score = minf(score, Vector2(candidate).distance_to(Vector2(other)))
+			if score > best:
+				best = score
+				chosen = j
+		positions.append(room_cells[chosen])
+		room_cells.remove_at(chosen)
+	return positions
 
 
 func _release_mouse() -> void:
@@ -1003,6 +1079,7 @@ func _sync_gates(portals: Array[Dictionary]) -> void:
 		_geometry.remove_child(_gate_root)
 		_gate_root.queue_free()
 	_gate_positions.clear()
+	_route_hardware.clear()
 	_gate_labels = _exits.duplicate()
 	_gate_root = Node3D.new()
 	_geometry.add_child(_gate_root)
@@ -1016,6 +1093,7 @@ func _sync_gates(portals: Array[Dictionary]) -> void:
 			for cell in cells:
 				var candidate := _world(Vector2(cell) + Vector2(0.5, 0.5))
 				if candidate.distance_squared_to(_spawn_point()) < 4.0: continue
+				if is_instance_valid(_crossing) and candidate.distance_squared_to(_crossing.position) < 3.6: continue
 				if _gate_positions.values().any(func(p: Vector3): return candidate.distance_squared_to(p) < 2.0): continue
 				at = candidate
 				break
@@ -1023,6 +1101,9 @@ func _sync_gates(portals: Array[Dictionary]) -> void:
 		var tint := Color("e7bb77") if not str(_exits[i]).begins_with("E") else Color("9bc7c5")
 		_gate_positions[i] = at
 		_plaque(_exit_label(i), at + Vector3.UP * 1.90, tint, _gate_root)
+		if campaign_view:
+			_build_watch_door(at)
+			continue
 		var plinth := MeshInstance3D.new()
 		var slab := BoxMesh.new()
 		slab.size = Vector3(0.78, 0.024, 0.42)
@@ -1058,8 +1139,8 @@ func set_field_party(names: Array) -> void:
 	_followers = Followers.new()
 	_viewport.add_child(_followers)
 	var points: Array[Vector3] = []
-	var origin := _spawn_point()
-	var cells := _reachable_cells(12)
+	var origin := _player.position if campaign_view else _spawn_point()
+	var cells := _reachable_cells(40 if campaign_view else 12)
 	var back: Vector3 = _player.camera().global_basis.z
 	var cursor := Vector2i(floori(origin.x), floori(origin.z))
 	var seen := {cursor: true}
@@ -1079,7 +1160,7 @@ func set_field_party(names: Array) -> void:
 		cursor = chosen
 		seen[chosen] = true
 		points.append(_world(Vector2(cursor) + Vector2(0.5, 0.5)))
-	_followers.setup(_player, points)
+	_followers.setup(_player, points, field_model)
 	_followers.sync(names)
 
 
@@ -1131,3 +1212,106 @@ func _set_clock(at: Vector3) -> void:
 	label.name = "FaceTime"
 	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 	label.pixel_size = 0.00096
+
+
+## Mount on a real run of floor, with three separate approaches and a clear aisle.
+func set_crossing(stage: String, survivor: String, variant: bool, stability: int, resolved: bool) -> void:
+	if not is_instance_valid(_player): return
+	var climate: String = {"returns":"echo", "exchange":"echo", "wash":"rain", "airlock":"rain", "shutter":"rewrite", "hall":"shelter", "darkroom":"rewrite", "relay":"echo"}.get(stage, "")
+	if is_instance_valid(_lights): _lights.apply(_hour, climate)
+	set_stability(stability)
+	if is_instance_valid(_crossing): return
+	var origin := _spawn_point()
+	var accessible := _reachable_cells(280)
+	var best := INF
+	var placement := Transform3D.IDENTITY
+	for cell in accessible:
+		for front: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP, Vector2i.RIGHT]:
+			var across := Vector2i(front.y, -front.x)
+			var clear := true
+			for row in 3:
+				for col in range(-1, 2):
+					var at: Vector2i = cell + front * row + across * col
+					if not accessible.has(at) or (row > 0 and _has_wall_between(at, at - front)) or (col > -1 and _has_wall_between(at, at - across)):
+						clear = false
+			if not clear: continue
+			var at := _world(Vector2(cell) + Vector2(.5, .5))
+			var f := Vector3(front.x, 0, front.y)
+			var score := origin.distance_squared_to(at + f * 2.05)
+			for item: Dictionary in _lot.objects:
+				if item.role in ["entry", "exit"] and Vector2(at.x, at.z).distance_squared_to(item.position) < 2.25: score += 20.0
+			if score >= best: continue
+			best = score
+			placement = Transform3D(Basis(Vector3.UP.cross(f), Vector3.UP, f), at)
+	assert(best < INF, "No accessible installation aisle for " + stage + " in " + _instance_id)
+	if best == INF: return
+	_crossing = CrossingFixture.new()
+	_geometry.add_child(_crossing)
+	_crossing.install(stage, placement, survivor, variant)
+	if resolved: _crossing.mark_released()
+	var front := placement.basis.z
+	var spawn := placement.origin + front * 2.22
+	if stage == "intake": spawn -= placement.basis.x * .58
+	var face := spawn - placement.origin
+	_player.spawn_at(spawn, atan2(face.x, face.z))
+	_refresh_targets()
+
+
+func show_crossing_action(group: int, action: String, result: Dictionary) -> void:
+	if is_instance_valid(_crossing): _crossing.react(group, action, result)
+
+
+func set_witness_targets(rows: Array[Dictionary]) -> void:
+	_witness_targets = rows
+	_refresh_targets()
+
+
+func show_crossing_turn(actors: Dictionary, beat: int) -> void:
+	if not is_instance_valid(_crossing): return
+	_crossing.turn(beat)
+	if not is_instance_valid(_followers): return
+	var docks: Dictionary = {}
+	for id in actors:
+		docks[id] = _crossing.to_global(Vector3(-.66 if actors[id] == 0 else .68, 0, 1.24))
+	_followers.rehearse(docks)
+
+
+func _build_watch_door(at: Vector3) -> void:
+	var door := ServiceDoor.instantiate() as Node3D
+	_gate_root.add_child(door)
+	door.position = at
+	var inward := _player.position - at
+	if absf(inward.x) > absf(inward.z): door.rotation.y = PI * .5 * signf(inward.x)
+	elif inward.z < 0: door.rotation.y = PI
+	var panel := door.find_child("Leaf", true, false) as Node3D
+	var blocker := StaticBody3D.new()
+	door.add_child(blocker)
+	_add_shape(blocker, Vector3(0, 1.05, .03), Vector3(1.04, 2.10, .085))
+	var collision := blocker.get_child(0) as CollisionShape3D
+	_route_hardware.append({"leaf":panel, "blocker":collision})
+	panel.rotation.y = -.96 if routes_released else 0.0
+	collision.set_deferred("disabled", routes_released)
+
+
+func release_routes(released: bool) -> void:
+	if released and is_instance_valid(_crossing): _crossing.mark_released()
+	if routes_released == released: return
+	routes_released = released
+	for hardware: Dictionary in _route_hardware:
+		if not is_instance_valid(hardware.leaf): continue
+		hardware.blocker.set_deferred("disabled", released)
+		var swing: Tween = hardware.leaf.create_tween()
+		swing.tween_property(hardware.leaf, "rotation:y", -.96 if released else 0.0, .38)
+
+
+## Read-only traversable cell graph used by the input-driven viewport regression.
+func viewport_routes() -> Array:
+	var grid: Array = []
+	var all: Dictionary = camp_layout([]).graph
+	for c: Vector2i in all:
+		var edge := 0
+		for j in 4:
+			var neighbor: Vector2i = c + [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP][j]
+			if all.has(neighbor) and neighbor in all[c]: edge |= 1 << j
+		grid.append([c.x, c.y, edge])
+	return grid

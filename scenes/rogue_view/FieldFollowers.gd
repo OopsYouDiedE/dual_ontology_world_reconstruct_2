@@ -5,11 +5,15 @@ const Visual := preload("res://scenes/rogue_player/ImportedCharacter.gd")
 const Model := preload("res://assets/characters/UserModels/model_06.glb")
 const STEP := 0.15
 var captain: CharacterBody3D
+var _model: Callable
 var _actors := {}
+var _rehearsal := {}
+var _rehearsal_time := 0.0
 var _trail: Array[Vector3] = []
 
-func setup(player: CharacterBody3D, starting_points: Array[Vector3]) -> void:
+func setup(player: CharacterBody3D, starting_points: Array[Vector3], model := Callable()) -> void:
 	captain = player
+	_model = model
 	_trail.assign([player.position])
 	for point in starting_points:
 		var old := _trail.back() as Vector3
@@ -27,7 +31,8 @@ func sync(names: Array) -> void:
 		var actor := Node3D.new()
 		add_child(actor)
 		actor.position = _slot(i)
-		Visual.attach(actor, Model.resource_path, 1.38, -90.0, id)
+		if _model.is_valid(): _model.call(actor, id)
+		else: Visual.attach(actor, Model.resource_path, 1.38, -90.0, id)
 		var label := Label3D.new()
 		label.text = id
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -36,6 +41,10 @@ func sync(names: Array) -> void:
 		label.modulate = Color("eed4a4")
 		actor.add_child(label)
 		_actors[id] = actor
+
+func rehearse(docks: Dictionary) -> void:
+	_rehearsal = docks
+	_rehearsal_time = .78
 
 func _slot(index: int) -> Vector3:
 	return _trail[mini((index + 1) * 7, _trail.size() - 1)]
@@ -47,9 +56,11 @@ func _physics_process(delta: float) -> void:
 	if captain.position.distance_to(_trail[0]) >= STEP:
 		_trail.push_front(captain.position)
 		if _trail.size() > 30: _trail.pop_back()
+	_rehearsal_time = maxf(0, _rehearsal_time - delta)
 	var index := 0
-	for actor: Node3D in _actors.values():
-		var target := _slot(index)
+	for id in _actors:
+		var actor: Node3D = _actors[id]
+		var target: Vector3 = _rehearsal[id] if _rehearsal_time > 0 and _rehearsal.has(id) else _slot(index)
 		index += 1
 		actor.visible = actor.position.distance_squared_to(captain.position) > 0.32
 		var moving := actor.position.distance_to(target) > 0.045
@@ -58,5 +69,5 @@ func _physics_process(delta: float) -> void:
 			if not facing.is_equal_approx(actor.position): actor.look_at(facing, Vector3.UP, true)
 			actor.position = actor.position.move_toward(target, 5.8 * delta)
 		var anim := actor.get_meta("animation_player", null) as AnimationPlayer
-		var clip := &"walk" if moving else &"idle"
+		var clip := &"walk" if moving else (&"interact" if _rehearsal_time > 0 and _rehearsal.has(id) else &"idle")
 		if anim and anim.has_animation(clip) and anim.current_animation != clip: anim.play(clip, 0.18)

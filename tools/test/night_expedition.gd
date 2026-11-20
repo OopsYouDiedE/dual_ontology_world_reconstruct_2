@@ -1,6 +1,6 @@
 extends SceneTree
 
-const Run := preload("res://scenes/rogue/Run.tscn")
+const Run := preload("res://scenes/rogue/Run.gd")
 const Wing := preload("res://scenes/rogue/SlidingWing.gd")
 const Scenes := preload("res://scenes/rogue_rules/NightRules.gd")
 var failure := ""
@@ -109,8 +109,9 @@ func _main() -> void:
 	if not _board():
 		quit(1)
 		return
-	var game := Run.instantiate()
+	var game := Run.new()
 	root.add_child(game)
+	game.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var tested_fatal := false
 	var tested_shortcut := false
 	for seed in range(12):

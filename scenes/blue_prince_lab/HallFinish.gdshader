@@ -2,6 +2,9 @@ shader_type spatial;
 
 #include "res://scenes/blue_prince_lab/HallToon.gdshaderinc"
 
+#include "res://scenes/blue_prince_lab/vesper/Exposure.gdshaderinc"
+uniform bool two_editions = false;
+
 uniform vec4 pigment : source_color = vec4(0.5, 0.54, 0.6, 1.0);
 uniform float grain = 0.07;
 uniform float surface_roughness = 0.8;
@@ -64,6 +67,14 @@ void fragment() {
 		vec3 cel = mix(vec3(0.41, 0.49, 0.58), vec3(0.88, 0.95, 1.02), band);
 		ALBEDO = vec3(0.0);
 		EMISSION = mix(pigment.rgb, tone, 0.34) * cel * 0.70;
+	}
+	if (two_editions) {
+		float margin = exposure_margin(point_world);
+		if (fire_year(margin)) {
+			ALBEDO *= vec3(.60,.27,.34);
+			EMISSION = EMISSION * vec3(.72,.34,.40) + .065 * tone * vec3(.94,.31,.21);
+		}
+		EMISSION += exposure_line(margin)*vec3(.92,.48,.14);
 	}
 	ROUGHNESS = surface_roughness;
 }

@@ -1,11 +1,12 @@
 extends Node3D
 ## Fixed reference cameras. Only the selected set is resident in the world.
-const NAMES := ["Chapel", "Garden Gate", "Forest Camp", "Attic", "Draft", "Security", "Inspect"]
+const NAMES := ["Chapel", "Garden Gate", "Forest Camp", "Attic", "Draft", "Security", "Inspect", "Vesper Index"]
 const SCENES := ["Chapel", "GardenGate", "ForestCamp", "Attic", "DraftLobby", "Security", "Darkroom"]
 const EYES := [Vector3(3.40,3.35,4.70),Vector3(0,1.50,8.9),Vector3(-0.46,1.57,8.6),Vector3(1.04,1.57,3.85),Vector3(0,1.48,3.02),Vector3(.10,1.83,4.14),Vector3(.24,1.62,3.25)]
 const AIM := [Vector3(-0.12,2.29,-3.20),Vector3(0.05,1.96,-6),Vector3(0.02,2.03,-3.1),Vector3(0.39,1.29,-4.7),Vector3(0,1.48,-1.0),Vector3(0,1.40,0),Vector3(0,1.67,-.4)]
 const FOV := [65.,46.,47.,46.,52.,50.,58.]
 const LAYER := 4
+const VESPER := 7
 var set_root: Node3D
 var previous := -1
 var meadow: Node3D
@@ -41,6 +42,14 @@ func clear_set(env: Environment) -> void:
 
 func show_set(index: int, camera: Camera3D, env: Environment) -> void:
 	clear_set(env)
+	if index == VESPER:
+		set_root = preload("res://scenes/blue_prince_lab/vesper/VesperRoom.gd").new()
+		add_child(set_root)
+		previous = index
+		env.ambient_light_color = Color("bdcbdc")
+		env.ambient_light_energy = .47
+		set_root.begin(camera)
+		return
 	var path := "res://scenes/blue_prince_lab/reference/%s.tscn" % SCENES[index]
 	set_root = (load(path) as PackedScene).instantiate()
 	add_child(set_root)

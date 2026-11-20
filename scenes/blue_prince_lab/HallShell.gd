@@ -65,8 +65,11 @@ func _ready() -> void:
 				file.store_string(JSON.stringify({"boxes": _boxes, "arches": _arches, "courses": _courses, "drapes": _drapes,
 					"materials": KEY_COLORS.keys().map(func(key: String): return [key, KEY_COLORS[key].to_html(false)])}))
 
-func _build_wall_shell() -> void:
+func _build_subfloor() -> void:
 	_solid(Vector3(0, -0.15, -0.39), Vector3(9.78, 0.30, 18.54), "grout")
+
+func _build_wall_shell() -> void:
+	_build_subfloor()
 	_solid(Vector3(0, UPPER_HALL * 0.5, 8.72), Vector3(9.78, UPPER_HALL, 0.30), "plaster")
 	for side: float in [-1.0, 1.0]:
 		_solid(Vector3(side * 2.99, UPPER_HALL * 0.5, BACK), Vector3(3.80, UPPER_HALL, 0.36), "plaster")

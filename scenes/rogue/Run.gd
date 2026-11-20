@@ -9,6 +9,10 @@ const Wing = preload("res://scenes/rogue/SlidingWing.gd")
 const Camp = preload("res://scenes/rogue_camp/CampResidents.gd")
 const CampActors = preload("res://scenes/rogue_view/CampActors.gd")
 
+const Visit := preload("res://scenes/blue_prince_lab/vesper/VesperVisit.gd")
+var vesper: Visit
+var vesper_recovered := false
+var vesper_progress: RefCounted
 var architecture_lab: Node3D
 var house
 var run_seed: int
@@ -149,6 +153,9 @@ func _create_overlay() -> void:
 	_modal_layer.hide()
 
 func new_run(value: int) -> void:
+	if vesper: _leave_vesper()
+	vesper_recovered=false
+	vesper_progress=null
 	_close_sheet()
 	_leave_camp()
 	camp = Camp.new()
@@ -244,6 +251,11 @@ func _inspect() -> void:
 	_refresh()
 
 func _input(event: InputEvent) -> void:
+	if vesper:
+		if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
+			_leave_vesper()
+			get_viewport().set_input_as_handled()
+		return
 	if is_instance_valid(architecture_lab) or not event is InputEventKey or not event.pressed or event.echo or choices == null: return
 	if event.physical_keycode == KEY_TAB and not ended:
 		if _modal_kind == "guide": _close_sheet()
@@ -294,6 +306,7 @@ func _refresh() -> void:
 		instruction.text += "\nSafe ground · Manage the crew, build facilities, or slide the wing on the survey table."
 		_button("Crew & facilities", _team_info)
 		_button("Sliding wing", _board_sheet)
+		_button("Vesper Index · filed" if vesper_recovered else "Investigate Vesper Index", _open_vesper)
 	var survivor := _field_candidate()
 	if not survivor.is_empty():
 		instruction.text += "\n%s emerges from cover and waits for your answer." % survivor
@@ -335,6 +348,7 @@ func _read_guide() -> void:
 	if _stage() == "rewrite" and inspected:
 		_sheet_label("RED INK · The Curator: CROSS BEFORE THE BELL.", 16, true)
 	if not notes.is_empty(): _sheet_label("INHERITED MARGIN\n" + "\n".join(notes), 14, true)
+	if vesper_recovered: _sheet_label("ARCHIVE EVIDENCE · E. Vale signed for the same key in 1903 and 1907.", 14)
 	if not journal.is_empty(): _sheet_label("VERIFIED IN THE FIELD · %d distinct rules" % journal.size(), 14)
 	_button("Fold card · Tab", _close_sheet, _sheet)
 
@@ -602,6 +616,31 @@ func _present_room(labels: Array) -> void:
 	room_view.set_modal(not _modal_kind.is_empty() or ended)
 	if is_instance_valid(_audio): _audio.pitch_scale = 1.38 if _stage() == "rain" else (0.73 if phase == "camp" else 1.0)
 
+func _open_vesper() -> void:
+	if phase != "camp" or vesper or not _modal_kind.is_empty(): return
+	room_view.set_modal(true)
+	room_view.get_parent().hide()
+	vesper=Visit.new()
+	if vesper_progress and not vesper_progress.crossed: vesper.puzzle.rules=vesper_progress
+	vesper.puzzle.recovered.connect(_file_vesper)
+	vesper.puzzle.return_requested.connect(_leave_vesper, CONNECT_DEFERRED)
+	add_child(vesper)
+
+func _file_vesper() -> void:
+	if vesper_recovered: return
+	vesper_recovered=true
+	crew.supplies+=1
+
+func _leave_vesper() -> void:
+	vesper_progress=vesper.puzzle.rules
+	remove_child(vesper)
+	vesper.queue_free()
+	vesper=null
+	room_view.get_parent().show()
+	room_view.set_modal(false)
+	if vesper_recovered: message="Night register filed: the same key was signed for twice. +1 supply recovered."
+	_refresh()
+
 func _enter_camp() -> void:
 	if camp_active: return
 	if not camp_ready:
@@ -685,6 +724,7 @@ func _start_ambience() -> void:
 
 func mcp_observe() -> Dictionary:
 	if is_instance_valid(architecture_lab): return architecture_lab.snapshot()
+	if vesper: return {"phase":phase, "modal":"vesper", "vesper":vesper.puzzle.snapshot(), "filed":vesper_recovered}
 	var buttons := []
 	var roots: Array[Node] = []
 	roots.append(choices if _modal_kind.is_empty() else _sheet)

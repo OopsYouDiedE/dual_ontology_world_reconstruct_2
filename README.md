@@ -24,6 +24,10 @@ dotnet build DualOntologyWorldReconstruct2.csproj
 
 热厨的[白模、叠绘提示和复现命令](docs/design/kitchen-paintover/README.md)用于固定入口视角，再据图调节三维场景、物件动作和光照。
 
+## 晚祷簿 · 可选双本体调查
+
+在公共大厅选择 **Investigate Vesper Index**。翻书切换 1903 年火灾与 1907 年调查现场，转动煤油灯，把另一个年份的手轮或桥面照进当前房间。取回登记簿可为本局增加一条档案证据和一份补给。也可从建筑实验的 **Vesper Index** 直接试玩。[操作、实图参考与测试](scenes/blue_prince_lab/vesper/README.md)。
+
 ## 大楼梯厅美术实验
 
 从正常入口附加 `-- --architecture-lab`，可对照九个固定机位：柱廊、礼拜堂、林门、营地、圆窗阁楼、倾台陀飞轮、蓝图选房、监控室和暗房检视。`H` 隐藏样板工具栏，仍可操作画面内的纸面界面。正式出征的 Public Hall 和 Observatory 在合适的地块内安装带玻璃的地面陀飞轮。见[实机九宫格、操作与复现步骤](scenes/blue_prince_lab/README.md)。

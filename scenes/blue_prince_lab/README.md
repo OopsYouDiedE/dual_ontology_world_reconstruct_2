@@ -1,6 +1,6 @@
 # Grand Stair Hall — architectural reference lab
 
-An optional, original study of the *Blue Prince* Grand Hall entrance image: a centered view down a cool blue-gray barrel vault, tapered circular columns and stepped arch ribs, pools of warm light, a muted gold runner, and a door at the far end. The stair, mechanical bay, academy crest and freestanding three-axis tourbillons belong to this prototype. Reference: [official game gallery](https://store.steampowered.com/app/1569580/Blue_Prince/) and [Grand Hall frame](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1569580/ss_7f4511e2454604568f545436f36674451fed6353.600x338.jpg). Game assets are generated in the project.
+An optional, original study of the *Blue Prince* Grand Hall entrance image: a centered view down a cool blue-gray barrel vault, tapered circular columns and stepped arch ribs, pools of warm light, a muted gold runner, and a door at the far end. The stair, mechanical bay, academy crest and freestanding three-axis exhibit belong to this prototype. Reference: [official game gallery](https://store.steampowered.com/app/1569580/Blue_Prince/) and [Grand Hall frame](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1569580/ss_7f4511e2454604568f545436f36674451fed6353.600x338.jpg). Game assets are generated in the project.
 
 ## Open the hall
 
@@ -10,8 +10,8 @@ From the repository root:
 & .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe --path . -- --architecture-lab
 ```
 
-- `1` entrance, `2` cabinet and gears, `3` landing, `4` banner and lamp, `5` tourbillon in the workroom behind the hall door, `6` the independently operated center-hall exhibit. Click an in-frame mechanism to operate it.
-- `F` to walk at eye level; WASD, mouse look, `E` to use an object within reach. `Esc` returns to the entrance view. The seeded expedition and its existing camera remain the default when the lab flag is absent.
+- `1` entrance, `2` cabinet and gears, `3` landing, `4` banner and lamp, `5` Meridian, `6` optional A26 print exhibit, `7` Service Stairs, `8` Stair Anomaly, `9` Archive, `0` Ledger. Click a mechanism to operate it, or click the open ledger on the archive desk to read it.
+- `F` to walk the Grand Stair Hall at eye level; WASD, mouse look, `E` to use an object within reach. `Esc` returns to the entrance view. The seeded expedition and its existing camera remain the default when the lab flag is absent.
 - `G` turns the shared draft on or off. `H` toggles the HUD. `Toon`, `Ink`, `Glow`, and `SDFGI` toggle independent layers at the same camera and scene state. `--lab-gi` chooses SDFGI on launch.
 
 | Assembly | Physics / runtime source |
@@ -22,7 +22,8 @@ From the repository root:
 | Gear train | Extruded tooth profiles; 30:22 counter-rotation and locked tooth phase. |
 | Room door and cabinet | Animated hinge bodies carry their own collision and trim. |
 | Stair | 10 treads at 0.38 m run × 0.165 m rise. The tread mesh is stepped; the walk collider uses a continuous grade and the landing has its own floor and guards. |
-| Spherical three-axis tourbillon | `Tourbillon.gd` builds nested cages, bearings, balance wheel, spiral hairspring, and a stepping escape wheel from original dimensioned 3D geometry. The local X/Y/Z periods are 22/13/7 s. Click either exhibit to run or stop it independently. The smaller hall exhibit uses the hall Toon material and sits 0.84 m off the runner center to leave the main sightline and walk route clear. This is a kinematic exhibit, without manufacturer CAD or a force-driven escapement. |
+| Meridian 03 | Original low-poly, three-axis kinematic study. See the [look studies and budgets](studies/README.md). |
+| Optional A26 print exhibit | Launch with `--hall-a26-preview` after running `tools/blue_prince_lab/build_a26_exhibit.py` with the original archive. This local CC BY-NC comparison asset is separate from the shipped Meridian geometry. |
 
 ## Look development
 
@@ -47,6 +48,7 @@ foreach ($test in 'banner_test','gear_check','lamp_check','door_test','stairs_ch
     & $Godot --headless --path . -s "res://tools/blue_prince_lab/$test.gd"
 }
 & .runtime/python/Scripts/python.exe tools/blue_prince_lab/hall_e2e.py
+& .runtime/python/Scripts/python.exe tools/blue_prince_lab/look_studies_e2e.py --clean
 ```
 
-The last command uses the live game MCP bridge and its real Forward+ viewport. It checks the entrance projections, compares Toon-only, Toon + Ink, Glow off, continuous diffuse, and SDFGI, independently operates both tourbillons, gears, door and cabinet, checks cloth and pendulum deflection from the same gust, and walks through the opened doorway and up the stairs. PNGs and an `architecture-report.json` are written under `.runtime/rogue-mcp/`.
+Both Python checks use the live game MCP bridge and its real Forward+ viewport. `hall_e2e.py` checks the entrance projections, compares Toon-only, Toon + Ink, Glow off, continuous diffuse, and SDFGI, operates the gears, door and cabinet (and the print exhibit with `--a26-preview`), checks cloth and pendulum deflection from the same gust, and walks through the opened doorway and up the stairs. PNGs and an `architecture-report.json` are written under `.runtime/rogue-mcp/`.

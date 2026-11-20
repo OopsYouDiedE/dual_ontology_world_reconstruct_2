@@ -8,6 +8,8 @@ const Door := preload("res://scenes/blue_prince_lab/doors/Door.tscn")
 const Cabinet := preload("res://scenes/blue_prince_lab/doors/Cabinet.tscn")
 const Stairs := preload("res://scenes/blue_prince_lab/stairs/Stairs.tscn")
 const A26Exhibit := preload("res://scenes/blue_prince_lab/A26Exhibit.gd")
+const Studies := preload("res://scenes/blue_prince_lab/studies/Studies.gd")
+const STUDY_START := 5
 const VIEWS := ["Entrance", "Mechanisms", "Landing", "Airflow", "A26 Exhibit"]
 const FRAMES := [Vector3(0,1.07,7.88), Vector3(-0.95,1.69,-0.15), Vector3(0.20,2.10,-16.00),
 	Vector3(-0.02,2.58,-1.48), Vector3(-1.30,1.88,1.85)]
@@ -21,6 +23,8 @@ var active_view := 0
 var portrait := false
 var notice := Label.new()
 var controls := HBoxContainer.new()
+var study_controls := HBoxContainer.new()
+var studies := Studies.new()
 var hud := CanvasLayer.new()
 var wind_sources: Array[Node3D] = []
 var use_targets: Array[Dictionary] = []
@@ -70,7 +74,9 @@ func _ready() -> void:
 	wind_sources.append(lamp)
 	decor = preload("res://scenes/blue_prince_lab/HallDecor.gd").new()
 	add_child(decor)
+	add_child(studies)
 	_collect_styled(self)
+	styled.append_array(studies.finish_materials())
 	_setup_ink()
 	_setup_cameras()
 	_setup_hud()
@@ -135,6 +141,7 @@ func _light_room() -> void:
 	day.rotation_degrees = Vector3(-8, 71, 0)
 	day.light_color = Color("d6e6fa")
 	day.light_energy = 0.21
+	day.light_cull_mask = 1
 	day.shadow_enabled = true
 	day.directional_shadow_max_distance = 33.0
 	add_child(day)
@@ -221,17 +228,22 @@ func _setup_hud() -> void:
 	_toggle_button("Glow", env.glow_enabled, func(): env.glow_enabled = not env.glow_enabled)
 	_toggle_button("SDFGI", env.sdfgi_enabled, func(): env.sdfgi_enabled = not env.sdfgi_enabled)
 	_button("Hide UI", _toggle_hud)
-	notice.position = Vector2(16, 52)
+	hud.add_child(study_controls)
+	study_controls.position = Vector2(16, 48)
+	study_controls.add_theme_constant_override("separation", 8)
+	for i in Studies.VIEWS.size():
+		_button(Studies.VIEWS[i], show_view.bind(STUDY_START + i), study_controls)
+	notice.position = Vector2(16, 84)
 	notice.add_theme_color_override("font_shadow_color", Color("161c26"))
 	notice.add_theme_constant_override("shadow_outline_size", 4)
 	hud.add_child(notice)
 
-func _button(title: String, callback: Callable) -> void:
+func _button(title: String, callback: Callable, row: HBoxContainer = null) -> void:
 	var button := Button.new()
 	button.text = title
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
-	controls.add_child(button)
+	(controls if row == null else row).add_child(button)
 
 func _toggle_button(title: String, enabled: bool, callback: Callable) -> void:
 	var button := Button.new()
@@ -244,13 +256,22 @@ func _toggle_button(title: String, enabled: bool, callback: Callable) -> void:
 
 func show_view(index: int) -> void:
 	active_view = index
-	shot_camera.fov = 68.0 if index == 0 else 64.0
-	shot_camera.position = FRAMES[index]
-	shot_camera.look_at(LOOK[index])
+	if index >= STUDY_START:
+		var shot := index - STUDY_START
+		studies.show_study(shot)
+		shot_camera.fov = Studies.FOV[shot]
+		shot_camera.position = Studies.ORIGIN + Studies.CAMERA[shot]
+		shot_camera.look_at(Studies.ORIGIN + Studies.FOCUS[shot])
+	else:
+		studies.clear()
+		shot_camera.fov = 68.0 if index == 0 else 64.0
+		shot_camera.position = FRAMES[index]
+		shot_camera.look_at(LOOK[index])
 	shot_camera.current = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _walk() -> void:
+	studies.clear()
 	active_view = -1
 	walk_camera.current = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -268,6 +289,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_4: show_view(3)
 			KEY_6:
 				if hall_exhibit != null: show_view(4)
+			KEY_7: show_view(STUDY_START + Studies.Shot.SERVICE)
+			KEY_8: show_view(STUDY_START + Studies.Shot.ANOMALY)
+			KEY_9: show_view(STUDY_START + Studies.Shot.ARCHIVE)
+			KEY_0: show_view(STUDY_START + Studies.Shot.LEDGER)
+			KEY_5: show_view(STUDY_START + Studies.Shot.MERIDIAN)
 			KEY_F: _walk() if active_view >= 0 else show_view(0)
 			KEY_ESCAPE: show_view(0)
 			KEY_H: _toggle_hud()
@@ -278,7 +304,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		walk_camera.rotation.x = clampf(walk_camera.rotation.x - event.relative.y * 0.0024, -1.23, 1.23)
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var point: Vector2 = event.position if active_view >= 0 else get_viewport().get_visible_rect().size * 0.5
-		_use(_select(point, 18.0 if active_view >= 0 else 2.5))
+		if active_view == STUDY_START + Studies.Shot.MERIDIAN:
+			if point.distance_to(_study_target()) < 165.0:
+				studies.meridian.interact()
+		elif active_view == STUDY_START + Studies.Shot.ARCHIVE:
+			if point.distance_to(_study_target()) < 40.0:
+				show_view(STUDY_START + Studies.Shot.LEDGER)
+		elif active_view < STUDY_START:
+			_use(_select(point, 18.0 if active_view >= 0 else 2.5))
+
+func _study_target() -> Vector2:
+	if active_view == STUDY_START + Studies.Shot.MERIDIAN:
+		return shot_camera.unproject_position(studies.meridian.global_position)
+	return shot_camera.unproject_position(Studies.ORIGIN + Vector3(0.10, 1.05, -1.44))
 
 func _select(point: Vector2, max_range: float) -> Dictionary:
 	var camera := get_viewport().get_camera_3d()
@@ -295,6 +333,7 @@ func _select(point: Vector2, max_range: float) -> Dictionary:
 	return best
 
 func _in_zone(target: Dictionary) -> bool:
+	if active_view >= STUDY_START: return false
 	if target.node == hall_exhibit:
 		return active_view in [0, 4] or (active_view == -1 and walker.position.z >= -9.3)
 	if target.node != door and (active_view == 2 or (active_view == -1 and walker.position.z < -9.3)):
@@ -309,6 +348,11 @@ func _physics_process(delta: float) -> void:
 	var wind := Vector3(6.0, 0.45, 2.1) * (1.0 + 0.30 * sin(elapsed * 3.1)) if winds else Vector3.ZERO
 	for component in wind_sources:
 		component.set_wind(wind)
+	if active_view >= STUDY_START:
+		notice.text = ["SERVICE STAIRS   /   BASELINE", "SERVICE STAIRS   /   ANOMALY",
+			"ACADEMY RECORDS   /   Click the ledger to read it.", "EVIDENCE   /   NIGHT REGISTER",
+			"MERIDIAN 03   /   Click the mechanism to start or stop all three axes."][active_view - STUDY_START]
+		return
 	if active_view == 4:
 		notice.text = "A26 / TRIAXIAL TOURBILLON MODEL II   ·   Click to separate or gather the original printed parts.   ·   CC BY-NC"
 		return
@@ -327,7 +371,7 @@ func _physics_process(delta: float) -> void:
 func snapshot() -> Dictionary:
 	var targets := []
 	var buttons := {}
-	for button: Control in controls.get_children():
+	for button: Control in controls.get_children() + study_controls.get_children():
 		var center := button.get_global_rect().get_center()
 		buttons[button.text] = [center.x, center.y]
 	var camera := get_viewport().get_camera_3d()
@@ -347,7 +391,20 @@ func snapshot() -> Dictionary:
 		for key in frame_points:
 			var pixel := camera.unproject_position(frame_points[key]) / viewport
 			landmarks[key] = [pixel.x, pixel.y]
-	return {"mode":"architecture_lab", "entrance_landmarks":landmarks, "view":VIEWS[active_view] if active_view >= 0 else "Walk",
+	var shot := {
+		"position": _axes(camera.global_position), "rotation": _axes(camera.global_rotation), "fov": camera.fov}
+	var mechanism := studies.meridian.mesh_stats()
+	mechanism["triangle_budget"] = studies.meridian.TRIANGLE_BUDGET
+	mechanism["surface_budget"] = studies.meridian.SURFACE_BUDGET
+	mechanism["running"] = studies.meridian.running
+	mechanism["angles"] = _axes(studies.meridian.angles)
+	if active_view in [STUDY_START + Studies.Shot.ARCHIVE, STUDY_START + Studies.Shot.MERIDIAN]:
+		var point := _study_target()
+		var title := "Read Night Register" if active_view == STUDY_START + Studies.Shot.ARCHIVE else "Start or stop Meridian"
+		targets.append({"name": title, "x": point.x, "y": point.y})
+	return {"mode":"architecture_lab", "entrance_landmarks":landmarks, "view":_view_name(),
+		"shot":shot, "hud_visible":hud.visible, "meridian":mechanism,
+		"stair_flight":("up" if studies.up_flight.visible else "down") if active_view in [STUDY_START, STUDY_START + Studies.Shot.ANOMALY] else "",
 		"wind":winds, "toon":toon, "ink":ink.visible, "glow":env.glow_enabled, "sdfgi":env.sdfgi_enabled, "targets":targets, "buttons":buttons,
 		"banner_deflection":wind_sources[1].tip_deflection(), "pendulum_radians":lamp.get_node("Pendulum").basis.get_rotation_quaternion().get_angle(),
 		"gear_running":gears.get("is_running"), "gear_angle":gears.get("driver_angle"),
@@ -357,3 +414,10 @@ func snapshot() -> Dictionary:
 		"door_open":door.get("is_open"), "cabinet_open":cabinet.get("is_open"),
 		"fps":Engine.get_frames_per_second(), "draw_calls":RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 		"player":[walker.position.x,walker.position.y,walker.position.z]}
+
+func _view_name() -> String:
+	if active_view >= STUDY_START: return Studies.VIEWS[active_view - STUDY_START]
+	return VIEWS[active_view] if active_view >= 0 else "Walk"
+
+func _axes(value: Vector3) -> Array[float]:
+	return [value.x, value.y, value.z]

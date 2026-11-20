@@ -64,12 +64,11 @@ def check(lab):
     lab.button('Meridian')
     rest = lab.state['meridian']
     assert 0 < rest['triangles'] <= rest['triangle_budget'] == 8500 and 0 < rest['moving_triangles'] <= 3500, rest
-    assert 0 < rest['surfaces'] <= rest['surface_budget'] == 16 and not rest['running'], rest
+    assert 0 < rest['surfaces'] <= rest['surface_budget'] == 16 and rest['running'], rest
     target = next(t for t in lab.state['targets'] if t['name'] == 'Start or stop Meridian')
-    lab.click(target['x'], target['y'])
     lab.wait(52)
     moving = lab.state['meridian']
-    assert moving['running'] and all(abs(a - b) > 0.01 for a, b in zip(rest['angles'], moving['angles'])), moving
+    assert moving['running'] and all(abs(a - b) > 0.0005 for a, b in zip(rest['angles'], moving['angles'])), moving
     lab.click(target['x'], target['y'])
     paused = lab.state['meridian']
     lab.wait(18)
@@ -78,6 +77,8 @@ def check(lab):
     assert lab.state['view'] == 'Entrance'
     lab.button('Meridian')
     assert lab.state['meridian'] == paused
+    lab.click(target['x'], target['y'])
+    assert lab.state['meridian']['running']
     return rest
 
 

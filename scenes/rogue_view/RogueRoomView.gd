@@ -243,7 +243,7 @@ func _use_snapshot(label: String, exits: Array, result: Dictionary, level: int) 
 
 
 func _apply(label: String, exits: Array, lot: Dictionary, mode: String, level: int) -> void:
-	var same_ground: bool = _mode == mode and _lot_level == level and _lot.get("segments") == lot.get("segments") and _lot.get("patterns") == lot.get("patterns") and _lot.get("windows") == lot.get("windows")
+	var same_ground: bool = (_room_label in ["Public Hall", "Observatory"]) == (label in ["Public Hall", "Observatory"]) and _mode == mode and _lot_level == level and _lot.get("segments") == lot.get("segments") and _lot.get("patterns") == lot.get("patterns") and _lot.get("windows") == lot.get("windows")
 	var changed_objects: bool = _lot.get("objects") != lot.get("objects")
 	var changed_avatars: bool = _lot.get("avatars") != lot.get("avatars")
 	_room_label = label
@@ -309,14 +309,19 @@ func _rebuild_architecture() -> void:
 	tile.size = Vector3(1, 0.15, 1)
 	var batches := {}
 	var floor_bounds := Rect2i()
+	var well := Rect2i()
+	if expedition_view and _room_label in ["Public Hall", "Observatory"]:
+		well = preload("render/MeridianWell.gd").plan(_lot)
+		if well.has_area(): preload("render/MeridianWell.gd").install(_geometry,well)
 	for cell: Vector2i in _lot.floors:
 		var pattern: int = _lot.patterns.get(cell, 0)
-		if not batches.has(pattern):
-			var surface := SurfaceTool.new()
-			surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-			batches[pattern] = surface
 		var pos := Vector3(cell.x + 0.5, -0.075, cell.y + 0.5)
-		batches[pattern].append_from(tile, 0, Transform3D(Basis.IDENTITY, pos))
+		if not well.has_point(cell):
+			if not batches.has(pattern):
+				var surface := SurfaceTool.new()
+				surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+				batches[pattern] = surface
+			batches[pattern].append_from(tile, 0, Transform3D(Basis.IDENTITY, pos))
 		var area := Rect2i(cell, Vector2i.ONE)
 		floor_bounds = area if not floor_bounds.has_area() else floor_bounds.merge(area)
 		if pattern != 65535:

@@ -17,6 +17,14 @@ def spruce(variant):
         for i in range(2*count):
             k=(i+1)%(2*count); c=shade(base,shades[i]*(1+.035*j)); a,b,d=rings
             m.face([a[k],a[i],b[i],b[k]],c);m.face([b[k],b[i],d[i],d[k]],c);m.face([d[k],d[i],tip],c);m.face([a[i],a[k],(0,y+.07,0)],shade(base,.59))
+            # Tapered needle sprays follow the actual slope of each outer facet.
+            if i%2==0:
+                heel=np.array(a[i]); left=np.array(b[k]); right=np.array(b[i]); up=np.array(d[i]); off=np.array([cos(tau*i/(2*count)+offset),0,sin(tau*i/(2*count)+offset)])*.0011
+                for q in range(3):
+                    u=(q+1)/5; root=heel*.16+(left*u+right*(1-u))*.70+up*.14+off
+                    end=heel*(.79-q*.065)+(left*u+right*(1-u))*(.21+q*.065)+off
+                    width=(left-right)*(.036+q*.006)
+                    m.face([root+width,root-width,end],shade(c,1.14+q*.042))
     m.save('Spruce'+str(variant))
 
 def landscape_modules():
@@ -73,8 +81,12 @@ def outside(camp):
         sc.add('RidgeTent',(1.60,.02,-3.1),-.48);fire=(-.10,.04,-1.1)
         for s in [-1,1]:m.rod((fire[0]+s*.70,.02,fire[2]),(fire[0]+s*.65,1.40,fire[2]),.055,'514635',6)
         m.rod((-.95,1.34,-1.1),(.78,1.34,-1.1),.064,'4e4130',7);m.rod((-.12,.82,-1.09),(-.12,1.34,-1.09),.012,'302e2c',5);m.rod((-.12,.58,-1.09),(-.12,.84,-1.09),.16,'333a34',8,.21)
-        for i in range(11):
-            a=tau*i/11;sc.add('Fieldstone',(fire[0]+.52*cos(a),.04,fire[2]+.39*sin(a)),a,(.21,.39,.23));x=fire[0]+rng.uniform(-.26,.26);z=fire[2]+rng.uniform(-.22,.22);m.rod((x,.12,z),(x+.08,rng.uniform(.38,.76),z),.12,'ff9f31' if i%3 else 'ffe59b',5,.012,'glass')
+        for tier,count in [(0,13),(1,9)]:
+            for i in range(count):
+                a=tau*(i+.41*tier)/count; r=.63-tier*.07+rng.uniform(-.045,.045)
+                sc.add('Fieldstone',(fire[0]+r*cos(a),.025+.144*tier+rng.uniform(-.025,.025),fire[2]+r*.85*sin(a)),a+pi/2+rng.uniform(-.25,.25),(.19+rng.random()*.10,.34+rng.random()*.10,.24))
+        for i in range(4):
+            a=.37+i*1.26; m.rod((fire[0]-.35*cos(a),.10+i*.031,fire[2]-.35*sin(a)),(fire[0]+.35*cos(a),.11+i*.031,fire[2]+.35*sin(a)),.091,'4a322a',8)
         for x,z in [(1.53,-.9),(1.8,-1.13),(-3.4,-4)]:m.rod((x,.21,z),(x+.9,.23,z-.36),.21,'65503b',8)
     else:
         sc.add('MoonGate',(1.45,0,-5.55));
@@ -105,11 +117,4 @@ def outside(camp):
         s=rng.uniform(.37,1.24);sc.add('Fieldstone',(x,0,z),rng.uniform(0,tau),(s,.86*s,s))
     if camp:
         for x,z,s in [(-.72,3.7,.82),(4.1,2.7,1.12),(1.47,4.55,.49)]:sc.add('Fieldstone',(x,.02,z),x,(s,s*.83,s))
-    for i in range(2500):
-        z=rng.uniform(-18,10);x=rng.uniform(-18,18)
-        if not camp and sin(x*.67+z*.55)+cos(z*.79-x*.28)<.57:continue
-        if abs(x-path(z))<(1.42 if camp else .29) or (camp and abs(x-.7)<2.5 and -5.2<z<1):continue
-        for j in range(rng.randint(4,9)):
-            bx=x+rng.uniform(-.32,.32);bz=z+rng.uniform(-.33,.33);h=rng.uniform(.07,.22);w=rng.uniform(.018,.049);c=rng.choice(['345a49','3c634e','2d5147','42624e'])
-            m.face([(bx-w,.009,bz),(bx+w,.009,bz+.018),(bx+rng.uniform(-.10,.10),h,bz-.05)],c)
     m.save(name+'Land');sc.add(name+'Land');sc.save()

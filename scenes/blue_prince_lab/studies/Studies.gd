@@ -6,10 +6,10 @@ const Batch := preload("res://scenes/blue_prince_lab/MeshBatches.gd")
 enum Shot { SERVICE, ANOMALY, ARCHIVE, LEDGER, MERIDIAN }
 const VIEWS := ["Service Stairs", "Stair Anomaly", "Archive", "Ledger", "Meridian"]
 const CAMERA := [Vector3(-0.54, 1.65, 2.37), Vector3(-0.54, 1.65, 2.37),
-	Vector3(0.64, 1.68, 3.92), Vector3(-0.04, 2.20, -0.46), Vector3(.62, 2.68, 3.79)]
+	Vector3(0.64, 1.68, 3.92), Vector3(-0.04, 2.20, -0.46), Vector3(2.8, 5.9, 10.1)]
 const FOCUS := [Vector3(-0.03, 0.56, -3.12), Vector3(-0.03, 0.56, -3.12),
-	Vector3(-0.23, 1.39, -2.4), Vector3(0.08, 1.03, -1.44), Vector3(.01, 2.06, -.94)]
-const FOV := [53.0, 53.0, 54.0, 38.0, 34.0]
+	Vector3(-0.23, 1.39, -2.4), Vector3(0.08, 1.03, -1.44), Vector3(0, 2.06, -1.55)]
+const FOV := [53.0, 53.0, 54.0, 38.0, 44.0]
 const ORIGIN := Vector3(80, 0, 0)
 const LAYER := 2
 
@@ -327,20 +327,50 @@ func _ledger() -> void:
 	_text("The flight does not.", Vector3(0.39, 1.052, -1.37), 40, 0.00088, "984b45", flat)
 
 func _build_exhibit() -> void:
-	_box(Vector3(0, -0.14, -0.48), Vector3(10, 0.28, 12), "slate")
-	_box(Vector3(0, 2.61, -3.26), Vector3(9.6, 5.5, 0.21), "night")
-	for x: float in [-4.65, 4.65]:
-		_box(Vector3(x, 2.61, -0.24), Vector3(0.22, 5.5, 6.5), "slate")
-	for x: float in [-3.8, -2.65, -1.5, 1.5, 2.65, 3.8]:
-		_box(Vector3(x, 2.68, -3.1), Vector3(0.11, 5.28, 0.21), "ink")
-	_box(Vector3(0, 0.08, -0.92), Vector3(2.84, 0.16, 2.04), "ink")
-	_box(Vector3(0, 0.38, -0.92), Vector3(2.33, 0.55, 1.70), "slate")
-	_box(Vector3(0, 0.68, -0.92), Vector3(2.77, 0.15, 1.96), "plaster")
-	_box(Vector3(0, 0.44, -0.053), Vector3(1.68, 0.29, 0.037), "ink")
-	_text("D E E P   S P A C E", Vector3(0, 0.46, -0.028), 46, 0.0038, "e5b676")
+	_box(Vector3(0,-.16,-2),Vector3(27,.32,34),"slate")
+	# Stair noses, railings and human-scale balusters give the eight-metre installation scale.
+	for i in 4:
+		_box(Vector3(0,.08+i*.14,-3.7-i*.30), Vector3(12.2-i*.57,.16+i*.28,13.5-i*.60), "slate" if i%2==0 else "ink")
+	for x: float in [-6.0,6.0]:
+		for j in 7:
+			_box(Vector3(x,1.1,2.2-j*1.8),Vector3(.10,1.55,.10),"brass")
+		_box(Vector3(x,1.88,-3.2),Vector3(.14,.09,11),"brass")
+	for j in 9:
+		var x := float(j-4)*2.6
+		_box(Vector3(x,3.2,-11),Vector3(2.58,6.4,.4),"night")
+		_box(Vector3(x,3.2,-10.7),Vector3(.18,6.4,.20),"brass")
+		_box(Vector3(x+1.29,2.3,-10.63),Vector3(2.36,3.7,.18),"ink")
+	# Full-height side returns enclose the chamber beyond the railings.
+	for side: float in [-1.,1.]:
+		_box(Vector3(side*10.5,5.6,-1.5),Vector3(.4,11.3,29),"night")
+		for j in 6:
+			var z := 7.-3.5*j
+			_box(Vector3(side*10.2,4.0,z),Vector3(.52,8.,.40),"slate")
+			_box(Vector3(side*9.91,2.6,z),Vector3(.06,.18,.65),"brass")
+	_box(Vector3(0,8.5,-11.0),Vector3(28,5.0,.41),"night")
+	_box(Vector3(0,6.35,-10.72),Vector3(23.,.24,.4),"slate")
 	meridian = Meridian.new()
-	meridian.position = Vector3(0, 2.075, -0.92)
+	meridian.position = Vector3(0,2.65,-1.9)
+	meridian.scale = Vector3.ONE * 3.1
 	room.add_child(meridian)
-	_light(Vector3(-2.38, 3.68, 1.2), "e1d9ce", 1.29, 7.5, true)
-	_light(Vector3(2.0, 2.65, 1.57), "c5dfff", 1.1, 6.1)
-	_light(Vector3(-1.38, 3.1, -1.85), "a4cbff", 0.65, 5.1)
+	var normal := meridian.basis.z.normalized()
+	for i in 3:
+		_cylinder(meridian.position-normal*(1.43+i*.19),normal,4.26+i*.13,.45,"ink" if i==0 else "slate")
+	# Tapered drum supports the tilted socket continuously down to the landing.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for j in 64:
+		var points: Array[Vector3] = []
+		for k in [j,j+1]:
+			var a := float(k)*TAU/64.
+			points.append(meridian.position-normal*1.73 + meridian.basis.x.normalized()*cos(a)*4.37 + meridian.basis.y.normalized()*sin(a)*4.37)
+		var u:=points[0]
+		var v:=points[1]
+		var b:=Vector3(u.x,.20,u.z)
+		var c:=Vector3(v.x,.20,v.z)
+		for pt: Vector3 in [u,c,b,u,v,c]: st.add_vertex(pt)
+	st.generate_normals()
+	_mesh(st.commit(),Vector3.ZERO,"slate",room)
+	_light(Vector3(-3,6,3),"ffe3b3",2.7,13,true)
+	_light(Vector3(4,5,3),"c9eaff",1.8,12)
+	_light(Vector3(-3,4,-5),"a4cbff",1.0,10)

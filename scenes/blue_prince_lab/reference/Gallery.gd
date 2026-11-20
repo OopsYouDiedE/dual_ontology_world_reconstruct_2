@@ -1,13 +1,16 @@
 extends Node3D
 ## Fixed reference cameras. Only the selected set is resident in the world.
-const NAMES := ["Chapel", "Garden Gate", "Forest Camp", "Attic"]
-const SCENES := ["Chapel", "GardenGate", "ForestCamp", "Attic"]
-const EYES := [Vector3(3.40,3.35,4.70),Vector3(0,1.50,8.9),Vector3(-0.46,1.57,8.6),Vector3(1.04,1.57,3.85)]
-const AIM := [Vector3(-0.12,2.29,-3.20),Vector3(0.05,1.96,-6),Vector3(0.02,2.03,-3.1),Vector3(0.39,1.29,-4.7)]
-const FOV := [65.,46.,47.,46.]
+const NAMES := ["Chapel", "Garden Gate", "Forest Camp", "Attic", "Draft", "Security", "Inspect"]
+const SCENES := ["Chapel", "GardenGate", "ForestCamp", "Attic", "DraftLobby", "Security", "Darkroom"]
+const EYES := [Vector3(3.40,3.35,4.70),Vector3(0,1.50,8.9),Vector3(-0.46,1.57,8.6),Vector3(1.04,1.57,3.85),Vector3(0,1.48,3.02),Vector3(.10,1.83,4.14),Vector3(.24,1.62,3.25)]
+const AIM := [Vector3(-0.12,2.29,-3.20),Vector3(0.05,1.96,-6),Vector3(0.02,2.03,-3.1),Vector3(0.39,1.29,-4.7),Vector3(0,1.48,-1.0),Vector3(0,1.40,0),Vector3(0,1.67,-.4)]
+const FOV := [65.,46.,47.,46.,52.,50.,58.]
 const LAYER := 4
 var set_root: Node3D
 var previous := -1
+var meadow: Node3D
+var interface_layer: CanvasLayer
+var desk: Control
 var sky := Sky.new()
 var paint := ShaderMaterial.new()
 
@@ -20,6 +23,12 @@ func _ready() -> void:
 
 func clear_set(env: Environment) -> void:
 	if previous < 0: return
+	if interface_layer:
+		remove_child(interface_layer)
+		interface_layer.queue_free()
+		interface_layer=null
+	desk=null
+	meadow=null
 	remove_child(set_root)
 	set_root.queue_free()
 	previous = -1
@@ -58,13 +67,15 @@ func show_set(index: int, camera: Camera3D, env: Environment) -> void:
 		env.ambient_light_color = Color("98b9d1")
 		env.ambient_light_energy = 0.82
 		_sun(Vector3(-.6,-.82,-.22),"c0d7e8",0.60)
-		if index == 2: _bulb(Vector3(-.1,.55,-1.1),"ffae57",1.2,2.9)
+		meadow = preload("Meadow.gd").new()
+		set_root.add_child(meadow)
+		meadow.build(index==2)
 	elif index == 0:
 		env.ambient_light_color = Color("d3c4d0")
 		env.ambient_light_energy = 0.77
 		_bulb(Vector3(-2.8,3,-2),"ffc3a9",1.36,7.0)
 		_bulb(Vector3(3.4,3.6,1.0),"d9d5ff",1.2,6.)
-	else:
+	elif index == 3:
 		env.ambient_light_color = Color("8caed0")
 		env.ambient_light_energy = .76
 		_bulb(Vector3(-.5,2.8,-.9),"98bcdf",1.12,10.0)
@@ -81,6 +92,43 @@ func show_set(index: int, camera: Camera3D, env: Environment) -> void:
 		set_root.add_child(daylight)
 		daylight.position = Vector3(-2.22,5.60,-7.23)
 		daylight.look_at(set_root.to_global(Vector3(-1.02,2.96,-4.95)))
+
+	else:
+		env.ambient_light_color = Color(["abb4c2","8caaa1","b97e8d"][index-4])
+		env.ambient_light_energy = [.50,.62,.65][index-4]
+		if index==5:
+			_screens()
+			_bulb(Vector3(0,1.65,1.15),"83dca8",1.05,5.)
+			_bulb(Vector3(-1.2,3.2,2.0),"afc3c6",.83,7.)
+		else:
+			_bulb(Vector3(-2,2.45,1.0),"ff3152" if index==6 else "a6bed7",2.4 if index==6 else .80,7.)
+			_bulb(Vector3(2.5,1.87,1.7),"fa3449" if index==6 else "9aadc2",1.7 if index==6 else .65,5.)
+			interface_layer=CanvasLayer.new()
+			interface_layer.layer=1
+			add_child(interface_layer)
+			desk=preload("interface/PaperDesk.gd").new()
+			interface_layer.add_child(desk)
+			desk.setup(NAMES[index])
+
+func _screens() -> void:
+	var cabinets: Array = JSON.parse_string(FileAccess.get_file_as_string("res://scenes/blue_prince_lab/reference/interface/cabinets.json"))
+	for i in cabinets.size():
+		var b: Array = cabinets[i]
+		var face := QuadMesh.new()
+		face.size=Vector2(b[2]*.875,b[3]*.757)
+		var crt := ShaderMaterial.new()
+		crt.shader=preload("interface/CRT.gdshader")
+		crt.set_shader_parameter("feed",preload("interface/Feeds.jpg"))
+		var ch := (i*3+i/8)%8
+		crt.set_shader_parameter("tile",Vector2(ch%4,ch/4))
+		crt.set_shader_parameter("channel",i*.163)
+		var tube := MeshInstance3D.new()
+		tube.mesh=face
+		tube.layers=LAYER
+		tube.material_override=crt
+		tube.position=Vector3(b[0],b[1]+b[3]*.547,.054)
+		tube.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		set_root.add_child(tube)
 
 func _sun(direction: Vector3, hue: String, power: float) -> void:
 	var sun := DirectionalLight3D.new()

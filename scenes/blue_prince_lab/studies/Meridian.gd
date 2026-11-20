@@ -4,23 +4,34 @@ const TRIANGLE_BUDGET := 8500
 const SURFACE_BUDGET := 16
 const SPEEDS := Vector3(TAU / 1800.0, -TAU / 360.0, TAU / 40.0)
 const ASSETS := "res://scenes/blue_prince_lab/reference/meshes/"
-var angles := Vector3(-.13, -.26, .11)
-var running := false
+const REST := Vector3(-.13, -.26, .11)
+var angles := REST
+var running := true
+var elapsed := 0.0
+var hour := Node3D.new()
+var minute := Node3D.new()
+var beat := 0.0
+var oscillator := Node3D.new()
 var yaw := Node3D.new()
 var pitch := Node3D.new()
 var roll := Node3D.new()
 var _mesh_stats := {"triangles":0, "surfaces":0, "moving_triangles":0}
 
 func _ready() -> void:
-	rotation_degrees = Vector3(-39,-20,12)
+	rotation_degrees.x = -72.0
 	_piece("Case", self)
+	add_child(hour)
+	add_child(minute)
+	_piece("HourHand", hour)
+	_piece("MinuteHand", minute)
 	add_child(yaw)
 	yaw.add_child(pitch)
 	pitch.add_child(roll)
 	_piece("BlueSwing", yaw)
 	_piece("SilverCarrier", pitch)
-	_piece("ForkBridge", pitch)
-	_piece("Balance", roll)
+	_piece("ForkBridge", roll)
+	roll.add_child(oscillator)
+	_piece("Balance", oscillator)
 	var ink := Sprite3D.new()
 	ink.texture = preload("res://scenes/blue_prince_lab/reference/ChapterInk.png")
 	ink.pixel_size = 2.72 / 1024.
@@ -57,13 +68,18 @@ func interact() -> void:
 
 func _process(delta: float) -> void:
 	if running:
-		angles += SPEEDS * delta * 10.0 # tenfold exhibit playback
+		elapsed = fmod(elapsed + delta, 43200.0)
+		angles = REST + SPEEDS * elapsed
+		beat = fmod(beat + TAU * 3.0 * delta, TAU)
 		_apply_pose()
 
 func _apply_pose() -> void:
-	yaw.rotation.y = angles.x
+	hour.rotation.z = -elapsed * TAU / 43200.0
+	minute.rotation.z = -elapsed * TAU / 3600.0
+	yaw.rotation.z = angles.x
 	pitch.rotation.x = angles.y
-	roll.rotation.z = angles.z
+	roll.rotation.y = angles.z
+	oscillator.rotation.z = 2.7 * sin(beat)
 
 func mesh_stats() -> Dictionary:
 	return _mesh_stats.duplicate()
@@ -76,5 +92,5 @@ func _count_surfaces(node: Node) -> void:
 			var count: int = arrays[Mesh.ARRAY_VERTEX].size() if indices == null or indices.is_empty() else indices.size()
 			_mesh_stats.triangles += count / 3
 			_mesh_stats.surfaces += 1
-			if yaw.is_ancestor_of(node): _mesh_stats.moving_triangles += count / 3
+			if yaw.is_ancestor_of(node) or hour.is_ancestor_of(node) or minute.is_ancestor_of(node): _mesh_stats.moving_triangles += count / 3
 	for child in node.get_children(): _count_surfaces(child)

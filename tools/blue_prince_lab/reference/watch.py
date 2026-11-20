@@ -33,10 +33,12 @@ def watch():
     for a in [.45,2.02,3.6,5.15]:
         x=.966*cos(a);y=.966*sin(a);m.rod((x,y,-.072),(x,y,-.039),.050,'bebbb0',8,mat='metal')
     # Peripheral forked minute / hour pointers span the dial without a central arbor.
-    for a,W in [(3.53,.043),(5.45,.124)]:
+    for a,W,name in [(3.53,.043,"MinuteHand"),(5.45,.124,"HourHand")]:
+        hand=Mesh()
         def pos(rad,w):return (rad*cos(a)-w*sin(a),rad*sin(a)+w*cos(a))
-        for s in [-1,1]:m.slab([pos(.67,0),pos(.72,s*.023),pos(1.11,s*W),pos(1.228,s*W)],.040,.019,'263778','metal')
-        m.slab([pos(1.11,-W),pos(1.11,W),pos(1.228,W),pos(1.228,-W)],.04,.019,'293777','metal')
+        for s in [-1,1]:hand.slab([pos(.67,0),pos(.72,s*.023),pos(1.11,s*W),pos(1.228,s*W)],.040,.019,'263778','metal')
+        hand.slab([pos(1.11,-W),pos(1.11,W),pos(1.228,W),pos(1.228,-W)],.04,.019,'293777','metal')
+        hand.save(name)
     m.rod((1.27,-.03,-.22),(1.46,-.03,-.22),.145,'979997',24,mat='metal');
     for i in range(8):
         a=tau*i/8;m.rod((1.35,-.03+.145*cos(a),-.22+.145*sin(a)),(1.41,-.03+.145*cos(a),-.22+.145*sin(a)),.035,DARK,8)

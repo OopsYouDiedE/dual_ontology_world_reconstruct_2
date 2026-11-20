@@ -26,6 +26,7 @@ var portrait := false
 var notice := Label.new()
 var controls := HBoxContainer.new()
 var study_controls := HBoxContainer.new()
+var interface_controls := HBoxContainer.new()
 var studies := Studies.new()
 var gallery := Gallery.new()
 var hud := CanvasLayer.new()
@@ -221,6 +222,7 @@ func _setup_cameras() -> void:
 	add_child(shot_camera)
 
 func _setup_hud() -> void:
+	hud.layer=4
 	add_child(hud)
 	hud.add_child(controls)
 	controls.position = Vector2(16, 14)
@@ -239,9 +241,11 @@ func _setup_hud() -> void:
 	study_controls.add_theme_constant_override("separation", 8)
 	for i in Studies.VIEWS.size():
 		_button(Studies.VIEWS[i], show_view.bind(STUDY_START + i), study_controls)
+	hud.add_child(interface_controls)
+	interface_controls.position = Vector2(16,82)
 	for i in Gallery.NAMES.size():
-		_button(Gallery.NAMES[i], show_view.bind(REFERENCE_START + i), study_controls)
-	notice.position = Vector2(16, 84)
+		_button(Gallery.NAMES[i], show_view.bind(REFERENCE_START + i), study_controls if i<4 else interface_controls)
+	notice.position = Vector2(16, 119)
 	notice.add_theme_color_override("font_shadow_color", Color("161c26"))
 	notice.add_theme_constant_override("shadow_outline_size", 4)
 	hud.add_child(notice)
@@ -367,7 +371,7 @@ func _physics_process(delta: float) -> void:
 	if active_view >= STUDY_START:
 		notice.text = ["SERVICE STAIRS   /   BASELINE", "SERVICE STAIRS   /   ANOMALY",
 			"ACADEMY RECORDS   /   Click the ledger to read it.", "EVIDENCE   /   NIGHT REGISTER",
-			"DEEP SPACE   /   Click the mechanism to start or stop all three axes."][active_view - STUDY_START]
+			"DEEP SPACE   /   Running at real time. Click to pause or resume."][active_view - STUDY_START]
 		return
 	if active_view == 4:
 		notice.text = "A26 / TRIAXIAL TOURBILLON MODEL II   ·   Click to separate or gather the original printed parts.   ·   CC BY-NC"
@@ -387,7 +391,7 @@ func _physics_process(delta: float) -> void:
 func snapshot() -> Dictionary:
 	var targets := []
 	var buttons := {}
-	for button: Control in controls.get_children() + study_controls.get_children():
+	for button: Control in controls.get_children() + study_controls.get_children() + interface_controls.get_children():
 		var center := button.get_global_rect().get_center()
 		buttons[button.text] = [center.x, center.y]
 	var camera := get_viewport().get_camera_3d()
@@ -413,12 +417,18 @@ func snapshot() -> Dictionary:
 	mechanism["triangle_budget"] = studies.meridian.TRIANGLE_BUDGET
 	mechanism["surface_budget"] = studies.meridian.SURFACE_BUDGET
 	mechanism["running"] = studies.meridian.running
+	mechanism["beat"] = studies.meridian.beat
+	mechanism["minute_pointer"] = studies.meridian.minute.rotation.z
 	mechanism["angles"] = _axes(studies.meridian.angles)
 	if active_view in [STUDY_START + Studies.Shot.ARCHIVE, STUDY_START + Studies.Shot.MERIDIAN]:
 		var point := _study_target()
 		var title := "Read Night Register" if active_view == STUDY_START + Studies.Shot.ARCHIVE else "Start or stop Meridian"
 		targets.append({"name": title, "x": point.x, "y": point.y})
 	return {"mode":"architecture_lab", "entrance_landmarks":landmarks, "view":_view_name(),
+		"grass_tufts":gallery.meadow.count if gallery.meadow else 0,
+		"fire_power":gallery.meadow.lamp.light_energy if gallery.meadow and gallery.meadow.lamp else 0.,
+		"draft_pick":gallery.desk.picked if gallery.desk else -1,
+		"lens_at":[gallery.desk.lens_at.x,gallery.desk.lens_at.y] if gallery.desk else [],
 		"shot":shot, "hud_visible":hud.visible, "meridian":mechanism,
 		"stair_flight":("up" if studies.up_flight.visible else "down") if active_view in [STUDY_START, STUDY_START + Studies.Shot.ANOMALY] else "",
 		"wind":winds, "toon":toon, "ink":ink.visible, "glow":env.glow_enabled, "sdfgi":env.sdfgi_enabled, "targets":targets, "buttons":buttons,

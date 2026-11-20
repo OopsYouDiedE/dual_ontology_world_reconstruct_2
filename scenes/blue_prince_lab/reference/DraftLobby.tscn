@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/DraftLobbyFixtures.glb" id="1"]
+
+[node name="DraftLobby" type="Node3D"]
+
+[node name="DraftLobbyFixtures_0" parent="." instance=ExtResource("1")]
+position = Vector3(0.000000, 0.000000, 0.000000)
+rotation = Vector3(0, 0.000000, 0)
+scale = Vector3(1.000000, 1.000000, 1.000000)

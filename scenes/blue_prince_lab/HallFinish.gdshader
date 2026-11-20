@@ -39,6 +39,8 @@ void fragment() {
 	float mottling = 0.40 * field(point_world * 2.65 + offset) + 0.49 * wash
 		+ 0.11 * field(point_world * vec3(15.0, 6.0, 15.0));
 	vec3 tone = pigment.rgb * (1.0 + grain * (mottling - 0.5) * 2.0);
+	float dry = field(vec3(point_world.x+point_world.y*.45,point_world.y,point_world.z-point_world.x*.24)*vec3(9.,1.6,4.)+offset);
+	tone *= mix(vec3(.90,.92,1.), vec3(1.12,1.09,1.02),smoothstep(.2,.78,dry));
 	if (runner > 0.5) {
 		float stroke = field(point_world * vec3(16.0,5.0,1.3));
 		float worn = smoothstep(0.79,1.17,abs(point_world.x) + 0.043 * (broad - 0.5));

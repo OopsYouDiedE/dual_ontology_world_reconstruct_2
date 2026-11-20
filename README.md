@@ -26,7 +26,7 @@ dotnet build DualOntologyWorldReconstruct2.csproj
 
 ## 大楼梯厅美术实验
 
-从正常入口附加 `-- --architecture-lab` 可打开独立样板，查看柱廊、礼拜堂、林门、营地、阁楼五个固定参考机位，以及可启停的 Deep Space 三轴陀飞轮。见[操作、几何节点生成与验收](scenes/blue_prince_lab/README.md)。
+从正常入口附加 `-- --architecture-lab`，可对照九个固定机位：柱廊、礼拜堂、林门、营地、圆窗阁楼、倾台陀飞轮、蓝图选房、监控室和暗房检视。`H` 隐藏样板工具栏，仍可操作画面内的纸面界面。正式出征的 Public Hall 和 Observatory 在合适的地块内安装带玻璃的地面陀飞轮。见[实机九宫格、操作与复现步骤](scenes/blue_prince_lab/README.md)。
 
 ## 检查
 

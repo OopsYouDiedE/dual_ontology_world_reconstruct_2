@@ -1,6 +1,6 @@
 # Academy look studies
 
-Launch with `-- --architecture-lab`. The second row switches between the authored views. `H` toggles the HUD. The regular seeded expedition is unchanged.
+Launch with `-- --architecture-lab`. The second row switches between the authored views. `H` toggles the HUD. Public Hall and Observatory also share the movement, mounted below walkable glass.
 
 | View | Visual reference | Academy treatment |
 | --- | --- | --- |
@@ -25,12 +25,12 @@ Judged the manufacturer and entrant photos by silhouette at room distance, legib
 | Jaeger-LeCoultre - [Duometre Heliotourbillon Perpetual](https://www.jaeger-lecoultre.com/us-en/news/watchmaking/duometre-heliotourbillon-perpetual) | A tightly interleaved sphere with a distinctive ruby hub. The silver-on-silver structure reads best in macro; its dense overlaps compete for shape at display distance. |
 | Girard-Perregaux - [Planetarium Tri-Axial](https://www.gphg.org/en/watches/planetarium-tri-axial) | A compact and symmetrical cage. The adjacent globe contributes much of the composition. The isolated cage leaves less open space than Halter's. |
 
-`Meridian` is the existing control name. It now shows a reconstruction from Halter’s oblique and profile photographs. The stepped bezel, chapter ring, blued peripheral pointers, blue swing, pierced silver bridge, gold balance, hairspring, ruby and crown are separate visible features. Only the dial lettering uses a texture. Three nested pivots run at tenfold exhibit speed; click to pause or resume at the same pose. Internal parts hidden in the photographs are approximations; motion is kinematic.
+`Meridian` is the existing control name. It now shows a reconstruction from Halter’s oblique and profile photographs. The stepped bezel, chapter ring, blued peripheral pointers, blue swing, pierced silver bridge, gold balance, hairspring, ruby and crown are separate visible features. Only the dial lettering uses a texture. The inner, middle and outer pivots take 40 seconds, 6 minutes and 30 minutes per turn. The balance oscillates at 3 Hz; the peripheral minute and hour hands complete their own turns in one and twelve hours. The watch starts on entry; click the centre to pause and resume at the same pose. Internal parts hidden in the photographs are approximations; motion is kinematic.
 
 | Godot mesh-buffer measurement (highest detail) | Triangles | Material surfaces |
 | --- | ---: | ---: |
-| Complete watch, including dial lettering and crystal | **8,266** | **11** |
-| Moving assembly alone | **3,264** | Included above |
+| Complete watch, including dial lettering and crystal | **8,266** | **13** |
+| Moving assembly alone | **3,336** | Included above |
 | Enforced ceilings | 8,500 complete / 3,500 moving | 16 complete |
 
 The count excludes the stand and room. The older local 59,898-triangle A26 print model depicts a different assembly and is not used to construct this watch.

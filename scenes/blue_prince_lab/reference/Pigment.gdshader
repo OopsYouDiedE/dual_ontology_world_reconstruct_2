@@ -21,6 +21,9 @@ void vertex() { place = (MODEL_MATRIX * vec4(VERTEX,1.)).xyz; }
 void fragment() {
 	float broad = wash(place*1.4);
 	float tooth = wash(place*vec3(13.,21.,7.)+broad);
-	ALBEDO = COLOR.rgb * (.78 + .36*broad + .10*tooth);
+	vec3 slant = vec3(place.x + place.y*.48 + place.z*.21, place.y - place.z*.34, place.z - place.x*.41);
+	float daub = smoothstep(.25,.72,wash(slant*vec3(6.,1.3,3.)+broad*.7));
+	float bristle = wash(slant*vec3(32.,3.1,17.) + broad*1.25);
+	ALBEDO = COLOR.rgb * (.63+.31*broad+.09*tooth+.29*daub+.17*bristle) * mix(vec3(.90,.99,1.08),vec3(1.12,1.035,.89),daub);
 	ROUGHNESS = .93;
 }

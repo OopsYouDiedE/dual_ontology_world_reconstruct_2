@@ -7,7 +7,7 @@ from look_studies_e2e import Lab
 
 VIEWS = {
     "Entrance": "01-hall", "Chapel": "02-chapel", "Garden Gate": "03-gate",
-    "Forest Camp": "04-camp", "Attic": "05-attic", "Meridian": "06-tourbillon",
+    "Forest Camp": "04-camp", "Attic": "05-attic", "Meridian": "06-tourbillon", "Draft": "07-draft", "Security": "08-security", "Inspect": "09-inspect",
 }
 
 

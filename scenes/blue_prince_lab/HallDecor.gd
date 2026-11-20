@@ -4,16 +4,16 @@ const TRIM := Color("788187")
 const FACE := Color("aab4ba")
 const EDGE := Color("4e5d67")
 const METAL := Color("827152")
-const LOCATIONS := [4.0, 0.42, -3.13]
+const LOCATIONS := [3.34, -0.03, -3.81]
 
 func _ready() -> void:
 	for side: float in [-1.0, 1.0]:
 		for i in range(LOCATIONS.size()):
 			var figure := Node3D.new()
 			figure.name = "Founder"
-			figure.position = Vector3(side * (3.90 if i == 0 else 3.69), 0.0, LOCATIONS[i])
+			figure.position = Vector3(side * (3.90 if i == 0 else 3.04), 0.0, LOCATIONS[i])
 			figure.rotation.y = -side * (0.83 + 0.08 * i)
-			figure.scale = Vector3(0.64, 0.99, 0.72) if i == 0 else Vector3(0.85, 0.97, 0.89)
+			figure.scale = Vector3(0.74, 1.06, 0.78) if i == 0 else Vector3(0.85, 0.97, 0.89)
 			add_child(figure)
 			_bust(figure, i + (0 if side < 0.0 else 3))
 		_pointing_hand(side)
@@ -26,7 +26,8 @@ func _ready() -> void:
 func _pointing_hand(side: float) -> void:
 	var hand := Node3D.new()
 	hand.name = "StoneWayfinder"
-	hand.position = Vector3(side * 1.42, 1.014, -8.58)
+	hand.position = Vector3(side * 1.77, 1.91, -8.58)
+	hand.scale = Vector3.ONE * 1.48
 	hand.rotation.y = side * PI * 0.5
 	add_child(hand)
 	_block(hand, Vector3(0,0.038,0.025), Vector3(0.47,0.076,0.18), TRIM)

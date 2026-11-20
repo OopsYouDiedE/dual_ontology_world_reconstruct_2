@@ -1,9 +1,10 @@
 extends Node3D
 ## Repeated bays keep the reference perspective legible at 720p. World units are metres.
 const FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
-const BAY_Z := [3.0, -1.55, -5.62]
-const STRUCTURAL_ARCH_Z := [2.72, -1.55]
+const BAY_Z := [1.82, -1.88, -5.62]
+const STRUCTURAL_ARCH_Z := [1.82, -1.88]
 const END_HALL_START := -3.05
+const REAR_RISE := 5.52
 const END_WIDTH := 4.52
 const BACK := -9.25
 const SPRING := 5.10
@@ -68,8 +69,8 @@ func _build_wall_shell() -> void:
 	_solid(Vector3(0, -0.15, -0.39), Vector3(9.78, 0.30, 18.54), "grout")
 	_solid(Vector3(0, UPPER_HALL * 0.5, 8.72), Vector3(9.78, UPPER_HALL, 0.30), "plaster")
 	for side: float in [-1.0, 1.0]:
-		_solid(Vector3(side * 2.82, UPPER_HALL * 0.5, BACK), Vector3(4.16, UPPER_HALL, 0.36), "plaster")
-	_solid(Vector3(0, (UPPER_HALL + 2.57) * 0.5, BACK), Vector3(1.49, UPPER_HALL - 2.57, 0.36), "plaster")
+		_solid(Vector3(side * 2.99, UPPER_HALL * 0.5, BACK), Vector3(3.80, UPPER_HALL, 0.36), "plaster")
+	_solid(Vector3(0, (UPPER_HALL + 3.86) * 0.5, BACK), Vector3(2.20, UPPER_HALL - 3.86, 0.36), "plaster")
 	_solid(Vector3(-4.76, UPPER_HALL * 0.5, -0.36), Vector3(0.32, UPPER_HALL, 18.4), "plaster")
 	_solid(Vector3(4.76, 1.77, -0.36), Vector3(0.32, 3.54, 18.4), "plaster")
 	_solid(Vector3(4.76, (4.37 + UPPER_HALL) * 0.5, -0.36), Vector3(0.32, UPPER_HALL - 4.37, 18.4), "plaster")
@@ -91,7 +92,7 @@ func _build_workroom() -> void:
 		_box(Vector3(side * 2.88, 0.15, -16.2), Vector3(0.09, 0.30, 14.0), "edge")
 		for z: float in [-10.0, -13.3, -16.6, -19.9, -22.5]:
 			_box(Vector3(side * 2.86, 2.15, z), Vector3(0.19, 4.3, 0.26), "stone")
-	_solid(Vector3(0, 2.2, -23.20), Vector3(6.18, 4.4, 0.24), "plaster")
+	_solid(Vector3(0, 2.2, -23.86), Vector3(6.18, 4.4, 0.24), "plaster")
 	_solid(Vector3(0, 1.5, -22.42), Vector3(2.5, 0.30, 1.46), "stone")
 
 func _build_floor() -> void:
@@ -113,12 +114,12 @@ func _build_vault() -> void:
 		_build_entry_arch(STRUCTURAL_ARCH_Z[i], 1.06 if i == 0 else 0.91)
 	# A single broad rear shell without ribs, keystones or panel breaks down its length.
 	var back_depth := END_HALL_START - BACK
-	_elliptic_ring(Vector3(0, SPRING, BACK + back_depth * 0.5), END_WIDTH, ARCH_RADIUS + 0.09,
+	_elliptic_ring(Vector3(0, SPRING, BACK + back_depth * 0.5), END_WIDTH, REAR_RISE,
 		0.0, 0.18, back_depth, "vault")
 	_seal_vault_transition()
 	for z: float in [8.66, BACK + 0.015]:
 		var width := END_WIDTH if z < 0.0 else ARCH_RADIUS
-		var height := ARCH_RADIUS + 0.11 if z < 0.0 else ARCH_RADIUS
+		var height := REAR_RISE if z < 0.0 else ARCH_RADIUS
 		var p := Vector3(0, SPRING, z)
 		for i in range(48):
 			var a := PI * float(i) / 48.0
@@ -131,7 +132,7 @@ func _seal_vault_transition() -> void:
 	for i in range(48):
 		var a := Vector2.from_angle(PI * float(i) / 48.0)
 		var b := Vector2.from_angle(PI * float(i + 1) / 48.0)
-		var outer := Vector2(END_WIDTH + 0.03, ARCH_RADIUS + 0.11)
+		var outer := Vector2(END_WIDTH + 0.03, REAR_RISE)
 		_prism([a*ARCH_RADIUS, a*outer, b*outer, b*ARCH_RADIUS],
 			Vector3(0,SPRING,END_HALL_START), 0.0, 0.22, "vault")
 
@@ -214,37 +215,36 @@ func _build_masonry() -> void:
 	# Nested frames retain three different silhouettes and physical jamb depths.
 	# The broad outlines at the back sit in one wall plane, rather than
 	# projecting into the hall as extra transverse vaults.
-	_elliptic_ring(Vector3(0, SPRING, -9.004), 3.92, 2.98, -0.045, 0.020, 0.036, "edge")
-	_elliptic_ring(Vector3(0, SPRING, -8.995), 3.92, 2.98, 0.020, 0.074, 0.035, "vault_rib")
+	_elliptic_ring(Vector3(0, SPRING, -9.004), 3.78, 5.34, -0.045, 0.020, 0.036, "edge")
+	_elliptic_ring(Vector3(0, SPRING, -8.995), 3.78, 5.34, 0.020, 0.074, 0.035, "vault_rib")
 	for side: float in [-1.0, 1.0]:
-		_box(Vector3(side*3.92, SPRING * 0.5, -9.003), Vector3(0.074,SPRING,0.045), "edge")
-	_portal(1.94, 4.03, 0.54)
-	_portal(0.93, 2.71, 0.60)
+		_box(Vector3(side*3.78, SPRING * 0.5, -9.003), Vector3(0.074,SPRING,0.045), "edge")
+	_portal(2.26, 5.24, 0.74)
+	_portal(1.20, 3.97, 0.72)
 	# Segmented stone fields give the cold focus a readable boundary beyond the light pool.
-	var fan_center := Vector3(0, 4.03, -9.054)
+	var fan_center := Vector3(0, 5.24, -9.054)
 	for i in range(20):
 		var a := PI * float(i) / 20.0
 		var b := PI * float(i + 1) / 20.0
-		var tone := "fan_b" if i >= 7 and i < 13 else "fan_a"
-		_prism([Vector2.ZERO, Vector2.from_angle(a) * 1.94,
-			Vector2.from_angle(b) * 1.94], fan_center, 0, 0.046, tone)
-	for i in range(3):
-		var a := PI * (i + 1) / 4.0
-		var v := Vector2.from_angle(a)
-		var d := Vector2(-v.y, v.x) * 0.013
-		_prism([v * 0.21 - d, v * 1.91 - d, v * 1.91 + d, v * 0.21 + d],
-			fan_center + Vector3.BACK * 0.028, 0, 0.02, "fan_seam")
-	_prism([Vector2(-1.94,-1.33), Vector2(1.94,-1.33), Vector2(1.94,0), Vector2(-1.94,0)],
+		var tone := "fan_a"
+		_prism([Vector2.ZERO, Vector2.from_angle(a) * 2.26,
+			Vector2.from_angle(b) * 2.26], fan_center, 0, 0.046, tone)
+	for side: float in [-1.0, 1.0]:
+		var foot := Vector2(side * 0.84, -1.46)
+		var head := Vector2(side * 1.08, 1.84)
+		var lip := Vector2(0.020, 0)
+		_prism([foot-lip,head-lip,head+lip,foot+lip],fan_center + Vector3.BACK * 0.03,0,0.024,"fan_seam")
+	_prism([Vector2(-2.26,-1.29), Vector2(2.26,-1.29), Vector2(2.26,0), Vector2(-2.26,0)],
 		fan_center, 0, 0.046, "fan_a")
 	for side: float in [-1.0, 1.0]:
-		_box(Vector3(side * 1.424, 1.54, -9.054), Vector3(1.020, 2.32, 0.046), "fan_a")
+		_box(Vector3(side * 1.73, 1.985, -9.054), Vector3(1.06, 3.97, 0.046), "fan_a")
 	_prism([Vector2(-0.70,0),Vector2(0.70,0),Vector2(0.46,0.34),Vector2(-0.46,0.34)],
-		Vector3(0,2.72,-8.93), 0.0, 0.078, "ivory")
+		Vector3(0,3.97,-8.93), 0.0, 0.078, "ivory")
 	for side: float in [-1.0, 1.0]:
-		var p := Vector3(side * 1.42, 0, -8.58)
+		var p := Vector3(side * 1.77, 0, -8.58)
 		_box(p + Vector3.UP * 0.10, Vector3(0.57,0.20,0.60), "edge")
-		_box(p + Vector3.UP * 0.53, Vector3(0.38,0.82,0.44), "stone")
-		_box(p + Vector3.UP * 0.96, Vector3(0.55,0.10,0.59), "ivory")
+		_box(p + Vector3.UP * 0.99, Vector3(0.49,1.60,0.48), "stone")
+		_box(p + Vector3.UP * 1.84, Vector3(0.73,0.14,0.62), "ivory")
 	for i in range(-5, 6):
 		if abs(i) < 2: continue
 		_box(Vector3(i * 0.70, 0.47, -9.00), Vector3(0.61, 0.68, 0.13), "panel")
@@ -292,12 +292,12 @@ func _pier(side: float, z: float) -> void:
 		_box(p + Vector3.UP * h, Vector3(1.54, 0.052, 1.53), "edge")
 	for face: float in [-1.0, 1.0]:
 		for shift: float in [-0.44, 0.0, 0.44]:
-			_box(p + Vector3(shift, 0.145, face * 0.739), Vector3(0.36, 0.117, 0.029), "reveal")
-			_box(p + Vector3(face * 0.744, 0.145, shift), Vector3(0.029, 0.117, 0.36), "reveal")
+			_box(p + Vector3(shift, 0.145, face * 0.739), Vector3(0.36, 0.117, 0.029), "edge")
+			_box(p + Vector3(face * 0.744, 0.145, shift), Vector3(0.029, 0.117, 0.36), "edge")
 	_round(p, [[0.70,0.29], [0.70,0.34], [0.60,0.40], [0.54,0.50], [0.48,SPRING-0.34]], "shaft")
 	for h: float in [0.57, 0.75, 0.94, 1.16, 1.39]:
 		var r := lerpf(0.54, 0.48, (h-0.50)/(SPRING-0.84))
-		_round(p, [[r-0.004,h-0.024], [r+0.022,h-0.019], [r+0.022,h+0.015], [r-0.004,h+0.030]], "edge")
+		_round(p, [[r-0.004,h-0.024], [r+0.014,h-0.019], [r+0.014,h+0.015], [r-0.004,h+0.030]], "shaft")
 	_round(p, [[0.479,SPRING-0.37], [0.55,SPRING-0.23], [0.68,SPRING-0.13], [0.70,SPRING+0.02]], "ivory")
 	_box(p + Vector3.UP * SPRING, Vector3(1.47, 0.11, 1.36), "stone")
 

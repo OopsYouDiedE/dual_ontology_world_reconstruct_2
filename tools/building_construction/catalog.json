@@ -993,6 +993,55 @@
       "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeMasonryJoints.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::masonry_joints"
+    },
+    {
+      "id": "RecipeReferencePew",
+      "category": "Chairs",
+      "label": "Upholstered chapel pew",
+      "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeReferencePew.gd",
+      "recipe": true
+    },
+    {
+      "id": "RecipeReferenceLeadedBay",
+      "category": "Windows",
+      "label": "Leaded chapel bay",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeReferenceLeadedBay.gd",
+      "recipe": true
+    },
+    {
+      "id": "RecipeReferenceSpokeWindow",
+      "category": "Windows",
+      "label": "Eight-spoke attic window",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeReferenceSpokeWindow.gd",
+      "recipe": true
+    },
+    {
+      "id": "RecipeReferenceMoonGate",
+      "category": "Doors",
+      "label": "Iron moon gate",
+      "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeReferenceMoonGate.gd",
+      "recipe": true
+    },
+    {
+      "id": "RecipeReferenceGardenWall",
+      "category": "Walls",
+      "label": "Capped garden wall",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeReferenceGardenWall.gd",
+      "recipe": true
+    },
+    {
+      "id": "RecipeReferenceRidgeTent",
+      "category": "Outdoor",
+      "label": "Canvas ridge tent",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceRidgeTent.gd",
+      "recipe": true
+    },
+    {
+      "id": "RecipeReferenceSpruce1",
+      "category": "Outdoor",
+      "label": "Layered spruce",
+      "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceSpruce1.gd",
+      "recipe": true
     }
   ]
 }

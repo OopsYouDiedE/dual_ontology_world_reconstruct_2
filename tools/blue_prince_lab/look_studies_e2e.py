@@ -63,7 +63,7 @@ def check(lab):
     assert lab.state['view'] == 'Ledger' and lab.state['shot'] != archive
     lab.button('Meridian')
     rest = lab.state['meridian']
-    assert 0 < rest['triangles'] <= rest['triangle_budget'] == 3000, rest
+    assert 0 < rest['triangles'] <= rest['triangle_budget'] == 8500 and 0 < rest['moving_triangles'] <= 3500, rest
     assert 0 < rest['surfaces'] <= rest['surface_budget'] == 16 and not rest['running'], rest
     target = next(t for t in lab.state['targets'] if t['name'] == 'Start or stop Meridian')
     lab.click(target['x'], target['y'])

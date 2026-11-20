@@ -9,6 +9,8 @@ const Cabinet := preload("res://scenes/blue_prince_lab/doors/Cabinet.tscn")
 const Stairs := preload("res://scenes/blue_prince_lab/stairs/Stairs.tscn")
 const A26Exhibit := preload("res://scenes/blue_prince_lab/A26Exhibit.gd")
 const Studies := preload("res://scenes/blue_prince_lab/studies/Studies.gd")
+const Gallery := preload("res://scenes/blue_prince_lab/reference/Gallery.gd")
+const REFERENCE_START := 10
 const STUDY_START := 5
 const VIEWS := ["Entrance", "Mechanisms", "Landing", "Airflow", "A26 Exhibit"]
 const FRAMES := [Vector3(0,1.07,7.88), Vector3(-0.95,1.69,-0.15), Vector3(0.20,2.10,-16.00),
@@ -25,6 +27,7 @@ var notice := Label.new()
 var controls := HBoxContainer.new()
 var study_controls := HBoxContainer.new()
 var studies := Studies.new()
+var gallery := Gallery.new()
 var hud := CanvasLayer.new()
 var wind_sources: Array[Node3D] = []
 var use_targets: Array[Dictionary] = []
@@ -49,6 +52,7 @@ func _ready() -> void:
 	stairs = _place(Stairs, Vector3(0, 0, -17.05))
 	door = Door.instantiate()
 	door.position = Vector3(0,0.015,-9.13)
+	door.scale = Vector3.ONE * 1.48
 	door.set("hall_finish", true)
 	add_child(door)
 	cabinet = _place(Cabinet, Vector3(-4.27,0,1.45), PI / 2.0)
@@ -75,6 +79,7 @@ func _ready() -> void:
 	decor = preload("res://scenes/blue_prince_lab/HallDecor.gd").new()
 	add_child(decor)
 	add_child(studies)
+	add_child(gallery)
 	_collect_styled(self)
 	styled.append_array(studies.finish_materials())
 	_setup_ink()
@@ -151,7 +156,7 @@ func _light_room() -> void:
 	_omni(Vector3(0,2.30,1.12), Color("f5dfba"), 0.37, 6.60, false, 1.22)
 	for side: float in [-1.0, 1.0]:
 		_omni(Vector3(side*2.24,3.32,-5.22), Color("dcecf9"), 0.53, 8.6, false, 0.85)
-		_omni(Vector3(side*4.18,1.91,4.18), Color("ffca8f"), 0.27, 4.60, false, 1.13)
+		_omni(Vector3(side*4.18,1.91,4.18), Color("e6cdae"), 0.17, 4.60, false, 1.13)
 		_omni(Vector3(side*4.25,1.77,0.84), Color("ebbf91"), 0.15, 4.40, false, 1.18)
 		_omni(Vector3(side*2.5,2.8,-15.0), Color("efd3ab"), 0.62, 5.65, false)
 	_omni(Vector3(-0.7,2.58,-13.12), Color("ffecd2"), 1.5, 4.8, true)
@@ -167,6 +172,7 @@ func _collect_styled(n: Node) -> void:
 
 func _toggle_toon() -> void:
 	toon = not toon
+	gallery.paint.set_shader_parameter("toon_on",toon)
 	for mat in styled:
 		mat.set_shader_parameter("toon_on",toon)
 
@@ -233,6 +239,8 @@ func _setup_hud() -> void:
 	study_controls.add_theme_constant_override("separation", 8)
 	for i in Studies.VIEWS.size():
 		_button(Studies.VIEWS[i], show_view.bind(STUDY_START + i), study_controls)
+	for i in Gallery.NAMES.size():
+		_button(Gallery.NAMES[i], show_view.bind(REFERENCE_START + i), study_controls)
 	notice.position = Vector2(16, 84)
 	notice.add_theme_color_override("font_shadow_color", Color("161c26"))
 	notice.add_theme_constant_override("shadow_outline_size", 4)
@@ -255,8 +263,12 @@ func _toggle_button(title: String, enabled: bool, callback: Callable) -> void:
 	controls.add_child(button)
 
 func show_view(index: int) -> void:
+	gallery.clear_set(env)
 	active_view = index
-	if index >= STUDY_START:
+	if index >= REFERENCE_START:
+		studies.clear()
+		gallery.show_set(index - REFERENCE_START, shot_camera, env)
+	elif index >= STUDY_START:
 		var shot := index - STUDY_START
 		studies.show_study(shot)
 		shot_camera.fov = Studies.FOV[shot]
@@ -271,6 +283,7 @@ func show_view(index: int) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _walk() -> void:
+	gallery.clear_set(env)
 	studies.clear()
 	active_view = -1
 	walk_camera.current = true
@@ -348,10 +361,13 @@ func _physics_process(delta: float) -> void:
 	var wind := Vector3(6.0, 0.45, 2.1) * (1.0 + 0.30 * sin(elapsed * 3.1)) if winds else Vector3.ZERO
 	for component in wind_sources:
 		component.set_wind(wind)
+	if active_view >= REFERENCE_START:
+		notice.text = "REFERENCE STUDY   /   " + Gallery.NAMES[active_view - REFERENCE_START].to_upper()
+		return
 	if active_view >= STUDY_START:
 		notice.text = ["SERVICE STAIRS   /   BASELINE", "SERVICE STAIRS   /   ANOMALY",
 			"ACADEMY RECORDS   /   Click the ledger to read it.", "EVIDENCE   /   NIGHT REGISTER",
-			"MERIDIAN 03   /   Click the mechanism to start or stop all three axes."][active_view - STUDY_START]
+			"DEEP SPACE   /   Click the mechanism to start or stop all three axes."][active_view - STUDY_START]
 		return
 	if active_view == 4:
 		notice.text = "A26 / TRIAXIAL TOURBILLON MODEL II   ·   Click to separate or gather the original printed parts.   ·   CC BY-NC"
@@ -386,7 +402,7 @@ func snapshot() -> Dictionary:
 	if active_view == 0:
 		var frame_points := {"threshold":Vector3(0,0,-9.13),
 			"runner_far_left":Vector3(-1.17,0.03,-9.13), "first_pendant":Vector3(-2.56,4.64,3.21),
-			"near_column_base":Vector3(-3.43,0.14,3.0), "first_bust_crown":Vector3(-3.90,2.55,4)}
+			"near_column_base":Vector3(-3.43,0.14,1.82), "first_bust_crown":Vector3(-3.90,2.72,3.34)}
 		var viewport := get_viewport().get_visible_rect().size
 		for key in frame_points:
 			var pixel := camera.unproject_position(frame_points[key]) / viewport
@@ -416,6 +432,7 @@ func snapshot() -> Dictionary:
 		"player":[walker.position.x,walker.position.y,walker.position.z]}
 
 func _view_name() -> String:
+	if active_view >= REFERENCE_START: return Gallery.NAMES[active_view - REFERENCE_START]
 	if active_view >= STUDY_START: return Studies.VIEWS[active_view - STUDY_START]
 	return VIEWS[active_view] if active_view >= 0 else "Walk"
 

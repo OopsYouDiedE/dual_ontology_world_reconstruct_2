@@ -1,0 +1,771 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/RidgeTent.glb" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/Fieldstone.glb" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/Spruce1.glb" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/Spruce2.glb" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/Spruce3.glb" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/Spruce0.glb" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/ForestCampLand.glb" id="7"]
+
+[node name="ForestCamp" type="Node3D"]
+
+[node name="RidgeTent_0" parent="." instance=ExtResource("1")]
+position = Vector3(1.600000, 0.020000, -3.100000)
+rotation = Vector3(0, -0.480000, 0)
+scale = Vector3(1.000000, 1.000000, 1.000000)
+
+[node name="Fieldstone_1" parent="." instance=ExtResource("2")]
+position = Vector3(0.420000, 0.040000, -1.100000)
+rotation = Vector3(0, 0.000000, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_2" parent="." instance=ExtResource("2")]
+position = Vector3(0.337452, 0.040000, -0.889150)
+rotation = Vector3(0, 0.571199, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_3" parent="." instance=ExtResource("2")]
+position = Vector3(0.116016, 0.040000, -0.745244)
+rotation = Vector3(0, 1.142397, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_4" parent="." instance=ExtResource("2")]
+position = Vector3(-0.174004, 0.040000, -0.713970)
+rotation = Vector3(0, 1.713596, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_5" parent="." instance=ExtResource("2")]
+position = Vector3(-0.440528, 0.040000, -0.805258)
+rotation = Vector3(0, 2.284795, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_6" parent="." instance=ExtResource("2")]
+position = Vector3(-0.598936, 0.040000, -0.990124)
+rotation = Vector3(0, 2.855993, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_7" parent="." instance=ExtResource("2")]
+position = Vector3(-0.598936, 0.040000, -1.209876)
+rotation = Vector3(0, 3.427192, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_8" parent="." instance=ExtResource("2")]
+position = Vector3(-0.440528, 0.040000, -1.394742)
+rotation = Vector3(0, 3.998391, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_9" parent="." instance=ExtResource("2")]
+position = Vector3(-0.174004, 0.040000, -1.486030)
+rotation = Vector3(0, 4.569589, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_10" parent="." instance=ExtResource("2")]
+position = Vector3(0.116016, 0.040000, -1.454756)
+rotation = Vector3(0, 5.140788, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Fieldstone_11" parent="." instance=ExtResource("2")]
+position = Vector3(0.337452, 0.040000, -1.310850)
+rotation = Vector3(0, 5.711987, 0)
+scale = Vector3(0.210000, 0.390000, 0.230000)
+
+[node name="Spruce1_12" parent="." instance=ExtResource("3")]
+position = Vector3(-31.172521, 0.000000, -6.612743)
+rotation = Vector3(0, 5.201981, 0)
+scale = Vector3(3.637726, 3.789298, 3.637726)
+
+[node name="Spruce1_13" parent="." instance=ExtResource("3")]
+position = Vector3(-25.431754, 0.000000, -6.904250)
+rotation = Vector3(0, 0.207592, 0)
+scale = Vector3(3.972364, 4.137879, 3.972364)
+
+[node name="Spruce1_14" parent="." instance=ExtResource("3")]
+position = Vector3(-23.402794, 0.000000, -5.708118)
+rotation = Vector3(0, 1.929431, 0)
+scale = Vector3(5.123524, 5.337004, 5.123524)
+
+[node name="Spruce2_15" parent="." instance=ExtResource("4")]
+position = Vector3(-17.681802, 0.000000, -5.771936)
+rotation = Vector3(0, 4.742699, 0)
+scale = Vector3(4.728248, 4.925259, 4.728248)
+
+[node name="Spruce1_16" parent="." instance=ExtResource("3")]
+position = Vector3(-16.036746, 0.000000, -6.575932)
+rotation = Vector3(0, 2.040309, 0)
+scale = Vector3(5.629985, 5.864568, 5.629985)
+
+[node name="Spruce1_17" parent="." instance=ExtResource("3")]
+position = Vector3(-12.176178, 0.000000, -4.882877)
+rotation = Vector3(0, 6.267705, 0)
+scale = Vector3(5.697204, 5.934588, 5.697204)
+
+[node name="Spruce1_18" parent="." instance=ExtResource("3")]
+position = Vector3(-6.711113, 0.000000, -5.287770)
+rotation = Vector3(0, 0.988977, 0)
+scale = Vector3(5.716106, 5.954278, 5.716106)
+
+[node name="Spruce1_19" parent="." instance=ExtResource("3")]
+position = Vector3(-4.686927, 0.000000, -6.927547)
+rotation = Vector3(0, 5.106977, 0)
+scale = Vector3(5.107435, 5.320245, 5.107435)
+
+[node name="Spruce1_20" parent="." instance=ExtResource("3")]
+position = Vector3(0.583728, 0.000000, -5.993822)
+rotation = Vector3(0, 4.824745, 0)
+scale = Vector3(5.997259, 6.247145, 5.997259)
+
+[node name="Spruce1_21" parent="." instance=ExtResource("3")]
+position = Vector3(4.716487, 0.000000, -5.062960)
+rotation = Vector3(0, 3.123104, 0)
+scale = Vector3(3.563976, 3.712475, 3.563976)
+
+[node name="Spruce1_22" parent="." instance=ExtResource("3")]
+position = Vector3(8.169130, 0.000000, -7.117934)
+rotation = Vector3(0, 4.876278, 0)
+scale = Vector3(5.232439, 5.450457, 5.232439)
+
+[node name="Spruce3_23" parent="." instance=ExtResource("5")]
+position = Vector3(10.152438, 0.000000, -5.544558)
+rotation = Vector3(0, 3.537248, 0)
+scale = Vector3(5.971305, 6.220109, 5.971305)
+
+[node name="Spruce2_24" parent="." instance=ExtResource("4")]
+position = Vector3(15.108631, 0.000000, -6.863265)
+rotation = Vector3(0, 2.653725, 0)
+scale = Vector3(5.342274, 5.564869, 5.342274)
+
+[node name="Spruce0_25" parent="." instance=ExtResource("6")]
+position = Vector3(18.963584, 0.000000, -7.180999)
+rotation = Vector3(0, 3.687019, 0)
+scale = Vector3(5.833187, 6.076236, 5.833187)
+
+[node name="Spruce1_26" parent="." instance=ExtResource("3")]
+position = Vector3(21.456793, 0.000000, -6.438540)
+rotation = Vector3(0, 0.776310, 0)
+scale = Vector3(5.732459, 5.971312, 5.732459)
+
+[node name="Spruce2_27" parent="." instance=ExtResource("4")]
+position = Vector3(26.460954, 0.000000, -6.134692)
+rotation = Vector3(0, 0.286895, 0)
+scale = Vector3(5.073824, 5.285234, 5.073824)
+
+[node name="Spruce0_28" parent="." instance=ExtResource("6")]
+position = Vector3(29.662144, 0.000000, -7.060886)
+rotation = Vector3(0, 4.106565, 0)
+scale = Vector3(3.634482, 3.785919, 3.634482)
+
+[node name="Spruce1_29" parent="." instance=ExtResource("3")]
+position = Vector3(-29.422439, 0.000000, -11.196778)
+rotation = Vector3(0, 5.312300, 0)
+scale = Vector3(3.697151, 3.851199, 3.697151)
+
+[node name="Spruce1_30" parent="." instance=ExtResource("3")]
+position = Vector3(-27.377227, 0.000000, -11.008332)
+rotation = Vector3(0, 0.878394, 0)
+scale = Vector3(6.727015, 7.007308, 6.727015)
+
+[node name="Spruce3_31" parent="." instance=ExtResource("5")]
+position = Vector3(-21.609038, 0.000000, -11.090042)
+rotation = Vector3(0, 4.853926, 0)
+scale = Vector3(4.650222, 4.843981, 4.650222)
+
+[node name="Spruce0_32" parent="." instance=ExtResource("6")]
+position = Vector3(-18.234853, 0.000000, -12.122982)
+rotation = Vector3(0, 5.220947, 0)
+scale = Vector3(4.334138, 4.514727, 4.334138)
+
+[node name="Spruce1_33" parent="." instance=ExtResource("3")]
+position = Vector3(-13.907805, 0.000000, -10.128614)
+rotation = Vector3(0, 1.363108, 0)
+scale = Vector3(4.441468, 4.626530, 4.441468)
+
+[node name="Spruce1_34" parent="." instance=ExtResource("3")]
+position = Vector3(-11.433246, 0.000000, -10.956313)
+rotation = Vector3(0, 3.348009, 0)
+scale = Vector3(5.032124, 5.241796, 5.032124)
+
+[node name="Spruce3_35" parent="." instance=ExtResource("5")]
+position = Vector3(-8.064261, 0.000000, -12.022167)
+rotation = Vector3(0, 1.443772, 0)
+scale = Vector3(6.478873, 6.748826, 6.478873)
+
+[node name="Spruce1_36" parent="." instance=ExtResource("3")]
+position = Vector3(-4.595201, 0.000000, -9.931303)
+rotation = Vector3(0, 1.641619, 0)
+scale = Vector3(6.647557, 6.924538, 6.647557)
+
+[node name="Spruce3_37" parent="." instance=ExtResource("5")]
+position = Vector3(0.989297, 0.000000, -11.736973)
+rotation = Vector3(0, 4.015765, 0)
+scale = Vector3(5.212880, 5.430083, 5.212880)
+
+[node name="Spruce2_38" parent="." instance=ExtResource("4")]
+position = Vector3(4.545748, 0.000000, -10.898220)
+rotation = Vector3(0, 3.127941, 0)
+scale = Vector3(5.725833, 5.964410, 5.725833)
+
+[node name="Spruce2_39" parent="." instance=ExtResource("4")]
+position = Vector3(6.720395, 0.000000, -10.331005)
+rotation = Vector3(0, 5.433230, 0)
+scale = Vector3(6.594064, 6.868816, 6.594064)
+
+[node name="Spruce3_40" parent="." instance=ExtResource("5")]
+position = Vector3(10.973323, 0.000000, -10.896122)
+rotation = Vector3(0, 0.813105, 0)
+scale = Vector3(4.820368, 5.021216, 4.820368)
+
+[node name="Spruce2_41" parent="." instance=ExtResource("4")]
+position = Vector3(14.129314, 0.000000, -11.792198)
+rotation = Vector3(0, 5.301132, 0)
+scale = Vector3(4.669359, 4.863916, 4.669359)
+
+[node name="Spruce0_42" parent="." instance=ExtResource("6")]
+position = Vector3(17.461067, 0.000000, -10.706324)
+rotation = Vector3(0, 3.623862, 0)
+scale = Vector3(4.481940, 4.668687, 4.481940)
+
+[node name="Spruce1_43" parent="." instance=ExtResource("3")]
+position = Vector3(22.304944, 0.000000, -9.897556)
+rotation = Vector3(0, 4.308517, 0)
+scale = Vector3(4.849856, 5.051933, 4.849856)
+
+[node name="Spruce3_44" parent="." instance=ExtResource("5")]
+position = Vector3(25.195204, 0.000000, -11.902045)
+rotation = Vector3(0, 3.516311, 0)
+scale = Vector3(6.331172, 6.594971, 6.331172)
+
+[node name="Spruce1_45" parent="." instance=ExtResource("3")]
+position = Vector3(28.728330, 0.000000, -10.467735)
+rotation = Vector3(0, 1.677762, 0)
+scale = Vector3(4.028267, 4.196111, 4.028267)
+
+[node name="Spruce1_46" parent="." instance=ExtResource("3")]
+position = Vector3(-30.011518, 0.000000, -15.360743)
+rotation = Vector3(0, 3.812261, 0)
+scale = Vector3(5.023294, 5.232598, 5.023294)
+
+[node name="Spruce1_47" parent="." instance=ExtResource("3")]
+position = Vector3(-25.324402, 0.000000, -16.304727)
+rotation = Vector3(0, 5.139969, 0)
+scale = Vector3(4.942157, 5.148080, 4.942157)
+
+[node name="Spruce2_48" parent="." instance=ExtResource("4")]
+position = Vector3(-22.970515, 0.000000, -16.285882)
+rotation = Vector3(0, 0.571381, 0)
+scale = Vector3(6.283493, 6.545305, 6.283493)
+
+[node name="Spruce0_49" parent="." instance=ExtResource("6")]
+position = Vector3(-19.076465, 0.000000, -15.622161)
+rotation = Vector3(0, 3.093853, 0)
+scale = Vector3(5.358571, 5.581845, 5.358571)
+
+[node name="Spruce1_50" parent="." instance=ExtResource("3")]
+position = Vector3(-13.692289, 0.000000, -14.360111)
+rotation = Vector3(0, 2.373498, 0)
+scale = Vector3(6.353841, 6.618585, 6.353841)
+
+[node name="Spruce2_51" parent="." instance=ExtResource("4")]
+position = Vector3(-10.686762, 0.000000, -15.358824)
+rotation = Vector3(0, 5.580745, 0)
+scale = Vector3(4.195508, 4.370321, 4.195508)
+
+[node name="Spruce3_52" parent="." instance=ExtResource("5")]
+position = Vector3(-8.014646, 0.000000, -14.717911)
+rotation = Vector3(0, 0.746557, 0)
+scale = Vector3(5.903764, 6.149754, 5.903764)
+
+[node name="Spruce2_53" parent="." instance=ExtResource("4")]
+position = Vector3(-3.339697, 0.000000, -15.023364)
+rotation = Vector3(0, 6.054329, 0)
+scale = Vector3(5.740590, 5.979781, 5.740590)
+
+[node name="Spruce0_54" parent="." instance=ExtResource("6")]
+position = Vector3(0.630185, 0.000000, -15.196053)
+rotation = Vector3(0, 4.013686, 0)
+scale = Vector3(6.951590, 7.241240, 6.951590)
+
+[node name="Spruce1_55" parent="." instance=ExtResource("3")]
+position = Vector3(4.910564, 0.000000, -15.024922)
+rotation = Vector3(0, 3.652620, 0)
+scale = Vector3(6.867249, 7.153384, 6.867249)
+
+[node name="Spruce3_56" parent="." instance=ExtResource("5")]
+position = Vector3(7.677215, 0.000000, -14.834381)
+rotation = Vector3(0, 0.752549, 0)
+scale = Vector3(5.067090, 5.278218, 5.067090)
+
+[node name="Spruce2_57" parent="." instance=ExtResource("4")]
+position = Vector3(10.981278, 0.000000, -14.839221)
+rotation = Vector3(0, 6.038194, 0)
+scale = Vector3(4.962580, 5.169354, 4.962580)
+
+[node name="Spruce1_58" parent="." instance=ExtResource("3")]
+position = Vector3(14.667242, 0.000000, -17.022347)
+rotation = Vector3(0, 6.162554, 0)
+scale = Vector3(5.191466, 5.407777, 5.191466)
+
+[node name="Spruce1_59" parent="." instance=ExtResource("3")]
+position = Vector3(19.702146, 0.000000, -14.480951)
+rotation = Vector3(0, 5.125056, 0)
+scale = Vector3(5.756120, 5.995959, 5.756120)
+
+[node name="Spruce1_60" parent="." instance=ExtResource("3")]
+position = Vector3(22.376263, 0.000000, -16.823271)
+rotation = Vector3(0, 4.015853, 0)
+scale = Vector3(5.044580, 5.254771, 5.044580)
+
+[node name="Spruce1_61" parent="." instance=ExtResource("3")]
+position = Vector3(25.605193, 0.000000, -16.857866)
+rotation = Vector3(0, 2.482630, 0)
+scale = Vector3(6.725494, 7.005723, 6.725494)
+
+[node name="Spruce3_62" parent="." instance=ExtResource("5")]
+position = Vector3(30.186007, 0.000000, -16.275029)
+rotation = Vector3(0, 2.603053, 0)
+scale = Vector3(5.153704, 5.368441, 5.153704)
+
+[node name="Spruce2_63" parent="." instance=ExtResource("4")]
+position = Vector3(-30.182533, 0.000000, -20.308346)
+rotation = Vector3(0, 4.408411, 0)
+scale = Vector3(3.120530, 3.250552, 3.120530)
+
+[node name="Spruce1_64" parent="." instance=ExtResource("3")]
+position = Vector3(-26.091954, 0.000000, -19.207712)
+rotation = Vector3(0, 4.725221, 0)
+scale = Vector3(4.383243, 4.565878, 4.383243)
+
+[node name="Spruce0_65" parent="." instance=ExtResource("6")]
+position = Vector3(-21.250555, 0.000000, -21.481999)
+rotation = Vector3(0, 5.457344, 0)
+scale = Vector3(4.013170, 4.180386, 4.013170)
+
+[node name="Spruce1_66" parent="." instance=ExtResource("3")]
+position = Vector3(-18.433882, 0.000000, -21.248470)
+rotation = Vector3(0, 5.855247, 0)
+scale = Vector3(3.538992, 3.686450, 3.538992)
+
+[node name="Spruce1_67" parent="." instance=ExtResource("3")]
+position = Vector3(-14.491519, 0.000000, -20.288081)
+rotation = Vector3(0, 1.361733, 0)
+scale = Vector3(3.248455, 3.383807, 3.248455)
+
+[node name="Spruce0_68" parent="." instance=ExtResource("6")]
+position = Vector3(-12.525511, 0.000000, -20.560520)
+rotation = Vector3(0, 0.808254, 0)
+scale = Vector3(2.908384, 3.029567, 2.908384)
+
+[node name="Spruce1_69" parent="." instance=ExtResource("3")]
+position = Vector3(-6.496523, 0.000000, -19.762274)
+rotation = Vector3(0, 3.723019, 0)
+scale = Vector3(3.008390, 3.133740, 3.008390)
+
+[node name="Spruce0_70" parent="." instance=ExtResource("6")]
+position = Vector3(-2.412863, 0.000000, -21.812296)
+rotation = Vector3(0, 2.547473, 0)
+scale = Vector3(3.296774, 3.434139, 3.296774)
+
+[node name="Spruce0_71" parent="." instance=ExtResource("6")]
+position = Vector3(0.086009, 0.000000, -21.726341)
+rotation = Vector3(0, 4.326357, 0)
+scale = Vector3(3.341850, 3.481094, 3.341850)
+
+[node name="Spruce3_72" parent="." instance=ExtResource("5")]
+position = Vector3(2.544263, 0.000000, -20.005601)
+rotation = Vector3(0, 0.439175, 0)
+scale = Vector3(4.480074, 4.666744, 4.480074)
+
+[node name="Spruce1_73" parent="." instance=ExtResource("3")]
+position = Vector3(6.694658, 0.000000, -19.541950)
+rotation = Vector3(0, 0.327151, 0)
+scale = Vector3(4.229115, 4.405328, 4.229115)
+
+[node name="Spruce2_74" parent="." instance=ExtResource("4")]
+position = Vector3(12.034928, 0.000000, -21.343996)
+rotation = Vector3(0, 5.852073, 0)
+scale = Vector3(3.378310, 3.519073, 3.378310)
+
+[node name="Spruce3_75" parent="." instance=ExtResource("5")]
+position = Vector3(16.317043, 0.000000, -21.706487)
+rotation = Vector3(0, 1.903536, 0)
+scale = Vector3(3.589428, 3.738988, 3.589428)
+
+[node name="Spruce0_76" parent="." instance=ExtResource("6")]
+position = Vector3(18.169682, 0.000000, -19.382434)
+rotation = Vector3(0, 0.253250, 0)
+scale = Vector3(4.524695, 4.713224, 4.524695)
+
+[node name="Spruce3_77" parent="." instance=ExtResource("5")]
+position = Vector3(22.959939, 0.000000, -20.895692)
+rotation = Vector3(0, 0.645137, 0)
+scale = Vector3(3.642297, 3.794059, 3.642297)
+
+[node name="Spruce3_78" parent="." instance=ExtResource("5")]
+position = Vector3(26.128810, 0.000000, -19.718328)
+rotation = Vector3(0, 4.037350, 0)
+scale = Vector3(4.445934, 4.631182, 4.445934)
+
+[node name="Spruce1_79" parent="." instance=ExtResource("3")]
+position = Vector3(30.450946, 0.000000, -21.457006)
+rotation = Vector3(0, 5.850974, 0)
+scale = Vector3(3.681666, 3.835069, 3.681666)
+
+[node name="Spruce1_80" parent="." instance=ExtResource("3")]
+position = Vector3(-30.573919, 0.000000, -24.422452)
+rotation = Vector3(0, 3.403801, 0)
+scale = Vector3(4.537870, 4.726948, 4.537870)
+
+[node name="Spruce1_81" parent="." instance=ExtResource("3")]
+position = Vector3(-24.780225, 0.000000, -24.139170)
+rotation = Vector3(0, 3.464741, 0)
+scale = Vector3(3.352965, 3.492672, 3.352965)
+
+[node name="Spruce2_82" parent="." instance=ExtResource("4")]
+position = Vector3(-23.501032, 0.000000, -25.128906)
+rotation = Vector3(0, 3.630519, 0)
+scale = Vector3(3.851757, 4.012247, 3.851757)
+
+[node name="Spruce1_83" parent="." instance=ExtResource("3")]
+position = Vector3(-18.695530, 0.000000, -26.606180)
+rotation = Vector3(0, 1.758027, 0)
+scale = Vector3(3.304939, 3.442644, 3.304939)
+
+[node name="Spruce1_84" parent="." instance=ExtResource("3")]
+position = Vector3(-16.089511, 0.000000, -26.454599)
+rotation = Vector3(0, 0.871747, 0)
+scale = Vector3(3.619991, 3.770824, 3.619991)
+
+[node name="Spruce0_85" parent="." instance=ExtResource("6")]
+position = Vector3(-11.268042, 0.000000, -25.857324)
+rotation = Vector3(0, 4.308656, 0)
+scale = Vector3(4.274269, 4.452364, 4.274269)
+
+[node name="Spruce1_86" parent="." instance=ExtResource("3")]
+position = Vector3(-6.489917, 0.000000, -24.899650)
+rotation = Vector3(0, 5.819696, 0)
+scale = Vector3(2.644078, 2.754248, 2.644078)
+
+[node name="Spruce1_87" parent="." instance=ExtResource("3")]
+position = Vector3(-4.996252, 0.000000, -24.691287)
+rotation = Vector3(0, 1.260600, 0)
+scale = Vector3(3.478486, 3.623423, 3.478486)
+
+[node name="Spruce3_88" parent="." instance=ExtResource("5")]
+position = Vector3(-0.073046, 0.000000, -24.807627)
+rotation = Vector3(0, 2.190599, 0)
+scale = Vector3(3.669277, 3.822164, 3.669277)
+
+[node name="Spruce1_89" parent="." instance=ExtResource("3")]
+position = Vector3(4.152971, 0.000000, -24.590856)
+rotation = Vector3(0, 4.765408, 0)
+scale = Vector3(3.560215, 3.708558, 3.560215)
+
+[node name="Spruce2_90" parent="." instance=ExtResource("4")]
+position = Vector3(6.632437, 0.000000, -23.950557)
+rotation = Vector3(0, 6.140907, 0)
+scale = Vector3(3.855277, 4.015913, 3.855277)
+
+[node name="Spruce1_91" parent="." instance=ExtResource("3")]
+position = Vector3(11.795642, 0.000000, -26.218349)
+rotation = Vector3(0, 3.768789, 0)
+scale = Vector3(2.957195, 3.080412, 2.957195)
+
+[node name="Spruce1_92" parent="." instance=ExtResource("3")]
+position = Vector3(15.361811, 0.000000, -26.290762)
+rotation = Vector3(0, 4.892071, 0)
+scale = Vector3(3.225983, 3.360399, 3.225983)
+
+[node name="Spruce3_93" parent="." instance=ExtResource("5")]
+position = Vector3(18.759065, 0.000000, -24.132458)
+rotation = Vector3(0, 1.343294, 0)
+scale = Vector3(2.758470, 2.873406, 2.758470)
+
+[node name="Spruce3_94" parent="." instance=ExtResource("5")]
+position = Vector3(22.869728, 0.000000, -25.099545)
+rotation = Vector3(0, 2.894997, 0)
+scale = Vector3(2.943278, 3.065914, 2.943278)
+
+[node name="Spruce1_95" parent="." instance=ExtResource("3")]
+position = Vector3(26.818743, 0.000000, -26.012898)
+rotation = Vector3(0, 1.826388, 0)
+scale = Vector3(3.600989, 3.751031, 3.600989)
+
+[node name="Spruce2_96" parent="." instance=ExtResource("4")]
+position = Vector3(31.074375, 0.000000, -25.226322)
+rotation = Vector3(0, 4.000808, 0)
+scale = Vector3(3.225620, 3.360021, 3.225620)
+
+[node name="Spruce0_97" parent="." instance=ExtResource("6")]
+position = Vector3(-29.472050, 0.000000, -30.987959)
+rotation = Vector3(0, 0.549818, 0)
+scale = Vector3(4.268486, 4.446339, 4.268486)
+
+[node name="Spruce2_98" parent="." instance=ExtResource("4")]
+position = Vector3(-27.414293, 0.000000, -29.695642)
+rotation = Vector3(0, 3.264056, 0)
+scale = Vector3(3.596676, 3.746538, 3.596676)
+
+[node name="Spruce1_99" parent="." instance=ExtResource("3")]
+position = Vector3(-21.159124, 0.000000, -29.712546)
+rotation = Vector3(0, 6.173557, 0)
+scale = Vector3(3.930981, 4.094771, 3.930981)
+
+[node name="Spruce0_100" parent="." instance=ExtResource("6")]
+position = Vector3(-17.955292, 0.000000, -30.431741)
+rotation = Vector3(0, 1.377791, 0)
+scale = Vector3(4.288605, 4.467297, 4.288605)
+
+[node name="Spruce0_101" parent="." instance=ExtResource("6")]
+position = Vector3(-15.079632, 0.000000, -29.985264)
+rotation = Vector3(0, 0.306446, 0)
+scale = Vector3(3.377320, 3.518041, 3.377320)
+
+[node name="Spruce0_102" parent="." instance=ExtResource("6")]
+position = Vector3(-9.945810, 0.000000, -30.977445)
+rotation = Vector3(0, 3.376306, 0)
+scale = Vector3(3.498387, 3.644153, 3.498387)
+
+[node name="Spruce3_103" parent="." instance=ExtResource("5")]
+position = Vector3(-8.614354, 0.000000, -30.991995)
+rotation = Vector3(0, 0.642952, 0)
+scale = Vector3(3.254052, 3.389638, 3.254052)
+
+[node name="Spruce2_104" parent="." instance=ExtResource("4")]
+position = Vector3(-3.401845, 0.000000, -29.583895)
+rotation = Vector3(0, 4.085489, 0)
+scale = Vector3(3.936037, 4.100039, 3.936037)
+
+[node name="Spruce3_105" parent="." instance=ExtResource("5")]
+position = Vector3(-0.301065, 0.000000, -29.469165)
+rotation = Vector3(0, 0.394503, 0)
+scale = Vector3(3.423884, 3.566546, 3.423884)
+
+[node name="Spruce1_106" parent="." instance=ExtResource("3")]
+position = Vector3(2.935359, 0.000000, -28.774460)
+rotation = Vector3(0, 3.573714, 0)
+scale = Vector3(3.629065, 3.780276, 3.629065)
+
+[node name="Spruce2_107" parent="." instance=ExtResource("4")]
+position = Vector3(7.792985, 0.000000, -29.073926)
+rotation = Vector3(0, 0.080436, 0)
+scale = Vector3(3.814011, 3.972928, 3.814011)
+
+[node name="Spruce1_108" parent="." instance=ExtResource("3")]
+position = Vector3(9.925704, 0.000000, -30.959409)
+rotation = Vector3(0, 2.664345, 0)
+scale = Vector3(4.360916, 4.542620, 4.360916)
+
+[node name="Spruce1_109" parent="." instance=ExtResource("3")]
+position = Vector3(15.022502, 0.000000, -28.946915)
+rotation = Vector3(0, 1.584358, 0)
+scale = Vector3(4.226673, 4.402785, 4.226673)
+
+[node name="Spruce1_110" parent="." instance=ExtResource("3")]
+position = Vector3(19.981817, 0.000000, -31.386522)
+rotation = Vector3(0, 1.160023, 0)
+scale = Vector3(3.696000, 3.850000, 3.696000)
+
+[node name="Spruce0_111" parent="." instance=ExtResource("6")]
+position = Vector3(21.654861, 0.000000, -30.250987)
+rotation = Vector3(0, 0.734058, 0)
+scale = Vector3(3.085832, 3.214408, 3.085832)
+
+[node name="Spruce3_112" parent="." instance=ExtResource("5")]
+position = Vector3(26.005300, 0.000000, -30.662115)
+rotation = Vector3(0, 3.484842, 0)
+scale = Vector3(3.801121, 3.959501, 3.801121)
+
+[node name="Spruce2_113" parent="." instance=ExtResource("4")]
+position = Vector3(30.722767, 0.000000, -31.209307)
+rotation = Vector3(0, 5.072458, 0)
+scale = Vector3(3.964182, 4.129356, 3.964182)
+
+[node name="Spruce1_114" parent="." instance=ExtResource("3")]
+position = Vector3(-4.800000, 0.000000, 4.800000)
+rotation = Vector3(0, 4.295780, 0)
+scale = Vector3(9.216000, 9.600000, 9.216000)
+
+[node name="Spruce1_115" parent="." instance=ExtResource("3")]
+position = Vector3(-5.650000, 0.000000, -0.250000)
+rotation = Vector3(0, 3.897546, 0)
+scale = Vector3(8.352000, 8.700000, 8.352000)
+
+[node name="Spruce3_116" parent="." instance=ExtResource("5")]
+position = Vector3(5.720000, 0.000000, 1.070000)
+rotation = Vector3(0, 5.845056, 0)
+scale = Vector3(8.304000, 8.650000, 8.304000)
+
+[node name="Spruce3_117" parent="." instance=ExtResource("5")]
+position = Vector3(4.600000, 0.000000, -2.500000)
+rotation = Vector3(0, 0.624366, 0)
+scale = Vector3(6.432000, 6.700000, 6.432000)
+
+[node name="Spruce3_118" parent="." instance=ExtResource("5")]
+position = Vector3(-3.900000, 0.000000, -4.800000)
+rotation = Vector3(0, 0.149120, 0)
+scale = Vector3(5.184000, 5.400000, 5.184000)
+
+[node name="Spruce2_119" parent="." instance=ExtResource("4")]
+position = Vector3(6.700000, 0.000000, -3.700000)
+rotation = Vector3(0, 0.338937, 0)
+scale = Vector3(6.816000, 7.100000, 6.816000)
+
+[node name="Fieldstone_120" parent="." instance=ExtResource("2")]
+position = Vector3(9.193791, 0.000000, -11.613308)
+rotation = Vector3(0, 0.772698, 0)
+scale = Vector3(0.764062, 0.657093, 0.764062)
+
+[node name="Fieldstone_121" parent="." instance=ExtResource("2")]
+position = Vector3(13.924766, 0.000000, 5.055738)
+rotation = Vector3(0, 4.636331, 0)
+scale = Vector3(0.631075, 0.542725, 0.631075)
+
+[node name="Fieldstone_122" parent="." instance=ExtResource("2")]
+position = Vector3(14.026784, 0.000000, -13.786706)
+rotation = Vector3(0, 5.639967, 0)
+scale = Vector3(0.816727, 0.702386, 0.816727)
+
+[node name="Fieldstone_123" parent="." instance=ExtResource("2")]
+position = Vector3(-14.702178, 0.000000, -3.884642)
+rotation = Vector3(0, 5.879059, 0)
+scale = Vector3(0.460548, 0.396071, 0.460548)
+
+[node name="Fieldstone_124" parent="." instance=ExtResource("2")]
+position = Vector3(-7.880926, 0.000000, -13.403432)
+rotation = Vector3(0, 4.955649, 0)
+scale = Vector3(1.028027, 0.884103, 1.028027)
+
+[node name="Fieldstone_125" parent="." instance=ExtResource("2")]
+position = Vector3(-2.659026, 0.000000, -8.365084)
+rotation = Vector3(0, 2.741791, 0)
+scale = Vector3(1.020313, 0.877469, 1.020313)
+
+[node name="Fieldstone_126" parent="." instance=ExtResource("2")]
+position = Vector3(13.806387, 0.000000, -8.988251)
+rotation = Vector3(0, 5.108939, 0)
+scale = Vector3(0.829882, 0.713698, 0.829882)
+
+[node name="Fieldstone_127" parent="." instance=ExtResource("2")]
+position = Vector3(-12.655582, 0.000000, -8.188566)
+rotation = Vector3(0, 4.056312, 0)
+scale = Vector3(0.425902, 0.366276, 0.425902)
+
+[node name="Fieldstone_128" parent="." instance=ExtResource("2")]
+position = Vector3(-14.723858, 0.000000, -7.380531)
+rotation = Vector3(0, 0.356342, 0)
+scale = Vector3(1.036550, 0.891433, 1.036550)
+
+[node name="Fieldstone_129" parent="." instance=ExtResource("2")]
+position = Vector3(14.702521, 0.000000, 1.698699)
+rotation = Vector3(0, 6.152371, 0)
+scale = Vector3(0.423782, 0.364452, 0.423782)
+
+[node name="Fieldstone_130" parent="." instance=ExtResource("2")]
+position = Vector3(3.659114, 0.000000, -15.241245)
+rotation = Vector3(0, 2.735837, 0)
+scale = Vector3(1.169748, 1.005983, 1.169748)
+
+[node name="Fieldstone_131" parent="." instance=ExtResource("2")]
+position = Vector3(8.970513, 0.000000, 0.351919)
+rotation = Vector3(0, 1.040308, 0)
+scale = Vector3(0.910254, 0.782818, 0.910254)
+
+[node name="Fieldstone_132" parent="." instance=ExtResource("2")]
+position = Vector3(7.899444, 0.000000, -1.256216)
+rotation = Vector3(0, 2.954619, 0)
+scale = Vector3(0.416076, 0.357825, 0.416076)
+
+[node name="Fieldstone_133" parent="." instance=ExtResource("2")]
+position = Vector3(12.479756, 0.000000, -10.215652)
+rotation = Vector3(0, 0.938431, 0)
+scale = Vector3(0.768186, 0.660640, 0.768186)
+
+[node name="Fieldstone_134" parent="." instance=ExtResource("2")]
+position = Vector3(0.758963, 0.000000, -13.041217)
+rotation = Vector3(0, 4.063545, 0)
+scale = Vector3(0.438726, 0.377304, 0.438726)
+
+[node name="Fieldstone_135" parent="." instance=ExtResource("2")]
+position = Vector3(7.309443, 0.000000, -11.245670)
+rotation = Vector3(0, 2.752756, 0)
+scale = Vector3(0.925529, 0.795955, 0.925529)
+
+[node name="Fieldstone_136" parent="." instance=ExtResource("2")]
+position = Vector3(-12.130268, 0.000000, -1.360839)
+rotation = Vector3(0, 5.035752, 0)
+scale = Vector3(0.554506, 0.476875, 0.554506)
+
+[node name="Fieldstone_137" parent="." instance=ExtResource("2")]
+position = Vector3(-5.589013, 0.000000, -9.843247)
+rotation = Vector3(0, 2.392859, 0)
+scale = Vector3(0.872119, 0.750022, 0.872119)
+
+[node name="Fieldstone_138" parent="." instance=ExtResource("2")]
+position = Vector3(-8.233653, 0.000000, 2.750440)
+rotation = Vector3(0, 2.913464, 0)
+scale = Vector3(0.753839, 0.648302, 0.753839)
+
+[node name="Fieldstone_139" parent="." instance=ExtResource("2")]
+position = Vector3(-10.261931, 0.000000, -7.780540)
+rotation = Vector3(0, 5.093846, 0)
+scale = Vector3(1.078947, 0.927894, 1.078947)
+
+[node name="Fieldstone_140" parent="." instance=ExtResource("2")]
+position = Vector3(-12.211799, 0.000000, -0.591442)
+rotation = Vector3(0, 1.996637, 0)
+scale = Vector3(0.801281, 0.689101, 0.801281)
+
+[node name="Fieldstone_141" parent="." instance=ExtResource("2")]
+position = Vector3(-9.610891, 0.000000, -0.214089)
+rotation = Vector3(0, 4.665438, 0)
+scale = Vector3(0.444329, 0.382123, 0.444329)
+
+[node name="Fieldstone_142" parent="." instance=ExtResource("2")]
+position = Vector3(-7.922128, 0.000000, -4.613332)
+rotation = Vector3(0, 0.704886, 0)
+scale = Vector3(0.903586, 0.777084, 0.903586)
+
+[node name="Fieldstone_143" parent="." instance=ExtResource("2")]
+position = Vector3(6.112495, 0.000000, -4.863817)
+rotation = Vector3(0, 0.012631, 0)
+scale = Vector3(0.733743, 0.631019, 0.733743)
+
+[node name="Fieldstone_144" parent="." instance=ExtResource("2")]
+position = Vector3(11.873468, 0.000000, -4.098983)
+rotation = Vector3(0, 6.042705, 0)
+scale = Vector3(1.158769, 0.996541, 1.158769)
+
+[node name="Fieldstone_145" parent="." instance=ExtResource("2")]
+position = Vector3(8.655321, 0.000000, 1.293968)
+rotation = Vector3(0, 3.670260, 0)
+scale = Vector3(0.896269, 0.770791, 0.896269)
+
+[node name="Fieldstone_146" parent="." instance=ExtResource("2")]
+position = Vector3(-6.972038, 0.000000, 1.646570)
+rotation = Vector3(0, 1.025238, 0)
+scale = Vector3(0.751513, 0.646301, 0.751513)
+
+[node name="Fieldstone_147" parent="." instance=ExtResource("2")]
+position = Vector3(-4.943345, 0.000000, -0.165846)
+rotation = Vector3(0, 1.232382, 0)
+scale = Vector3(0.587721, 0.505440, 0.587721)
+
+[node name="Fieldstone_148" parent="." instance=ExtResource("2")]
+position = Vector3(-0.720000, 0.020000, 3.700000)
+rotation = Vector3(0, -0.720000, 0)
+scale = Vector3(0.820000, 0.680600, 0.820000)
+
+[node name="Fieldstone_149" parent="." instance=ExtResource("2")]
+position = Vector3(4.100000, 0.020000, 2.700000)
+rotation = Vector3(0, 4.100000, 0)
+scale = Vector3(1.120000, 0.929600, 1.120000)
+
+[node name="Fieldstone_150" parent="." instance=ExtResource("2")]
+position = Vector3(1.470000, 0.020000, 4.550000)
+rotation = Vector3(0, 1.470000, 0)
+scale = Vector3(0.490000, 0.406700, 0.490000)
+
+[node name="ForestCampLand_151" parent="." instance=ExtResource("7")]
+position = Vector3(0.000000, 0.000000, 0.000000)
+rotation = Vector3(0, 0.000000, 0)
+scale = Vector3(1.000000, 1.000000, 1.000000)

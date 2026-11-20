@@ -1,6 +1,6 @@
 # Grand Stair Hall — architectural reference lab
 
-An optional, original study of the *Blue Prince* Grand Hall entrance image: a centered view down a cool blue-gray barrel vault, tapered circular columns and stepped arch ribs, pools of warm light, a muted gold runner, and a door at the far end. The stair, mechanical bay, academy crest and freestanding three-axis exhibit belong to this prototype. Reference: [official game gallery](https://store.steampowered.com/app/1569580/Blue_Prince/) and [Grand Hall frame](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1569580/ss_7f4511e2454604568f545436f36674451fed6353.600x338.jpg). Game assets are generated in the project.
+An optional architectural reconstruction of the *Blue Prince* Grand Hall entrance image: a centered view down a cool blue-gray barrel vault, tapered circular columns and stepped arch ribs, pools of warm light, a muted gold runner, and a door at the far end. The stair, mechanical bay, academy crest and freestanding three-axis exhibit belong to this prototype. Reference: [official game gallery](https://store.steampowered.com/app/1569580/Blue_Prince/) and [Grand Hall frame](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1569580/ss_7f4511e2454604568f545436f36674451fed6353.600x338.jpg). Game assets are generated in the project.
 
 ## Open the hall
 
@@ -22,8 +22,26 @@ From the repository root:
 | Gear train | Extruded tooth profiles; 30:22 counter-rotation and locked tooth phase. |
 | Room door and cabinet | Animated hinge bodies carry their own collision and trim. |
 | Stair | 10 treads at 0.38 m run × 0.165 m rise. The tread mesh is stepped; the walk collider uses a continuous grade and the landing has its own floor and guards. |
-| Meridian 03 | Original low-poly, three-axis kinematic study. See the [look studies and budgets](studies/README.md). |
+| Meridian 03 | Low-poly reconstruction of the Halter Deep Space dial, case and three-axis mechanism. See the [look studies and budgets](studies/README.md). |
 | Optional A26 print exhibit | Launch with `--hall-a26-preview` after running `tools/blue_prince_lab/build_a26_exhibit.py` with the original archive. This local CC BY-NC comparison asset is separate from the shipped Meridian geometry. |
+
+## Five reference cameras
+
+Choose **Entrance**, **Chapel**, **Garden Gate**, **Forest Camp**, or **Attic**. The four additional scenes are fixed composition studies, loaded one at a time. **Meridian** opens the watch. For reviewing the look, enable SDFGI and press `H` to hide the controls. The gallery does not add these rooms to the seeded run.
+
+![Six native viewport captures](reference/plates.jpg)
+
+| Camera | Geometry to compare against the supplied frame |
+| --- | --- |
+| Entrance | Foreground column feet and pendants frame the stepped transverse ribs. The end wall has nested portals, two hand pedestals, and a working door with projecting bevelled panels. |
+| Chapel | A close leaded figure on the right; stepped sills, a high window over the opposite door, exposed timber trusses and two ranks of upholstered pews. |
+| Garden Gate | Round iron opening and side grilles, capped low wall, irregular path stones, firs and three layers of ridgelines. |
+| Forest Camp | Foreground conifers frame an open tent, guy ropes, fire ring, hanging pot and a curved approach. |
+| Attic | Boarded gable, solid rafters and eight-spoke round window. A warm exterior source casts the window bars across individual floorboards; a separate cool interior fill keeps the chair and red wagon legible. |
+
+**ArchBuilder:** place the seven reference pieces by their English labels in the component catalog: *Upholstered chapel pew*, *Leaded chapel bay*, *Eight-spoke attic window*, *Iron moon gate*, *Capped garden wall*, *Canvas ridge tent*, and *Layered spruce*. These use the same GLBs as the gallery and have matching mesh collision; the spruce is scaled per placement in the two outdoor plates. The window's local origin is its centre, the other modules use floor level.
+
+The geometry generator is `tools/blue_prince_lab/reference/build.py` (Python, NumPy and Pillow). Run it from the repository root to rebuild the GLBs and four assembly scenes; preserve their `.import` settings for vertex pigment. `tools/blue_prince_lab/reference_e2e.py` records all six HUD-free 1280×720 frames and camera states under `.runtime/reference-plates/`. Run `--headless --path . --script tools/blue_prince_lab/reference_parts_test.gd` for factory placement and aperture/collision checks.
 
 ## Look development
 

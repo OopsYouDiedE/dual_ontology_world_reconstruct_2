@@ -57,9 +57,9 @@ void fragment() {
 		+ pale_wash * (0.34 + 0.66 * falloff) * mix(0.93, 1.07, wash) * vec3(0.60, 0.79, 0.94);
 	if (shaft_flat && toon_on) {
 		vec3 world_normal = normalize(mat3(INV_VIEW_MATRIX) * NORMAL);
-		vec3 key = normalize(vec3(-sign(point_world.x) * 0.985, 0.0, 0.17));
+		vec3 key = normalize(vec3(-sign(point_world.x) * 0.99, 0.0, -0.20));
 		float band = smoothstep(0.245, 0.295, dot(world_normal, key));
-		vec3 cel = mix(vec3(0.54, 0.66, 0.77), vec3(0.94, 1.00, 1.05), band);
+		vec3 cel = mix(vec3(0.41, 0.49, 0.58), vec3(0.88, 0.95, 1.02), band);
 		ALBEDO = vec3(0.0);
 		EMISSION = mix(pigment.rgb, tone, 0.34) * cel * 0.70;
 	}

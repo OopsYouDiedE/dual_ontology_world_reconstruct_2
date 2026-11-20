@@ -1,12 +1,12 @@
 # Academy look studies
 
-Launch with `-- --architecture-lab`. The second row switches between five authored views. `H` toggles the HUD. The regular seeded expedition is unchanged.
+Launch with `-- --architecture-lab`. The second row switches between the authored views. `H` toggles the HUD. The regular seeded expedition is unchanged.
 
 | View | Visual reference | Academy treatment |
 | --- | --- | --- |
 | **Service Stairs / Stair Anomaly** (`7` / `8`) | [Blue Prince](https://store.steampowered.com/app/1569580/Blue_Prince/) for strong room identity; [The Exit 8](https://store.steampowered.com/app/2653790/The_Exit_8/) for a visual baseline. | An enamel sign, maintenance cabinet, exposed pipes and railed stair shaft. Hold the first-person camera, props and lights fixed. The flight leads down to B1 in the baseline and up to 01 in the anomaly. |
 | **Archive / Ledger** (`9` / `0`) | [Crow Country](https://store.steampowered.com/app/1996010/Crow_Country/) for furniture that tells you how a room is used; [SIGNALIS](https://store.steampowered.com/app/1262350/SIGNALIS/) for layered document reading. | Catalogue drawers, paper boxes and a night desk. Cool window light frames a warm task lamp. Click the open register to read the night porter's correction. |
-| **Meridian 03** (`5`) | Three spherical or three-axis mechanisms compared below. | A freestanding exhibit: cool wall, blue cradle and warm balance wheel. Click it to start or stop all three axes. |
+| **Meridian 03** (`5`) | Three spherical or three-axis mechanisms compared below. | Reconstructed Deep Space case, dial and three moving cages. Click it to start or stop all three axes. |
 
 ## Style baseline
 
@@ -25,15 +25,15 @@ Judged the manufacturer and entrant photos by silhouette at room distance, legib
 | Jaeger-LeCoultre - [Duometre Heliotourbillon Perpetual](https://www.jaeger-lecoultre.com/us-en/news/watchmaking/duometre-heliotourbillon-perpetual) | A tightly interleaved sphere with a distinctive ruby hub. The silver-on-silver structure reads best in macro; its dense overlaps compete for shape at display distance. |
 | Girard-Perregaux - [Planetarium Tri-Axial](https://www.gphg.org/en/watches/planetarium-tri-axial) | A compact and symmetrical cage. The adjacent globe contributes much of the composition. The isolated cage leaves less open space than Halter's. |
 
-`Meridian.gd` builds an original blue cradle, two bright carrier rails, a silver bearing bridge, a brass balance, ruby accents and a coarse escape wheel. The local Y/X/Z pivots have authored periods of 26, 13 and 7 seconds, respectively. This is a kinematic exhibit; the escape wheel does not drive the pivots. The case, dial, branding and external meshes are omitted.
+`Meridian` is the existing control name. It now shows a reconstruction from Halter’s oblique and profile photographs. The stepped bezel, chapter ring, blued peripheral pointers, blue swing, pierced silver bridge, gold balance, hairspring, ruby and crown are separate visible features. Only the dial lettering uses a texture. Three nested pivots run at tenfold exhibit speed; click to pause or resume at the same pose. Internal parts hidden in the photographs are approximations; motion is kinematic.
 
-| Geometry metric | Count |
-| --- | ---: |
-| Optional local A26 GLB, measured from exported index buffers | 59,898 triangles |
-| Meridian, measured from Godot mesh buffers after batching | **2,640 triangles / 16 material surfaces** |
-| Meridian budget asserted by the live test | **3,000 triangles / 16 surfaces** |
+| Godot mesh-buffer measurement (highest detail) | Triangles | Material surfaces |
+| --- | ---: | ---: |
+| Complete watch, including dial lettering and crystal | **8,266** | **11** |
+| Moving assembly alone | **3,264** | Included above |
+| Enforced ceilings | 8,500 complete / 3,500 moving | 16 complete |
 
-The count includes the bearings and the mechanism's own foot, and excludes the stone pedestal and chamber. Batching is per material within each moving pivot. The A26 asset remains a separate, opt-in comparison.
+The count excludes the stand and room. The older local 59,898-triangle A26 print model depicts a different assembly and is not used to construct this watch.
 
 ## Capture and verification
 

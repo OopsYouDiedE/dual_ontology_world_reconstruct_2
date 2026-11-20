@@ -6,10 +6,10 @@ const Batch := preload("res://scenes/blue_prince_lab/MeshBatches.gd")
 enum Shot { SERVICE, ANOMALY, ARCHIVE, LEDGER, MERIDIAN }
 const VIEWS := ["Service Stairs", "Stair Anomaly", "Archive", "Ledger", "Meridian"]
 const CAMERA := [Vector3(-0.54, 1.65, 2.37), Vector3(-0.54, 1.65, 2.37),
-	Vector3(0.64, 1.68, 3.92), Vector3(-0.04, 2.20, -0.46), Vector3(2.03, 2.76, 5.1)]
+	Vector3(0.64, 1.68, 3.92), Vector3(-0.04, 2.20, -0.46), Vector3(.62, 2.68, 3.79)]
 const FOCUS := [Vector3(-0.03, 0.56, -3.12), Vector3(-0.03, 0.56, -3.12),
-	Vector3(-0.23, 1.39, -2.4), Vector3(0.08, 1.03, -1.44), Vector3(0.03, 1.94, -0.95)]
-const FOV := [53.0, 53.0, 54.0, 38.0, 39.0]
+	Vector3(-0.23, 1.39, -2.4), Vector3(0.08, 1.03, -1.44), Vector3(.01, 2.06, -.94)]
+const FOV := [53.0, 53.0, 54.0, 38.0, 34.0]
 const ORIGIN := Vector3(80, 0, 0)
 const LAYER := 2
 
@@ -71,7 +71,7 @@ func _layer(node: Node) -> void:
 
 func finish_materials() -> Array[ShaderMaterial]:
 	var materials: Array[ShaderMaterial] = []
-	for mat: Material in bindings.values() + meridian.finishes.values():
+	for mat: Material in bindings.values():
 		if mat is ShaderMaterial:
 			materials.append(mat)
 	return materials
@@ -337,10 +337,10 @@ func _build_exhibit() -> void:
 	_box(Vector3(0, 0.38, -0.92), Vector3(2.33, 0.55, 1.70), "slate")
 	_box(Vector3(0, 0.68, -0.92), Vector3(2.77, 0.15, 1.96), "plaster")
 	_box(Vector3(0, 0.44, -0.053), Vector3(1.68, 0.29, 0.037), "ink")
-	_text("M E R I D I A N   /   0 3", Vector3(0, 0.46, -0.028), 46, 0.0038, "e5b676")
+	_text("D E E P   S P A C E", Vector3(0, 0.46, -0.028), 46, 0.0038, "e5b676")
 	meridian = Meridian.new()
 	meridian.position = Vector3(0, 2.075, -0.92)
 	room.add_child(meridian)
-	_light(Vector3(-2.38, 3.68, 1.2), "f8d1a5", 2.45, 7.5, true)
+	_light(Vector3(-2.38, 3.68, 1.2), "e1d9ce", 1.29, 7.5, true)
 	_light(Vector3(2.0, 2.65, 1.57), "c5dfff", 1.1, 6.1)
 	_light(Vector3(-1.38, 3.1, -1.85), "a4cbff", 0.65, 5.1)

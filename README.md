@@ -26,7 +26,7 @@ dotnet build DualOntologyWorldReconstruct2.csproj
 
 ## 大楼梯厅美术实验
 
-从正常入口附加 `-- --architecture-lab` 可打开独立样板，查看 Blue Prince 参考构图、第一人称和可交互机关。见[操作、几何节点生成与验收](scenes/blue_prince_lab/README.md)。
+从正常入口附加 `-- --architecture-lab` 可打开独立样板，查看柱廊、礼拜堂、林门、营地、阁楼五个固定参考机位，以及可启停的 Deep Space 三轴陀飞轮。见[操作、几何节点生成与验收](scenes/blue_prince_lab/README.md)。
 
 ## 检查
 

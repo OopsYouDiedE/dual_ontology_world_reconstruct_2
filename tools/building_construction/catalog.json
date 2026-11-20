@@ -23,7 +23,9 @@
       "label": "Wall",
       "path": "res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd",
       "parametric": true,
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "SmartFloorZone3D",
@@ -31,7 +33,9 @@
       "label": "Floor",
       "path": "res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd",
       "parametric": true,
-      "mount": "deck"
+      "mount": "deck",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "SmartStair3D",
@@ -39,7 +43,9 @@
       "label": "Stairs",
       "path": "res://tools/building_construction/BuildingConstruction/Stairs/SmartStair3D.gd",
       "parametric": true,
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "SmartRailing3D",
@@ -47,7 +53,9 @@
       "label": "Railing",
       "path": "res://tools/building_construction/BuildingConstruction/Railings/SmartRailing3D.gd",
       "parametric": true,
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "HingedDoor3D",
@@ -55,7 +63,10 @@
       "label": "Door",
       "path": "res://tools/building_construction/BuildingConstruction/Doors/HingedDoor3D.gd",
       "parametric": true,
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "HingedWindow3D",
@@ -63,7 +74,10 @@
       "label": "Window",
       "path": "res://tools/building_construction/BuildingConstruction/Windows/HingedWindow3D.gd",
       "parametric": true,
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "RecipeBook",
@@ -72,7 +86,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBook.gd",
       "parametric": true,
       "source": "kit/furniture.py::book",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBooks",
@@ -81,7 +97,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBooks.gd",
       "parametric": true,
       "source": "kit/furniture.py::books",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeOpenBook",
@@ -90,7 +108,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeOpenBook.gd",
       "parametric": true,
       "source": "kit/furniture.py::open_book",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBookshelf",
@@ -99,7 +119,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd",
       "parametric": true,
       "source": "kit/furniture.py::bookshelf",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeTable",
@@ -108,7 +130,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeTable.gd",
       "parametric": true,
       "source": "kit/furniture.py::table",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeChair",
@@ -117,7 +141,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeChair.gd",
       "parametric": true,
       "source": "kit/furniture.py::chair",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBench",
@@ -126,7 +152,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeBench.gd",
       "parametric": true,
       "source": "kit/furniture.py::bench",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeReceptionDesk",
@@ -135,7 +163,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeReceptionDesk.gd",
       "parametric": true,
       "source": "kit/furniture.py::reception_desk",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePlanter",
@@ -144,7 +174,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlanter.gd",
       "parametric": true,
       "source": "kit/furniture.py::planter",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePainting",
@@ -153,7 +185,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePainting.gd",
       "parametric": true,
       "source": "kit/furniture.py::painting",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeLadder",
@@ -162,7 +196,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeLadder.gd",
       "parametric": true,
       "source": "kit/furniture.py::ladder",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeWallLantern",
@@ -171,7 +207,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeWallLantern.gd",
       "parametric": true,
       "source": "kit/lighting.py::wall_lantern",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBankerLamp",
@@ -180,7 +218,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeBankerLamp.gd",
       "parametric": true,
       "source": "kit/lighting.py::banker_lamp",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePendantLamp",
@@ -189,7 +229,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipePendantLamp.gd",
       "parametric": true,
       "source": "kit/lighting.py::pendant_lamp",
-      "mount": "ceiling"
+      "mount": "ceiling",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBed",
@@ -198,7 +240,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Beds/RecipeBed.gd",
       "parametric": true,
       "source": "kit/special_props.py::bed",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeCabinet",
@@ -207,7 +251,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeCabinet.gd",
       "parametric": true,
       "source": "kit/special_props.py::cabinet",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeChest",
@@ -216,7 +262,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeChest.gd",
       "parametric": true,
       "source": "kit/special_props.py::chest",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeVessel",
@@ -225,7 +273,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeVessel.gd",
       "parametric": true,
       "source": "kit/special_props.py::vessel",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeSink",
@@ -234,7 +284,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSink.gd",
       "parametric": true,
       "source": "kit/special_props.py::sink",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeStove",
@@ -243,7 +295,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeStove.gd",
       "parametric": true,
       "source": "kit/special_props.py::stove",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeWorkCounter",
@@ -252,7 +306,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeWorkCounter.gd",
       "parametric": true,
       "source": "kit/special_props.py::work_counter",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeTub",
@@ -261,7 +317,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeTub.gd",
       "parametric": true,
       "source": "kit/special_props.py::tub",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeWashstand",
@@ -270,7 +328,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeWashstand.gd",
       "parametric": true,
       "source": "kit/special_props.py::washstand",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeScreen",
@@ -279,7 +339,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeScreen.gd",
       "parametric": true,
       "source": "kit/special_props.py::screen",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeRack",
@@ -288,7 +350,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRack.gd",
       "parametric": true,
       "source": "kit/special_props.py::rack",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeChalkboard",
@@ -297,7 +361,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeChalkboard.gd",
       "parametric": true,
       "source": "kit/special_props.py::chalkboard",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeLectern",
@@ -306,7 +372,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeLectern.gd",
       "parametric": true,
       "source": "kit/special_props.py::lectern",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeChessboard",
@@ -315,7 +383,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeChessboard.gd",
       "parametric": true,
       "source": "kit/special_props.py::chessboard",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeRecordStation",
@@ -324,7 +394,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRecordStation.gd",
       "parametric": true,
       "source": "kit/special_props.py::record_station",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBottles",
@@ -333,7 +405,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBottles.gd",
       "parametric": true,
       "source": "kit/special_props.py::bottles",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeCrates",
@@ -342,7 +416,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCrates.gd",
       "parametric": true,
       "source": "kit/special_props.py::crates",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeSacks",
@@ -351,7 +427,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSacks.gd",
       "parametric": true,
       "source": "kit/special_props.py::sacks",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePaneledBed",
@@ -360,7 +438,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Beds/RecipePaneledBed.gd",
       "parametric": true,
       "source": "kit/residential_props.py::paneled_bed",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeFramedMirror",
@@ -369,7 +449,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeFramedMirror.gd",
       "parametric": true,
       "source": "kit/residential_props.py::framed_mirror",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePitcher",
@@ -378,7 +460,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePitcher.gd",
       "parametric": true,
       "source": "kit/residential_props.py::pitcher",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeWashTable",
@@ -387,7 +471,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeWashTable.gd",
       "parametric": true,
       "source": "kit/residential_props.py::wash_table",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeRug",
@@ -396,7 +482,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Floors/RecipeRug.gd",
       "parametric": true,
       "source": "kit/residential_props.py::rug",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeSlateTable",
@@ -405,7 +493,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeSlateTable.gd",
       "parametric": true,
       "source": "kit/residential_props.py::slate_table",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeFoldingDesk",
@@ -414,7 +504,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeFoldingDesk.gd",
       "parametric": true,
       "source": "kit/residential_props.py::folding_desk",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeGoBoard",
@@ -423,7 +515,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGoBoard.gd",
       "parametric": true,
       "source": "kit/residential_props.py::go_board",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeMusicStand",
@@ -432,7 +526,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeMusicStand.gd",
       "parametric": true,
       "source": "kit/residential_props.py::music_stand",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeKeyboard",
@@ -441,7 +537,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeKeyboard.gd",
       "parametric": true,
       "source": "kit/residential_props.py::keyboard",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeCookerHood",
@@ -450,7 +548,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCookerHood.gd",
       "parametric": true,
       "source": "kit/residential_props.py::cooker_hood",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeCrockeryShelf",
@@ -459,7 +559,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCrockeryShelf.gd",
       "parametric": true,
       "source": "kit/residential_props.py::crockery_shelf",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeLinenCabinet",
@@ -468,7 +570,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeLinenCabinet.gd",
       "parametric": true,
       "source": "kit/residential_props.py::linen_cabinet",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeSpeakingTube",
@@ -477,7 +581,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSpeakingTube.gd",
       "parametric": true,
       "source": "kit/residential_props.py::speaking_tube",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePressurePanel",
@@ -486,7 +592,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePressurePanel.gd",
       "parametric": true,
       "source": "kit/residential_props.py::pressure_panel",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeVentGrille",
@@ -495,7 +603,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeVentGrille.gd",
       "parametric": true,
       "source": "kit/residential_props.py::vent_grille",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeDeskBundle",
@@ -504,7 +614,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeDeskBundle.gd",
       "parametric": true,
       "source": "kit/residential_props.py::desk_bundle",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeEasel",
@@ -513,7 +625,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeEasel.gd",
       "parametric": true,
       "source": "kit/residential_props.py::easel",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeStool",
@@ -522,7 +636,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeStool.gd",
       "parametric": true,
       "source": "kit/residential_props.py::stool",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeSealDoorTrim",
@@ -531,7 +647,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSealDoorTrim.gd",
       "parametric": true,
       "source": "kit/residential_props.py::seal_door_trim",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeKitchenHood",
@@ -540,7 +658,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeKitchenHood.gd",
       "parametric": true,
       "source": "kit/residential_props.py::kitchen_hood",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeUprightPiano",
@@ -549,7 +669,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeUprightPiano.gd",
       "parametric": true,
       "source": "kit/residential_props.py::upright_piano",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeRingBand",
@@ -558,7 +680,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRingBand.gd",
       "parametric": true,
       "source": "kit/public_props.py::ring_band",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeArmillary",
@@ -567,7 +691,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeArmillary.gd",
       "parametric": true,
       "source": "kit/public_props.py::armillary",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeResonanceTubes",
@@ -576,7 +702,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeResonanceTubes.gd",
       "parametric": true,
       "source": "kit/public_props.py::resonance_tubes",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBalance",
@@ -585,7 +713,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBalance.gd",
       "parametric": true,
       "source": "kit/public_props.py::balance",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeMagnifier",
@@ -594,7 +724,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeMagnifier.gd",
       "parametric": true,
       "source": "kit/public_props.py::magnifier",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeStampPress",
@@ -603,7 +735,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeStampPress.gd",
       "parametric": true,
       "source": "kit/public_props.py::stamp_press",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeRecordsPillar",
@@ -612,7 +746,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRecordsPillar.gd",
       "parametric": true,
       "source": "kit/public_props.py::records_pillar",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeMedicineCabinet",
@@ -621,7 +757,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Cabinets/RecipeMedicineCabinet.gd",
       "parametric": true,
       "source": "kit/public_props.py::medicine_cabinet",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeDishRack",
@@ -630,7 +768,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeDishRack.gd",
       "parametric": true,
       "source": "kit/public_props.py::dish_rack",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePlantingBed",
@@ -639,7 +779,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlantingBed.gd",
       "parametric": true,
       "source": "kit/public_props.py::planting_bed",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeGreenhouseFrame",
@@ -648,7 +790,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGreenhouseFrame.gd",
       "parametric": true,
       "source": "kit/public_props.py::greenhouse_frame",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeWateringCan",
@@ -657,7 +801,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeWateringCan.gd",
       "parametric": true,
       "source": "kit/public_props.py::watering_can",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeGrille",
@@ -666,7 +812,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGrille.gd",
       "parametric": true,
       "source": "kit/public_props.py::grille",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePedestal",
@@ -675,7 +823,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePedestal.gd",
       "parametric": true,
       "source": "kit/decor.py::pedestal",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeCoatStand",
@@ -684,7 +834,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeCoatStand.gd",
       "parametric": true,
       "source": "kit/decor.py::coat_stand",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePlatform",
@@ -693,7 +845,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlatform.gd",
       "parametric": true,
       "source": "kit/decor.py::platform",
-      "mount": "deck"
+      "mount": "deck",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeLibraryRail",
@@ -702,7 +856,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Railings/RecipeLibraryRail.gd",
       "parametric": true,
       "source": "kit/decor.py::library_rail",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeArchedWindow",
@@ -711,7 +867,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeArchedWindow.gd",
       "parametric": true,
       "source": "kit/openings.py::arched_window",
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "RecipeClosedDoor",
@@ -720,7 +879,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeClosedDoor.gd",
       "parametric": true,
       "source": "kit/openings.py::closed_door",
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "RecipeRectangularWindow",
@@ -729,7 +891,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeRectangularWindow.gd",
       "parametric": true,
       "source": "kit/variants.py::rectangular_window",
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "RecipeRoundWindow",
@@ -738,7 +903,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeRoundWindow.gd",
       "parametric": true,
       "source": "kit/variants.py::round_window",
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "RecipeArchedClosedDoor",
@@ -747,7 +915,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeArchedClosedDoor.gd",
       "parametric": true,
       "source": "kit/variants.py::arched_closed_door",
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "RecipeWallPath",
@@ -756,7 +927,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeWallPath.gd",
       "parametric": true,
       "source": "kit/architecture.py::wall_path",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeStaircase",
@@ -765,7 +938,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Stairs/RecipeStaircase.gd",
       "parametric": true,
       "source": "kit/architecture.py::staircase",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeRailing",
@@ -774,7 +949,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Railings/RecipeRailing.gd",
       "parametric": true,
       "source": "kit/architecture.py::railing",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeStraightFlight",
@@ -783,7 +960,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Stairs/RecipeStraightFlight.gd",
       "parametric": true,
       "source": "kit/stair_exact.py::straight_flight",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeTiledFloor",
@@ -792,7 +971,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Floors/RecipeTiledFloor.gd",
       "parametric": true,
       "source": "kit/flooring.py::tiled_floor",
-      "mount": "deck"
+      "mount": "deck",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeStoneWall",
@@ -801,7 +982,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeStoneWall.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::stone_wall",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeCourtyardGate",
@@ -810,7 +993,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeCourtyardGate.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::courtyard_gate",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeTree",
@@ -819,7 +1004,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeTree.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::tree",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePlanterBed",
@@ -828,7 +1015,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipePlanterBed.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::planter_bed",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeFountain",
@@ -837,7 +1026,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeFountain.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::fountain",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeScholarlyStatue",
@@ -846,7 +1037,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeScholarlyStatue.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::scholarly_statue",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeInstrumentTable",
@@ -855,7 +1048,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Tables/RecipeInstrumentTable.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::instrument_table",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeLampPost",
@@ -864,7 +1059,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeLampPost.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::lamp_post",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeOathPlatform",
@@ -873,7 +1070,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeOathPlatform.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::oath_platform",
-      "mount": "deck"
+      "mount": "deck",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeBarrelOutdoor",
@@ -882,7 +1081,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeBarrelOutdoor.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::barrel",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBollard",
@@ -891,7 +1092,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeBollard.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::bollard",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeRopeCoil",
@@ -900,7 +1103,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeRopeCoil.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::rope_coil",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeDock",
@@ -909,7 +1114,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeDock.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::dock",
-      "mount": "deck"
+      "mount": "deck",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeWaterPatch",
@@ -918,7 +1125,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeWaterPatch.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::water_patch",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "effect",
+      "visual_source": "procedural_effect"
     },
     {
       "id": "RecipeRowboat",
@@ -927,7 +1136,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeRowboat.gd",
       "parametric": true,
       "source": "kit/outdoor_props.py::rowboat",
-      "mount": "water_or_ground"
+      "mount": "water_or_ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeRing",
@@ -936,7 +1147,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRing.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::ring",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeFlange",
@@ -945,7 +1158,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeFlange.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::flange",
-      "mount": "surface"
+      "mount": "surface",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePipeRun",
@@ -954,7 +1169,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePipeRun.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::pipe_run",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeGauge",
@@ -963,7 +1180,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeGauge.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::gauge",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeInterlockHandle",
@@ -972,7 +1191,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeInterlockHandle.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::interlock_handle",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeValveStation",
@@ -981,7 +1202,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeValveStation.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::valve_station",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeControlConsole",
@@ -990,7 +1213,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeControlConsole.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::control_console",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeReactionVessel",
@@ -999,7 +1224,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeReactionVessel.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::reaction_vessel",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeCagedLamp",
@@ -1008,7 +1235,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Lighting/RecipeCagedLamp.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::caged_lamp",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeIndicatorBoard",
@@ -1017,7 +1246,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeIndicatorBoard.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::indicator_board",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeSchematic",
@@ -1026,7 +1257,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeSchematic.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::schematic",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePallet",
@@ -1035,7 +1268,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePallet.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::pallet",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeStorageRack",
@@ -1044,7 +1279,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeStorageRack.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::storage_rack",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeBarrelIndustrial",
@@ -1053,7 +1290,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeBarrelIndustrial.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::barrel",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeHandcart",
@@ -1062,7 +1301,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeHandcart.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::handcart",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipePlatformScale",
@@ -1071,7 +1312,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipePlatformScale.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::platform_scale",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeDrainGrate",
@@ -1080,7 +1323,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeDrainGrate.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::drain_grate",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeSimpleRail",
@@ -1089,7 +1334,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Railings/RecipeSimpleRail.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::simple_rail",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeRampModule",
@@ -1098,7 +1345,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeRampModule.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::ramp_module",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeHeavyLock",
@@ -1107,7 +1356,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Props/RecipeHeavyLock.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::heavy_lock",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "RecipeMasonryJoints",
@@ -1116,7 +1367,9 @@
       "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeMasonryJoints.gd",
       "parametric": true,
       "source": "kit/industrial_props.py::masonry_joints",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "RecipeReferencePew",
@@ -1124,7 +1377,9 @@
       "label": "Upholstered chapel pew",
       "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeReferencePew.gd",
       "recipe": true,
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "existing_glb"
     },
     {
       "id": "RecipeReferenceLeadedBay",
@@ -1132,7 +1387,10 @@
       "label": "Leaded chapel bay",
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeReferenceLeadedBay.gd",
       "recipe": true,
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "existing_glb",
+      "frame_route": "A"
     },
     {
       "id": "RecipeReferenceSpokeWindow",
@@ -1140,7 +1398,10 @@
       "label": "Eight-spoke attic window",
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeReferenceSpokeWindow.gd",
       "recipe": true,
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "existing_glb",
+      "frame_route": "A"
     },
     {
       "id": "RecipeReferenceMoonGate",
@@ -1148,7 +1409,9 @@
       "label": "Iron moon gate",
       "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeReferenceMoonGate.gd",
       "recipe": true,
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "existing_glb"
     },
     {
       "id": "RecipeReferenceGardenWall",
@@ -1156,7 +1419,9 @@
       "label": "Capped garden wall",
       "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeReferenceGardenWall.gd",
       "recipe": true,
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "existing_glb"
     },
     {
       "id": "RecipeReferenceRidgeTent",
@@ -1164,7 +1429,9 @@
       "label": "Canvas ridge tent",
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceRidgeTent.gd",
       "recipe": true,
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "existing_glb"
     },
     {
       "id": "RecipeReferenceSpruce1",
@@ -1172,56 +1439,83 @@
       "label": "Layered spruce",
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceSpruce1.gd",
       "recipe": true,
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "B",
+      "visual_source": "existing_glb"
     },
     {
       "id": "HallGears",
       "category": "Mechanisms",
       "label": "Gear train",
       "path": "res://scenes/blue_prince_lab/gears/Gears.gd",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "HallCabinet",
       "category": "Mechanisms",
       "label": "Hinged cabinet",
       "path": "res://scenes/blue_prince_lab/doors/Cabinet.gd",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "HallDoor",
       "category": "Mechanisms",
       "label": "Framed hinged door",
       "path": "res://scenes/blue_prince_lab/doors/Door.gd",
-      "mount": "opening"
+      "mount": "opening",
+      "production_route": "C",
+      "visual_source": "legacy_procedural",
+      "frame_route": "A"
     },
     {
       "id": "HallBanner",
       "category": "Mechanisms",
       "label": "Wind banner",
       "path": "res://scenes/blue_prince_lab/banner/Banner.gd",
-      "mount": "wall"
+      "mount": "wall",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "HallLamp",
       "category": "Mechanisms",
       "label": "Suspended lamp",
       "path": "res://scenes/blue_prince_lab/lamp/Lamp.gd",
-      "mount": "ceiling"
+      "mount": "ceiling",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     },
     {
       "id": "HallStairs",
       "category": "Mechanisms",
       "label": "Hall stair flight",
       "path": "res://scenes/blue_prince_lab/stairs/Stairs.gd",
-      "mount": "run"
+      "mount": "run",
+      "production_route": "A",
+      "visual_source": "parametric_structure"
     },
     {
       "id": "HallMeridian",
       "category": "Mechanisms",
       "label": "Meridian instrument",
       "path": "res://scenes/blue_prince_lab/studies/Meridian.gd",
-      "mount": "ground"
+      "mount": "ground",
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
+    },
+    {
+      "id": "PhysicalButton",
+      "category": "Mechanisms",
+      "label": "Panel pushbutton",
+      "path": "res://scenes/physical_button/PhysicalButton.gd",
+      "mount": "control",
+      "optional": true,
+      "production_route": "C",
+      "visual_source": "legacy_procedural"
     }
   ]
 }

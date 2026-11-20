@@ -25,6 +25,10 @@ The outline shows attachments under their supports. Deleting a support removes i
 
 In a component's inspector, choose an existing activity and use **Open activity** to operate it in place. A button, door, gear or activity can drive a compatible target chosen in the inspector. The Vesper Index is included; west-wing rooms, folio pages and the physical panel button appear when their corresponding project scripts are installed. These controls reuse the original component motion and puzzle rules. Building a candidate does not change the seeded Run generator.
 
+## Art production routes
+
+Catalog selection displays the production route; the entry tooltip also describes the current visual source. A is parametric architecture, B is Tripo text-to-3D for ordinary static props, and C is a reviewed GPT reference followed by Tripo image-to-3D. A door or window can keep a route-A cutout while its insert uses route C. `mount` and the existing assembly behavior stay independent from this art metadata. See [the asset queue and pilot specifications](../../docs/design/academy-prop-production.md).
+
 ## Check
 
 Run with Godot .NET 4.7.2:

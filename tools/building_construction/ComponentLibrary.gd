@@ -4,6 +4,18 @@ const CATALOG_PATH := "res://tools/building_construction/catalog.json"
 const Assembly = preload("BuildingConstruction/Shared/ComponentAssembly.gd")
 const Socket = preload("BuildingConstruction/Shared/MechanismSocket.gd")
 const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
+const PRODUCTION_ROUTES := {
+	"A": "A · Parametric architecture",
+	"B": "B · Tripo text to 3D",
+	"C": "C · GPT reference, then Tripo image to 3D",
+	"effect": "Environment effect",
+}
+const VISUAL_SOURCES := {
+	"existing_glb": "Existing imported mesh; pending visual review",
+	"parametric_structure": "Existing structure; pending finish review",
+	"legacy_procedural": "Existing procedural visual; pending replacement",
+	"procedural_effect": "Existing environment visual",
+}
 const CANDIDATE_PATH := "res://tools/building_construction/candidates/BuildingCandidate.tscn"
 
 var camera: Camera3D
@@ -38,9 +50,8 @@ func _ready() -> void:
 		push_error("Invalid building catalog.")
 		return
 	catalog = parsed
-	var button_path := "res://scenes/physical_button/PhysicalButton.gd"
-	if ResourceLoader.exists(button_path):
-		catalog.items.append({"id":"PhysicalButton","category":"Mechanisms","mount":"control","label":"Panel pushbutton","path":button_path})
+	catalog.items = catalog.items.filter(func(entry: Dictionary) -> bool:
+		return not entry.get("optional", false) or ResourceLoader.exists(str(entry.path)))
 	activity_choices = Socket.choices()
 	candidates = Node3D.new()
 	candidates.name = "BuilderCandidates"
@@ -153,12 +164,20 @@ func _refresh(index: int) -> void:
 	for entry in catalog.items:
 		if entry.category == key:
 			entries.append(entry)
-			items.add_item(str(entry.label))
+			var row := items.add_item(str(entry.label))
+			items.set_item_tooltip(row, _production_note(entry))
+
+func _production_note(entry: Dictionary) -> String:
+	var route: String = PRODUCTION_ROUTES.get(entry.get("production_route", ""), "")
+	var source: String = VISUAL_SOURCES.get(entry.get("visual_source", ""), "")
+	if entry.get("frame_route", "") == "A": route += "\nWall cutout: A · Parametric architecture"
+	return "\n".join(PackedStringArray([route, source]))
 
 func _select_item(index: int) -> void:
 	selected_path = str(entries[index].path)
 	selected_entry = entries[index]
-	status.text = "%s · %s mount. Click a support or joint; R rotates, F swaps run ends." % [selected_entry.label, selected_entry.mount]
+	var route: String = PRODUCTION_ROUTES.get(selected_entry.get("production_route", ""), "")
+	status.text = "%s · %s mount\n%s\nClick a support. R: turn. F: swap end." % [selected_entry.label, selected_entry.mount, route]
 
 func _cancel() -> void:
 	selected_path = ""

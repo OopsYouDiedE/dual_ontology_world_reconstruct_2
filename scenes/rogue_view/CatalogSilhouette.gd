@@ -2,11 +2,15 @@ extends RefCounted
 ## Lightweight catalog silhouettes for known GUIDs when the art pack is unavailable.
 ## The lot always supplies the anchor, direction and existence of the object.
 
+const ACADEMY_SIDE_CHAIR := preload("res://assets/props/academy/academy_side_chair.glb")
+
 static func populate(anchor: Node3D, guid: int) -> bool:
 	var wood := Color("594231")
 	var upholstery := Color("765b57")
 	match guid:
-		0x68ea432a, 0x5dea43f0, 0x53ea43a5, 0x3cea43f8:
+		0x5dea43f0:
+			anchor.add_child(ACADEMY_SIDE_CHAIR.instantiate())
+		0x68ea432a, 0x53ea43a5, 0x3cea43f8:
 			var armchair := guid == 0x68ea432a
 			var width := 0.76 if armchair else 0.50
 			var depth := 0.69 if armchair else 0.48

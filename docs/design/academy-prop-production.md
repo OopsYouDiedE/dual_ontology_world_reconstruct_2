@@ -23,13 +23,14 @@
 
 ### B-01 · 学院木椅
 
-- **交付目标**：`assets/props/academy/academy_side_chair.glb`，先接 Native lot `0x5DEA43F0`。宽 0.46 × 深 0.49 × 高 0.88 m；座面约 0.45 m 高。深染白蜡木，四腿、座板、座框、横撑和三条竖靠背均固定。留出可看穿的腿间和靠背缝隙。
-- **引擎接口**：四脚底面中心为根原点，+Y 向上，坐姿朝 -Z；原始 lot 朝向外层处理。弱化纹理噪声，保住椅脚接地与榫接轮廓。安排简化碰撞代理，保持原 lot 格位。
-- **网页进度**：Tripo Studio → 3D Workspace → Model → Text，提示词已填，等待账号登录。生成前检查账户额度及 Privacy 选项。
+- **交付目标**：`assets/props/academy/academy_side_chair.glb`，先接 Native lot `0x5DEA43F0`。宽 0.46 × 深 0.49 × 高 0.88 m；座面约 0.45 m 高。深染白蜡木，四腿、座板、座框、横撑和靠背竖档均固定。留出可看穿的腿间和靠背缝隙。
+- **引擎接口**：四脚底面中心为根原点，+Y 向上，坐姿朝 -Z；原始 lot 朝向外层处理。保住椅脚接地和榫接轮廓，使用单一哑光木色材质，不使用贴图。独立碰撞代理 `academy_side_chair_collision.tres` 的形状中心在根节点上方 0.225 m，供需要实体椅的宿主使用；当前 lot 换模保留原格位和通行规则。
+- **生成与筛选**：首版 H3.1 为 1,993,692 tris；P1.0 四边面重拓扑后为 1,187 tris，但上横档和座面的缺陷在多角度仍可见，退回。正式版用 Tripo Studio → Model → Smart Mesh P2.0 → Text，私有，四边面目标 600，两件同一批生成，跳过纹理生成。A（`354e2802`）网页显示 707 面，GLB 为 1,234 tris，采用两根内竖档、封闭网格；B（`92cbaa56`）网页显示 586 面，GLB 为 1,125 tris，焊点后仍有 169 条开放边，退回。交付 A 使用纯色哑光材质，0 张图片贴图，23,140 B。
+- **人工验收**：Forward+ 看过正、侧、背和高位四面，并在正式 lot 渲染器的 `living_hall`、`clinic`、`foyer` 画面确认落地、朝向与家具邻接。只换 `0x5DEA43F0`。
 
 **Tripo Text-to-3D（英文）**
 
-> One isolated four-legged academy side chair, 46 cm wide, 49 cm deep and 88 cm high; seat at 45 cm. Dark stained ash wood, square tapered legs, exposed mortise-and-tenon seat rails, low side stretchers, solid softly beveled wooden seat and three upright back splats under a shaped crest rail. 1900s vintage design, stylized graphic-novel low-poly 3D game prop, chunky readable silhouette, crisp beveled edges, hand-painted muted wood grain and subtle dark ink contour lines. Clear air gaps between legs and splats, same finish front and back. Single object, no plinth, no upholstery, no text, no scene, no floating details.
+> One isolated four-legged academy side chair, 46 cm wide, 49 cm deep and 88 cm high; seat at 45 cm. Dark stained ash wood, square tapered legs, exposed mortise-and-tenon seat rails, low side stretchers, solid softly beveled wooden seat and simple upright back splats under one symmetric solid top rail. 1900s vintage design, stylized graphic-novel low-poly game prop, chunky readable silhouette, crisp edge bevels, uniform muted warm brown color, no image textures or sculpted grain. Air gaps only between the legs and back splats. The seat and crest are intact solid surfaces. Single object, no plinth, upholstery, knots, cracks, gouges, or backdrop.
 
 ### C-01 · 厨房传菜闸按钮
 

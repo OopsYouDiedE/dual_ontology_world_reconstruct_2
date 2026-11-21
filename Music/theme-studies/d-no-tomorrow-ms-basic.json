@@ -1,0 +1,40 @@
+{
+  "profile": "MuseScore Basic",
+  "voice_tracks": {
+    "soprano": {
+      "instrumentId": "soprano",
+      "name": "MS Basic",
+      "partId": "1",
+      "type": "fluid_soundfont"
+    },
+    "alto": {
+      "instrumentId": "alto",
+      "name": "MS Basic",
+      "partId": "2",
+      "type": "fluid_soundfont"
+    },
+    "tenor": {
+      "instrumentId": "tenor",
+      "name": "MS Basic",
+      "partId": "3",
+      "type": "fluid_soundfont"
+    },
+    "bass": {
+      "instrumentId": "bass",
+      "name": "MS Basic",
+      "partId": "4",
+      "type": "fluid_soundfont"
+    }
+  },
+  "raw": {
+    "integrated_lufs": -27.22,
+    "true_peak_dbtp": -12.45,
+    "loudness_range_lu": 10.6
+  },
+  "gain_db": 7.22,
+  "delivered_mp3": {
+    "integrated_lufs": -20.01,
+    "true_peak_dbtp": -5.23,
+    "loudness_range_lu": 10.7
+  }
+}

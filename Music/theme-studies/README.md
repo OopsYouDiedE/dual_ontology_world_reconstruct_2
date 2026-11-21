@@ -11,6 +11,17 @@
 
 另有 [D：钟后接回开头](d-next-turn.mp3)（约 14 秒）。全曲文件保留冷开场的女高独唱；这个摘录专门展示收尾的低脉搏如何经过接缝，走入下一轮。
 
+## D · MuseScore 人声音色试听
+
+- [开场四小节谱图](d-score-preview.png) · [三页总谱 PDF](d-no-tomorrow.pdf) · [MuseScore 原生工程](d-no-tomorrow.mscz) · [MusicXML](d-no-tomorrow.musicxml)。
+- [MuseScore 内置 Choir Aahs 试听](d-no-tomorrow-ms-basic.mp3)（约 59 秒）。命令行生成；四条人声轨保留独立谱线、力度和原有入拍，使用 MuseScore 自带 MS Basic 的 Choir Aahs，原试听的自制合成声没有混入。这个内置版本四轨共用 Ah 音色，谱上的 Oo 留给支持该音色的播放库或演唱。成品为 **−20.01 LUFS / −5.23 dBTP / 10.7 LU LRA**，见 [测量记录](d-no-tomorrow-ms-basic.json)。
+- 本机 MuseSampler 已加载，但 Muse Choir 资源有多个零字节文件；实际试导出时，四个人声轨都回退到 MS Basic。导出脚本默认验证四轨都确实使用 MuseSampler，失败时不会把回退文件交付为 Muse Choir。音色齐全后可在命令行重导同一份谱。
+
+```powershell
+python tools/music/render_musescore.py                            # 完整 Muse Choir；验证四轨音源
+python tools/music/render_musescore.py --profile "MuseScore Basic"  # 此处交付的内置 Ah 试奏
+```
+
 ## 来源与组合
 
 - [《Une vie à rêver》官方录音](https://clairobscurexpedition33.bandcamp.com/track/une-vie-r-ver) 第二部分约 2:45 的起势，及 [A.E. 转写](https://musescore.com/user/36989239/scores/26303614) m67–68：取 **G→A♭** 这个具体的局部音高材料和「上声先起」的动作。这里让 G5、A♭5 各唱两拍，续成 G5–E♭5–D5 的回落；其后声线、四部组合和音色为本轮写作。试奏没有使用参考录音采样。

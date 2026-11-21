@@ -2,6 +2,7 @@ extends Node
 ## Opt-in testing bridge. Normal game launches leave it dormant.
 
 const TEST_SCENES := [
+	"res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",
 	"res://scenes/rogue/Run.tscn",
 	"res://scenes/rubber_whitebox/RubberYard.tscn",
 	"res://scenes/rubber_whitebox/kinetic_pilot/Gallery.tscn",

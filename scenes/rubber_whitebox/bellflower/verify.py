@@ -151,21 +151,51 @@ def stage_sweep_certificate(w):
     assert c['approach_s_mm']+c['move_mm_tick']<c['gate_s_mm']-c['gate_half_depth_mm']-c['half_actor_mm'][2]
     assert c['end_s_mm']>c['gate_s_mm']+c['gate_half_depth_mm']+c['half_actor_mm'][2]
     assert c['move_mm_tick'] < c['plate_s_mm'][1]-c['plate_s_mm'][0]
-    for g,(_,y,_,tier,_) in w.arm_axes.items():
-        low,high=w.group_bounds[g]
-        bound_y=y+min(0,low[1])-max(abs(low[2]),abs(high[2]))*math.sin(math.radians(c['crown']['twist_deg'][tier]))
-        assert bound_y>body_top, g
-    for g in ('room','flower','wing0','wing1','latch','carriage','plate'):
+    hx,_,hz=c['half_actor_mm']
+    def lane_clear(lo,hi):
+        return (lo[1]>=body_top or hi[1]<=0 or hi[2]<=-c['end_s_mm']-hz or
+                lo[2]>=-min(c['spawn_s_mm'])+hz or all(
+                    lo[0]>=x+hx or hi[0]<=x-hx for x in c['lane_x_mm']))
+
+    def swept(points,axis,lo,hi):
+        """Exact coordinate extrema of each vertex over a continuous roll interval."""
+        az,axis_y,r,_,_=axis
+        ca,sa=math.cos(az),math.sin(az)
+        rx,_,rz=c['root_mm']
+        low,high=[math.inf]*3,[-math.inf]*3
+        for x,y,z in points:
+            center=(rx+ca*(r+x),axis_y,rz+sa*(r+x))
+            for dim,(p,u,v) in enumerate(zip(center,(-sa*z,y,ca*z),(sa*y,z,-ca*y))):
+                angles=[lo,hi]
+                stationary=math.atan2(v,u)
+                angles.extend(k for k in (stationary-math.pi,stationary,stationary+math.pi) if lo<k<hi)
+                values=[p+u*math.cos(a)+v*math.sin(a) for a in angles]
+                low[dim]=min(low[dim],min(values)); high[dim]=max(high[dim],max(values))
+        return low,high
+
+    lowest_moving=math.inf
+    for g,axis in w.arm_axes.items():
+        angle=math.radians(c['crown']['twist_deg'][axis[3]])
+        attachments=[(w.group_bounds[h],tap) for h,(owner,tap) in w.hangers.items() if owner==g]
+        for i in range(8):
+            a,b=-angle+i*angle/4,-angle+(i+1)*angle/4
+            for h in w.groups[g]:
+                lo,hi=swept(h.verts,axis,a,b)
+                lowest_moving=min(lowest_moving,lo[1])
+                assert lane_clear(lo,hi),h.key
+            for (lo,hi),tap in attachments:
+                p0,p1=swept([tap],axis,a,b)
+                lowest_moving=min(lowest_moving,lo[1]+p0[1])
+                assert lane_clear([x+y for x,y in zip(lo,p0)],[x+y for x,y in zip(hi,p1)]),g
+    assert lowest_moving>0
+    for g in ('room','flower','latch','carriage','plate'):
         for h in w.groups[g]:
-            if h.key.startswith('pedal') or h.key=='floor' or 'marker' in h.key or g in ('wing0','wing1'):
+            if h.key.startswith('pedal') or h.key=='floor' or 'marker' in h.key:
                 continue
-            for x in c['lane_x_mm']:
-                hx,_,hz=c['half_actor_mm']
-                assert (h.low[0]>=x+hx or h.high[0]<=x-hx or h.low[1]>=body_top or h.high[1]<=0
-                        or h.high[2]<=-c['end_s_mm']-hz or h.low[2]>=-min(c['spawn_s_mm'])+hz), h.key
+            assert lane_clear(h.low,h.high),h.key
     assert c['lane_x_mm'][1]-c['lane_x_mm'][0]>2*c['half_actor_mm'][0]
     return {'loaded_min_clearance_mm':round(loaded_clearance,3),
-            'solid_sweep_validated':True}
+            'crown_min_floor_clearance_mm':round(lowest_moving,3), 'solid_sweep_validated':True}
 
 
 def strict(c,active):

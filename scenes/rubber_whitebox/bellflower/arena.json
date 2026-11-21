@@ -35,7 +35,7 @@
   "root_mm": [
     0,
     0,
-    -4400
+    -3350
   ],
   "lane_x_mm": [
     -680,
@@ -109,30 +109,29 @@
       5,
       5
     ],
-    "axis_y_mm": [
-      7020,
-      8940
-    ],
-    "hub_radius_mm": [
-      780,
-      620
-    ],
-    "arm_reach_mm": [
-      3900,
-      3250
-    ],
+    "axis_y_mm": [3290, 5630],
+    "az_offset_deg": [5, 0],
+    "hub_radius_mm": [1080, 900],
+    "arm_reach_mm": [6650, 7200],
+    "reach_clip_mm": {"side": 6410, "rear": 5750},
+    "base": {
+      "leg_x_mm": 1600,
+      "sill_y_mm": 2760,
+      "yoke_y_mm": 4210
+    },
     "tube": {
       "turn_deg": 180,
       "start_deg": -135,
       "pair_phase_deg": 180,
-      "root_orbit_mm": 137,
-      "orbit_mm": [830, 660],
+      "root_orbit_mm": 350,
+      "orbit_mm": [1150, 1300],
+      "tip_droop_mm": [1000, 180],
       "handedness": [1, -1],
-      "root_radius_mm": 91,
-      "tip_radius_mm": 74,
-      "shaft_end_mm": 280,
-      "sections": 20,
-      "sides": 12
+      "root_radius_mm": 248,
+      "tip_radius_mm": 186,
+      "shaft_end_mm": 450,
+      "sections": 24,
+      "sides": 14
     },
     "twist_deg": [
       13,
@@ -143,8 +142,8 @@
       361
     ],
     "rope_mm": [
-      1080,
-      880
+      450,
+      800
     ]
   },
   "day_lights": [
@@ -167,19 +166,19 @@
     },
     {
       "p": [
-        4200,
-        11200,
-        -10200
+        1980,
+        3570,
+        -8960
       ],
       "aim": [
-        -930,
-        1750,
-        -3650
+        -1300,
+        1880,
+        -2080
       ],
       "angle": 39,
       "r": 20800,
       "i": 49500,
-      "energy": 10.0,
+      "energy": 5.5,
       "color": "c8d9f2"
     }
   ],
@@ -206,10 +205,10 @@
       ],
       "target_mm": [
         0,
-        5100,
-        -4100
+        2970,
+        -3350
       ],
-      "fov": 75
+      "fov": 86
     },
     "C-under-bells": {
       "p_mm": [

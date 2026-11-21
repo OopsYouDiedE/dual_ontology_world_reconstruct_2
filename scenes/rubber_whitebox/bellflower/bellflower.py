@@ -319,11 +319,11 @@ class World:
             add(box(f'route_marker{j}',0,-11,z,2490,24,1550,'path'))
         for s in (-1,1):
             add(box(f'route_border{s}',s*1280,-10,-610,23,24,12600,'rim'))
-        for j,radius in enumerate((4400,4530)):
+        for j,radius in enumerate((6660,6800)):
             n=36
             for k in range(n):
                 a,b=k*math.tau/n,(k+1)*math.tau/n
-                ring=[(math.cos(v)*r,rz+math.sin(v)*r) for v,r in ((a,radius-18),(a,radius+18),(b,radius+18),(b,radius-18))]
+                ring=[(math.cos(v)*r,rz+math.sin(v)*(r if math.sin(v)>0 else r*0.82)) for v,r in ((a,radius-18),(a,radius+18),(b,radius+18),(b,radius-18))]
                 add(prism(f'ring_marker{j}/{k}',[(x,-9,z) for x,z in ring],[(x,3,z) for x,z in ring],'rim'))
         # Real rear exit arch; it frames a recessed door at the back of the chamber.
         portal=-10020
@@ -336,18 +336,27 @@ class World:
         add(box('rear_threshold',0,-10,portal,2700,25,1530,'path'))
         add(box('behind_portal',0,1640,portal-1390,2350,3280,320,'night'))
 
-        # Overhead iron yoke hangs the drive spine from real roof beams.
-        add(box('gearbox',rx,6890,rz,2010,1070,1600,'black','flower'))
-        add(box('gearbox_cap',rx,7470,rz,2130,165,1730,'steel','flower'))
-        add(drum('center_spindle',rx,rz,6810,10940,302,287,'black'))
-        add(box('head_stock',0,10860,rz,1230,405,1280,'black','flower'))
-        for sign in (-1,1):
-            for turn in (-1,1):
-                add(beam(f'suspension{sign}/{turn}',(sign*435,10910,rz+turn*415),
-                         (sign*5870,12822,(-6750 if turn<0 else -2300)),119,'black','flower'))
-        for n in range(7):
-            add(box(f'gearbox_fin{n}',-810+270*n,6850,rz+817,62,620,92,'steel','flower'))
+        # Split floor pedestal: stone feet carry a steel saddle above both lanes.
         crown=c['crown']; self.hangers={}
+        base=crown['base']; leg,sill=base['leg_x_mm'],base['sill_y_mm']
+        bottom,upper=crown['axis_y_mm']
+        for side in (-1,1):
+            x=rx+side*leg
+            add(box(f'pedestal/{side}/foot',x,125,rz,1110,250,1340,'stone','flower'))
+            add(box(f'pedestal/{side}/plinth',x,280,rz,880,100,1090,'white','flower'))
+            add(drum(f'pedestal/{side}/post',x,rz,325,sill-200,381,339,'white','flower',16))
+            for rib in range(12):
+                phi=math.tau*rib/12
+                u,v=math.cos(phi),math.sin(phi)
+                add(beam(f'pedestal/{side}/flute{rib}',(x+373*u,375,rz+373*v),
+                         (x+332*u,sill-240,rz+332*v),25,'stone','flower'))
+            add(box(f'pedestal/{side}/capital',x,sill-150,rz,875,242,965,'black','flower'))
+        add(box('pedestal/saddle',rx,sill,rz,4070,285,1220,'black','flower'))
+        add(box('gearbox',rx,(bottom+sill)/2,rz,2260,bottom-sill,1680,'black','flower'))
+        add(box('gearbox_cap',rx,bottom-260,rz,2380,130,1820,'steel','flower'))
+        add(drum('center_spindle',rx,rz,bottom-125,upper+185,417,346,'black'))
+        for n in range(7):
+            add(box(f'gearbox_fin{n}',rx-870+290*n,bottom-510,rz+849,66,395,94,'steel','flower'))
         for tier,n in enumerate(crown['pairs']):
             y,r=crown['axis_y_mm'][tier],crown['hub_radius_mm'][tier]
             add(drum(f'hub{tier}',rx,rz,y-155,y+155,r+140,r+140,'black',sides=20))
@@ -368,7 +377,7 @@ class World:
                     orbit=tube['root_orbit_mm']+(tube['orbit_mm'][tier]-tube['root_orbit_mm'])*t*t*(3-2*t)
                     angle=math.radians(tube['start_deg']+member*tube['pair_phase_deg']+u*tube['turn_deg'])
                     radius=(1-u)*tube['root_radius_mm']+u*tube['tip_radius_mm']
-                    path.append((start+(reach-start)*u,orbit*math.sin(angle),
+                    path.append((start+(reach-start)*u,orbit*math.sin(angle)-tube['tip_droop_mm'][tier]*u**2,
                                  handed*orbit*math.cos(angle),radius))
                 rings,normals=[],[]
                 for k,(x,yy,zz,radius) in enumerate(path):
@@ -383,25 +392,34 @@ class World:
                 pair.append((path,rings,normals))
             for i in range(n):
                 name=f'rotor:{tier}:{i}'
-                az=math.tau*(i+.5+.5*tier)/n
+                az=math.tau*(i+.5+.5*tier)/n+math.radians(crown['az_offset_deg'][tier])
                 ca,sa=math.cos(az),math.sin(az)
                 self.arm_axes[name]=(az,y,r,tier,i)
+                # Trim the radial reach of perimeter-facing pairs to the open hall.
+                # The lateral allowance keeps the entire thick tube and hanging bell inboard.
+                side_room=crown['reach_clip_mm']['side']-1750*abs(sa)
+                rear_room=crown['reach_clip_mm']['rear']-1750*abs(ca)
+                limit=min(reach,side_room/max(abs(ca),0.001)-r,
+                          rear_room/max(-sa,0.001)-r)
+                scale=(limit-start)/(reach-start)
+                def compress(v):
+                    return start+(v[0]-start)*scale,v[1],v[2]
                 # One stationary bearing in the hub, one common rotating collar.
                 add(beam(name+'/bearing',(rx+(r-65)*ca,y,rz+(r-65)*sa),
-                         (rx+(r+141)*ca,y,rz+(r+141)*sa),211,'black','flower'))
-                add(beam(name+'/shaft',(92,0,0),(178,0,0),132,'steel',name))
-                add(beam(name+'/collar',(161,0,0),(start-20,0,0),252,'black',name))
-                add(beam(name+'/rim',(start-63,0,0),(start-20,0,0),255,'rim',name))
+                         (rx+(r+141)*ca,y,rz+(r+141)*sa),439,'black','flower'))
+                add(beam(name+'/shaft',(92,0,0),(233,0,0),242,'steel',name))
+                add(beam(name+'/collar',(210,0,0),(start-20,0,0),699,'black',name))
+                add(beam(name+'/rim',(start-71,0,0),(start-20,0,0),708,'rim',name))
                 for member,(path,rings,normals) in enumerate(pair):
                     hanger=f'bell:{tier}:{i}:{member}'
                     _,sy,sz,_=path[0]
-                    add(beam(f'{name}/ferrule{member}',(start-32,sy,sz),(start+20,sy,sz),100,'steel',name))
+                    add(beam(f'{name}/ferrule{member}',(start-32,sy,sz),(start+26,sy,sz),271,'steel',name))
                     for k in range(spans):
                         # Identical shared-seam solids for mesh, collision, shadow and rays.
-                        hull=prism(f'{name}/tube{member}/{k}',rings[k],rings[k+1],'tube',name)
-                        hull.smooth=normals[k]+normals[k+1]
+                        hull=prism(f'{name}/tube{member}/{k}',[compress(v) for v in rings[k]],[compress(v) for v in rings[k+1]],'tube',name)
+                        hull.smooth=[unit((nx/scale,ny,nz)) for nx,ny,nz in normals[k]+normals[k+1]]
                         add(hull)
-                    self.hangers[hanger]=(name,path[-1][:3])
+                    self.hangers[hanger]=(name,compress(path[-1][:3]))
                     rope=crown['rope_mm'][tier]
                     add(beam(hanger+'/rope',(0,25,0),(0,-rope-45,0),22,'red',hanger))
                     radius=crown['bell_radius_mm'][tier]
@@ -409,16 +427,18 @@ class World:
                     bell(hanger,0,0,-rope-670,profile,sides=16)
 
         # Two low bells hang from a differential yoke directly below the flower.
-        add(beam('bell_yoke',(0,6370,rz),(0,6370,-gate),217,'black','flower'))
-        add(box('bell_crossbar',0,6330,-gate,1870,235,360,'black','flower'))
+        yoke=base['yoke_y_mm']
+        add(box('bell_yoke',rx,yoke,(rz-gate)/2,680,320,abs(rz+gate)+410,'black','flower'))
+        add(box('bell_crossbar',rx,yoke,-gate,1870,235,360,'black','flower'))
+        add(beam('bell_return_shaft',(-2280,yoke,-gate),(rx,yoke,-gate),85,'steel','flower'))
         low=c['low_bells']
         for i,sign in enumerate((-1,1)):
             g=f'wing{i}'; x=sign*low['x_mm']; base=low['bottom_mm']; profile=low['profile_mm']
             bell(g,x,-gate,base,profile,'device')
             top=base+profile[-1][0]
-            add(beam(g+'/rope',(x,top+100,-gate),(x,5470,-gate),29,'red',g))
-            add(beam(g+'/hanger',(x,5300,-gate),(x,6440,-gate),64,'black',g))
-            add(drum(f'pulley{i}',x,-gate,6190,6470,152,152,'black','flower',12))
+            add(beam(g+'/rope',(x,top+100,-gate),(x,yoke-910,-gate),29,'red',g))
+            add(beam(g+'/hanger',(x,yoke-980,-gate),(x,yoke+90,-gate),64,'black',g))
+            add(drum(f'pulley{i}',x,-gate,yoke-175,yoke+145,152,152,'black','flower',12))
         # Press plate and accessible side-mounted return catch, visible from the entry.
         lo,hi=c['plate_s_mm']; x=c['lane_x_mm'][1]
         add(box('pedal_frame',x,6,-(lo+hi)/2,870,16,830,'black'))
@@ -429,10 +449,10 @@ class World:
         add(box('latch_stand',-2260,y/2,-2050,270,y,350,'black','flower'))
         add(box('latch_frame',-2260,y,-2050,460,365,270,'steel','flower'))
         add(box('latch',-2260,y,-2270,238,bh,430,'bronze_edge','latch','control'))
-        add(beam('latch_link',(-2270,y,-2170),(-2270,6330,-2800),49,'black','flower'))
+        add(beam('latch_link',(-2270,y,-2170),(-2270,yoke,-gate),49,'black','flower'))
         ctop=y+bh/2-c['lift_mm']
         add(box('catch_tooth',-2260,ctop+45,-2550,285,90,275,'rim','carriage'))
-        add(beam('catch_guide',(-2260,ctop+50,-2550),(-2195,5620,-2800),79,'steel','carriage'))
+        add(beam('catch_guide',(-2260,ctop+50,-2550),(-2195,yoke-710,-gate),79,'steel','carriage'))
         for i,m in enumerate(('lead','mate')):
             x,y,z=c['half_actor_mm']
             add(box('actor'+str(i),0,y,0,2*x,2*y,2*z,m,'actor'+str(i),'teammate'))

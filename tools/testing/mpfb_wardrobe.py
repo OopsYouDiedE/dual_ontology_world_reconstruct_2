@@ -17,10 +17,10 @@ CAST = {
     'halvard': ('base', 'jacket', 'workwear'),
     'jane': ('base', 'shorts', 'sport'),
     'qingyue': ('base', 'skirt', 'jeans'),
-    'lucian': ('base', 'shirt'),
-    'ward': ('base', 'suit'),
-    'shending': ('base', 'workwear'),
-    'caretaker': ('base', 'suit'),
+    'lucian': ('base', 'shirt', 'fitted'),
+    'ward': ('base', 'suit', 'fitted'),
+    'shending': ('base', 'workwear', 'fitted'),
+    'caretaker': ('base', 'suit', 'fitted'),
 }
 POSES = {'front': 0.0, 'reach': 0.75, 'knee': 2.25, 'side': 0.0, 'back': 0.0}
 
@@ -46,7 +46,7 @@ async def review():
                 assert initial['renderer'] == 'forward_plus', initial
                 state = initial['state']
                 assert state.get('ready') and set(state['cast_buttons']) == set(CAST), state
-                shots, layering = {}, {}
+                shots, layering, faces = {}, {}, {}
 
                 async def click(coords, screenshot=False):
                     x, y = coords
@@ -55,7 +55,7 @@ async def review():
                 for who, outfits in CAST.items():
                     state = (await click(state['cast_buttons'][who]))['state']
                     assert (state['character'], state['outfit'], state['test_mode']) == (who, 'base', 'native_motion'), state
-                    assert set(state['wardrobe_buttons']) == set(outfits), state
+                    assert set(state['wardrobe_buttons']) - {'before'} == set(outfits), state
                     shots[who], neutral_tracks = {}, {}
                     for outfit in outfits:
                         state = (await click(state['wardrobe_buttons'][outfit]))['state']
@@ -101,10 +101,24 @@ async def review():
                             assert state['finished'] and not state['playing'], state
                     assert rotation_delta(neutral_tracks['front'][0], neutral_tracks['reach'][0]) > .5
                     assert rotation_delta(neutral_tracks['front'][1], neutral_tracks['knee'][1]) > .5
+                for who in ('lucian', 'ward', 'shending', 'caretaker'):
+                    state = (await click(state['cast_buttons'][who]))['state']
+                    faces[who] = {}
+                    for version in ('before', 'base'):
+                        if version not in state['wardrobe_buttons']:
+                            continue
+                        state = (await click(state['wardrobe_buttons'][version]))['state']
+                        assert state['outfit'] == version and state['bones'] == 53, state
+                        faces[who][version] = {}
+                        for angle in ('portrait', 'profile'):
+                            snapshot = await click(state['pose_buttons'][angle], screenshot=True)
+                            state = snapshot['state']
+                            assert state['pose'] == angle and state['seconds'] == 0, state
+                            faces[who][version][angle] = snapshot['screenshot']
                 state = (await click(state['cast_buttons']['r05']))['state']
                 assert state['character'] == 'r05' and state['outfit'] == 'base', state
                 print(json.dumps({'status': 'MPFB_WARDROBE_VIEWPORT_PASS', 'session': sid,
-                                  'screenshots': shots, 'shoe_isolation': layering,
+                                  'screenshots': shots, 'shoe_isolation': layering, 'faces': faces,
                                   'log': initial['log']}, indent=2))
             finally:
                 await call('close', session_id=sid)

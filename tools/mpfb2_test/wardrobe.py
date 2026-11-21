@@ -17,8 +17,9 @@ from style_pilot import (
     export, landmarks, unmask_coords,
 )
 
-from build import animate, body_copy, coat, export as export_fit, material
+from build import animate, body_copy, export as export_fit, material
 from muscle import CAST, FEATURED_CAST
+from featured_look import review_eyes, review_skin
 
 OUTFITS = {
     'suit': 'male_elegantsuit01',
@@ -34,6 +35,8 @@ CAST_OUTFITS = {
     'shending': {'workwear': 'male_worksuit01'},
     'caretaker': {'suit': 'male_elegantsuit01'},
 }
+for actor in FEATURED_CAST:
+    CAST_OUTFITS[actor]['fitted'] = 'male_casualsuit06'
 CAST_SHOES = {actor: 'shoes05' if actor == 'jane' else 'shoes04' for actor in CAST_OUTFITS}
 SHOES = 'shoes04'
 FRAMES = {'rest': 1, 'reach': 19, 'knee': 55}
@@ -190,6 +193,61 @@ def overlap_samples(master, garment):
     return report
 
 
+def silhouette_fit(garment, master, stature):
+    """Plain short sleeves, separate shirt/trouser pigments, controlled ease at the waist."""
+    verts = garment.data.vertices
+    graph = [set() for _ in verts]
+    for e in garment.data.edges:
+        a, b = e.vertices
+        graph[a].add(b)
+        graph[b].add(a)
+    pending = set(range(len(verts)))
+    groups = []
+    while pending:
+        seed = pending.pop()
+        group, queue = {seed}, [seed]
+        while queue:
+            for nxt in graph[queue.pop()] & pending:
+                pending.remove(nxt)
+                queue.append(nxt)
+                group.add(nxt)
+        groups.append(group)
+    assert len(groups) == 2, [len(g) for g in groups]  # Stock short-sleeve topology.
+    transform = garment.matrix_world.copy()
+    inverse = transform.inverted()
+    shirt = max(groups, key=lambda g: sum((transform @ verts[i].co).z for i in g) / len(g))
+    points, faces = evaluated_mesh(master)
+    skin = BVHTree.FromPolygons(points, faces)
+    moved = []
+    for i in shirt:
+        vertex = verts[i]
+        point = transform @ vertex.co
+        # Fade the pull over the shirt's waist and ribs. Sleeves, hem and collar retain stock fit.
+        z = point.z / stature
+        influence = max(0, min(1, (z - .56) / .035, (.745 - z) / .050))
+        if not influence:
+            continue
+        hit, normal, _, distance = skin.find_nearest(point, .045)
+        if hit is None or distance <= .012 or (point-hit).dot(normal) <= 0 or abs(normal.z) > .58:
+            continue
+        horizontal = Vector((normal.x, normal.y, 0)).normalized()
+        pull = min(.013, (distance - .012) * .75) * influence
+        dest = point - horizontal * pull
+        closest, next_normal, _, _ = skin.find_nearest(dest, .06)
+        if closest is None or (dest-closest).dot(next_normal) < .007:
+            continue
+        vertex.co = inverse @ dest
+        moved.append(pull)
+    garment.data.materials.clear()
+    garment.data.materials.append(material('Plain sage jersey', (.36, .42, .35)))
+    garment.data.materials.append(material('Plain slate twill', (.18, .23, .26)))
+    for polygon in garment.data.polygons:
+        polygon.material_index = 0 if polygon.vertices[0] in shirt else 1
+    garment.data.update()
+    return {'shirt_vertices': len(shirt), 'shirt_vertices_drawn_in': len(moved),
+            'max_inset_mm': round(1e3 * max(moved, default=0), 2), 'target_waist_clearance_mm': 12}
+
+
 def verify_fit_body(master, original):
     """Check coverage-independent positions against the existing fit GLB and map HM08 indices."""
     doc, blob = read_glb(original)
@@ -254,9 +312,10 @@ def build_fit(actor, outfit, source, original, out):
     eyes = HumanService.add_mhclo_asset(asset, donor, asset_type='Eyes', subdiv_levels=0,
                                        material_type='GAMEENGINE')
     eyes.data.name = 'Review_Eyes'
+    review_eyes(eyes, actor)
     master = body_copy(donor, 'Review_Body')
     error = verify_fit_body(master, original)
-    coat(master, material('Warm gray study clay', (0.44, 0.37, 0.31)))
+    review_skin(master, actor)
     points = unmask_coords(donor)
     body_group = donor.vertex_groups['body'].index
     ids = [v.index for v in donor.data.vertices if any(g.group == body_group for g in v.groups)]
@@ -268,6 +327,7 @@ def build_fit(actor, outfit, source, original, out):
     assert max(dist for _, _, dist in pairs) < 2e-5 and len({i for _, i, _ in pairs}) == len(pairs)
     garment, covered = fit_clothes(donor, rig, slug, 'Wardrobe_Outfit')
     shoes, feet = fit_clothes(donor, rig, CAST_SHOES[actor], 'Wardrobe_Shoes')
+    fit = silhouette_fit(garment, master, (CAST | FEATURED_CAST)[actor][3]) if outfit == 'fitted' else None
     animate(rig, arm_drop=8)  # Same authoring path as muscle.py --design-fit; hash against this actor below.
     overlap = overlap_samples(master, garment)
     bpy.context.scene.frame_set(1)
@@ -284,6 +344,8 @@ def build_fit(actor, outfit, source, original, out):
                'motion_sha256': digest, 'rig_and_bind_max_diff': verify_fit_rig(original, variant),
                'body_fit_max_error_m': error, 'skin_vertices_masked': len(master.data.vertices)-len(body.data.vertices),
                'geometry_overlap_unmasked': overlap, **stats}
+    if fit is not None:
+        receipt['silhouette_fit'] = fit
     (out/f'wardrobe-{name}.json').write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')
     print('CAST_WARDROBE_PASS', json.dumps(receipt), flush=True)
 

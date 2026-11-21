@@ -9,7 +9,9 @@ from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build import (HumanService, LocationService, TargetService, activate, animate,
-                   body_copy, coat, evaluated, export, material)
+                   body_copy, evaluated, export, material)
+
+from featured_look import RACE, review_eyes, review_skin
 
 # gender slider, card age, weight slider, review height (metres), target head ratio
 CAST = {
@@ -64,24 +66,35 @@ FIT_TARGETS = {
         "measure-shoulder-dist": -0.12, "torso-scale-depth": -0.16, "measure-waist-circ": -0.13,
         "{side}-upperarm-muscle": -0.12, "{side}-upperleg-muscle": -0.10,
         "head-scale-vert": 0.13, "head-scale-horiz": -0.29, "chin-width": -0.22,
-        "chin-prominent": -0.12, "nose-scale-horiz": -0.10, "{side}-cheek-volume": 0.10,
+        "chin-prominent": -0.16, "nose-scale-horiz": -0.20, "nose-greek": 0.25,
+        "{side}-eye-height1": 0.25, "{side}-eye-scale": 0.12, "{side}-cheek-volume": 0.12,
+        "mouth-upperlip-volume": 0.22, "mouth-scale-horiz": -0.12,
     },
     "ward": {
-        "measure-shoulder-dist": 0.25, "torso-vshape": 0.20, "torso-muscle-pectoral": 0.18,
+        "measure-shoulder-dist": 0.38, "torso-vshape": 0.20, "torso-muscle-pectoral": 0.18,
         "measure-neck-circ": 0.14, "head-scale-horiz": 0.24, "head-scale-vert": -0.14,
-        "chin-width": 0.42, "chin-height": -0.17, "{side}-cheek-bones": 0.10,
+        "chin-width": 0.53, "chin-height": -0.21, "chin-bones": 0.24,
+        "{side}-cheek-bones": 0.19, "{side}-eye-height2": -0.23, "{side}-eye-bag": 0.24,
+        "nose-hump": 0.31, "nose-point-width": 0.20, "mouth-scale-horiz": 0.19,
+        "mouth-upperlip-volume": -0.23,
     },
     "shending": {
-        "torso-scale-depth": 0.32, "measure-waist-circ": 0.34, "stomach-tone": -0.30,
+        "torso-scale-depth": 0.32, "measure-waist-circ": 0.47, "stomach-tone": -0.30,
         "measure-neck-circ": 0.28, "torso-muscle-dorsi": 0.26, "{side}-lowerarm-muscle": 0.34,
         "head-scale-horiz": 0.19, "head-fat": 0.23, "chin-width": 0.22,
-        "{side}-cheek-volume": 0.30, "nose-scale-horiz": 0.16,
+        "{side}-cheek-volume": 0.40, "nose-scale-horiz": 0.29, "nose-scale-depth": -0.22,
+        "nose-point-width": 0.28, "{side}-eye-height1": -0.21, "{side}-eye-bag": 0.19,
+        "mouth-lowerlip-volume": 0.24, "mouth-scale-horiz": 0.10,
     },
     "caretaker": {
         "measure-shoulder-dist": -0.18, "torso-scale-horiz": -0.16, "measure-waist-circ": -0.17,
         "{side}-hand-scale": -0.25, "{side}-hand-fingers-diameter": -0.35,
         "{side}-hand-fingers-length": 0.20, "head-scale-vert": 0.25, "forehead-temple": -0.22,
-        "head-scale-horiz": -0.22, "chin-height": 0.28, "chin-width": -0.37, "head-fat": -0.18,
+        "head-scale-horiz": -0.34, "chin-height": 0.34, "chin-width": -0.45, "head-fat": -0.25,
+        "{side}-cheek-bones": 0.34, "{side}-cheek-volume": -0.28,
+        "{side}-eye-height2": -0.21, "{side}-eye-scale": 0.08,
+        "nose-greek": 0.40, "nose-scale-vert": 0.20, "nose-point-width": -0.23,
+        "mouth-scale-horiz": -0.19, "mouth-scale-vert": -0.16,
     },
 }
 
@@ -243,6 +256,8 @@ def main():
             stem = f"{name}-{tag}"
             macro = TargetService.get_default_macro_info_dict()
             macro.update(gender=gender, age=age_slider(years), weight=weight, muscle=muscle)
+            if name in RACE:
+                macro['race'] = RACE[name].copy()
             body = HumanService.create_human(macro_detail_dict=macro, feet_on_ground=False)
             actual = TargetService.get_macro_info_dict_from_basemesh(body)
             assert abs(actual.pop("muscle") - muscle) < 1e-6
@@ -259,6 +274,9 @@ def main():
             HumanService.serialize_to_json_file(body, str(preset), save_clothes=False)
             stored = json.loads(preset.read_text(encoding="utf-8"))
             assert abs(stored["phenotype"]["muscle"] - muscle) < 1e-6
+            if name in RACE:
+                race = stored['phenotype']['race']
+                assert all(abs(race[key] - value) < 1e-6 for key, value in RACE[name].items()), race
             stored_targets = {t["target"]: t["value"] for t in stored["targets"]}
             for target, strength in local.items():
                 assert abs(stored_targets[target] - strength) < 1e-6
@@ -273,9 +291,10 @@ def main():
                                                 material_type="GAMEENGINE")
             model = body_copy(body, "Review_Body")
             eyes.data.name = "Review_Eyes"
+            review_eyes(eyes, name)
             assert len(model.data.vertices) == 13380
             dims = measurements(model.data, rig.data.bones, height)
-            coat(model, material("Warm gray study clay", (0.44, 0.37, 0.31)))
+            review_skin(model, name)
             model.data.materials.append(material("Fitted slate suit", (0.165, 0.255, 0.28)))
             if faces is None:
                 faces = coverage(model, rig.data.bones)

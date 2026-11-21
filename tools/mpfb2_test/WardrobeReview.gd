@@ -2,19 +2,20 @@ extends "res://scenes/character_review/R05NativeMotion.gd"
 ## Local wardrobe review: each outfit carries the selected character's own embedded action.
 
 const DIR := "res://.runtime/mpfb2-wardrobe/"
+const PORTRAIT_HEIGHTS := {"lucian": 1.79, "ward": 1.80, "shending": 1.75, "caretaker": 1.84}
 const FIT_DIR := "res://.runtime/mpfb2-fit/godot/"
 const CAST := {
 	"r05": ["R-05", "Detective", {"base": "Trial clothes", "suit": "Formal suit", "jacket": "Casual jacket", "shirt": "Striped shirt"}],
 	"halvard": ["R-06", "Halvard", {"base": "Trial clothes", "jacket": "Casual jacket", "workwear": "Work overalls"}],
 	"jane": ["R-03", "Jane", {"base": "Trial clothes", "shorts": "Denim shorts", "sport": "Sportswear"}],
 	"qingyue": ["R-10", "Qingyue", {"base": "Trial clothes", "skirt": "Formal skirt", "jeans": "T-shirt & jeans"}],
-	"lucian": ["R-01", "Lucian", {"base": "Trial clothes", "shirt": "Striped shirt"}],
-	"ward": ["R-04", "Ward", {"base": "Trial clothes", "suit": "Formal suit"}],
-	"shending": ["R-07", "Shen Ding", {"base": "Trial clothes", "workwear": "Work overalls"}],
-	"caretaker": ["Caretaker", "", {"base": "Trial clothes", "suit": "Formal suit"}],
+	"lucian": ["R-01", "Lucian", {"base": "Trial clothes", "shirt": "Striped shirt", "fitted": "Fitted T-shirt"}],
+	"ward": ["R-04", "Ward", {"base": "Trial clothes", "suit": "Formal suit", "fitted": "Fitted T-shirt"}],
+	"shending": ["R-07", "Shen Ding", {"base": "Trial clothes", "workwear": "Work overalls", "fitted": "Fitted T-shirt"}],
+	"caretaker": ["Caretaker", "", {"base": "Trial clothes", "suit": "Formal suit", "fitted": "Fitted T-shirt"}],
 }
-const POSES := {"front": 0.0, "reach": 0.75, "knee": 2.25, "side": 0.0, "back": 0.0}
-const CAPTIONS := {"front": "Front", "reach": "Reach", "knee": "Knee bend", "side": "Side", "back": "Back"}
+const POSES := {"front": 0.0, "reach": 0.75, "knee": 2.25, "side": 0.0, "back": 0.0, "portrait": 0.0, "profile": 0.0}
+const CAPTIONS := {"front": "Front", "reach": "Reach", "knee": "Knee bend", "side": "Side", "back": "Back", "portrait": "Face", "profile": "Face profile"}
 var characters: Dictionary[String, Button]
 var options: Dictionary[String, Button]
 var samples: Dictionary[String, Button]
@@ -71,6 +72,8 @@ func make_button(parent: GridContainer, text_: String) -> Button:
 
 
 func path_for(who: String, id: String) -> String:
+	if id == "before":
+		return DIR + "face-before/" + who + "-fit.glb"
 	if id == "base":
 		return FIT_DIR + who + "-fit.glb"
 	return DIR + "%s_%s.glb" % [who, id]
@@ -83,7 +86,12 @@ func refresh_outfits() -> void:
 		outfits.remove_child(child)
 		child.queue_free()
 	options.clear()
-	var labels: Dictionary = CAST[character][2]
+	var labels: Dictionary = CAST[character][2].duplicate()
+	var has_portrait := character in PORTRAIT_HEIGHTS
+	samples["portrait"].disabled = not has_portrait
+	samples["profile"].disabled = not has_portrait
+	if has_portrait and FileAccess.file_exists(path_for(character, "before")):
+		labels["before"] = "Previous face"
 	for id: String in labels:
 		var button := make_button(outfits, labels[id])
 		button.pressed.connect(_switch.bind(character, id))
@@ -160,7 +168,20 @@ func fail_outfit(reason: String) -> void:
 	push_error(reason)
 
 
+func frame_view(close_up: bool) -> void:
+	var camera: Camera3D = $Camera
+	if close_up:
+		camera.position = Vector3(0, PORTRAIT_HEIGHTS[character] - 0.128, 2.4)
+		camera.rotation_degrees.x = 0.0
+		camera.size = 0.41
+	else:
+		camera.position = Vector3(0, 1.34, 4)
+		camera.rotation_degrees.x = -5.0
+		camera.size = 2.26
+
+
 func play_original() -> void:
+	frame_view(false)
 	pose = "live"
 	actor.rotation.y = 0.27
 	super.play_original()
@@ -172,12 +193,14 @@ func _set_pose(id: String) -> void:
 		return
 	pose = id
 	finished = false
-	actor.rotation.y = {"back": PI + 0.27, "side": PI * 0.5}.get(id, 0.27)
+	frame_view(id == "portrait" or id == "profile")
+	actor.rotation.y = {"back": PI + 0.27, "side": PI * 0.5, "portrait": 0.0, "profile": PI * 0.5}.get(id, 0.27)
 	player.play(CLIP, 0.0)
 	player.advance(0.0)
 	player.seek(POSES[id], true)
 	player.pause()
-	status.text = "%s / %s" % [CAST[character][2][selected], CAPTIONS[id]]
+	var label: String = "Previous face" if selected == "before" else CAST[character][2][selected]
+	status.text = "%s / %s" % [label, CAPTIONS[id]]
 
 
 func apply_review_materials() -> void:

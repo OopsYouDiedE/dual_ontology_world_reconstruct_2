@@ -4,6 +4,7 @@ extends Node
 const TEST_SCENES := [
 	"res://scenes/rogue/Run.tscn",
 	"res://scenes/rubber_whitebox/RubberYard.tscn",
+	"res://scenes/rubber_whitebox/kinetic_pilot/Gallery.tscn",
 	"res://scenes/rubber_whitebox/rule_arena/RuleArena.tscn",
 	"res://scenes/rubber_whitebox/room_review/RoomReview.tscn",
 ]

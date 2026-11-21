@@ -2,9 +2,10 @@ import { Worker } from 'node:worker_threads';
 import { performance } from 'node:perf_hooks';
 import { once } from 'node:events';
 export class Judge {
-  constructor(src) {
+  constructor(src, maxAction = 399) {
     if (Buffer.byteLength(src) > 131072) throw Error('source exceeds 128 KiB');
     this.src = src;
+    this.maxAction = maxAction;
     this.violations = 0;
     this.denied = 0;
     this.peak = 0;
@@ -15,7 +16,7 @@ export class Judge {
     this.c = new Int32Array(control);
     this.data = Buffer.from(data);
     this.w = new Worker(new URL('./worker.mjs', import.meta.url), {
-      workerData: { src: this.src, control, data },
+      workerData: { src: this.src, maxAction: this.maxAction, control, data },
     });
     const timeout = AbortSignal.timeout(5000);
     try {

@@ -6,7 +6,7 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { spawnSync } from 'node:child_process';
 const here = path.dirname(fileURLToPath(import.meta.url)),
-  [op, folder] = process.argv.slice(2);
+  [op, folder, requestedProfile] = process.argv.slice(2);
 if (!folder) throw Error('match.mjs prepare|clock|score SESSION_DIR');
 const dir = path.resolve(folder),
   pub = path.join(dir, 'author'),
@@ -16,25 +16,44 @@ const save = (f, x) => fs.writeFileSync(f, JSON.stringify(x, null, 2) + '\n', { 
 const secret = path.join(priv, 'draw.json'),
   frozen = path.join(priv, 'submission.js'),
   stamp = path.join(priv, 'freeze.json');
-const manifest = () =>
+const common = ['guest.mjs', 'worker.mjs', 'judge.mjs', 'package-lock.json', 'match.mjs'];
+const pilotFiles = [
+  'arena.mjs',
+  'game.mjs',
+  'studio.mjs',
+  'mesh.mjs',
+  'source-top.mjs',
+  'spinning-top.glb',
+  'Grab3D-LICENSE.txt',
+  'rules.mjs',
+  'reference.js',
+  'starter.js',
+  'PROTOCOL.md',
+];
+const manifest = (profile) =>
   Object.fromEntries(
-    [
-      'architecture.mjs',
-      'blockouts.json',
-      'physics.mjs',
-      'game.mjs',
-      'guest.mjs',
-      'worker.mjs',
-      'judge.mjs',
-      'arena.mjs',
-      'package-lock.json',
-      'reference.js',
-      'PROTOCOL.md',
-      'starter.js',
-      'match.mjs',
-    ].map((f) => [f, hash(fs.readFileSync(path.join(here, f)))]),
+    (profile === 'kinetic'
+      ? [...common, ...pilotFiles.map((f) => 'kinetic/' + f)]
+      : [
+          'architecture.mjs',
+          'blockouts.json',
+          'physics.mjs',
+          'game.mjs',
+          'guest.mjs',
+          'worker.mjs',
+          'judge.mjs',
+          'arena.mjs',
+          'package-lock.json',
+          'reference.js',
+          'PROTOCOL.md',
+          'starter.js',
+          'match.mjs',
+        ]
+    ).map((f) => [f, hash(fs.readFileSync(path.join(here, f)))]),
   );
 if (op === 'prepare') {
+  const profile = requestedProfile ?? 'legacy';
+  if (!['legacy', 'kinetic'].includes(profile)) throw Error('unknown profile');
   fs.mkdirSync(dir);
   fs.mkdirSync(pub);
   fs.mkdirSync(priv);
@@ -43,11 +62,23 @@ if (op === 'prepare') {
   save(secret, {
     salt: randomBytes(24).toString('hex'),
     seeds: [...seeds],
-    engine: manifest(),
+    profile,
+    engine: manifest(profile),
     node: process.version,
   });
-  for (const k of ['PROTOCOL.md', 'physics.mjs', 'starter.js'])
-    fs.copyFileSync(path.join(here, k), path.join(pub, k));
+  for (const k of profile === 'kinetic'
+    ? [
+        'PROTOCOL.md',
+        'studio.mjs',
+        'mesh.mjs',
+        'source-top.mjs',
+        'spinning-top.glb',
+        'Grab3D-LICENSE.txt',
+        'rules.mjs',
+        'starter.js',
+      ]
+    : ['PROTOCOL.md', 'physics.mjs', 'starter.js'])
+    fs.copyFileSync(path.join(here, profile === 'kinetic' ? 'kinetic' : '.', k), path.join(pub, k));
   save(path.join(pub, 'commitment.json'), {
     sha256: hash(fs.readFileSync(secret)),
     seeds: 32,
@@ -82,12 +113,14 @@ if (op === 'prepare') {
     draw = JSON.parse(fs.readFileSync(secret));
   if (
     hash(fs.readFileSync(secret)) !== token.sha256 ||
-    JSON.stringify(manifest()) !== JSON.stringify(draw.engine) ||
+    JSON.stringify(manifest(draw.profile)) !== JSON.stringify(draw.engine) ||
     process.version !== draw.node
   )
     throw Error('draw, engine or runtime changed');
   if (hash(fs.readFileSync(frozen)) !== JSON.parse(fs.readFileSync(stamp)).sha256)
     throw Error('submission changed after deadline');
+  const pilot = draw.profile === 'kinetic',
+    runner = pilot ? path.join(here, 'kinetic') : here;
   const rows = [];
   for (const seed of draw.seeds)
     for (const who of ['reference', 'submission']) {
@@ -95,12 +128,13 @@ if (op === 'prepare') {
         proc = spawnSync(
           process.execPath,
           [
-            path.join(here, 'arena.mjs'),
+            path.join(runner, 'arena.mjs'),
             'run',
+            ...(pilot ? ['--stage', draw.seeds.indexOf(seed) % 2 ? '6' : '3'] : []),
             '--seed',
             String(seed),
             '--bot',
-            who === 'reference' ? path.join(here, 'reference.js') : frozen,
+            who === 'reference' ? path.join(runner, 'reference.js') : frozen,
             '--out',
             file,
           ],
@@ -110,7 +144,7 @@ if (op === 'prepare') {
         throw Error(`infrastructure / invalid submission: ${String(proc.stderr).slice(-1200)}`);
       rows.push({ who, ...JSON.parse(proc.stdout) });
     }
-  const wins = (who) => rows.filter((r) => r.who === who && r.result === 'camp').length;
+  const wins = (who) => rows.filter((r) => r.who === who && r.result === (pilot ? 'exit' : 'camp')).length;
   save(path.join(priv, 'score.json'), {
     referenceWins: wins('reference'),
     submissionWins: wins('submission'),

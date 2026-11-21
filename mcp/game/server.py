@@ -19,6 +19,7 @@ SCENE = "res://scenes/rogue/Run.tscn"
 SCENES = {
     "rogue": SCENE,
     "whitebox": "res://scenes/rubber_whitebox/RubberYard.tscn",
+    "kinetic_pilot": "res://scenes/rubber_whitebox/kinetic_pilot/Gallery.tscn",
     "rule_arena": "res://scenes/rubber_whitebox/rule_arena/RuleArena.tscn",
     "room_review": "res://scenes/rubber_whitebox/room_review/RoomReview.tscn",
 }
@@ -147,7 +148,7 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False,
-           scene: Literal["rogue", "whitebox", "room_review", "rule_arena"] = "rogue"):
+           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot"] = "rogue"):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:

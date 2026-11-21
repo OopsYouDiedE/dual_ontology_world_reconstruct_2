@@ -15,7 +15,7 @@ for (;;) {
     continue;
   }
   const val = g.call(decoder.decode(bytes.subarray(0, ctrl[1])), ctrl[2] / 1000);
-  ctrl[3] = g.interrupted ? -1 : Number.isInteger(val) && val >= 0 && val <= 399 ? val : 0;
+  ctrl[3] = g.interrupted ? -1 : Number.isInteger(val) && val >= 0 && val <= d.maxAction ? val : 0;
   Atomics.store(ctrl, 0, 2);
   Atomics.notify(ctrl, 0);
 }

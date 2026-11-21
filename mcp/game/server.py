@@ -16,24 +16,27 @@ import environment
 
 ROOT = environment.ROOT
 SCENE = "res://scenes/rogue/Run.tscn"
+SCENES = {"rogue": SCENE, "whitebox": "res://scenes/rubber_whitebox/RubberYard.tscn"}
 AUTOLOAD = 'GameMcp="*res://mcp/game/GameControl.gd"'
 
 
-def readiness():
+def readiness(scene_key="rogue"):
+    scene = SCENES[scene_key]
     project = (ROOT / "project.godot").read_text(encoding="utf-8-sig")
     match = re.search(r"(?ms)^\[autoload\][^\S\n]*\n(.*?)(?=^\[|\Z)", project)
     entries = [line.strip() for line in match[1].splitlines()
                if line.strip() and not line.lstrip().startswith(";")] if match else []
     reasons = []
-    if not (ROOT / SCENE.removeprefix("res://")).is_file():
-        reasons.append(f"Missing {SCENE}")
+    if not (ROOT / scene.removeprefix("res://")).is_file():
+        reasons.append(f"Missing {scene}")
     if entries != [AUTOLOAD]:
         reasons.append(f"Expected the sole [autoload] entry: {AUTOLOAD}")
-    return {"ready": not reasons, "scene": SCENE, "renderer": "forward_plus", "reasons": reasons}
+    return {"ready": not reasons, "scene": scene, "renderer": "forward_plus", "reasons": reasons}
 
 
 class Run:
-    def __init__(self, seed, architecture_lab=False, *, hall_a26_preview=False):
+    def __init__(self, seed, architecture_lab=False, *, hall_a26_preview=False, scene_key="rogue"):
+        self.scene = SCENES[scene_key]
         godot = Path(environment.resolve_godot()).resolve()
         if os.name == "nt" and godot.name.lower().endswith("_console.exe"):
             godot = godot.with_name(godot.name[:-len("_console.exe")] + ".exe")
@@ -57,7 +60,7 @@ class Run:
         self.log = self.directory / "godot.log"
         command = [str(godot), "--path", str(ROOT), "--rendering-method", "forward_plus",
                    "--language", "en", "--max-fps", "60", "--windowed", "--position", "-32000,-32000",
-                   "--log-file", str(self.log), SCENE, "--", f"--rogue-mcp-dir={self.directory}", f"--run-seed={seed}"]
+                   "--log-file", str(self.log), self.scene, "--", f"--rogue-mcp-dir={self.directory}", f"--run-seed={seed}"]
         if architecture_lab:
             command.append("--architecture-lab")
             if hall_a26_preview:
@@ -84,7 +87,7 @@ class Run:
         result = json.loads(reply.read_text(encoding="utf-8"))
         if (result.get("pid") != self.process.pid or result.get("project_sha256") != self.project_sha
                 or Path(result.get("project_root", "")).resolve() != ROOT.resolve()
-                or result.get("scene") != SCENE or result.get("renderer") != "forward_plus"
+                or result.get("scene") != self.scene or result.get("renderer") != "forward_plus"
                 or str(result.get("window_backend", "")).lower() in ("", "headless")):
             raise RuntimeError(f"Wrong scene, project, host or renderer: {result}; log: {self.log}")
         if result.get("error"):
@@ -138,16 +141,19 @@ def game_server():
         return readiness()
 
     @server.tool(structured_output=False)
-    def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False):
-        """Open scenes/rogue/Run.tscn directly in real Forward+ with an isolated user profile."""
+    def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False,
+           scene: Literal["rogue", "whitebox"] = "rogue"):
+        """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:
             if run is not None:
                 raise ValueError("Close the current session before starting another")
-            state = readiness()
+            if scene == "whitebox" and architecture_lab:
+                raise ValueError("Architecture lab mode requires the rogue scene")
+            state = readiness(scene)
             if not state["ready"]:
                 raise ValueError("; ".join(state["reasons"]))
-            candidate = Run(seed, architecture_lab)
+            candidate = Run(seed, architecture_lab, scene_key=scene)
             try:
                 result = candidate.request("observe", screenshot=screenshot, timeout=40)
             except BaseException:

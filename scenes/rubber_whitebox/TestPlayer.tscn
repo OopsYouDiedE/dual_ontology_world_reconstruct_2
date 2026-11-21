@@ -1,0 +1,242 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/rubber_whitebox/TestPlayer.gd" id="PlayerScript"]
+
+[sub_resource type="StandardMaterial3D" id="Suit"]
+albedo_color = Color(0.917647, 0.886275, 0.807843, 1)
+roughness = 0.54
+metallic = 0
+
+[sub_resource type="StandardMaterial3D" id="Joints"]
+albedo_color = Color(0.133333, 0.266667, 0.321569, 1)
+roughness = 0.69
+metallic = 0
+
+[sub_resource type="StandardMaterial3D" id="Amber"]
+albedo_color = Color(0.964706, 0.666667, 0.313725, 1)
+roughness = 0.52
+metallic = 0
+
+[sub_resource type="StandardMaterial3D" id="Visor"]
+albedo_color = Color(0.0705882, 0.207843, 0.262745, 1)
+roughness = 0.28
+metallic = 0.22
+
+[sub_resource type="StandardMaterial3D" id="VisorInset"]
+albedo_color = Color(0.513725, 0.870588, 0.843137, 1)
+roughness = 0.36
+metallic = 0
+emission_enabled = true
+emission = Color(0.513725, 0.870588, 0.843137, 1)
+emission_energy_multiplier = 0.18
+
+[sub_resource type="CapsuleShape3D" id="Capsule"]
+radius = 0.31
+height = 1.72
+
+[sub_resource type="SphereShape3D" id="CameraSweep"]
+radius = 0.21
+
+[sub_resource type="SphereMesh" id="Helmet"]
+radius = 0.224
+height = 0.43
+radial_segments = 12
+rings = 5
+
+[sub_resource type="CapsuleMesh" id="Hip"]
+radius = 0.2
+height = 0.42
+radial_segments = 10
+rings = 3
+
+[sub_resource type="CapsuleMesh" id="Torso"]
+radius = 0.268
+height = 0.63
+radial_segments = 10
+rings = 4
+
+[sub_resource type="SphereMesh" id="Glove"]
+radius = 0.083
+height = 0.173
+radial_segments = 8
+rings = 3
+
+[sub_resource type="BoxMesh" id="Box_0p316_0p126_0p088"]
+size = Vector3(0.316, 0.126, 0.088)
+
+[sub_resource type="BoxMesh" id="Box_0p21_0p017_0p008"]
+size = Vector3(0.21, 0.017, 0.008)
+
+[sub_resource type="BoxMesh" id="Box_0p092_0p038_0p124"]
+size = Vector3(0.092, 0.038, 0.124)
+
+[sub_resource type="BoxMesh" id="Box_0p302_0p34_0p135"]
+size = Vector3(0.302, 0.34, 0.135)
+
+[sub_resource type="BoxMesh" id="Box_0p197_0p119_0p012"]
+size = Vector3(0.197, 0.119, 0.012)
+
+[sub_resource type="BoxMesh" id="Box_0p205_0p59_0p205"]
+size = Vector3(0.205, 0.59, 0.205)
+
+[sub_resource type="BoxMesh" id="Box_0p154_0p147_0p058"]
+size = Vector3(0.154, 0.147, 0.058)
+
+[sub_resource type="BoxMesh" id="Box_0p224_0p17_0p315"]
+size = Vector3(0.224, 0.17, 0.315)
+
+[sub_resource type="BoxMesh" id="Box_0p144_0p4_0p15"]
+size = Vector3(0.144, 0.4, 0.15)
+
+[sub_resource type="BoxMesh" id="Box_0p177_0p122_0p172"]
+size = Vector3(0.177, 0.122, 0.172)
+
+[node name="TestPlayer" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("PlayerScript")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.86, 0)
+shape = SubResource("Capsule")
+
+[node name="Orbit" type="Node3D" parent="."]
+position = Vector3(0, 1.22, 0)
+
+[node name="Boom" type="SpringArm3D" parent="Orbit"]
+rotation = Vector3(-0.35, 0, 0)
+shape = SubResource("CameraSweep")
+spring_length = 6.9
+margin = 0.19
+collision_mask = 1
+
+[node name="Camera" type="Camera3D" parent="Orbit/Boom"]
+current = true
+fov = 60
+near = 0.12
+far = 80.0
+
+[node name="Figure" type="Node3D" parent="."]
+
+[node name="Suit" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 1.14, 0)
+material_override = SubResource("Suit")
+mesh = SubResource("Torso")
+scale = Vector3(1, 1, 0.75)
+
+[node name="Hip" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 0.84, 0)
+material_override = SubResource("Joints")
+mesh = SubResource("Hip")
+scale = Vector3(1.1, 0.68, 0.8)
+
+[node name="Helmet" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 1.6, 0)
+material_override = SubResource("Suit")
+mesh = SubResource("Helmet")
+
+[node name="FaceShield" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 1.59, -0.172)
+material_override = SubResource("Visor")
+mesh = SubResource("Box_0p316_0p126_0p088")
+
+[node name="SightLine" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 1.607, -0.218)
+material_override = SubResource("VisorInset")
+mesh = SubResource("Box_0p21_0p017_0p008")
+
+[node name="HelmetStripe" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 1.742, 0.109)
+material_override = SubResource("Amber")
+mesh = SubResource("Box_0p092_0p038_0p124")
+rotation = Vector3(-0.59, 0, 0)
+
+[node name="Backpack" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 1.168, 0.186)
+material_override = SubResource("Joints")
+mesh = SubResource("Box_0p302_0p34_0p135")
+
+[node name="UnitBadge" type="MeshInstance3D" parent="Figure"]
+position = Vector3(0, 1.205, 0.257)
+material_override = SubResource("Amber")
+mesh = SubResource("Box_0p197_0p119_0p012")
+
+[node name="UnitNumber" type="Label3D" parent="Figure"]
+position = Vector3(0, 1.203, 0.265)
+pixel_size = 0.0033
+font_size = 28
+outline_size = 0
+modulate = Color(0.0980392, 0.2, 0.25098, 1)
+text = "07"
+
+[node name="LeftLeg" type="Node3D" parent="Figure"]
+position = Vector3(-0.15, 0.8, 0)
+
+[node name="Shin" type="MeshInstance3D" parent="Figure/LeftLeg"]
+position = Vector3(0, -0.33, 0)
+material_override = SubResource("Suit")
+mesh = SubResource("Box_0p205_0p59_0p205")
+
+[node name="Knee" type="MeshInstance3D" parent="Figure/LeftLeg"]
+position = Vector3(0, -0.33, -0.1)
+material_override = SubResource("Joints")
+mesh = SubResource("Box_0p154_0p147_0p058")
+
+[node name="Boot" type="MeshInstance3D" parent="Figure/LeftLeg"]
+position = Vector3(0, -0.71, -0.038)
+material_override = SubResource("Joints")
+mesh = SubResource("Box_0p224_0p17_0p315")
+
+[node name="LeftArm" type="Node3D" parent="Figure"]
+position = Vector3(-0.291, 1.34, 0)
+
+[node name="Sleeve" type="MeshInstance3D" parent="Figure/LeftArm"]
+position = Vector3(0, -0.205, 0)
+material_override = SubResource("Suit")
+mesh = SubResource("Box_0p144_0p4_0p15")
+
+[node name="Shoulder" type="MeshInstance3D" parent="Figure/LeftArm"]
+position = Vector3(0, -0.043, 0)
+material_override = SubResource("Amber")
+mesh = SubResource("Box_0p177_0p122_0p172")
+
+[node name="Glove" type="MeshInstance3D" parent="Figure/LeftArm"]
+position = Vector3(0, -0.45, 0)
+material_override = SubResource("Joints")
+mesh = SubResource("Glove")
+
+[node name="RightLeg" type="Node3D" parent="Figure"]
+position = Vector3(0.15, 0.8, 0)
+
+[node name="Shin" type="MeshInstance3D" parent="Figure/RightLeg"]
+position = Vector3(0, -0.33, 0)
+material_override = SubResource("Suit")
+mesh = SubResource("Box_0p205_0p59_0p205")
+
+[node name="Knee" type="MeshInstance3D" parent="Figure/RightLeg"]
+position = Vector3(0, -0.33, -0.1)
+material_override = SubResource("Joints")
+mesh = SubResource("Box_0p154_0p147_0p058")
+
+[node name="Boot" type="MeshInstance3D" parent="Figure/RightLeg"]
+position = Vector3(0, -0.71, -0.038)
+material_override = SubResource("Joints")
+mesh = SubResource("Box_0p224_0p17_0p315")
+
+[node name="RightArm" type="Node3D" parent="Figure"]
+position = Vector3(0.291, 1.34, 0)
+
+[node name="Sleeve" type="MeshInstance3D" parent="Figure/RightArm"]
+position = Vector3(0, -0.205, 0)
+material_override = SubResource("Suit")
+mesh = SubResource("Box_0p144_0p4_0p15")
+
+[node name="Shoulder" type="MeshInstance3D" parent="Figure/RightArm"]
+position = Vector3(0, -0.043, 0)
+material_override = SubResource("Amber")
+mesh = SubResource("Box_0p177_0p122_0p172")
+
+[node name="Glove" type="MeshInstance3D" parent="Figure/RightArm"]
+position = Vector3(0, -0.45, 0)
+material_override = SubResource("Joints")
+mesh = SubResource("Glove")

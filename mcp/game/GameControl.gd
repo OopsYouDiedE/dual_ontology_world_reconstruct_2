@@ -1,7 +1,7 @@
 extends Node
 ## Opt-in testing bridge. Normal game launches leave it dormant.
 
-const RUN_SCENE := "res://scenes/rogue/Run.tscn"
+const TEST_SCENES := ["res://scenes/rogue/Run.tscn", "res://scenes/rubber_whitebox/RubberYard.tscn"]
 var run_dir := ""
 var busy := false
 
@@ -45,8 +45,8 @@ func _handle(request: Dictionary) -> void:
 	var operation := str(request.get("operation", ""))
 	var error := ""
 	var scene := get_tree().current_scene
-	if not is_instance_valid(scene) or scene.scene_file_path != RUN_SCENE:
-		error = "Expected the direct Rogue Run scene"
+	if not is_instance_valid(scene) or scene.scene_file_path not in TEST_SCENES:
+		error = "Expected an allowlisted test scene"
 	elif operation == "action":
 		var action := StringName(request.get("action", ""))
 		if not InputMap.has_action(action):

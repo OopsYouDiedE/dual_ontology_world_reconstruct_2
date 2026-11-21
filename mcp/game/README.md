@@ -4,7 +4,7 @@
 
 ## 场景接口
 
-- 固定入口 `res://scenes/rogue/Run.tscn`，通过 Godot 命令行直接打开。根节点保持为 `current_scene`；房间切换、结算和重开可在根节点内切换子树或重新加载同路径。`project.godot` 的 `[autoload]` 只需 `GameMcp="*res://mcp/game/GameControl.gd"`。
+- 正式入口固定为 `res://scenes/rogue/Run.tscn`，通过 Godot 命令行直接打开。根节点保持为 `current_scene`；房间切换、结算和重开可在根节点内切换子树或重新加载同路径。`project.godot` 的 `[autoload]` 只需 `GameMcp="*res://mcp/game/GameControl.gd"`。
 - 按玩家正常路径接收鼠标和 Godot InputMap 事件。测试可用视口坐标点击，也可传 InputMap 动作名。桥接器在测试启动参数缺席时休眠。
 - 可选只读 `mcp_observe() -> Dictionary`，请返回 JSON 可序列化的数据，例如 `phase`、`round`、`seed`、`player_cell`、`visible_choices`。没有此方法时仍可用画面、点击和 InputMap 测试。若要固定随机性，由场景解析 `OS.get_cmdline_user_args()` 中的 `--run-seed=<整数>` 并把它用于局内 RNG；普通启动维持游戏自己的默认行为。
 
@@ -16,3 +16,7 @@
 4. `close {"session_id":"…"}` 回收本连接启动的进程。日志、PNG、回复和隔离 profile 保留在 `.runtime/rogue-mcp/<session_id>/`。
 
 项目根目录可运行 `& .runtime/python/Scripts/python.exe tools/testing/rogue_smoke.py --seed 1`。若需验证一个项目已登记的动作，追加 `--action <InputMap名称> --frames 8`；点击起始画面可用 `--click 450 680`（1280×720，seed 1）。运行前需完成场景资源导入；若场景调用 C#，需先构建当前项目程序集。
+
+## Rubber Yard 白模
+
+`on` 可另外传入 `{"scene":"whitebox"}`，直接启动 `res://scenes/rubber_whitebox/RubberYard.tscn`；默认 `scene` 仍是 `rogue`。用 `tools/testing/rubber_yard_smoke.py` 检查第三人称角色、坡道、配重和压力闸，并捕获真实画面。`status` 继续检查正式入口和唯一 autoload。

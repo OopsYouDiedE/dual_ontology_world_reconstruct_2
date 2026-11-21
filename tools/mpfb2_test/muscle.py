@@ -1,4 +1,4 @@
-"""Generate the four-character MPFB muscle sweep in an isolated Blender profile."""
+"""Generate MPFB muscle studies and independent featured-cast fits in an isolated Blender profile."""
 import argparse
 import json
 from pathlib import Path
@@ -18,8 +18,17 @@ CAST = {
     "jane": (0.0, 19, 0.49, 1.56, None),
     "qingyue": (0.0, 19, 0.45, 1.64, None),
 }
+# First MPFB pass for the remaining featured cast. Heights are review choices.
+# The Caretaker's age input shapes his adult guise rather than dating the character.
+FEATURED_CAST = {
+    "lucian": (1.0, 21, 0.34, 1.79, None),
+    "ward": (1.0, 38, 0.53, 1.80, None),
+    "shending": (1.0, 44, 0.69, 1.75, None),
+    "caretaker": (1.0, 38, 0.31, 1.84, None),
+}
 LEVELS = (0.50, 0.75, 1.00)
-FIT_LEVELS = {"detective": 0.50, "halvard": 0.75, "jane": 0.75, "qingyue": 0.50}
+FIT_LEVELS = {"detective": 0.50, "halvard": 0.75, "jane": 0.75, "qingyue": 0.50,
+              "lucian": 0.44, "ward": 0.56, "shending": 0.64, "caretaker": 0.40}
 
 # Signed strengths on named stock targets, not normalized macro slider values.
 # {side} applies the same weight to the corresponding left and right targets.
@@ -50,6 +59,29 @@ FIT_TARGETS = {
         "torso-muscle-dorsi": -0.16, "{side}-upperarm-muscle": -0.23,
         "{side}-lowerarm-muscle": -0.18, "{side}-upperleg-muscle": -0.15,
         "{side}-lowerleg-muscle": -0.16, "stomach-tone": -0.25,
+    },
+    "lucian": {
+        "measure-shoulder-dist": -0.12, "torso-scale-depth": -0.16, "measure-waist-circ": -0.13,
+        "{side}-upperarm-muscle": -0.12, "{side}-upperleg-muscle": -0.10,
+        "head-scale-vert": 0.13, "head-scale-horiz": -0.29, "chin-width": -0.22,
+        "chin-prominent": -0.12, "nose-scale-horiz": -0.10, "{side}-cheek-volume": 0.10,
+    },
+    "ward": {
+        "measure-shoulder-dist": 0.25, "torso-vshape": 0.20, "torso-muscle-pectoral": 0.18,
+        "measure-neck-circ": 0.14, "head-scale-horiz": 0.24, "head-scale-vert": -0.14,
+        "chin-width": 0.42, "chin-height": -0.17, "{side}-cheek-bones": 0.10,
+    },
+    "shending": {
+        "torso-scale-depth": 0.32, "measure-waist-circ": 0.34, "stomach-tone": -0.30,
+        "measure-neck-circ": 0.28, "torso-muscle-dorsi": 0.26, "{side}-lowerarm-muscle": 0.34,
+        "head-scale-horiz": 0.19, "head-fat": 0.23, "chin-width": 0.22,
+        "{side}-cheek-volume": 0.30, "nose-scale-horiz": 0.16,
+    },
+    "caretaker": {
+        "measure-shoulder-dist": -0.18, "torso-scale-horiz": -0.16, "measure-waist-circ": -0.17,
+        "{side}-hand-scale": -0.25, "{side}-hand-fingers-diameter": -0.35,
+        "{side}-hand-fingers-length": 0.20, "head-scale-vert": 0.25, "forehead-temple": -0.22,
+        "head-scale-horiz": -0.22, "chin-height": 0.28, "chin-width": -0.37, "head-fat": -0.18,
     },
 }
 
@@ -182,7 +214,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--design-fit", action="store_true", help="Build baseline and locally fitted presets")
+    parser.add_argument("--featured-additions", action="store_true", help="Generate only the four new featured-cast models")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
+    if args.featured_additions and not args.design_fit:
+        parser.error("--featured-additions needs --design-fit")
+    cast = FEATURED_CAST if args.featured_additions else CAST
     out = args.out.resolve()
     presets = out / "presets"
     preview = out / "godot"
@@ -195,7 +231,7 @@ def main():
     crown, chin = head["zmax"], head["zmin"]
     receipt = {"blender": bpy.app.version_string, "mpfb": "2.0.18", "cast": {}}
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    for name, (gender, years, weight, height, ratio) in CAST.items():
+    for name, (gender, years, weight, height, ratio) in cast.items():
         fixed_head, faces, original_macro = None, None, None
         variants = []
         samples = (("base", FIT_LEVELS[name]), ("fit", FIT_LEVELS[name])) if args.design_fit else (
@@ -264,11 +300,14 @@ def main():
                 assert delta["upper_arm"] > 4 and delta["forearm"] > 3 and delta["shoulder_joint_span"] > 1
             elif name == "jane":
                 assert delta["forearm"] > 1 and delta["calf"] > 1 and delta["waist_line"] > 2
-            else:
+            elif name == "qingyue":
                 assert all(delta[k] < 0 for k in ("upper_arm", "forearm", "thigh", "calf"))
-        receipt["cast"][name] = {"card_age_years": years, "macros_except_muscle": original_macro,
+        receipt["cast"][name] = {"card_age_years": None if name == "caretaker" else years,
+                                 "mpfb_age_input_years": years, "macros_except_muscle": original_macro,
                                  "review_height_m": height, "fixed_head_target": fixed_head, "samples": variants}
-    (out / ("fit-receipt.json" if args.design_fit else "muscle-receipt.json")).write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    basename = "featured-fit-receipt.json" if args.featured_additions else (
+        "fit-receipt.json" if args.design_fit else "muscle-receipt.json")
+    (out / basename).write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

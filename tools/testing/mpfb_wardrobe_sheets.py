@@ -12,8 +12,12 @@ MOTION = {
     'jane': ('R-03  Jane Cox', 'shorts', 'T-shirt + shorts'),
     'qingyue': ('R-10  Qingyue', 'skirt', 'Blouse + skirt'),
 }
-STATIC = {'lucian': 'R-01  Lucian', 'ward': 'R-04  Ward',
-          'shending': 'R-07  Shen Ding', 'caretaker': 'Caretaker'}
+NEW = {
+    'lucian': ('R-01  Lucian', 'shirt', 'Striped shirt + jeans'),
+    'ward': ('R-04  Ward', 'suit', 'Formal suit'),
+    'shending': ('R-07  Shen Ding', 'workwear', 'Work overalls'),
+    'caretaker': ('Caretaker', 'suit', 'Formal suit'),
+}
 
 
 def font(size):
@@ -58,23 +62,22 @@ def main():
     assert data['status'] == 'MPFB_WARDROBE_VIEWPORT_PASS'
     shot = data['screenshots']
     out = args.receipt.parent
-    sheet(out/'eight-cast-overview.jpg', 'ACADEMY  /  EIGHT CHARACTER MODELS',
-          'Godot Forward+  /  Review framing normalized for static sources', [
-              ('01  /  MPFB wardrobe + original embedded motion',
-               [(shot[key][outfit]['front'], name, label) for key, (name, outfit, label) in MOTION.items()]),
-              ('02  /  Independent original meshes + base garment (static)',
-               [(shot[key]['base']['front'], name, 'Original static base') for key, name in STATIC.items()]),
+    sheet(out/'eight-mpfb-overview.jpg', 'ACADEMY  /  EIGHT MPFB CHARACTER MODELS',
+          'Godot Forward+  /  Each model has its own rig and embedded pose check', [
+              (title, [(shot[key][outfit]['front'], name, label)
+                       for key, (name, outfit, label) in group.items()])
+              for title, group in [('01  /  Existing MPFB cast', MOTION), ('02  /  New MPFB cast', NEW)]
           ])
-    sheet(out/'eight-cast-motion.jpg', 'NATIVE MOTION  /  WARDROBE CHECK',
-          'Each wardrobe variant plays its own model’s embedded MPFB pose check', [
+    sheet(out/'four-new-mpfb-motion.jpg', 'NEW MPFB MODELS  /  NATIVE MOTION',
+          'Stock wardrobe fitted to each character’s own MPFB recipe', [
               (f'{name}  /  {label}', [(shot[key][outfit][pose], title, detail) for pose, title, detail in (
                   ('front', 'Front', '0.00 s'), ('reach', 'Reach', '0.75 s'),
                   ('knee', 'Knee bend', '2.25 s'), ('back', 'Back', '0.00 s'),
-              )]) for key, (name, outfit, label) in MOTION.items()
+              )]) for key, (name, outfit, label) in NEW.items()
           ])
-    sheet(out/'eight-cast-static.jpg', 'ORIGINAL STATIC MODELS  /  TURNAROUNDS',
-          'Original base and underwear geometry  /  0 rig and animation tracks', [
-              (title, [(shot[key]['base'][pose], name, '') for key, name in STATIC.items()])
+    sheet(out/'four-new-mpfb-body.jpg', 'NEW MPFB MODELS  /  BASE TURNAROUNDS',
+          'Review clothes, neutral pose and common camera scale', [
+              (title, [(shot[key]['base'][pose], name, '') for key, (name, _, _) in NEW.items()])
               for pose, title in [('front', 'Front'), ('side', 'Side'), ('back', 'Back')]
           ])
 

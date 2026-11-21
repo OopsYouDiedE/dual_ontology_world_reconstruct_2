@@ -18,7 +18,7 @@ from style_pilot import (
 )
 
 from build import animate, body_copy, coat, export as export_fit, material
-from muscle import CAST
+from muscle import CAST, FEATURED_CAST
 
 OUTFITS = {
     'suit': 'male_elegantsuit01',
@@ -29,8 +29,12 @@ CAST_OUTFITS = {
     'halvard': {'jacket': 'male_casualsuit05', 'workwear': 'male_worksuit01'},
     'jane': {'shorts': 'female_casualsuit02', 'sport': 'female_sportsuit01'},
     'qingyue': {'skirt': 'female_elegantsuit01', 'jeans': 'female_casualsuit01'},
+    'lucian': {'shirt': 'male_casualsuit03'},
+    'ward': {'suit': 'male_elegantsuit01'},
+    'shending': {'workwear': 'male_worksuit01'},
+    'caretaker': {'suit': 'male_elegantsuit01'},
 }
-CAST_SHOES = {'halvard': 'shoes04', 'jane': 'shoes05', 'qingyue': 'shoes04'}
+CAST_SHOES = {actor: 'shoes05' if actor == 'jane' else 'shoes04' for actor in CAST_OUTFITS}
 SHOES = 'shoes04'
 FRAMES = {'rest': 1, 'reach': 19, 'knee': 55}
 
@@ -240,7 +244,7 @@ def build_fit(actor, outfit, source, original, out):
     meta = Path(LocationService.get_mpfb_data('mesh_metadata'))/'hm08_config.json'
     hd = json.loads(meta.read_text())['dimensions']['Head']
     sole, height, _ = landmarks(donor, hd['zmax'], hd['zmin'])
-    scale = CAST[actor][3]/height
+    scale = (CAST | FEATURED_CAST)[actor][3]/height
     activate(donor)
     donor.scale = (scale,)*3
     donor.location.z = -sole*scale

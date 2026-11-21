@@ -3,7 +3,6 @@ import asyncio
 from datetime import timedelta
 import json
 import math
-import struct
 from pathlib import Path
 import sys
 
@@ -18,31 +17,12 @@ CAST = {
     'halvard': ('base', 'jacket', 'workwear'),
     'jane': ('base', 'shorts', 'sport'),
     'qingyue': ('base', 'skirt', 'jeans'),
+    'lucian': ('base', 'shirt'),
+    'ward': ('base', 'suit'),
+    'shending': ('base', 'workwear'),
+    'caretaker': ('base', 'suit'),
 }
 POSES = {'front': 0.0, 'reach': 0.75, 'knee': 2.25, 'side': 0.0, 'back': 0.0}
-STILL_POSES = ('front', 'side', 'back')
-STATIC = {
-    'lucian': '02-lucian.glb',
-    'ward': '03-ward.glb',
-    'shending': '04-shen-ding.glb',
-    'caretaker': '07-caretaker.glb',
-}
-
-
-def verify_static_source(state, name):
-    source = f'.runtime/academy-body-pilot/anatomy-photo-relief-final/models/{name}'
-    assert state['model'] == 'res://' + source and state['base_clothing'] == 1, state
-    with (ROOT/source).open('rb') as file:
-        magic, version, _, size, encoding = struct.unpack('<4s4I', file.read(20))
-        assert (magic, version, encoding) == (b'glTF', 2, 0x4e4f534a)
-        doc = json.loads(file.read(size))
-    assert not doc.get('skins') and not doc.get('animations'), source
-    n_meshes = sum('mesh' in n for n in doc['nodes'])
-    assert state['mesh_count'] == n_meshes and state['bones'] == 0 and not state['clips'], state
-    assert {'Body', 'Underwear'} <= {n['name'] for n in doc['nodes'] if 'mesh' in n}, doc['nodes']
-    assert not state['garment_meshes'] and set(state['pose_buttons']) == set(STILL_POSES), state
-    return {'source': source, 'mesh_count': n_meshes, 'base_clothing': state['base_clothing'],
-            'skins': 0, 'animations': 0}
 
 
 async def review():
@@ -65,7 +45,7 @@ async def review():
             try:
                 assert initial['renderer'] == 'forward_plus', initial
                 state = initial['state']
-                assert state.get('ready') and set(state['cast_buttons']) == CAST.keys() | STATIC.keys(), state
+                assert state.get('ready') and set(state['cast_buttons']) == set(CAST), state
                 shots, layering = {}, {}
 
                 async def click(coords, screenshot=False):
@@ -82,8 +62,9 @@ async def review():
                         assert not state['wardrobe_error'] and state['outfit'] == outfit, state
                         assert state['bones'] == 53 and state['clips'] == ['MPFB_Pose_Check'], state
                         assert state['garment_meshes'] == (0 if outfit == 'base' else 2), state
-                        if outfit != 'base':
-                            assert state['model'].endswith(f'/{who}_{outfit}.glb'), state
+                        expected = (f'/{who}_{outfit}.glb' if outfit != 'base' else
+                                    '/r05_styled.glb' if who == 'r05' else f'/{who}-fit.glb')
+                        assert state['model'].endswith(expected), state
                         shots[who][outfit] = {}
                         for pose, time in POSES.items():
                             frame = await click(state['pose_buttons'][pose], screenshot=True)
@@ -120,23 +101,10 @@ async def review():
                             assert state['finished'] and not state['playing'], state
                     assert rotation_delta(neutral_tracks['front'][0], neutral_tracks['reach'][0]) > .5
                     assert rotation_delta(neutral_tracks['front'][1], neutral_tracks['knee'][1]) > .5
-                static_checks = {}
-                for who, name in STATIC.items():
-                    state = (await click(state['cast_buttons'][who]))['state']
-                    assert (state['character'], state['outfit'], state['test_mode']) == (who, 'base', 'static'), state
-                    assert not state['wardrobe_error'], state
-                    static_checks[who] = verify_static_source(state, name)
-                    views = {}
-                    for pose in STILL_POSES:
-                        frame = await click(state['pose_buttons'][pose], screenshot=True)
-                        state = frame['state']
-                        assert (state['character'], state['pose']) == (who, pose) and not state['playing'], state
-                        views[pose] = frame['screenshot']
-                    shots[who] = {'base': views}
                 state = (await click(state['cast_buttons']['r05']))['state']
                 assert state['character'] == 'r05' and state['outfit'] == 'base', state
                 print(json.dumps({'status': 'MPFB_WARDROBE_VIEWPORT_PASS', 'session': sid,
-                                  'screenshots': shots, 'shoe_isolation': layering, 'static_sources': static_checks,
+                                  'screenshots': shots, 'shoe_isolation': layering,
                                   'log': initial['log']}, indent=2))
             finally:
                 await call('close', session_id=sid)

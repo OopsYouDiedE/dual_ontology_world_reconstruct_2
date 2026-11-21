@@ -84,7 +84,7 @@ def fit(body):
             "crown_vertex": crown, "chin_vertex": chin}
 
 
-def animate(rig):
+def animate(rig, arm_drop=24):
     def set_pose(name, axis, degrees):
         bone = rig.pose.bones[name]
         bone.rotation_mode = "QUATERNION"
@@ -100,7 +100,7 @@ def animate(rig):
         for side in ("l", "r"):
             upper = rig.data.bones[f"upperarm_{side}"]
             down = 1 if upper.tail_local.x > upper.head_local.x else -1
-            set_pose(f"upperarm_{side}", (0, 1, 0), down * (24 if side == "l" else 24 - reach * 0.8))
+            set_pose(f"upperarm_{side}", (0, 1, 0), down * (arm_drop if side == "l" else arm_drop - reach * 0.8))
             set_pose(f"lowerarm_{side}", (0, 0, 1), -down * (reach if side == "r" else 0))
             set_pose(f"thigh_{side}", (1, 0, 0), stride if side == "r" else -stride * 0.55)
             set_pose(f"calf_{side}", (1, 0, 0), -knee if side == "r" else 0)

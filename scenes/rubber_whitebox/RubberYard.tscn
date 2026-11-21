@@ -14,6 +14,7 @@ shader_parameter/sheet_color = Color(0.219608, 0.407843, 0.529412, 1)
 shader_parameter/registration_ink = Color(0.709804, 0.843137, 0.878431, 1)
 shader_parameter/tile_size = 1.0
 shader_parameter/molded_tread = true
+shader_parameter/floor_grid_ink = 0.44
 
 [sub_resource type="ShaderMaterial" id="RedMat"]
 shader = ExtResource("Tile")

@@ -5,6 +5,7 @@ uniform vec4 sheet_color : source_color = vec4(0.22, 0.39, 0.54, 1.0);
 uniform vec4 registration_ink : source_color = vec4(0.71, 0.86, 0.88, 1.0);
 uniform float tile_size : hint_range(0.1, 4.0) = 1.0;
 uniform bool molded_tread = false;
+uniform float floor_grid_ink : hint_range(0.0, 1.0, 0.01) = 0.0;
 varying vec3 world_position;
 varying vec3 world_normal;
 
@@ -30,6 +31,13 @@ vec2 pebble(vec2 p, float footprint) {
 	float rounded = 1.0 - smoothstep(0.09, 0.29 + footprint * 0.22, length(offset));
 	float coverage = 1.0 - smoothstep(0.34, 1.25, footprint);
 	return vec2(rounded * coverage, random.x);
+}
+
+// Estimate the coverage of a stripe by a pixel footprint on each world axis.
+vec2 stripe_coverage(vec2 distance_to_line, vec2 half_width, vec2 footprint) {
+	vec2 span = max(footprint, vec2(0.0001));
+	return max(vec2(0.0), min(distance_to_line + 0.5 * span, half_width) -
+		max(distance_to_line - 0.5 * span, -half_width)) / span;
 }
 
 void vertex() {
@@ -62,7 +70,8 @@ void fragment() {
 	float tone = 0.97 + grain.x * mix(0.08, 0.18, grain.y) + 0.12 * lip;
 	float relief = crown * 0.0018 + grain.x * 0.00035;
 	float roughness = 0.76 - lip * 0.10 + grain.x * 0.08 + joint * 0.08;
-	if (molded_tread && axis.y >= max(axis.x, axis.z)) {
+	bool floor_face = molded_tread && axis.y >= max(axis.x, axis.z);
+	if (floor_face) {
 		// Layers at three scales: molded grip, colored rubber crumbs and burnished traffic.
 		const mat2 DIAGONAL = mat2(vec2(0.94, 0.342), vec2(-0.342, 0.94));
 		vec2 tread = pebble(DIAGONAL * plane * 27.0, footprint * 27.0);
@@ -76,7 +85,16 @@ void fragment() {
 		roughness += 0.052 * grain.x + 0.11 * mottling - wear * 0.15;
 	}
 	vec3 rubber = sheet_color.rgb * tile_tone * tone;
-	ALBEDO = mix(mix(rubber, sheet_color.rgb * 0.43, joint * 0.78), registration_ink.rgb, cross_mark * 0.47);
+	float ink = cross_mark * 0.47;
+	if (floor_face) {
+		// Every second seam gets a wider stripe; the joint between is a hairline.
+		vec2 seam_index = floor(tiled + 0.5);
+		vec2 major = 1.0 - mod(seam_index, 2.0);
+		vec2 width = mix(vec2(0.009), vec2(0.027), major);
+		vec2 grid = stripe_coverage(edge, width * 0.5, pixel) * mix(vec2(0.62), vec2(1.0), major);
+		ink = floor_grid_ink * max(max(grid.x, grid.y), cross_mark * 0.86);
+	}
+	ALBEDO = mix(mix(rubber, sheet_color.rgb * 0.43, joint * 0.78), registration_ink.rgb, ink);
 	ROUGHNESS = clamp(roughness, 0.0, 1.0);
 	SPECULAR = 0.33;
 

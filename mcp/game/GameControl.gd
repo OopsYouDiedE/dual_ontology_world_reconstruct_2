@@ -6,6 +6,7 @@ const TEST_SCENES := [
 	"res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
 	"res://scenes/character_review/R05NativeMotion.tscn",
 	"res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",
+	"res://scenes/rubber_whitebox/shadecloth/Shadecloth.tscn",
 	"res://scenes/rogue/Run.tscn",
 	"res://scenes/rubber_whitebox/RubberYard.tscn",
 	"res://scenes/rubber_whitebox/kinetic_pilot/Gallery.tscn",

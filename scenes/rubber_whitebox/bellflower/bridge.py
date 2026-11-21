@@ -7,13 +7,13 @@ from bellflower import read_config, World, Run
 from verify import Brain, proposal
 
 
-def main():
+def main(config=read_config, world_type=World, run_type=Run):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--seed',type=int,default=1)
     p.add_argument('--strong',action='store_true')
     args=p.parse_args()
-    w=World(read_config(),args.seed,args.strong)
-    a=Run(w)
+    w=world_type(config(),args.seed,args.strong)
+    a=run_type(w)
     brain=Brain(w.c,'B4')
     diagnostic=False
 
@@ -28,10 +28,11 @@ def main():
             if op=='quit':
                 return
             if op=='preview':
-                send(a.preview(req['view'],req.get('hidden',False),req.get('phase','pinch')))
+                options={key:req[key] for key in ('uncovered','frame_tick') if key in req}
+                send(a.preview(req['view'],req.get('hidden',False),req.get('phase','pinch'),**options))
                 continue
             if op=='reset':
-                a=Run(w); brain=Brain(w.c,'B4'); diagnostic=False
+                a=run_type(w); brain=Brain(w.c,'B4'); diagnostic=False
             elif op=='hide':
                 a.hidden=not a.hidden
                 diagnostic=True

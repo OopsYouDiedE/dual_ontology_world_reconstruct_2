@@ -30,3 +30,7 @@
 ## 06 Gyroscope Well
 
 `on {"scene":"gyro06","seed":6}` opens the section review of the standalone kinetic sculpture. `gyro_a` through `gyro_d` select the four plates, `gyro_hide` removes the spinning assembly and extends the bridges, `gyro_walk` starts first-person traversal, and `gyro_pause` toggles the 60 Hz mechanism. Run `tools/testing/gyro06_capture.py` for the complete Forward+ capture set. See [the scene guide](../../scenes/rubber_whitebox/gyro06/README.md).
+
+## 03 — The Airborne Shade
+
+`on {"scene":"shadecloth"}` opens the Bellflower hall variant in a fixed review pose. `shade_a` through `shade_d` select the review cameras, `shade_play` plays or pauses the orbit, `shade_uncover` isolates the cloth's shadow, and `shade_live` starts first-person traversal. See the [scene guide](../../scenes/rubber_whitebox/shadecloth/README.md).

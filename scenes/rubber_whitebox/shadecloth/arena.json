@@ -1,0 +1,24 @@
+{
+  "id": "03-shadecloth",
+  "cloth": {
+    "center_mm": [0, 6100, -3350],
+    "orbit_mm": [1670, 1370],
+    "period_ticks": 840,
+    "half_size_mm": [3110, 1640],
+    "segments": [22, 12]
+  },
+  "fans": {
+    "count": 6,
+    "radius_mm": 4390,
+    "first_angle_deg": 30,
+    "rotor_deg_per_tick": 13
+  },
+  "primary": {"p":[0, 11470, -3350], "aim":[0, 0, -3350], "angle":46, "r":19800, "i":60000, "energy":10.8, "color":"ffe4b5"},
+  "gate_light": {"p":[1980, 3570, -8960], "aim":[0, 1510, -2730], "angle":27, "r":14200, "i":49500, "energy":2.1, "color":"b6c6ed"},
+  "views": {
+    "A-section": {"p_mm":[13700, 12400, 13000], "target_mm":[0, 5150, -2760], "ortho":23.8, "cutaway":true, "phase_ticks":117},
+    "B-floor": {"p_mm":[1550, 1930, 6050], "target_mm":[-680, 5580, -3710], "fov":73, "phase_ticks":0},
+    "C-folds": {"p_mm":[-5460, 9220, 2130], "target_mm":[560, 5230, -3450], "fov":67, "phase_ticks":122},
+    "D-sweep": {"p_mm":[13700, 12400, 13000], "target_mm":[0, 5150, -2760], "ortho":23.8, "cutaway":true, "phase_ticks":537}
+  }
+}

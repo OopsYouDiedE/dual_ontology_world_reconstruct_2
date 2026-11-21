@@ -33,7 +33,7 @@ func _ready() -> void:
 		var kv := arg.trim_prefix("--").split("=", true, 1)
 		_options[kv[0]] = kv[1] if kv.size() == 2 else true
 	var exe := str(_options.get("python", "python"))
-	var args := PackedStringArray(["-u", ProjectSettings.globalize_path(WORKER), "--seed", str(_options.get("seed", _options.get("run-seed", 1)))])
+	var args := PackedStringArray(["-u", ProjectSettings.globalize_path(_worker_path()), "--seed", str(_options.get("seed", _options.get("run-seed", 1)))])
 	if _options.has("strong"):
 		args.append("--strong")
 	var handle := OS.execute_with_pipe(exe, args, true)
@@ -52,6 +52,10 @@ func _ready() -> void:
 		_take_views(str(_options.capture))
 	elif _options.has("auto") or _options.has("smoke"):
 		_auto = true
+
+
+func _worker_path() -> String:
+	return WORKER
 
 
 func _fail(message: String) -> void:
@@ -117,7 +121,9 @@ func _build(packet: Dictionary) -> void:
 		lamp.shadow_normal_bias = 0.95
 		lamp.shadow_blur = 0.80
 		add_child(lamp)
-		lamp.look_at(_vec(source.aim))
+		var target := _vec(source.aim)
+		var up := Vector3.BACK if absf((target - lamp.position).normalized().dot(Vector3.UP)) > 0.999 else Vector3.UP
+		lamp.look_at(target, up)
 	for part in packet.meshes:
 		_build_part(part)
 	_camera = Camera3D.new()

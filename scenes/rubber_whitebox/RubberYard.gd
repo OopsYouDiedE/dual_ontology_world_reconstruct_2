@@ -1,6 +1,7 @@
 extends Node3D
 ## Standalone art/physics whitebox; its inputs and state stay within this scene.
 
+const Inputs = preload("res://scenes/rubber_whitebox/WhiteboxInput.gd")
 const TestPlayer = preload("res://scenes/rubber_whitebox/TestPlayer.gd")
 const GATE_TRAVEL := 2.72
 const RELEASE_DELAY := 2.2
@@ -35,28 +36,11 @@ func _ready() -> void:
 	pad_home = pad_top.position
 	lamp = signal_lamp.material_override.duplicate() as StandardMaterial3D
 	signal_lamp.material_override = lamp
-	_bind_key(&"whitebox_jump", KEY_SPACE)
-	_bind_key(&"whitebox_sprint", KEY_SHIFT)
-	_bind_key(&"whitebox_orbit_left", KEY_Q)
-	_bind_key(&"whitebox_orbit_right", KEY_R)
-	_bind_key(&"whitebox_reset", KEY_BACKSPACE)
-	_bind_key(&"whitebox_hud", KEY_H)
-	_bind_key(&"whitebox_zoom_in", KEY_Z)
-	_bind_key(&"whitebox_zoom_out", KEY_X)
-	_bind_key(&"whitebox_tilt_up", KEY_PAGEUP)
-	_bind_key(&"whitebox_tilt_down", KEY_PAGEDOWN)
+	Inputs.install()
 	_reset()
 
 func _exit_tree() -> void:
 	get_viewport().use_taa = previous_taa
-
-func _bind_key(action: StringName, key: Key) -> void:
-	if InputMap.has_action(action):
-		return
-	InputMap.add_action(action)
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	InputMap.action_add_event(action, event)
 
 func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("whitebox_reset") or player.position.y < -3.0:

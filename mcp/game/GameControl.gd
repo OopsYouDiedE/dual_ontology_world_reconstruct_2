@@ -1,7 +1,11 @@
 extends Node
 ## Opt-in testing bridge. Normal game launches leave it dormant.
 
-const TEST_SCENES := ["res://scenes/rogue/Run.tscn", "res://scenes/rubber_whitebox/RubberYard.tscn"]
+const TEST_SCENES := [
+	"res://scenes/rogue/Run.tscn",
+	"res://scenes/rubber_whitebox/RubberYard.tscn",
+	"res://scenes/rubber_whitebox/room_review/RoomReview.tscn",
+]
 var run_dir := ""
 var busy := false
 

@@ -20,3 +20,5 @@
 ## Rubber Yard 白模
 
 `on` 可另外传入 `{"scene":"whitebox"}`，直接启动 `res://scenes/rubber_whitebox/RubberYard.tscn`；默认 `scene` 仍是 `rogue`。用 `tools/testing/rubber_yard_smoke.py` 检查第三人称角色、坡道、配重和压力闸，并捕获真实画面。`status` 继续检查正式入口和唯一 autoload。
+
+`on {"scene":"room_review"}` 启动夜班 11 间白模的审查场景。`review_next` / `review_previous` 切房，`review_plan` 切换俯视，`review_use_threshold` 在出口地贴使用。`tools/testing/room_review_capture.py` 驱动该模式并生成逐间实机截图。

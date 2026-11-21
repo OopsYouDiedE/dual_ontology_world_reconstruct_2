@@ -8,19 +8,9 @@
 
 [ext_resource type="Environment" path="res://scenes/rubber_whitebox/YardLook.tres" id="Look"]
 
-[sub_resource type="ShaderMaterial" id="BlueMat"]
-shader = ExtResource("Tile")
-shader_parameter/sheet_color = Color(0.219608, 0.407843, 0.529412, 1)
-shader_parameter/registration_ink = Color(0.709804, 0.843137, 0.878431, 1)
-shader_parameter/tile_size = 1.0
-shader_parameter/molded_tread = true
-shader_parameter/floor_grid_ink = 0.44
+[ext_resource type="Material" path="res://scenes/rubber_whitebox/BlueRubber.tres" id="BlueMat"]
 
-[sub_resource type="ShaderMaterial" id="RedMat"]
-shader = ExtResource("Tile")
-shader_parameter/sheet_color = Color(0.647059, 0.294118, 0.235294, 1)
-shader_parameter/registration_ink = Color(0.964706, 0.705882, 0.572549, 1)
-shader_parameter/tile_size = 1.0
+[ext_resource type="Material" path="res://scenes/rubber_whitebox/RedRubber.tres" id="RedMat"]
 
 [sub_resource type="ShaderMaterial" id="WhiteMat"]
 shader = ExtResource("Tile")
@@ -302,7 +292,7 @@ position = Vector3(0, 0, 4.45)
 position = Vector3(0, -0.21, 0)
 
 [node name="Surface" type="MeshInstance3D" parent="Shell/BlueFloor"]
-material_override = SubResource("BlueMat")
+material_override = ExtResource("BlueMat")
 mesh = SubResource("Box_22_0p42_22p5")
 
 [node name="Collision" type="CollisionShape3D" parent="Shell/BlueFloor"]
@@ -312,7 +302,7 @@ shape = SubResource("Shape_22_0p42_22p5")
 position = Vector3(0, 2.95, -11.15)
 
 [node name="Surface" type="MeshInstance3D" parent="Shell/BackWall"]
-material_override = SubResource("RedMat")
+material_override = ExtResource("RedMat")
 mesh = SubResource("Box_22p6_5p9_0p5")
 
 [node name="Collision" type="CollisionShape3D" parent="Shell/BackWall"]
@@ -322,7 +312,7 @@ shape = SubResource("Shape_22p6_5p9_0p5")
 position = Vector3(-11, 2.95, 0)
 
 [node name="Surface" type="MeshInstance3D" parent="Shell/WestWall"]
-material_override = SubResource("RedMat")
+material_override = ExtResource("RedMat")
 mesh = SubResource("Box_0p45_5p9_22p5")
 
 [node name="Collision" type="CollisionShape3D" parent="Shell/WestWall"]
@@ -342,7 +332,7 @@ mesh = SubResource("Box_0p13_0p28_22p5")
 position = Vector3(11, 2.95, 0)
 
 [node name="Surface" type="MeshInstance3D" parent="Shell/EastWall"]
-material_override = SubResource("RedMat")
+material_override = ExtResource("RedMat")
 mesh = SubResource("Box_0p45_5p9_22p5")
 
 [node name="Collision" type="CollisionShape3D" parent="Shell/EastWall"]

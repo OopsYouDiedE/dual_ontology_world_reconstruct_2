@@ -48,6 +48,12 @@ async def exercise(client, identity):
     await reset()
     await state(91, "move_left")
     on_deck = await state(92, "move_up")
+    # Let the next observation drive the last part of the climb when render
+    # and physics frames drift. The available deck is more than one pulse long.
+    for _ in range(4):
+        if on_deck["player"][1] > 1.20:
+            break
+        on_deck = await state(18, "move_up")
     assert on_deck["grounded"] and 1.20 < on_deck["player"][1] < 1.30, on_deck
     down = await state(105, "move_up")
     assert down["grounded"] and abs(down["player"][1]) < 0.04, down
@@ -60,10 +66,12 @@ async def exercise(client, identity):
     # MCP action durations use process frames. Approach the plate by observed
     # position so a slower render frame cannot push the block through the target.
     pushed = await state(41, "move_left")
-    for _ in range(16):
-        if pushed["block"][0] < 0.83:
+    for _ in range(22):
+        block_x = pushed["block"][0]
+        if block_x < 0.83:
             break
-        pushed = await state(8, "move_left")
+        frames = 20 if block_x > 2.8 else 13 if block_x > 1.60 else 8
+        pushed = await state(frames, "move_left")
     assert -0.8 < pushed["block"][0] < 0.83, pushed
     away = await state(37, "move_down")
     assert away["player"][2] > 0.55 and abs(away["block"][0]) < 1.3, away

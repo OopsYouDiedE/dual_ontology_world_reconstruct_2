@@ -16,7 +16,11 @@ import environment
 
 ROOT = environment.ROOT
 SCENE = "res://scenes/rogue/Run.tscn"
-SCENES = {"rogue": SCENE, "whitebox": "res://scenes/rubber_whitebox/RubberYard.tscn"}
+SCENES = {
+    "rogue": SCENE,
+    "whitebox": "res://scenes/rubber_whitebox/RubberYard.tscn",
+    "room_review": "res://scenes/rubber_whitebox/room_review/RoomReview.tscn",
+}
 AUTOLOAD = 'GameMcp="*res://mcp/game/GameControl.gd"'
 
 
@@ -142,13 +146,13 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False,
-           scene: Literal["rogue", "whitebox"] = "rogue"):
+           scene: Literal["rogue", "whitebox", "room_review"] = "rogue"):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:
             if run is not None:
                 raise ValueError("Close the current session before starting another")
-            if scene == "whitebox" and architecture_lab:
+            if scene != "rogue" and architecture_lab:
                 raise ValueError("Architecture lab mode requires the rogue scene")
             state = readiness(scene)
             if not state["ready"]:

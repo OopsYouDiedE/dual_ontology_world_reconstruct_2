@@ -75,6 +75,16 @@ def improve(parts, source_path, dest, scale):
     return {'before':a,'after_relax':b,'after':patch_after},lut
 
 
+def add_auricle_groups(ob, groups, lut):
+    sizes = {}
+    for label, indices in groups.items():
+        ids = [int(lut[i]) for i in indices]
+        assert len(ids) == len(set(ids)) and min(ids) >= 0, (ob.name, label)
+        ob.vertex_groups.new(name=label).add(ids, 1., 'REPLACE')
+        sizes[label] = len(ids)
+    return sizes
+
+
 def export_one(out, base, row):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     configure_ui()
@@ -92,6 +102,9 @@ def export_one(out, base, row):
     assert body.name == 'Body'
     fixes = out/'fitted'; fixes.mkdir(exist_ok=True)
     low_repair,lut=improve(parts,out/f'{slug}-low.json',fixes/f'{slug}-low.json',scale)
+    ears_file = out/f'{slug}-ear-vertices.json'
+    ears = read(ears_file) if ears_file.exists() else {}
+    ear_low = add_auricle_groups(body, ears.get('low', {}), lut)
     rings = read(out/f'{slug}-loops.json')
     rings={k:{n:[int(lut[i]) for i in ids] for n,ids in r.items()} for k,r in rings.items()}
     assert all(i>=0 for r in rings.values() for ids in r.values() for i in ids)
@@ -119,8 +132,14 @@ def export_one(out, base, row):
     assert {'Body','Eye 1','Eye 2','Underwear','Brow 1','Brow 2'} <= counts.keys()
     assert not m.get('images') and not m.get('textures')
     hs = add_parts(out/f'{slug}-sculpt.json', hi, scale, ' / Sculpt')
-    high_repair,_=improve(hs,out/f'{slug}-sculpt.json',fixes/f'{slug}-sculpt.json',scale)
+    high_repair,high_lut=improve(hs,out/f'{slug}-sculpt.json',fixes/f'{slug}-sculpt.json',scale)
+    ear_high = add_auricle_groups(hs[0], ears.get('sculpt', {}), high_lut)
     audit_hi = audit_body(hs[0])
+    if ears:
+        assert all(not a[k] for a in (audit, audit_hi)
+                   for k in ('crossings', 'open_edges', 'edges_over_two_faces')), (slug, audit, audit_hi)
+        audit['auricle_vertices'] = ear_low
+        audit_hi['auricle_vertices'] = ear_high
     old = create('Previous body',prev['v'],prev['f'],[],scale,prior)
     audit_old = audit_body(old)
     old.display_type = 'WIRE'

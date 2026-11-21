@@ -74,13 +74,14 @@ def panels(data, idx, with_cloth=True):
         yield f'eye{i}',np.array(e['v']),e['f'],EYE[e['mat']]
 
 
-def raster(meshes, angle, size, view='full', wire=False, level=0, shader=None):
+def raster(meshes, angle, size, view='full', wire=False, level=0, shader=None, *, frame=None):
     w,h=size; zoom=1.4; ww,hh=round(w*zoom),round(h*zoom)
     phi=np.radians(angle); co,si=np.cos(phi),np.sin(phi)
     # Body vertices are source normalized, correct world scale is selected in Blender.
     M=np.array([[co,si,0],[0,0,1],[si,-co,0]]).T
     center=(0,.50); screen_h=1.095
     if view=='head':center=(0,.924);screen_h=.196 if level!=1 else .216
+    if frame is not None: center,screen_h=frame
     pix=hh/screen_h
     canvas=np.empty((hh,ww,3),dtype=np.uint8); canvas[:]=[34,41,50]
     depth=np.full((hh,ww),-np.inf)

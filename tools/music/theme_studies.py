@@ -153,7 +153,7 @@ def events(score, part):
     return result
 
 
-def validate(score, version):
+def validate_common(score):
     assert tuple(score) == tuple(PARTS)
     for p, bars in score.items():
         assert len(bars) == NBAR
@@ -161,11 +161,16 @@ def validate(score, version):
             parse(bar)
         if p != 'Soprano':
             assert events(score, p)[0][0] >= 36
-    assert score['Soprano'] == SOP and SOP[:2] == SOP[10:12]
     grid = [{t:midi_pitch(pitch) for pos,d,pitch in events(score, p) for t in range(pos,pos+d)}
             for p in VOICES]
     for upper, lower in zip(grid, grid[1:]):
-        assert all(upper[t] >= lower[t] for t in upper.keys() & lower.keys()), 'SATB voices cross'
+        for t in upper.keys() & lower.keys():
+            assert upper[t] >= lower[t], f'SATB voices cross at measure {t//BAR+1}, tick {t%BAR}'
+
+
+def validate(score, version):
+    validate_common(score)
+    assert score['Soprano'] == SOP and SOP[:2] == SOP[10:12]
     if version in 'cd':
         assert sum(d == 2 for _, d in parse(score['Piano'][8])) == 24
         assert all(d == 6 for _, d in parse(score['Violoncello'][9])[1:])
@@ -178,8 +183,20 @@ def validate(score, version):
 
 
 def export_score(score, version, path):
+    slurs = {(1,0):'start', (2,36):'stop', (3,6):'start', (4,24):'stop',
+             (5,0):'start', (6,36):'stop', (7,12):'start', (8,24):'stop',
+             (11,0):'start', (12,36):'stop', (13,0):'start', (14,24):'stop',
+             (15,0):'start', (15,24):'stop'}
+    return write_score(score, path, name=f'{version.upper()}. {NAMES[version]}', slurs=slurs,
+                       breaks=(5, 9, 11, 13) if version in 'cd' else (5, 9, 13),
+                       form={5:('A', 'Gather'), 9:('B', 'Clockwork'), 11:('A2', 'Same vow'), 15:('C', 'Before dawn')},
+                       dynamics={(4,0):'mp', (11,0):'p', (14,0):'mf', (16,0):'p'},
+                       directions={('Violoncello',10,24):'Poco marcato'} if version in 'cd' else None)
+
+
+def write_score(score, path, *, name, form, slurs, dynamics, breaks=(5,9,13), directions=None, accents=()):
     root = ET.Element('score-partwise', version='4.0')
-    name = f'{version.upper()}. {NAMES[version]}'
+    directions = directions or {}
     child(child(root, 'work'), 'work-title', 'On the Same Night')
     child(root, 'movement-title', name)
     child(child(root, 'identification'), 'creator', 'The Sleeping Academy - theme studies', type='composer')
@@ -196,16 +213,12 @@ def export_score(score, version, path):
         midi = child(tag, 'midi-instrument', id=f'P{i}-I1')
         child(midi, 'midi-channel', i)
         child(midi, 'midi-program', program)
-    slurs = {(1,0):'start', (2,36):'stop', (3,6):'start', (4,24):'stop',
-             (5,0):'start', (6,36):'stop', (7,12):'start', (8,24):'stop',
-             (11,0):'start', (12,36):'stop', (13,0):'start', (14,24):'stop',
-             (15,0):'start', (15,24):'stop'}
     for i, (part, (sign, line, octave, _, _)) in enumerate(PARTS.items(), 1):
         track = child(root, 'part', id=f'P{i}')
         first = events(score, part)[0][0]
         for n, bar in enumerate(score[part], 1):
             m = child(track, 'measure', number=str(n))
-            if n in (5, 9, 13) or (n == 11 and version in 'cd'):
+            if n in breaks:
                 child(m, 'print', **{'new-system': 'yes'})
             if n == 1:
                 attr = child(m, 'attributes')
@@ -226,7 +239,6 @@ def export_score(score, version, path):
                     child(metro, 'beat-unit', 'quarter')
                     child(metro, 'per-minute', TEMPO)
                     child(wrapper, 'sound', tempo=str(TEMPO))
-            form = {5:('A', 'Gather'), 9:('B', 'Clockwork'), 11:('A2', 'Same vow'), 15:('C', 'Before dawn')}
             if i == 1 and n in form:
                 mark, text = form[n]
                 direction(m, 'rehearsal', mark)
@@ -240,10 +252,10 @@ def export_score(score, version, path):
                                  'Violoncello':('Arco, sul tasto','pp'), 'Bell':('One stroke', 'p')}[part]
                     direction(m, 'words', text)
                     child(direction(m, 'dynamics', placement='below')[1], dyn)
-                if version in 'cd' and part == 'Violoncello' and (n, pos) == (10, 24):
-                    direction(m, 'words', 'Poco marcato')
-                if part == 'Soprano' and pos == 0 and n in (4, 11, 14, 16):
-                    child(direction(m, 'dynamics', placement='below')[1], {4:'mp',11:'p',14:'mf',16:'p'}[n])
+                if (part, n, pos) in directions:
+                    direction(m, 'words', directions[part, n, pos])
+                if part == 'Soprano' and (n, pos) in dynamics:
+                    child(direction(m, 'dynamics', placement='below')[1], dynamics[n, pos])
                 item = child(m, 'note')
                 if pitch == 'r':
                     child(item, 'rest', **({'measure': 'yes'} if d == BAR else {}))
@@ -281,6 +293,9 @@ def export_score(score, version, path):
                 if part == 'Soprano' and (n, pos) in slurs:
                     assert pitch != 'r'
                     child(child(item, 'notations'), 'slur', type=slurs[n, pos], number='1')
+                if (part, n, pos) in accents:
+                    assert pitch != 'r' and d != 2
+                    child(child(child(item, 'notations'), 'articulations'), 'accent')
                 pos += d
             if n == NBAR:
                 child(child(m, 'barline', location='right'), 'bar-style', 'light-heavy')
@@ -294,7 +309,7 @@ CONTEXT = {5}
 TENSE = {1, 2, 6, 10, 11}
 
 
-def interval_stats(score):
+def interval_stats(score, return_bar=11):
     def midi_grid(part):
         result = [None]*(BAR*NBAR)
         for t, d, p in events(score, part):
@@ -316,9 +331,10 @@ def interval_stats(score):
             views['all'][bin_name] += 1
             if i == 0:
                 views['bass'][bin_name] += 1
-                if 10*BAR <= t < 12*BAR:
+                if (return_bar-1)*BAR <= t < (return_bar+1)*BAR:
                     views['return_bass'][bin_name] += 1
-    for t in [10*BAR,10*BAR+24,10*BAR+36,11*BAR,15*BAR]:
+    start = (return_bar-1)*BAR
+    for t in [start,start+24,start+36,start+BAR,15*BAR]:
         top, *others = [g[t] for g in grids]
         low = min((p for p in others if p is not None), default=None)
         details.append({'measure':t//BAR+1,'beat':1+t%BAR//DIV,'lead':top,'bass':low,

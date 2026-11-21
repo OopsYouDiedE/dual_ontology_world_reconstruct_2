@@ -13,7 +13,7 @@ EYE = np.asarray([(205,194,174), (222,211,192),(91,67,51),(22,22,24)])
 WAIST = [(.580,.443),(.597,.478),(.568,.441),(.576,.434),(.576,.449),(.565,.457),(.591,.472)]
 
 
-def clothes(v,f,idx):
+def clothes(v,f,idx,waist_and_hem=None):
     """Independent simple review clothing. Clip the body triangulation to seams, then offset.
 
     Pure color only. The unmasked base is retained, including all underlying skin polygons.
@@ -21,8 +21,9 @@ def clothes(v,f,idx):
     t=tris(f); a,b,c=v[t].transpose(1,0,2); normals=np.cross(b-a,c-a); vn=np.zeros_like(v)
     for k in range(3):np.add.at(vn,t[:,k],normals)
     x,y,z=v.T
-    waist, hem=WAIST[idx]
-    band_top=waist + .026*np.abs(x)/.13 + .009*np.clip(y/.07,-1,1)
+    waist, hem=WAIST[idx] if waist_and_hem is None else waist_and_hem
+    rise, pitch=(.026,.009) if waist_and_hem is None else (.012,.003)
+    band_top=waist + rise*np.abs(x)/.13 + pitch*np.clip(y/.07,-1,1)
     specs=[('Underwear', [band_top-z,z-hem,.190-np.abs(x)], .0023)]
     if idx==5:
         # Armholes and broad shoulder straps; cut the front neckline lower than the back.
@@ -73,7 +74,7 @@ def panels(data, idx, with_cloth=True):
         yield f'eye{i}',np.array(e['v']),e['f'],EYE[e['mat']]
 
 
-def raster(meshes, angle, size, view='full', wire=False, level=0):
+def raster(meshes, angle, size, view='full', wire=False, level=0, shader=None):
     w,h=size; zoom=1.4; ww,hh=round(w*zoom),round(h*zoom)
     phi=np.radians(angle); co,si=np.cos(phi),np.sin(phi)
     # Body vertices are source normalized, correct world scale is selected in Blender.
@@ -105,9 +106,13 @@ def raster(meshes, angle, size, view='full', wire=False, level=0):
                 if not m.any():continue
                 a=np.column_stack([A[m],B[m],C[m]]);n=unit(a@vn[face]); shade=.66+.34*np.clip(n@np.array([-.43,.60,-.67]),-.82,1.)
                 base=shade[:,None]*material
+                if shader is not None:
+                    xyz_world=a@v[face]
+                    norm_world=-(n*[1,-1,1])@M.T
+                    base=shader(name,xyz_world,norm_world,base)
                 if wire:
                     color_line=np.array([29,43,56]);density=np.zeros(len(a));
-                    if name=='body':base=shade[:,None]*[204,209,215]
+                    if name.lower()=='body':base=shade[:,None]*[204,209,215]
                     for k,(j,l) in enumerate(((t,t+1),(t+1,0),(0,t))):
                         if (l-j)%len(f)!=1:continue
                         gap=a[:,k]*abs(det)/max(np.linalg.norm(af[j,:2]-af[l,:2]),1e-6)

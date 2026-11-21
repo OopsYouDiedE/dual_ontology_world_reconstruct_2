@@ -2,6 +2,7 @@ extends Node
 ## Opt-in testing bridge. Normal game launches leave it dormant.
 
 const TEST_SCENES := [
+	"res://scenes/rule_evaluation/Evaluation.tscn",
 	"res://tools/mpfb2_test/WardrobeReview.tscn",
 	"res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
 	"res://scenes/character_review/R05NativeMotion.tscn",

@@ -19,6 +19,7 @@ ROOT = environment.ROOT
 SCENE = "res://scenes/rogue/Run.tscn"
 SCENES = {
     "rogue": SCENE,
+    "rule_evaluation": "res://scenes/rule_evaluation/Evaluation.tscn",
     "gyro06": "res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
     "r05_native_motion": "res://scenes/character_review/R05NativeMotion.tscn",
     "mpfb_wardrobe": "res://tools/mpfb2_test/WardrobeReview.tscn",
@@ -47,7 +48,7 @@ def readiness(scene_key="rogue"):
 
 
 class Run:
-    def __init__(self, seed, architecture_lab=False, *, hall_a26_preview=False, scene_key="rogue"):
+    def __init__(self, seed, architecture_lab=False, *, hall_a26_preview=False, scene_key="rogue", eval_review=False, eval_rehearse_warning=None):
         self.scene = SCENES[scene_key]
         godot = Path(environment.resolve_godot()).resolve()
         if os.name == "nt" and godot.name.lower().endswith("_console.exe"):
@@ -80,6 +81,13 @@ class Run:
             command.append("--pause-review")
         if scene_key in ("bellflower", "shadecloth"):
             command.append(f"--python={sys.executable}")
+        if scene_key == "rule_evaluation":
+            command[1:1] = ["--resolution", "1280x720"]
+            command.append(f"--python={sys.executable}")
+            if eval_review:
+                command.append("--eval-review")
+            if eval_rehearse_warning is not None:
+                command.append(f"--eval-rehearse-warning={int(eval_rehearse_warning)}")
         if architecture_lab:
             command.append("--architecture-lab")
             if hall_a26_preview:
@@ -161,7 +169,8 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False,
-           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "r05_native_motion", "mpfb_wardrobe", "gyro06"] = "rogue"):
+           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "r05_native_motion", "mpfb_wardrobe", "gyro06", "rule_evaluation"] = "rogue",
+           eval_review: bool = False):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:
@@ -172,7 +181,7 @@ def game_server():
             state = readiness(scene)
             if not state["ready"]:
                 raise ValueError("; ".join(state["reasons"]))
-            candidate = Run(seed, architecture_lab, scene_key=scene)
+            candidate = Run(seed, architecture_lab, scene_key=scene, eval_review=eval_review)
             try:
                 result = candidate.request("observe", screenshot=screenshot, timeout=40)
             except BaseException:

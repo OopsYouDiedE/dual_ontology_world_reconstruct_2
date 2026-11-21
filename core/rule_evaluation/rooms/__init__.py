@@ -1,0 +1,1 @@
+"""Procedural physical puzzle catalog."""

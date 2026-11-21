@@ -37,3 +37,7 @@ dotnet run --project core/rogue_topology/tests/DuelView.RogueTopology.Tests.cspr
 ```
 
 [实机 MCP](mcp/game/README.md) 从正式入口启动真实 Forward+ 窗口；可通过界面点击检查画面，报告与截图写入 `.runtime/rogue-mcp/`。旧版 `rogue_run_e2e.py` 按第三人称流程编写，不是当前规则怪谈入口的回归测试。
+
+## 十关规则博弈评测
+
+[评测说明](docs/design/rule-evaluation.md)包含独立第一人称场景、Forward+ 审查入口、确定性见证、基准运行和黑盒选手协议。

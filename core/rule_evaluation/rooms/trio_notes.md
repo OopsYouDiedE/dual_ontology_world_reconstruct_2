@@ -1,0 +1,20 @@
+# Trio chambers
+
+Rooms 07–10 use dry and live circuits. Dry-run effects move the actual machinery and can produce a recorded counterexample. Arming zeros the instruments; in live mode each station needs its assigned operator on the matching plate. Disarm returns to dry mode, including after an accidental early arm. The `occupied` field repeats the floor-plate reading on the eye-level station cabinet.
+
+| Room | Reasoning test | Inspectable transforms |
+| --- | --- | --- |
+| 07 Counterweight Exchange | Establish the copper jack counterexample, then release with two operators and both loaded stations. | Copper load lifts, cobalt rail lifts, exit slides. |
+| 08 Escapement Gantry | Activate both clutches, infer the overlap of two offset escapements, then transfer in that shared window. | Drive links extend and two shuttles rise independently. Their overlap is 100–140 ticks. |
+| 09 The Shadow Register | Activate the copper yoke before testing cobalt's key. Demonstrate a safe turn with a dark reticle, arm, and work the live register from below the hood. | Projection mask lifts out of the lantern–reticle line; reticle lights after the live turn; leader crouches and stands. |
+| 10 Foundry Transfer | Demonstrate both stations, index with both plates held in the raised-shuttle phase, clear the released operator identified by the seeded room rule, settle using the holder, then clear the remaining operator and unload in the lower phase. | Return load lifts, clock shuttle rises, trolley slides along its overhead track, stop block drops, exit slides. |
+
+Viewport groups: `lever` station cabinets; `plate` floor pads (`occupied`); `console` center housing; `shutter` moving leaf, plate or mask; `counterweight` / `carriage` loads; `clock` escapement (`active`); `lamp` / `reticle` optical components; `frame` structural members; `exit` portal (`open`). Capture from first person: pre/post load lift (07), non-overlap vs overlap with the linked gantry (08), mask low/raised plus unlit/lit reticle from the crouched stance (09), pre-index/after transfer/after settle or exit release (10).
+
+Validation: shared room compiler sampled 1,000 seeds (4,000 chambers). The shared oracle executed full-campaign witnesses on seeds 0–15; the suite passed deterministic checkpoint/terminal hash and event replay before the frame additions, then cleared all 16 again with the updated frame and optical geometry. Seed 7 ablations showed that skipping any single persuasion blocks the scripted finish, standing blocks interaction at the hood, and withdrawing copper first triggers the room-rule standoff. Actual Forward+ capture and visual audit tracked separately from these logic checks.
+
+## Forward+ audit and follow-up
+
+The single read-only `gpt-6.2-astra` audit inspected the first-person `review-v1` before/operation/exit PNGs with `Fixtures.gd`, `Evaluation.gd`, and this room module. Room-side fixes: 07 brings both loads into the crank sightline and adds separate ready repeaters; 08 separates the two clock faces from their unlabeled motion markers; 09 moves the crouched operating position back and adds a fixed receiver backing; 10 separates the clock from the narrower trolley, adds independent plate repeaters and makes the hold/clear assignment seed-dependent. Renderer follow-ups: draw a stationary exit frame without a second opaque leaf; derive the interaction prompt from admissible operations and show recently executed actions separately; give the room 09 receiver an emissive registration mark driven by `reticle.lit`; tint/flash the room 10 beacon from `alarm.active`; keep per-fixture indicators tied to one named signal.
+
+Foundry overload: with both live stations coupled, deliberately advancing against the lower stop lights the eye-height beacon. The emergency stop and disarm operations clear it from the same controller stance. On 24 seeds the warning was visible on the first observation, emergency stop recovered after one further decision, and inaction failed only after 40 observable ticks. The final room layout passed 32 full deterministic campaign replays with zero witness panic.

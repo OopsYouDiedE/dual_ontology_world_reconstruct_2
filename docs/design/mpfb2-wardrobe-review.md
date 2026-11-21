@@ -96,3 +96,52 @@ foreach ($entry in 'halvard:jacket','halvard:workwear','jane:shorts','jane:sport
 ```
 
 手动打开 `res://tools/mpfb2_test/WardrobeReview.tscn`，或用 Game MCP 的 `mpfb_wardrobe` 入口。没有本地生成文件时，对应角色或衣件按钮显示为灰色。`MPFB_WARDROBE_VIEWPORT_PASS` 的 JSON 包含 真实视口截图和日志路径；各试装回放另等到动作完成。有前版 GLB 时共拍 143 张。新增对照拼图为 `four-face-detail.jpg`、`four-silhouette-fit.jpg` 和 `four-fitted-motion.jpg`。试装 GLB、视口图与各套报告均留在 `.runtime/`。
+
+## 八人二轮微调及 UV 改绘
+
+本轮生成独立的 `.runtime/mpfb2-detail/` 审阅副本，保留八人原有身高、宏观肌肉和肤色配置。沿用各自 LOCAL FIT 的局部目标并累加小幅修正，重新按各自身体生成骨架、按原姿势脚本原生烘焙；没有跨人物重定向。R-05 另走自己的风格化工作台，保留发块、服饰、柔化法线、烘焙底色和 67 个面部形态键。Game MCP 可切 **Trial clothes / Refined body**；全员支持 **Face / Face profile**。
+
+| 角色 | 本轮轮廓重点 | 面部重点 |
+| --- | --- | --- |
+| 侦探 | 稍收腰、加强胸和前臂 | 鼻尖略窄、下巴前推、上眼轮廓微调 |
+| 霍铎 | 肩关节跨度 +0.58 cm，增厚颈和小腿 | 宽下颌、短下巴、鼻尖更宽 |
+| 雀儿 | 小腿围 +1.16 cm，增强大腿和腰部量感 | 圆颊、短下巴、眼裂更开 |
+| 阮清月 | 腰线 −2.50 cm，缩胸廓深度、拉长颈线 | 窄下巴和鼻梁、纵向拉长脸形 |
+| 卢西安 | 肩关节跨度 −0.41 cm，收薄胸廓和上臂 | 收下颌，保留一点颊部体积 |
+| 沃德 | 肩关节跨度 +1.81 cm，上臂围 +1.09 cm | 方下颌、强调颧骨 |
+| 沈鼎 | 腰线 +2.11 cm，增厚胸背和前臂 | 丰颊、鼻尖略宽 |
+| 代管者 | 肩关节跨度 −1.22 cm，拉长颈和指节 | 更长的下巴和内收脸颊，保留竖瞳 |
+
+### 服装改绘验证
+
+本机 MPFB 2.0.18 的 `MaterialService` 在游戏材质中把 `.mhmat` 的 `diffuseTexture` 接到 Principled Base Color；MHCLO 负责衣件的贴体映射。已有衣件保留 UV 和版型，复制原始贴图，在 Blender **Texture Paint** 里用 UV 布局或直接在模型上绘制，保存 sRGB PNG 再替换 Base Color。需要在 MPFB 资产库复用时，给项目自己的副本保存新 `.mhmat` 配置；这次原始 CC0 衣件和插件代码均保持原样。
+
+- **R-05 `male_casualsuit05`**：叠穿夹克改为铁锈帆布，保留领襟和袋口分色；浅麻色条纹内搭、灰蓝裤，补画背部双针迹。
+- **R-10 `female_elegantsuit01`**：象牙色底配冷色细条纹，墨蓝半裙增加两道弧形裙边。屈膝时裙边随原网格变形。
+- `repaint_wardrobe.py` 用相同 UV 的 PNG 替换 GLB 中的 Base Color 图像。每套除目标图像外，所有二进制 bufferView 逐字节相同（包括网格、UV、蒙皮、动画和其他贴图）；`repaint-receipt.json` 记录检查结果。实机对照切 **Stock color / Academy repaint**，两套均检查抬臂、屈膝并回放到结束。
+- 缝线、印花、口袋分色、内外搭的材质区分适合用贴图。增加实际衣层、改变衣长和翻领轮廓、制作可拆外套、去鞋袜穿插需要改衣件网格并重新试装。在 Blender 中完成版型和 UV 后，可用 MPFB **MakeClothes** 构建项目的贴体衣件；正式衣件的层叠与碰撞仍需在人物自己的动作里验收。
+
+沿用上一节的环境和旧版本地模型，执行以下命令：
+
+```powershell
+$d = '.runtime/mpfb2-detail'
+& $blender -b -t 8 --python-exit-code 1 --python tools/mpfb2_test/muscle.py -- `
+  --out $d --design-fit --detail-pass
+if ($LASTEXITCODE) { throw 'Refined body build failed' }
+& $blender -b -t 8 --python-exit-code 1 --python tools/mpfb2_test/style_pilot.py -- `
+  --out "$d/r05" --presets "$d/presets" --detail-pass
+if ($LASTEXITCODE) { throw 'Refined R-05 style build failed' }
+& $blender -b -t 8 --python-exit-code 1 --python tools/mpfb2_test/wardrobe.py -- `
+  --actor r05 --outfit jacket --source "$d/r05" --original-glb "$d/r05/r05-styled.glb" --out $d
+if ($LASTEXITCODE) { throw 'R-05 jacket fit failed' }
+& $blender -b -t 8 --python-exit-code 1 --python tools/mpfb2_test/wardrobe.py -- `
+  --actor qingyue --outfit skirt --source $d --original-glb "$d/godot/qingyue-fit.glb" --out $d
+if ($LASTEXITCODE) { throw 'R-10 skirt fit failed' }
+& $python -B tools/mpfb2_test/repaint_wardrobe.py $d
+if ($LASTEXITCODE) { throw 'Wardrobe repaint failed' }
+& $python -B tools/testing/mpfb_wardrobe.py --detail > "$d/detail-viewport.json"
+if ($LASTEXITCODE) { throw 'Detail viewport regression failed' }
+& $python -B tools/testing/mpfb_wardrobe_sheets.py "$d/detail-viewport.json"
+```
+
+`MPFB_DETAIL_VIEWPORT_PASS` 报告包含旧／新体型、面部与服装的 112 张实机图。交付拼图包括 `eight-detail-{front,side,back,portrait}.jpg`、`body-before-after-{first,second}.jpg`、`wardrobe-repaint.jpg`，单独的 UV 改绘 PNG 可直接导回 Blender。

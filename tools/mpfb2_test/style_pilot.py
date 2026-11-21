@@ -13,6 +13,7 @@ from mathutils.bvhtree import BVHTree
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build import (HumanService, LocationService, TargetService, activate, animate, apply_modifier,
                    coat, duplicate, evaluated, glb_json, material)
+from detail_look import R05_FACE, refine
 from muscle import apply_local_targets, coverage, landmarks
 from bl_ext.user_default.mpfb.services import ExportService, FaceService
 from bl_ext.user_default.mpfb.ui.create_assets.maketarget import MakeTargetObjectProperties
@@ -418,14 +419,14 @@ def verify_preset(preset, target, expected):
         settings.set_value("second_root", old, entity_reference=scene)
 
 
-def specimen(out, preset, target, indices):
+def specimen(out, preset, target, indices, identity=IDENTITY):
     crown, chin = indices
     styled = target is not None
     body = load_preset(preset)
     original = unmask_coords(body)
     preset_error = None
     if styled:
-        apply_local_targets(body, IDENTITY)
+        apply_local_targets(body, identity)
         style = TargetService.load_target(body,str(target),name=target.stem,weight=1.0)
         assert style.value==1
         # Deserialization can find the custom target if installed in the editable custom-target library.
@@ -495,6 +496,7 @@ def specimen(out, preset, target, indices):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--out',type=Path,required=True); p.add_argument('--presets',type=Path,required=True)
+    p.add_argument("--detail-pass", action="store_true", help="Apply second-pass R-05 facial weights")
     args=p.parse_args(sys.argv[sys.argv.index('--')+1:])
     out=args.out.resolve();out.mkdir(parents=True,exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -513,7 +515,8 @@ def main():
     preset=(args.presets/'human.detective-fit.json').resolve()
     base=specimen(out,preset,None,ids)
     clean()
-    styled=specimen(out,preset,targets['masc'],ids)
+    identity = refine(IDENTITY, R05_FACE) if args.detail_pass else IDENTITY
+    styled=specimen(out,preset,targets['masc'],ids,identity)
     r={'base':base,'styled':styled,'jane_target_smoke':{'base':h0/head0,'styled':h1/head1}}
     (out/'blender-receipt.json').write_text(json.dumps(r,indent=2)+'\n',encoding='utf-8')
     print('ACADEMY_STYLE_PASS',json.dumps(r),flush=True)

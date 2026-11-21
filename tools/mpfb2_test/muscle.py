@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build import (HumanService, LocationService, TargetService, activate, animate,
                    body_copy, evaluated, export, material)
 
+from detail_look import DETAIL, refine
 from featured_look import RACE, review_eyes, review_skin
 
 # gender slider, card age, weight slider, review height (metres), target head ratio
@@ -228,10 +229,15 @@ def main():
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--design-fit", action="store_true", help="Build baseline and locally fitted presets")
     parser.add_argument("--featured-additions", action="store_true", help="Generate only the four new featured-cast models")
+    parser.add_argument("--detail-pass", action="store_true", help="Build the eight refined local-fit recipes in a separate output directory")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:])
     if args.featured_additions and not args.design_fit:
         parser.error("--featured-additions needs --design-fit")
+    if args.detail_pass and (not args.design_fit or args.featured_additions):
+        parser.error("--detail-pass needs --design-fit and builds the whole cast")
     cast = FEATURED_CAST if args.featured_additions else CAST
+    if args.detail_pass:
+        cast = CAST | FEATURED_CAST
     out = args.out.resolve()
     presets = out / "presets"
     preview = out / "godot"
@@ -249,6 +255,8 @@ def main():
         variants = []
         samples = (("base", FIT_LEVELS[name]), ("fit", FIT_LEVELS[name])) if args.design_fit else (
             tuple((f"{int(muscle * 100):03d}", muscle) for muscle in LEVELS))
+        if args.detail_pass:
+            samples = (("fit", FIT_LEVELS[name]),)
         for tag, muscle in samples:
             for obj in list(bpy.data.objects):
                 bpy.data.objects.remove(obj, do_unlink=True)
@@ -266,7 +274,10 @@ def main():
             assert original_macro == actual, (original_macro, actual)
             if ratio:
                 fixed_head = head_fit(body, crown, chin, ratio, fixed_head)
-            local = apply_local_targets(body, FIT_TARGETS[name]) if tag == "fit" else {}
+            strengths = FIT_TARGETS[name]
+            if args.detail_pass:
+                strengths = refine(strengths, DETAIL[name])
+            local = apply_local_targets(body, strengths) if tag == "fit" else {}
             sole, raw_height, head_height = landmarks(body, crown, chin)
             if ratio and not variants:
                 assert abs(raw_height / head_height - ratio) < 0.0001
@@ -309,7 +320,7 @@ def main():
                              "uniform_scale": scale, "head_ratio": raw_height / head_height,
                              "sections_cm": dims, "local_targets": local, "export": result})
             print("MPFB_MUSCLE_SAMPLE", stem, json.dumps(dims), flush=True)
-        if args.design_fit:
+        if args.design_fit and not args.detail_pass:
             base, fit = (v["sections_cm"] for v in variants)
             delta = {k: fit[k] - base[k] for k in base}
             # Confirm the intended directional changes in the exported body.
@@ -324,8 +335,12 @@ def main():
         receipt["cast"][name] = {"card_age_years": None if name == "caretaker" else years,
                                  "mpfb_age_input_years": years, "macros_except_muscle": original_macro,
                                  "review_height_m": height, "fixed_head_target": fixed_head, "samples": variants}
-    basename = "featured-fit-receipt.json" if args.featured_additions else (
-        "fit-receipt.json" if args.design_fit else "muscle-receipt.json")
+    if args.detail_pass:
+        basename = "detail-fit-receipt.json"
+    elif args.featured_additions:
+        basename = "featured-fit-receipt.json"
+    else:
+        basename = "fit-receipt.json" if args.design_fit else "muscle-receipt.json"
     (out / basename).write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
 
 

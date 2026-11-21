@@ -57,11 +57,40 @@ def sheet(output, title, subtitle, groups, *, crop_width=.322, profile_center=.5
     canvas.save(output, quality=94, subsampling=0)
 
 
+def detail_sheets(shot, out):
+    for pose, title in [('front', 'FRONT'), ('side', 'SIDE'), ('back', 'BACK'), ('portrait', 'FACE')]:
+        sheet(out/f'eight-detail-{pose}.jpg', f'ACADEMY  /  REFINED MPFB CAST  /  {title}',
+              'Godot Forward+  /  Same portrait zoom and light' if pose == 'portrait' else
+              'Godot Forward+  /  Shared camera scale  /  Basic review clothes', [
+                  (label, [(shot[key]['detail'][pose], name, '') for key, (name, _, _) in group.items()])
+                  for label, group in [('01  /  First group', MOTION), ('02  /  Second group', NEW)]
+              ])
+    for suffix, group in [('first', MOTION), ('second', NEW)]:
+        sheet(out/f'body-before-after-{suffix}.jpg', 'ACADEMY  /  MPFB BODY TUNING',
+              'Same camera, light and neutral pose  /  Basic review clothes', [
+                  (label, [(shot[key][version]['front'], name, '') for key, (name, _, _) in group.items()])
+                  for label, version in [('A  /  Previous recipe', 'base'), ('B  /  Refined recipe', 'detail')]
+              ])
+    sheet(out/'wardrobe-repaint.jpg', 'ACADEMY  /  TWO UV REPAINTS',
+          'Same pattern, UV, rig and native motion  /  Only the base-color texture changes', [
+              (title, [(shot[who][version][pose], caption, detail) for version, pose, caption, detail in [
+                  ('paint_stock', 'front', 'Stock colors', 'Same refined body'),
+                  ('paint', 'front', 'Academy repaint', 'Same camera'),
+                  ('paint', 'back', 'Back view', 'Repainted seams and hems'),
+                  ('paint', 'reach' if who == 'r05' else 'knee', 'Native pose check', 'Repaint on the original rig'),
+              ]]) for who, title in [('r05', 'R-05  /  Rust canvas and slate denim'),
+                                     ('qingyue', 'R-10  /  Ivory stripe and ink-blue skirt')]
+          ])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('receipt', type=Path)
     args = parser.parse_args()
     data = json.loads(args.receipt.read_text(encoding='utf-8-sig'))
+    if data['status'] == 'MPFB_DETAIL_VIEWPORT_PASS':
+        detail_sheets(data['screenshots'], args.receipt.parent)
+        return
     assert data['status'] == 'MPFB_WARDROBE_VIEWPORT_PASS'
     shot = data['screenshots']
     out = args.receipt.parent

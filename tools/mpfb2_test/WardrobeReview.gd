@@ -2,7 +2,13 @@ extends "res://scenes/character_review/R05NativeMotion.gd"
 ## Local wardrobe review: each outfit carries the selected character's own embedded action.
 
 const DIR := "res://.runtime/mpfb2-wardrobe/"
-const PORTRAIT_HEIGHTS := {"lucian": 1.79, "ward": 1.80, "shending": 1.75, "caretaker": 1.84}
+const DETAIL_DIR := "res://.runtime/mpfb2-detail/"
+const PORTRAIT_HEIGHTS := {
+	"r05": 1.77, "halvard": 1.82, "jane": 1.56, "qingyue": 1.64,
+	"lucian": 1.79, "ward": 1.80, "shending": 1.75, "caretaker": 1.84,
+}
+const PAINT_STOCK := {"r05": "r05_jacket", "qingyue": "qingyue_skirt"}
+const DETAIL_LABELS := {"detail": "Refined body", "paint_stock": "Stock color", "paint": "Academy repaint"}
 const FIT_DIR := "res://.runtime/mpfb2-fit/godot/"
 const CAST := {
 	"r05": ["R-05", "Detective", {"base": "Trial clothes", "suit": "Formal suit", "jacket": "Casual jacket", "shirt": "Striped shirt"}],
@@ -72,6 +78,10 @@ func make_button(parent: GridContainer, text_: String) -> Button:
 
 
 func path_for(who: String, id: String) -> String:
+	if id == "detail":
+		return DETAIL_DIR + ("r05/r05-styled.glb" if who == "r05" else "godot/" + who + "-fit.glb")
+	if id == "paint_stock" or id == "paint":
+		return DETAIL_DIR + PAINT_STOCK[who] + ("_paint.glb" if id == "paint" else ".glb")
 	if id == "before":
 		return DIR + "face-before/" + who + "-fit.glb"
 	if id == "base":
@@ -87,11 +97,14 @@ func refresh_outfits() -> void:
 		child.queue_free()
 	options.clear()
 	var labels: Dictionary = CAST[character][2].duplicate()
-	var has_portrait := character in PORTRAIT_HEIGHTS
-	samples["portrait"].disabled = not has_portrait
-	samples["profile"].disabled = not has_portrait
-	if has_portrait and FileAccess.file_exists(path_for(character, "before")):
+	if FileAccess.file_exists(path_for(character, "before")):
 		labels["before"] = "Previous face"
+	if FileAccess.file_exists(path_for(character, "detail")):
+		labels["detail"] = DETAIL_LABELS["detail"]
+	if character in PAINT_STOCK:
+		for id in ["paint_stock", "paint"]:
+			if FileAccess.file_exists(path_for(character, id)):
+				labels[id] = DETAIL_LABELS[id]
 	for id: String in labels:
 		var button := make_button(outfits, labels[id])
 		button.pressed.connect(_switch.bind(character, id))
@@ -199,7 +212,7 @@ func _set_pose(id: String) -> void:
 	player.advance(0.0)
 	player.seek(POSES[id], true)
 	player.pause()
-	var label: String = "Previous face" if selected == "before" else CAST[character][2][selected]
+	var label: String = "Previous face" if selected == "before" else str(DETAIL_LABELS.get(selected, CAST[character][2].get(selected, selected)))
 	status.text = "%s / %s" % [label, CAPTIONS[id]]
 
 

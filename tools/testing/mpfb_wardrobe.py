@@ -1,4 +1,5 @@
 """Capture each cast member and verify their own animation through the project GameMcp."""
+import argparse
 import asyncio
 from datetime import timedelta
 import json
@@ -25,7 +26,54 @@ CAST = {
 POSES = {'front': 0.0, 'reach': 0.75, 'knee': 2.25, 'side': 0.0, 'back': 0.0}
 
 
-async def review():
+async def detail_review(initial, call, click):
+    sid = initial['session_id']
+    state = initial['state']
+    shots = {}
+    for who in CAST:
+        state = (await click(state['cast_buttons'][who]))['state']
+        assert state['character'] == who and state['outfit'] == 'base', state
+        shots[who] = {}
+        versions = ('base', 'detail', 'paint_stock', 'paint') if who in {'r05', 'qingyue'} else ('base', 'detail')
+        track_samples = {}
+        for version in versions:
+            state = (await click(state['wardrobe_buttons'][version]))['state']
+            assert not state['wardrobe_error'] and state['outfit'] == version, state
+            assert state['bones'] == 53 and state['clips'] == ['MPFB_Pose_Check'], state
+            assert state['garment_meshes'] == (2 if version.startswith('paint') else 0), state
+            if version != 'base':
+                assert '/mpfb2-detail/' in state['model'], state
+            shots[who][version] = {}
+            track_samples[version] = {}
+            angles = ('front', 'side', 'back', 'portrait', 'profile') if version in {'base', 'detail'} else (
+                'front', 'back', 'reach', 'knee')
+            for pose in angles + (('reach', 'knee') if version == 'detail' else ()):
+                frame = await click(state['pose_buttons'][pose], screenshot=True)
+                state = frame['state']
+                assert (state['character'], state['outfit'], state['pose']) == (who, version, pose), state
+                assert not state['playing'] and state['seconds'] == POSES.get(pose, 0.0), state
+                track_samples[version][pose] = state['right_elbow'], state['right_knee']
+                shots[who][version][pose] = frame['screenshot']
+            if version != 'base':
+                neutral, reach, knee = (track_samples[version][p] for p in ('front', 'reach', 'knee'))
+                assert rotation_delta(neutral[0], reach[0]) > .5
+                assert rotation_delta(neutral[1], knee[1]) > .5
+            if version == 'paint':
+                for pose, sample in track_samples[version].items():
+                    # Only textures differ between these two variants.
+                    assert sample == track_samples['paint_stock'][pose], state
+                state = (await click(state['replay_center']))['state']
+                assert state['playing'], state
+                for _ in range(3):
+                    state = (await call('step', session_id=sid, operation='wait', frames=120))['state']
+                    if state['finished']:
+                        break
+                assert state['finished'] and not state['playing'], state
+    print(json.dumps({'status': 'MPFB_DETAIL_VIEWPORT_PASS', 'session': sid,
+                      'screenshots': shots, 'log': initial['log']}, indent=2))
+
+
+async def review(detail=False):
     params = StdioServerParameters(command=sys.executable, cwd=str(ROOT), args=[
         '-B', str(ROOT/'mcp/game/server.py'), '--service', 'input', '--expected-project-root', str(ROOT),
     ])
@@ -52,10 +100,14 @@ async def review():
                     x, y = coords
                     return await call('step', session_id=sid, operation='click', x=x, y=y, screenshot=screenshot)
 
+                if detail:
+                    await detail_review(initial, call, click)
+                    return
+
                 for who, outfits in CAST.items():
                     state = (await click(state['cast_buttons'][who]))['state']
                     assert (state['character'], state['outfit'], state['test_mode']) == (who, 'base', 'native_motion'), state
-                    assert set(state['wardrobe_buttons']) - {'before'} == set(outfits), state
+                    assert set(state['wardrobe_buttons']) - {'before', 'detail', 'paint_stock', 'paint'} == set(outfits), state
                     shots[who], neutral_tracks = {}, {}
                     for outfit in outfits:
                         state = (await click(state['wardrobe_buttons'][outfit]))['state']
@@ -125,4 +177,6 @@ async def review():
 
 
 if __name__ == '__main__':
-    asyncio.run(review())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--detail", action="store_true", help="Capture the eight refined bodies and two UV paint pilots")
+    asyncio.run(review(parser.parse_args().detail))

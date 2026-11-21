@@ -42,3 +42,5 @@
 ## 夜班房间白模审查
 
 [Room Review](room_review/README.md) 按主线顺序摆出 11 种关卡布局，复用本场的墙地橡胶贴片和第三人称测试角色。
+
+[十关规则竞技场](../../tools/rule_arena/README.md)：复用上述白模的自动裁判与 Godot 回放。Sol 限时编写参赛程序，主办方冻结提交后统一测试。

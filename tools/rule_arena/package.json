@@ -1,0 +1,1 @@
+{"name":"night-watch-rule-arena","private":true,"type":"module","dependencies":{"quickjs-emscripten":"0.31.0"},"scripts":{"test":"node --test arena.test.mjs"}}

@@ -3,14 +3,23 @@ extends "res://scenes/character_review/R05NativeMotion.gd"
 
 const DIR := "res://.runtime/mpfb2-wardrobe/"
 const FIT_DIR := "res://.runtime/mpfb2-fit/godot/"
+const STATIC_DIR := "res://.runtime/academy-body-pilot/anatomy-photo-relief-final/models/"
+const STATIC_MODELS := {
+	"lucian": "02-lucian.glb", "ward": "03-ward.glb",
+	"shending": "04-shen-ding.glb", "caretaker": "07-caretaker.glb",
+}
 const CAST := {
 	"r05": ["R-05", "Detective", {"base": "Trial clothes", "suit": "Formal suit", "jacket": "Casual jacket", "shirt": "Striped shirt"}],
 	"halvard": ["R-06", "Halvard", {"base": "Trial clothes", "jacket": "Casual jacket", "workwear": "Work overalls"}],
 	"jane": ["R-03", "Jane", {"base": "Trial clothes", "shorts": "Denim shorts", "sport": "Sportswear"}],
 	"qingyue": ["R-10", "Qingyue", {"base": "Trial clothes", "skirt": "Formal skirt", "jeans": "T-shirt & jeans"}],
+	"lucian": ["R-01", "Lucian", {"base": "Original base"}],
+	"ward": ["R-04", "Ward", {"base": "Original base"}],
+	"shending": ["R-07", "Shen Ding", {"base": "Original base"}],
+	"caretaker": ["Caretaker", "", {"base": "Original base"}],
 }
-const POSES := {"front": 0.0, "reach": 0.75, "knee": 2.25, "back": 0.0}
-const CAPTIONS := {"front": "Front", "reach": "Reach", "knee": "Knee bend", "back": "Back"}
+const POSES := {"front": 0.0, "reach": 0.75, "knee": 2.25, "side": 0.0, "back": 0.0}
+const CAPTIONS := {"front": "Front", "reach": "Reach", "knee": "Knee bend", "side": "Side", "back": "Back"}
 var characters: Dictionary[String, Button]
 var options: Dictionary[String, Button]
 var samples: Dictionary[String, Button]
@@ -67,13 +76,26 @@ func make_button(parent: GridContainer, text_: String) -> Button:
 
 
 func path_for(who: String, id: String) -> String:
+	if id == "base" and who in STATIC_MODELS:
+		return STATIC_DIR + str(STATIC_MODELS[who])
 	if id == "base":
 		return FIT_DIR + who + "-fit.glb"
 	return DIR + "%s_%s.glb" % [who, id]
 
 
 func refresh_outfits() -> void:
-	$Overlay/Panel/Margin/Rows/Title.text = "%s / %s" % [CAST[character][0], CAST[character][1]]
+	var row: Array = CAST[character]
+	$Overlay/Panel/Margin/Rows/Title.text = row[0] if row[1] == "" else "%s / %s" % [row[0], row[1]]
+	var still := character in STATIC_MODELS
+	replay.disabled = still
+	samples["reach"].disabled = still
+	samples["knee"].disabled = still
+	# These four source GLBs were exported at a normalized height of 1 m.
+	# Match the framing with the camera, leaving the source model unchanged.
+	var camera: Camera3D = $Camera
+	var ratio := 1.0 / 1.77 if still else 1.0
+	camera.size = 2.26 * ratio
+	camera.position = Vector3(0, 1.34, 4) * ratio
 	for child in outfits.get_children():
 		outfits.remove_child(child)
 		child.queue_free()
@@ -96,23 +118,28 @@ func _switch(who: String, id: String) -> void:
 		return
 	var players := next.find_children("*", "AnimationPlayer", true, false)
 	var rigs := next.find_children("*", "Skeleton3D", true, false)
-	if players.size() != 1 or rigs.size() != 1 or not players[0].has_animation(CLIP):
+	var still := who in STATIC_MODELS
+	var valid: bool = players.is_empty() and rigs.is_empty() if still else (
+		players.size() == 1 and rigs.size() == 1 and players[0].has_animation(CLIP))
+	if not valid:
 		if next != control:
 			next.free()
-		fail_outfit("Missing native action or rig: %s / %s" % [who, id])
+		fail_outfit("Unexpected action or rig configuration: %s / %s" % [who, id])
 		return
 	var changed_character := character != who
-	player.pause()
+	if player != null:
+		player.pause()
 	actor.hide()
 	if actor != control:
 		actor.queue_free()
 	if next != control:
 		add_child(next)
-		players[0].animation_finished.connect(_on_finished)
+		if not still:
+			players[0].animation_finished.connect(_on_finished)
 	actor = next
 	actor.show()
-	player = players[0]
-	rig = rigs[0]
+	player = null if still else players[0]
+	rig = null if still else rigs[0]
 	character = who
 	selected = id
 	report_error = ""
@@ -156,6 +183,8 @@ func fail_outfit(reason: String) -> void:
 
 
 func play_original() -> void:
+	if player == null:
+		return
 	pose = "live"
 	actor.rotation.y = 0.27
 	super.play_original()
@@ -167,7 +196,11 @@ func _set_pose(id: String) -> void:
 		return
 	pose = id
 	finished = false
-	actor.rotation.y = PI + 0.27 if id == "back" else 0.27
+	var offset := 0.0 if player == null else 0.27
+	actor.rotation.y = {"back": PI + offset, "side": PI * 0.5}.get(id, offset)
+	if player == null:
+		status.text = "Original base (static) / " + str(CAPTIONS[id])
+		return
 	player.play(CLIP, 0.0)
 	player.advance(0.0)
 	player.seek(POSES[id], true)
@@ -203,9 +236,14 @@ func apply_review_materials() -> void:
 
 
 func mcp_observe() -> Dictionary:
-	var state := super.mcp_observe()
+	var still := character in STATIC_MODELS
+	var state := {"ready": true, "bones": 0, "clips": [], "playing": false} if still else super.mcp_observe()
 	if not state.get("ready", false):
 		return state
+	state["test_mode"] = "static" if still else "native_motion"
+	if still:
+		state["mesh_count"] = actor.find_children("*", "MeshInstance3D", true, false).size()
+		state["base_clothing"] = actor.find_children("Underwear*", "MeshInstance3D", true, false).size()
 	state["character"] = character
 	state["model"] = control.scene_file_path if character == "r05" and selected == "base" else path_for(character, selected)
 	state["outfit"] = selected

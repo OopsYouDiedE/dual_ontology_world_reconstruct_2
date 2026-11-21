@@ -19,6 +19,7 @@ ROOT = environment.ROOT
 SCENE = "res://scenes/rogue/Run.tscn"
 SCENES = {
     "rogue": SCENE,
+    "gyro06": "res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
     "r05_native_motion": "res://scenes/character_review/R05NativeMotion.tscn",
     "mpfb_wardrobe": "res://tools/mpfb2_test/WardrobeReview.tscn",
     "bellflower": "res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",
@@ -71,6 +72,8 @@ class Run:
         command = [str(godot), "--path", str(ROOT), "--rendering-method", "forward_plus",
                    "--language", "en", "--max-fps", "60", "--windowed", "--position", "-32000,-32000",
                    "--log-file", str(self.log), self.scene, "--", f"--rogue-mcp-dir={self.directory}", f"--run-seed={seed}"]
+        if scene_key == "gyro06":
+            command[1:1] = ["--resolution", "1600x1000"]
         if scene_key == "bellflower":
             command.append(f"--python={sys.executable}")
         if architecture_lab:
@@ -154,7 +157,7 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False,
-           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "r05_native_motion", "mpfb_wardrobe"] = "rogue"):
+           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "r05_native_motion", "mpfb_wardrobe", "gyro06"] = "rogue"):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:

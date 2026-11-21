@@ -3,6 +3,7 @@ extends Node
 
 const TEST_SCENES := [
 	"res://tools/mpfb2_test/WardrobeReview.tscn",
+	"res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
 	"res://scenes/character_review/R05NativeMotion.tscn",
 	"res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",
 	"res://scenes/rogue/Run.tscn",

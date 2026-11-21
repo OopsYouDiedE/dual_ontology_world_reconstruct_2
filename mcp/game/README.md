@@ -26,3 +26,7 @@
 ## The Bellflower
 
 `on {"scene":"bellflower"}` opens the isolated two-agent level 03. `bellflower_rays` toggles the 27-ray overlay, `bellflower_remove` removes the mechanism for visual and physical comparison, and `bellflower_reference` starts a fresh reference run. See the [sample commands](../../scenes/rubber_whitebox/bellflower/README.md).
+
+## 06 Gyroscope Well
+
+`on {"scene":"gyro06","seed":6}` opens the section review of the standalone kinetic sculpture. `gyro_a` through `gyro_d` select the four plates, `gyro_hide` removes the spinning assembly and extends the bridges, `gyro_walk` starts first-person traversal, and `gyro_pause` toggles the 60 Hz mechanism. Run `tools/testing/gyro06_capture.py` for the complete Forward+ capture set. See [the scene guide](../../scenes/rubber_whitebox/gyro06/README.md).

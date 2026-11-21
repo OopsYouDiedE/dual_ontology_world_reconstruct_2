@@ -29,8 +29,9 @@
 $root = (New-Item -ItemType Directory -Force .runtime/mpfb2-test).FullName
 $blender = 'C:/Program Files/Blender Foundation/Blender 4.2/blender.exe'
 $godot = (Resolve-Path .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe).Path
-$env:BLENDER_USER_RESOURCES = "$root/profile"
-$env:BLENDER_USER_SCRIPTS = "$root/profile/scripts"
+$env:BLENDER_USER_RESOURCES = (New-Item -ItemType Directory -Force (Join-Path $root profile)).FullName
+$env:BLENDER_USER_CONFIG = (New-Item -ItemType Directory -Force (Join-Path $env:BLENDER_USER_RESOURCES config)).FullName
+$env:BLENDER_USER_SCRIPTS = Join-Path $env:BLENDER_USER_RESOURCES scripts
 & $blender -b --factory-startup --python-expr 'import bpy; bpy.ops.wm.save_userpref()'
 & $blender --command extension install-file --repo user_default --enable "$root/mpfb-2.0.18.zip"
 & $blender -b --python-exit-code 1 --python tools/mpfb2_test/build.py -- `

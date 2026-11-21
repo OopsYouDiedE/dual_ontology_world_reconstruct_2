@@ -44,4 +44,18 @@ godot --path $preview --rendering-method forward_plus --script res://StyleReview
 if ($LASTEXITCODE) { throw 'Forward+ test failed' }
 ```
 
-完成标志：Blender `ACADEMY_STYLE_PASS` 并写 `blender-receipt.json`；Godot `ACADEMY_STYLE_GODOT_PASS` 并出 13 张图。可编辑烘焙工作台 `r05-baked-workbench.blend` 打包贴图；`custom/` 保存两份风格目标；`r05-styled.glb` 是带骨骼、形态键、肤色贴图和线宽遮罩的导出模型，Toon 与描边由 Godot 侧施加。中间产物和视口截图都留在 `.runtime/`。
+完成标志：Blender `ACADEMY_STYLE_PASS` 并写 `blender-receipt.json`；Godot `ACADEMY_STYLE_GODOT_PASS` 并出 13 张图。可编辑烘焙工作台 `r05-baked-workbench.blend` 打包贴图；`custom/` 保存两份风格目标；`r05-styled.glb` 是带骨骼、形态键、肤色贴图和线宽遮罩的导出模型，Toon 与描边由 Godot 侧施加。中间产物和验证截图留在 `.runtime/`；用于项目动作试放的同一份 GLB 见下节。
+
+## 项目内原生动作试放
+
+项目场景 `res://scenes/character_review/R05NativeMotion.tscn` 直接实例化 `res://assets/characters/mpfb/r05_styled.glb`：同一份风格试片（约 5.98 头身、试装短袖），包括原生 53 骨、蒙皮、表情和自带的 `MPFB_Pose_Check`。与本轮 Blender 导出的源 GLB 逐字节一致（SHA-256 `aec06a117a614537e7bf51aad288d04c68352b9937819289c28ab70f5f7840c1`）。在 3 秒片段内依次检查手臂、回中和屈膝姿态；启动时播放一次，通过 **Replay original** 重播。场景加灯光和角色独立细描边；动画直接由 GLB 的 AnimationPlayer 播放，主游戏和角色控制器保持原样。这里的 MPFB 试片当前自带一段验姿动画。
+
+HM08、官方 `eyes/low-poly`、`teeth/teeth_base`、`tongue/tongue01` 及内嵌素材来自 MPFB 数据和 MakeHuman System Assets 的 CC0 版本。发束、眉条、试衣、皮肤烘焙和验姿动作来自此项目的样板脚本。
+
+在编辑器中打开上述场景并运行当前场景，或从仓库根目录执行：
+
+```powershell
+godot --path . --rendering-method forward_plus res://scenes/character_review/R05NativeMotion.tscn
+# 项目 GameMcp：真实视口，校验原始动作、重播和缓存截图。
+& .runtime/python/Scripts/python.exe -B tools/testing/r05_native_motion.py
+```

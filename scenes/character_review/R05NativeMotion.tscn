@@ -1,0 +1,94 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/character_review/R05NativeMotion.gd" id="1_review"]
+[ext_resource type="PackedScene" path="res://assets/characters/mpfb/r05_styled.glb" id="2_r05"]
+
+[sub_resource type="Environment" id="Environment_review"]
+background_mode = 1
+background_color = Color(0.245, 0.219, 0.208, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.825, 0.776, 0.851, 1)
+ambient_light_energy = 0.47
+
+[sub_resource type="StandardMaterial3D" id="Material_ground"]
+albedo_color = Color(0.35, 0.305, 0.26, 1)
+roughness = 1.0
+
+[sub_resource type="PlaneMesh" id="Plane_ground"]
+material = SubResource("Material_ground")
+size = Vector2(30, 30)
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+content_margin_left = 20.0
+content_margin_top = 14.0
+content_margin_right = 20.0
+content_margin_bottom = 16.0
+bg_color = Color(0.082, 0.069, 0.066, 0.93)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="R05NativeMotion" type="Node3D"]
+script = ExtResource("1_review")
+
+[node name="R05" parent="." instance=ExtResource("2_r05")]
+rotation = Vector3(0, 0.27, 0)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_review")
+
+[node name="Key" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-29, -32, 0)
+light_color = Color(1, 0.933, 0.855, 1)
+light_energy = 1.63
+shadow_enabled = true
+shadow_opacity = 0.54
+directional_shadow_max_distance = 9.0
+
+[node name="Fill" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-22, 121, 0)
+light_color = Color(0.727, 0.803, 0.88, 1)
+light_energy = 0.6
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.007, 0)
+mesh = SubResource("Plane_ground")
+
+[node name="Camera" type="Camera3D" parent="."]
+position = Vector3(0, 1.34, 4)
+rotation_degrees = Vector3(-5, 0, 0)
+current = true
+projection = 1
+size = 2.26
+far = 30.0
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="PanelContainer" parent="Overlay"]
+offset_left = 24.0
+offset_top = 24.0
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Margin" type="MarginContainer" parent="Overlay/Panel"]
+layout_mode = 2
+
+[node name="Rows" type="VBoxContainer" parent="Overlay/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Overlay/Panel/Margin/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.968, 0.884, 0.786, 1)
+theme_override_font_sizes/font_size = 23
+text = "R-05 / NATIVE MOTION"
+
+[node name="Status" type="Label" parent="Overlay/Panel/Margin/Rows"]
+layout_mode = 2
+custom_minimum_size = Vector2(230, 0)
+theme_override_font_sizes/font_size = 15
+text = "Loading embedded action"
+
+[node name="Replay" type="Button" parent="Overlay/Panel/Margin/Rows"]
+layout_mode = 2
+text = "Replay original"

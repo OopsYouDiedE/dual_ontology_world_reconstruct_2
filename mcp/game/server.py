@@ -20,6 +20,7 @@ SCENE = "res://scenes/rogue/Run.tscn"
 SCENES = {
     "rogue": SCENE,
     "r05_native_motion": "res://scenes/character_review/R05NativeMotion.tscn",
+    "mpfb_wardrobe": "res://tools/mpfb2_test/WardrobeReview.tscn",
     "bellflower": "res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",
     "whitebox": "res://scenes/rubber_whitebox/RubberYard.tscn",
     "kinetic_pilot": "res://scenes/rubber_whitebox/kinetic_pilot/Gallery.tscn",
@@ -153,7 +154,7 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False,
-           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "r05_native_motion"] = "rogue"):
+           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "r05_native_motion", "mpfb_wardrobe"] = "rogue"):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:

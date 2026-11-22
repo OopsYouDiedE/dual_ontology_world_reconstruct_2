@@ -1,72 +1,38 @@
 extends RefCounted
-## Small typed subset of the project's SELF / FORBID rule vocabulary. Only
-## the native span order is patchable; the hard dock interlock stays separate.
-const RULE_ID := "hale_unbraced_span"
-const LEAD_RULE_ID := "lead_wait_for_dog"
-const HALE_RULE := {
-	"rule_id": RULE_ID, "scope": "SELF", "source": "NATIVE", "modality": "FORBID",
-	"action": {"type": "Interact", "target_entity_id": "span", "op_type": "cross"},
-	"condition": ["not", ["eq", "span", "dog_seated", 1]],
-	"label": "Hale / Do not take an unbraced span."
-}
-const LEAD_RULE := {
-	"rule_id": LEAD_RULE_ID, "scope": "SELF", "source": "NATIVE", "modality": "FORBID",
-	"action": {"type": "Interact", "target_entity_id": "exit", "op_type": "traverse"},
-	"condition": ["not", ["eq", "span", "dog_seated", 1]],
-	"label": "Lead / Surveyor secures a span before you clear the room."
-}
-const NATIVE_ORDER := {"type": "Interact", "target_entity_id": "span", "op_type": "cross"}
-const LEAD_ORDER := {"type": "Interact", "target_entity_id": "exit", "op_type": "traverse"}
-const FRESH_TICKS := 3600
-var records: Array[Dictionary] = []
-var revision: Dictionary = {}
-var rejection := ""
+## Hale's authored belief and its local exception. Only a continuous sequence
+## of witnessed actor actions can produce an admissible counterexample.
+const RULE := {"id":"hale_lit_span", "scope":"SELF", "modality":"FORBID", "action":"observe_lit_span",
+	"condition":["eq","span_lit",true], "claim":"The light takes anyone who looks into a span."}
+const MIN_OBSERVED := 13
+var observed := 0
+var saw_survival := false
+var counterexample := false
+var revised := false
 
 
-static func evaluate(expr: Array, fields: Dictionary) -> bool:
-	match expr[0]:
-		"not": return not evaluate(expr[1], fields)
-		"eq": return fields.get(expr[1], {}).get(expr[2], -1) == expr[3]
+func record(lead_grounded_on_span: bool, lead_witness: bool, hale_saw_lead: bool, lead_back_on_bank: bool) -> bool:
+	if counterexample: return false
+	if lead_grounded_on_span and lead_witness and hale_saw_lead:
+		observed += 1
+		if observed >= MIN_OBSERVED: saw_survival = true
+	else:
+		observed = 0
+	if lead_back_on_bank and hale_saw_lead and saw_survival:
+		counterexample = true
+		return true
 	return false
 
 
-static func forbidden(rule: Dictionary, action: Dictionary, fields: Dictionary) -> bool:
-	for key: String in rule.action:
-		if rule.action[key] != action.get(key): return false
-	return rule.modality == "FORBID" and evaluate(rule.condition, fields)
+func invalidate_attempt() -> void:
+	observed = 0
+	saw_survival = false
 
 
-func add_record(held: bool, tick: int, observer: int, specimen: StringName, start_tick: int) -> void:
-	# Only the carriage referee can create these. The radio submits IDs, not observations.
-	records.append({"id": records.size() + 1, "span": "span", "specimen": specimen,
-		"kind": "SUPPORTED" if held else "CAUGHT", "observer": observer, "start": start_tick, "tick": tick})
-
-
-func recent(kind: String, tick: int) -> Dictionary:
-	for i in range(records.size() - 1, -1, -1):
-		var r: Dictionary = records[i]
-		if r.kind == kind and r.tick + FRESH_TICKS >= tick: return r
-	return {}
-
-
-func persuade(rule_id: String, refs: Array, tick: int, now_lit: bool) -> bool:
-	rejection = "Hale: The test needs a caught load and a load through to the far tray."
-	if rule_id != RULE_ID or refs.size() != 2 or refs[0] == refs[1]: return false
-	var caught := recent("CAUGHT", tick)
-	var carried := recent("SUPPORTED", tick)
-	if caught.is_empty() or carried.is_empty(): return false
-	if not refs.has(caught.id) or not refs.has(carried.id) or caught.specimen != carried.specimen: return false
-	if caught.observer != 0 or carried.observer != 0 or caught.span != "span" or carried.span != "span": return false
-	if not now_lit:
-		rejection = "Hale: Take the witness position again. Then I'll accept the trial."
-		return false
-	revision = {"rule_id": RULE_ID, "mode": "EXEMPT_ACTION", "action": NATIVE_ORDER.duplicate(),
-		"evidence": refs.duplicate(), "expires": mini(caught.tick, carried.tick) + FRESH_TICKS,
-		"condition": ["eq", "witness", "live", 1]}
-	rejection = ""
+func speak(face_to_face: bool) -> bool:
+	if revised or not counterexample or not face_to_face: return false
+	revised = true
 	return true
 
 
-func allows_departure(tick: int, fields: Dictionary) -> bool:
-	if not forbidden(HALE_RULE, NATIVE_ORDER, fields): return true
-	return not revision.is_empty() and tick <= revision.expires and evaluate(revision.condition, fields)
+func forbidden(action: String, facts: Dictionary) -> bool:
+	return action == RULE.action and facts.get(RULE.condition[1], false) == RULE.condition[2] and not revised

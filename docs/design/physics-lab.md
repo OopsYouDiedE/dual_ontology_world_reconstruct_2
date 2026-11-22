@@ -15,7 +15,7 @@ $lab = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
 
 `Model.gd` 按 60 Hz 推进，`Geometry.gd` 只呈现同一份装置状态。`capture.py` 用项目 Game MCP 的 InputMap 和真实 Forward+ 视口驱动同一场景。`manifest.json` 将每张 PNG 与房号、机位、物理步和状态绑定；`trace.json` 记录每次命令后的状态哈希，便于两次独立运行逐步比较。复现时，开场先暂停再重置，排除加载耗时。
 
-## 逐关对照
+## 逐关对照（归档展台）
 
 | 实验 plate | 对照 → 成功条件 | 在模型中验证的量 |
 |---|---|---|
@@ -32,23 +32,23 @@ $lab = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
 
 物理查对线索：OpenStax *University Physics* 的偏振、驻波、电磁感应与狭义相对论章节；MIT Game Lab 的 *A Slower Speed of Light* 用于参考放大传播时差的表现。L3/L6/L7 的异常联锁作为提案的玩法假设测试，L5 的能差与寄存器是可重复的控制实验。
 
-## L03：可步行的凝视气闸
+## L03：凝视接力
 
-普通浏览进入 L03 后，`WASD` 步行，鼠标或方向键转头。`E` 在实验台放下试重，`F` 切换见证灯，`Q` 提交试验对照，`C` 请求同伴渡桥，`J` 查阅手册，`R` 重开，`[` / `]` 离开该关。旧 L03 展台仍可通过 `-- --lab-archive-observer` 打开；历史 `capture.py` 专门回放归档的十展台。
+正式浏览的 L03 是独立的第一人称关卡。`WASD` 步行，鼠标或方向键转头，`Ctrl` 下蹲，`E` 近距离面对面交谈，`R` 重开，`[` / `]` 返回展厅横向浏览。旧的 L03 展台由 `-- --lab-archive-observer` 保留。其余九个展台和正式战役保持原样。
 
-- 从侧方见证湾才能看见发光刻板；连通近岸和远岸的桥位于中央。刻板照明、接收装置和射线查询共享专用见证灯的开关。桥、挡杆和门用共位的碰撞体与网格；过桥须沿实际空间行走。
-- 可在相同试验台重复放下同一个试重，记录它落入低处承接区或抵达对岸。Hale 的原守则限制当前渡桥动作；用对照记录可取得限时、附现场见证条件的豁免。远岸的实体信号让 Hale 选择继续或停步。
-- Hale 使用「测试 MPFB2」原生动作审阅场同一份 R-05 试装模型 `assets/characters/mpfb/r05_styled.glb`。原骨架保留；走路步态跟随碰撞体实际位移，上闩动作使用模型原生 `MPFB_Pose_Check` 的抬臂片段。玩家保留第一人称机位。远岸止动爪随操作转动，就位后保持桥面并开启出口。
+- **直接观察桥本体。** 入口视野正前方是第一段断桥。观察者眼高的 27 射线，必须首碰桥自身受聚光灯照亮的有效面。A 的有效面在上方，B 的有效面是桥构件外伸的侧肋。声响和实际桥面标记凝固、失视和释放。失视 60 物理步后桥面与碰撞一起消失；安全网只送回走到过的实地。光学段使用实景光源的锥角、范围和遮挡查询；观察维持实体是虚构规则。
+- **让 Hale 亲眼见到反例。** 他相信直视悬桥的人会被光夺走。你走进光、踩到桥面，再安全退回。只有 Hale 沿真实视线观察到了这段行动，近身对话才允许修订这条禁令。关卡没有通讯报告、试重、灯开关和远程发动按钮。
+- **两次交换观察者。** 你看住 A，让 Hale 先到中岛。从这里他能看见近岸不可能看到的 B 侧肋；你走过 A，蹲过实体矮梁，再通过 B。走 B 的人看不到自己的脚下那条外伸侧肋；到远岸标出的侧位后你才能接过观察，再让 Hale 通过。两人到齐，出口开门。窗、墙、矮梁和桥都可在真实视角检查；危险动作在暗井里可恢复。
+- **R-05 的正式西装。** `assets/characters/mpfb/r05_formal.glb` 来自在「测试 MPFB2」试装场生成的同一份 `r05_suit.glb`（MakeHuman CC0 `male_elegantsuit01` 与 `shoes04`，使用项目 R-05 体型、贴合蒙皮及骨架）。复用原审阅场的柔色阶 Toon 与反壳描边，同时保留服装底色贴图。冷、暖定向聚光分别负责路径和人物读形；角色保留程序走姿、原生屈膝取样与头部视角反馈。
 
 ```powershell
 & $lab --path . --rendering-method forward_plus --resolution 1280x720 res://scenes/physics_lab/airlock/Airlock.tscn
 & $lab --headless --path . -s res://tools/physics_lab/verify_airlock.gd
-& .runtime/python/Scripts/python.exe tools/physics_lab/capture_airlock.py --out .runtime/physics-lab/l03/mpfb-r05-final
+& .runtime/python/Scripts/python.exe tools/physics_lab/capture_airlock.py --out .runtime/physics-lab/l03/relay-final/viewport
+& ./tools/physics_lab/record_airlock.ps1
 ```
 
-脚本用相同输入分别跑过恢复见证通关、失视到期跌落回岸两条路线。`manifest.json` 记录 22 张眼高画面和场景状态，`trace.json` 记录固定步输入后的 114 份回执。两次使用 R-05 的 Forward+ 实跑中，114 条状态哈希逐条相同；正常展厅的 L02 → L03 → L04 → L03 切换有独立验证。该路径用于回归通行、碰撞、证据门和角色动作；首次游玩时的自发理解仍需无提示试玩。
-
-**Astra 对前一版的独立复核：核心谜题裁定【驳回重写】。** 近岸保持踏板可以替换目前的光学状态，且从同一个观察点便能完成两次试验、说服及协作，空间推理只在第一次找机位时出现。下一版应让不同高度的视线、移动遮挡和重复试载共同决定通行路线；让玩家亲自选对照记录，并分别检验熄灯、转头和退到遮挡物后的预警。保留本版碰撞、角色动作和成功／跌落回岸的脚本基线。
+`Walkthrough.gd` 只发送与手玩等价的步行、镜头、蹲伏和交谈输入。录制从进门时的空桥开始，以双人到达和 `AIRLOCK CLEARED` 收尾，保留游戏音效。回归包含暗灯和转身失视、多个近岸位置的 B 遮挡、B 行走面无法自持、两侧观察位、矮梁碰撞、未观察到的反例被拒、两段实体碰撞与坠落回原岸。新设计的可发现性仍待首次游玩的人无提示测试。
 
 ## 归档展台的验收边界
 

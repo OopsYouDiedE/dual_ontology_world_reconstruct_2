@@ -1,218 +1,212 @@
 extends RefCounted
-## Every gameplay-facing surface is built as one mesh + shape pair. Small
-## trim, decals and readout markings are decoration and never block a query.
+## The moving surface and its optically addressable facets share room coordinates.
 const Kit = preload("res://scenes/physics_lab/Geometry.gd")
-const STONE := Color("b6b8b5")
-const PALE := Color("d5d5cf")
-const WHITE := Color("e7e6df")
-const GRAPHITE := Color("424a4a")
-const STEEL := Color("697473")
-const BRASS := Color("aea092")
-const INK := Color("242d2e")
-const RECESS := Color("566162")
-const ENV := 1
-const ACTORS := 2
-const GUARD := 4
-const SENSORS := 8
-const PROBE := 16
-const SPAN_SIZE := Vector3(1.64, 0.19, 2.66)
-const DECK_LOW := -0.76
-const TRACK_X := -2.10
-const BENCH := Vector3(TRACK_X, 0, 3.46)
-const GAP_EDGE := 1.30
-const FAR_DOG := Vector3(1.92, 0, -2.80)
-const EXIT_Z := -5.02
-
+const WORLD := 1
+const ACTOR := 2
+const FACET := 4
+const DECK := 8
+const LEAD_HOME := Vector3(-.18, 0, 3.31)
+const HALE_HOME := Vector3(1.03, 0, 1.16)
+const ISLAND_WATCH := Vector3(.93, 0, -2.79)
+const FAR_WATCH := Vector3(6.30, 0, -2.61)
+const B_LANE := -3.87
+const A_AIM := Vector3(0, .006, -1.55)
+const B_AIM := Vector3(3.55, -.245, -2.977)
+const B_END := 5.84
+const STONE := Color("898984")
+const PALE := Color("c4c3b8")
+const SEAM := Color("383c40")
+const DARK := Color("33363a")
+const COLD := Color("a9c8cc")
 var kit := Kit.new()
 var root: Node3D
-var target: StaticBody3D
-var bridge: AnimatableBody3D
-var guard: AnimatableBody3D
-var exit_leaf: AnimatableBody3D
-var ratchet: Node3D
-var receiver_lamp: OmniLight3D
-var receiver_face: MeshInstance3D
-var tile_on: StandardMaterial3D
-var warning_near: StaticBody3D
-var warning_far: StaticBody3D
-var bars: Array[MeshInstance3D] = []
-var relay := "HOLD"
-var rehearsal_dials: Array[MeshInstance3D] = []
-
-
-func box(at: Vector3, size: Vector3, color: Color, parent: Node3D = null) -> MeshInstance3D:
-	return kit.box(at, size, color, parent)
-
-
-func shape(at: Vector3, size: Vector3, color: Color, tag: String,
-		layer: int = ENV, moving: bool = false) -> PhysicsBody3D:
-	var body: PhysicsBody3D = AnimatableBody3D.new() if moving else StaticBody3D.new()
-	if moving: (body as AnimatableBody3D).sync_to_physics = false
-	root.add_child(body)
-	body.position = at
-	body.collision_layer = layer
-	body.collision_mask = 0
-	body.set_meta("surface", tag)
-	var physics := CollisionShape3D.new()
-	var dims := BoxShape3D.new()
-	dims.size = size
-	physics.shape = dims
-	body.add_child(physics)
-	box(Vector3.ZERO, size, color, body)
-	return body
-
-
-func sign_text(text: String, at: Vector3, height: float, parent: Node3D = null) -> Label3D:
-	var sign_ := kit.label(text, at, height, parent)
-	sign_.modulate = INK
-	return sign_
+var spans: Array[Dictionary] = []
+var gate: StaticBody3D
+var gate_home: float
+var lintel: MeshInstance3D
+var gate_lamp: StandardMaterial3D
+var gateside: Node3D
 
 
 func make(parent: Node3D) -> void:
 	root = parent
-	kit.root = root
-	bank(3.85, 5.10)
-	bank(-4.18, 5.76)
-	shape(Vector3(0, -1.31, 0), Vector3(7.2, .20, 2.67), RECESS, "catch_pit")
-	for edge: float in [-1.0, 1.0]:
-		shape(Vector3(0, -.78, edge * 1.37), Vector3(7.2, 1.02, .14), STONE, "pit_sill")
-		for side: float in [-1.0, 1.0]:
-			shape(Vector3(side * 2.18, .17, edge * 1.40), Vector3(2.76, .34, .17), PALE, "curb")
-			for i in range(5):
-				box(Vector3(side * (.93 + i * .56), .362, edge * 1.40), Vector3(.29, .032, .15), GRAPHITE)
-	for side: float in [-1.0, 1.0]:
-		shape(Vector3(side * 3.65, 1.70, -.30), Vector3(.24, 3.45, 13.48), PALE, "side_wall")
-		for z: float in [-5.4, -3.15, -.95, 1.25, 3.45, 5.70]:
-			box(Vector3(side * 3.515, 1.55, z), Vector3(.03, 2.95, .019), STONE)
-			box(Vector3(side * 3.478, .35, z), Vector3(.083, .11, .50), GRAPHITE)
-	shape(Vector3(0, 1.70, 6.43), Vector3(7.2, 3.45, .22), PALE, "entry_wall")
-	shape(Vector3(0, 1.70, -7.04), Vector3(7.2, 3.45, .22), PALE, "rear_wall")
-	shape(Vector3(0, 3.60, -.3), Vector3(7.44, .33, 13.48), STONE, "ceiling")
-	# Nested thresholds frame the trench; the left optical hood occludes the witness
-	# from the crossing strip. A second side is open for over-the-rail viewing.
-	for z: float in [2.17, -.99, -4.89]:
-		box(Vector3(0, 3.12, z), Vector3(7.0, .40, .31), WHITE)
-		box(Vector3(0, 2.91, z), Vector3(7.0, .045, .34), GRAPHITE)
-	for side: float in [-1.0, 1.0]:
-		var x := -1.19 if side < 0 else .96
-		shape(Vector3(x, 1.20, 1.29), Vector3(.22, 2.40, .30), WHITE, "cross_jamb")
-		box(Vector3(x - side * .115, 1.18, 1.455), Vector3(.045, 2.31, .038), GRAPHITE)
-	box(Vector3(-.12, 2.40, 1.30), Vector3(2.38, .18, .33), WHITE)
-	for x: float in [-2.66, -1.54]:
-		shape(Vector3(x, 1.17, -.60), Vector3(.19, 2.34, 2.30), PALE, "optical_hood")
-		box(Vector3(x, 2.37, -.60), Vector3(.23, .05, 2.36), GRAPHITE)
-	shape(Vector3(TRACK_X, 2.29, -.62), Vector3(1.28, .17, 2.31), STONE, "hood_roof")
-	shape(Vector3(TRACK_X, .72, -1.80), Vector3(1.04, 1.44, .23), RECESS, "receiver_plinth")
-	target = shape(Vector3(TRACK_X, 1.51, -1.71), Vector3(.54, .64, .19), GRAPHITE, "witness") as StaticBody3D
-	receiver_face = box(Vector3(0, 0, .101), Vector3(.405, .505, .018), PALE, target)
-	tile_on = emission(WHITE, .92)
+	kit.root = parent
+	_solid(Vector3(2.2,-3.95,-.55), Vector3(16,.32,13), Color("141719"), "catch")
+	_solid(Vector3(3.1,4.29,-.62),Vector3(10.06,.23,9.94),Color("25272d"),"ceiling")
+	_solid(Vector3(0,-.135,2), Vector3(3.64,.27,4.08), STONE, "near")
+	_solid(Vector3(.20,-.135,-3.75), Vector3(2.18,.27,2.31), STONE, "island")
+	_solid(Vector3(6.90,-.135,-3.66), Vector3(2.18,.27,3.02), STONE, "far")
+	# Tall black baffle across the near bank's view of the second span.
+	_solid(Vector3(3.05,1.25,-2.25), Vector3(4.98,3.36,.22), DARK, "blind_wall")
+	for x in [.61,1.8,3.06,4.32,5.49]:
+		kit.box(Vector3(x,1.41,-2.12), Vector3(.024,2.95,.04), SEAM)
+	_solid(Vector3(.86,1.25,-2.25), Vector3(.57,3.30,.28), Color("45474b"), "blind_pier")
+	# Pass beneath the lintel from the island into B; a standing capsule strikes it.
+	_solid(Vector3(1.24,1.77,B_LANE), Vector3(.29,.99,1.55), Color("6a6b68"), "low_lintel")
+	kit.box(Vector3(1.25,1.296,B_LANE), Vector3(.34,.042,1.56), PALE)
 	for i in range(5):
-		box(Vector3(.148 - i * .073, 0, .113), Vector3(.018, .39, .012), GRAPHITE, target)
-	box(Vector3(TRACK_X, 2.075, -.64), Vector3(.31, .083, .40), GRAPHITE)
-	receiver_lamp = light(Vector3(TRACK_X, 1.98, -.70), 2.60, 2.8)
-	receiver_lamp.light_bake_mode = Light3D.BAKE_DISABLED
-	# Gate does not affect the test carriage: the loading rail is under the actor guard.
-	bridge = shape(Vector3(0, DECK_LOW - SPAN_SIZE.y * .5, 0), SPAN_SIZE, GRAPHITE, "span", ENV, true) as AnimatableBody3D
-	for i in range(13):
-		box(Vector3(0, SPAN_SIZE.y * .5 - .007, -1.224 + i * .204), Vector3(1.53, .014, .164), STONE, bridge)
-	guard = shape(Vector3(0, .88, 1.423), Vector3(1.68, .16, .13), GRAPHITE, "stop_bar", GUARD, true) as AnimatableBody3D
-	for x: float in [-.66, -.34, 0.0, .34, .66]:
-		box(Vector3(x, 0.0, .071), Vector3(.11, .074, .018), WHITE, guard)
-	for sx: float in [-1.0, 1.0]:
-		shape(Vector3(sx * 2.27, 1.40, EXIT_Z), Vector3(2.64, 2.80, .27), PALE, "exit_jamb")
-	shape(Vector3(0, 2.81, EXIT_Z), Vector3(2.15, .40, .30), WHITE, "exit_lintel")
-	exit_leaf = shape(Vector3(0, 1.30, EXIT_Z), Vector3(1.90, 2.60, .22), STEEL, "exit_leaf", ENV, true) as AnimatableBody3D
-	for x: float in [-.66, -.33, .0, .33, .66]:
-		box(Vector3(x, 0.0, .114), Vector3(.014, 2.58, .014), GRAPHITE, exit_leaf)
-	sign_text("SERVICE LOCK", Vector3(0, 2.78, EXIT_Z + .18), .178)
-	var dog := shape(FAR_DOG + Vector3(0, .48, 0), Vector3(.56, .96, .51), STONE, "dock_plinth")
-	ratchet = kit.node(Vector3(0, .53, .10), dog)
-	box(Vector3(0, .06, 0), Vector3(.08, .44, .083), GRAPHITE, ratchet)
-	kit.cylinder(Vector3(0, .30, 0), .069, .24, BRASS, ratchet).rotation.z = PI * .50
-	sign_text("DOG", Vector3(0, .23, .266), .115, dog)
-	# The inlet plate is mounted clear of the required body position.
-	var bench := shape(BENCH + Vector3(-.81, .56, .08), Vector3(.88, 1.12, .89), STONE, "test_bench")
-	box(Vector3(0, .574, 0), Vector3(.86, .037, .89), GRAPHITE, bench)
-	for i in range(2):
-		var p := box(Vector3(.21 - i * .40, .605, .12), Vector3(.25, .045, .38), WHITE, bench)
-		rehearsal_dials.append(p)
-	sign_text("CATCH", Vector3(-.22, .30, .452), .132, bench)
-	sign_text("TRAY", Vector3(.21, .30, .452), .132, bench)
-	sign_text("PROOF LOAD   /   01", Vector3(0, .02, .454), .103, bench)
-	var floor_stencil := sign_text("WITNESS", BENCH + Vector3(.0, .009, .32), .145)
-	floor_stencil.rotation.x = -PI / 2.0
-	box(BENCH + Vector3(0, .006, 0), Vector3(.69, .01, .68), STONE)
-	for x: float in [-.32, .32]:
-		box(BENCH + Vector3(x, .019, 0), Vector3(.06, .012, .63), GRAPHITE)
-	var plate := kit.node(Vector3(TRACK_X, 2.62, .68))
-	box(Vector3.ZERO, Vector3(1.19, .235, .07), PALE, plate)
-	sign_text("WITNESS BAY", Vector3(0, 0, .042), .133, plate)
-	box(Vector3(TRACK_X, 2.475, .69), Vector3(1.27, .021, .052), GRAPHITE)
-	warning_near = signal_panel(Vector3(-.30, 2.04, 1.49), "caution_near")
-	warning_far = signal_panel(Vector3(-.30, 1.57, -3.29), "caution_far")
-	for z: float in [4.7, 2.8, -.17, -3.48, -5.90]:
-		light(Vector3(.25, 3.17, z), 1.08 if z == -.17 else 1.34, 5.20)
-		box(Vector3(.22, 3.37, z), Vector3(3.16, .082, .34), GRAPHITE)
-		var diffuser := box(Vector3(.22, 3.315, z), Vector3(2.91, .05, .19), WHITE)
-		diffuser.material_override = emission(WHITE, .62)
+		kit.box(Vector3(1.083,1.42,B_LANE-.52+i*.26), Vector3(.018,.12,.035), SEAM)
+	_solid(Vector3(-1.88,1.65,1.8), Vector3(.2,4.9,4.75), DARK, "west_entry")
+	_solid(Vector3(1.88,1.65,1.8), Vector3(.2,4.9,4.75), DARK, "east_entry")
+	_solid(Vector3(0,1.75,4.12), Vector3(3.8,4.8,.23), DARK, "entry_wall")
+	_solid(Vector3(-1.91,1.15,-3.96), Vector3(.23,6.5,6.82), Color("272a30"), "west_well")
+	_solid(Vector3(3.2,1.15,-5.45), Vector3(10.45,6.5,.25), Color("303139"), "north_well")
+	_solid(Vector3(8.18,1.12,-3.70), Vector3(.25,6.15,4.84), DARK, "end_wall")
+	_solid(Vector3(6.90,.24,-2.13), Vector3(2.22,.48,.16), DARK, "far_rail")
+	_solid(Vector3(-.86,.23,-3.79), Vector3(.13,.46,2.17), SEAM, "island_rail")
+	_solid(Vector3(.21,.22,-4.81), Vector3(2.15,.44,.14), DARK, "island_back")
+	for z in [3.60, 2.71, 1.82, .93, .06]:
+		kit.box(Vector3(0,.003,z), Vector3(3.56,.007,.021), SEAM)
+	for x in [-.69,.69]:
+		kit.box(Vector3(x,.006,.526), Vector3(.043,.009,.93), PALE)
+		kit.box(Vector3(x,.034,-2.68), Vector3(.065,.067,.19), PALE)
+	for p in [ISLAND_WATCH, FAR_WATCH]:
+		for k in [-1,1]:
+			kit.box(p+Vector3(.11*k,.006,0), Vector3(.038,.012,.35), Color("d5d3be"))
+	make_span(Vector3(0,-.115,-1.29), Vector3(1.43,.23,2.70), Vector3.ZERO, Vector3.ZERO)
+	make_span(Vector3(3.56,-.115,B_LANE), Vector3(4.56,.23,1.19),
+		Vector3(3.56,-.241,-3.018), Vector3(4.48,.32,.075))
+	_gate()
+	spans[0]["lamp"] = spot(Vector3(-.13,4.0,-.95), Vector3(0,0,-1.36), Color("c4d8e7"), 4.4, 30)
+	spot(Vector3(1.1,3.58,-4.04), Vector3(.42,0,-3.67), Color("d8d9d1"), 2.45, 32)
+	spans[1]["lamp"] = spot(Vector3(3.55,3.65,-2.59), Vector3(3.55,-.21,-3.45), Color("b1cbd2"), 3.6, 36)
+	spot(Vector3(1.0,2.84,2.08), Vector3(.77,.6,1.30), Color("dbcdba"), 2.05, 37)
+	spot(Vector3(6.47,3.8,-3.26), Vector3(7.33,.84,-3.91), Color("d4d3c4"), 3.70, 33)
+	spot(Vector3(1.32,2.64,.16), Vector3(.99,.95,1.24), Color("b9c7d5"), .94, 37)
+	spot(Vector3(-1.05,2.82,1.83), Vector3(-1.73,1.82,.74), Color("bbc6d0"), .96, 39)
+	spot(Vector3(4.29,2.66,-4.55), Vector3(3.44,1.01,-5.26), Color("879aa7"), .77, 44)
+	_architecture()
+	# A clerestory stripe above the blind wall gives the room depth from the doorway.
+	var lamp := kit.box(Vector3(6.25,2.67,-5.27),Vector3(1.38,.062,.10), PALE)
+	lamp.material_override = luminous(Color("a8b9bd"), .9)
+	for z in [-1.9,-.93,0.05]:
+		kit.box(Vector3(-1.77,.98,z),Vector3(.12,.045,.37), SEAM)
 
 
-func bank(z: float, depth: float) -> void:
-	shape(Vector3(0, -.17, z), Vector3(7.08, .34, depth), PALE, "bank")
-	for i in range(-3, 4):
-		box(Vector3(i * 1.01, .003, z), Vector3(.013, .005, depth), STONE)
-	for i in range(1, floori(depth) + 1):
-		box(Vector3(0, .004, z - depth / 2 + i * .93), Vector3(7.08, .005, .013), STONE)
-	for x: float in [-.48, .48, TRACK_X]:
-		box(Vector3(x, .008, z), Vector3(.025, .008, depth - .05), STEEL)
+func _architecture() -> void:
+	for p in [Vector3(-.13,4.08,-.95),Vector3(3.55,4.09,-2.65)]:
+		kit.box(p+Vector3.UP*.035,Vector3(.43,.115,.50),DARK)
+		var slot := kit.box(p,Vector3(.20,.023,.38),COLD)
+		slot.material_override = luminous(Color("afbdc4"),1.4)
+	for z in [2.66,1.05,-.44,-1.85]:
+		kit.box(Vector3(-1.772,1.46,z),Vector3(.12,2.92,.082),Color("555961"))
+		kit.box(Vector3(-1.699,1.37,z+.069),Vector3(.013,2.65,.019),SEAM)
+	for side: float in [-1.0,1.0]:
+		_solid(Vector3(side*1.22,.22,.025),Vector3(.99,.44,.21),DARK,"edge_rail")
+		var marker := kit.box(Vector3(side*.83,.46,.025),Vector3(.078,.022,.20),PALE)
+		marker.material_override = luminous(Color("a8aaa2"),.32)
+	kit.box(Vector3(-1.64,2.97,-.53),Vector3(.17,.13,3.75),SEAM)
+	for x in [.62,1.91,3.19,4.47,5.37]:
+		kit.box(Vector3(x,2.88,-2.11),Vector3(.039,.18,.038),Color("777a7b"))
+	kit.box(Vector3(3.03,2.96,-2.106),Vector3(5.02,.026,.028),Color("676e73"))
+	var mark := kit.label("I",Vector3(.91,1.27,-2.096),.23)
+	mark.modulate = Color("cfcdc3")
+	var turn := kit.label("II",Vector3(1.079,1.50,B_LANE),.10)
+	turn.rotation.y = -PI/2.0
+	turn.modulate = Color("d4d2c7")
+	for i in range(12):
+		kit.box(Vector3(1.61+i*.37,1.18,-5.302),Vector3(.022,2.29,.022),Color("474b52"))
 
 
-func signal_panel(at: Vector3, id: String) -> StaticBody3D:
-	var panel := shape(at, Vector3(.87, .25, .08), GRAPHITE, id, SENSORS) as StaticBody3D
-	for i in range(6):
-		bars.append(box(Vector3((i - 2.5) * .123, 0, .045), Vector3(.096,.135,.012), WHITE, panel))
-	return panel
+func _solid(at: Vector3, size: Vector3, color: Color, tag: String, layer: int = WORLD) -> StaticBody3D:
+	var b := StaticBody3D.new()
+	root.add_child(b)
+	b.position = at
+	b.collision_layer = layer
+	b.collision_mask = 0
+	b.set_meta("surface", tag)
+	var s := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	s.shape = shape
+	b.add_child(s)
+	if layer != FACET: kit.box(Vector3.ZERO, size, color, b)
+	return b
 
 
-func light(at: Vector3, energy: float, reach: float) -> OmniLight3D:
-	var lamp := OmniLight3D.new()
-	lamp.light_color = Color("faf5e9")
-	lamp.light_energy = energy
-	lamp.omni_range = reach
-	lamp.omni_attenuation = 1.1
-	root.add_child(lamp)
-	lamp.position = at
-	return lamp
+func make_span(at: Vector3, size: Vector3, rib_at: Vector3, rib_size: Vector3) -> void:
+	var idx := spans.size()
+	var solid := _solid(at, size, PALE, "floor_%s" % idx, DECK)
+	var mesh := solid.get_child(1) as MeshInstance3D
+	var optical := _solid(at if idx == 0 else rib_at, size if idx == 0 else rib_size, PALE, "span_%s" % idx, FACET)
+	var rib := mesh if idx == 0 else kit.box(rib_at, rib_size, COLD)
+	var frame := kit.node(Vector3.ZERO)
+	var ghost := kit.node(Vector3.ZERO)
+	var line_mat := luminous(Color("91acb6"), .26)
+	for i in range(10 if idx == 0 else 18):
+		var p := float(i) / float(9 if idx == 0 else 17) - .5
+		var v := at + Vector3(0, .116, p * (size.z-.07)) if idx == 0 else at + Vector3(p * (size.x-.08),.116,0)
+		kit.box(v, Vector3(size.x - .08,.009,.021) if idx == 0 else Vector3(.025,.009,size.z-.05), SEAM, frame)
+		if i % 3 == 0:
+			var trace := kit.box(v - Vector3.UP*.068, Vector3(size.x-.13,.022,.020) if idx == 0 else Vector3(.023,.020,size.z-.06), COLD, ghost)
+			trace.material_override = line_mat
+	if idx == 1:
+		for i in range(10):
+			kit.box(Vector3(1.47 + i*.47,-.10,-3.10), Vector3(.065,.18,.39), SEAM, frame)
+		var guide := kit.box(rib_at, Vector3(rib_size.x,.018,.024),COLD,ghost)
+		guide.material_override = line_mat
+	var steel := luminous(Color("9eafb0"), .57)
+	var warm := luminous(Color("c1ac93"), 1.05)
+	spans.append({"solid":solid,"optic":optical,"surface":mesh,"rib":rib,"frame":frame,"ghost":ghost,
+		"clear":steel,"warn":warm,"focus":A_AIM if idx==0 else B_AIM,"normal":Vector3.UP if idx==0 else Vector3.BACK})
+	paint(idx, false, 0)
 
 
-func emission(color: Color, energy: float) -> StandardMaterial3D:
+func paint(i: int, solid_now: bool, warning_age: int) -> void:
+	var s := spans[i]
+	s.solid.collision_layer = DECK if solid_now else 0
+	s.surface.visible = solid_now
+	s.frame.visible = solid_now
+	s.rib.visible = solid_now
+	s.ghost.visible = not solid_now
+	var flash := warning_age > 0 and (warning_age / 12) % 2 == 0
+	s.surface.material_override = s.warn if flash else kit.mat(PALE)
+	s.rib.material_override = s.warn if flash else (s.clear if i == 1 else kit.mat(PALE))
+
+
+func spot(from: Vector3, toward: Vector3, color: Color, energy: float, angle: float) -> SpotLight3D:
+	var s := SpotLight3D.new()
+	root.add_child(s)
+	s.position = from
+	s.look_at(toward)
+	s.light_color = color
+	s.light_energy = energy
+	s.spot_angle = angle
+	s.spot_range = 10.0
+	s.shadow_enabled = true
+	return s
+
+
+func luminous(color: Color, energy: float) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
+	m.roughness = .92
 	m.emission_enabled = true
 	m.emission = color
 	m.emission_energy_multiplier = energy
 	return m
 
 
-func set_lamp(on: bool) -> void:
-	receiver_lamp.visible = on
-	receiver_face.material_override = tile_on if on else kit.mat(RECESS)
+func _gate() -> void:
+	var x := 7.48
+	var z := -3.95
+	gate_home = 1.10
+	gate = _solid(Vector3(x,gate_home,z),Vector3(.19,2.20,1.36),SEAM,"exit_leaf")
+	for dz in [-.83,.83]:
+		_solid(Vector3(x,1.30,z+dz),Vector3(.40,2.61,.30),STONE,"gate_jamb")
+		kit.box(Vector3(x-.214,1.31,z+dz), Vector3(.022,2.42,.035),PALE)
+	_solid(Vector3(x,2.51,z),Vector3(.42,.54,1.9),STONE,"gate_head")
+	for i in range(6):
+		kit.box(Vector3(-.101,0,-.53+i*.21),Vector3(.018,2.03,.021),DARK,gate)
+	gate_lamp = luminous(Color("8f9a94"), .22)
+	lintel = kit.box(Vector3(x-.219,2.43,z),Vector3(.029,.056,.77),COLD)
+	lintel.material_override = gate_lamp
+	var mark := kit.label("03 / NORTH SERVICE", Vector3(x-.229,2.63,z),.096)
+	mark.rotation.y = -PI/2.0
+	mark.modulate = Color("dedbd1")
+	gateside = kit.node(Vector3(x-.20,1.2,z-.98))
 
 
-func set_signal(ready: bool, alarm: int) -> void:
-	relay = "PROCEED" if ready and alarm == 0 else "HOLD"
-	for i in range(bars.size()):
-		var cell := i % 6
-		var on := cell < ceili(alarm / 10.0) if alarm > 0 else ready and cell in [0, 5]
-		bars[i].material_override = kit.mat(WHITE if on else STEEL)
-		bars[i].scale.y = 1.0 if alarm > 0 else .52
-
-
-func render_state(lift: float, open_guard: bool, dog_turn: float, door_slide: float,
-		failed_trial: bool, held_trial: bool) -> void:
-	bridge.position.y = lift - SPAN_SIZE.y * .50
-	guard.position.y = 2.69 if open_guard else .88
-	ratchet.rotation.z = lerpf(.31, -1.12, dog_turn)
-	exit_leaf.position.x = door_slide * 2.03
-	rehearsal_dials[0].material_override = kit.mat(GRAPHITE if failed_trial else STONE)
-	rehearsal_dials[1].material_override = kit.mat(WHITE if held_trial else STONE)
+func lift_gate(amount: float) -> void:
+	gate.position.y = gate_home + 2.43 * amount
+	gate_lamp.emission_energy_multiplier = lerpf(.22, 1.75, amount)

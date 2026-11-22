@@ -38,17 +38,17 @@ $lab = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
 
 - 从侧方见证湾才能看见发光刻板；连通近岸和远岸的桥位于中央。刻板照明、接收装置和射线查询共享专用见证灯的开关。桥、挡杆和门用共位的碰撞体与网格；过桥须沿实际空间行走。
 - 可在相同试验台重复放下同一个试重，记录它落入低处承接区或抵达对岸。Hale 的原守则限制当前渡桥动作；用对照记录可取得限时、附现场见证条件的豁免。远岸的实体信号让 Hale 选择继续或停步。
-- Hale 使用后期学院工坊制作的 177 cm、6.5 头身侦探 `assets/characters/academy/detective.gltf`，沿用模型自带的 `idle`、`walk`、`operate` 骨骼动画和衣摆模拟。侦探外观挂在原有同伴碰撞体上，玩家保留第一人称机位。远岸止动爪随操作动作转动，完全就位后保持桥面并开启出口。
+- Hale 使用「测试 MPFB2」原生动作审阅场同一份 R-05 试装模型 `assets/characters/mpfb/r05_styled.glb`。原骨架保留；走路步态跟随碰撞体实际位移，上闩动作使用模型原生 `MPFB_Pose_Check` 的抬臂片段。玩家保留第一人称机位。远岸止动爪随操作转动，就位后保持桥面并开启出口。
 
 ```powershell
 & $lab --path . --rendering-method forward_plus --resolution 1280x720 res://scenes/physics_lab/airlock/Airlock.tscn
 & $lab --headless --path . -s res://tools/physics_lab/verify_airlock.gd
-& .runtime/python/Scripts/python.exe tools/physics_lab/capture_airlock.py --out .runtime/physics-lab/l03/detective-final
+& .runtime/python/Scripts/python.exe tools/physics_lab/capture_airlock.py --out .runtime/physics-lab/l03/mpfb-r05-final
 ```
 
-脚本用相同输入分别跑过恢复见证通关、失视到期跌落回岸两条路线。`manifest.json` 记录 22 张眼高画面和场景状态，`trace.json` 记录固定步输入后的 114 份回执。两次独立 Forward+ 实跑的 114 条状态哈希逐条相同；正常展厅中也验证了 L02 → L03 → L04 → L03。该路径用于回归通行、碰撞、证据门和角色动作；首次游玩时的自发理解仍需无提示试玩。
+脚本用相同输入分别跑过恢复见证通关、失视到期跌落回岸两条路线。`manifest.json` 记录 22 张眼高画面和场景状态，`trace.json` 记录固定步输入后的 114 份回执。两次使用 R-05 的 Forward+ 实跑中，114 条状态哈希逐条相同；正常展厅的 L02 → L03 → L04 → L03 切换有独立验证。该路径用于回归通行、碰撞、证据门和角色动作；首次游玩时的自发理解仍需无提示试玩。
 
-**Astra 独立复核：角色资产核对通过，核心谜题裁定【驳回重写】。** 近岸保持踏板可以替换目前的光学状态，且从同一个观察点便能完成两次试验、说服及协作，空间推理只在第一次找机位时出现。下一版应让不同高度的视线、移动遮挡和重复试载共同决定通行路线；让玩家亲自选对照记录，并分别检验熄灯、转头和退到遮挡物后的预警。保留本版碰撞、角色动作和成功／跌落回岸的脚本基线。
+**Astra 对前一版的独立复核：核心谜题裁定【驳回重写】。** 近岸保持踏板可以替换目前的光学状态，且从同一个观察点便能完成两次试验、说服及协作，空间推理只在第一次找机位时出现。下一版应让不同高度的视线、移动遮挡和重复试载共同决定通行路线；让玩家亲自选对照记录，并分别检验熄灯、转头和退到遮挡物后的预警。保留本版碰撞、角色动作和成功／跌落回岸的脚本基线。
 
 ## 归档展台的验收边界
 

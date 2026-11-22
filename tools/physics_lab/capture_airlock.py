@@ -35,7 +35,7 @@ def main():
         receipt = json.loads(run.request('observe', screenshot=True, timeout=60)[0])
         s = receipt['state']
         assert s['view'] == 'eye' and not s['audit_left']
-        assert s['hale_model'] == 'res://assets/characters/academy/detective.gltf'
+        assert s['hale_model'] == 'res://assets/characters/mpfb/r05_styled.glb'
         dest = f'{len(manifest)+1:02d}-{name}.png'
         shutil.copyfile(receipt['screenshot'], out / dest)
         manifest.append(dict(image=dest, renderer=receipt['renderer'], **s))

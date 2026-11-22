@@ -3,10 +3,8 @@ extends Node3D
 ## observation, the typed rule and its evidence, then the view of those bodies.
 const SceneRoom = preload("res://scenes/physics_lab/airlock/Room.gd")
 const Rules = preload("res://scenes/physics_lab/airlock/Rules.gd")
-const Detective := preload("res://assets/characters/academy/detective.gltf")
-const GarmentDynamics := preload("res://scenes/rogue_player/GarmentDynamics.gd")
+const DetectiveMotion := preload("res://scenes/physics_lab/airlock/DetectiveMotion.gd")
 const DOG_TICKS := 48
-const HALE_DOG_CLIP := &"operate"
 const EyeHeight := 1.57
 const STEP := 1.0 / 60.0
 const RISE_TICKS := 26
@@ -30,7 +28,7 @@ var player: CharacterBody3D
 var hale: CharacterBody3D
 var probe: CharacterBody3D
 var model_hale: Node3D
-var hale_anim: AnimationPlayer
+var hale_motion: DetectiveMotion
 var camera: Camera3D
 var tick := 0
 var frame_flags: Dictionary = {}
@@ -193,31 +191,9 @@ func _attach_hale() -> void:
 	model_hale = room.kit.node(Vector3.ZERO, hale)
 	model_hale.name = "HaleModel"
 	_face_hale(LEAD_HOME - HALE_HOME)
-	# Use the atelier's later 177 cm detective, with its fitted rig and baked clips.
-	# Hale is the role in this room; the player still observes from a first-person eye.
-	var actor := Detective.instantiate() as Node3D
-	model_hale.add_child(actor)
-	var skeleton := actor.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
-	skeleton.modifier_callback_mode_process = Skeleton3D.MODIFIER_CALLBACK_MODE_PROCESS_PHYSICS
-	GarmentDynamics.install(skeleton)
-	hale_anim = actor.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
-	for loop in [&"idle", &"walk"]:
-		hale_anim.get_animation(loop).loop_mode = Animation.LOOP_LINEAR
-	# Sample the rig on the same clock as movement and ratchet engagement.
-	hale_anim.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
-	hale_anim.play(&"idle")
-	hale_anim.advance(0.0)
-
-
-func _animate_hale(moving: bool) -> void:
-	if hale_anim == null: return
-	var clip: StringName = HALE_DOG_CLIP if duty == "WORKING DOG" else (&"walk" if moving else &"idle")
-	if hale_anim.current_animation != clip:
-		hale_anim.play(clip, .08, 1.0)
-	var elapsed := STEP
-	if clip == HALE_DOG_CLIP:
-		elapsed = hale_anim.get_animation(clip).length / float(DOG_TICKS - 1)
-	hale_anim.advance(elapsed)
+	# Use the same R-05 GLB as the MPFB2 native-motion review.
+	hale_motion = DetectiveMotion.new()
+	hale_motion.attach(model_hale)
 
 
 func _make_ui() -> void:
@@ -454,7 +430,7 @@ func return_to_bank(actor: CharacterBody3D, place: Vector3, id: String) -> void:
 
 
 func _face_hale(dir: Vector3) -> void:
-	# The atelier model faces local +Z; Godot camera and sight rays face local -Z.
+	# The R-05 model faces local +Z; Godot camera and sight rays face local -Z.
 	model_hale.rotation.y = atan2(dir.x, dir.z)
 
 
@@ -518,7 +494,9 @@ func _move_hale() -> void:
 		rules.revision.clear()
 		_call("Hale: Withdrawing to the near bank.")
 	var traveled := (hale.position - from) * Vector3(1,0,1)
-	_animate_hale(traveled.length() > .007 and traveled.length() < .10)
+	var distance := traveled.length()
+	hale_motion.advance(distance if distance < .10 else 0.0, duty == "WORKING DOG",
+		float(dog_stroke) / DOG_TICKS, STEP)
 
 
 func _at_bench() -> bool:
@@ -689,8 +667,8 @@ func mcp_observe() -> Dictionary:
 		"collider_top_mm":roundi((room.bridge.get_child(0).global_position.y + room.bridge.get_child(0).shape.size.y * .5) * 1000),
 		"stop_bar_y_mm":roundi(room.guard.position.y*1000), "loss_tick":lose_at, "remaining":grace_remaining(),
 		"warning_samples":[lead_visible_ticks,hale_visible_ticks],
-		"hale_model":model_hale.get_child(0).scene_file_path,
-		"hale_clip":String(hale_anim.assigned_animation) if hale_anim != null else "", "dog_stroke":dog_stroke,
+		"hale_model":hale_motion.actor.scene_file_path,
+		"hale_clip":String(hale_motion.clip), "dog_stroke":dog_stroke,
 		"duty":duty, "dog":dog_seated, "door":door_steps, "cleared":cleared, "trial":trial.duplicate(),
 		"perception":frame_flags.duplicate(true), "records":rules.records.duplicate(true),
 		"revision":rules.revision.duplicate(true), "events":event_trace.duplicate(true)}

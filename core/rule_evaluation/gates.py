@@ -3,9 +3,10 @@ from copy import deepcopy
 from functools import lru_cache
 from math import lcm
 
-from .dsl import phase_references
+from .dsl import match, phase_references
 from .oracle import execute_witness, reproducible
-from .physics import MIN_WINDOW, TELEGRAPH_TICKS, canonical
+from .layout import CAMPAIGN_MAX_TICKS
+from .physics import MAX_PHASE_PERIOD, MIN_WINDOW, TELEGRAPH_TICKS, canonical
 
 
 def phase_projection(expr, data):
@@ -46,7 +47,7 @@ def timing_problems(room):
             if not names: continue
             periods = [phases[n]["period"] for n in names]
             period = lcm(*periods)
-            if period > 36_000:
+            if period > MAX_PHASE_PERIOD:
                 yield {"tag": "TEMPORAL_PERIOD_UNCERTIFIED", "target": e["id"], "op": op}
                 continue
             windows = tuple(
@@ -65,8 +66,42 @@ def operate(target, action):
 def hazard_checkpoint(world, packet):
     """Locate an exercise checkpoint on the safe trace (whitebox only)."""
     spec = world.room.get("hazard_exercise")
-    return spec if spec and any(a.get("op_type") == spec["at_op"] for a in
-        (packet if isinstance(packet,list) else packet.get("actions",[packet]))) else None
+    if spec and any(actor == spec.get("at_actor", 0) and act.get("op_type") == spec["at_op"]
+                    for actor, act in operations(packet)):
+        return spec
+
+
+def operations(packet):
+    for act in (packet if isinstance(packet, list) else packet.get("actions", [packet])):
+        if act.get("type") == "CommandCompanion":
+            yield act["agent_id"], act["action_spec"]
+        elif act.get("type") == "Interact":
+            yield 0, act
+
+
+def check_live_handoffs(world, packet):
+    """Replay both denied alternatives at the real live witness checkpoint."""
+    for actor, act in operations(packet):
+        for rule_id, spec in world.room.get("handoffs", {}).items():
+            if actor != spec["role"]:
+                continue
+            native = next(r for r in world.room["manuals"][actor] if r["rule_id"] == rule_id)
+            if not match(native["action"], act) or not world.test(spec["live"]):
+                continue
+            without_proof = deepcopy(world)
+            approved = next(r for r in without_proof.rules[actor] if r["rule_id"] == rule_id)
+            approved.clear()
+            approved.update(deepcopy(native))
+            without_proof.step({"type": "CommandCompanion", "agent_id": actor, "action_spec": act})
+            wrong_actor = deepcopy(world)
+            wrong_actor.step(act)
+            def blocked_rules(branch):
+                return next((e["rules"] for e in branch.events[len(world.events):]
+                             if e["kind"] == "RULE_STANDOFF"), [])
+            yield rule_id, {"tick": world.tick, "actor": actor,
+                            "operator_blocked_without_patch": rule_id in blocked_rules(without_proof),
+                            "lead_blocked_live": set(blocked_rules(wrong_actor)) >=
+                                                 {spec["lead_rule"], spec["local_rule"]}}
 
 
 def run_hazard_exercise(world, spec):
@@ -89,11 +124,13 @@ def run_hazard_exercise(world, spec):
 
 
 def evaluate_seed(seed, config=None):
-    hazard_outcomes = {}
+    hazard_outcomes, handoff_outcomes = {}, {}
     def check_before(w, packet):
+        level = w.index+1
+        for rule_id, result in check_live_handoffs(w, packet):
+            handoff_outcomes.setdefault(level, {})[rule_id] = result
         spec = hazard_checkpoint(w, packet)
         if not spec: return
-        level = w.index+1
         experiment = run_hazard_exercise(w, spec)
         if not experiment:
             hazard_outcomes[level] = {"warning_visible": False, "recoverable": False, "fatal_after_ticks": None}
@@ -122,8 +159,11 @@ def evaluate_seed(seed, config=None):
             problems.append({"tag":"UNTELEGRAPHED_DEATH", "room":room["index"], "exercise":result})
     projection_shapes, live_counterexamples = [], {}
     proven = set()
+    deductions = {}
     for event in world.events:
         if event["kind"] == "PERSUADED":
+            if "deduction" in event:
+                deductions[event["room"], event["rule"]] = event["evidence"]
             proven.add((event["room"],event["actor"],event["rule"]))
         if event["kind"] == "INTERACT":
             for rule in event.get("native_blocks", []):
@@ -139,9 +179,24 @@ def evaluate_seed(seed, config=None):
             problems.append({"tag":"NON_DISTINCT_RULE_PROJECTION", "room":room["index"]})
         if failure is None and room["count"] > 1 and room["index"] not in live_counterexamples:
             problems.append({"tag":"UNCERTIFIED_RULE_STANDOFF", "room":room["index"]})
+        for rule_id in room.get("handoffs", {}):
+            level = room["index"]
+            result = handoff_outcomes.get(level, {}).get(rule_id, {})
+            result["evidence_ref"] = deductions.get((level, rule_id))
+            if (not result["evidence_ref"] or not result.get("lead_blocked_live") or
+                    not result.get("operator_blocked_without_patch") or
+                    not any(row["rule"] == rule_id and row["tick"] == result.get("tick")
+                            for row in live_counterexamples.get(level, []))):
+                problems.append({"tag": "UNCERTIFIED_CROSS_MANUAL_HANDOFF", "room": level,
+                                 "rule": rule_id, "exercise": result})
+    witness_budget_ratio = world.tick / CAMPAIGN_MAX_TICKS
+    if failure is None and not 0.30 <= witness_budget_ratio <= 0.45:
+        problems.append({"tag": "WITNESS_BUDGET_RATIO", "ratio": witness_budget_ratio})
     consistent = reproducible(world)
     return world, {"seed": seed, "zero_panic": failure is None, "witness_ticks": world.tick,
-                   "witness_error": failure, "reproducible": consistent, "sampling_pass": not bool(problems),
+                   "witness_error": failure, "max_ticks": CAMPAIGN_MAX_TICKS,
+                   "witness_budget_ratio": witness_budget_ratio,
+                   "cross_manual_handoffs": handoff_outcomes, "reproducible": consistent, "sampling_pass": not bool(problems),
                    "invalid_design_defects": problems, "hazard_exercises": hazard_outcomes,
                    "distinct_manual_shapes":all(projection_shapes), "live_counterexamples":live_counterexamples,
                    "state_sha256": world.state_hash(),

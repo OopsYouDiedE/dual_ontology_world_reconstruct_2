@@ -1,0 +1,7 @@
+{
+  "model": "gpt-6.2-sol",
+  "revision": "sol-v2-public-training-2026-11-22",
+  "provenance": "Independent Sol author; public lesson packet and six black-box training seeds only. Frozen before the adjudicator drew either scored cohort.",
+  "ability_profile": "Course-aware observation-only geometry mapping and bounded local routing; geometric comparison, public phase prediction, witnessed patches, and published mechanical interlocks. No seed input or room generator use.",
+  "training_clear_ticks": {"101": 5360, "113": 5320, "127": 4960, "139": 5080, "149": 5100, "163": 5140}
+}

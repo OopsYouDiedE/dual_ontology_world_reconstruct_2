@@ -1,2 +1,3 @@
 *.asm text eol=lf
 *.json text eol=lf
+*.policy.py text eol=lf

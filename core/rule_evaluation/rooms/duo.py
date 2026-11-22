@@ -1,4 +1,5 @@
 """Seeded dual-operator rooms. Geometry coordinates and offsets are in mm."""
+from .gameplay_v2 import danger, handoff
 
 
 def _entity(id, label, kind, x, z, size, color, **extra):
@@ -219,7 +220,7 @@ def _shuttle(rng):
                          ops={'commission': _op(_eq('ballast', 'attached'),
                                                 ['ballast', 'attached', 0], ['shuttle', 'docked', 0],
                                                 ['clutch', 'engaged', 1])})
-    return dict(title='5 · Counterweight Transfer', start=[0, 1500], size=[9000, 11100],
+    room = dict(title='5 · Counterweight Transfer', start=[0, 1500], size=[9000, 11100],
                 sampling_required=['shuttle', 'balance'],
                 entities=[shuttle, lever, ballast,
                           *[_track(f'runner_{i}', stroke // 2, 5500 + i * 440,
@@ -230,10 +231,16 @@ def _shuttle(rng):
                                                      ['not', _eq('balance', 'occupied')])],
                                         1: [_rule(rule, 'capstan', 'shift', loaded)]},
                 public_exit=True, exit_when=_and(_eq('ballast', 'attached', 0), docked),
-                hint='When the clutch raises the test weight, the far plate takes over the counterbalance.',
+                hint='When the clutch raises the test weight, the far plate takes over the counterbalance. Dropping the test weight under load sends the shuttle back; catch the weight at the clutch.',
                 witness=[_move(20), _use('capstan', 'shift'), _move(20), _move(20), _move(2),
                          _use('clutch', 'commission'), _cmd(_move(20)), _query(), _patch(rule),
                          _cmd(_use('capstan', 'shift')), _use('exit', 'traverse')])
+
+    handoff(room, 1, 'capstan', 'shift', rule, ['not', _eq('ballast', 'attached')])
+    return danger(room, 'clutch', 'traverse', 'drop_test_weight', 'catch_counterweight',
+                  _and(docked, _eq('balance', 'occupied')), 'runaway',
+                  'RUNAWAY COUNTERWEIGHT | Catch at clutch', side * 850, 8130, y=1700,
+                  fault=(['shuttle', 'docked', 0],), reset=(['shuttle', 'docked', 1],))
 
 
 def _shutter(rng):
@@ -265,7 +272,8 @@ def _shutter(rng):
                       state=dict(open=0), transform=dict(field='open', offset=[0, 1550, 0]))
     returns = [_entity(f'jamb_{i}', 'Shutter jamb', 'divider', i * 2650, 8870,
                        [3050, 2920, 440], '#717E86', solid=True) for i in (-1, 1)]
-    return dict(title='6 · The Low-Sight Shutter', start=[0, 1500], size=[8300, 11400],
+    handle['ops']['retract']['when'] = _and(handle['ops']['retract']['when'], _eq('alarm', 'steam', 0))
+    room = dict(title='6 · The Low-Sight Shutter', start=[0, 1500], size=[8300, 11400],
                 sampling_required=['shutter', 'sight'],
                 entities=[vent, handle, sight, shutter, *returns, _frame(side * 2400, 6800, 2600),
                           _track('sight_link', -side * 500, 6500, 130, 3830, '#456C7C'), _exit(9660)],
@@ -274,13 +282,18 @@ def _shutter(rng):
                                       ['not', ['pose', 0, 'crouch']])],
                          1: [_rule(rule, 'handle', 'retract', ['not', bled])]},
                 public_exit=True, exit_when=_and(live, open_),
-                hint='Relief pressure blocks the release; the inspection sight needs relief to engage.',
+                hint='Relief pressure blocks the release; the inspection sight needs relief to engage. A purge against the closed shutter traps steam; isolate the purge at the sight.',
                 witness=[_move(20), _use('vent', 'seal'), _use('handle', 'retract'),
                          _use('vent', 'bleed'), _move(20), _move(20), _move(4),
                          dict(type='SetPose', pose='crouch'), _use('sight', 'engage'),
                          _cmd(_move(20)), _query(), _patch(rule), _cmd(_use('vent', 'seal')),
                          _cmd(_use('handle', 'retract')), _move(13),
                          _use('exit', 'traverse')])
+
+    handoff(room, 1, 'handle', 'retract', rule, live)
+    return danger(room, 'sight', 'retract', 'purge_under_shutter', 'isolate_purge',
+                  _and(live, ['not', open_], ['not', bled]), 'steam',
+                  'STEAM DISCHARGE | Isolate at sight', -side * 800, 8490 + gap, y=770, at_actor=1)
 
 
 def build(rng, phase_bias=0):

@@ -2,7 +2,11 @@
 from copy import deepcopy
 import re
 from .dsl import compound, expr, integer, text, validate_rule
-from .physics import MIN_WINDOW, Rng
+from .logic import desk_contract
+from .physics import MAX_PHASE_PERIOD, MAX_TICKS, MIN_WINDOW, Rng
+
+
+CAMPAIGN_MAX_TICKS = MAX_TICKS
 
 
 def vec(value, n, low, high):
@@ -58,7 +62,7 @@ def compile_room(raw, index):
     raw["sampling_required"] = sorted(samples)
     seen_phases = set()
     for p in raw.setdefault("phases", []):
-        period = integer(p["period"], 2*MIN_WINDOW, 36000)
+        period = integer(p["period"], 2*MIN_WINDOW, MAX_PHASE_PERIOD)
         integer(p["offset"], -period, period)
         integer(p["window"], MIN_WINDOW, period - MIN_WINDOW)
         pair = p["id"], p.get("field", "active")
@@ -108,6 +112,43 @@ def compile_room(raw, index):
     rules = raw["room_rules"] + [r for rs in raw["manuals"].values() for r in rs]
     if len({r["rule_id"] for r in rules}) != len(rules):
         raise ValueError("duplicate rule ID")
+    for rule_id, spec in raw.get("handoffs", {}).items():
+        role = integer(spec["role"], 1, count - 1)
+        groups = ((rule_id, raw["manuals"][role]), (spec["lead_rule"], raw["manuals"][0]),
+                  (spec["local_rule"], raw["room_rules"]))
+        links = [next((r for r in rs if r["rule_id"] == name), None) for name, rs in groups]
+        if any(r is None for r in links) or [r["modality"] for r in links] != ["FORBID", "FORBID", "REQUIRE"]:
+            raise ValueError("handoff needs two manual prohibitions and a local assignment requirement")
+        action = links[0]["action"]
+        if (any(r["action"] != action for r in links) or
+                action.get("op_type") not in entities.get(action.get("target_entity_id"), {}).get("ops", {})):
+            raise ValueError("handoff rules must refer to the same fixture operation")
+        spec["live"] = expr(spec["live"], ids)
+        if spec["live"] != links[1]["condition"]:
+            raise ValueError("lead dry-only prohibition must match the live condition")
+        assignment = ["or", ["and", ["actor", 0], ["not", spec["live"]]],
+                      ["and", ["actor", role], spec["live"]]]
+        if links[2]["condition"] != assignment:
+            raise ValueError("local handoff must assign the dry stroke and live follower to distinct actors")
+    for rule_id, spec in raw.get("document_proofs", {}).items():
+        handoff = raw.get("handoffs", {}).get(rule_id)
+        ops = entities.get(spec["desk"], {}).get("ops", {})
+        safety = next((r for r in raw["manuals"][0] if r["rule_id"]==spec["safety_rule"]), None)
+        if (not handoff or not safety or safety["modality"] != "FORBID" or
+                safety["action"] != {"target_entity_id":spec["desk"],"op_type":spec["permit_op"]} or
+                not all(op in ops for op in (spec["permit_op"],spec["excluded_op"]))):
+            raise ValueError("document proof needs accessible handoff, operation sheets and lead safety rule")
+        spec["window"] = expr(spec["window"], ids)
+        # Compare the exact public operation guards used by the integer mechanism.
+        guard = spec["window"]
+        if not desk_contract(safety["condition"],handoff["live"],guard,
+                             ops[spec["permit_op"]]["when"],ops[spec["excluded_op"]]["when"]):
+            raise ValueError("document proof does not entail a safe transfer window")
+        native = next(r for r in raw["manuals"][handoff["role"]] if r["rule_id"]==rule_id)
+        mesh = entities[native["action"]["target_entity_id"]]["ops"][native["action"]["op_type"]]
+        protected = {(e,k) for e,k,_ in ops[spec["excluded_op"]]["effects"] if e=="alarm"}
+        if protected & {(e,k) for e,k,_ in mesh["effects"]}:
+            raise ValueError("certified action writes the hazard fuse")
     raw["exit_when"] = expr(raw["exit_when"], ids)
     raw["hazard"] = expr(raw.get("hazard", ["false"]), ids)
     if raw["hazard"] != ["false"]:
@@ -119,6 +160,7 @@ def compile_room(raw, index):
         if len(trigger) != 3 or len(recover) != 2 or not test.get("at_op"):
             raise ValueError("hazards require an admission exercise")
         integer(trigger[2],0,count-1)
+        integer(test.get("at_actor", 0), 0, count-1)
         for eid, op in (trigger[:2], recover):
             if eid not in entities or op not in entities[eid].get("ops", {}):
                 raise ValueError("unknown hazard exercise operation")

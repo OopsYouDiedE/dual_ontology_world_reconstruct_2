@@ -7,8 +7,8 @@ from math import isqrt, lcm
 from struct import pack
 
 from .dsl import WAIT, compound, match, phase_references, public_rule
-from .layout import envelope, make_world
-from .physics import (ACTOR_RADIUS, CROUCH_EYE, DECISION_TICKS, EYE, MAX_TICKS, RANGE, REACH,
+from .layout import CAMPAIGN_MAX_TICKS, envelope, make_world
+from .physics import (ACTOR_RADIUS, CROUCH_EYE, DECISION_TICKS, EYE, MAX_PHASE_PERIOD, RANGE, REACH,
                       RAY_UNIT, TELEGRAPH_TICKS, Rng, cos, digest, dist2, movement, ray_box, ray_dir, sin)
 
 
@@ -16,7 +16,7 @@ from .physics import (ACTOR_RADIUS, CROUCH_EYE, DECISION_TICKS, EYE, MAX_TICKS, 
 def periodic_assignments(specs):
     """Reachable joint clock values, holding all non-clock state fixed."""
     period = lcm(*(p for _,p,_,_ in specs))
-    if period > MAX_TICKS:
+    if period > MAX_PHASE_PERIOD:
         return ()  # the admission gate rejects this schedule
     signatures = {tuple((tick+offset) % p < window for _,p,offset,window in specs)
                   for tick in range(period)}
@@ -342,6 +342,9 @@ class World:
                 found.append(r["rule_id"])
         return found
 
+    def hard_local_block(self, blocks):
+        return any(s["local_rule"] in blocks for s in self.room.get("handoffs", {}).values())
+
     def fail_action(self, reason, actor, action, **meta):
         self.last_result = reason
         self.record(reason, actor=actor, action=action, **meta)
@@ -355,6 +358,8 @@ class World:
         if blocks:
             if actor:
                 self.breakers.add((actor, tuple(blocks)))
+                return self.fail_action("RULE_STANDOFF", actor, act, rules=blocks)
+            if self.hard_local_block(blocks):
                 return self.fail_action("RULE_STANDOFF", actor, act, rules=blocks)
             self.record("PLAYER_MANUAL_WARNING", action=act, rules=blocks)
         if t == "Wait":
@@ -437,19 +442,33 @@ class World:
                 if match(r["action"], act) and ((r["modality"] == "FORBID" and active)
                                                  or (r["modality"] == "REQUIRE" and not active)):
                     counters.append([i, r["rule_id"], digest(r["condition"])])
+        deductions = {}
+        if actor == 0:
+            for role, rule_id, _ in counters:
+                spec = self.room.get("handoffs", {}).get(rule_id)
+                if (spec and not self.test(spec["live"]) and not self.blocked(0, act, native=True)
+                        and spec["local_rule"] in self.blocked(role, act, native=True)):
+                    deductions[rule_id] = dict(lead_rule=spec["lead_rule"], local_rule=spec["local_rule"],
+                                               operator_rule=rule_id, operator=role, circuit="dry")
         pre = self.entity_record(target)
         native_blocks = self.blocked(actor, act, native=True) if actor else []
         for eid, var, value in operation["effects"]:
             self.states[eid][var] = value
         self.refresh()
+        post = self.entity_record(target) if self.lit(target) else "UNOBSERVABLE"
+        changes = {field: [before, post["whitebox_state"][field]]
+                   for field, before in pre["whitebox_state"].items()
+                   if post != "UNOBSERVABLE" and post["whitebox_state"][field] != before}
+        deductions = {key: dict(value, observed_changes=changes) for key, value in deductions.items() if changes}
         self.record("INTERACT", actor=actor, action=act, native_blocks=native_blocks)
         self.last_interaction = {"actor": actor, "action": deepcopy(act), "tick": self.tick}
         self.evidence.append({"id": f"E{self.index+1:02d}-{self.tick:05d}-{self.evidence_serial:03d}",
                               "tick": self.tick, "actor": actor, "action": dict(act), "seen_by": [actor],
                               "possible_witnesses": bystanders,
-                              "pre": pre, "post": self.entity_record(target) if self.lit(target) else "UNOBSERVABLE",
+                              "pre": pre, "post": post,
                               "counterexamples": counters,
-                              "safe": not self.alarm_active})
+                              "safe": not self.alarm_active,
+                              **({"deductions": deductions} if deductions else {})})
         self.evidence_serial += 1
         self.evidence = self.evidence[-128:]
         return True
@@ -536,16 +555,82 @@ class World:
         return False
 
     def visible_evidence(self, actor):
-        return [{k: deepcopy(e[k]) for k in ("id", "tick", "actor", "action", "pre", "post")}
+        return [{k: deepcopy(e[k]) for k in ("id", "tick", "actor", "action", "pre", "post", "deductions") if k in e}
                 for e in self.evidence if actor in e["seen_by"] and e["safe"]
                 and self.tick >= e["tick"] + TELEGRAPH_TICKS]
+
+    def available_document_proofs(self):
+        """References are visible only after sampling the desk/clocks and synchronizing the operator."""
+        rows = []
+        for rule_id, spec in sorted(self.room.get("document_proofs", {}).items()):
+            handoff = self.room["handoffs"][rule_id]
+            who = handoff["role"]
+            query = self.query_frames.get(who, {})
+            rule = next((r for r in query.get("rules", []) if r["rule_id"] == rule_id), None)
+            if not rule or not {spec["desk"], *phase_references(spec["window"])} <= self.seen[0]:
+                continue
+            refs = [f"manual:0:{spec['safety_rule']}", f"manual:{who}:{rule_id}",
+                    f"room:{handoff['local_rule']}", f"sheet:{spec['desk']}:{spec['permit_op']}",
+                    f"sheet:{spec['desk']}:{spec['excluded_op']}"]
+            rows.append(dict(rule_node_id=rule_id, agent_id=who, action=deepcopy(rule["action"]),
+                             mode="EXEMPT_DURING_DOCUMENTED_WINDOW", evidence_ref=refs, window=deepcopy(spec["window"])))
+        return rows
+
+    def accept_patch(self, actor, rule, pat, evidence_id, guard, deduction=None, *, restore=None):
+        if restore is not None:
+            rule.update(deepcopy(restore))
+        else:
+            # Restrict the patch to the exact operation and, where applicable,
+            # the witnessed or derived live interlock window.
+            existing = rule.setdefault("exceptions", [])
+            exception = {"action": pat, "when": deepcopy(guard)}
+            if exception not in existing:
+                existing.append(exception)
+        rule["source"] = "PERSUADED_PATCH"
+        for a, ids in tuple(self.breakers):
+            if a == actor and rule["rule_id"] in ids:
+                self.breakers.remove((a, ids))
+        teammate = self.actors[actor]
+        teammate.panic = max(0, teammate.panic - self.config.persuade_calm)
+        self.declared[actor] = [public_rule(r) for r in self.rules[actor]]
+        proof = {"room":self.index+1,"agent_id":actor,"rule_id":rule["rule_id"],"evidence_ref":evidence_id}
+        if deduction:
+            proof["deduction"] = deepcopy(deduction)
+        if proof not in self.accepted_patches:
+            self.accepted_patches.append(proof)
+        self.record("PERSUADED", actor=actor, rule=rule["rule_id"], evidence=evidence_id,
+                    **({"deduction": deduction} if deduction else {}))
+        self.last_result = "PERSUADED"
+        return True
 
     def persuade(self, actor, act):
         patch = act["proposed_ast_patch"]
         rule = next((r for r in self.rules[actor] if r["rule_id"] == act["rule_node_id"]), None)
         refs = set(act["evidence_ref"])
-        frames = [e for e in self.evidence if e["id"] in refs and (0 in e["seen_by"] or actor in e["seen_by"])
-                  and e["safe"] and self.tick >= e["tick"]+TELEGRAPH_TICKS]
+        if rule and patch["mode"] == "EXEMPT_DURING_DOCUMENTED_WINDOW":
+            available = next((p for p in self.available_document_proofs() if p["agent_id"]==actor and
+                              p["rule_node_id"]==rule["rule_id"]), None)
+            if available and refs == set(available["evidence_ref"]) and rule["source"] != "TAMPERED":
+                pat = {"type":"Interact", **available["action"]}
+                if patch.get("action", pat) == pat:
+                    handoff = self.room["handoffs"][rule["rule_id"]]
+                    deduction = {"kind":"DOCUMENT_ENTAILMENT", "premises":available["evidence_ref"],
+                                 "window":available["window"], "manual_query_tick":self.query_frames[actor]["tick"]}
+                    return self.accept_patch(actor,rule,pat,"D:"+rule["rule_id"],
+                                             ["and",handoff["live"],available["window"]],deduction)
+        referenced = {e["id"]: e for e in self.evidence if e["id"] in refs}
+        statuses = {}
+        for ref in sorted(refs):
+            frame = referenced.get(ref)
+            if frame is None: reason = "unknown_reference"
+            elif not {0, actor}.intersection(frame["seen_by"]): reason = "unwitnessed"
+            elif not frame["safe"]: reason = "unsafe"
+            elif self.tick < frame["tick"] + TELEGRAPH_TICKS: reason = "immature"
+            else: reason = "mature"
+            statuses[ref] = reason
+        frames = [e for ref, e in referenced.items() if statuses[ref] == "mature"]
+        handoff = self.room.get("handoffs", {}).get(act["rule_node_id"])
+        rejection = "rule_or_action_mismatch"
         if rule and frames and len(frames) == len(refs) and patch["mode"] in {"EXEMPT_ACTION", "RESTORE_NATIVE"}:
             counter = [actor, rule["rule_id"], digest(rule["condition"])]
             native = next((r for r in self.room["manuals"][actor] if r["rule_id"] == rule["rule_id"]), None)
@@ -556,27 +641,35 @@ class World:
                     continue
                 if patch["mode"] == "RESTORE_NATIVE" and (rule["source"] != "TAMPERED" or native is None):
                     continue
-                rule["source"] = "PERSUADED_PATCH"
-                if patch["mode"] == "RESTORE_NATIVE":
-                    rule.update(deepcopy(native))
-                    rule["source"] = "PERSUADED_PATCH"
-                else:
-                    # A demonstration discharges only the exact demonstrated operation.
-                    # Physical interlocks and independent room rules still govern execution.
-                    existing = rule.setdefault("exceptions", [])
-                    if not any(x["action"] == pat for x in existing):
-                        existing.append({"action": pat, "when": ["true"]})
-                for a, ids in tuple(self.breakers):
-                    if a == actor and rule["rule_id"] in ids:
-                        self.breakers.remove((a, ids))
-                a = self.actors[actor]
-                a.panic = max(0, a.panic - self.config.persuade_calm)
-                self.declared[actor] = [public_rule(r) for r in self.rules[actor]]
-                proof = {"room":self.index+1,"agent_id":actor,"rule_id":rule["rule_id"],"evidence_ref":ev["id"]}
-                if proof not in self.accepted_patches: self.accepted_patches.append(proof)
-                self.record("PERSUADED", actor=actor, rule=rule["rule_id"], evidence=ev["id"])
-                self.last_result = "PERSUADED"
-                return True
+                deduction = ev.get("deductions", {}).get(rule["rule_id"])
+                if handoff and (not deduction or patch["mode"] != "EXEMPT_ACTION"):
+                    rejection = "missing_dry_handoff"
+                    continue
+                if handoff and not any(r["rule_id"] == rule["rule_id"]
+                                       for r in self.query_frames.get(actor, {}).get("rules", [])):
+                    rejection = "manual_not_queried"
+                    continue
+                if deduction:
+                    deduction = dict(deduction, manual_query_tick=self.query_frames[actor]["tick"])
+                return self.accept_patch(actor, rule, pat, ev["id"],
+                                         handoff["live"] if handoff else ["true"], deduction,
+                                         restore=native if patch["mode"] == "RESTORE_NATIVE" else None)
+        # A retryable timing failure does not submit a coerced mechanical action.
+        values = set(statuses.values())
+        pending = [e for ref,e in referenced.items() if statuses[ref] == "immature" and 0 in e["seen_by"]]
+        def would_support(frame):
+            if not rule or frame["actor"] == actor or patch["mode"] not in {"EXEMPT_ACTION", "RESTORE_NATIVE"}:
+                return False
+            pat = {k: frame["action"][k] for k in ("type", "op_type", "target_entity_id")}
+            return (patch.get("action", pat) == pat and
+                    [actor, rule["rule_id"], digest(rule["condition"])] in frame["counterexamples"] and
+                    (not handoff or (patch["mode"] == "EXEMPT_ACTION" and rule["rule_id"] in frame.get("deductions", {}))))
+        immature = bool(pending and values <= {"mature", "immature"} and any(would_support(e) for e in pending))
+        self.record("EVIDENCE_REJECTED", actor=actor, rule=act["rule_node_id"], reference_status=statuses,
+                    reason="immature" if immature else "invalid_reference" if values - {"mature"} else rejection)
+        if handoff and immature:
+            self.last_result = "EVIDENCE_IMMATURE"
+            return False
         fallback = None
         pat = patch.get("action", rule.get("action", {}) if rule else {})
         if "op_type" in pat and pat.get("target_entity_id") in self.entities:
@@ -661,7 +754,7 @@ class World:
             self.commit_physics()
             if self.status != "RUNNING":
                 break
-            if self.tick >= MAX_TICKS:
+            if self.tick >= CAMPAIGN_MAX_TICKS:
                 break
         if self.status == "RUNNING":
             self.psych_step()
@@ -669,7 +762,7 @@ class World:
             self.unseen_required[self.index+1] = sorted(self.required_targets() - set().union(*self.seen))
             self.record("ROOM_CLEARED")
             self.enter()
-        if self.status == "RUNNING" and self.tick >= MAX_TICKS:
+        if self.status == "RUNNING" and self.tick >= CAMPAIGN_MAX_TICKS:
             self.status = "TIMEOUT"
             self.record("TIMEOUT")
         obs = self.observe()
@@ -787,12 +880,19 @@ class World:
                 "handbook": {"acquired_tick":0,"opened_sections":sorted(self.rule_book),"accepted_patches":deepcopy(self.accepted_patches)},
                 "warning": warning, "equipment": equipment,
                 "probe_response": deepcopy(self.probe_mark.get("response")) if self.probe_mark and self.tick < self.probe_mark["until"] else None,
-                "evidence": self.visible_evidence(0), "last_result": self.last_result}
+                "evidence": self.visible_evidence(0), "last_result": self.last_result,
+                **({"logic_proofs": self.available_document_proofs()} if self.room.get("document_proofs") else {}),
+                **({"max_ticks": CAMPAIGN_MAX_TICKS, "evidence_pending": [
+                    {"id": e["id"], "action": deepcopy(e["action"]), "ready_tick": e["tick"] + TELEGRAPH_TICKS}
+                    for e in self.evidence if e.get("deductions") and 0 in e["seen_by"] and e["safe"]
+                    and self.tick < e["tick"] + TELEGRAPH_TICKS]} if self.room.get("handoffs") else {})}
 
     def visual_operation(self, actor, eid, op):
         act = {"type":"Interact", "target_entity_id":eid, "op_type":op}
         if not self.see_target(actor, eid, reach=REACH): return "out_of_reach"
-        if self.blocked(actor, act): return "rule_standoff" if actor else "manual_warning"
+        blocks = self.blocked(actor, act)
+        if blocks:
+            return "rule_standoff" if actor or self.hard_local_block(blocks) else "manual_warning"
         if eid == "exit" and op == "traverse":
             return "ready" if actor == 0 and self.test(self.room["exit_when"]) and not self.alarm_active else "locked"
         behavior = self.entities[eid].get("ops", {}).get(op)

@@ -109,7 +109,7 @@ class LockstepContract(unittest.TestCase):
     def test_timeout_at_exact_budget(self):
         w = World(0,rooms=[sandbox()])
         for i in range(MAX_TICKS//20): w.step(WAIT)
-        self.assertEqual((w.tick,w.status,len(w.checkpoints)),(MAX_TICKS,"TIMEOUT",1800))
+        self.assertEqual((w.tick,w.status,len(w.checkpoints)),(MAX_TICKS,"TIMEOUT",MAX_TICKS//20))
         with self.assertRaises(ValueError): w.step(WAIT)
 
     def test_state_and_replay_ignore_python_hash_seed(self):

@@ -1,4 +1,6 @@
-# Sol blind enrollment packet
+# Sol v1 blind enrollment packet
+
+> Archived v1 contract. For current scored policy development, use [v2 policy and training](../../../docs/design/rule-policy-lane.md) and the [v2 action/curriculum notes](../../../docs/design/rule-evaluation.md). The assembly ABI and 36,000-tick budget below describe the archived run.
 
 Blind baseline author task for the user-requested evaluation roster specifically named Sol. You have at most 45 minutes from dispatch. Maximize legitimate full-campaign completion across unknown procedural seeds. You receive only this public packet; DO NOT use any tools, browse, inspect files/workspace/repository or conversations, read organizer code, or obtain additional context. Return one self-contained policy directly in final as a fenced assembly program plus a short factual capability profile. I will freeze it byte-for-byte, translate it mechanically and run it without per-room help. No seed or hidden state is available. Do not make edits, delegate, or send interim reports.
 

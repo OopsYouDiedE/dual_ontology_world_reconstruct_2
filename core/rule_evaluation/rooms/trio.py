@@ -1,4 +1,5 @@
 """Rooms 7–10: pressure, timing, projected light, and indexed transfer."""
+from .gameplay_v2 import danger, handoff
 
 
 def _eq(entity, field, value=1):
@@ -237,12 +238,19 @@ def _counterweight(rng):
                               ['exit', 'open', 1])})
     room.start_demo()
     room.demonstrate(1, 'charge')
+    room.witness[-1] = dict(type='QueryCompanion', agent_id=1)
     room.witness.append(_proof(1, permit))
     room.arm()
     room.station_crew(1, 'charge')
     room.station_crew(2, 'brace')
     room.witness.append(_interact('console', 'release'))
-    return room.finish('Demonstrate, then arm to reset the test loads. The crank needs each live plate. A witnessed empty jack cycle can clear the copper restriction.')
+    spec = room.finish('Demonstrate, then arm to reset the test loads. The crank needs each live plate. A witnessed dry jack cycle can clear the copper restriction. Uncoupling a loaded jack drops the counterweight; seat the ratchet at the crank.')
+
+    handoff(spec, 1, 'copper', 'charge', permit, _eq('console', 'armed'))
+    return danger(spec, 'console', 'release', 'uncouple_under_load', 'seat_ratchet',
+                  _and(room.held(), _eq('copper', 'charged')), 'ratchet_slip',
+                  'SLIPPING RATCHET | Seat at crank', 0, room.console_z + 410, y=1430,
+                  fault=(['counterweight', 'raised', 0],), reset=(['counterweight', 'raised', 1],))
 
 
 def _escapement(rng, phase_bias):
@@ -274,14 +282,23 @@ def _escapement(rng, phase_bias):
     })
     room.start_demo()
     room.demonstrate(2, 'mesh')
+    room.witness[-1] = dict(type='QueryCompanion', agent_id=2)
     room.witness.append(_proof(2, permit))
     room.arm()
     room.station_crew(1, 'drive')
     room.station_crew(2, 'mesh')
     room.await_phase()
     room.witness.append(_interact('console', 'transfer'))
-    return room.finish('Dry-cycle the matching clutch before arming; arming zeros both clutches. The linked drive runs only while both shuttles are raised.',
+    spec = room.finish('Dry-cycle the matching clutch before arming; arming zeros both clutches. The linked drive runs only while both shuttles are raised. Alternatively compare the lead timing rule with the index transfer and bypass sheets, and certify the cobalt clutch only inside the overlapping sectors. A sync bypass outside overlap binds the gantry; declutch at the index.',
                        sampling_required=['clock', 'return_clock'])
+
+    handoff(spec, 2, 'cobalt', 'mesh', permit, _eq('console', 'armed'))
+    spec['document_proofs'] = {permit: dict(desk='console', permit_op='transfer', excluded_op='bypass_sync',
+                                           safety_rule='lead_manual_off_phase_transfer', window=both_phases)}
+    return danger(spec, 'console', 'transfer', 'bypass_sync', 'declutch_gantry',
+                  _and(engaged, ['not', both_phases]), 'gear_bind', 'GANTRY BIND | Declutch at index',
+                  0, room.console_z + 410, y=1430,
+                  fault=(['right_link', 'extended', 0],), reset=(['right_link', 'extended', 1],))
 
 
 def _shadow(rng):
@@ -318,8 +335,10 @@ def _shadow(rng):
                                ['pose', 0, 'crouch'], ['actor', 0]), ['exit', 'open', 1])})
     room.start_demo()
     room.demonstrate(1, 'raise')
+    room.witness[-1] = dict(type='QueryCompanion', agent_id=1)
     room.witness.append(_proof(1, permit))
     room.demonstrate(2, 'turn')
+    room.witness[-1] = dict(type='QueryCompanion', agent_id=2)
     room.witness.append(_proof(2, blue_rule))
     room.approach_console()
     room.witness.extend([dict(type='SetPose', pose='crouch'), _interact('console', 'arm')])
@@ -328,8 +347,15 @@ def _shadow(rng):
     room.witness.extend([_interact('console', 'read'), dict(type='SetPose', pose='stand'),
                          _move(0, 1, 6)])
     room.console_approach += 600  # Move beyond the station row before crossing the aisle.
-    return room.finish('The yoke lifts the mask first. Use the approach to dry-cycle the register key before crouching at the controller to arm the reading circuit.',
+    spec = room.finish('The yoke lifts the mask first. Use the approach to dry-cycle the register key before crouching at the controller to arm the reading circuit. Opening the iris drops the mask and floods the reader; cap the iris to recover.',
                        sampling_required=['mask', 'reticle'])
+
+    handoff(spec, 1, 'copper', 'raise', permit, _eq('console', 'armed'))
+    handoff(spec, 2, 'cobalt', 'turn', blue_rule, _eq('console', 'armed'))
+    return danger(spec, 'console', 'read', 'open_lantern_iris', 'cap_lantern_iris',
+                  _and(room.held(), ['lit', 'reticle']), 'glare',
+                  'PROJECTOR GLARE | Cap iris at reader', 0, room.console_z - 360, y=820,
+                  fault=(['mask', 'raised', 0],), reset=(['mask', 'raised', 1],))
 
 
 def _transfer(rng, phase_bias):

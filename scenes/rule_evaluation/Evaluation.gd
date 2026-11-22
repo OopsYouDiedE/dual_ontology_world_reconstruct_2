@@ -2,15 +2,18 @@ extends Node3D
 ## Forward+ first-person projection of the authoritative lockstep worker.
 
 const Fixtures := preload("res://scenes/rule_evaluation/Fixtures.gd")
+const FieldFilm := preload("res://scenes/rule_evaluation/FieldFilm.gd")
 const Cast := preload("res://scenes/rogue_crossing/Roster.gd")
 const MM := 0.001
 const WAIT := {"type":"Wait"}
-const CAMP_EYE := Vector3(0, 1.56, 2.3)
+const CAMP_EYE := Vector3(0, 1.62, 5.55)
 const ACTIONS := {&"eval_next_review": KEY_PAGEUP, &"eval_prev_review": KEY_PAGEDOWN,
 	&"eval_use": KEY_E, &"eval_probe": KEY_F, &"eval_crouch": KEY_C, &"eval_notebook": KEY_TAB,
-	&"eval_cycle": KEY_Z, &"eval_query": KEY_R, &"eval_evidence": KEY_P, &"eval_previous_evidence": KEY_O,
+	&"eval_cycle": KEY_Z, &"eval_query": KEY_R, &"eval_evidence": KEY_P, &"eval_previous_evidence": KEY_O, &"eval_logic_proof": KEY_Y,
 	&"eval_left": KEY_Q, &"eval_right": KEY_T, &"eval_pause": KEY_SPACE, &"eval_hint": KEY_H}
 
+var _film: FieldFilm
+var _film_seed := 1
 var _pipe: FileAccess
 var _packet := {}
 var _render := {}
@@ -64,10 +67,15 @@ func _ready() -> void:
 		var kv := arg.trim_prefix("--").split("=", true, 1)
 		options[kv[0]] = kv[1] if kv.size() == 2 else true
 	_review = options.has("eval-review")
-	_paused = options.has("eval-paused")
+	_paused = options.has("eval-paused") or options.has("eval-film")
+	if options.has("eval-film"):
+		_film = FieldFilm.new(str(options["eval-film"]), str(options["eval-film-receipt"]))
+		_film_seed = int(options.get("run-seed", "1"))
 	var args := PackedStringArray(["-u", ProjectSettings.globalize_path("res://core/rule_evaluation/bridge.py"),
 		"--seed", str(options.get("run-seed", "1"))])
 	if _review: args.append("--review")
+	if _film != null:
+		args.append_array(PackedStringArray(["--film", str(options.get("eval-film-mode", "admitted"))]))
 	if options.has("eval-rehearse-warning"):
 		args.append_array(PackedStringArray(["--rehearse-warning",str(options["eval-rehearse-warning"])]))
 	var handle := OS.execute_with_pipe(str(options.get("python", "python")), args, true)
@@ -85,7 +93,7 @@ func _ready() -> void:
 	_setup_environment()
 	_setup_ui()
 	_receive()
-	if not _review:
+	if not _review and _film == null:
 		_notebook.show()
 		_draw_notebook()
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -164,6 +172,7 @@ func _setup_ui() -> void:
 	var cross := _label(root, "+", 23, Color("f4eadc"))
 	cross.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	cross.position -= Vector2(6, 16)
+	cross.visible = _film == null
 	var focus_panel := PanelContainer.new()
 	root.add_child(focus_panel)
 	focus_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
@@ -263,6 +272,8 @@ func _build() -> void:
 	_spot = null
 	if _level == 11:
 		Fixtures.encasement(_room, 11.0, 15.0, _level, "Main Camp Hall / Expedition Complete")
+		Fixtures.archive_plate(_room, Vector3(-3.79, 2.24, 12.63), Rect2i(0, 298, 480, 270), "04  /  FOREST CAMP")
+		Fixtures.archive_plate(_room, Vector3(3.79, 2.24, 12.63), Rect2i(480, 0, 480, 270), "02  /  WEST CHAPEL")
 		var wood := Fixtures.matte(Color("7f5c43"))
 		var cloth := Fixtures.matte(Color("a8734e"))
 		Fixtures.box(_room, Vector3(0, 0.02, 9), Vector3(4.0, 0.04, 7.8), cloth)
@@ -290,9 +301,19 @@ func _build() -> void:
 		if e.entity_id == "exit":
 			portal = _point(e.primitive_geometry.position)
 			span = float(e.primitive_geometry.size[0])*MM
-	Fixtures.encasement(_room, float(size[0])*MM, float(size[1])*MM, _level, _render.title, portal, span)
+	Fixtures.encasement(_room, float(size[0])*MM, float(size[1])*MM, _level, _room_heading(), portal, span)
 	for e: Dictionary in _render.entities:
-		_objects[e.entity_id] = Fixtures.make(_room, e, bool(_render.separate_exit_leaf))
+		var holder := Fixtures.make(_room, e, bool(_render.separate_exit_leaf))
+		_objects[e.entity_id] = holder
+		if e.entity_class in ["counterweight", "shutter"] and e.has("travel") and absf(float(e.travel[1])) >= 650:
+			var load_size := _point(e.primitive_geometry.size)
+			var cables := Node3D.new()
+			_room.add_child(cables)
+			var steel := Fixtures.matte(Color("55534c"), 0.52)
+			for x: float in [-0.31, 0.31]:
+				Fixtures.box(cables, Vector3(x*load_size.x, 0.5, load_size.z*0.18), Vector3(0.042, 1.02, 0.042), steel)
+			holder["suspension"] = cables
+			holder["load_height"] = load_size.y
 		if e.entity_id == "latch" and e.has("mount"):
 			var p := _point(e.mount)
 			Fixtures.box(_room,p + Vector3(0,0.40,0),Vector3(1.30,0.80,0.67),Fixtures.matte(Color("58635c"),0.12))
@@ -327,11 +348,23 @@ func _attach_actor(id: int) -> void:
 func _point(x: Array) -> Vector3:
 	return Vector3(float(x[0]),float(x[1]),float(x[2])) * MM
 
+func _room_heading() -> String:
+	var title := str(_render.title)
+	if _level < 1 or _level > 10: return title
+	for separator: String in [" | ", " · ", " / "]:
+		if title.contains(separator):
+			return "%02d / %s" % [_level, title.get_slice(separator, 1)]
+	return "%02d / %s" % [_level, title]
+
 func _apply(snap: bool) -> void:
-	_header.text = str(_render.title)
+	_header.text = _room_heading()
 	_subhead.text = "LOCKSTEP  /  60 Hz      |      STEP %05d     |     %s" % [int(_render.tick), _packet.get("review", "FIELD EXERCISE")]
 	_warning_panel.visible = bool(_obs.get("warning", false))
-	_warning.text = "OVERPRESSURE  /  RELIEVE THE YOKE" if _level == 4 else "OVERLOAD  /  EMERGENCY STOP"
+	_warning.text = "OVERPRESSURE  /  RELIEVE THE YOKE" if _level == 4 else "MECHANICAL FAULT  /  STOP"
+	if _level != 4 and _warning_panel.visible:
+		for e: Dictionary in _render.get("entities", []):
+			if e.entity_id == "alarm" and not str(e.label).is_empty():
+				_warning.text = str(e.label).to_upper()
 	_footer.text = "PgUp / PgDn  Review verified actions   •   Tab  Field notebook" if _review else "WASD  Walk      Mouse  Look      E  Operate      Z  Cycle      C  Crouch      F  Probe      Tab  Notebook      Space  Pause"
 	for id in _actors: _actors[id].root.hide()
 	if _level == 11:
@@ -343,10 +376,10 @@ func _apply(snap: bool) -> void:
 		for id in [1,2]:
 			if not _actors.has(id): _attach_actor(id)
 			var crew := _actors[id].root as Node3D
-			var go := Vector3(-2.4 if id==1 else 2.4,0.0,7.2+float(id)*0.7)
+			var go := Vector3(-1.72 if id==1 else 1.72,0.0,9.15+float(id)*0.2)
 			_actor_targets[id] = go
 			crew.position = go
-			crew.rotation.y = -0.65 if id==1 else 0.68
+			crew.rotation.y = 2.81 if id==1 else -2.81
 			crew.show()
 			var actor_body := _actors[id].body as Node3D
 			actor_body.scale = Vector3.ONE
@@ -376,7 +409,7 @@ func _apply(snap: bool) -> void:
 		var flag := holder.get("flag") as Node3D
 		if flag:
 			flag.visible = int(e.whitebox_state.get("selected", 0)) == 1
-		if not e.lit:
+		if not e.lit and e.entity_class != "reticle":
 			var blackout := Fixtures.matte(Color("030505"))
 			for n in model.find_children("*", "MeshInstance3D", true, false):
 				if not n.has_meta("original"):
@@ -386,7 +419,7 @@ func _apply(snap: bool) -> void:
 			for n in model.find_children("*", "MeshInstance3D", true, false):
 				if n.has_meta("original"):
 					n.material_override = n.get_meta("original")
-		for n in model.find_children("*", "Label3D", true, false): n.visible = bool(e.lit)
+		for n in model.find_children("*", "Label3D", true, false): n.visible = bool(e.lit) or e.entity_class == "reticle"
 		var state: Dictionary = e.whitebox_state
 		var gauge := holder.get("gauge") as Node3D
 		if gauge:
@@ -399,9 +432,15 @@ func _apply(snap: bool) -> void:
 			if e.entity_id == "alarm":
 				color = Color("ff4732") if _render.alarm else Color("51322c")
 			if e.entity_class == "reticle": color = Color("ffda63") if e.lit else Color("3c372c")
+			if e.entity_class == "lamp": color = Color("f5d68b") if on else Color("362f26")
 			glow.albedo_color = color
 			glow.emission = color
 			glow.emission_energy_multiplier = 1.6 if (e.entity_class == "reticle" and e.lit) or (e.entity_id == "alarm" and _render.alarm) else 0.58
+		var lever := holder.get("lever") as Node3D
+		if lever:
+			var goal := deg_to_rad(-21.0 if on else 0.0)
+			holder["lever_rotation"] = goal
+			if snap: lever.rotation.z = goal
 		var rotor := holder.get("rotor") as Node3D
 		if rotor:
 			var period := maxi(1, int(state.get("period", state.get("period_ticks", 240))))
@@ -413,7 +452,7 @@ func _apply(snap: bool) -> void:
 		_spot.position = lens + (receptor-lens).normalized()*0.66
 		_spot.look_at(receptor,Vector3.UP)
 		for e: Dictionary in _render.entities:
-			if e.entity_id == "projector": _spot.visible = int(e.whitebox_state.powered) == 1
+			if e.entity_id == "reticle": _spot.visible = bool(e.lit)
 	if _moving_mark != null:
 		_moving_mark.visible = _render.probe != null
 		if _moving_mark.visible: _moving_mark.position = _point(_render.probe.point)
@@ -422,19 +461,24 @@ func _apply(snap: bool) -> void:
 		if not _actors.has(id): _attach_actor(id)
 		var cast: Dictionary = _actors[id]
 		var target := Vector3(float(a.pos[0])*MM, 0, float(a.pos[1])*MM)
-		_actor_targets[id] = target
 		var actor_root := cast.root as Node3D
-		var prior := actor_root.position
+		var prior: Vector3 = _actor_targets.get(id, target)
+		_actor_targets[id] = target
 		if snap: actor_root.position = target
 		actor_root.visible = Vector2(target.x-_target_cam.x,target.z-_target_cam.z).length_squared() > 0.27
 		actor_root.rotation.y = deg_to_rad(float(a.yaw))
-		if prior.distance_to(target) > 0.09:
+		var recent: Variant = _render.last_interaction
+		if a.motion == "operate" and recent is Dictionary and int(recent.actor) == id:
+			var fixture: Vector3 = _target_objects.get(recent.action.target_entity_id, target)
+			if Vector2(fixture.x - target.x, fixture.z - target.z).length_squared() > 0.02:
+				actor_root.rotation.y = atan2(fixture.x - target.x, fixture.z - target.z)
+		elif prior.distance_to(target) > 0.03:
 			actor_root.rotation.y = atan2(target.x - prior.x, target.z - prior.z)
 		var body := cast.body as Node3D
 		body.scale.y = 0.64 if a.pose == "crouch" else 1.0
 		var anim := cast.anim as AnimationPlayer
 		if anim:
-			var motion: StringName = &"interact" if a.motion == "operate" else (&"walk" if a.motion in ["walk","creep"] else &"idle")
+			var motion: StringName = &"interact" if a.motion == "operate" else (&"walk" if (a.motion in ["walk","creep"] or (not snap and prior.distance_to(target) > 0.035)) else &"idle")
 			if motion == &"interact" and _render.last_interaction != null and str(_render.last_interaction.action.op_type) in ["turn", "retract", "release", "mesh", "throw", "shift"] and anim.has_animation(&"operate"):
 				motion = &"operate"
 			if anim.has_animation(motion) and (anim.current_animation != motion):
@@ -447,7 +491,7 @@ func _apply(snap: bool) -> void:
 
 func _signal_on(e: Dictionary, state: Dictionary) -> bool:
 	const CHANNELS := {"latch":"latched", "selector":"live", "vent":"bled", "receiver":"charged",
-		"release":"thrown", "handle":"released", "reticle":"", "console":"armed", "clutch":"engaged", "capstan":"stroked", "bolt":"extended"}
+		"release":"thrown", "handle":"released", "reticle":"", "console":"armed", "clutch":"engaged", "capstan":"stroked", "bolt":"extended", "projector":"powered"}
 	if e.entity_id == "reticle": return bool(e.lit)
 	var preferred := str(CHANNELS.get(e.entity_id, ""))
 	if preferred != "": return int(state.get(preferred, 0)) == 1
@@ -463,10 +507,20 @@ func _process(delta: float) -> void:
 		if _objects.has(key):
 			var fixture := _objects[key].root as Node3D
 			fixture.position = fixture.position.lerp(_target_objects[key], minf(1.0, delta*12.0))
+			var lever: Node3D = _objects[key].get("lever")
+			if lever:
+				lever.rotation.z = lerpf(lever.rotation.z, float(_objects[key].get("lever_rotation", 0.0)), minf(1.0, delta*14.0))
+			var cables: Node3D = _objects[key].get("suspension")
+			if cables:
+				cables.position = fixture.position + Vector3.UP * float(_objects[key].load_height)
+				cables.scale.y = maxf(0.012, 4.18 - cables.position.y)
 	for id in _actor_targets:
 		if _actors.has(id):
 			var node := _actors[id].root as Node3D
 			node.position = node.position.lerp(_actor_targets[id], minf(1.0,delta*9.0))
+	if _film != null:
+		_film.advance(self)
+		return
 	_update_focus()
 	_focus_panel.visible = not _notebook.visible and not _interaction.text.is_empty()
 
@@ -532,7 +586,7 @@ func _draw_notebook() -> void:
 	var companions: Array = _obs.get("companions", [])
 	var text := PackedStringArray([
 		"0 Lead  /  1 Hale  /  2 Finch     Select then direct movement and fixture actions.",
-		"R syncs the selected crew. O cycles witness records. P submits the selected record.",
+		"Close this notebook to use the radio: R queries selected crew, O cycles evidence, P submits a record, Y submits alternate proof.",
 		"H toggles optional commissioning notes."])
 	if _show_hint:
 		text.append("\nCOMMISSIONING NOTES")
@@ -551,6 +605,18 @@ func _draw_notebook() -> void:
 	for i in range(rows.size()):
 		var sample: Dictionary = rows[i]
 		text.append(("● " if i == posmod(_evidence_selected, rows.size()) else "  ") + "%s  /  %s  %s" % [sample.id, sample.action.op_type, sample.action.target_entity_id])
+		for rule_id: String in sample.get("deductions", {}):
+			text.append("    Dry-cycle handoff evidence  /  %s" % rule_id)
+	for pending: Dictionary in _obs.get("evidence_pending", []):
+		text.append("  %s  /  %s  %s  /  developing until tick %d" % [pending.id, pending.action.op_type,
+			pending.action.target_entity_id, int(pending.ready_tick)])
+	var logic: Array = _obs.get("logic_proofs", [])
+	if not logic.is_empty():
+		text.append("\nDOCUMENTED PHASE PROOFS  /  Y to radio the selected operator")
+		for proof: Dictionary in logic:
+			text.append("  %s  /  %s" % ["Hale" if int(proof.agent_id) == 1 else "Finch", proof.rule_node_id])
+			text.append("    Window: %s" % JSON.stringify(_as_integer_values(proof.window)))
+			text.append("    Records: %s" % ", ".join(PackedStringArray(proof.evidence_ref)))
 	var equipment: Dictionary = _obs.get("equipment", {})
 	text.append("\nOBSERVED EQUIPMENT / WHITEBOX TRANSFER FUNCTIONS")
 	for id: String in equipment:
@@ -590,8 +656,18 @@ func _proof() -> void:
 	for r: Dictionary in companions[_selected-1].declared_rules:
 		if r.action.get("target_entity_id", "") == chosen.action.target_entity_id and r.action.get("op_type", "") == chosen.action.op_type:
 			_queued.append({"type":"PersuadeWithEvidence", "agent_id":_selected, "rule_node_id":r.rule_id,
-				"proposed_ast_patch":{"mode":"EXEMPT_ACTION"}, "evidence_ref":chosen.id})
+				"proposed_ast_patch":{"mode":"EXEMPT_ACTION"}, "evidence_ref":[chosen.id]})
 			return
+
+func _documented_proof() -> void:
+	for proof: Dictionary in _obs.get("logic_proofs", []):
+		if int(proof.agent_id) != _selected: continue
+		var dry_record_exists := _evidence_rows().any(func(sample: Dictionary) -> bool:
+			return sample.get("deductions", {}).has(proof.rule_node_id))
+		if dry_record_exists: continue
+		_queued.append({"type":"PersuadeWithEvidence", "agent_id":_selected, "rule_node_id":proof.rule_node_id,
+			"proposed_ast_patch":{"mode":proof.mode}, "evidence_ref":proof.evidence_ref})
+		return
 
 func _as_integer_values(v: Variant) -> Variant:
 	if v is float and v == floorf(v): return int(v)
@@ -615,7 +691,7 @@ func _submit_action(raw: String) -> void:
 		_entry.placeholder_text = "Expected an action object or an ordered action array."
 
 func _input(event: InputEvent) -> void:
-	if _view == null: return
+	if _view == null or _film != null: return
 	if _notebook.visible and not _entry.has_focus() and event.is_action_pressed(&"eval_hint"):
 		_show_hint = not _show_hint
 		_draw_notebook()
@@ -666,6 +742,7 @@ func _input(event: InputEvent) -> void:
 		_queued.append({"type":"QueryCompanion", "agent_id":_selected})
 	if event.is_action_pressed(&"eval_previous_evidence"): _evidence_selected -= 1
 	if event.is_action_pressed(&"eval_evidence"): _proof()
+	if event.is_action_pressed(&"eval_logic_proof"): _documented_proof()
 
 func _physics_process(_delta: float) -> void:
 	if _review or _paused or _view == null or _notebook.visible or _obs.get("status", "") != "RUNNING": return

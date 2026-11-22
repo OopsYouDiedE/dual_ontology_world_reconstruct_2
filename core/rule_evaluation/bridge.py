@@ -87,13 +87,14 @@ def main():
     modes=parser.add_mutually_exclusive_group()
     modes.add_argument("--review", action="store_true")
     modes.add_argument("--rehearse-warning", type=int, choices=[4,10])
+    modes.add_argument("--film", choices=["admitted", "development"])
     args = parser.parse_args()
     world, samples, index = World(args.seed), [], 0
     if args.review:
         samples = make_samples(args.seed)
     elif args.rehearse_warning:
         world = archived_warning(args.seed,args.rehearse_warning)
-    else:
+    elif args.film != "development":
         # Admission never changes the selected seed or exposes the constructive witness.
         _, gate = evaluate_seed(args.seed)
         if not (gate["zero_panic"] and gate["sampling_pass"] and gate["reproducible"]):
@@ -118,7 +119,10 @@ def main():
             elif op == "step" and not samples:
                 if world.status == "RUNNING":
                     world.step(packet["action"])
-                emit(reply(world))
+                snapshot = reply(world)
+                if args.film and world.status == "CAMP":
+                    snapshot["film_state_sha256"] = world.state_hash()
+                emit(snapshot)
             else:
                 raise ValueError("invalid operation in current mode")
         except (TypeError, KeyError, ValueError) as e:

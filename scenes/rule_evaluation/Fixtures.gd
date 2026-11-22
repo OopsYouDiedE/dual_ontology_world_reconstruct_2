@@ -8,6 +8,10 @@ const STEEL := Color("52636a")
 const BRASS := Color("a47b4d")
 const GREEN := Color("a3e4b9")
 const AMBER := Color("f0b16d")
+const FIELD_PLATES := preload("res://scenes/blue_prince_lab/reference/plates.jpg")
+const ESCAPEMENT_BALANCE := preload("res://scenes/blue_prince_lab/reference/meshes/Balance.glb")
+const INDEX_CAGE_DRIVE := preload("res://scenes/blue_prince_lab/reference/meshes/CageDrive.glb")
+
 
 static func matte(color: Color, metal := 0.0) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -59,6 +63,41 @@ static func print_on(parent: Node3D, title: String, center: Vector3, color: Colo
 	text.rotation_degrees.y = 180
 	parent.add_child(text)
 	return text
+
+static func archive_plate(parent: Node3D, center: Vector3, region: Rect2i, caption: String) -> void:
+	var frame := matte(Color("49362a"), 0.08)
+	box(parent, center, Vector3(2.13, 1.42, 0.10), frame)
+	box(parent, center + Vector3(0, 0.04, -0.07), Vector3(2.01, 1.20, 0.05), matte(PAPER))
+	var print_material := matte(Color.WHITE)
+	print_material.albedo_texture = ImageTexture.create_from_image(FIELD_PLATES.get_image().get_region(region))
+	var plate := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.87, 1.052)
+	plate.mesh = quad
+	plate.material_override = print_material
+	plate.rotation.y = PI
+	plate.position = center + Vector3(0, 0.045, -0.101)
+	parent.add_child(plate)
+	print_on(parent, caption, center + Vector3(0, -0.61, -0.070), PAPER, 0.0025)
+
+static func mount_authored_rotor(parent: Node3D, asset: PackedScene, radius: float, finish: Material) -> void:
+	# The installed model is a visual child of the integer phase-driven rotor.
+	# Fit the authored mesh to the face envelope; never add imported collision.
+	var mounted := asset.instantiate() as Node3D
+	parent.add_child(mounted)
+	var mesh_node: MeshInstance3D = mounted as MeshInstance3D
+	if mesh_node == null:
+		var meshes := mounted.find_children("*", "MeshInstance3D", true, false)
+		if not meshes.is_empty(): mesh_node = meshes[0] as MeshInstance3D
+	if mesh_node == null:
+		mounted.queue_free()
+		return
+	var envelope: AABB = (mounted.global_transform.affine_inverse() * mesh_node.global_transform) * mesh_node.get_aabb()
+	var xy := radius * 1.55 / maxf(0.001, maxf(envelope.size.x, envelope.size.y))
+	var fit := Vector3(xy, xy, minf(xy, 0.047 / maxf(envelope.size.z, 0.001)))
+	mounted.scale = fit
+	mounted.position = Vector3(0, 0, -0.074) - envelope.get_center() * fit
+	mesh_node.material_override = finish
 
 static func encasement(parent: Node3D, width: float, depth: float, level: int, title: String,
 		portal := Vector3.INF, span := 1.7) -> void:
@@ -153,6 +192,7 @@ static func make(parent: Node3D, e: Dictionary, separate_exit_leaf := false) -> 
 	var pointer: Node3D
 	var flag: Node3D
 	var gauge: Node3D
+	var lever: Node3D
 	if kind == "shadow_zone":
 		return {"root": root, "mark": null, "rotor": null}
 	if e.entity_id == "exit":
@@ -187,11 +227,15 @@ static func make(parent: Node3D, e: Dictionary, separate_exit_leaf := false) -> 
 		mobile.position = Vector3(0, s.y*0.50, -s.z*0.45)
 		root.add_child(mobile)
 		disk(mobile, Vector3.ZERO, r*0.90, 0.08, body)
-		for index in range(6):
-			var angle := float(index) * PI / 3.0
-			var spoke := box(mobile, Vector3(cos(angle)*r*0.53, sin(angle)*r*0.53, -0.06), Vector3(r * 0.70, r * 0.085, 0.03), ivory)
-			spoke.rotation.z = angle
-		disk(mobile, Vector3(0, 0, -0.047), r*0.23, 0.073, dark)
+		if kind == "flywheel" or kind == "clock":
+			var model: PackedScene = INDEX_CAGE_DRIVE if kind == "flywheel" else ESCAPEMENT_BALANCE
+			mount_authored_rotor(mobile, model, r, matte(Color("d1b585"), 0.24))
+		else:
+			for index in range(6):
+				var angle := float(index) * PI / 3.0
+				var spoke := box(mobile, Vector3(cos(angle)*r*0.53, sin(angle)*r*0.53, -0.06), Vector3(r * 0.70, r * 0.085, 0.03), ivory)
+				spoke.rotation.z = angle
+			disk(mobile, Vector3(0, 0, -0.047), r*0.23, 0.073, dark)
 		box(mobile, Vector3(0, r*0.73, -0.071), Vector3(r*0.13, r*0.21, 0.022), light_mat(AMBER))
 		signal_mesh = disk(root, Vector3(s.x*0.42, s.y*0.91, -s.z*0.59), 0.061, 0.045, signal_material)
 	elif kind in ["plate", "pressure_plate"]:
@@ -211,7 +255,7 @@ static func make(parent: Node3D, e: Dictionary, separate_exit_leaf := false) -> 
 		box(root, Vector3(0,s.y*0.50,0), s, dark)
 		box(root, Vector3(0,s.y*0.50,-s.z*0.50), Vector3(s.x*0.89,s.y*0.87,0.031), metal)
 		if kind == "lamp":
-			disk(root,Vector3(0,s.y*0.50,-s.z*0.58),s.y*0.32,0.10,light_mat(Color("d7b570")))
+			signal_mesh = disk(root,Vector3(0,s.y*0.50,-s.z*0.58),s.y*0.32,0.10,signal_material)
 		else:
 			signal_mesh = box(root, Vector3(0,s.y*0.50,-s.z*0.58), Vector3(s.x*0.79,s.y*0.52,0.05), signal_material)
 			box(root, Vector3(0,s.y*0.50,-s.z*0.67), Vector3(s.x*0.15,0.028,0.018), dark)
@@ -235,7 +279,15 @@ static func make(parent: Node3D, e: Dictionary, separate_exit_leaf := false) -> 
 		box(root, Vector3(0, s.y*0.73, -s.z*0.41), Vector3(s.x*0.77, s.y*0.34, s.z*0.18), metal)
 		for x: float in [-0.23, 0.23]:
 			box(root, Vector3(s.x*x, s.y*0.77, -s.z*0.58), Vector3(s.x*0.080, s.y*0.17, s.z*0.24), dark)
-		box(root, Vector3(0, s.y*0.81, -s.z*0.68), Vector3(s.x*0.61, 0.068, 0.089), ivory)
+		var handle_center := Vector3(0, s.y*0.81, -s.z*0.68)
+		if e.entity_id in ["copper", "cobalt", "capstan", "bolt", "release"]:
+			lever = Node3D.new()
+			root.add_child(lever)
+			lever.position = handle_center
+			box(lever, Vector3.ZERO, Vector3(s.x*0.61, 0.068, 0.089), ivory)
+			disk(lever, Vector3(0, 0, 0.01), 0.07, 0.12, metal)
+		else:
+			box(root, handle_center, Vector3(s.x*0.61, 0.068, 0.089), ivory)
 		signal_mesh = disk(root, Vector3(s.x*0.43, s.y*0.90, -s.z*0.49), 0.047, 0.05, signal_material)
 		if e.whitebox_state.has("pressure_kpa"):
 			var center := Vector3(0,s.y*0.66,-s.z*0.52)
@@ -257,12 +309,28 @@ static func make(parent: Node3D, e: Dictionary, separate_exit_leaf := false) -> 
 			box(flag, Vector3(0, s.y+0.17,0), Vector3(0.038,0.38,0.047), metal)
 			box(flag, Vector3(0, s.y+0.38,0), Vector3(s.x*0.86,0.27,0.067), matte(Color("d96040")))
 			print_on(flag,"REJECTED",Vector3(0,s.y+0.37,-0.049),PAPER,0.0032)
-	if e.entity_id != "exit" and not str(e.label).is_empty() and kind not in ["divider", "plate", "pressure_plate", "inspection-arm"] and s.y >= 0.24:
+	if e.entity_id != "exit" and not str(e.label).is_empty() and e.entity_id != "index" and kind not in ["divider", "plate", "pressure_plate", "inspection-arm"] and s.y >= 0.24:
 		var caption := str(e.label).to_upper()
 		var first_line := caption.split(" | ")[0].split(" • ")[0]
 		var bottom := s.y*0.23 if kind in ["clock","phase-cam","flywheel"] else s.y*0.52
 		if kind == "inspection-datum": bottom = s.y*0.91
-		var glyph := minf(0.0032, s.x / maxf(15.0 * float(first_line.length()), 240.0))
-		box(root, Vector3(0, bottom, -s.z*0.545), Vector3(s.x*0.94, 0.154, 0.026), dark)
-		print_on(root, first_line, Vector3(0, bottom, -s.z*0.56-0.016), PAPER, glyph)
-	return {"root":root, "mark":signal_mesh, "indicator":signal_material, "rotor":mobile, "pointer":pointer, "slide":slide, "flag":flag, "gauge":gauge, "span":s.x}
+		if kind == "reticle": bottom = s.y*0.15
+		# Nameplates stay outside the swept silhouette of the bolt and drive links.
+		var plate_width := s.x * 0.94
+		var plate_x := 0.0
+		if kind == "reticle":
+			first_line = "REGISTER"
+			plate_width = s.x * 0.62
+			plate_x = signf(float(e.primitive_geometry.position[0])) * s.x * 0.165
+		if first_line == "READER": bottom = s.y*0.69
+		if e.entity_id == "bolt" or kind in ["clock", "flywheel"]:
+			bottom = s.y*0.915
+			plate_width = s.x * 0.66
+			plate_x = -s.x * 0.082
+		var glyph := minf(0.0032, plate_width / maxf(15.0 * float(first_line.length()), 240.0))
+		box(root, Vector3(plate_x, bottom, -s.z*0.545), Vector3(plate_width, 0.154, 0.026), dark)
+		print_on(root, first_line, Vector3(plate_x, bottom, -s.z*0.56-0.016), PAPER, glyph)
+		if kind == "flywheel":
+			box(root, Vector3(0, s.y*0.11, -s.z*0.545), Vector3(s.x*0.66, 0.154, 0.026), dark)
+			print_on(root, "DOG UP = WORKING SECTOR", Vector3(0, s.y*0.11, -s.z*0.56-0.016), PAPER, 0.0025)
+	return {"root":root, "mark":signal_mesh, "indicator":signal_material, "rotor":mobile, "pointer":pointer, "slide":slide, "flag":flag, "gauge":gauge, "lever":lever, "span":s.x}

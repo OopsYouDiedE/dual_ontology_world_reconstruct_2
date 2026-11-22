@@ -4,7 +4,7 @@ from collections import Counter
 import json
 from pathlib import Path
 
-from .batch import INVALID
+INVALID = {"UNTELEGRAPHED_DEATH", "RAY_GAP_MISS", "TWITCH_EXECUTION_FAIL", "HIDDEN_MECHANIC_LEAK_OR_CONFLICT"}
 
 
 def compare(base, candidate):
@@ -15,12 +15,22 @@ def compare(base, candidate):
         "RAY_GAP_MISS": "Enlarge the interactive silhouette or add a clear scan position; reject candidate.",
         "TWITCH_EXECUTION_FAIL": "Lengthen the joint phase window or simplify the execution route; reject candidate.",
         "HIDDEN_MECHANIC_LEAK_OR_CONFLICT": "Reconcile the fixture with its whitebox transfer function; reject candidate.",
+        "RULE_DEADLOCK_STALL": "Inspect the cited native/local blockers; verify that visible premises permit a bounded patch.",
+        "EVIDENCE_IMMATURE": "Compare submission tick against the cited frame's maturity boundary.",
+        "WRONG_TARGET_SELECTED": "Compare the selected bay silhouette and the master datum at the cited selection tick.",
+        "NO_PROGRESS_LOOP": "Examine the repeated actions and the last meaningful physical or rule change.",
+        "HAZARD_IGNORED": "Check the visible warning frames and recovery affordance before adjusting the hazard.",
+        "INTERACTION_CONTRACT_MISMATCH": "Inspect actual reach/facing, the reported target, and the published action schema.",
+        "ACTION_SCHEMA_REJECTED": "Check generated actions against the public envelope before changing puzzle difficulty.",
+        "VM_FUEL_CAP_HIT": "Inspect the metered source line and whether a legal anytime candidate survived.",
         "MULTI_AGENT_DEADLOCK": "Check that a safe evidence observation precedes the live multi-station conflict.",
         "TEMPORAL_PHASE_ERROR": "Compare the phase projection, observed reference clock, and available delay schedule.",
         "ACTIVE_SENSING_DEFICIT": "Inspect failed ray sweeps and the probe or comparison affordances.",
         "PSYCH_RISK_COLLAPSE": "Inspect coercion frequency and available low-risk alternatives.",
         "ANYTIME_BUDGET_BOTTLENECK": "Check last valid candidates and reduce redundant state expansion.",
     }
+    if base.get("schema") != candidate.get("schema") or base["runtime"].get("lane") != candidate["runtime"].get("lane"):
+        raise ValueError("paired design comparison requires the same execution lane")
     out = {"paired_seeds":len(base["seeds"]),"config_before":base["config"],"config_after":candidate["config"],
            "validity_before":base["validity"],"validity_after":candidate["validity"],"deltas":{},"diagnostics":[]}
     for name, after in candidate["summary"].items():
@@ -29,7 +39,8 @@ def compare(base, candidate):
             continue
         if name == "sol" and base["roster"][name].get("sha256") != candidate["roster"][name].get("sha256"):
             continue
-        out["deltas"][name] = {k:after[k]-before[k] for k in before if k!="count" and before[k] is not None and after.get(k) is not None}
+        out["deltas"][name] = {k:after[k]-before[k] for k in before if k!="count" and isinstance(before[k], (int,float))
+                              and isinstance(after.get(k), (int,float))}
         paired=[]
         for a,b in zip(base["per_seed"],candidate["per_seed"]):
             x,y=a["results"].get(name),b["results"].get(name)

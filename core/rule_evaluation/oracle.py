@@ -1,6 +1,6 @@
 """Constructive admission proof and replay (not a competing policy)."""
 from copy import deepcopy
-from .physics import DECISION_TICKS, WITNESS_TICKS, digest
+from .physics import TELEGRAPH_TICKS, WITNESS_TICKS, digest
 from .world import World
 
 
@@ -10,8 +10,13 @@ def resolve_witness_packet(world, packet):
     for act in (packet if isinstance(packet, list) else packet.get("actions", [packet])):
         if act.get("type") != "PersuadeWithEvidence" or act.get("evidence_ref") != "last":
             continue
-        ev = next((e for e in reversed(world.evidence) if e["safe"] and world.tick >= e["tick"]+40
-                   and any(c[:2] == [act["agent_id"], act["rule_node_id"]] for c in e["counterexamples"])), None)
+        rule_id, actor = act["rule_node_id"], act["agent_id"]
+        handoff = rule_id in world.room.get("handoffs", {})
+        ev = next((e for e in reversed(world.evidence)
+                   if e["safe"] and world.tick >= e["tick"] + TELEGRAPH_TICKS
+                   and {0, actor}.intersection(e["seen_by"])
+                   and any(c[:2] == [actor, rule_id] for c in e["counterexamples"])
+                   and (not handoff or rule_id in e.get("deductions", {}))), None)
         if ev is None:
             raise ValueError(f"no mature evidence for {act['rule_node_id']}")
         act["evidence_ref"] = ev["id"]

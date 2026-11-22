@@ -19,6 +19,9 @@ class Decision:
     fuel: int
     candidates: int
     exhausted: bool
+    fault: dict | None = None
+    fuel_line: int | None = None
+    rejected: int = 0
 
 
 class Meter:

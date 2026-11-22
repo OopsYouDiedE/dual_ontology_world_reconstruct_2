@@ -1,63 +1,133 @@
 extends RefCounted
-## Hale's local rule projections. An exception narrows the taboo; it does not erase it.
+## Finite hypothesis test over Hale's local sensory frames. The bridge owns the law.
 const PLAYER := [
 	{"when":"light_reddens","do":"look_away","notice":"If the light reddens, look away."},
 	{"when":"gaze_broken","within_ticks":60,"do":"regain_stone","notice":"Off the span within a second of looking away."},
 ]
-const TABOO := {"observe_lit_span":{"not":["lead_already_watching"]}}
-const ORIGINAL := {"deny":["observe_lit_span","step_into_void"],"exception":{}}
-const REVISED := {"deny":["observe_lit_span","step_into_void"],"exception":TABOO}
-const DISTORTED := {"deny":["step_into_void"],"urge":["keep_both_eyes_on_red"]}
+const ORIGINAL := {"hold":"DO_NOT_LOOK","step":"DO_NOT_STEP_INTO_VOID"}
+const DISTORTED := {"hold":"JOIN_VISIBLE_GAZE","step":"DO_NOT_STEP_INTO_VOID"}
+const LOOK_IS_HAZARD := "any_gaze_is_dangerous"
+const JOIN_IS_HAZARD := "joined_gaze_is_dangerous"
+const NO_GAZE_HAZARD := "gaze_is_not_the_hazard"
 const MIN_SOLO := 27
 const MIN_UNINTERRUPTED_SOLO := 84
 const PANIC_LIMIT := 46
-var ast := ORIGINAL
+const HAND_SIGNAL := 13
+const NONE := "UNSEEN"
+var ast: Dictionary = ORIGINAL.duplicate(true)
+var hypotheses: Array[String] = [LOOK_IS_HAZARD, JOIN_IS_HAZARD, NO_GAZE_HAZARD]
 var counterexample := false
 var revised := false
 var panic := 0
 var distorted := false
 var red_witnessed := false
 var solo := 0
+var together := 0
+var apart := 0
+var overlap_seen_on_stone := 0
+
 
 static func player_notice() -> String:
 	return PLAYER[0].notice + "\n" + PLAYER[1].notice
 
-func sample_trial(hale_eye_on_span: bool, lead_eye_on_span: bool) -> String:
-	if hale_eye_on_span and lead_eye_on_span:
-		red_witnessed = true
+
+func _fits(hypothesis: String, head: String, color: String) -> bool:
+	match hypothesis:
+		LOOK_IS_HAZARD: return color == "RED"
+		JOIN_IS_HAZARD: return (head == "TOWARD") == (color == "RED")
+		NO_GAZE_HAZARD: return color == "WHITE"
+	return false
+
+
+func sample_trial(local: Dictionary) -> String:
+	# Only compare an aspect actually seen during my own look and a visible head pose.
+	var color: String = local.get("color", NONE)
+	var head: String = local.get("head", NONE)
+	if local.get("heard_red", false) or color == "RED":
 		panic += 1
 		if not distorted and panic >= PANIC_LIMIT:
 			distorted = true
-			ast = DISTORTED
+			ast = DISTORTED.duplicate(true)
 			return "DISTORTED"
-	solo = solo + 1 if hale_eye_on_span and not lead_eye_on_span and not distorted else 0
-	if solo >= (MIN_SOLO if red_witnessed else MIN_UNINTERRUPTED_SOLO):
-		counterexample = true
-		return "EVIDENCE"
+	if distorted: return ""
+	var both_red := color == "RED" and head == "TOWARD"
+	together = together + 1 if both_red else 0
+	if together == 5:
+		red_witnessed = true
+		_prune(head,color)
+	solo = solo + 1 if color == "WHITE" and head == "AWAY" else 0
+	if not counterexample and solo >= (MIN_SOLO if red_witnessed else MIN_UNINTERRUPTED_SOLO):
+		_prune(head,color)
+		counterexample = LOOK_IS_HAZARD not in hypotheses
+		if counterexample: return "EVIDENCE"
 	return ""
+
+
+func _prune(head: String, color: String) -> void:
+	var surviving: Array[String] = []
+	for h in hypotheses:
+		if _fits(h,head,color): surviving.append(h)
+	# Contradictory or misread signals do not fabricate certainty.
+	if not surviving.is_empty(): hypotheses = surviving
+
 
 func begin_trial() -> void:
 	red_witnessed = false
 	solo = 0
+	together = 0
+	apart = 0
+	overlap_seen_on_stone = 0
+	if not revised:
+		counterexample = false
+		hypotheses.assign([LOOK_IS_HAZARD,JOIN_IS_HAZARD,NO_GAZE_HAZARD])
+
 
 func ground() -> void:
 	panic = 0
 	distorted = false
-	ast = REVISED if revised else ORIGINAL
+	ast = _inferred() if revised else ORIGINAL.duplicate(true)
 	begin_trial()
+
 
 func speak(face_to_face: bool) -> bool:
 	if revised or distorted or not counterexample or not face_to_face: return false
 	revised = true
-	ast = REVISED
+	ast = _inferred()
 	return true
 
-func forbidden(action: String, facts: Dictionary = {}) -> bool:
-	if action not in ast.deny: return false
-	var exception: Dictionary = ast.get("exception",{}).get(action,{})
-	if exception.has("not"):
-		return bool(facts.get(exception["not"][0],true))
-	return true
 
-func urges_overlap() -> bool:
-	return "keep_both_eyes_on_red" in ast.get("urge",[])
+func _inferred() -> Dictionary:
+	# Compile a conservative rule: every surviving explanation must predict white.
+	var safe: Array[String] = []
+	for pose in ["AWAY","TOWARD"]:
+		var unanimous := true
+		for h in hypotheses:
+			if not _fits(h,pose,"WHITE"): unanimous = false
+		if unanimous: safe.append(pose)
+	return {"hold":"MODEL_CHECK_GAZE","step":"DO_NOT_STEP_INTO_VOID","allowed_heads":safe,
+		"supported_hypotheses":hypotheses.duplicate()}
+
+
+func decide(local: Dictionary, action: String) -> String:
+	var head: String = local.get("head", NONE)
+	var bank: String = local.get("bank", NONE)
+	match ast.hold:
+		"DO_NOT_LOOK": return "REFUSE"
+		"JOIN_VISIBLE_GAZE":
+			return "JOIN" if head == "TOWARD" else "SEARCH"
+		"MODEL_CHECK_GAZE":
+			if action == "TAKE": return "TAKE" if bank in ["island","far"] and head in ast.allowed_heads else "WAIT"
+			if action == "GIVE":
+				# Recoil from a known overlap if I can verify my partner is on stone.
+				var safe_to_recoil: bool = bank == "far" and local.get("color",NONE) == "RED"
+				overlap_seen_on_stone = overlap_seen_on_stone+1 if safe_to_recoil else 0
+				if overlap_seen_on_stone >= 9: return "RECOIL"
+				# Don't pull a footing away from someone whose safety I cannot see.
+				apart = apart+1 if bank == "far" and head == "AWAY" else 0
+				if apart >= HAND_SIGNAL: return "GIVE"
+				return "HOLD"
+	return "WAIT"
+
+
+func permits_step(footing: bool) -> bool:
+	return footing or ast.step != "DO_NOT_STEP_INTO_VOID"

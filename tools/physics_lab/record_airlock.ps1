@@ -1,6 +1,6 @@
 param(
-    [string]$Out = '.runtime/physics-lab/l03/single-gaze',
-    [ValidateSet('clear','early','late','panic','death')][string]$Case = 'clear',
+    [string]$Out = '.runtime/physics-lab/l03/local-percepts',
+    [ValidateSet('clear','alternate','blocked','public','recoil','early','late','panic','death')][string]$Case = 'clear',
     [string]$Godot = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
 )
 $ErrorActionPreference = 'Stop'
@@ -9,7 +9,7 @@ try {
     New-Item -ItemType Directory -Force $Out | Out-Null
     $Dest = (Resolve-Path -LiteralPath $Out).Path
     $Raw = Join-Path $Dest "$Case-source.avi"
-    $Name = if ($Case -eq 'clear') { 'L03-One-Pair-of-Eyes.mp4' } else { "L03-$Case.mp4" }
+    $Name = if ($Case -eq 'clear') { 'L03-Blind-Relay.mp4' } else { "L03-$Case.mp4" }
     $MP4 = Join-Path $Dest $Name
     $Log = Join-Path $Dest "$Case-movie.log"
     & $Godot --path . --rendering-method forward_plus --resolution 1280x720 --disable-vsync `
@@ -24,7 +24,8 @@ try {
         'clear' { $State.cleared -and -not $State.failed }
         'early' { $State.failed -eq 'DOUBLE_GAZE' -and $State.red[1] -gt 40 }
         'late' { $State.failed -eq 'FALL' }
-        'panic' { -not $State.distorted -and $State.events.kind -contains 'GROUNDED' }
+        'panic' { $State.cleared -and -not $State.distorted -and $State.events.kind -contains 'GROUNDED' }
+        default { $State.cleared -and -not $State.failed }
         'death' { $State.failed -eq 'DOUBLE_GAZE' -and $State.red[0] -gt 40 }
     }
     if (-not $Expected) { throw "Unexpected result for $Case. See $Log" }

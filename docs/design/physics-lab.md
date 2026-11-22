@@ -36,20 +36,21 @@ $lab = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
 
 正式浏览的 L03 是独立第一人称关卡。`WASD` 步行，鼠标或方向键转头，`Ctrl` 下蹲，`E` 近距离面对面交谈，`R` 重开，`[` / `]` 返回展厅横向浏览。旧的 L03 展台由 `-- --lab-archive-observer` 保留。其余九个展台和正式战役保持原样。
 
-- **桥自身是致死体。** A 的有效面在正上方，B 的有效面是桥构件外伸的侧肋。两位观察者各用眼高的 27 条首命中射线，采样聚光灯照亮且无遮挡的桥面。每段独立计数：一人看稳为冷白；最后一道视线撤出后，在第 60 个零眼采样释放网格与碰撞，跌入暗井会终止本局；同段双视立即红鸣，连续维持 40 个完整预警 tick 后，在下一采样终止。撤一眼会清零红警。跨段各一眼不叠加。几何可见性与坠落用 Godot 光路和重力；凝视切换实体是本关虚构规则。
-- **两份安全口径。** 入口铭牌告知见红撤眼、断视后一秒内离桥；Hale 遇同行仍坚持不看发光桥，也不主动踏入已经消失的桥。面对面可约他在近岸试看。红后撤眼，Hale 可亲自见到稳定冷白；玩家也可以从一开始回避视线，让 Hale 做更长的单眼试探。只观察红、只有玩家看桥、证据不足或远程交谈都不能修改禁令。试探与近身交谈将 AST 缩窄成“同伴未观察该段时才可接管”。
-- **恐慌让证词不可靠。** 近岸反复试探的红警累积到阈值时，Hale 会改口劝玩家维持双视，内部局部 AST 转为错误建议；桥的危险判定不变。在近岸面对面让他冷静可恢复守则，再做试探。这个压力分支不会强迫玩家为了通关而积累恐慌。
-- **需要亲自背对，才能交接同一段桥。** 玩家先稳住 A 送 Hale 到中岛。中岛到远岸，用 B 的侧肋和实体矮梁拆开观察位与通行位。玩家通过后，在远岸对准实体铭刻板，让 Hale 从对面看见玩家且确认玩家已撤眼；他转头并敲出信号，然后跨向 B。玩家等敲击后回头接管。抢看让 B 进入红警，错过窗口会让 Hale 在过桥时失去支撑。交接日志记录 B 的实际零眼间隙，门只在两人都到远岸之后打开。
+- **桥自身是致死体。** A 的有效面朝上，B 的竖向感光肋伸出桥的行走面。每位观察者从眼高发出 27 条首命中射线（水平间隔 15°），有效面必须受对应聚光灯照亮且无遮挡。每段独立计数：一人看稳为冷白；第 60 个零眼采样撤去网格与承重；同段双视立即红鸣，满 40 个完整预警步后再采到双视才致死。光照使用 Godot 灯位、角度、范围与墙／角色遮挡，凝视切换实体属于关内虚构规则。
+- **Hale 的局部信息。** 引擎真值只裁决桥。Hale 读取他实际看得见的桥面状态、可听范围内的红鸣，以及未被墙遮住的同伴头向和脚下支撑。看不见记为未知。近岸自愿试验用三条作者提供的解释比较红与白：「凝视皆危险」「叠加才危险」「凝视与危险无关」。同伴转开后稳定冷白可以排除第一条；叠加时显红还能排除第三条。只做冷白试验的人能安全通过，但 Hale 会保留两条解释。面对面交谈按所有仍成立的解释生成安全许可。
+- **换一个姿态，Hale 的行为会不同。** 原守则拒绝看，修订后他观测到同伴转开才接看；若看到远岸同伴已站稳且桥发红，他会先撤眼再要求重新交接。压力会让他采纳错误策略：重新寻找同伴的头向，再跟着看，真能触发新红警。近岸安抚后可以重新试验并通关。路径移动仍使用场景作者设置的岸线与矮梁路点。
+- **同一段桥的盲眼交接。** 中岛需要 Hale 看见领队背身，才肯接过 B。过桥后，领队在远岸上只要处于 Hale 看得清头向与脚下的位置，就能背向深渊示意；墙面告示只提示动作，不参与判定。高遮板后能从下方看见感光肋，Hale 却看不见你的头；从那里抢看可以致死，转身示意则暂时无效。敲击后两人都不看，墙边反光格随实际失视宽限熄灭。回头太晚，Hale 会失去承重。出口由两具角色的实际到岸触发。
 - **R-05 的正式西装。** `assets/characters/mpfb/r05_formal.glb` 来自「测试 MPFB2」的 `r05_suit.glb`。沿用 Toon、反壳描边、服装底色、肢体动画及头向反馈。
 
 ```powershell
 & $lab --path . --rendering-method forward_plus --resolution 1280x720 res://scenes/physics_lab/airlock/Airlock.tscn
 & $lab --headless --path . -s res://tools/physics_lab/verify_airlock.gd
-& .runtime/python/Scripts/python.exe tools/physics_lab/capture_airlock.py --out .runtime/physics-lab/l03/single-gaze/review/clear
+& $lab --path . --rendering-method forward_plus --windowed --resolution 1280x720 -s res://tools/physics_lab/survey_airlock.gd -- --airlock-audit
+& .runtime/python/Scripts/python.exe tools/physics_lab/capture_airlock.py --out .runtime/physics-lab/l03/local-percepts/acceptance/clear
 & ./tools/physics_lab/record_airlock.ps1
 ```
 
-`Walkthrough.gd` 只发步行、视角、蹲伏和对话输入。`capture_airlock.py --case early|late|panic|death` 和 `record_airlock.ps1 -Case early|late|panic|death` 可复查失败／恢复分支。覆盖长短撤视、红警时间和规则边界的头测与 Forward+ 录像结合使用。当前通关路径是已知解录制，首次游玩的无提示可发现性需独立测试。
+`capture_airlock.py` 与 `record_airlock.ps1` 支持换位置、遮挡、公开信号慢转、早接、晚接、可救撤视和失控后恢复通关。头测扫描三处观测位、眼高、偏移和角度，并在同一 Godot 场景下比较三种 Hale 守则针对相同玩家转向的实际凝视动作。`survey_airlock.gd` 是冻结姿态的渲染对照，包含原审查的 ±1°、开关灯、角色投影和墙体遮挡。所有路线是已知解控制回放；`public` 分支仅在 B 段用屏幕提示和方向键等效速度定时接管，不计为首次无提示通关。
 
 ### 后续展台的规则怪谈约束
 

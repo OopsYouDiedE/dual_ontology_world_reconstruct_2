@@ -36,13 +36,60 @@ func _run() -> void:
 	var opened_eye := Vector3(.72,1.60,.7)
 	check(game._observe(opened_eye,(Room.B_AIM-opened_eye).normalized(),game.lead)[1], "Removing only the baffle reveals B from near; there is no scripted bank exclusion.")
 	for b in blinders: b.collision_layer = Room.WORLD
-	for point in [Room.ISLAND_WATCH,Room.FAR_WATCH]:
+	for point in [Room.ISLAND_WATCH,Room.FAR_WATCH,Room.FAR_SECOND]:
 		var eye: Vector3 = point + Vector3.UP*1.60
 		check(game._observe(eye,(Room.B_AIM-eye).normalized(),game.lead)[1], "Each overlook sees the same B rib directly.")
+	var hits := 0
+	var samples := 0
+	var min_contiguous := 100
+	for point in [Room.ISLAND_WATCH,Room.FAR_WATCH,Room.FAR_SECOND]:
+		for dy in [.92,1.60]:
+			for dx in [-.11,0.0,.11]:
+				var eye: Vector3 = point + Vector3(dx,dy,0)
+				var axis := (Room.B_AIM-eye).normalized()
+				var row := 0
+				for az in range(-8,9):
+					var look := axis.rotated(Vector3.UP,deg_to_rad(az))
+					var hit: bool = game._observe(eye,look,game.lead)[1]
+					samples += 1
+					hits += int(hit)
+					row += int(hit and abs(az) <= 4)
+					if not hit and abs(az) <= 4: print("Overlap miss ",eye," ",az)
+					if abs(az) <= 1: check(hit,"The photographed rib must survive the prior ±1° audit counterexample: %s° at %s" % [az,eye])
+				if row < 9: print("Sweep edge ",eye," -> ",row,"/9")
+				min_contiguous = mini(min_contiguous,row)
+				for pitch in [-3.0,3.0]:
+					var slope := axis.rotated(axis.cross(Vector3.UP).normalized(),deg_to_rad(pitch))
+					check(game._observe(eye,slope,game.lead)[1], "Three-degree vertical adjustment must not lose B at %s." % eye)
+	print("B optical sweep: %s/%s angular samples; worst central +/-4 deg row has %s/9 hits" % [hits,samples,min_contiguous])
+	check(min_contiguous == 9, "B central yaw coverage must stay continuous across stations, head heights and offsets.")
+	var old_eye := Vector3(6.297585,1.600834,-2.628127)
+	var old_axis := (Vector3(3.55,-.245,-2.977)-old_eye).normalized()
+	for az in [-1.0,0.0,1.0]:
+		check(game._observe(old_eye,old_axis.rotated(Vector3.UP,deg_to_rad(az)),game.lead)[1], "Astra's exact historical ±1° pose must still see B in the replacement geometry.")
 	for x in [1.65,2.10,3.30,4.50,5.55]:
-		for z in [-4.26,-3.88,-3.12]:
+		for z in [-4.26,-3.88,-3.40]:
 			var eye := Vector3(x,1.60,z)
-			check(not game._observe(eye,(Room.B_AIM-eye).normalized(),game.lead)[1], "Walking the B deck cannot replace its lateral observer.")
+			check(not game._observe(eye,(Room.B_AIM-eye).normalized(),game.lead)[1], "An eye above actual B walking surface cannot replace the lateral observer.")
+	var aperture := Room.FAR_HIDDEN+Vector3.UP*1.60
+	check(game._observe(aperture,(Room.B_AIM-aperture).normalized(),game.lead)[1], "Standing behind the high shutter sees down to the rib.")
+	var lane_eye := Room.ISLAND_WATCH+Vector3.UP*1.60
+	var no_exclusions: Array[RID] = []
+	var hidden_head: Dictionary = game._ray(lane_eye,aperture,Room.WORLD,no_exclusions)
+	check(not hidden_head.is_empty() and hidden_head.collider.get_meta("surface") == "head_shutter", "The same shutter blocks Hale's head-level line; this is not a 2D test.")
+	for zone in [Room.FAR_WATCH,Room.FAR_SECOND]:
+		check(game._ray(lane_eye,zone+Vector3.UP*1.60,Room.WORLD,no_exclusions).is_empty(), "Both alternate dry-bank positions expose a visible signal.")
+	var lamp: SpotLight3D = game.room.spans[1].lamp
+	var sample := Room.B_AIM
+	check(game._lit(lamp,sample), "The dedicated B light illuminates the rib with no blocker.")
+	game.lead.position = sample.lerp(lamp.position,.36)-Vector3.UP*.85
+	await physics_frame
+	await process_frame
+	check(not game._lit(lamp,sample), "A real actor standing in the light ray blocks the licensed facet.")
+	game.lead.position = Room.LEAD_HOME
+	await physics_frame
+	await process_frame
+	check(game._lit(lamp,sample), "Removing the physical shadow restores the illuminated facet.")
 	var start := Transform3D(Basis.IDENTITY,Vector3(.58,.007,Room.B_LANE))
 	var contact := KinematicCollision3D.new()
 	check(game.lead.test_move(start,Vector3(.76,0,0),contact) and contact.get_collider().get_meta("surface") == "low_lintel", "Standing capsule hits the lintel.")
@@ -56,31 +103,47 @@ func _run() -> void:
 		check(span.surface.mesh.size == span.solid.get_child(0).shape.size, "Live deck dimensions agree.")
 		game.room.paint(i,false,0)
 		check(not span.surface.visible and span.solid.collision_layer == 0, "Collapsed deck has only optical echoes.")
+	var untouched := Rules.new()
+	var careful := Rules.new()
 	var isolated := Rules.new()
-	check(isolated.forbidden("observe_lit_span",{"lead_already_watching":false}), "Hale holds the initial taboo even while the lead looks away.")
-	for i in range(120): isolated.sample_trial(false,true)
-	check(not isolated.speak(true), "The lead's solo evidence cannot describe what Hale perceived.")
-	for i in range(15): isolated.sample_trial(true,true)
+	var far_away := {"head":"AWAY","bank":"far","color":"WHITE"}
+	var far_toward := {"head":"TOWARD","bank":"far","color":"RED"}
+	var alone := {"head":"AWAY","bank":"near","color":"WHITE"}
+	var conflict := {"head":"TOWARD","bank":"near","color":"RED"}
+	var hidden := {"head":Rules.NONE,"bank":Rules.NONE,"color":"WHITE"}
+	for i in range(120): isolated.sample_trial(hidden)
+	check(not isolated.speak(true), "Unseen head direction is not counterexample evidence.")
+	for i in range(15): isolated.sample_trial(conflict)
 	check(not isolated.speak(true), "A red flare alone confirms danger but cannot narrow the taboo.")
-	for i in range(Rules.MIN_SOLO-1): isolated.sample_trial(true,false)
+	for i in range(Rules.MIN_SOLO-1): isolated.sample_trial(alone)
 	check(not isolated.counterexample, "A transient white flash does not suffice.")
-	check(isolated.sample_trial(true,false) == "EVIDENCE", "Hale sees the sustained one-eye boundary after red.")
+	check(isolated.sample_trial(alone) == "EVIDENCE", "Hale sees the sustained one-eye boundary after red.")
 	check(not isolated.speak(false), "Evidence grants no remote conversation.")
-	check(isolated.speak(true), "Face-to-face conversation narrows the taboo.")
-	check(not isolated.forbidden("observe_lit_span",{"lead_already_watching":false}), "Solo ownership is allowed.")
-	check(isolated.forbidden("observe_lit_span",{"lead_already_watching":true}), "Overlapping ownership stays forbidden.")
-	check(isolated.forbidden("observe_lit_span") and isolated.forbidden("step_into_void"), "The exception fails closed and the void taboo survives.")
-	var cautious := Rules.new()
-	for i in range(Rules.MIN_UNINTERRUPTED_SOLO-1): cautious.sample_trial(true,false)
-	check(not cautious.counterexample, "Without a contrast Hale takes longer to trust the stationary result.")
-	check(cautious.sample_trial(true,false) == "EVIDENCE", "A careful player can also establish the exception without provoking red.")
+	check(isolated.speak(true) and isolated.hypotheses == [Rules.JOIN_IS_HAZARD], "Contrasting observations refute both rival explanations.")
+	check(isolated.ast.allowed_heads == ["AWAY"] and not isolated.permits_step(false), "The generated exception fails closed and retains the void taboo.")
+	for i in range(Rules.MIN_UNINTERRUPTED_SOLO-1): careful.sample_trial(alone)
+	check(not careful.counterexample, "Without a contrast Hale takes longer to trust the stationary result.")
+	check(careful.sample_trial(alone) == "EVIDENCE" and careful.speak(true), "A cautious player proves the solo boundary without provoking red.")
+	check(careful.hypotheses == [Rules.JOIN_IS_HAZARD,Rules.NO_GAZE_HAZARD] and careful.ast.allowed_heads == ["AWAY"], "Solo evidence leaves genuine uncertainty; an untested overlap is not approved.")
 	var panic := Rules.new()
-	for i in range(23): panic.sample_trial(true,true)
-	panic.sample_trial(true,false)
-	for i in range(23): panic.sample_trial(true,true)
-	check(panic.distorted and panic.urges_overlap() and not panic.speak(true), "Separate survivable flares can corrupt advice without granting valid evidence.")
+	for i in range(23): panic.sample_trial(conflict)
+	panic.sample_trial(alone)
+	for i in range(23): panic.sample_trial(conflict)
+	check(panic.distorted and not panic.speak(true), "Separate survivable flares can corrupt behaviour without granting valid evidence.")
+	# One identical percept trace fed to each controller, no internal bridge state supplied.
+	var trial_actions := []
+	for mind in [untouched,isolated,panic]:
+		var choice: String
+		for i in range(Rules.HAND_SIGNAL): choice = mind.decide(far_away,"GIVE")
+		var away_choice := choice
+		for i in range(9): choice = mind.decide(far_toward,"GIVE")
+		trial_actions.append([away_choice,choice])
+	check(trial_actions == [["REFUSE","REFUSE"],["GIVE","RECOIL"],["SEARCH","JOIN"]], "Identical public observations must cause three distinct decisions and only the distorted policy joins red.")
+	print("Same percept stream / initial, revised, distorted: ",trial_actions)
+	for i in range(Rules.HAND_SIGNAL+6):
+		check(isolated.decide(hidden,"GIVE") == "HOLD", "Lost line of sight stalls the transfer on the same bridge.")
 	panic.ground()
-	check(not panic.distorted and panic.panic == 0 and panic.forbidden("observe_lit_span"), "Grounding restores the known safety rule.")
+	check(not panic.distorted and panic.panic == 0 and panic.decide(far_toward,"TAKE") == "REFUSE", "Grounding restores the known safety rule.")
 	var span := Span.new()
 	span.step(1)
 	for i in range(59): span.step(0)
@@ -105,7 +168,7 @@ func _run() -> void:
 	game._simulate(Vector2.ZERO,Vector2.ZERO,false,false)
 	check(not game.deck[1] and not game.room.spans[1].surface.visible and game.room.spans[1].solid.collision_layer == 0,
 		"On sample 60 the B mesh and collision release together.")
-	for i in range(66): game._simulate(Vector2.ZERO,Vector2.ZERO,false,false)
+	for i in range(100): game._simulate(Vector2.ZERO,Vector2.ZERO,false,false)
 	check(game.failed == "FALL" and game.lead.position.y < -2.46 and not game.cleared, "Loss of support has a terminal fall after gravity does its work.")
 	game._reset()
 	check(game.failed.is_empty() and game.role == "NEAR" and game.deck == [false,false], "Restart restores a live initial room.")
@@ -113,8 +176,44 @@ func _run() -> void:
 	for i in range(40):
 		check(game._tick_spans(), "Red must remain survivable throughout all 40 warning steps.")
 	check(not game._tick_spans() and game.failed == "DOUBLE_GAZE", "The next overlapping sample kills, even on the near bank.")
-	for message in failures: printerr(message)
-	print("Airlock optical, geometric, AST, panic, and lethal timing counterfactuals: %d failures" % failures.size())
 	game.queue_free()
 	await process_frame
+	await _same_inputs([Rules.new(), isolated, _distorted_mind()])
+	for message in failures: printerr(message)
+	print("Airlock optical, geometric, AST, panic, and lethal timing counterfactuals: %d failures" % failures.size())
 	quit(0 if failures.is_empty() else 1)
+
+
+func _distorted_mind() -> Rules:
+	var mind := Rules.new()
+	var flare := {"color":"RED","head":"TOWARD","bank":"near"}
+	for i in range(23): mind.sample_trial(flare)
+	mind.sample_trial({"color":"WHITE","head":"AWAY","bank":"near"})
+	for i in range(23): mind.sample_trial(flare)
+	return mind
+
+
+func _same_inputs(minds: Array) -> void:
+	var rows := []
+	for mind: Rules in minds:
+		var world := Scene.instantiate()
+		root.add_child(world)
+		world.set_physics_process(false)
+		world.role = "WAIT_B"
+		world.rule = mind
+		world.hale.position = Room.ISLAND_WATCH
+		world.lead.position = Vector3(-.18,0,-3.48)
+		world._turn_hale(Vector3(.21,1.45,-3.88))
+		world.yaw = PI/2.0
+		world.pitch = .0
+		await physics_frame
+		await process_frame
+		for i in range(25): world._simulate(Vector2.ZERO,Vector2.ZERO,false,false)
+		var gaze_away: bool = world.witness[1][1]
+		for i in range(25): world._simulate(Vector2.ZERO,Vector2(-PI/15.0,0) if i < 15 else Vector2.ZERO,false,false)
+		rows.append([gaze_away,world.witness[1][1],world.role])
+		world.queue_free()
+		await process_frame
+	print("Same real scene + player turn / initial, revised, distorted: ",rows)
+	check(rows == [[false,false,"WAIT_B"],[true,true,"WATCH_B"],[false,true,"WATCH_B"]],
+		"Policy revisions must yield three actual gaze patterns under identical inputs in Godot.")

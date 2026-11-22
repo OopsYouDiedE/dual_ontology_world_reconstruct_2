@@ -10,10 +10,14 @@ const LEAD_HOME := Vector3(-.18, 0, 3.31)
 const HALE_HOME := Vector3(1.03, 0, 1.16)
 const ISLAND_WATCH := Vector3(.93, 0, -2.79)
 const FAR_WATCH := Vector3(6.30, 0, -2.61)
-const FAR_MARK := Vector3(6.30, 1.56, -2.18)
+const FAR_MARK := Vector3(6.30, 1.67, -2.18)
+const FAR_SECOND := Vector3(6.80,0,-2.49)
+const FAR_HIDDEN := Vector3(6.42,0,-3.02)
 const B_LANE := -3.87
 const A_AIM := Vector3(0, .006, -1.55)
-const B_AIM := Vector3(3.55, -.245, -2.977)
+const B_AIM := Vector3(3.55, -.68, -3.218)
+const B_RIB := Vector3(3.56,-.90,-3.27)
+const B_RIB_SIZE := Vector3(4.72,1.74,.104)
 const B_END := 5.84
 const STONE := Color("898984")
 const PALE := Color("c4c3b8")
@@ -29,6 +33,7 @@ var lintel: MeshInstance3D
 var gate_lamp: StandardMaterial3D
 var gateside: Node3D
 var entry_notice: Label3D
+var relay_marks: Array[StandardMaterial3D] = []
 
 
 func make(parent: Node3D) -> void:
@@ -40,7 +45,7 @@ func make(parent: Node3D) -> void:
 	_solid(Vector3(.20,-.135,-3.75), Vector3(2.18,.27,2.31), STONE, "island")
 	_solid(Vector3(6.90,-.135,-3.66), Vector3(2.18,.27,3.02), STONE, "far")
 	# Tall black baffle across the near bank's view of the second span.
-	_solid(Vector3(3.05,1.25,-2.25), Vector3(4.98,3.36,.22), DARK, "blind_wall")
+	_solid(Vector3(2.99,.63,-2.25), Vector3(5.34,4.60,.22), DARK, "blind_wall")
 	for x in [.61,1.8,3.06,4.32,5.49]:
 		kit.box(Vector3(x,1.41,-2.12), Vector3(.024,2.95,.04), SEAM)
 	_solid(Vector3(.86,1.25,-2.25), Vector3(.57,3.30,.28), Color("45474b"), "blind_pier")
@@ -56,12 +61,22 @@ func make(parent: Node3D) -> void:
 	_solid(Vector3(3.2,1.15,-5.45), Vector3(10.45,6.5,.25), Color("303139"), "north_well")
 	_solid(Vector3(8.18,1.12,-3.70), Vector3(.25,6.15,4.84), DARK, "end_wall")
 	_solid(Vector3(6.90,.24,-2.13), Vector3(2.22,.48,.16), DARK, "far_rail")
-	_solid(Vector3(6.30,1.2,-2.105),Vector3(.82,1.49,.12),DARK,"blind_marker")
+	_solid(Vector3(6.30,1.2,-2.105),Vector3(.82,1.49,.12),DARK,"relay_screen")
 	var bar := kit.box(FAR_MARK+Vector3.DOWN*.21,Vector3(.49,.026,.025),PALE)
 	bar.material_override = luminous(Color("a7b5b9"),.65)
-	var prayer := kit.label("FACE THE WALL\nUNTIL THE KNOCK",FAR_MARK,.078)
+	var prayer := kit.label("SHOW HIM YOUR BACK.\nTURN AT THE KNOCK.",FAR_MARK,.078)
 	prayer.rotation.y = PI
 	prayer.modulate = Color("dddcd2")
+	# A high shutter clips only the head-height sightline. The optical rib is still visible below it.
+	_solid(Vector3(5.97,2.34,-3.10),Vector3(.17,1.78,.46),DARK,"head_shutter")
+	# Reflected signal from the side rib, repeated along the back wall.
+	kit.box(Vector3(6.59,1.48,-2.115),Vector3(1.63,.102,.12),SEAM)
+	for x in [6.28,6.88]:
+		for i in range(6):
+			var trace := kit.box(Vector3(x+(i-2.5)*.076,1.48,-2.184),Vector3(.054,.044,.022),COLD)
+			var mat := luminous(Color("8e9692"),.12)
+			trace.material_override = mat
+			relay_marks.append(mat)
 	_solid(Vector3(-.86,.23,-3.79), Vector3(.13,.46,2.17), SEAM, "island_rail")
 	_solid(Vector3(.21,.22,-4.81), Vector3(2.15,.44,.14), DARK, "island_back")
 	for z in [3.60, 2.71, 1.82, .93, .06]:
@@ -74,15 +89,17 @@ func make(parent: Node3D) -> void:
 			kit.box(p+Vector3(.11*k,.006,0), Vector3(.038,.012,.35), Color("d5d3be"))
 	make_span(Vector3(0,-.115,-1.29), Vector3(1.43,.23,2.70), Vector3.ZERO, Vector3.ZERO)
 	make_span(Vector3(3.56,-.115,B_LANE), Vector3(4.56,.23,1.19),
-		Vector3(3.56,-.241,-3.018), Vector3(4.48,.32,.075))
+		B_RIB, B_RIB_SIZE)
 	_gate()
 	spans[0]["lamp"] = spot(Vector3(-.13,4.0,-.95), Vector3(0,0,-1.36), Color("c4d8e7"), 4.4, 30)
+	spot(Vector3(1.54,2.1,-2.53),Vector3(.88,1.53,-2.94),Color("a6b8bf"),.87,31)
 	spot(Vector3(1.1,3.58,-4.04), Vector3(.42,0,-3.67), Color("d8d9d1"), 2.45, 32)
-	spans[1]["lamp"] = spot(Vector3(3.55,3.65,-2.59), Vector3(3.55,-.21,-3.45), Color("b1cbd2"), 3.6, 36)
+	spans[1]["lamp"] = spot(Vector3(3.55,3.65,-2.59), B_AIM, Color("b1cbd2"), 4.2, 40)
 	spot(Vector3(1.0,2.84,2.08), Vector3(.77,.6,1.30), Color("dbcdba"), 2.05, 37)
 	spot(Vector3(6.47,3.8,-3.26), Vector3(7.33,.84,-3.91), Color("d4d3c4"), 3.70, 33)
 	spot(Vector3(1.32,2.64,.16), Vector3(.99,.95,1.24), Color("b9c7d5"), .94, 37)
 	spot(Vector3(-1.05,2.82,1.83), Vector3(-1.73,1.82,.74), Color("bbc6d0"), .96, 39)
+	spot(Vector3(3.02,2.62,-4.22),Vector3(1.94,1.55,-3.87),Color("b8c7ca"),2.02,38)
 	spot(Vector3(4.29,2.66,-4.55), Vector3(3.44,1.01,-5.26), Color("879aa7"), .77, 44)
 	_architecture()
 	kit.box(Vector3(-1.605,1.49,.62),Vector3(.052,.42,1.68),SEAM)
@@ -155,18 +172,21 @@ func make_span(at: Vector3, size: Vector3, rib_at: Vector3, rib_size: Vector3) -
 			trace.material_override = line_mat
 	if idx == 1:
 		for i in range(10):
-			kit.box(Vector3(1.47 + i*.47,-.10,-3.10), Vector3(.065,.18,.39), SEAM, frame)
-		var guide := kit.box(rib_at, Vector3(rib_size.x,.018,.024),COLD,ghost)
-		guide.material_override = line_mat
-	var steel := luminous(Color("9eafb0"), .57)
+			kit.box(Vector3(1.47 + i*.47,-.158,-3.256), Vector3(.065,.18,.13), SEAM, frame)
+		# The residual trace never resembles a walkable tread; it marks the optical face itself.
+		for h in [-.77,-.02,.77]:
+			var guide := kit.box(rib_at+Vector3(0,h,rib_size.z*.52), Vector3(rib_size.x,.021,.024),COLD,ghost)
+			guide.material_override = line_mat
+	var steel := kit.mat(Color("9eafb0"))
 	var warm := luminous(Color("c1ac93"), 1.05)
 	spans.append({"solid":solid,"optic":optical,"surface":mesh,"rib":rib,"frame":frame,"ghost":ghost,
-		"clear":steel,"warn":warm,"red":luminous(Color("8f0d18"),.63),"red_accent":luminous(Color("d71b21"),.84),"focus":A_AIM if idx==0 else B_AIM,"normal":Vector3.UP if idx==0 else Vector3.BACK})
+		"clear":steel,"warn":warm,"aspect":"DARK","red":luminous(Color("72151a"),.44),"red_accent":luminous(Color("d71b21"),.84),"focus":A_AIM if idx==0 else B_AIM,"normal":Vector3.UP if idx==0 else Vector3.BACK})
 	paint(idx, false, 0)
 
 
-func paint(i: int, solid_now: bool, warning_age: int, red_age := 0) -> void:
+func paint(i: int, solid_now: bool, warning_age: int, red_age := 0, qualified := true) -> void:
 	var s := spans[i]
+	s.aspect = "RED" if red_age > 0 else ("FADE" if warning_age > 0 and solid_now else ("WHITE" if solid_now and qualified else "DARK"))
 	s.solid.collision_layer = DECK if solid_now else 0
 	s.surface.visible = solid_now
 	s.frame.visible = solid_now
@@ -178,14 +198,22 @@ func paint(i: int, solid_now: bool, warning_age: int, red_age := 0) -> void:
 		for seam in s.frame.get_children():
 			seam.rotation.y = .14*sin(float(red_age)*.39+seam.position.length_squared())
 			seam.material_override = s.red_accent
-		s.surface.material_override = s.red
-		s.rib.material_override = s.red_accent
+		s.surface.material_override = s.red if i == 0 else kit.mat(PALE)
+		if i == 1: s.rib.material_override = s.red
 	else:
 		for seam in s.frame.get_children():
 			seam.rotation.y = 0.0
 			seam.material_override = kit.mat(SEAM)
 		s.surface.material_override = s.warn if flash else (s.clear if i == 0 else kit.mat(PALE))
-		s.rib.material_override = s.warn if flash else s.clear
+		s.rib.material_override = s.warn if flash else (s.clear if qualified else kit.mat(DARK))
+
+
+func paint_relay(dark: int, red: bool) -> void:
+	for i in range(relay_marks.size()):
+		var mark := relay_marks[i]
+		var lit := dark < (i%6+1)*10
+		mark.emission = Color("a04642") if red else (Color("b9a694") if dark > 0 else Color("9eafb0"))
+		mark.emission_energy_multiplier = (1.12 if dark > 0 else .28) if lit else .025
 
 
 func spot(from: Vector3, toward: Vector3, color: Color, energy: float, angle: float) -> SpotLight3D:

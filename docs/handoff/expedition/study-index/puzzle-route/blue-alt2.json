@@ -1,0 +1,56 @@
+[
+  {
+    "video": "https://video.fastly.steamstatic.com/store_trailers/1569580/798984/4369b27e544e40953095b197bd6d33ed90fd72d6/1748585178/hls_264_master.m3u8?t=1739897457",
+    "page": "https://store.steampowered.com/app/1569580/?l=english",
+    "id": "blue-alt2",
+    "frames": [
+      [
+        5,
+        "blue-alt2-05.jpg"
+      ],
+      [
+        10,
+        "blue-alt2-10.jpg"
+      ],
+      [
+        15,
+        "blue-alt2-15.jpg"
+      ],
+      [
+        20,
+        "blue-alt2-20.jpg"
+      ],
+      [
+        25,
+        "blue-alt2-25.jpg"
+      ],
+      [
+        30,
+        "blue-alt2-30.jpg"
+      ],
+      [
+        36,
+        "blue-alt2-36.jpg"
+      ],
+      [
+        42,
+        "blue-alt2-42.jpg"
+      ],
+      [
+        48,
+        "blue-alt2-48.jpg"
+      ],
+      [
+        54,
+        "blue-alt2-54.jpg"
+      ],
+      [
+        60,
+        "blue-alt2-60.jpg"
+      ]
+    ],
+    "initial_error": null,
+    "issues": [],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/1569580/798984/4369b27e544e40953095b197bd6d33ed90fd72d6/1748585178/hls_264_3_video.m3u8"
+  }
+]

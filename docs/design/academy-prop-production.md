@@ -1,5 +1,7 @@
 # 学院建筑与物件：资产生产清单
 
+> 历史资产候选与分流方案。当前制作入口见 [出征工作流](../handoff/expedition/README.md)。
+
 执行入口：ArchBuilder → Props → Open Component Library。`tools/building_construction/catalog.json` 用现有组件 ID 登记生产路径，选中条目时显示路径，悬停可查看当前视觉来源。`mount` 保留安装方向和支撑语义；`production_route` 决定造型工具。新资产通过验收后，再接到对应的现有 ID、GUID 或机关宿主。
 
 | 路径 | 制作范围 | 当前收口 |

@@ -1,0 +1,99 @@
+[
+  {
+    "id": "ins-1",
+    "page": "https://store.steampowered.com/app/1092790/?l=english",
+    "video": "https://video.fastly.steamstatic.com/store_trailers/1092790/302287/ab0d21c6b888e99deba7fb8ca48e0f34ebba0332/1750618102/hls_264_master.m3u8?t=1597161792",
+    "frames": [
+      [
+        3,
+        "ins-1-03.jpg"
+      ],
+      [
+        8,
+        "ins-1-08.jpg"
+      ],
+      [
+        13,
+        "ins-1-13.jpg"
+      ],
+      [
+        18,
+        "ins-1-18.jpg"
+      ],
+      [
+        23,
+        "ins-1-23.jpg"
+      ],
+      [
+        28,
+        "ins-1-28.jpg"
+      ],
+      [
+        35,
+        "ins-1-35.jpg"
+      ],
+      [
+        42,
+        "ins-1-42.jpg"
+      ]
+    ],
+    "initial_error": "Command '['ffmpeg', '-y', '-nostdin', '-loglevel', 'error', '-rw_timeout', '12000000', '-i', 'https://video.fastly.steamstatic.com/store_trailers/1092790/302287/ab0d21c6b888e99deba7fb8ca48e0f34ebba0332/1750618102/hls_264_master.m3u8?t=1597161792', '-t', '55', '-map', '0:v:0', '-c', 'copy', 'ins-1.mp4']' timed out after 75.0 seconds",
+    "issues": [
+      "49s: IncompleteRead(764928 bytes read, 84909 more expected)"
+    ],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/1092790/302287/ab0d21c6b888e99deba7fb8ca48e0f34ebba0332/1750618102/hls_264_1_video.m3u8"
+  },
+  {
+    "id": "ins-2",
+    "page": "https://store.steampowered.com/app/1092790/?l=english",
+    "video": "https://video.fastly.steamstatic.com/store_trailers/1092790/403882/734d67fdb26f3a44d766eea69eb1354b5cc4e984/1750618115/hls_264_master.m3u8?t=1711536013",
+    "frames": [
+      [
+        3,
+        "ins-2-03.jpg"
+      ],
+      [
+        8,
+        "ins-2-08.jpg"
+      ],
+      [
+        13,
+        "ins-2-13.jpg"
+      ],
+      [
+        18,
+        "ins-2-18.jpg"
+      ],
+      [
+        23,
+        "ins-2-23.jpg"
+      ],
+      [
+        28,
+        "ins-2-28.jpg"
+      ],
+      [
+        35,
+        "ins-2-35.jpg"
+      ],
+      [
+        42,
+        "ins-2-42.jpg"
+      ],
+      [
+        49,
+        "ins-2-49.jpg"
+      ]
+    ],
+    "size": [
+      1920,
+      1080
+    ],
+    "duration": 55.033333,
+    "initial_error": null,
+    "issues": [
+      "The read operation timed out"
+    ],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/1092790/403882/734d67fdb26f3a44d766eea69eb1354b5cc4e984/1750618115/hls_264_1_video.m3u8"
+  }
+]

@@ -4,6 +4,7 @@ const Main := preload("res://scenes/rogue/Run.tscn")
 const Rules := preload("res://scenes/rogue_crossing/Crossing.gd")
 const Cast := preload("res://scenes/rogue_crossing/Roster.gd")
 var errors: Array[String] = []
+var completed_routes := 0
 
 func _initialize() -> void: call_deferred("_test")
 
@@ -65,21 +66,6 @@ func _logic() -> void:
 		expect(ResourceLoader.exists("res://assets/characters/UserModels/model_%02d.glb" % n), "restored model %d" % n)
 	expect(all_models.size() == 17, "discrete original character meshes")
 
-func _path(house: RefCounted, start: String, to: String) -> Array[String]:
-	var q: Array[String] = [start]
-	var parent := {start:""}
-	for i in 80:
-		if i >= q.size(): break
-		for next in house.exits(q[i]):
-			if parent.has(next): continue
-			parent[next] = q[i]
-			q.append(next)
-	var result: Array[String] = []
-	while to != start and parent.has(to):
-		result.push_front(to)
-		to = parent[to]
-	return result
-
 func _activate(game: Node, predicate: Callable) -> bool:
 	var rv: Control = game.room_view
 	for t: Dictionary in rv._targets:
@@ -93,47 +79,50 @@ func _activate(game: Node, predicate: Callable) -> bool:
 
 func _route(game: Node, seed: int, explore: bool) -> void:
 	game.new_run(seed)
-	var path := _path(game.house, game.current, game.house.goal_room())
-	var schedule := [game.current] + path
-	for cell: String in schedule:
-		if cell != game.current:
-			var index: int = game.destinations.find(cell)
-			if not expect(index >= 0, "route step %s -> %s" % [game.current, cell]): return
-			if not await _activate(game, func(t): return t.kind == "exit" and t.index == index): return
-		var r: RefCounted = game._room()
-		expect(not game.room_view._navigation.visible, "watch does not offer remote travel")
-		expect(game.room_view._route_hardware.size() == game.house.exits(game.current).size(), "a modeled latch for every graph edge")
-		if not game.room_view._route_hardware.is_empty():
-			var apparatus: Dictionary = game.room_view._route_hardware[0]
-			await physics_frame
-			expect(not apparatus.blocker.disabled and not game.room_view.routes_released, "doors physically sealed until crossing succeeds")
-		if r.stage == "hall":
-			expect(game.party.size() == game.house.recruit_rooms().size() and game.party.size() in [1,2], "meet all seeded survivors before the Hall")
-			expect(game.camp_actors != null and game.camp_actors.actors.size() == 16, "all 16 residents retain their own models in Hall")
-			if explore:
-				for name: String in ["Quer", "Ada"]:
-					if await _activate(game, func(t): return t.kind == "witness" and t.id == name): game._close()
-		if explore or r.stage == "intake":
-			if not await _activate(game, func(t): return t.kind == "crossing" and t.index == 0): return
+	expect(game.phase == "camp" and game.camp_actors.actors.size() == 16, "native camp and original residents")
+	if explore:
+		if await _activate(game, func(t): return t.kind == "witness" and t.id == "Ada"):
+			game._hall_recruit("Ada")
+			game._deploy("Ada")
 			game._close()
-		var plan: Array = plans(r.stage, r.variant)[1 if not explore else 0]
-		if r.stage == "relay" and not explore: plan = plans(r.stage, r.variant)[0]
-		if r.stage == "hall": plan = plans(r.stage, r.variant)[1 if explore else 0]
-		if r.stage == "relay" and explore:
-			expect(game._can_agree(), "witnessed route unlocks genuine agreement after the Hall")
-			plan = [[1, "agree"], [1,"mute"],[1,"common"]]
+			expect(game.party.has("Ada"), "camp companion deployed")
+	for i in 9:
+		if game.phase == "won": break
+		var step_index := 0
+		if game.current == "turntable" and explore and not game.recalled:
+			step_index = game.destinations.find("camp")
+		if not expect(step_index >= 0,"return or onward available"): return
+		var bag: Dictionary = game.pack.duplicate()
+		if not await _activate(game, func(t): return t.kind == "exit" and t.index == step_index): return
+		if game.current == "camp":
+			expect(game.recalled and game.pack==bag and Array(game.destinations)==["turntable"],"resume without reroll")
+			continue
+		if game.current == "turntable" and game.recalled:
+			expect(not "camp" in game.destinations and game.pack==bag,"no repeat recall or loot")
+			continue
+		expect(game.destinations.is_empty() and not game.room_view.routes_released,"unresolved room is sealed")
+		var r: RefCounted = game._room()
+		var plan: Array = plans(r.stage,r.variant)[0]
+		var tool: String = "felt" if game.pack.felt>0 else "ratchet"
+		if r.stage=="meridian" and game.pack[tool]>0:
+			plan = [[1,"felt"],[1,"seal"]] if tool=="felt" else [[0,"docket"],[2,"ratchet"],[2,"wind"]]
 		for step: Array in plan:
 			if not await _activate(game, func(t): return t.kind == "crossing" and t.index == step[0]): return
-			game._act(game.current, step[0], step[1])
+			game._act(game.current,step[0],step[1])
 			while game._performing: await process_frame
-		if not expect(game.cleared.has(cell) and game.hp == 9, "room cleared safely: %s/%s — %s" % [seed,r.stage,game.message]): return
-	expect(game.phase == "won" and game.moves == 10, "all ten thresholds before dawn")
+		if not expect(game.cleared.has(game.current) and game.hp == 9, "safe solve: %d/%s" % [seed,r.stage]): return
+	if expect(game.phase=="won" and game.moves==(7 if explore else 5),"onward or recall path to dawn"):
+		completed_routes += 1
 
 func _test() -> void:
 	_logic()
 	var game := Main.instantiate()
 	root.add_child(game)
 	for seed in [1, 2, 25]: await _route(game, seed, seed != 2)
+	expect(completed_routes == 3, "all three campaigns must reach the bell")
+	game.queue_free()
+	await process_frame
+	await process_frame
 	for reason in errors: push_error(reason)
-	if errors.is_empty(): print("Night watch passed: 11 encounters, both variants, two routes per room, disagreements, original cast, Hall and dawn.")
+	if errors.is_empty(): print("Expedition integration passed: camp, recruitment, physical doors, three expeditions, optional single return, inventory and bell.")
 	quit(0 if errors.is_empty() else 1)

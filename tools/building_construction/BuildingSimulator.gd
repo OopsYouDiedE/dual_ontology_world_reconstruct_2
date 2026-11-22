@@ -5,7 +5,7 @@ const RoomPlan = preload("RoomPlan.gd")
 const Space = preload("res://scenes/components/life/BuildingSpace.gd")
 const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
 const Geo = preload("BuildingConstruction/Shared/ArchitectGeometry.gd")
-const Wall = preload("BuildingConstruction/Walls/WallPathGeometry.gd")
+const Wall = preload("production/line/WallPathGeometry.gd")
 const Floor = preload("BuildingConstruction/Floors/ArchitectFloor.gd")
 const Stair = preload("BuildingConstruction/Stairs/ArchitectStair.gd")
 const Railing = preload("BuildingConstruction/Railings/ArchitectRailing.gd")
@@ -379,7 +379,7 @@ func _make_ui() -> void:
 	component_list.custom_minimum_size.y = 150
 	component_list.item_selected.connect(func(index):
 		prop_entry = component_list.get_item_metadata(index)
-		prop_params = prop_entry.get("defaults",{}).duplicate(true))
+		prop_params = Components.parameter_defaults(prop_entry))
 	props.add_child(component_list)
 	refresh_component_list()
 	# Original web furniture remains the default selection.
@@ -674,9 +674,13 @@ func rebuild() -> void:
 
 func build_prop(item: Dictionary) -> Node3D:
 	if item.get("path","")!="":
-		var node = Components.create(str(item.path))
+		var entry := {"path": item.path}
+		for candidate in catalog.get("items", []):
+			if candidate.path == item.path:
+				entry = candidate
+				break
+		var node := Components.create_entry(entry, item.params)
 		if node == null: return null
-		for key in item.params: node.set(key,item.params[key])
 		node.position = Vector3(item.x,item.get("y",0),item.z)
 		node.rotation.y = deg_to_rad(item.get("yaw",0))
 		return node
@@ -968,7 +972,7 @@ func fill_parameters(parent: Node) -> void:
 			if item.kind=="native_recipe":
 				var defaults = {}
 				for entry in catalog.items:
-					if entry.path==item.get("path",""): defaults = entry.get("defaults",{}); break
+					if entry.path==item.get("path",""): defaults = Components.parameter_defaults(entry); break
 				for key in defaults:
 					var value = item.params.get(key,defaults[key])
 					if value is float or value is int:

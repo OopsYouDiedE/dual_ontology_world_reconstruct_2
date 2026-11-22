@@ -1,0 +1,40 @@
+[
+  {
+    "id": "gloom-1",
+    "page": "https://store.steampowered.com/app/1150760/?l=english",
+    "video": "https://video.fastly.steamstatic.com/store_trailers/1150760/1200876066/eacec8d32f4aa3d46f8c15f96c5ae886ba9ccfe7/1767242152/hls_264_master.m3u8?t=1767254755",
+    "frames": [
+      [
+        8,
+        "gloom-1-08.jpg"
+      ],
+      [
+        18,
+        "gloom-1-18.jpg"
+      ],
+      [
+        23,
+        "gloom-1-23.jpg"
+      ],
+      [
+        28,
+        "gloom-1-28.jpg"
+      ],
+      [
+        35,
+        "gloom-1-35.jpg"
+      ],
+      [
+        49,
+        "gloom-1-49.jpg"
+      ]
+    ],
+    "initial_error": "Command '['ffmpeg', '-y', '-nostdin', '-loglevel', 'error', '-rw_timeout', '12000000', '-i', 'https://video.fastly.steamstatic.com/store_trailers/1150760/1200876066/eacec8d32f4aa3d46f8c15f96c5ae886ba9ccfe7/1767242152/hls_264_master.m3u8?t=1767254755', '-t', '55', '-map', '0:v:0', '-c', 'copy', 'gloom-1.mp4']' returned non-zero exit status 1.",
+    "issues": [
+      "3s: The read operation timed out",
+      "13s: IncompleteRead(733422 bytes read, 178664 more expected)",
+      "42s: IncompleteRead(423261 bytes read, 404819 more expected)"
+    ],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/1150760/1200876066/eacec8d32f4aa3d46f8c15f96c5ae886ba9ccfe7/1767242152/hls_264_1_video.m3u8"
+  }
+]

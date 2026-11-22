@@ -38,7 +38,7 @@ func build(lot: Dictionary, center: Vector3) -> void:
 
 func apply(hour: float, mood: String) -> void:
 	for lamp in lamps:
-		lamp.light_color = Color("ffb77a") if mood == "ember" else Color("ffdfbc")
+		lamp.light_color = Color("ffb77a") if mood == "ember" else Color("f7f2e9")
 		lamp.light_energy = 1.0 if mood == "ember" else 3.2
 		match mood:
 			"shelter":

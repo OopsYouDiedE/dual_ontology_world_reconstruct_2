@@ -1,0 +1,336 @@
+path	scope (module files include supporting data; catalog roles are explicit)
+AGENTS.md	module / test / asset
+DualOntologyWorldReconstruct2.csproj	module / test / asset
+README.md	module / test / asset
+assets/characters/UserModels/model_01.glb	module / test / asset
+assets/characters/UserModels/model_02.glb	module / test / asset
+assets/characters/UserModels/model_03.glb	module / test / asset
+assets/characters/UserModels/model_04.glb	module / test / asset
+assets/characters/UserModels/model_05.glb	module / test / asset
+assets/characters/UserModels/model_06.glb	module / test / asset
+assets/characters/UserModels/model_07.glb	module / test / asset
+assets/characters/UserModels/model_08.glb	module / test / asset
+assets/characters/UserModels/model_09.glb	module / test / asset
+assets/characters/UserModels/model_10.glb	module / test / asset
+assets/characters/UserModels/model_11.glb	module / test / asset
+assets/characters/UserModels/model_12.glb	module / test / asset
+assets/characters/UserModels/model_13.glb	module / test / asset
+assets/characters/UserModels/model_14.glb	module / test / asset
+assets/characters/UserModels/model_15.glb	module / test / asset
+assets/characters/UserModels/model_16.glb	module / test / asset
+assets/characters/UserModels/model_17.glb	module / test / asset
+content/academy_lots/README.md	module / test / asset
+content/academy_lots/clinic.xml	module / test / asset
+content/academy_lots/dining.xml	module / test / asset
+content/academy_lots/foyer.xml	module / test / asset
+content/academy_lots/kitchen.xml	module / test / asset
+content/academy_lots/lecture.xml	module / test / asset
+content/academy_lots/living_hall.xml	module / test / asset
+content/academy_lots/plan_landmarks.json	module / test / asset
+content/academy_lots/service_stair.xml	module / test / asset
+content/academy_lots/valve_gallery.xml	module / test / asset
+core/rogue_topology/DuelView.RogueTopology.csproj	module / test / asset
+core/rogue_topology/README.md	module / test / asset
+core/rogue_topology/Topology.cs	module / test / asset
+core/rogue_topology/tests/DuelView.RogueTopology.Tests.csproj	module / test / asset
+core/rogue_topology/tests/Program.cs	module / test / asset
+docs/handoff/expedition/.gdignore	handoff
+docs/handoff/expedition/README.md	handoff
+docs/handoff/expedition/audit-previous.md	handoff
+docs/handoff/expedition/audit-revision.md	handoff
+docs/handoff/expedition/evidence/east/01-camp.jpg	handoff
+docs/handoff/expedition/evidence/east/02-chart.jpg	handoff
+docs/handoff/expedition/evidence/east/03-first-room.jpg	handoff
+docs/handoff/expedition/evidence/east/04-return-junction.jpg	handoff
+docs/handoff/expedition/evidence/east/05-observatory.jpg	handoff
+docs/handoff/expedition/evidence/east/06-complete.jpg	handoff
+docs/handoff/expedition/evidence/east/frames.json	handoff
+docs/handoff/expedition/evidence/hall-01-continuous.jpg	handoff
+docs/handoff/expedition/evidence/hall-02-toon.jpg	handoff
+docs/handoff/expedition/evidence/hall-03-toon-ink.jpg	handoff
+docs/handoff/expedition/evidence/hall-04-toon-ink-sdfgi.jpg	handoff
+docs/handoff/expedition/evidence/numbered-roster-04.jpg	handoff
+docs/handoff/expedition/evidence/west/01-camp.jpg	handoff
+docs/handoff/expedition/evidence/west/02-chart.jpg	handoff
+docs/handoff/expedition/evidence/west/03-first-room.jpg	handoff
+docs/handoff/expedition/evidence/west/04-return-junction.jpg	handoff
+docs/handoff/expedition/evidence/west/05-observatory.jpg	handoff
+docs/handoff/expedition/evidence/west/06-complete.jpg	handoff
+docs/handoff/expedition/evidence/west/frames.json	handoff
+docs/handoff/expedition/expedition-handoff.pdf	handoff
+docs/handoff/expedition/reference-study.md	handoff
+docs/handoff/expedition/render.md	handoff
+docs/handoff/expedition/retired-routes.csv	handoff
+docs/handoff/expedition/source-inventory.tsv	handoff
+docs/handoff/expedition/study-index/below.json	handoff
+docs/handoff/expedition/study-index/continuous-extra.md	handoff
+docs/handoff/expedition/study-index/darkwood.json	handoff
+docs/handoff/expedition/study-index/frames.csv	handoff
+docs/handoff/expedition/study-index/gloom-retry.json	handoff
+docs/handoff/expedition/study-index/gloom.json	handoff
+docs/handoff/expedition/study-index/ins.json	handoff
+docs/handoff/expedition/study-index/inside.json	handoff
+docs/handoff/expedition/study-index/limbo.json	handoff
+docs/handoff/expedition/study-index/obra.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/blue-alt1.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/blue-alt2.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/blue.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/chants.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/ftl.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/idol.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/spire.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/tunic.json	handoff
+docs/handoff/expedition/study-index/puzzle-route/witness.json	handoff
+docs/handoff/expedition/verification.zip	handoff
+docs/handoff/expedition/workflow-paths.tsv	handoff
+mcp/game/GameControl.gd	module / test / asset
+mcp/game/README.md	module / test / asset
+mcp/game/environment.py	module / test / asset
+mcp/game/server.py	module / test / asset
+project.godot	module / test / asset
+scenes/blue_prince_lab/HallLook.gd	module / test / asset
+scenes/blue_prince_lab/banner/Banner.gd	assembly/gen; assembly/path
+scenes/blue_prince_lab/doors/Cabinet.gd	assembly/gen; assembly/path
+scenes/blue_prince_lab/doors/Door.gd	rule/gen; rule/path
+scenes/blue_prince_lab/lamp/Lamp.gd	rule/gen; rule/path
+scenes/blue_prince_lab/stairs/Stairs.gd	rule/gen; rule/path
+scenes/blue_prince_lab/studies/Meridian.gd	rule/gen; rule/path
+scenes/components/rendering/ChibiFigurineSurface.gdshader	module / test / asset
+scenes/components/rendering/FigurinePaint.gdshaderinc	module / test / asset
+scenes/components/rendering/actors/CastDielectric.gdshader	module / test / asset
+scenes/components/rendering/actors/ChibiFigurineDoubleSided.gdshader	module / test / asset
+scenes/components/rendering/actors/ChibiFigurineSurface.gdshader	module / test / asset
+scenes/components/rendering/actors/FigurinePaint.gdshaderinc	module / test / asset
+scenes/components/rendering/feedback/NightVeil.gdshader	module / test / asset
+scenes/components/rendering/post/HallInk.gdshader	module / test / asset
+scenes/components/rendering/surfaces/AcademyTile.gdshader	module / test / asset
+scenes/components/rendering/surfaces/KitchenFinish.gdshader	module / test / asset
+scenes/components/rendering/surfaces/SoftToonLight.gdshaderinc	module / test / asset
+scenes/physical_button/PhysicalButton.gd	assembly/gen; assembly/path
+scenes/rogue/HouseMap.cs	module / test / asset
+scenes/rogue/Run.tscn	module / test / asset
+scenes/rogue_camp/CampResidents.gd	module / test / asset
+scenes/rogue_camp/tests/camp_residents_test.gd	module / test / asset
+scenes/rogue_crossing/Crossing.gd	module / test / asset
+scenes/rogue_crossing/FirstWatch.gd	module / test / asset
+scenes/rogue_crossing/Fixture.gd	module / test / asset
+scenes/rogue_crossing/HallWitnesses.gd	module / test / asset
+scenes/rogue_crossing/Rooms.gd	module / test / asset
+scenes/rogue_crossing/Roster.gd	module / test / asset
+scenes/rogue_crossing/RouteChart.gd	module / test / asset
+scenes/rogue_player/ImportedCharacter.gd	module / test / asset
+scenes/rogue_rules/CampWatch.gd	module / test / asset
+scenes/rogue_rules/ExpeditionCrew.gd	module / test / asset
+scenes/rogue_rules/FieldGuide.gd	module / test / asset
+scenes/rogue_rules/NightRules.gd	module / test / asset
+scenes/rogue_rules/StandingOrders.gd	module / test / asset
+scenes/rogue_view/CampActors.gd	module / test / asset
+scenes/rogue_view/CatalogSilhouette.gd	module / test / asset
+scenes/rogue_view/FieldFollowers.gd	module / test / asset
+scenes/rogue_view/FreeSoSnapshot.gd	module / test / asset
+scenes/rogue_view/NativeBlueprint.gd	module / test / asset
+scenes/rogue_view/NativeLotPlan.gd	module / test / asset
+scenes/rogue_view/README.md	module / test / asset
+scenes/rogue_view/RogueRoomView.gd	module / test / asset
+scenes/rogue_view/RogueRoomView.tscn	module / test / asset
+scenes/rogue_view/render/HotKitchen.gd	module / test / asset
+scenes/rogue_view/render/KitchenSurfaceMasks.gd	module / test / asset
+scenes/rogue_view/render/MeridianWell.gd	module / test / asset
+scenes/rogue_view/render/OrthogonalShell.gd	module / test / asset
+scenes/rogue_view/render/RoomLighting.gd	module / test / asset
+scenes/rogue_view/tests/freeso_snapshot_test.gd	module / test / asset
+tools/blue_prince_lab/gear_check.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Beds/RecipeBed.gd	assembly/path
+tools/building_construction/BuildingConstruction/Beds/RecipePaneledBed.gd	assembly/path
+tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd	assembly/path
+tools/building_construction/BuildingConstruction/Cabinets/RecipeCabinet.gd	assembly/path
+tools/building_construction/BuildingConstruction/Cabinets/RecipeLinenCabinet.gd	assembly/path
+tools/building_construction/BuildingConstruction/Cabinets/RecipeMedicineCabinet.gd	assembly/path
+tools/building_construction/BuildingConstruction/Chairs/RecipeBench.gd	assembly/path
+tools/building_construction/BuildingConstruction/Chairs/RecipeChair.gd	assembly/path
+tools/building_construction/BuildingConstruction/Chairs/RecipeReferencePew.gd	assembly/path
+tools/building_construction/BuildingConstruction/Chairs/RecipeStool.gd	assembly/path
+tools/building_construction/BuildingConstruction/Doors/HingedDoor3D.gd	rule/path
+tools/building_construction/BuildingConstruction/Doors/RecipeArchedClosedDoor.gd	rule/path
+tools/building_construction/BuildingConstruction/Doors/RecipeClosedDoor.gd	rule/path
+tools/building_construction/BuildingConstruction/Doors/RecipeCourtyardGate.gd	rule/path
+tools/building_construction/BuildingConstruction/Doors/RecipeReferenceMoonGate.gd	assembly/path
+tools/building_construction/BuildingConstruction/Floors/RecipeRug.gd	assembly/path
+tools/building_construction/BuildingConstruction/Floors/RecipeTiledFloor.gd	rule/path
+tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd	rule/path
+tools/building_construction/BuildingConstruction/Lighting/RecipeBankerLamp.gd	rule/path
+tools/building_construction/BuildingConstruction/Lighting/RecipeCagedLamp.gd	rule/path
+tools/building_construction/BuildingConstruction/Lighting/RecipeLampPost.gd	rule/path
+tools/building_construction/BuildingConstruction/Lighting/RecipePendantLamp.gd	rule/path
+tools/building_construction/BuildingConstruction/Lighting/RecipeWallLantern.gd	rule/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeBarrelOutdoor.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeBollard.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeDock.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeFountain.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeOathPlatform.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipePlanterBed.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceRidgeTent.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceSpruce1.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeRopeCoil.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeRowboat.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeScholarlyStatue.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeTree.gd	assembly/path
+tools/building_construction/BuildingConstruction/Outdoor/RecipeWaterPatch.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeArmillary.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeBalance.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeBarrelIndustrial.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeBook.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeBooks.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeBottles.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeChalkboard.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeChessboard.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeChest.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeCoatStand.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeControlConsole.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeCookerHood.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeCrates.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeCrockeryShelf.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeDishRack.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeDrainGrate.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeEasel.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeFlange.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeFramedMirror.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeGauge.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeGoBoard.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeGreenhouseFrame.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeGrille.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeHandcart.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeHeavyLock.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeIndicatorBoard.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeInterlockHandle.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeKeyboard.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeKitchenHood.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeLadder.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeLectern.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeMagnifier.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeMusicStand.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeOpenBook.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePainting.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePallet.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePedestal.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePipeRun.gd	line/path
+tools/building_construction/BuildingConstruction/Props/RecipePitcher.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePlanter.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePlantingBed.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePlatform.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePlatformScale.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipePressurePanel.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeRack.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeRampModule.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeReactionVessel.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeRecordStation.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeRecordsPillar.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeResonanceTubes.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeRing.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeRingBand.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeSacks.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeSchematic.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeScreen.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeSealDoorTrim.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeSink.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeSpeakingTube.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeStampPress.gd	rule/path
+tools/building_construction/BuildingConstruction/Props/RecipeStorageRack.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeStove.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeTub.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeUprightPiano.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeValveStation.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeVentGrille.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeVessel.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeWashstand.gd	assembly/path
+tools/building_construction/BuildingConstruction/Props/RecipeWateringCan.gd	assembly/path
+tools/building_construction/BuildingConstruction/Railings/RecipeLibraryRail.gd	assembly/path
+tools/building_construction/BuildingConstruction/Railings/RecipeRailing.gd	line/path
+tools/building_construction/BuildingConstruction/Railings/RecipeSimpleRail.gd	assembly/path
+tools/building_construction/BuildingConstruction/Railings/SmartRailing3D.gd	line/path
+tools/building_construction/BuildingConstruction/Shared/ArchitectGeometry.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/ComponentAssembly.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/MechanismSocket.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/PathRecipes.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/PhysicsLayers.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/RecipeComponent.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/RecipeGeometry.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/RecipeSemantics.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Shared/ReferencePart.gd	module / test / asset
+tools/building_construction/BuildingConstruction/Stairs/RecipeStaircase.gd	rule/path
+tools/building_construction/BuildingConstruction/Stairs/RecipeStraightFlight.gd	rule/path
+tools/building_construction/BuildingConstruction/Stairs/SmartStair3D.gd	rule/path
+tools/building_construction/BuildingConstruction/Tables/RecipeDeskBundle.gd	assembly/path
+tools/building_construction/BuildingConstruction/Tables/RecipeFoldingDesk.gd	assembly/path
+tools/building_construction/BuildingConstruction/Tables/RecipeInstrumentTable.gd	assembly/path
+tools/building_construction/BuildingConstruction/Tables/RecipeReceptionDesk.gd	assembly/path
+tools/building_construction/BuildingConstruction/Tables/RecipeSlateTable.gd	assembly/path
+tools/building_construction/BuildingConstruction/Tables/RecipeTable.gd	assembly/path
+tools/building_construction/BuildingConstruction/Tables/RecipeWashTable.gd	assembly/path
+tools/building_construction/BuildingConstruction/Tables/RecipeWorkCounter.gd	assembly/path
+tools/building_construction/BuildingConstruction/Walls/RecipeBeam.gd	rule/path
+tools/building_construction/BuildingConstruction/Walls/RecipeColumn.gd	rule/path
+tools/building_construction/BuildingConstruction/Walls/RecipeMasonryJoints.gd	rule/path
+tools/building_construction/BuildingConstruction/Walls/RecipeReferenceGardenWall.gd	assembly/path
+tools/building_construction/BuildingConstruction/Walls/RecipeStoneWall.gd	rule/path
+tools/building_construction/BuildingConstruction/Walls/RecipeWallPath.gd	line/path
+tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd	line/path
+tools/building_construction/BuildingConstruction/Windows/HingedWindow3D.gd	rule/path
+tools/building_construction/BuildingConstruction/Windows/RecipeArchedWindow.gd	rule/path
+tools/building_construction/BuildingConstruction/Windows/RecipeRectangularWindow.gd	rule/path
+tools/building_construction/BuildingConstruction/Windows/RecipeReferenceLeadedBay.gd	assembly/path
+tools/building_construction/BuildingConstruction/Windows/RecipeReferenceSpokeWindow.gd	assembly/path
+tools/building_construction/BuildingConstruction/Windows/RecipeRoundWindow.gd	rule/path
+tools/building_construction/ComponentLibrary.gd	module / test / asset
+tools/building_construction/building_plugin.gd	module / test / asset
+tools/building_construction/catalog.json	module / test / asset
+tools/building_construction/production/README.zh-CN.md	module / test / asset
+tools/building_construction/production/assembly/ArchitectPlant.gd	module / test / asset
+tools/building_construction/production/assembly/ArchitectProps.gd	module / test / asset
+tools/building_construction/production/assembly/ComponentAssembly.gd	module / test / asset
+tools/building_construction/production/assembly/DecorRecipes.gd	assembly/gen; module / test / asset
+tools/building_construction/production/assembly/FurnitureRecipes.gd	assembly/gen; module / test / asset
+tools/building_construction/production/assembly/IndustrialRecipes.gd	assembly/gen; module / test / asset
+tools/building_construction/production/assembly/OutdoorRecipes.gd	assembly/gen; module / test / asset
+tools/building_construction/production/assembly/PublicRecipes.gd	assembly/gen; module / test / asset
+tools/building_construction/production/assembly/RecipeComponent.gd	module / test / asset
+tools/building_construction/production/assembly/ReferencePart.gd	assembly/gen; module / test / asset
+tools/building_construction/production/assembly/ResidentialRecipes.gd	assembly/gen; module / test / asset
+tools/building_construction/production/assembly/SpecialRecipes.gd	assembly/gen; module / test / asset
+tools/building_construction/production/line/ArchitectRailing.gd	module / test / asset
+tools/building_construction/production/line/ArchitectureRecipes.gd	line/gen; module / test / asset
+tools/building_construction/production/line/PathRecipes.gd	module / test / asset
+tools/building_construction/production/line/PipeRecipes.gd	line/gen; module / test / asset
+tools/building_construction/production/line/SmartRailing3D.gd	line/gen; module / test / asset
+tools/building_construction/production/line/SmartWall3D.gd	line/gen; module / test / asset
+tools/building_construction/production/line/WallPathGeometry.gd	module / test / asset
+tools/building_construction/production/rule/ArchitectFloor.gd	module / test / asset
+tools/building_construction/production/rule/ArchitectOpenings.gd	module / test / asset
+tools/building_construction/production/rule/ArchitectStair.gd	module / test / asset
+tools/building_construction/production/rule/FlightRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/FloorRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/GateRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/GearTrain.gd	module / test / asset; rule/gen; rule/path
+tools/building_construction/production/rule/HingedDoor3D.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/HingedWindow3D.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/IndustrialFittingRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/LightingRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/MasonryRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/OpeningRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/PublicGeometryRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/SmartFloorZone3D.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/SmartStair3D.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/StaircaseRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/StructuralRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/production/rule/VariantRecipes.gd	module / test / asset; rule/gen
+tools/building_construction/tests/production_pipeline_test.gd	module / test / asset
+tools/expedition/build_handoff.py	module / test / asset
+tools/expedition/numbered_roster_test.gd	module / test / asset
+tools/expedition/route_test.gd	module / test / asset
+tools/expedition/viewport_run.py	module / test / asset
+tools/night_crossing/viewport_run.py	module / test / asset
+tools/physics_lab/verify_airlock.gd	module / test / asset
+tools/test/building_candidate_unit.gd	module / test / asset
+tools/test/night_watch.gd	module / test / asset
+tools/test/room_daylight.gd	module / test / asset

@@ -50,7 +50,8 @@ func _refresh(index: int) -> void:
 	for entry in catalog.items:
 		if entry.category == selected:
 			entries.append(entry)
-			items.add_item(str(entry.label))
+			var row := items.add_item(str(entry.label))
+			items.set_item_tooltip(row, Components.production_note(entry))
 
 func _add_selected() -> void:
 	var selected := items.get_selected_items()
@@ -59,12 +60,10 @@ func _add_selected() -> void:
 		push_warning("请先打开场景并选择建筑组件。")
 		return
 	var path: String = entries[selected[0]].path
-	var instance := Components.create(path)
+	var instance := Components.create_entry(entries[selected[0]])
 	if instance == null:
 		push_error("无法加载建筑组件：" + path)
 		return
-	for key in entries[selected[0]].get("defaults", {}):
-		instance.set(key, entries[selected[0]].defaults[key])
 	var undo := get_undo_redo()
 	undo.create_action("添加建筑组件")
 	undo.add_do_method(root, "add_child", instance, true)

@@ -42,7 +42,7 @@ static func ink_pass() -> MeshInstance3D:
 	ink.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	ink.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 	var mat := ShaderMaterial.new()
-	mat.shader = preload("res://scenes/blue_prince_lab/HallInk.gdshader")
+	mat.shader = preload("res://scenes/components/rendering/post/HallInk.gdshader")
 	mat.render_priority = 100
 	ink.material_override = mat
 	return ink

@@ -1,21 +1,9 @@
 extends Node3D
 
 const CATALOG_PATH := "res://tools/building_construction/catalog.json"
-const Assembly = preload("BuildingConstruction/Shared/ComponentAssembly.gd")
+const Assembly = preload("production/assembly/ComponentAssembly.gd")
 const Socket = preload("BuildingConstruction/Shared/MechanismSocket.gd")
 const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
-const PRODUCTION_ROUTES := {
-	"A": "A · Parametric architecture",
-	"B": "B · Tripo text to 3D",
-	"C": "C · GPT reference, then Tripo image to 3D",
-	"effect": "Environment effect",
-}
-const VISUAL_SOURCES := {
-	"existing_glb": "Existing imported mesh; pending visual review",
-	"parametric_structure": "Existing structure; pending finish review",
-	"legacy_procedural": "Existing procedural visual; pending replacement",
-	"procedural_effect": "Existing environment visual",
-}
 const CANDIDATE_PATH := "res://tools/building_construction/candidates/BuildingCandidate.tscn"
 
 var camera: Camera3D
@@ -168,16 +156,13 @@ func _refresh(index: int) -> void:
 			items.set_item_tooltip(row, _production_note(entry))
 
 func _production_note(entry: Dictionary) -> String:
-	var route: String = PRODUCTION_ROUTES.get(entry.get("production_route", ""), "")
-	var source: String = VISUAL_SOURCES.get(entry.get("visual_source", ""), "")
-	if entry.get("frame_route", "") == "A": route += "\nWall cutout: A · Parametric architecture"
-	return "\n".join(PackedStringArray([route, source]))
+	return Components.production_note(entry)
 
 func _select_item(index: int) -> void:
 	selected_path = str(entries[index].path)
 	selected_entry = entries[index]
-	var route: String = PRODUCTION_ROUTES.get(selected_entry.get("production_route", ""), "")
-	status.text = "%s · %s mount\n%s\nClick a support. R: turn. F: swap end." % [selected_entry.label, selected_entry.mount, route]
+	var production := Components.production_note(selected_entry).get_slice("\n", 0)
+	status.text = "%s · %s mount\n%s\nClick a support. R: turn. F: swap end." % [selected_entry.label, selected_entry.mount, production]
 
 func _cancel() -> void:
 	selected_path = ""
@@ -243,11 +228,11 @@ func _place(mouse: Vector2) -> void:
 	status.text = "Placed %s%s" % [selected_entry.label, " on " + str(host.name) if host else ""]
 
 func _make_part(entry: Dictionary) -> Node3D:
-	var part := Components.create(str(entry.path))
+	var part := Components.create_entry(entry)
 	if part:
-		Assembly.tag(part,entry)
-		for key in entry.get("defaults",{}): part.set(key,entry.defaults[key])
-	else: status.text = "Could not load " + str(entry.label)
+		Assembly.tag(part, entry)
+	else:
+		status.text = "Could not load " + str(entry.label)
 	return part
 
 func _hit(origin: Vector3, ray: Vector3) -> Dictionary:
@@ -446,7 +431,7 @@ func _replace(packed: PackedScene) -> void:
 	for child in candidates.get_children():
 		if child.get_script() and Assembly.id(child).is_empty():
 			for entry in catalog.items:
-				if child.get_script().resource_path == entry.path:
+				if child.get_script().resource_path in [entry.path, entry.get("legacy_path", "")]:
 					Assembly.tag(child,entry)
 					break
 	_refresh_outline()

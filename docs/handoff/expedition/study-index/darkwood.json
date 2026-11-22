@@ -1,0 +1,46 @@
+[
+  {
+    "id": "darkwood-1",
+    "page": "https://store.steampowered.com/app/274520/?l=english",
+    "video": "https://video.fastly.steamstatic.com/store_trailers/274520/243462/a3de8a3d7142a5b2374ebdf9d32e211cfc26934f/1750500236/hls_264_master.m3u8?t=1764597553",
+    "frames": [
+      [
+        3,
+        "darkwood-1-03.jpg"
+      ],
+      [
+        8,
+        "darkwood-1-08.jpg"
+      ],
+      [
+        13,
+        "darkwood-1-13.jpg"
+      ],
+      [
+        23,
+        "darkwood-1-23.jpg"
+      ],
+      [
+        28,
+        "darkwood-1-28.jpg"
+      ],
+      [
+        35,
+        "darkwood-1-35.jpg"
+      ],
+      [
+        42,
+        "darkwood-1-42.jpg"
+      ],
+      [
+        49,
+        "darkwood-1-49.jpg"
+      ]
+    ],
+    "initial_error": "Command '['ffmpeg', '-y', '-nostdin', '-loglevel', 'error', '-rw_timeout', '12000000', '-i', 'https://video.fastly.steamstatic.com/store_trailers/274520/243462/a3de8a3d7142a5b2374ebdf9d32e211cfc26934f/1750500236/hls_264_master.m3u8?t=1764597553', '-t', '55', '-map', '0:v:0', '-c', 'copy', 'darkwood-1.mp4']' timed out after 75.0 seconds",
+    "issues": [
+      "18s: IncompleteRead(866324 bytes read, 69953 more expected)"
+    ],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/274520/243462/a3de8a3d7142a5b2374ebdf9d32e211cfc26934f/1750500236/hls_264_1_video.m3u8"
+  }
+]

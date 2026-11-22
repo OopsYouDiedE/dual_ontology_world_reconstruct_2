@@ -4,9 +4,11 @@
 
 ## 一局怎么玩
 
-- 第一人称。从 **Night Dispatch** 的实体递件柜领取夜班守则。**WASD** 移动，点击场景控制视角，**Esc** 释放鼠标或放下文件，**E** 检查、操作、穿门，**Tab** 翻开随身手册。**Q / R** 也可转身。
-- 公共大厅前会遇到 1–2 名幸存者，他们带着另一版守则。面对冲突可以分开工位、错开时段，或由玩家临时按同行者的一版操作。到大厅以后，证词与现场记录或队伍的信任才能推动统一守则。
-- 通过公共大厅，去观测台为本局队伍鸣响晨钟。每个关卡都有多条做法；勘察、工具准备与风险选择的代价不同。16 名可交谈居民加侦探继续用仓库原有的 17 个模型。[完整设计与解法](docs/design/night-watch.md)。
+从 **Public Hall** 起步。先找居民组队、阅读随身手册，再在路线图上看候选房间和物资。西线房间产毛毡：消回声、防潮，结算时多保住物资；东线房间产棘轮：固定传动轴，缩短慢速通路。每间机关限装一件，徒手也有解。
+
+全局地图的营地、折返闸和天文台位置固定。沿途六个位置从七种机关房里取六种；每局走其中三个。在 **Return Junction** 解闸后可以直接前进，也可以坐一次车返营休整，再从此处继续。终局在同一座观测台敲响晨钟。**WASD** 移动，点击场景控制视角，**E** 操作或过门，**Tab** 查手册，**Esc** 放下文件。也可点有名字的出口按钮选路。
+
+[给下一位 AI 的定稿 PDF](docs/handoff/expedition/expedition-handoff.pdf) · [现役工作流、证据与专项入口](docs/handoff/expedition/README.md)。
 
 ## 开发运行
 
@@ -15,7 +17,7 @@ dotnet build DualOntologyWorldReconstruct2.csproj
 & .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64.exe --path . -- --run-seed=1
 ```
 
-`core/rogue_topology/` 实现连接约束的传播、带权塌缩与回溯。`scenes/rogue/HouseMap.cs` 负责种子分支、入队节点和大厅前后的连接结构。正式关卡、证据和设备动作位于 `scenes/rogue_crossing/`。Godot 用 Forward+ 和 SDFGI 按画面显示尺寸渲染 Lowpoly 场景，文字用窗口分辨率绘制。
+`core/rogue_topology/` 实现连接约束的传播、带权塌缩与回溯。`scenes/rogue/HouseMap.cs` 固定宏观站位，并为支路分配连线和房卡。正式关卡、证据和设备动作位于 `scenes/rogue_crossing/`。Godot 用 Forward+ 和 SDFGI 按画面显示尺寸渲染 Lowpoly 场景，文字用窗口分辨率绘制。
 
 ## 建筑、营地与美术
 
@@ -31,9 +33,9 @@ dotnet build DualOntologyWorldReconstruct2.csproj
 
 ```powershell
 dotnet run --project core/rogue_topology/tests/DuelView.RogueTopology.Tests.csproj
-& .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe --headless --path . -s res://tools/test/house_map_bridge_unit.gd
+& .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe --headless --path . -s res://tools/expedition/route_test.gd
 & .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe --headless --path . -s res://tools/test/night_watch.gd -- --no-rule-save
-& .runtime/python/Scripts/python.exe tools/night_crossing/viewport_run.py --seed 1
+& .runtime/python/Scripts/python.exe tools/expedition/viewport_run.py --seed 1
 ```
 
 [实机 MCP](mcp/game/README.md) 从正式入口启动真实 Forward+ 窗口；可通过界面点击检查画面，报告与截图写入 `.runtime/rogue-mcp/`。旧版 `rogue_run_e2e.py` 按第三人称流程编写，不是当前规则怪谈入口的回归测试。

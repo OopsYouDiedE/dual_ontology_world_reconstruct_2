@@ -29,7 +29,44 @@ public partial class HouseMap : RefCounted
         return _layout is not null;
     }
 
-    public string start_room() => _layout is null ? "" : Start;
+    // The campaign chart is in map coordinates: columns are watches, rows are lanes.
+    // The solver can omit a cross-lane door, but must seat every room and join every fork.
+    private static readonly string[][] Chart = [[Camp], ["west_1", "east_1"], ["west_2", "east_2"],
+        ["turntable"], ["west_3", "east_3"], [Goal]];
+    public int column(string room) => Array.FindIndex(Chart, layer => Array.IndexOf(layer, room) >= 0);
+    public string[] forward(string room) => exits(room).Where(id => column(id) == column(room) + 1)
+        .OrderBy(id => Array.IndexOf(Chart[column(id)], id)).ToArray();
+    public bool generate_expedition(long value)
+    {
+        ulong seed = unchecked((ulong)value);
+        var slots = new List<RoomSlot>();
+        var links = new List<RoomLink>();
+        for (int d = 0; d < Chart.Length; d++)
+        {
+            string[] prev = d == 0 ? [] : Chart[d-1], next = d+1 == Chart.Length ? [] : Chart[d+1];
+            foreach (string room in Chart[d])
+            {
+                slots.Add(MakeSlot(room, prev, next));
+                foreach (string dest in next)
+                    links.Add(new RoomLink(room, dest, dest, room, Required: prev.Length == 0 || Chart[d].Length == 1 || next.Length == 1));
+            }
+        }
+        var graph = TopologySolver.Solve(new TopologyProblem(Camp, Goal, slots, links) { RequireAllRoomsReachable = true }, seed);
+        if (graph is null) { _layout = null; return false; }
+        var stages = new Dictionary<string,string> { [Camp] = "hall", ["turntable"] = "shutter", [Goal] = "meridian" };
+        var lots = new Dictionary<string,string> { [Camp] = "living_hall", ["turntable"] = "dining", [Goal] = "valve_gallery" };
+        (string stage,string lot)[] deck = [("returns","clinic"),("exchange","lecture"),("wash","valve_gallery"),
+            ("lift","service_stair"),("airlock","clinic"),("darkroom","lecture"),("relay","valve_gallery")];
+        var order = Enumerable.Range(0,deck.Length).ToArray();
+        new SeededChoices(seed ^ 0xA0761D6478BD642FUL).Shuffle(order);
+        int n = 0;
+        foreach (string room in Chart.SelectMany(layer => layer).Where(room => !stages.ContainsKey(room)))
+            (stages[room], lots[room]) = deck[order[n++]];
+        _layout = new Layout(graph,lots,[],stages);
+        return true;
+    }
+
+    public string start_room() => _layout is null ? "" : _layout.Stages.ContainsKey("turntable") ? Camp : Start;
     public string camp_room() => _layout is null ? "" : Camp;
     public string goal_room() => _layout is null ? "" : Goal;
 

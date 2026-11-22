@@ -1,0 +1,34 @@
+[
+  {
+    "id": "limbo-1",
+    "page": "https://store.steampowered.com/app/48000/?l=english",
+    "video": "https://video.fastly.steamstatic.com/store_trailers/48000/357935/8d388f19ab7f4f7526b49e98d473dc832b6dda87/1750480954/hls_264_master.m3u8?t=1617191650",
+    "frames": [
+      [
+        8,
+        "limbo-1-08.jpg"
+      ],
+      [
+        13,
+        "limbo-1-13.jpg"
+      ],
+      [
+        18,
+        "limbo-1-18.jpg"
+      ],
+      [
+        23,
+        "limbo-1-23.jpg"
+      ],
+      [
+        28,
+        "limbo-1-28.jpg"
+      ]
+    ],
+    "initial_error": "Command '['ffmpeg', '-y', '-nostdin', '-loglevel', 'error', '-rw_timeout', '12000000', '-i', 'https://video.fastly.steamstatic.com/store_trailers/48000/357935/8d388f19ab7f4f7526b49e98d473dc832b6dda87/1750480954/hls_264_master.m3u8?t=1617191650', '-t', '55', '-map', '0:v:0', '-c', 'copy', 'limbo-1.mp4']' timed out after 75.0 seconds",
+    "issues": [
+      "3s: IncompleteRead(819200 bytes read, 162689 more expected)"
+    ],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/48000/357935/8d388f19ab7f4f7526b49e98d473dc832b6dda87/1750480954/hls_264_1_video.m3u8"
+  }
+]

@@ -162,12 +162,45 @@ func _clear(id: String, protocols: Array, extra := 0) -> Dictionary:
 	route = id
 	report.clear()
 	for p in manifest: report.append(p.practice)
-	return {"line": EFFECTS[id], "damage":0, "clear":true, "bonus":extra, "manifest":manifest,
-		"minutes": 3 + (manifest[-1].beat * 6 if not manifest.is_empty() else 0) if id not in ["awning", "on_bell", "shoe", "under"] else 18}
+	var minutes: int = 3 + (manifest[-1].beat * 6 if not manifest.is_empty() else 0)
+	if id in ["awning", "on_bell", "shoe", "under", "wind"]: minutes = 18
+	var line: String = EFFECTS[id]
+	if flags.has("felt"):
+		extra += 2 if stage == "meridian" else 1
+		line += " The padded case kept the salvage intact."
+	elif flags.has("ratchet"):
+		minutes = 3
+		line += " The locked shaft saves the reset interval."
+	return {"line":line, "damage":0, "clear":true, "bonus":extra, "manifest":manifest, "minutes":minutes}
 
 func _record(id: String, line: String) -> Dictionary:
 	flags[id] = true
 	return _ok(line)
+
+func tool_group(tool: String) -> int:
+	if tool == "felt" and stage in ["returns","exchange","wash","airlock","shutter","darkroom","relay","meridian"]: return 1
+	if tool == "ratchet" and stage in ["lift","airlock","shutter","meridian"]: return 2
+	return -1
+
+func tool_label(tool: String) -> String:
+	return "Pack: fit felt · save the salvage (1 felt)" if tool == "felt" else "Pack: arrest the shaft · fast passage (1 ratchet)"
+
+func use_tool(group: int, tool: String, pack: Dictionary) -> Dictionary:
+	if completed or group < 0 or tool_group(tool) != group or flags.has("felt") or flags.has("ratchet") or pack.get(tool,0) < 1: return {}
+	pack[tool] -= 1
+	moves.append(tool)
+	if tool == "felt":
+		echo = 0
+		wet = 0
+		flags.sleeve = true
+		flags.carrier = true
+		return _record(tool,"The felt seats around the return. Water stays outside and the second signal dies.")
+	drive = 0
+	load_force = 0
+	flags.brake = true
+	flags.pin = true
+	flags.bleed = true
+	return _record(tool,"The ratchet takes the load. The maintenance catch can now be worked by hand.")
 
 func act(group: int, id: String, protocols: Array, can_agree := false, witness_count := 0) -> Dictionary:
 	if not options(group, protocols, can_agree).any(func(row): return row.id == id): return {}

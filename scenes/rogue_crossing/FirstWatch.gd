@@ -10,11 +10,13 @@ const Crew := preload("res://scenes/rogue_rules/ExpeditionCrew.gd")
 const Camp := preload("res://scenes/rogue_camp/CampResidents.gd")
 const MARGINS := "user://night_watch_margins.txt"
 
+var pack := {"felt":0, "ratchet":0}
+var recalled := false
 var house: RefCounted
 var room_view
 var run_seed: int
 var current := ""
-var phase := "approach"
+var phase := "camp"
 var rooms := {}
 var cleared := {}
 var destinations := PackedStringArray()
@@ -23,7 +25,6 @@ var roster: Array[String] = []
 var agreed := {}
 var facts := {}
 var depositions := {}
-var camp_reached := false
 var prospect := 0
 var hp := 9
 var nerve := 100
@@ -184,18 +185,22 @@ func new_run(value: int) -> void:
 	_leave_hall()
 	run_seed = value
 	house = House.new()
-	assert(house.generate_watch(value), "The watch topology must have a connected solution")
+	if not house.generate_expedition(value):
+		push_error("Expedition chart could not be seated")
+		return
 	current = house.start_room()
 	room_view.set_instance_id("")
-	phase = "approach"
+	phase = "camp"
 	rooms.clear()
 	cleared.clear()
+	cleared[current] = true
+	recalled = false
+	pack = {"felt":0,"ratchet":0}
 	party.clear()
 	roster.clear()
 	agreed.clear()
 	facts.clear()
 	depositions.clear()
-	camp_reached = false
 	prospect = 0
 	hp = 9
 	nerve = 100
@@ -203,7 +208,7 @@ func new_run(value: int) -> void:
 	moves = 0
 	crew = Crew.new()
 	camp = Camp.new()
-	handbook = false
+	handbook = true
 	inherited = false
 	_performing = false
 	_watch_number += 1
@@ -214,15 +219,12 @@ func _stage() -> String:
 	return house.room_stage(current)
 
 func _variant() -> bool:
+	if current in ["turntable",house.goal_room()]: return false
 	return ((str(run_seed) + "/" + current + "/" + _stage()).sha256_buffer()[0] & 1) == 0
 
 func _room() -> Crossing:
 	if not rooms.has(current): rooms[current] = Crossing.new(_stage(), _variant())
 	return rooms[current]
-
-func _survivor() -> String:
-	var index: int = Array(house.recruit_rooms()).find(current)
-	return Cast.encounter(run_seed, index) if index >= 0 and not cleared.has(current) else ""
 
 func _protocol(member: String) -> String:
 	return agreed.get(member, Cast.edition(member))
@@ -233,7 +235,7 @@ func _protocols() -> Array[String]:
 	return result
 
 func _can_agree() -> bool:
-	if not camp_reached or _stage() != "relay" or party.is_empty(): return false
+	if _stage() != "relay" or party.is_empty(): return false
 	if _protocols().all(func(p): return p == "Ivory"): return false
 	if depositions.size() >= 2 and facts.size() >= 2: return true
 	return prospect >= 4 and party.all(func(id): return crew.people[id].trust >= 3 and crew.people[id].stress < 3)
@@ -265,23 +267,25 @@ func _inspect(group: int) -> void:
 	_open("apparatus", title, "%s   /   %s" % [Rooms.TITLES[_stage()].to_upper(), "FILED" if cleared.has(current) else "NIGHT SERVICE"])
 	_acting = group
 	_label(r.read(group))
-	if group == 0 and _stage() == "intake":
-		_label("FROM THE PREFACE", 13, true)
-		for line in Rooms.IVORY: _label(line, 15)
 	if _stage() in ["exchange", "airlock", "relay"]:
 		for id in party:
 			var edition := _protocol(id)
 			_label("%s / %s: %s" % [id, edition, Rooms.VERSIONS[edition][1 if _stage() == "airlock" else 0]], 14, true)
 		if _stage() == "relay" and not _can_agree() and _protocols().any(func(p): return p != "Ivory"):
 			_label("A joint order needs two depositions and two field traces, or the crew’s confidence in your record.", 13)
-	for option: Dictionary in r.options(group, _protocols(), _can_agree()):
-		_button(_sheet, option.text, _act.bind(current, group, option.id))
+	if not cleared.has(current):
+		for tool in pack:
+			if r.tool_group(tool) == group:
+				var b := _button(_sheet, r.tool_label(tool), _act.bind(current, group, tool))
+				b.disabled = pack[tool] < 1 or r.flags.has("felt") or r.flags.has("ratchet")
+		for option: Dictionary in r.options(group, _protocols(), _can_agree()):
+			_button(_sheet, option.text, _act.bind(current, group, option.id))
 	_button(_sheet, "Put it down · Esc", _close)
 
 func _act(room_id: String, group: int, id: String) -> void:
 	if _performing or room_id != current or modal != "apparatus" or _acting != group or cleared.has(current): return
 	var r := _room()
-	var result := r.act(group, id, _protocols(), _can_agree(), depositions.size())
+	var result := r.use_tool(group,id,pack) if pack.has(id) else r.act(group, id, _protocols(), _can_agree(), depositions.size())
 	if result.is_empty(): return
 	_close()
 	room_view.show_crossing_action(group, id, result)
@@ -318,41 +322,36 @@ func _act(room_id: String, group: int, id: String) -> void:
 				await get_tree().create_timer(.62).timeout
 				if watch != _watch_number: return
 			_performing = false
-		var survivor := _survivor()
 		cleared[current] = true
-		if r.looked and _stage() not in ["intake", "hall", "meridian"]: facts[_stage()] = true
+		var reward := _reward(current)
+		if not reward.is_empty():
+			pack[reward] += 1
+			message += "  Packed one " + reward + "."
+		if r.looked and _stage() != "meridian": facts[_stage()] = true
 		if r.moves.size() <= 4: prospect += 1
-		crew.supplies += result.bonus + (0 if _stage() == "intake" else 1)
+		crew.supplies += result.bonus + 1
 		clock += float(result.minutes) / 60.0
-		if _stage() == "intake": handbook = true
 		if _stage() == "meridian": phase = "won"
-		if not survivor.is_empty() and not roster.has(survivor):
-			_recruit(survivor, true)
-			message += "  %s joins with the %s copy." % [survivor, _protocol(survivor)]
 		if not r.report.is_empty():
 			var stances := PackedStringArray(["Captain"])
 			stances.append_array(PackedStringArray(party))
 			for i in mini(stances.size(), r.report.size()): message += "\n%s: %s" % [stances[i], r.report[i]]
 	_refresh()
 
-func _recruit(id: String, deploy := false) -> void:
-	if not roster.has(id):
-		roster.append(id)
-		crew.recruit(id)
-	if deploy and not party.has(id) and party.size() < 3 and crew.deployable(id): party.append(id)
-
 func _take_deposition(id: String) -> void:
 	if phase != "camp" or not modal.is_empty() or id not in Cast.NAMES: return
 	depositions[id] = true
 	_open("witness", id + " · " + Cast.job(id), "SIGNED DEPOSITION   /   %s COPY" % _protocol(id).to_upper())
 	_label(Cast.witness(id))
-	_label("Filed in your evidence wallet. Two independent signatures will open the witness route.", 14)
+	_label("Filed in your evidence wallet. Two independent signatures can support a common relay order.", 14)
 	if not roster.has(id): _button(_sheet, "Recruit to the Hall roster", _hall_recruit.bind(id))
 	_button(_sheet, "Return to the Hall", _close)
 
 func _hall_recruit(id: String) -> void:
 	if phase != "camp" or id not in Cast.NAMES: return
-	_recruit(id)
+	if not roster.has(id):
+		roster.append(id)
+		crew.recruit(id)
 	_close()
 	message = id + " signs into the Hall roster. Assign their expedition duty in Crew & facilities."
 	_refresh()
@@ -372,7 +371,7 @@ func _team() -> void:
 func _deploy(id: String) -> void:
 	if phase != "camp" or id not in roster: return
 	if party.has(id): party.erase(id)
-	else: _recruit(id, true)
+	elif party.size() < 3 and crew.deployable(id): party.append(id)
 	_team()
 	_refresh()
 
@@ -404,17 +403,18 @@ func _update_hall(dt: float) -> void:
 func travel(index: int) -> void:
 	if _performing or phase in ["lost", "won"] or not modal.is_empty() or not cleared.has(current) or index < 0 or index >= destinations.size(): return
 	_leave_hall()
+	var previous := current
 	current = destinations[index]
+	if previous == "turntable" and current == house.camp_room(): recalled = true
 	moves += 1
 	clock += .20
 	message = ""
 	if current == house.camp_room():
 		phase = "camp"
-		camp_reached = true
 		hp = 9
 		nerve = 100 if crew.upgrades["Watch lamp"] else 90
 		crew.return_to_camp()
-	else: phase = "expedition" if camp_reached else "approach"
+	else: phase = "expedition"
 	_refresh()
 
 func _death_note() -> void:
@@ -438,24 +438,57 @@ func _file_note() -> void:
 	_close()
 	_refresh()
 
+func _reward(id: String) -> String:
+	if id.begins_with("west_"): return "felt"
+	if id.begins_with("east_"): return "ratchet"
+	return ""
+
+func _routes() -> PackedStringArray:
+	if phase == "camp" and recalled: return PackedStringArray(["turntable"])
+	var choices := PackedStringArray(house.forward(current))
+	if current == "turntable" and not recalled: choices.append(house.camp_room())
+	return choices
+
+func _route_name(id: String) -> String:
+	if id == house.camp_room(): return "Return to camp · recover"
+	if id == "turntable": return "Return Junction"
+	var reward := _reward(id)
+	return Rooms.TITLES[house.room_stage(id)] + (" / +1 " + reward if reward else "")
+
+func _chart() -> void:
+	_open("chart", "Expedition chart", "PUBLIC HALL   /   WATCH %d" % run_seed)
+	_button(_sheet, "Fold chart", _close)
+	var map := preload("RouteChart.gd").new()
+	map.chart = house
+	map.here = current
+	map.visited = cleared
+	map.custom_minimum_size = Vector2(600,160)
+	_sheet.add_child(map)
+	_label("West: felt protects salvage for camp upgrades. East: a ratchet locks a shaft for fast passage. Fit one tool per room, or save it for the bell. The junction tram offers one return and resumes here.",15)
+	for id in [house.camp_room(),"west_1","east_1","west_2","east_2","turntable","west_3","east_3"]:
+		var names := PackedStringArray()
+		for dest in house.forward(id): names.append(_route_name(dest))
+		_label(("HERE · " if id == current else "") + ("Return Junction" if id == "turntable" else Rooms.TITLES[house.room_stage(id)]) + "   →   " + "  |  ".join(names), 14, id == current)
+
 func _refresh() -> void:
 	_clear(_flow)
 	var alive := phase not in ["lost", "won"]
-	destinations = PackedStringArray(house.exits(current)) if cleared.has(current) and alive else PackedStringArray()
+	destinations = _routes() if cleared.has(current) and alive else PackedStringArray()
 	var labels := []
-	for id in house.exits(current): labels.append("%s / %s" % [Rooms.TITLES[house.room_stage(id)], id.get_slice("_", 1)] if "_" in id else Rooms.TITLES[house.room_stage(id)])
+	for id in _routes(): labels.append(_route_name(id))
 	room_view.set_hour(clock)
 	room_view.set_instance_id(current)
 	room_view.release_routes(cleared.has(current))
-	var title: String = Rooms.TITLES[_stage()]
+	var title: String = "Return Junction" if current == "turntable" else Rooms.TITLES[_stage()]
 	var path := "res://content/academy_lots/%s.xml" % house.template_id(current)
 	var err: Error = room_view.set_blueprint_room(title, labels, path)
 	assert(err == OK, "Missing native room blueprint " + path)
-	room_view.set_crossing(_stage(), _survivor(), _variant(), nerve, cleared.has(current))
+	if phase != "camp": room_view.set_crossing(_stage(), "", _variant(), nerve, cleared.has(current))
 	room_view.set_field_party([] if phase == "camp" else party)
 	room_view.set_modal(not modal.is_empty() or not alive)
 	if phase == "camp": _enter_hall()
 	_status.text = "THE SLEEPING ACADEMY     /     %s     ·     HP %d/9     Nerve %d     Party %d     Crates %d     ·     %02d:%02d" % ["NIGHT WATCH" if phase != "camp" else "PUBLIC HALL", hp, nerve, party.size() + 1, crew.supplies, floori(clock) % 24, floori(fposmod(clock, 1.0) * 60)]
+	_status.text += "     Felt %d  /  Ratchets %d" % [pack.felt,pack.ratchet]
 	if phase == "won":
 		_instruction.text = message + "\nMorning. The Hall has a name for everyone who returned."
 	elif phase == "lost":
@@ -463,7 +496,11 @@ func _refresh() -> void:
 		if not inherited: _button(_flow, "Edit field margin", _death_note)
 	else:
 		_instruction.text = message if not message.is_empty() else Rooms.BRIEF[_stage()]
+		if current == "turntable" and message.is_empty(): _instruction.text = "The return tram is behind this shutter. Release the drawbar to board or push on."
 		if cleared.has(current): _instruction.text += "\nPassage open · Follow a named doorway and press E."
+		if phase == "camp" and message.is_empty(): _instruction.text = "Choose a supply route. Speak to a resident to recruit before leaving."
+		for i in destinations.size(): _button(_flow, _route_name(destinations[i]), travel.bind(i))
+		_button(_flow,"Route chart",_chart).disabled = _performing
 		if handbook: _button(_flow, "Field manual · Tab", _read_guide).disabled = _performing
 		if phase == "camp": _button(_flow, "Crew & facilities", _team)
 	if not alive:
@@ -490,7 +527,7 @@ func mcp_observe() -> Dictionary:
 			buttons.append({"label":node.text, "x":center.x, "y":center.y, "enabled":not node.disabled})
 	var r := _room()
 	return {"phase":phase, "stage":_stage(), "room":current, "camp":house.camp_room(), "goal":house.goal_room(),
-		"seed":run_seed, "moves":moves, "health":hp, "nerve":nerve, "supplies":crew.supplies, "modal":modal,
+		"pack":pack.duplicate(),"recalled":recalled,"seed":run_seed, "moves":moves, "health":hp, "nerve":nerve, "supplies":crew.supplies, "modal":modal,
 		"roster":roster, "party":party, "protocols":_protocols(), "depositions":depositions.keys(), "facts":facts.keys(),
 		"exits":Array(destinations), "cleared":cleared.keys(), "route":r.route, "actions":r.moves, "reports":r.report,
 		"walk_grid":room_view.viewport_routes(), "witness_count":camp_actors.actors.size() if is_instance_valid(camp_actors) else 0,

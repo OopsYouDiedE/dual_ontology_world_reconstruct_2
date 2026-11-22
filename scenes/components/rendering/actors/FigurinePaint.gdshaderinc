@@ -1,3 +1,8 @@
+#define EXPEDITION_CUSTOM_LIGHT
+#include "res://scenes/components/rendering/surfaces/SoftToonLight.gdshaderinc"
+
+uniform bool expedition_soft_toon = false;
+
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap_anisotropic, repeat_enable, hint_default_white;
 uniform vec4 albedo_tint : source_color = vec4(1.0);
 uniform bool use_vertex_color = false;
@@ -19,7 +24,8 @@ void fragment() {
 void light() {
 	float facing = dot(NORMAL, LIGHT);
 	float diffuse = smoothstep(-0.30, 0.91, facing);
-	DIFFUSE_LIGHT += LIGHT_COLOR * ATTENUATION * (diffuse * 0.46);
+	float direct = expedition_soft_toon ? soft_toon_response(max(facing, 0.0)) / PI : diffuse * 0.46;
+	DIFFUSE_LIGHT += LIGHT_COLOR * ATTENUATION * direct;
 
 	vec3 half_dir = normalize(VIEW + LIGHT);
 	float lobe = pow(max(dot(NORMAL, half_dir), 0.0), mix(28.0, 10.0, surface_roughness));

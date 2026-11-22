@@ -1,4 +1,5 @@
 shader_type spatial;
+#include "SoftToonLight.gdshaderinc"
 uniform vec4 glaze : source_color = vec4(0.37, 0.32, 0.25, 1.0);
 uniform bool wall = false;
 uniform bool kitchen_weathering = false;

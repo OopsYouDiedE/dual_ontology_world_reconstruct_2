@@ -1,0 +1,29 @@
+﻿状态,类别,历史路线,出处,退出原因或现状,继任与保留
+替换/退役,入口,静态固定章节战役 / Boot,5018588^:project.godot; 5018588^:scenes/main/Boot.gd; 5018588^:scenes/dual_world/,固定章节与当前按种子生成的出征结构不同；Boot.tscn 残留，旧启动脚本已退出。,Run.tscn → FirstWatch.gd；旧叙事档案留作参考。
+替换/退役,入口,第一代种子跑团 / Run.gd,04189f9^:scenes/rogue/Run.tscn; 04189f9:scenes/rogue/Run.tscn; scenes/rogue/Run.gd,当前 Run.tscn 已换脚本；旧脚本和 night_expedition 测试仍可见。,Night Watch / FirstWatch；旧脚本可用于兼容验证。
+替换/退役,入口,网页原型与交叉迁移包,fd14595:docs/archive/index-web-prototype.html; refactor-game-for-godot.zip; refactor-project-to-web-game.zip（同一目录）,先作迁移对照归档，随后退出当前树。,玩家只走 Godot；历史文件可由 Git 取回。
+替换/退役,设计,第一章至四天分支 / 六章剧情的完整旧设计,fd14595:docs/archive/design/; 5018588,按章推进的集成方案退出正式生产；历史世界卡、美术设定和物件目标仍可引用。,种子学院、房间与出征逻辑；旧人物原设继续作美术资料。
+保留对照,资产,FreeSO 源实现 / 客户端桥接,5018588; tools/freeso_bridge/; third_party_sources/FreeSO/; content/academy_lots/,源代码与桥接留作机理参考和兼容核对；正式运行读取项目原生 Lot 接口。,保留 XML 与原生解析；不把整套外部客户端当生产入口。
+替换/退役,资产,厨房证据立体标块,995d025; 5018588^:assets/textures/evidence/,旧固定剧情中，痕迹改为受光的透明表面贴花；随后该章节退出生产。,可复用贴表面和同机位验收方法。
+替换/退役,渲染,低分辨率像素化视口,88495f4; 7aa98be^:scenes/rogue_view/RogueRoomView.tscn; 7aa98be,固定 384×216 + nearest 改为显示尺寸 + linear。,保留低多边形轮廓，按实际显示尺寸出图。
+保留对照,渲染,大厅连续光／色阶无墨线／辉光及 GI 开关,scenes/blue_prince_lab/HallLook.gd; Hall.gd; HallToon.gdshaderinc; HallInk.gdshader（同一目录）,仍可做消融；连续光适合自然材质，弱墨线帮助读轮廓；辉光会影响临界亮边。,统一提案用软色阶、距离衰退墨线、SDFGI；同机位留原档。
+保留对照,渲染,旧编号角色的手办色粉材质,scenes/rogue_player/ImportedCharacter.gd; ChibiFigurineSurface.gdshader（同一目录）,仍在编号阵容的运行路径；统一提案中保留作迁移比较。,按角色逐人验收；角色接口与模型、着色分开切换。
+未入主线,渲染,其他色调映射、抗锯齿及渲染后端,docs/design/blue-prince-character-look-study.md; 5018588^:project.godot; project.godot,角色研究有独立对照，旧设置曾含 mobile；这些设置须各自重拍并度量才可列生产。,先定 Forward+ / Filmic；跨平台和时序抗锯齿另验。
+替换/退役,角色,约五头身侦探作为验收目标,44ee1c5; ab92d55:docs/design/detective-6p5-study.md,文档明言按用户更正退出验收；不混入 5.98 头身满强度试片。,取 177 cm / 6.5 头身目标；可保留原衣饰轮廓研究。
+保留对照,角色,满强度风格化 R-05 和外部人体试装,6d566dc:docs/design/mpfb2-style-pilot.md; ab92d55:docs/design/detective-6p5-study.md; assets/characters/mpfb/r05_styled.glb,5.98 头身允许对照，外部 6.5 头身试装保留结构参考；R-05 动作测试仍可进。,选独立 L03 的 MPFB2 R-05 正装作为视觉、角色动作样板。
+未入主线,角色,十位完整着装 Tripo 稿,docs/design/academy-featured-character-export.md; .runtime/tripo-cast-10/,原始下载留作组队外观对照；八位人体、服装独立建模改为新一轮方向。,保留设计轮廓；身体与服装解耦后重新验证衣摆等关节动作。
+未入主线,角色,七位 Tripo 面数目标 / 首轮 Quad,0dcc40b; 9d233ad; dafcab4; docs/design/academy-featured-character-export.md,面数与下载成果已记录；动作、组件拆分和比例缺逐人生产验收。,供应商成品仅作为底稿；内部套用重拓扑和动作门槛。
+未入主线,角色,原表面布线与纯色七人样片,2ee724f:docs/design/academy-source-local-retopology.md; .runtime/academy-body-pilot/source-local-delivery/,质量项有明确数字；数位补洞边还有穿插，正式蒙皮与表情待验。,保留眼唇环、体积和表面偏差审计；不直接上线。
+未入主线,角色,八人 MPFB 原身和衣柜试配,27393dc; docs/design/mpfb2-wardrobe-review.md; .runtime/mpfb2-wardrobe/,原身、库存衣与 UV 重绘各有验证；不能把全批当作已接进默认阵容。,以 L03 正装试通一人，再将骨架、独立服装与贴图接口复制到其余人。
+保留对照,关卡,十机制展板中的 R3 远端反相联锁,4d7e714; docs/design/physics-lab.md; scenes/physics_lab/Lab.gd,仍由归档参数启动，是十实验样品之一。,正式评审看独立 Airlock，归档路保留可复现。
+替换/退役,关卡,独立 L03 白板、灯、试重、交报告,d1d7403:scenes/physics_lab/airlock/Airlock.gd; .runtime/physics-lab/l03/mpfb-r05-final/,白板在盲区，用 E/F/Q 实验按钮推动；观察与行动对象脱节。,桥面直接响应玩家视线；反例发生在人和桥都看得到的地方。
+替换/退役,关卡,L03 双段桥第一版：多人同看无害,a4d0782:scenes/physics_lab/airlock/Airlock.gd; cb2f7c1,同伴戒律缺少同时凝视的真实风险。,0/1/2 道有效视线分状态，叠视可致死，断视可撤回。
+替换/退役,关卡,L03 初版单眼接力和早期观测权限,"cb2f7c1; 62e9f7e; 22210cf; .runtime/physics-lab/l03/{single-gaze,local-percepts,final-witness}/",先收紧为 Hale 只读本地证据，再让两份可见守则本身触发死锁；规则变化可从视线和踏边复验。,22210cf 独立关验收；adba759 改鼠标抓取为 opt-in。
+保留对照,关卡/测试,白盒、动力房、规则竞技和十房评测,mcp/game/server.py; scenes/rubber_whitebox/; scenes/rule_evaluation/; 5a942ce,独立入口在用；旧评测分数属于旧提交，不能移作统一管线验收。,用同一启动协议与证据目录维护不同用途，R1–R10 按关验收。
+替换/退役,测试,旧 Goals / 建筑 UI / 动画 / DualWorld 脚本集,"dc2cc20^:core/runtime/GoalPlanningChecks.cs; dc2cc20^:tools/{building_construction/tests,characters,dual_world}/",dc2cc20 明确撤下，涉及 9 个实现脚本和 8 个 UID。,按当前产品的组件、生成拓扑、MCP 实机路径重建验收。
+替换/退役,测试,fixture 充当启动生命周期,"9848254:mcp/game/{play,host_process,server}.py",启动生命周期从 fixture 路径退役，复用宿主进程与观察设施。,偏底层 fixture 用于数据/单测；启动走正式或显式开发注册入口。
+替换/退役,测试,旧发布截图页 / 固定章节七指标包,5571db5^:artifacts/review/published/; 5571db5:artifacts/review/; d341ce8; 5018588,先合并旧发布页，再随章节退出当前验收。,可保留带种子、回放和环境的证据思路。
+替换/退役,音频,《同一夜》主旋律专题与独立全曲稿,7d94ac7^:Music/theme-studies/; 7d94ac7^:Music/no-morning-follows.mp3; 7d94ac7^:docs/design/main-theme.md,七个 A–G 试奏加一份独立全曲稿所在分支被明确撤下；46 个删除路径含不同格式和脚本。,暂留设计与声音事件需求，未找到已验收继任主题。
+替换/退役,资产,大厅八辐舵原型,2c1519b^:scenes/blue_prince_lab/Helm.gd; 2c1519b^:scenes/blue_prince_lab/README.md,1.30 m 八辐舵是早期大厅交互；大厅改造时撤下，未见独立判退理由。,程序剖面与转轴分离方式可复用；空间转向其他机械展品。
+替换/退役,资产,大厅初代陀飞轮脚本,2c1519b:scenes/blue_prince_lab/Tourbillon.gd; bb2c9cc:scenes/blue_prince_lab/A26Exhibit.gd,首个脚本被删除，大厅此阶段改放 A26；原提交未单列退役原因。,后续陀飞轮及 Vesper 实验属于新实现，各自取证。
+替换/退役,测试,早期导入审计与证据清单,0a0a1c0^:docs/autonomy-validation/; 0a0a1c0^:docs/building-optimization-validation/,清理了历史摘要、传输长日志、导入证据及映射；旧格式与固定章节检查分开统计。,可沿用捕获元数据和可重跑验收，旧日志留在历史。

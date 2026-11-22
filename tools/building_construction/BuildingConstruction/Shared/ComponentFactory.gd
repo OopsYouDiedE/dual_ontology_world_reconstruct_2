@@ -20,3 +20,34 @@ static func create(path: String) -> Node3D:
 	var instance := definition.new() as Node3D
 	instance.name = resolved.get_file().get_basename()
 	return instance
+
+## Catalog metadata identifies the live implementation; the public component
+## path keeps the node type and serialized scene contract stable.
+static func create_entry(entry: Dictionary, overrides: Dictionary = {}) -> Node3D:
+	var instance := create(str(entry.path))
+	if instance == null: return null
+	var production: Dictionary = entry.get("production", {})
+	if not production.is_empty() and "recipe_module" in instance:
+		instance.set("recipe_module", str(production.generator))
+	var parameters: Dictionary = entry.get("defaults", {}).duplicate(true)
+	parameters.merge(overrides.duplicate(true), true)
+	for key in parameters:
+		instance.set(key, parameters[key])
+	return instance
+
+static func production_note(entry: Dictionary) -> String:
+	var production: Dictionary = entry.get("production", {})
+	return "Production: %s\n%s" % [production.get("kind", "assembly"), production.get("generator", entry.path)]
+
+## Defaults for the JSON/YAML authoring inspector, sourced from the same recipe
+## instance that will generate the model. Catalog overrides take precedence.
+static func parameter_defaults(entry: Dictionary) -> Dictionary:
+	var parameters: Dictionary = entry.get("defaults", {}).duplicate(true)
+	var instance := create(str(entry.path))
+	if instance == null: return parameters
+	if "recipe_parameters" in instance:
+		var declared: Dictionary = instance.get("recipe_parameters").duplicate(true)
+		declared.merge(parameters, true)
+		parameters = declared
+	instance.free()
+	return parameters

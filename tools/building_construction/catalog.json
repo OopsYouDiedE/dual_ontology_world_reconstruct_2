@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "categories": {
     "Walls": "Wall",
     "Floors": "Floor",
@@ -24,8 +24,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd",
       "parametric": true,
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "line",
+        "generator": "res://tools/building_construction/production/line/SmartWall3D.gd"
+      }
     },
     {
       "id": "SmartFloorZone3D",
@@ -34,8 +36,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd",
       "parametric": true,
       "mount": "deck",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/SmartFloorZone3D.gd"
+      }
     },
     {
       "id": "SmartStair3D",
@@ -44,8 +48,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Stairs/SmartStair3D.gd",
       "parametric": true,
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/SmartStair3D.gd"
+      }
     },
     {
       "id": "SmartRailing3D",
@@ -54,8 +60,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Railings/SmartRailing3D.gd",
       "parametric": true,
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "line",
+        "generator": "res://tools/building_construction/production/line/SmartRailing3D.gd"
+      }
     },
     {
       "id": "HingedDoor3D",
@@ -64,9 +72,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Doors/HingedDoor3D.gd",
       "parametric": true,
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/HingedDoor3D.gd"
+      }
     },
     {
       "id": "HingedWindow3D",
@@ -75,9 +84,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Windows/HingedWindow3D.gd",
       "parametric": true,
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/HingedWindow3D.gd"
+      }
     },
     {
       "id": "RecipeBook",
@@ -87,8 +97,10 @@
       "parametric": true,
       "source": "kit/furniture.py::book",
       "mount": "surface",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeBooks",
@@ -98,8 +110,10 @@
       "parametric": true,
       "source": "kit/furniture.py::books",
       "mount": "surface",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeOpenBook",
@@ -109,8 +123,10 @@
       "parametric": true,
       "source": "kit/furniture.py::open_book",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeBookshelf",
@@ -120,8 +136,10 @@
       "parametric": true,
       "source": "kit/furniture.py::bookshelf",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeTable",
@@ -131,8 +149,10 @@
       "parametric": true,
       "source": "kit/furniture.py::table",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeChair",
@@ -142,8 +162,10 @@
       "parametric": true,
       "source": "kit/furniture.py::chair",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeBench",
@@ -153,8 +175,10 @@
       "parametric": true,
       "source": "kit/furniture.py::bench",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeReceptionDesk",
@@ -164,8 +188,10 @@
       "parametric": true,
       "source": "kit/furniture.py::reception_desk",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipePlanter",
@@ -175,8 +201,10 @@
       "parametric": true,
       "source": "kit/furniture.py::planter",
       "mount": "surface",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipePainting",
@@ -186,8 +214,10 @@
       "parametric": true,
       "source": "kit/furniture.py::painting",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeLadder",
@@ -197,8 +227,10 @@
       "parametric": true,
       "source": "kit/furniture.py::ladder",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      }
     },
     {
       "id": "RecipeWallLantern",
@@ -208,8 +240,10 @@
       "parametric": true,
       "source": "kit/lighting.py::wall_lantern",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/LightingRecipes.gd"
+      }
     },
     {
       "id": "RecipeBankerLamp",
@@ -219,8 +253,10 @@
       "parametric": true,
       "source": "kit/lighting.py::banker_lamp",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/LightingRecipes.gd"
+      }
     },
     {
       "id": "RecipePendantLamp",
@@ -230,8 +266,10 @@
       "parametric": true,
       "source": "kit/lighting.py::pendant_lamp",
       "mount": "ceiling",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/LightingRecipes.gd"
+      }
     },
     {
       "id": "RecipeBed",
@@ -241,8 +279,10 @@
       "parametric": true,
       "source": "kit/special_props.py::bed",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeCabinet",
@@ -252,8 +292,10 @@
       "parametric": true,
       "source": "kit/special_props.py::cabinet",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeChest",
@@ -263,8 +305,10 @@
       "parametric": true,
       "source": "kit/special_props.py::chest",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeVessel",
@@ -274,8 +318,10 @@
       "parametric": true,
       "source": "kit/special_props.py::vessel",
       "mount": "surface",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeSink",
@@ -285,8 +331,10 @@
       "parametric": true,
       "source": "kit/special_props.py::sink",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeStove",
@@ -296,8 +344,10 @@
       "parametric": true,
       "source": "kit/special_props.py::stove",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeWorkCounter",
@@ -307,8 +357,10 @@
       "parametric": true,
       "source": "kit/special_props.py::work_counter",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeTub",
@@ -318,8 +370,10 @@
       "parametric": true,
       "source": "kit/special_props.py::tub",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeWashstand",
@@ -329,8 +383,10 @@
       "parametric": true,
       "source": "kit/special_props.py::washstand",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeScreen",
@@ -340,8 +396,10 @@
       "parametric": true,
       "source": "kit/special_props.py::screen",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeRack",
@@ -351,8 +409,10 @@
       "parametric": true,
       "source": "kit/special_props.py::rack",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeChalkboard",
@@ -362,8 +422,10 @@
       "parametric": true,
       "source": "kit/special_props.py::chalkboard",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeLectern",
@@ -373,8 +435,10 @@
       "parametric": true,
       "source": "kit/special_props.py::lectern",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeChessboard",
@@ -384,8 +448,10 @@
       "parametric": true,
       "source": "kit/special_props.py::chessboard",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeRecordStation",
@@ -395,8 +461,10 @@
       "parametric": true,
       "source": "kit/special_props.py::record_station",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeBottles",
@@ -406,8 +474,10 @@
       "parametric": true,
       "source": "kit/special_props.py::bottles",
       "mount": "surface",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeCrates",
@@ -417,8 +487,10 @@
       "parametric": true,
       "source": "kit/special_props.py::crates",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipeSacks",
@@ -428,8 +500,10 @@
       "parametric": true,
       "source": "kit/special_props.py::sacks",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      }
     },
     {
       "id": "RecipePaneledBed",
@@ -439,8 +513,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::paneled_bed",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeFramedMirror",
@@ -450,8 +526,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::framed_mirror",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipePitcher",
@@ -461,8 +539,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::pitcher",
       "mount": "surface",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeWashTable",
@@ -472,8 +552,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::wash_table",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeRug",
@@ -483,8 +565,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::rug",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeSlateTable",
@@ -494,8 +578,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::slate_table",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeFoldingDesk",
@@ -505,8 +591,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::folding_desk",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeGoBoard",
@@ -516,8 +604,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::go_board",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeMusicStand",
@@ -527,8 +617,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::music_stand",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeKeyboard",
@@ -538,8 +630,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::keyboard",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeCookerHood",
@@ -549,8 +643,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::cooker_hood",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeCrockeryShelf",
@@ -560,8 +656,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::crockery_shelf",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeLinenCabinet",
@@ -571,8 +669,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::linen_cabinet",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeSpeakingTube",
@@ -582,8 +682,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::speaking_tube",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipePressurePanel",
@@ -593,8 +695,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::pressure_panel",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeVentGrille",
@@ -604,8 +708,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::vent_grille",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeDeskBundle",
@@ -615,8 +721,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::desk_bundle",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeEasel",
@@ -626,8 +734,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::easel",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeStool",
@@ -637,8 +747,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::stool",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeSealDoorTrim",
@@ -648,8 +760,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::seal_door_trim",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/VariantRecipes.gd"
+      }
     },
     {
       "id": "RecipeKitchenHood",
@@ -659,8 +773,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::kitchen_hood",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeUprightPiano",
@@ -670,8 +786,10 @@
       "parametric": true,
       "source": "kit/residential_props.py::upright_piano",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ResidentialRecipes.gd"
+      }
     },
     {
       "id": "RecipeRingBand",
@@ -681,8 +799,10 @@
       "parametric": true,
       "source": "kit/public_props.py::ring_band",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeArmillary",
@@ -692,8 +812,10 @@
       "parametric": true,
       "source": "kit/public_props.py::armillary",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeResonanceTubes",
@@ -703,8 +825,10 @@
       "parametric": true,
       "source": "kit/public_props.py::resonance_tubes",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeBalance",
@@ -714,8 +838,10 @@
       "parametric": true,
       "source": "kit/public_props.py::balance",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeMagnifier",
@@ -725,8 +851,10 @@
       "parametric": true,
       "source": "kit/public_props.py::magnifier",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeStampPress",
@@ -736,8 +864,10 @@
       "parametric": true,
       "source": "kit/public_props.py::stamp_press",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeRecordsPillar",
@@ -747,8 +877,10 @@
       "parametric": true,
       "source": "kit/public_props.py::records_pillar",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeMedicineCabinet",
@@ -758,8 +890,10 @@
       "parametric": true,
       "source": "kit/public_props.py::medicine_cabinet",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/PublicRecipes.gd"
+      }
     },
     {
       "id": "RecipeDishRack",
@@ -769,8 +903,10 @@
       "parametric": true,
       "source": "kit/public_props.py::dish_rack",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/PublicRecipes.gd"
+      }
     },
     {
       "id": "RecipePlantingBed",
@@ -780,8 +916,10 @@
       "parametric": true,
       "source": "kit/public_props.py::planting_bed",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/PublicRecipes.gd"
+      }
     },
     {
       "id": "RecipeGreenhouseFrame",
@@ -791,8 +929,10 @@
       "parametric": true,
       "source": "kit/public_props.py::greenhouse_frame",
       "mount": "ground",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipeWateringCan",
@@ -802,8 +942,10 @@
       "parametric": true,
       "source": "kit/public_props.py::watering_can",
       "mount": "surface",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/PublicRecipes.gd"
+      }
     },
     {
       "id": "RecipeGrille",
@@ -813,8 +955,10 @@
       "parametric": true,
       "source": "kit/public_props.py::grille",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/PublicGeometryRecipes.gd"
+      }
     },
     {
       "id": "RecipePedestal",
@@ -824,8 +968,10 @@
       "parametric": true,
       "source": "kit/decor.py::pedestal",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/DecorRecipes.gd"
+      }
     },
     {
       "id": "RecipeCoatStand",
@@ -835,8 +981,10 @@
       "parametric": true,
       "source": "kit/decor.py::coat_stand",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/DecorRecipes.gd"
+      }
     },
     {
       "id": "RecipePlatform",
@@ -846,8 +994,10 @@
       "parametric": true,
       "source": "kit/decor.py::platform",
       "mount": "deck",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/DecorRecipes.gd"
+      }
     },
     {
       "id": "RecipeLibraryRail",
@@ -857,8 +1007,10 @@
       "parametric": true,
       "source": "kit/decor.py::library_rail",
       "mount": "wall",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/DecorRecipes.gd"
+      }
     },
     {
       "id": "RecipeArchedWindow",
@@ -868,9 +1020,10 @@
       "parametric": true,
       "source": "kit/openings.py::arched_window",
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/OpeningRecipes.gd"
+      }
     },
     {
       "id": "RecipeClosedDoor",
@@ -880,9 +1033,10 @@
       "parametric": true,
       "source": "kit/openings.py::closed_door",
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/OpeningRecipes.gd"
+      }
     },
     {
       "id": "RecipeRectangularWindow",
@@ -892,9 +1046,10 @@
       "parametric": true,
       "source": "kit/variants.py::rectangular_window",
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/VariantRecipes.gd"
+      }
     },
     {
       "id": "RecipeRoundWindow",
@@ -904,9 +1059,10 @@
       "parametric": true,
       "source": "kit/variants.py::round_window",
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/VariantRecipes.gd"
+      }
     },
     {
       "id": "RecipeArchedClosedDoor",
@@ -916,9 +1072,10 @@
       "parametric": true,
       "source": "kit/variants.py::arched_closed_door",
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/VariantRecipes.gd"
+      }
     },
     {
       "id": "RecipeWallPath",
@@ -928,8 +1085,10 @@
       "parametric": true,
       "source": "kit/architecture.py::wall_path",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "line",
+        "generator": "res://tools/building_construction/production/line/ArchitectureRecipes.gd"
+      }
     },
     {
       "id": "RecipeStaircase",
@@ -939,8 +1098,10 @@
       "parametric": true,
       "source": "kit/architecture.py::staircase",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/StaircaseRecipes.gd"
+      }
     },
     {
       "id": "RecipeRailing",
@@ -950,8 +1111,10 @@
       "parametric": true,
       "source": "kit/architecture.py::railing",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "line",
+        "generator": "res://tools/building_construction/production/line/ArchitectureRecipes.gd"
+      }
     },
     {
       "id": "RecipeStraightFlight",
@@ -961,8 +1124,10 @@
       "parametric": true,
       "source": "kit/stair_exact.py::straight_flight",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/FlightRecipes.gd"
+      }
     },
     {
       "id": "RecipeTiledFloor",
@@ -972,8 +1137,10 @@
       "parametric": true,
       "source": "kit/flooring.py::tiled_floor",
       "mount": "deck",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/FloorRecipes.gd"
+      }
     },
     {
       "id": "RecipeStoneWall",
@@ -983,8 +1150,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::stone_wall",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/MasonryRecipes.gd"
+      }
     },
     {
       "id": "RecipeCourtyardGate",
@@ -994,8 +1163,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::courtyard_gate",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/GateRecipes.gd"
+      }
     },
     {
       "id": "RecipeTree",
@@ -1005,8 +1176,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::tree",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipePlanterBed",
@@ -1016,8 +1189,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::planter_bed",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeFountain",
@@ -1027,8 +1202,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::fountain",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeScholarlyStatue",
@@ -1038,8 +1215,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::scholarly_statue",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeInstrumentTable",
@@ -1049,8 +1228,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::instrument_table",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeLampPost",
@@ -1060,8 +1241,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::lamp_post",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/LightingRecipes.gd"
+      }
     },
     {
       "id": "RecipeOathPlatform",
@@ -1071,8 +1254,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::oath_platform",
       "mount": "deck",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeBarrelOutdoor",
@@ -1082,8 +1267,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::barrel",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeBollard",
@@ -1093,8 +1280,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::bollard",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeRopeCoil",
@@ -1104,8 +1293,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::rope_coil",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeDock",
@@ -1115,8 +1306,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::dock",
       "mount": "deck",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeWaterPatch",
@@ -1126,8 +1319,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::water_patch",
       "mount": "ground",
-      "production_route": "effect",
-      "visual_source": "procedural_effect"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeRowboat",
@@ -1137,8 +1332,10 @@
       "parametric": true,
       "source": "kit/outdoor_props.py::rowboat",
       "mount": "water_or_ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/OutdoorRecipes.gd"
+      }
     },
     {
       "id": "RecipeRing",
@@ -1148,8 +1345,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::ring",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/IndustrialFittingRecipes.gd"
+      }
     },
     {
       "id": "RecipeFlange",
@@ -1159,8 +1358,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::flange",
       "mount": "surface",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/IndustrialFittingRecipes.gd"
+      }
     },
     {
       "id": "RecipePipeRun",
@@ -1170,8 +1371,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::pipe_run",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "line",
+        "generator": "res://tools/building_construction/production/line/PipeRecipes.gd"
+      }
     },
     {
       "id": "RecipeGauge",
@@ -1181,8 +1384,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::gauge",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeInterlockHandle",
@@ -1192,8 +1397,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::interlock_handle",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeValveStation",
@@ -1203,8 +1410,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::valve_station",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeControlConsole",
@@ -1214,8 +1423,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::control_console",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeReactionVessel",
@@ -1225,8 +1436,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::reaction_vessel",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeCagedLamp",
@@ -1236,8 +1449,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::caged_lamp",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/LightingRecipes.gd"
+      }
     },
     {
       "id": "RecipeIndicatorBoard",
@@ -1247,8 +1462,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::indicator_board",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeSchematic",
@@ -1258,8 +1475,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::schematic",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipePallet",
@@ -1269,8 +1488,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::pallet",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeStorageRack",
@@ -1280,8 +1501,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::storage_rack",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeBarrelIndustrial",
@@ -1291,8 +1514,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::barrel",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeHandcart",
@@ -1302,8 +1527,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::handcart",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipePlatformScale",
@@ -1313,8 +1540,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::platform_scale",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeDrainGrate",
@@ -1324,8 +1553,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::drain_grate",
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeSimpleRail",
@@ -1335,8 +1566,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::simple_rail",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeRampModule",
@@ -1346,8 +1579,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::ramp_module",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeHeavyLock",
@@ -1357,8 +1592,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::heavy_lock",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/IndustrialRecipes.gd"
+      }
     },
     {
       "id": "RecipeMasonryJoints",
@@ -1368,8 +1605,10 @@
       "parametric": true,
       "source": "kit/industrial_props.py::masonry_joints",
       "mount": "wall",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/MasonryRecipes.gd"
+      }
     },
     {
       "id": "RecipeReferencePew",
@@ -1378,8 +1617,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Chairs/RecipeReferencePew.gd",
       "recipe": true,
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "existing_glb"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ReferencePart.gd"
+      }
     },
     {
       "id": "RecipeReferenceLeadedBay",
@@ -1388,9 +1629,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeReferenceLeadedBay.gd",
       "recipe": true,
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "existing_glb",
-      "frame_route": "A"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ReferencePart.gd"
+      }
     },
     {
       "id": "RecipeReferenceSpokeWindow",
@@ -1399,9 +1641,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeReferenceSpokeWindow.gd",
       "recipe": true,
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "existing_glb",
-      "frame_route": "A"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ReferencePart.gd"
+      }
     },
     {
       "id": "RecipeReferenceMoonGate",
@@ -1410,8 +1653,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Doors/RecipeReferenceMoonGate.gd",
       "recipe": true,
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "existing_glb"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ReferencePart.gd"
+      }
     },
     {
       "id": "RecipeReferenceGardenWall",
@@ -1420,8 +1665,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeReferenceGardenWall.gd",
       "recipe": true,
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "existing_glb"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ReferencePart.gd"
+      }
     },
     {
       "id": "RecipeReferenceRidgeTent",
@@ -1430,8 +1677,10 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceRidgeTent.gd",
       "recipe": true,
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "existing_glb"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ReferencePart.gd"
+      }
     },
     {
       "id": "RecipeReferenceSpruce1",
@@ -1440,17 +1689,22 @@
       "path": "res://tools/building_construction/BuildingConstruction/Outdoor/RecipeReferenceSpruce1.gd",
       "recipe": true,
       "mount": "ground",
-      "production_route": "B",
-      "visual_source": "existing_glb"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://tools/building_construction/production/assembly/ReferencePart.gd"
+      }
     },
     {
       "id": "HallGears",
+      "legacy_path": "res://scenes/blue_prince_lab/gears/Gears.gd",
       "category": "Mechanisms",
       "label": "Gear train",
-      "path": "res://scenes/blue_prince_lab/gears/Gears.gd",
+      "path": "res://tools/building_construction/production/rule/GearTrain.gd",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/GearTrain.gd"
+      }
     },
     {
       "id": "HallCabinet",
@@ -1458,8 +1712,10 @@
       "label": "Hinged cabinet",
       "path": "res://scenes/blue_prince_lab/doors/Cabinet.gd",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://scenes/blue_prince_lab/doors/Cabinet.gd"
+      }
     },
     {
       "id": "HallDoor",
@@ -1467,9 +1723,10 @@
       "label": "Framed hinged door",
       "path": "res://scenes/blue_prince_lab/doors/Door.gd",
       "mount": "opening",
-      "production_route": "C",
-      "visual_source": "legacy_procedural",
-      "frame_route": "A"
+      "production": {
+        "kind": "rule",
+        "generator": "res://scenes/blue_prince_lab/doors/Door.gd"
+      }
     },
     {
       "id": "HallBanner",
@@ -1477,8 +1734,10 @@
       "label": "Wind banner",
       "path": "res://scenes/blue_prince_lab/banner/Banner.gd",
       "mount": "wall",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://scenes/blue_prince_lab/banner/Banner.gd"
+      }
     },
     {
       "id": "HallLamp",
@@ -1486,8 +1745,10 @@
       "label": "Suspended lamp",
       "path": "res://scenes/blue_prince_lab/lamp/Lamp.gd",
       "mount": "ceiling",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://scenes/blue_prince_lab/lamp/Lamp.gd"
+      }
     },
     {
       "id": "HallStairs",
@@ -1495,8 +1756,10 @@
       "label": "Hall stair flight",
       "path": "res://scenes/blue_prince_lab/stairs/Stairs.gd",
       "mount": "run",
-      "production_route": "A",
-      "visual_source": "parametric_structure"
+      "production": {
+        "kind": "rule",
+        "generator": "res://scenes/blue_prince_lab/stairs/Stairs.gd"
+      }
     },
     {
       "id": "HallMeridian",
@@ -1504,8 +1767,10 @@
       "label": "Meridian instrument",
       "path": "res://scenes/blue_prince_lab/studies/Meridian.gd",
       "mount": "ground",
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "rule",
+        "generator": "res://scenes/blue_prince_lab/studies/Meridian.gd"
+      }
     },
     {
       "id": "PhysicalButton",
@@ -1514,8 +1779,32 @@
       "path": "res://scenes/physical_button/PhysicalButton.gd",
       "mount": "control",
       "optional": true,
-      "production_route": "C",
-      "visual_source": "legacy_procedural"
+      "production": {
+        "kind": "assembly",
+        "generator": "res://scenes/physical_button/PhysicalButton.gd"
+      }
+    },
+    {
+      "id": "RecipeBeam",
+      "category": "Walls",
+      "label": "Structural Beam",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeBeam.gd",
+      "mount": "ground",
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/StructuralRecipes.gd"
+      }
+    },
+    {
+      "id": "RecipeColumn",
+      "category": "Walls",
+      "label": "Structural Column",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeColumn.gd",
+      "mount": "ground",
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/StructuralRecipes.gd"
+      }
     }
   ]
 }

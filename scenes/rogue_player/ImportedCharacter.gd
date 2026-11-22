@@ -2,8 +2,8 @@ extends RefCounted
 
 const RIG_FIX := preload("res://scenes/rogue_player/RigWeightFix.gd")
 const ANIM_LIB_HELPER := preload("res://scenes/rogue_player/KayKitAnimationLibrary.gd")
-const CHIBI_SHADER := preload("res://scenes/rogue_player/ChibiFigurineSurface.gdshader")
-const CHIBI_DOUBLE_SIDED := preload("res://scenes/rogue_player/ChibiFigurineDoubleSided.gdshader")
+const CHIBI_SHADER := preload("res://scenes/components/rendering/actors/ChibiFigurineSurface.gdshader")
+const CHIBI_DOUBLE_SIDED := preload("res://scenes/components/rendering/actors/ChibiFigurineDoubleSided.gdshader")
 const SOURCE_RIG_PATH := "res://assets/imported/kaykit/animations/Rig_Medium_General.glb"
 
 const NOMINAL_ACTOR_HEIGHT := 1.32
@@ -794,6 +794,9 @@ static func _apply_chibi_figurine_materials(model: Node3D, resolved_path: String
 				finish.set_shader_parameter("uv_scale", Vector2(source.uv1_scale.x, source.uv1_scale.y))
 				finish.set_shader_parameter("uv_offset", Vector2(source.uv1_offset.x, source.uv1_offset.y))
 				finish.set_shader_parameter("surface_roughness", clampf(source.roughness, 0.77, 0.95))
+				if resolved_path.begins_with("res://assets/characters/UserModels/model_"):
+					finish.set_shader_parameter("expedition_soft_toon", true)
+					finish.set_shader_parameter("toon_strength", 0.58)
 				_figurine_material_cache[key] = finish
 			mesh_node.set_surface_override_material(surface, finish)
 

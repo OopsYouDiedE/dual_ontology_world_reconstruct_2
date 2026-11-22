@@ -18,7 +18,7 @@ var _route_hardware := []
 
 signal lane_selected(index: int)
 
-const Veil := preload("res://scenes/rogue_view/render/NightVeil.gdshader")
+const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdshader")
 const Followers := preload("res://scenes/rogue_view/FieldFollowers.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 var expedition_view := false
@@ -43,8 +43,6 @@ const Blueprint = preload("res://scenes/rogue_view/NativeBlueprint.gd")
 const Silhouette = preload("res://scenes/rogue_view/CatalogSilhouette.gd")
 const Plan = preload("res://scenes/rogue_view/NativeLotPlan.gd")
 const PLAYER_SCENE := "res://scenes/rogue_player/RoguePlayer.tscn"
-const ACADEMY_ART := "res://scenes/academy_art/AcademyArt.gd"
-const ACADEMY_TEMPLATES := ["foyer", "kitchen", "living_hall", "lecture", "clinic", "dining", "valve_gallery", "service_stair"]
 const INTERACT := &"interact"
 const REACH := 1.85
 
@@ -60,7 +58,6 @@ var _blueprint_path := ""
 var _blueprint_stamp := -1
 var _lot_level := 1
 var _template := ""
-var _art: Script
 var _mode := ""
 var _instance_id := ""
 var _player: CharacterBody3D
@@ -92,7 +89,7 @@ const Kitchen = preload("res://scenes/rogue_view/render/HotKitchen.gd")
 var _kitchen
 var _kitchen_plan := {}
 const Lighting = preload("res://scenes/rogue_view/render/RoomLighting.gd")
-const TileShader = preload("res://scenes/rogue_view/render/AcademyTile.gdshader")
+const TileShader = preload("res://scenes/components/rendering/surfaces/AcademyTile.gdshader")
 var _lights: Node3D
 var _hour := 12.0
 
@@ -114,6 +111,16 @@ func _resize_render_target() -> void:
 func _ready() -> void:
 	_pixels.resized.connect(_resize_render_target)
 	_resize_render_target.call_deferred()
+	if expedition_view:
+		var world: WorldEnvironment = $RoomViewport/WorldEnvironment
+		world.environment = world.environment.duplicate() as Environment
+		world.environment.adjustment_enabled = true
+		world.environment.adjustment_saturation = 0.76
+	if expedition_view and RenderingServer.get_current_rendering_method() == &"forward_plus":
+		var ink := preload("res://scenes/blue_prince_lab/HallLook.gd").ink_pass()
+		ink.name = "ExpeditionInk"
+		ink.material_override.set_shader_parameter("opacity", 0.40)
+		_viewport.add_child(ink)
 	if not InputMap.has_action(INTERACT):
 		InputMap.add_action(INTERACT)
 		var key := InputEventKey.new()
@@ -122,7 +129,6 @@ func _ready() -> void:
 		var pad := InputEventJoypadButton.new()
 		pad.button_index = JOY_BUTTON_A
 		InputMap.action_add_event(INTERACT, pad)
-	if ResourceLoader.exists(ACADEMY_ART): _art = load(ACADEMY_ART) as Script
 	_title.hide()
 	if expedition_view:
 		var veil := ColorRect.new()
@@ -386,8 +392,6 @@ func _rebuild_architecture() -> void:
 	_geometry.add_child(_lights)
 	_lights.build(_lot, center)
 	set_hour(_hour)
-	if _art != null and _mode == "blueprint" and _template in ACADEMY_TEMPLATES:
-		_art.dress_shell(_geometry, _template, _lot)
 
 
 func _build_window(wall_center: Vector3, basis: Basis, width: float) -> void:
@@ -438,11 +442,7 @@ func _rebuild_objects() -> void:
 		if "shelf" in word or "cabinet" in word or "bookcase" in word: body.size = Vector3(0.82, 1.48, 0.40)
 		if role in ["entry", "exit"] or item.get("annotation_only", false): body.size = Vector3(0.76, 0.035, 0.76)
 		body.material = _material(Color("5ba47f") if role == "entry" else Color("ce9b58") if role == "exit" else Color("866d55"))
-		var populated := false
-		if not item.get("annotation_only", false) and _art != null:
-			populated = _art.populate_object(anchor, _template if _mode == "blueprint" else "", item)
-		if not populated:
-			populated = Silhouette.populate(anchor, int(item.guid))
+		var populated := Silhouette.populate(anchor, int(item.guid))
 		if not populated:
 			marker.mesh = body
 			marker.position.y = body.size.y * 0.5
@@ -583,7 +583,7 @@ func _refresh_targets() -> void:
 			_targets.append({"kind": "lane", "index": i, "position": _lanes[i], "label": "brass strip" if i == 0 else "red strip"})
 	if portals.size() < _exits.size():
 		portals.append_array(entrances)
-	if expedition_view and (not campaign_view or is_instance_valid(_crossing)):
+	if expedition_view and (not campaign_view or routes_released or is_instance_valid(_crossing)):
 		_sync_gates(portals)
 		for i in _gate_positions:
 			_targets.append({"kind": "exit", "index": i, "position": _gate_positions[i], "label": _exit_label(i)})
@@ -907,7 +907,6 @@ func camp_layout(names: Array) -> Dictionary:
 ## Keep the witness aisle clear and distribute initial jobs across the actual Hall floor.
 func _hall_floor_positions(graph: Dictionary, reserved: Dictionary, count: int) -> Array[Vector2i]:
 	var positions: Array[Vector2i] = []
-	if not is_instance_valid(_crossing): return positions
 	var room_cells: Array[Vector2i] = []
 	var origin := _player.position
 	var first := Vector2i(floori(origin.x), floori(origin.z))
@@ -924,8 +923,9 @@ func _hall_floor_positions(graph: Dictionary, reserved: Dictionary, count: int) 
 			visited[next] = true
 			queue.append(next)
 		if reserved.has(cell) or not graph.has(cell): continue
-		var local := _crossing.to_local(_world(Vector2(cell) + Vector2(.5,.5)))
-		if absf(local.x) < 1.7 and local.z > -.62 and local.z < 2.0: continue
+		if is_instance_valid(_crossing):
+			var local := _crossing.to_local(_world(Vector2(cell) + Vector2(.5,.5)))
+			if absf(local.x) < 1.7 and local.z > -.62 and local.z < 2.0: continue
 		room_cells.append(cell)
 	for i in mini(count, room_cells.size()):
 		var chosen := 0

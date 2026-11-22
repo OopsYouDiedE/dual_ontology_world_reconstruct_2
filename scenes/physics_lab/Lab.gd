@@ -2,6 +2,8 @@ extends Node3D
 ## Ten experiment plates. Commands and the 60 Hz model are identical in both camera views.
 
 const EngineModel = preload("res://scenes/physics_lab/Model.gd")
+const AirlockScene = preload("res://scenes/physics_lab/airlock/Airlock.tscn")
+const Airlock = preload("res://scenes/physics_lab/airlock/Airlock.gd")
 const Kit = preload("res://scenes/physics_lab/Geometry.gd")
 const TITLES := ["The Three-Polarizer Gate", "The Standing-Wave Gallery", "The Observer Airlock",
 	"The Folded Arcade", "The Sorting Gate", "The Inverted Shaft", "The Alchemical Crossing",
@@ -40,6 +42,10 @@ const WALK := [Vector3(4.27, 1.56, 3.30), Vector3(3.75, 1.56, 3), Vector3(-3, 1.
 var model := EngineModel.new()
 var shell := Kit.new()
 var stage: Node3D
+var airlock: Airlock
+var archive_observer := false
+var gallery_hud: CanvasLayer
+var gallery_light: DirectionalLight3D
 var camera: Camera3D
 var paused := false
 var eye := false
@@ -60,6 +66,7 @@ func _ready() -> void:
 		InputMap.action_add_event(action, key)
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--lab-pause": paused = true
+		if arg == "--lab-archive-observer": archive_observer = true
 	get_viewport().msaa_3d = Viewport.MSAA_4X
 	var lighting := WorldEnvironment.new()
 	var env := Environment.new()
@@ -85,6 +92,7 @@ func _ready() -> void:
 	keylight.shadow_enabled = true
 	keylight.light_angular_distance = 0.0
 	add_child(keylight)
+	gallery_light = keylight
 	camera = Camera3D.new()
 	add_child(camera)
 	camera.current = true
@@ -95,6 +103,7 @@ func _ready() -> void:
 func make_ui() -> void:
 	var canvas := CanvasLayer.new()
 	add_child(canvas)
+	gallery_hud = canvas
 	var top := VBoxContainer.new()
 	top.position = Vector2(36, 24)
 	top.add_theme_constant_override("separation", 3)
@@ -165,6 +174,17 @@ func select(index: int) -> void:
 	stage = Node3D.new()
 	add_child(stage)
 	model.reset(posmod(index, TITLES.size()))
+	airlock = null
+	if model.room == 2 and not archive_observer:
+		gallery_hud.hide()
+		gallery_light.hide()
+		airlock = AirlockScene.instantiate() as Airlock
+		airlock.guided = true
+		stage.add_child(airlock)
+		return
+	gallery_hud.show()
+	gallery_light.show()
+	camera.make_current()
 	shell.build(stage, model.room)
 	title.text = "%02d    %s" % [model.room + 1, TITLES[model.room]]
 	note.text = NOTES[model.room]
@@ -226,12 +246,16 @@ func act(index: int) -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if not paused:
+	if not paused and not is_instance_valid(airlock):
 		model.advance()
 		refresh()
 
 
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(airlock):
+		if event.is_action_pressed(&"lab_prev"): browse(-1)
+		if event.is_action_pressed(&"lab_next"): browse(1)
+		return
 	for i in range(4):
 		if event.is_action_pressed([&"lab_a", &"lab_b", &"lab_c", &"lab_d"][i]): act(i)
 	if event.is_action_pressed(&"lab_prev"): browse(-1)
@@ -267,5 +291,6 @@ func refresh() -> void:
 
 
 func mcp_observe() -> Dictionary:
+	if is_instance_valid(airlock): return airlock.mcp_observe()
 	return {"plate": model.room + 1, "title": TITLES[model.room], "tick": model.tick,
 		"paused": paused, "camera": "eye" if eye else "section", "state": model.s.duplicate(true)}

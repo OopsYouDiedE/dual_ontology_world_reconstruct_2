@@ -1,4 +1,4 @@
-"""Run all ten counterfactual/positive experiments through the Game MCP Forward+ viewport."""
+"""Replay the ten archived counterfactual/positive experiments through the Game MCP Forward+ viewport."""
 import argparse
 import hashlib
 import json
@@ -17,7 +17,7 @@ def main():
     args = parser.parse_args()
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
-    run = server.Run(1, scene_key="physics_lab")
+    run = server.Run(1, scene_key="physics_lab", eval_review=True)
     rows = []
     trace = []
 

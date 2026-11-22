@@ -1,38 +1,63 @@
 extends RefCounted
-## Hale's authored belief and its local exception. Only a continuous sequence
-## of witnessed actor actions can produce an admissible counterexample.
-const RULE := {"id":"hale_lit_span", "scope":"SELF", "modality":"FORBID", "action":"observe_lit_span",
-	"condition":["eq","span_lit",true], "claim":"The light takes anyone who looks into a span."}
-const MIN_OBSERVED := 13
-var observed := 0
-var saw_survival := false
+## Hale's local rule projections. An exception narrows the taboo; it does not erase it.
+const PLAYER := [
+	{"when":"light_reddens","do":"look_away","notice":"If the light reddens, look away."},
+	{"when":"gaze_broken","within_ticks":60,"do":"regain_stone","notice":"Off the span within a second of looking away."},
+]
+const TABOO := {"observe_lit_span":{"not":["lead_already_watching"]}}
+const ORIGINAL := {"deny":["observe_lit_span","step_into_void"],"exception":{}}
+const REVISED := {"deny":["observe_lit_span","step_into_void"],"exception":TABOO}
+const DISTORTED := {"deny":["step_into_void"],"urge":["keep_both_eyes_on_red"]}
+const MIN_SOLO := 27
+const MIN_UNINTERRUPTED_SOLO := 84
+const PANIC_LIMIT := 46
+var ast := ORIGINAL
 var counterexample := false
 var revised := false
+var panic := 0
+var distorted := false
+var red_witnessed := false
+var solo := 0
 
+static func player_notice() -> String:
+	return PLAYER[0].notice + "\n" + PLAYER[1].notice
 
-func record(lead_grounded_on_span: bool, lead_witness: bool, hale_saw_lead: bool, lead_back_on_bank: bool) -> bool:
-	if counterexample: return false
-	if lead_grounded_on_span and lead_witness and hale_saw_lead:
-		observed += 1
-		if observed >= MIN_OBSERVED: saw_survival = true
-	else:
-		observed = 0
-	if lead_back_on_bank and hale_saw_lead and saw_survival:
+func sample_trial(hale_eye_on_span: bool, lead_eye_on_span: bool) -> String:
+	if hale_eye_on_span and lead_eye_on_span:
+		red_witnessed = true
+		panic += 1
+		if not distorted and panic >= PANIC_LIMIT:
+			distorted = true
+			ast = DISTORTED
+			return "DISTORTED"
+	solo = solo + 1 if hale_eye_on_span and not lead_eye_on_span and not distorted else 0
+	if solo >= (MIN_SOLO if red_witnessed else MIN_UNINTERRUPTED_SOLO):
 		counterexample = true
-		return true
-	return false
+		return "EVIDENCE"
+	return ""
 
+func begin_trial() -> void:
+	red_witnessed = false
+	solo = 0
 
-func invalidate_attempt() -> void:
-	observed = 0
-	saw_survival = false
-
+func ground() -> void:
+	panic = 0
+	distorted = false
+	ast = REVISED if revised else ORIGINAL
+	begin_trial()
 
 func speak(face_to_face: bool) -> bool:
-	if revised or not counterexample or not face_to_face: return false
+	if revised or distorted or not counterexample or not face_to_face: return false
 	revised = true
+	ast = REVISED
 	return true
 
+func forbidden(action: String, facts: Dictionary = {}) -> bool:
+	if action not in ast.deny: return false
+	var exception: Dictionary = ast.get("exception",{}).get(action,{})
+	if exception.has("not"):
+		return bool(facts.get(exception["not"][0],true))
+	return true
 
-func forbidden(action: String, facts: Dictionary) -> bool:
-	return action == RULE.action and facts.get(RULE.condition[1], false) == RULE.condition[2] and not revised
+func urges_overlap() -> bool:
+	return "keep_both_eyes_on_red" in ast.get("urge",[])

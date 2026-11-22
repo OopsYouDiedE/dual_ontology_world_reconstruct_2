@@ -1,5 +1,6 @@
 extends RefCounted
 ## The moving surface and its optically addressable facets share room coordinates.
+const Rules = preload("res://scenes/physics_lab/airlock/Rules.gd")
 const Kit = preload("res://scenes/physics_lab/Geometry.gd")
 const WORLD := 1
 const ACTOR := 2
@@ -9,6 +10,7 @@ const LEAD_HOME := Vector3(-.18, 0, 3.31)
 const HALE_HOME := Vector3(1.03, 0, 1.16)
 const ISLAND_WATCH := Vector3(.93, 0, -2.79)
 const FAR_WATCH := Vector3(6.30, 0, -2.61)
+const FAR_MARK := Vector3(6.30, 1.56, -2.18)
 const B_LANE := -3.87
 const A_AIM := Vector3(0, .006, -1.55)
 const B_AIM := Vector3(3.55, -.245, -2.977)
@@ -26,6 +28,7 @@ var gate_home: float
 var lintel: MeshInstance3D
 var gate_lamp: StandardMaterial3D
 var gateside: Node3D
+var entry_notice: Label3D
 
 
 func make(parent: Node3D) -> void:
@@ -53,6 +56,12 @@ func make(parent: Node3D) -> void:
 	_solid(Vector3(3.2,1.15,-5.45), Vector3(10.45,6.5,.25), Color("303139"), "north_well")
 	_solid(Vector3(8.18,1.12,-3.70), Vector3(.25,6.15,4.84), DARK, "end_wall")
 	_solid(Vector3(6.90,.24,-2.13), Vector3(2.22,.48,.16), DARK, "far_rail")
+	_solid(Vector3(6.30,1.2,-2.105),Vector3(.82,1.49,.12),DARK,"blind_marker")
+	var bar := kit.box(FAR_MARK+Vector3.DOWN*.21,Vector3(.49,.026,.025),PALE)
+	bar.material_override = luminous(Color("a7b5b9"),.65)
+	var prayer := kit.label("FACE THE WALL\nUNTIL THE KNOCK",FAR_MARK,.078)
+	prayer.rotation.y = PI
+	prayer.modulate = Color("dddcd2")
 	_solid(Vector3(-.86,.23,-3.79), Vector3(.13,.46,2.17), SEAM, "island_rail")
 	_solid(Vector3(.21,.22,-4.81), Vector3(2.15,.44,.14), DARK, "island_back")
 	for z in [3.60, 2.71, 1.82, .93, .06]:
@@ -76,6 +85,10 @@ func make(parent: Node3D) -> void:
 	spot(Vector3(-1.05,2.82,1.83), Vector3(-1.73,1.82,.74), Color("bbc6d0"), .96, 39)
 	spot(Vector3(4.29,2.66,-4.55), Vector3(3.44,1.01,-5.26), Color("879aa7"), .77, 44)
 	_architecture()
+	kit.box(Vector3(-1.605,1.49,.62),Vector3(.052,.42,1.68),SEAM)
+	entry_notice = kit.label(Rules.player_notice(),Vector3(-1.575,1.49,.62),.072)
+	entry_notice.rotation.y = PI/2.0
+	entry_notice.modulate = Color("e2ddd2")
 	# A clerestory stripe above the blind wall gives the room depth from the doorway.
 	var lamp := kit.box(Vector3(6.25,2.67,-5.27),Vector3(1.38,.062,.10), PALE)
 	lamp.material_override = luminous(Color("a8b9bd"), .9)
@@ -148,20 +161,31 @@ func make_span(at: Vector3, size: Vector3, rib_at: Vector3, rib_size: Vector3) -
 	var steel := luminous(Color("9eafb0"), .57)
 	var warm := luminous(Color("c1ac93"), 1.05)
 	spans.append({"solid":solid,"optic":optical,"surface":mesh,"rib":rib,"frame":frame,"ghost":ghost,
-		"clear":steel,"warn":warm,"focus":A_AIM if idx==0 else B_AIM,"normal":Vector3.UP if idx==0 else Vector3.BACK})
+		"clear":steel,"warn":warm,"red":luminous(Color("8f0d18"),.63),"red_accent":luminous(Color("d71b21"),.84),"focus":A_AIM if idx==0 else B_AIM,"normal":Vector3.UP if idx==0 else Vector3.BACK})
 	paint(idx, false, 0)
 
 
-func paint(i: int, solid_now: bool, warning_age: int) -> void:
+func paint(i: int, solid_now: bool, warning_age: int, red_age := 0) -> void:
 	var s := spans[i]
 	s.solid.collision_layer = DECK if solid_now else 0
 	s.surface.visible = solid_now
 	s.frame.visible = solid_now
 	s.rib.visible = solid_now
 	s.ghost.visible = not solid_now
-	var flash := warning_age > 0 and (warning_age / 12) % 2 == 0
-	s.surface.material_override = s.warn if flash else kit.mat(PALE)
-	s.rib.material_override = s.warn if flash else (s.clear if i == 1 else kit.mat(PALE))
+	var flash := warning_age > 0 and warning_age % 24 < 12
+	if red_age > 0:
+		# Thin seams buckle while the real foot-bearing envelope stays fixed during warning.
+		for seam in s.frame.get_children():
+			seam.rotation.y = .14*sin(float(red_age)*.39+seam.position.length_squared())
+			seam.material_override = s.red_accent
+		s.surface.material_override = s.red
+		s.rib.material_override = s.red_accent
+	else:
+		for seam in s.frame.get_children():
+			seam.rotation.y = 0.0
+			seam.material_override = kit.mat(SEAM)
+		s.surface.material_override = s.warn if flash else (s.clear if i == 0 else kit.mat(PALE))
+		s.rib.material_override = s.warn if flash else s.clear
 
 
 func spot(from: Vector3, toward: Vector3, color: Color, energy: float, angle: float) -> SpotLight3D:

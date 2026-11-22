@@ -24,6 +24,11 @@ var hale: CharacterBody3D
 var model: Node3D
 var motion: DetectiveMotion
 var camera: Camera3D
+var cue_head: Node3D
+var cue_boot: Node3D
+var hale_optics: Dictionary = {}
+var head_memory: Dictionary = {}
+var boot_memory: Dictionary = {}
 var yaw := 0.0
 var pitch := .012
 var hale_forward := Vector3.FORWARD
@@ -38,6 +43,13 @@ var spans := [Span.new(),Span.new()]
 var red_signal := [false,false]
 var red_voices: Array[AudioStreamPlayer3D] = [null,null]
 var trial_at := 0
+var offer := 0
+var offer_open := false
+var book_open := false
+var book: PanelContainer
+var book_text: Label
+var attempted_tread := false
+var stalemate := false
 var local_hale: Dictionary = {}
 var last_policy := ""
 var searched := false
@@ -105,6 +117,8 @@ func _reset() -> void:
 	camera.environment = _environment()
 	lead.add_child(camera)
 	camera.position.y = EYE
+	camera.set_cull_mask_value(2,false)
+	_make_lead_marks()
 	camera.make_current()
 	yaw = 0.0
 	pitch = .012
@@ -117,7 +131,16 @@ func _reset() -> void:
 	red_signal = [false,false]
 	red_voices = [null,null]
 	trial_at = 0
+	offer = 0
+	offer_open = false
+	book_open = false
+	book.hide()
+	attempted_tread = false
+	stalemate = false
 	local_hale = {}
+	hale_optics = {}
+	head_memory = {}
+	boot_memory = {}
 	last_policy = ""
 	searched = false
 	red_after_panic = false
@@ -196,6 +219,12 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not auto_input:
 		raw_look += e.relative
 	if e.is_action_pressed(&"air_talk"): queued_talk = true
+	if e is InputEventKey and e.pressed and not e.echo:
+		if e.physical_keycode == KEY_TAB and not auto_input:
+			book_open = not book_open
+			if not book_open: offer_open = false
+		if offer_open and e.physical_keycode in [KEY_1,KEY_2,KEY_3]:
+			offer = e.physical_keycode - KEY_1 + 1
 	if e.is_action_pressed(&"air_reset"): queued_reset = true
 	if e.is_action_pressed(&"air_film") and film_enabled and not is_instance_valid(clip): _start_film()
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE and not auto_input:
@@ -230,6 +259,8 @@ func _physics_process(_dt: float) -> void:
 		angles = cmd.get("look",Vector2.ZERO)
 		wants_low = cmd.get("low",false)
 		talk = cmd.get("talk",false)
+		offer = cmd.get("offer",0)
+		book_open = cmd.get("book",false)
 	_simulate(moves, angles, wants_low, talk)
 
 
@@ -247,12 +278,17 @@ func _simulate(moves: Vector2, angles: Vector2, wants_low: bool, talk: bool) -> 
 	var lead_front := -camera.global_transform.basis.z
 	var lead_eyes := camera.global_position
 	if not failed.is_empty(): return
+	cue_head.position.y = camera.position.y - .09
+	cue_head.rotation.y = yaw
+	for plate: Node3D in cue_head.get_children(): plate.force_update_transform()
+	cue_boot.force_update_transform()
 	witness[0] = _observe(lead_eyes,lead_front,lead)
-	# Sample head direction even during a forbidden or involuntary glance.
-	witness[1] = _observe(_hale_eye(),hale_forward,hale)
+	# One common visual acquisition also feeds Hale's policy. No player-directed rays.
+	hale_optics = _sample(_hale_eye(),hale_forward,hale,true)
+	witness[1] = hale_optics.spans
 	if not _tick_spans(): return
 	_drive(lead,Vector3(moves.x,0,moves.y).rotated(Vector3.UP,yaw), LOW_SPEED if crouched else SPEED)
-	local_hale = _hale_percept(0 if role in ["NEAR","TRIAL_WAIT","TRIAL_LOOK","READY","A_LINE","CROSS_A"] else 1)
+	local_hale = _hale_percept(0 if role in ["NEAR","A_LINE","CROSS_A"] else 1)
 	_trial(talk and _can_talk())
 	_update_hale()
 	if minf(lead.position.y,hale.position.y) < -2.46:
@@ -281,6 +317,8 @@ func _tick_spans() -> bool:
 			_sound("form" if span.solid else "drop",focus)
 		red_signal[i] = span.red > 0
 		if span.red == 1:
+			if role == "WATCH_B":
+				_say("[A rising drone.]",48)
 			_event("RED",{"span":i})
 			red_voices[i] = _sound("red",focus)
 		if old_red > 0 and span.red == 0:
@@ -313,87 +351,161 @@ func _fail(reason: String, at: Vector3, span := -1) -> void:
 	_refresh()
 
 
+func _tread_in_view() -> bool:
+	var middle := room.tread_reference.global_position
+	if not camera.is_position_in_frustum(middle): return false
+	# The physical tips must frame the visible gap; the same point carries the real tread when solid.
+	for tip: Node3D in room.tread_reference.get_children():
+		if not camera.is_position_in_frustum(tip.global_position): return false
+		if not _ray(camera.global_position,tip.global_position,Room.WORLD|Room.ACTOR,[lead.get_rid()]).is_empty(): return false
+	return _ray(camera.global_position,middle,Room.WORLD|Room.ACTOR,[lead.get_rid()]).is_empty()
+
+
 func _trial(talk: bool) -> void:
-	if role == "NEAR":
-		_avert_hale()
-		if not talk: return
-		if rule.distorted:
+	if role == "WAIT_B":
+		# The first-hand demonstration is the dark threshold within sight, then a retreat onto stone.
+		var at_lintel := lead.position.x > .70 and absf(lead.position.z-Room.B_LANE) < .43
+		if at_lintel and not deck[1] and not rule.revised and not attempted_tread and not book_open and not offer_open and _tread_in_view():
+			attempted_tread = true
+			var referent := room.tread_reference.global_position
+			_event("TREAD_DARK",{"clause":Rules.TREAD.id,"point":referent,"screen":camera.unproject_position(referent)})
+		if attempted_tread and not at_lintel and _floor(lead) == "island" and not stalemate:
+			stalemate = true
+			_event("ORIGINAL_RULES_STALL",{"player":Rules.TREAD.id,"hale":Rules.TABOO.id})
+			_say("Hale: P-03 brought you back. H-03 keeps me here.",235)
+		if not talk and offer == 0: return
+		if talk and not _can_talk(): return
+		if rule.distorted and talk:
 			rule.ground()
 			_event("GROUNDED")
-			_say("Hale: That wasn't what I meant to say. From the bank. Again.",240)
-		elif rule.speak(true):
-			role = "READY"
-			_event("RULE_REVISED")
-			_say("Hale: I'll look only when you aren't. Hold this stretch while I cross.",250)
-		else:
+			_say("Hale: Read it back to me. The original wording.",215)
+		elif rule.counterexample:
+			if offer != 0:
+				var proposed := offer
+				offer = 0
+				if _can_talk() and rule.speak(true,"P-03" if proposed == 3 else "H-03","TOWARD" if proposed == 2 else "AWAY"):
+					offer_open = false
+					book_open = false
+					_event("RULE_REVISED",{"clause":Rules.TABOO.id,"allowed":rule.ast.allowed_heads})
+					_say("Hale: I'll write that exception under H-03.",200)
+				else:
+					_event("OFFER_REJECTED",{"choice":proposed})
+					_say("Hale: That's not what we saw.",165)
+			elif talk and not rule.revised:
+				offer_open = true
+				book_open = true
+		elif talk and not rule.revised:
+			if not stalemate:
+				_say("Hale: I won't look into it. Compare our field copies.",180)
+				return
 			rule.begin_trial()
 			searched = false
 			red_after_panic = false
 			trial_at = tick
 			role = "TRIAL_WAIT"
 			_event("TRIAL_REQUESTED")
-			_say("Hale: From the bank. One breath. Then I'm turning back.",144)
+			_say("Hale: One look, from stone. If it reddens, we stop.",140)
 			_sound("reply",hale.position + Vector3.UP)
-	elif role == "TRIAL_WAIT" and tick-trial_at >= 47:
+	elif role == "TRIAL_WAIT" and tick-trial_at >= 39:
 		role = "TRIAL_LOOK"
-		_turn_hale(Room.A_AIM)
+		_turn_hale(_watch_b())
 	elif role == "TRIAL_LOOK":
 		var result := rule.sample_trial(local_hale)
 		if result == "DISTORTED":
 			_event("RULE_DISTORTED")
-			_say("Hale: No. You have to look with me. Red settles if we hold it.",208)
+			_say("Hale: No. Look with me. It needs to see us both.",215)
 		elif result == "EVIDENCE":
-			role = "NEAR"
+			role = "WAIT_B"
 			_event("COUNTEREXAMPLE",{"remaining":rule.hypotheses.duplicate()})
-			_say("Hale: White. I can look while you face away.",250)
-			_avert_hale()
+			_say("Hale: It went white. And it stayed white.",230)
+			_sound("knock",hale.position+Vector3.UP)
 		if role != "TRIAL_LOOK": return
 		if rule.distorted:
 			var reaction := rule.decide(local_hale,"TAKE")
 			_policy(reaction)
 			if reaction == "SEARCH":
 				searched = true
-				_avert_hale()
+				_turn_hale(Room.ISLAND_TRIAL + Vector3.UP*1.84)
 			elif reaction == "JOIN":
 				if searched and not red_after_panic:
 					red_after_panic = true
 					_event("FALSE_RULE_GLANCE")
-				_turn_hale(Room.A_AIM)
-		if tick-trial_at >= 340:
-			role = "NEAR"
-			if not rule.distorted:
-				_say("Hale: Back on the bank. I need to see where you're looking.",210)
-			_avert_hale()
+				_turn_hale(_watch_b())
+		if tick-trial_at >= 258:
+			role = "WAIT_B"
+			if not rule.distorted: _say("Hale: I didn't see enough to change it.",175)
 
 
 func _policy(decision: String) -> void:
 	if decision == last_policy: return
 	last_policy = decision
-	_event("HALE_DECISION",{"action":decision,"stage":role,"head":local_hale.get("head"),"bank":local_hale.get("bank")})
+	_event("HALE_DECISION",{"action":decision,"stage":role,"head":local_hale.get("head"),"bank":local_hale.get("bank"),
+		"head_hit":local_hale.get("head_hit",{}),"boot_hit":local_hale.get("boot_hit",{}),"span_hit":local_hale.get("span_hit",{})})
 
 
 func _hale_percept(span: int) -> Dictionary:
-	# The mind gets pose and footing only when Hale can actually see the lead.
-	# The simulator's lead witness bit and dark/red counters are never passed to it.
-	var from := _hale_eye()
-	var eyes := camera.global_position
-	var face: String = Rules.NONE
-	var bank: String = Rules.NONE
-	var offset := eyes-from
-	if offset.length() < 8.0 and hale_forward.dot(offset.normalized()) > .32:
-		var ray := _ray(from,eyes-Vector3.UP*.10,Room.WORLD|Room.ACTOR,[hale.get_rid()])
-		if not ray.is_empty() and ray.collider == lead:
-			var toward: Vector3 = (room.spans[span].focus-eyes).slide(Vector3.UP).normalized()
-			var facing := (-camera.global_transform.basis.z).slide(Vector3.UP).normalized()
-			var d := toward.dot(facing)
-			face = "AWAY" if d < .19 else ("TOWARD" if d > .69 else "SIDE")
-			var feet := _ray(from,lead.global_position+Vector3.UP*.19,Room.WORLD|Room.ACTOR,[hale.get_rid()])
-			if not feet.is_empty() and feet.collider == lead: bank = _floor(lead)
-	var visible: bool = witness[1][span]
-	var color: String = room.spans[span].aspect if visible else Rules.NONE
-	# Same bridge source as the audible warning, with a finite listening radius.
-	var heard_red: bool = red_signal[span] and from.distance_to(room.spans[span].focus) < 6.0
-	return {"head":face,"bank":bank,"color":color,"heard_red":heard_red}
+	var through := hale_optics.get("head",{}) as Dictionary
+	var boot := hale_optics.get("boot",{}) as Dictionary
+	if not through.is_empty(): head_memory = through
+	if not boot.is_empty(): boot_memory = boot
+	# A brief overlap window between the visible boot and the turn of the face.
+	# Fresh orientation is mandatory; a past glimpse cannot prove where the head points now.
+	if not boot_memory.is_empty() and tick-int(boot_memory.tick) > 9: boot_memory = {}
+	var pose := Rules.NONE
+	if not through.is_empty():
+		var toward: Vector3 = (room.spans[span].focus-through.point).slide(Vector3.UP).normalized()
+		var dot: float = toward.dot(through.direction)
+		pose = "AWAY" if dot < .19 else ("TOWARD" if dot > .69 else "SIDE")
+	var optic: Dictionary = hale_optics.get("optic",[{},{}])[span]
+	return {"head":pose,"bank":boot_memory.get("bank",Rules.NONE),
+		"color":room.spans[span].aspect if not optic.is_empty() else Rules.NONE,
+		"heard_red":red_signal[span] and _hale_eye().distance_to(room.spans[span].focus) < 6.0,
+		"head_hit":through,"boot_hit":boot_memory,"span_hit":optic}
+
+
+func _make_lead_marks() -> void:
+	# Two outward faces of a field helmet crest; the first-person camera omits its own marks.
+	# Hit normals and the sampled painted face suffice to infer pose. Do not read global pose.
+	cue_head = Node3D.new()
+	lead.add_child(cue_head)
+	for face in ["visor","nape","right","left"]:
+		var plate := StaticBody3D.new()
+		plate.collision_layer = Room.CUE
+		plate.collision_mask = 0
+		cue_head.add_child(plate)
+		plate.set_meta("signal",face)
+		plate.position = {"visor":Vector3(0,0,-.239),"nape":Vector3(0,0,.239),"right":Vector3(.239,0,0),"left":Vector3(-.239,0,0)}[face]
+		plate.rotation.y = {"visor":PI,"nape":0.0,"right":PI/2.0,"left":-PI/2.0}[face]
+		var quad := QuadMesh.new()
+		quad.size = Vector2(.47,.43)
+		var visual := room.kit.piece(quad,Vector3.ZERO,Color("aababb") if face == "visor" else Color("878076"),plate)
+		visual.layers = 2
+		var shell := CollisionShape3D.new()
+		shell.shape = quad.create_trimesh_shape()
+		plate.add_child(shell)
+	cue_boot = StaticBody3D.new()
+	lead.add_child(cue_boot)
+	cue_boot.collision_layer = Room.CUE
+	cue_boot.collision_mask = 0
+	cue_boot.set_meta("signal","boots")
+	cue_boot.position.y = .19
+	var size := Vector3(.47,.29,.47)
+	var visual := room.kit.box(Vector3.ZERO,size,Color("847e74"),cue_boot)
+	visual.layers = 2
+	var box := BoxShape3D.new()
+	box.size = size
+	var shell := CollisionShape3D.new()
+	shell.shape = box
+	cue_boot.add_child(shell)
+
+
+func _sample_bank(contact: Vector3) -> String:
+	# A visible low boot mark inside the known stone footprint, with a conservative edge margin.
+	# This classifier gets only the optical hit point, never the lead body's contact or position.
+	if contact.y < .035 or contact.y > .34: return Rules.NONE
+	for bank in ["island", "far"]:
+		if room.stone_bounds[bank].grow(-.23).has_point(Vector2(contact.x,contact.z)): return bank
+	return Rules.NONE
 
 
 func _drive(who: CharacterBody3D, direction: Vector3, speed: float) -> void:
@@ -414,31 +526,60 @@ func _ray(from: Vector3, to: Vector3, mask: int, omit: Array[RID]) -> Dictionary
 
 
 func _observe(eye: Vector3, forward: Vector3, who: CharacterBody3D) -> Array:
-	var found := [false,false]
+	return _sample(eye,forward,who,false).spans
+
+
+func _sample(eye: Vector3, forward: Vector3, who: CharacterBody3D, marks: bool) -> Dictionary:
+	var sampled := {"spans":[false,false],"optic":[{},{}],"head":{},"boot":{}}
 	var az := atan2(-forward.x,-forward.z)
 	var el := asin(clampf(forward.y,-1.0,1.0))
+	var idx := -1
+	var mask := Room.WORLD|Room.ACTOR|Room.FACET|(Room.CUE if marks else 0)
 	for column in [0,-1,1,-2,2,-3,3,-4,4]:
 		for row in [0,-1,1]:
+			idx += 1
 			var direction := Vector3.FORWARD.rotated(Vector3.RIGHT,el+deg_to_rad(row*13.0)).rotated(Vector3.UP,az+deg_to_rad(column*15.0))
-			var hit := _ray(eye,eye+direction*13.0,Room.WORLD|Room.ACTOR|Room.FACET,[who.get_rid()])
+			var hit := _ray(eye,eye+direction*13.0,mask,[who.get_rid()])
 			if hit.is_empty(): continue
 			for i in range(2):
 				var settings := room.spans[i]
-				if not found[i] and hit.collider == settings.optic and hit.normal.dot(settings.normal) > .95:
-					found[i] = _lit(settings.lamp,hit.position)
-			if found == [true,true]: return found
-	return found
+				if not sampled.spans[i] and hit.collider == settings.optic and hit.normal.dot(settings.normal) > .95:
+					if _lit(settings.lamp,hit.position,false,hit.normal):
+						sampled.spans[i] = true
+						sampled.optic[i] = _receipt_hit(idx,"span-%d" % i,settings.lamp,hit)
+			if not marks: continue
+			var cue: String = hit.collider.get_meta("signal","")
+			if cue.is_empty(): continue
+			if (cue == "boots" and not sampled.boot.is_empty()) or (cue != "boots" and not sampled.head.is_empty()): continue
+			for n in range(room.cue_lights.size()):
+				var lamp := room.cue_lights[n]
+				if not _lit(lamp,hit.position,true,hit.normal): continue
+				var reading := _receipt_hit(idx,"landing-%d" % n,lamp,hit)
+				reading.mark = cue
+				if cue == "boots":
+					reading.bank = _sample_bank(hit.position)
+					if reading.bank != Rules.NONE: sampled.boot = reading
+				else:
+					reading.direction = hit.normal.rotated(Vector3.UP,{"visor":0.0,"nape":PI,"right":PI/2.0,"left":-PI/2.0}[cue])
+					sampled.head = reading
+				break
+	return sampled
 
 
-func _lit(lamp: SpotLight3D, point: Vector3) -> bool:
+func _receipt_hit(idx: int, source: String, lamp: SpotLight3D, hit: Dictionary) -> Dictionary:
+	var normal: Vector3 = hit.normal
+	return {"ray":idx,"tick":tick,"light":source,"point":hit.position,"normal":normal,
+		"incidence":normal.dot((lamp.global_position-hit.position).normalized())}
+
+
+func _lit(lamp: SpotLight3D, point: Vector3, outer_mark := false, normal := Vector3.ZERO) -> bool:
 	var d := point-lamp.global_position
 	if not lamp.visible or lamp.light_energy <= 0.0 or d.length() > lamp.spot_range: return false
 	if d.normalized().dot(-lamp.global_transform.basis.z) < cos(deg_to_rad(lamp.spot_angle)): return false
-	return _ray(lamp.global_position,point,Room.WORLD|Room.ACTOR,[]).is_empty()
-
-
-func _lead_target() -> Vector3:
-	return lead.global_position + Vector3.UP*(.72 if crouched else 1.14)
+	if normal != Vector3.ZERO and normal.dot(-d.normalized()) <= .02: return false
+	var omit: Array[RID] = []
+	if outer_mark: omit.append(lead.get_rid())
+	return _ray(lamp.global_position,point+normal*.004,Room.WORLD|Room.ACTOR|(Room.CUE if outer_mark else 0),omit).is_empty()
 
 
 func _hale_eye() -> Vector3:
@@ -446,22 +587,20 @@ func _hale_eye() -> Vector3:
 
 
 func _hale_sees_lead() -> bool:
-	var target := _lead_target()
-	var direction := (target-_hale_eye()).normalized()
-	if hale_forward.dot(direction) < .53: return false
-	var hit := _ray(_hale_eye(),target,Room.WORLD|Room.ACTOR,[hale.get_rid()])
-	return not hit.is_empty() and hit.collider == lead
+	return not local_hale.get("head_hit",{}).is_empty() or (not head_memory.is_empty() and tick-int(head_memory.tick) <= 6)
 
 
 func _can_talk() -> bool:
-	if role != "NEAR" or _floor(lead) != "near" or not _hale_sees_lead() or lead.position.distance_to(hale.position) > 1.70: return false
-	return (-camera.global_transform.basis.z).dot((hale.global_position+Vector3.UP*1.39-camera.global_position).normalized()) > .72
+	if role != "WAIT_B" or not _hale_sees_lead() or lead.position.distance_to(hale.position) > 1.60: return false
+	return (-camera.global_transform.basis.z).dot((hale.global_position+Vector3.UP*1.39-camera.global_position).normalized()) > .69
 
 
-func _avert_hale() -> void:
-	var offset := _lead_target()-_hale_eye()
-	var horizontal := offset.slide(Vector3.UP)
-	_turn_hale(_hale_eye()+horizontal+Vector3.UP*horizontal.length()*.41)
+func _watch_b() -> Vector3:
+	return _hale_eye() + Vector3(6.0,-1.275,.185)
+
+
+func _inspect_far() -> Vector3:
+	return _hale_eye() + Vector3(6.0,-1.275,0.0)
 
 
 func _turn_hale(target: Vector3) -> void:
@@ -479,13 +618,6 @@ func _hale_feels_footing(target: Vector3) -> bool:
 	return not _ray(step_to+Vector3.UP*.20,step_to-Vector3.UP*.09,Room.WORLD|Room.DECK,[]).is_empty()
 
 
-func _reading_a_threshold() -> String:
-	var from := _hale_eye()
-	for x in [-.52,0.0,.52]:
-		var point := Vector3(x,.023,-.63)
-		if hale_forward.dot((point-from).normalized()) <= .38: continue
-		if _ray(from,point,Room.WORLD|Room.ACTOR,[hale.get_rid()]).is_empty(): return room.spans[0].aspect
-	return Rules.NONE
 
 
 func _update_hale() -> void:
@@ -493,16 +625,15 @@ func _update_hale() -> void:
 	var speed := 2.65
 	var aim := Vector3.ZERO
 	match role:
-		"READY":
-			# Look for the illuminated threshold in the periphery, without joining the stare.
-			aim = Vector3(0,2.65,-1.45)
-			if _reading_a_threshold() == "WHITE":
-				role = "A_LINE"
-				_event("FIRST_HANDOFF")
+		"NEAR":
+			# Walk only after contacting a solid threshold; his ban on looking remains in force.
+			role = "A_LINE"
 		"A_LINE":
 			target = Vector3(-.25,0,.53)
 			aim = Vector3(-.25,4.0,-3.7)
-			if _flat(hale.position,target) < .08: role = "CROSS_A"
+			if _flat(hale.position,target) < .08:
+				role = "CROSS_A"
+				_event("FIRST_HANDOFF")
 		"CROSS_A":
 			target = Vector3(-.25,0,-3.27)
 			aim = Vector3(-.25,3.4,-4.95)
@@ -514,25 +645,25 @@ func _update_hale() -> void:
 			if _flat(hale.position,target) < .077:
 				role = "WAIT_B"
 				_event("HALE_AT_LANDING")
-				_say("Hale: Come around the screen. Let me see you turn away.",300)
+				_say("Hale: Second span. H-03 still applies.",230)
 		"WAIT_B":
-			aim = Vector3(.21,1.45,-3.88)
+			# Sweep the actual ray lattice down across the companion's stance and back.
+			aim = Room.ISLAND_TRIAL + Vector3.UP * 1.84 if not rule.revised or tick % 31 >= 12 else Vector3(.29,.18,-2.73)
 			var action := rule.decide(local_hale,"TAKE")
 			_policy(action)
 			if action in ["TAKE","JOIN"]:
 				role = "WATCH_B"
-				aim = Room.B_AIM
+				aim = _watch_b()
 				_event("HALE_TAKES_B")
-				_say("Hale: I've got it. At the far ledge, let me see your back. Turn at the knock.",380)
 		"WATCH_B":
-			aim = Room.B_AIM
+			aim = _watch_b()
 			var decision := rule.decide(local_hale,"GIVE")
 			_policy(decision)
 			if decision == "RECOIL":
 				role = "RETRY_B"
-				aim = Vector3(6.3,4.35,-2.62)
+				aim = _inspect_far()
 				_event("HALE_RECOILS")
-				_say("Hale: Stone. You're safe. Give me your back; I'll take it again.",255)
+				_say("Hale: Stone. Pull back.",130)
 			elif decision == "GIVE":
 				role = "B_LINE"
 				exchange = true
@@ -540,14 +671,14 @@ func _update_hale() -> void:
 				aim = Vector3(.93,1.58,-5.0)
 				_event("BLIND_SIGNAL")
 				_sound("knock",hale.position + Vector3.UP)
-				_say("Hale: Now.",78)
+				_say("[A knock.]",54)
 		"RETRY_B":
-			aim = Vector3(6.3,4.35,-2.62)
+			aim = _inspect_far()
 			var action := rule.decide(local_hale,"TAKE")
 			_policy(action)
 			if action == "TAKE":
 				role = "WATCH_B"
-				aim = Room.B_AIM
+				aim = _watch_b()
 				_event("HALE_RETAKES_B")
 		"B_LINE":
 			target = Vector3(.91,0,Room.B_LANE)
@@ -625,6 +756,27 @@ func _make_hud() -> void:
 	hud.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	hud.offset_top = -42
 	hud.offset_bottom = -12
+	book = PanelContainer.new()
+	book.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(book)
+	book.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	book.offset_left = -347
+	book.offset_right = 347
+	book.offset_top = -183
+	var page := StyleBoxFlat.new()
+	page.bg_color = Color("242729f2")
+	page.set_border_width_all(1)
+	page.border_color = Color("7e8580")
+	page.content_margin_left = 28
+	page.content_margin_right = 28
+	page.content_margin_top = 23
+	page.content_margin_bottom = 23
+	book.add_theme_stylebox_override("panel",page)
+	book_text = Label.new()
+	book_text.add_theme_font_size_override("font_size",18)
+	book_text.custom_minimum_size.x = 630
+	book_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	book.add_child(book_text)
 
 
 func _say(text: String, length: int) -> void:
@@ -633,17 +785,23 @@ func _say(text: String, length: int) -> void:
 
 
 func _refresh() -> void:
-	if tick == 134 and role == "NEAR" and not rule.counterexample:
-		_say("Hale: With someone here, I don't look at the light. I've seen what it takes.",230)
+	book.visible = (book_open or offer_open) and failed.is_empty() and not cleared
+	if book.visible:
+		book_text.text = "FIELD COPIES   /   L03     [TAB]\n\nP-03   YOUR COPY\n" + Rules.TREAD.notice
+		book_text.text += "\n" + Rules.player_notice() + "\n\nH-03   HALE'S COPY\n" + Rules.TABOO.notice
+		if rule.revised: book_text.text += "\nPencilled exception: " + Rules.SINGLE_EXCEPTION
+		if offer_open: book_text.text += "\n\nPROPOSE AN AMENDMENT\n[1] H-03: Look only while I face away.\n[2] H-03: Allow both of us to look.\n[3] P-03: Cross without seeing the tread."
+	if tick == 75 and role in ["NEAR","A_LINE"]:
+		_say("Hale: I've got a different copy. Keep both close.",204)
 	if tick > until: subtitle.text = ""
 	if not failed.is_empty():
 		hud.text = "R   /   Restart airlock"
 	elif cleared:
 		hud.text = "AIRLOCK CLEARED"
 	elif _can_talk():
-		hud.text = "E   /   Ground Hale" if rule.distorted else ("E   /   Talk to Hale" if rule.counterexample else "E   /   Ask Hale to look")
+		hud.text = ("E   /   Ground Hale" if rule.distorted else ("E   /   Compare the evidence" if rule.counterexample else "E   /   Speak to Hale")) + "   ·   Tab  Field copies"
 	else:
-		hud.text = ("WASD  Move   ·   Mouse  Look   ·   Ctrl  Crouch" if tick < 193 else ("Ctrl  Crouch" if lead.position.z < -3.20 and lead.position.x < 1.25 else ""))
+		hud.text = ("WASD  Move   ·   Mouse  Look   ·   Ctrl  Crouch   ·   Tab  Field copies" if tick < 193 else ("Ctrl  Crouch" if lead.position.z < -3.20 and lead.position.x < 1.25 else ""))
 		if guided and tick < 193: hud.text += "   ·   [ / ]  Gallery"
 	crosshair.modulate.a = .66 if witness[0].has(true) else .36
 
@@ -693,7 +851,7 @@ func mcp_observe() -> Dictionary:
 		"bridge_mesh":[room.spans[0].surface.visible,room.spans[1].surface.visible],
 		"crouched":crouched,"role":role,"counterexample":rule.counterexample,"revision":rule.revised,
 		"ast":rule.ast,"hale_percept":local_hale,"hypotheses":rule.hypotheses,"player_ast":Rules.PLAYER,"panic":rule.panic,"distorted":rule.distorted,"failed":failed,
-		"subtitle":subtitle.text,"dark":[spans[0].dark,spans[1].dark],"red":[spans[0].red,spans[1].red],
+		"subtitle":subtitle.text,"book":book.visible,"offer_open":offer_open,"stalemate":stalemate,"dark":[spans[0].dark,spans[1].dark],"red":[spans[0].red,spans[1].red],
 		"cleared":cleared,"events":receipts.duplicate(true),"film":clip.get("phase") if clip != null else "",
 		"phase_age":tick-int(clip.get("since")) if clip != null else 0,
 		"film_error":film_failed,"hale_model":motion.actor.scene_file_path}

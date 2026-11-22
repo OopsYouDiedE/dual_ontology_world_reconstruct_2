@@ -4,8 +4,12 @@ const PLAYER := [
 	{"when":"light_reddens","do":"look_away","notice":"If the light reddens, look away."},
 	{"when":"gaze_broken","within_ticks":60,"do":"regain_stone","notice":"Off the span within a second of looking away."},
 ]
-const ORIGINAL := {"hold":"DO_NOT_LOOK","step":"DO_NOT_STEP_INTO_VOID"}
-const DISTORTED := {"hold":"JOIN_VISIBLE_GAZE","step":"DO_NOT_STEP_INTO_VOID"}
+const TREAD := {"id":"P-03", "when":"at_low_lintel", "do":"keep_tread_in_sight_or_retreat",
+	"notice":"At a low lintel, keep the pale tread in sight. If it goes dark, retreat to stone."}
+const TABOO := {"id":"H-03", "notice":"In company, do not look into a hanging span. At a low lintel, the lead goes first. Feel for the floor before stepping."}
+const SINGLE_EXCEPTION := "Only with my companion visibly turned away."
+const ORIGINAL := {"hold":"DO_NOT_LOOK","step":"DO_NOT_STEP_INTO_VOID","lintel":"LEAD_FIRST"}
+const DISTORTED := {"hold":"JOIN_VISIBLE_GAZE","step":"DO_NOT_STEP_INTO_VOID","lintel":"LEAD_FIRST"}
 const LOOK_IS_HAZARD := "any_gaze_is_dangerous"
 const JOIN_IS_HAZARD := "joined_gaze_is_dangerous"
 const NO_GAZE_HAZARD := "gaze_is_not_the_hazard"
@@ -89,8 +93,9 @@ func ground() -> void:
 	begin_trial()
 
 
-func speak(face_to_face: bool) -> bool:
-	if revised or distorted or not counterexample or not face_to_face: return false
+func speak(face_to_face: bool, clause := "H-03", proposed_pose := "AWAY") -> bool:
+	if revised or distorted or not counterexample or not face_to_face or clause != TABOO.id: return false
+	if proposed_pose not in _inferred().allowed_heads: return false
 	revised = true
 	ast = _inferred()
 	return true
@@ -104,7 +109,7 @@ func _inferred() -> Dictionary:
 		for h in hypotheses:
 			if not _fits(h,pose,"WHITE"): unanimous = false
 		if unanimous: safe.append(pose)
-	return {"hold":"MODEL_CHECK_GAZE","step":"DO_NOT_STEP_INTO_VOID","allowed_heads":safe,
+	return {"hold":"MODEL_CHECK_GAZE","step":"DO_NOT_STEP_INTO_VOID","lintel":ORIGINAL.lintel,"allowed_heads":safe,
 		"supported_hypotheses":hypotheses.duplicate()}
 
 
@@ -123,7 +128,8 @@ func decide(local: Dictionary, action: String) -> String:
 				overlap_seen_on_stone = overlap_seen_on_stone+1 if safe_to_recoil else 0
 				if overlap_seen_on_stone >= 9: return "RECOIL"
 				# Don't pull a footing away from someone whose safety I cannot see.
-				apart = apart+1 if bank == "far" and head == "AWAY" else 0
+				var partner_safe: bool = bank == "far" or (ast.get("lintel", "") != "LEAD_FIRST" and bank == "island")
+				apart = apart+1 if partner_safe and head == "AWAY" else 0
 				if apart >= HAND_SIGNAL: return "GIVE"
 				return "HOLD"
 	return "WAIT"

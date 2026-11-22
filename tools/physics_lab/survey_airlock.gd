@@ -3,7 +3,7 @@ extends SceneTree
 const Scene := preload("res://scenes/physics_lab/airlock/Airlock.tscn")
 const Room := preload("res://scenes/physics_lab/airlock/Room.gd")
 var game: Node3D
-var output := ".runtime/physics-lab/l03/local-percepts/acceptance/optics"
+var output := ".runtime/physics-lab/l03/final-witness/optics"
 var rows: Array[Dictionary] = []
 
 
@@ -50,11 +50,24 @@ func _run() -> void:
 			part.hide()
 			part.collision_layer = 0
 	await _shot("06-baffle-lifted",entrance,through)
+	# Restore the room before examining the same-pose off-screen / in-frame pair.
+	for part in game.room.root.get_children():
+		if part is StaticBody3D and part.get_meta("surface", "") in ["blind_wall","blind_pier"]:
+			part.show()
+			part.collision_layer = Room.WORLD
+	var tread_eye := Vector3(.82,1.60,Room.B_LANE)
+	var tread_axis := (Room.TREAD_AT-tread_eye).normalized()
+	game.room.paint(1,false,0)
+	await _shot("07-tread-offscreen",tread_eye,Vector3.RIGHT.rotated(Vector3.BACK,deg_to_rad(-5)))
+	await _shot("08-tread-framed-dark",tread_eye,tread_axis)
+	game.room.paint(1,true,0)
+	await _shot("09-tread-present-model",tread_eye,tread_axis)
 	var file := FileAccess.open(output.path_join("survey.json"),FileAccess.WRITE)
 	file.store_string(JSON.stringify(rows,"  "))
 	var passed: bool = rows[0].witness[1] and rows[1].witness[1] and rows[2].witness[1] and rows[3].focus_lit
 	passed = passed and not rows[4].witness[1] and not rows[4].focus_lit and not rows[5].focus_lit
 	passed = passed and not rows[6].witness[1] and rows[7].witness[1]
+	passed = passed and not rows[8].tread_in_view and rows[9].tread_in_view and rows[10].tread_in_view
 	game.queue_free()
 	await process_frame
 	print("Optical raster survey: %d real frames; passed=%s" % [rows.size(),passed])
@@ -77,4 +90,6 @@ func _shot(id: String, eye: Vector3, forward: Vector3) -> void:
 	var observed: Array = game._observe(eye,forward,game.lead)
 	var beam: SpotLight3D = game.room.spans[1].lamp
 	rows.append({"frame":filename,"eye":eye,"forward":forward,"witness":observed,
-		"focus_lit":game._lit(beam,Room.B_AIM),"renderer":"forward_plus"})
+		"focus_lit":game._lit(beam,Room.B_AIM),"renderer":"forward_plus",
+		"tread_in_view":game._tread_in_view(),"tread_visible":game.room.tread.is_visible_in_tree(),
+		"tread_world":game.room.tread.global_position,"tread_ref":game.room.tread_reference.global_position})

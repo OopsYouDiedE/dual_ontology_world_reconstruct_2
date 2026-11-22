@@ -6,18 +6,21 @@ const WORLD := 1
 const ACTOR := 2
 const FACET := 4
 const DECK := 8
+const CUE := 16
 const LEAD_HOME := Vector3(-.18, 0, 3.31)
 const HALE_HOME := Vector3(1.03, 0, 1.16)
-const ISLAND_WATCH := Vector3(.93, 0, -2.79)
+const ISLAND_WATCH := Vector3(-.49, 0, -2.79)
+const ISLAND_TRIAL := Vector3(.52, 0, -2.71)
 const FAR_WATCH := Vector3(6.30, 0, -2.61)
 const FAR_MARK := Vector3(6.30, 1.67, -2.18)
-const FAR_SECOND := Vector3(6.80,0,-2.49)
+const FAR_SECOND := Vector3(6.78,0,-2.61)
 const FAR_HIDDEN := Vector3(6.42,0,-3.02)
 const B_LANE := -3.87
+const TREAD_AT := Vector3(1.83,.021,B_LANE)
 const A_AIM := Vector3(0, .006, -1.55)
 const B_AIM := Vector3(3.55, -.68, -3.218)
-const B_RIB := Vector3(3.56,-.90,-3.27)
-const B_RIB_SIZE := Vector3(4.72,1.74,.104)
+const B_RIB := Vector3(3.28,-.47,-3.27)
+const B_RIB_SIZE := Vector3(5.28,2.60,.104)
 const B_END := 5.84
 const STONE := Color("898984")
 const PALE := Color("c4c3b8")
@@ -33,6 +36,10 @@ var lintel: MeshInstance3D
 var gate_lamp: StandardMaterial3D
 var gateside: Node3D
 var entry_notice: Label3D
+var tread_reference: Node3D
+var tread: MeshInstance3D
+var stone_bounds: Dictionary[String, Rect2] = {}
+var cue_lights: Array[SpotLight3D] = []
 var relay_marks: Array[StandardMaterial3D] = []
 
 
@@ -42,7 +49,7 @@ func make(parent: Node3D) -> void:
 	_solid(Vector3(2.2,-3.95,-.55), Vector3(16,.32,13), Color("141719"), "catch")
 	_solid(Vector3(3.1,4.29,-.62),Vector3(10.06,.23,9.94),Color("25272d"),"ceiling")
 	_solid(Vector3(0,-.135,2), Vector3(3.64,.27,4.08), STONE, "near")
-	_solid(Vector3(.20,-.135,-3.75), Vector3(2.18,.27,2.31), STONE, "island")
+	_solid(Vector3(.20,-.135,-3.68), Vector3(2.18,.27,2.45), STONE, "island")
 	_solid(Vector3(6.90,-.135,-3.66), Vector3(2.18,.27,3.02), STONE, "far")
 	# Tall black baffle across the near bank's view of the second span.
 	_solid(Vector3(2.99,.63,-2.25), Vector3(5.34,4.60,.22), DARK, "blind_wall")
@@ -64,7 +71,7 @@ func make(parent: Node3D) -> void:
 	_solid(Vector3(6.30,1.2,-2.105),Vector3(.82,1.49,.12),DARK,"relay_screen")
 	var bar := kit.box(FAR_MARK+Vector3.DOWN*.21,Vector3(.49,.026,.025),PALE)
 	bar.material_override = luminous(Color("a7b5b9"),.65)
-	var prayer := kit.label("SHOW HIM YOUR BACK.\nTURN AT THE KNOCK.",FAR_MARK,.078)
+	var prayer := kit.label("SOUTH LANDING  /  II",FAR_MARK,.071)
 	prayer.rotation.y = PI
 	prayer.modulate = Color("dddcd2")
 	# A high shutter clips only the head-height sightline. The optical rib is still visible below it.
@@ -84,26 +91,36 @@ func make(parent: Node3D) -> void:
 	for x in [-.69,.69]:
 		kit.box(Vector3(x,.006,.526), Vector3(.043,.009,.93), PALE)
 		kit.box(Vector3(x,.034,-2.68), Vector3(.065,.067,.19), PALE)
-	for p in [ISLAND_WATCH, FAR_WATCH]:
+	for p in [ISLAND_TRIAL, FAR_WATCH, FAR_SECOND]:
 		for k in [-1,1]:
 			kit.box(p+Vector3(.11*k,.006,0), Vector3(.038,.012,.35), Color("d5d3be"))
 	make_span(Vector3(0,-.115,-1.29), Vector3(1.43,.23,2.70), Vector3.ZERO, Vector3.ZERO)
 	make_span(Vector3(3.56,-.115,B_LANE), Vector3(4.56,.23,1.19),
 		B_RIB, B_RIB_SIZE)
+	# The tread is part of B, moves with B, and never becomes a separate lever.
+	tread_reference = kit.node(TREAD_AT)
+	tread = kit.box(TREAD_AT - spans[1].solid.position - spans[1].surface.position,Vector3(.23,.027,.82),PALE,spans[1].surface)
+	# Fixed guide tips indicate exactly where the pale tread should join them.
+	for side in [-1.0,1.0]:
+		var guide := kit.box(Vector3(0,-.008,side*.46),Vector3(.25,.022,.085),PALE,tread_reference)
+		guide.material_override = luminous(Color("a4afab"),.28)
 	_gate()
 	spans[0]["lamp"] = spot(Vector3(-.13,4.0,-.95), Vector3(0,0,-1.36), Color("c4d8e7"), 4.4, 30)
 	spot(Vector3(1.54,2.1,-2.53),Vector3(.88,1.53,-2.94),Color("a6b8bf"),.87,31)
 	spot(Vector3(1.1,3.58,-4.04), Vector3(.42,0,-3.67), Color("d8d9d1"), 2.45, 32)
-	spans[1]["lamp"] = spot(Vector3(3.55,3.65,-2.59), B_AIM, Color("b1cbd2"), 4.2, 40)
+	spans[1]["lamp"] = spot(Vector3(3.55,3.65,-2.59), B_AIM, Color("b1cbd2"), 4.2, 46)
 	spot(Vector3(1.0,2.84,2.08), Vector3(.77,.6,1.30), Color("dbcdba"), 2.05, 37)
 	spot(Vector3(6.47,3.8,-3.26), Vector3(7.33,.84,-3.91), Color("d4d3c4"), 3.70, 33)
 	spot(Vector3(1.32,2.64,.16), Vector3(.99,.95,1.24), Color("b9c7d5"), .94, 37)
 	spot(Vector3(-1.05,2.82,1.83), Vector3(-1.73,1.82,.74), Color("bbc6d0"), .96, 39)
 	spot(Vector3(3.02,2.62,-4.22),Vector3(1.94,1.55,-3.87),Color("b8c7ca"),2.02,38)
 	spot(Vector3(4.29,2.66,-4.55), Vector3(3.44,1.01,-5.26), Color("879aa7"), .77, 44)
+	# Pools illuminate the same actor marks the ray lattice can read.
+	cue_lights.append(spot(Vector3(.11,3.20,-2.72),Vector3(.42,.28,-3.28),Color("aebcc0"),1.6,45))
+	cue_lights.append(spot(Vector3(5.55,3.47,-2.42),Vector3(6.57,.46,-2.69),Color("b6bfbe"),2.3,41))
 	_architecture()
 	kit.box(Vector3(-1.605,1.49,.62),Vector3(.052,.42,1.68),SEAM)
-	entry_notice = kit.label(Rules.player_notice(),Vector3(-1.575,1.49,.62),.072)
+	entry_notice = kit.label("IF THE LIGHT REDDENS, LOOK AWAY.\nTHE RED HAS A LONG MEMORY.",Vector3(-1.575,1.49,.62),.062)
 	entry_notice.rotation.y = PI/2.0
 	entry_notice.modulate = Color("e2ddd2")
 	# A clerestory stripe above the blind wall gives the room depth from the doorway.
@@ -145,6 +162,9 @@ func _solid(at: Vector3, size: Vector3, color: Color, tag: String, layer: int = 
 	b.collision_layer = layer
 	b.collision_mask = 0
 	b.set_meta("surface", tag)
+	if tag in ["near","island","far"]:
+		var footprint := Vector2(size.x,size.z)
+		stone_bounds[tag] = Rect2(Vector2(at.x,at.z)-footprint*.5,footprint)
 	var s := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = size
@@ -162,7 +182,7 @@ func make_span(at: Vector3, size: Vector3, rib_at: Vector3, rib_size: Vector3) -
 	var rib := mesh if idx == 0 else kit.box(rib_at, rib_size, COLD)
 	var frame := kit.node(Vector3.ZERO)
 	var ghost := kit.node(Vector3.ZERO)
-	var line_mat := luminous(Color("91acb6"), .26)
+	var line_mat := luminous(Color("8398a1"), .17)
 	for i in range(10 if idx == 0 else 18):
 		var p := float(i) / float(9 if idx == 0 else 17) - .5
 		var v := at + Vector3(0, .116, p * (size.z-.07)) if idx == 0 else at + Vector3(p * (size.x-.08),.116,0)
@@ -180,7 +200,7 @@ func make_span(at: Vector3, size: Vector3, rib_at: Vector3, rib_size: Vector3) -
 	var steel := kit.mat(Color("9eafb0"))
 	var warm := luminous(Color("c1ac93"), 1.05)
 	spans.append({"solid":solid,"optic":optical,"surface":mesh,"rib":rib,"frame":frame,"ghost":ghost,
-		"clear":steel,"warn":warm,"aspect":"DARK","red":luminous(Color("72151a"),.44),"red_accent":luminous(Color("d71b21"),.84),"focus":A_AIM if idx==0 else B_AIM,"normal":Vector3.UP if idx==0 else Vector3.BACK})
+		"clear":steel,"warn":warm,"aspect":"DARK","red":luminous(Color("543c3d"),.25),"red_accent":luminous(Color("d71b21"),.84),"focus":A_AIM if idx==0 else B_AIM,"normal":Vector3.UP if idx==0 else Vector3.BACK})
 	paint(idx, false, 0)
 
 
@@ -199,7 +219,7 @@ func paint(i: int, solid_now: bool, warning_age: int, red_age := 0, qualified :=
 			seam.rotation.y = .14*sin(float(red_age)*.39+seam.position.length_squared())
 			seam.material_override = s.red_accent
 		s.surface.material_override = s.red if i == 0 else kit.mat(PALE)
-		if i == 1: s.rib.material_override = s.red
+		s.rib.material_override = s.red
 	else:
 		for seam in s.frame.get_children():
 			seam.rotation.y = 0.0

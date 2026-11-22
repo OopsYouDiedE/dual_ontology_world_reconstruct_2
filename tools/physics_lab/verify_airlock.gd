@@ -77,6 +77,8 @@ func _run() -> void:
 	var no_exclusions: Array[RID] = []
 	var hidden_head: Dictionary = game._ray(lane_eye,aperture,Room.WORLD,no_exclusions)
 	check(not hidden_head.is_empty() and hidden_head.collider.get_meta("surface") == "head_shutter", "The same shutter blocks Hale's head-level line; this is not a 2D test.")
+	await _verify_tread(game)
+	await _verify_marks(game)
 	for zone in [Room.FAR_WATCH,Room.FAR_SECOND]:
 		check(game._ray(lane_eye,zone+Vector3.UP*1.60,Room.WORLD,no_exclusions).is_empty(), "Both alternate dry-bank positions expose a visible signal.")
 	var lamp: SpotLight3D = game.room.spans[1].lamp
@@ -184,6 +186,105 @@ func _run() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
+func _verify_tread(game: Node3D) -> void:
+	var throat := Vector3(.82,0,Room.B_LANE)
+	check(game.room.tread.global_position.is_equal_approx(game.room.tread_reference.global_position),
+		"The real pale tread and the missing-tread referent must occupy the same world point.")
+	game.role = "WAIT_B"
+	game.lead.position = throat
+	game.yaw = -PI/2.0
+	game.pitch = deg_to_rad(-5)
+	game._camera_rotation()
+	await physics_frame
+	await process_frame
+	var shallow: bool = game._tread_in_view()
+	game._trial(false)
+	game.lead.position = Room.ISLAND_TRIAL
+	await physics_frame
+	await process_frame
+	game._trial(false)
+	check(not shallow and not game.attempted_tread and not game.stalemate, "Off-screen tread plus retreat must not award observation.")
+	game.lead.position = throat
+	var aim := (Room.TREAD_AT-(throat+Vector3.UP*1.60)).normalized()
+	game.pitch = asin(aim.y)
+	game._camera_rotation()
+	await physics_frame
+	await process_frame
+	var downward: bool = game._tread_in_view()
+	var cover = game.room._solid(Vector3(1.32,.82,Room.B_LANE),Vector3(.09,.50,1.52),Color("464646"),"test_occluder")
+	await physics_frame
+	await process_frame
+	check(not game._tread_in_view(), "An in-frustum tread hidden behind a wall does not enter evidence.")
+	game._trial(false)
+	check(not game.attempted_tread, "The occluded witness cannot unlock the trial.")
+	cover.queue_free()
+	await physics_frame
+	await process_frame
+	game.book_open = true
+	game._trial(false)
+	check(not game.attempted_tread, "The open field copies cannot obscure the mark while granting evidence.")
+	game.book_open = false
+	game._trial(false)
+	game.lead.position = Room.ISLAND_TRIAL
+	await physics_frame
+	await process_frame
+	game._trial(false)
+	check(downward and game.attempted_tread and game.stalemate, "Same position + framed true glance + retreat unlocks the trial.")
+	print("Tread same-position counterexample: shallow=",shallow,", clear downward=",downward,", retreat receipt=",game.stalemate)
+	game._reset()
+	await physics_frame
+	await process_frame
+
+
+func _verify_marks(game: Node3D) -> void:
+	game.hale.position = Room.ISLAND_WATCH
+	game.cue_head.position.y = 1.51
+	game.cue_head.rotation.y = PI
+	for point: Vector3 in [Room.FAR_WATCH,Room.FAR_SECOND,Room.FAR_HIDDEN,Vector3(4.9,0,Room.B_LANE)]:
+		game.lead.position = point
+		await physics_frame
+		await process_frame
+		var eye := game._hale_eye() as Vector3
+		var dir: Vector3 = (game._watch_b()-eye).normalized()
+		var visual: Dictionary = game._sample(eye,dir,game.hale,true)
+		check(visual.spans[1], "A visual contact test must not falsify the live B witness: %s" % point)
+		if point in [Room.FAR_WATCH,Room.FAR_SECOND]:
+			check(not visual.head.is_empty() and visual.boot.get("bank") == "far", "Both dry poses must give same-lattice head and boot cues.")
+			for item in [visual.head,visual.boot,visual.optic[1]]:
+				check(item.get("ray",-1) in range(27) and not item.get("light","").is_empty(),"Percept must cite its ray and actual light.")
+		else:
+			check(visual.boot.get("bank",Rules.NONE) != "far", "Concealed or on-deck identity cannot be treated as safe on stone.")
+		if point == Room.FAR_HIDDEN: check(visual.head.is_empty(), "The high shutter really hides the head signal.")
+	game.lead.position = Room.FAR_WATCH
+	await physics_frame
+	await process_frame
+	var far_lamp: SpotLight3D = game.room.cue_lights[1]
+	var old_lamp: Transform3D = far_lamp.global_transform
+	var old_eye := game._hale_eye() as Vector3
+	var look: Vector3 = (game._watch_b()-old_eye).normalized()
+	var illuminated: Dictionary = game._sample(old_eye,look,game.hale,true)
+	far_lamp.position = Vector3(6.69,3.47,-2.94)
+	far_lamp.look_at(Vector3(6.63,.27,-2.70))
+	var from_behind: Dictionary = game._sample(old_eye,look,game.hale,true)
+	check(illuminated.head.get("incidence",-1) > .02 and illuminated.boot.get("incidence",-1) > .02,
+		"Astra's exact far-bank signals must now have light on the ray-hit exterior, not merely a spot cone.")
+	check(from_behind.spans[1] and from_behind.head.is_empty() and from_behind.boot.is_empty(),
+		"Returning the active lamp to its former backlit position cannot claim the same head / boot observations.")
+	print("Far-side incidence counterexample: head=",illuminated.head.get("incidence"),", boot=",illuminated.boot.get("incidence"),
+		", rear rejected=",from_behind.head.is_empty() and from_behind.boot.is_empty())
+	far_lamp.global_transform = old_lamp
+	for lamp: SpotLight3D in game.room.cue_lights: lamp.hide()
+	var eye := game._hale_eye() as Vector3
+	var unlit: Dictionary = game._sample(eye,(game._watch_b()-eye).normalized(),game.hale,true)
+	check(unlit.spans[1] and unlit.head.is_empty() and unlit.boot.is_empty(),"Dark actor signals must become unobservable without turning off the bridge.")
+	for lamp: SpotLight3D in game.room.cue_lights: lamp.show()
+	game.hale.position = Room.HALE_HOME
+	game.lead.position = Room.LEAD_HOME
+	game.cue_head.rotation.y = 0.0
+	await physics_frame
+	await process_frame
+
+
 func _distorted_mind() -> Rules:
 	var mind := Rules.new()
 	var flare := {"color":"RED","head":"TOWARD","bank":"near"}
@@ -202,13 +303,13 @@ func _same_inputs(minds: Array) -> void:
 		world.role = "WAIT_B"
 		world.rule = mind
 		world.hale.position = Room.ISLAND_WATCH
-		world.lead.position = Vector3(-.18,0,-3.48)
-		world._turn_hale(Vector3(.21,1.45,-3.88))
+		world.lead.position = Room.ISLAND_TRIAL
+		world._turn_hale(Room.ISLAND_TRIAL+Vector3.UP*1.84)
 		world.yaw = PI/2.0
 		world.pitch = .0
 		await physics_frame
 		await process_frame
-		for i in range(25): world._simulate(Vector2.ZERO,Vector2.ZERO,false,false)
+		for i in range(55): world._simulate(Vector2.ZERO,Vector2.ZERO,false,false)
 		var gaze_away: bool = world.witness[1][1]
 		for i in range(25): world._simulate(Vector2.ZERO,Vector2(-PI/15.0,0) if i < 15 else Vector2.ZERO,false,false)
 		rows.append([gaze_away,world.witness[1][1],world.role])

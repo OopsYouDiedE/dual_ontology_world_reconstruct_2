@@ -11,6 +11,10 @@ var panic_recovered := false
 var false_turn_at := -1
 var left_cover := false
 var public_signal := -1
+var rejected_at := 0
+var agreement_at := 0
+var dark_at := 0
+var panic_retry := false
 
 
 func _init() -> void:
@@ -40,68 +44,72 @@ func command(game: Node3D) -> Dictionary:
 	match phase:
 		0:
 			if age >= 105: _next(game)
-			return _input(game,Vector3(-.18,0,2.40),Room.A_AIM,.034)
+			var cmd := _input(game,Vector3(-.16,0,2.34),Room.A_AIM,.041)
+			cmd.book = age >= 45 and age < 96
+			return cmd
 		1:
-			if age >= 138: _next(game)
-			return _input(game,Vector3(-.44,0,1.37),Vector3(-1.575,1.49,.62),.045)
+			if game.role == "WAIT_B": _next(game)
+			return _input(game,Vector3(.39,0,.51),near_aim,.043)
 		2:
-			if game.role == "TRIAL_WAIT": _next(game)
-			var out := _input(game,Vector3(-.15,0,1.29),hale_face)
-			out["talk"] = age > 52
-			return out
+			var pos := Vector3(.04,0,-2.91)
+			if _arrived(p,pos): _next(game)
+			return _input(game,pos,near_aim if p.z > -1.72 else Vector3(.04,0,-3.35))
 		3:
-			if variant == "death" and game.failed == "DOUBLE_GAZE":
-				if age > 158: _finish(game)
-				return {}
-			if variant == "panic" and not panic_recovered and game.rule.distorted and (game.red_after_panic or game.role == "NEAR"):
-				if false_turn_at < 0: false_turn_at = game.tick
-				if game.role == "NEAR": _next(game)
-				return _input(game,p,near_aim if game.tick-false_turn_at < 20 else hale_face,.16)
-			if game.rule.counterexample: _next(game)
-			var aim := near_aim
-			var trial_pos := Vector3(-.19,0,.55)
-			var red_age: int = game.spans[0].red
-			if variant == "panic" and not panic_recovered:
-				var trial_age: int = game.tick-game.trial_at
-				if (trial_age >= 70 and trial_age < 91) or (game.rule.distorted and trial_age < 144): aim = hale_face
-			elif variant == "solo": aim = hale_face
-			elif variant != "death":
-				if red_age >= 23: withdrew = true
-				if withdrew: aim = hale_face
-			return _input(game,trial_pos,aim,.16 if age >= 50 else .061)
+			var pos := Vector3(.82,0,Room.B_LANE)
+			if dark_at == 0 and game.attempted_tread: dark_at = game.tick
+			if _arrived(p,pos) and dark_at > 0 and game.tick-dark_at > 19: _next(game)
+			return _input(game,pos,Vector3(1.8,.02,Room.B_LANE),.063)
 		4:
-			if variant == "panic" and not panic_recovered:
-				if not game.rule.distorted:
-					if age > 102:
-						phase = 2
-						since = game.tick
-						panic_recovered = true
-					return {}
-
-			elif game.rule.revised: _next(game)
-			var out := _input(game,p,hale_face)
-			out["talk"] = age > 52
+			if game.role == "TRIAL_WAIT": _next(game)
+			var out := _input(game,Room.ISLAND_TRIAL,hale_face,.055)
+			out["talk"] = _arrived(p,Room.ISLAND_TRIAL) and age % 14 == 0
 			return out
 		5:
-			if game.role == "WAIT_B" and age > 130: _next(game)
-			return _input(game,Vector3(.39,0,.50),near_aim,.035)
+			if game.rule.counterexample and not game.rule.distorted: _next(game)
+			if variant == "death" and game.failed == "DOUBLE_GAZE":
+				if age > 180: _finish(game)
+				return {}
+			if variant == "panic" and not panic_retry and game.role == "WAIT_B" and game.rule.distorted:
+				panic_retry = true
+				withdrew = false
+				phase = 4
+				since = game.tick
+			var aim := Room.B_AIM
+			var trial_age: int = game.tick-game.trial_at
+			if variant == "panic" and not panic_retry:
+				if trial_age in range(65,83) or (game.rule.distorted and trial_age in range(110,139)): aim = hale_face
+				if game.red_after_panic and (game.spans[1].red >= 13 or withdrew):
+					withdrew = true
+					aim = hale_face
+			elif variant == "solo": aim = hale_face
+			elif variant != "death":
+				if game.spans[1].red >= 16: withdrew = true
+				if withdrew or trial_age > 82: aim = hale_face
+			return _input(game,Room.ISLAND_TRIAL,aim,.18)
 		6:
-			var pos := Vector3(-.19,0,-2.91)
-			if _arrived(p,pos): _next(game)
-			return _input(game,pos,near_aim if p.z > -1.72 else Vector3(.20,0,-3.30))
+			if game.rule.revised and game.role == "WATCH_B" and game.deck[1]: _next(game)
+			var out := _input(game,Room.ISLAND_TRIAL,hale_face,.085)
+			if not game.rule.revised and not game.offer_open: out.talk = age > 24 and age % 12 == 0
+			if game.offer_open:
+				if agreement_at == 0: agreement_at = game.tick
+				if rejected_at == 0 and game.tick-agreement_at > 18:
+					out.offer = 2
+					rejected_at = game.tick
+				elif rejected_at > 0 and game.tick-rejected_at > 32: out.offer = 1
+			return out
 		7:
-			var pos := Vector3(.53,0,Room.B_LANE)
-			if _arrived(p,pos) and game.deck[1]: _next(game)
-			return _input(game,pos,Vector3(-1.48,1.43,-3.73),.069)
+			var pos := Vector3(.74,0,Room.B_LANE)
+			if _arrived(p,pos): _next(game)
+			return _input(game,pos,Vector3(5.25,.31,Room.B_LANE),.068)
 		8:
 			var pos := Vector3(1.95,0,Room.B_LANE)
 			if _arrived(p,pos): _next(game)
-			return _input(game,pos,Vector3(5.25,.35,Room.B_LANE),.035,true)
+			return _input(game,pos,Vector3(5.25,.35,Room.B_LANE),.041,true)
 		9:
 			var pos := Vector3(6.16,0,Room.B_LANE)
 			if _arrived(p,pos): _next(game)
 			var aim := Vector3(7.41,1.02,-3.95)
-			if p.x > 4.2:
+			if p.x > 4.55:
 				if variant in ["early","recoil"]: aim = Vector3(6.0,1.4,-8.0)
 				elif variant == "blocked": aim = side
 			return _input(game,pos,aim,.066)
@@ -122,8 +130,7 @@ func command(game: Node3D) -> Dictionary:
 				if game.failed == "FALL" and age > 200: _finish(game)
 				return _input(game,p,Room.B_AIM if game.failed == "FALL" else back,.083)
 			if variant == "public":
-				# This known-route replay reacts to the same on-screen signal a person sees.
-				if public_signal < 0 and game.subtitle.text == "Hale: Now.": public_signal = game.tick
+				if public_signal < 0 and game.subtitle.text == "[A knock.]": public_signal = game.tick
 				if public_signal >= 0 and game.tick-public_signal >= 13: _next(game)
 			elif game.spans[1].dark >= 7 and game.role in ["B_LINE","CROSS_B"]: _next(game)
 			return _input(game,landing,back)

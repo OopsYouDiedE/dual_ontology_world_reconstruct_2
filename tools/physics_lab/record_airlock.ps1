@@ -1,6 +1,6 @@
 param(
-    [string]$Out = '.runtime/physics-lab/l03/local-percepts',
-    [ValidateSet('clear','alternate','blocked','public','recoil','early','late','panic','death')][string]$Case = 'clear',
+    [string]$Out = '.runtime/physics-lab/l03/final-witness',
+    [ValidateSet('clear','alternate','blocked','public','recoil','early','late','panic','death','solo')][string]$Case = 'clear',
     [string]$Godot = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
 )
 $ErrorActionPreference = 'Stop'
@@ -26,7 +26,7 @@ try {
         'late' { $State.failed -eq 'FALL' }
         'panic' { $State.cleared -and -not $State.distorted -and $State.events.kind -contains 'GROUNDED' }
         default { $State.cleared -and -not $State.failed }
-        'death' { $State.failed -eq 'DOUBLE_GAZE' -and $State.red[0] -gt 40 }
+        'death' { $State.failed -eq 'DOUBLE_GAZE' -and $State.red[1] -gt 40 }
     }
     if (-not $Expected) { throw "Unexpected result for $Case. See $Log" }
     & ffmpeg -hide_banner -loglevel error -y -i $Raw -c:v libx264 -preset medium -crf 18 `

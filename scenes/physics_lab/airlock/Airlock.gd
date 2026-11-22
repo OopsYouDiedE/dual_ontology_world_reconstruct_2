@@ -87,7 +87,7 @@ func _ready() -> void:
 	_make_cues()
 	_reset()
 	if args.has("--airlock-film") or args.has("--airlock-film-test"): _start_film()
-	if DisplayServer.get_name() != "headless" and not film_enabled: Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not film_enabled: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _exit_tree() -> void:
@@ -216,6 +216,11 @@ func _stance(body: CharacterBody3D, low: bool, was_low: bool) -> bool:
 
 
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT and e.pressed:
+		if not auto_input and not book_open and not offer_open and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			get_viewport().set_input_as_handled()
+			return
 	if e is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not auto_input:
 		raw_look += e.relative
 	if e.is_action_pressed(&"air_talk"): queued_talk = true
@@ -227,7 +232,8 @@ func _unhandled_input(e: InputEvent) -> void:
 			offer = e.physical_keycode - KEY_1 + 1
 	if e.is_action_pressed(&"air_reset"): queued_reset = true
 	if e.is_action_pressed(&"air_film") and film_enabled and not is_instance_valid(clip): _start_film()
-	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE and not auto_input:
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_ESCAPE and not auto_input:
+		raw_look = Vector2.ZERO
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
 
 
@@ -801,8 +807,10 @@ func _refresh() -> void:
 	elif _can_talk():
 		hud.text = ("E   /   Ground Hale" if rule.distorted else ("E   /   Compare the evidence" if rule.counterexample else "E   /   Speak to Hale")) + "   ·   Tab  Field copies"
 	else:
-		hud.text = ("WASD  Move   ·   Mouse  Look   ·   Ctrl  Crouch   ·   Tab  Field copies" if tick < 193 else ("Ctrl  Crouch" if lead.position.z < -3.20 and lead.position.x < 1.25 else ""))
+		hud.text = ("WASD  Move   ·   Ctrl  Crouch   ·   Tab  Field copies" if tick < 193 else ("Ctrl  Crouch" if lead.position.z < -3.20 and lead.position.x < 1.25 else ""))
 		if guided and tick < 193: hud.text += "   ·   [ / ]  Gallery"
+	if not film_enabled and not book.visible and failed.is_empty() and not cleared and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+		hud.text = "Click to look   ·   " + hud.text if not hud.text.is_empty() else "Click to look"
 	crosshair.modulate.a = .66 if witness[0].has(true) else .36
 
 

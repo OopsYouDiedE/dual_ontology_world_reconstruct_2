@@ -1,6 +1,6 @@
 extends Node3D
 ## Metric primitives shared by the A/B/C construction recipes. Y is feet elevation.
-const COLORS = {"chalk":"c7c3b6","trim":"ded9cb","joint":"b1ad9e","floor":"cdc8bc","iron":"40474a","dark":"232735","brass":"ba914e","amber":"ffc35a","green":"65d39c","glass":"bfdedd","book":"9f998a"}
+const COLORS = {"brick":"796a5f","abyss":"090b10","pit":"47484a","test_amber":"e99425","chalk":"c7c3b6","trim":"ded9cb","joint":"b1ad9e","floor":"cdc8bc","iron":"40474a","dark":"232735","brass":"ba914e","amber":"ffc35a","green":"65d39c","glass":"bfdedd","book":"9f998a"}
 var materials := {}
 var cut: Array[Node3D] = []
 var plates: Array[Node3D] = []

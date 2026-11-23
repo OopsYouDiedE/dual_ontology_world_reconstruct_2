@@ -1,9 +1,11 @@
 extends "Masonry.gd"
 const CX:=61.0
 const CZ:=10.1
+const BLIND_ANGLES := [90,210,330]
 var gate:Node3D
 var leaf:Node3D
 var bridge:Node3D
+var test_board:Node3D
 var panel:Node3D
 var core:Node3D
 var supplies:Node3D
@@ -36,30 +38,40 @@ func arcade()->void:
 		var z:float=(i-10)*.174;var h:=3.1+sqrt(1.76*1.76-z*z);rect("Picket",36,h*.5,z,.085,h,.036,"iron",false)
 	for y in [.18,1.25,2.68,3.12]:rect("Strap",36,y,0,.10,.075,2.8,"iron",false)
 	invisible_block(Vector3(36,1.6,0),Vector3(.15,3.2,2.8));section=root_group
-	for x in range(1,36,2):rect("PavingJoint",x,.002,0,.013,.004,4.16,"joint",false)
+	for x in range(1,36,2):rect("PavingJoint",x,.002,0,.034,.008,4.16,"joint",false)
+	for z in [-.15,.15]:rect("GuideInlay",18,.006,z,36,.012,.032,"joint",false)
 func invisible_block(p:Vector3,s:Vector3)->void:
 	var n:=rect("Barrier",p.x,p.y,p.z,s.x,s.y,s.z,"iron");n.hide()
 func archive()->void:
-	group("B1_B5_Archive");slab(31,4.85,6,5.3);slab(23.85,5.55,8.3,6.7);slab(23.9,12,7.7,6.2,-.6);slab(34.75,14.1,14,2);slab(38.5,10.1,6.5,5.8)
-	wall(false,27.9,2.3,8.9,3.8,[[4.1,5.7,0,2.4]]);wall(false,34.1,2.3,7.5,3.8);wall(true,7.5,28,34,3.8);wall(false,19.7,2.3,8.9,3.8,[[3.2,4.4,1,3.2],[6,7.2,1,3.2]]);wall(true,2.2,19.7,28,3.8,[],true)
-	wall(true,8.95,19.8,27.9,4,[[20.15,21.75,0,2.4],[22.25,27.05,1,2.5]])
-	rect("ObservationGlass",24.65,1.75,8.95,4.8,1.5,.055,"glass");for x in [22.25,23.85,25.45,27.05]:rect("Mullion",x,1.75,8.95,.045,1.5,.09,"iron",false)
+	group("B1_B5_Archive");slab(31,4.85,6,5.3);slab(23.85,5.55,8.3,6.7);rect("RecessFloor",23.9,-.72,12,7.7,.24,6.2,"pit");slab(34.75,14.1,14,2);slab(38.5,10.1,6.5,5.8)
+	wall(false,27.9,2.3,8.9,3.8,[[4.1,5.7,0,2.4]]);wall(false,34.1,2.3,7.5,3.8);wall(true,7.5,28,34,3.8,[],true);wall(false,19.7,2.3,8.9,3.8,[[3.2,4.4,1,3.2],[6,7.2,1,3.2]]);wall(true,2.2,19.7,28,3.8,[],true)
+	wall(true,8.95,19.8,27.9,4,[[20.15,21.75,0,2.4],[22.25,27.05,.38,2.75]])
+	rect("ObservationGlass",24.65,1.565,8.95,4.8,2.37,.055,"glass");for x in [22.25,23.85,25.45,27.05]:rect("Mullion",x,1.565,8.95,.045,2.37,.09,"iron",false)
 	wall(false,20,9.05,15.05,4);wall(true,15.15,20,27.75,4,[],true);wall(false,27.8,9.05,15.05,4,[[13.3,14.9,0,2.4]])
 	# Narrow rim at grade around a genuine sunken test pit, with a walkable ramp.
-	slab(23.9,9.7,7.7,1.5);slab(23.9,14.3,7.7,1.6);slab(20.8,12,1.6,3.2);slab(27,12,1.6,3.2);slab(23.85,12,3.2,1.8)
-	slab(23.85,10.73,1.15,.80);slab(23.85,13.2,1.15,1.10);rect("AmberTestPlate",23.85,.012,12,3.2,.024,1.8,"amber");var ramp:=rect("PitRamp",21.95,-.32,12,1.6,.12,1.1,"floor");ramp.rotation.z=-.40
+	slab(23.9,9.57,7.7,1.26);slab(23.9,14.48,7.7,1.26);slab(20.65,12.02,1.2,3.65);slab(27.15,12.02,1.2,3.65)
+	# A single thin span crosses the recessed floor. The air pocket remains visible from B2.
+	test_board=rect("AmberTestPlate",23.85,.045,12.02,1.30,.09,3.83,"test_amber")
+	var ramp:=rect("PitRamp",21.94,-.34,12,1.67,.12,1.15,"joint");ramp.rotation.z=-.40
 	wall(true,13,27.8,41.8,2.4,[[38.1,39.7,0,2.4]],false,"dark");wall(true,15.2,27.8,41.8,2.4,[],true,"dark");wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14,2,2.4)
-	wall(true,7.2,35.25,41.75,3.8,[[37.9,39.5,0,2.4]]);wall(false,35.15,7.2,13,3.8);wall(false,41.85,7.2,13,3.8,[[8.9,11.3,0,2.8]])
+	wall(true,7.2,35.25,41.75,3.8,[[36.68,37.72,.83,2.35],[37.9,39.5,0,2.4]]);wall(false,35.15,7.2,13,3.8);wall(false,41.85,7.2,13,3.8,[[8.9,11.3,0,2.8]])
 	for v in [[31,4.85,6,5],[23.85,5.6,8,6.5],[23.9,12,7.5,6],[38.5,10.1,6.5,5.5]]:lid(v[0],v[1],v[2],v[3],4 if v[0]==23.9 else 3.8)
 	for z in [4.0,6.9]:shelf(23.65,z)
 	# Rubble in the blind opening beyond B1, visible across a broken barricade.
-	for i in 17:
-		var n:=rect("FallenStone",28.6+fmod(i*1.73,4.7),.18+(.22 if i%3==0 else 0.),7.15-fmod(i*.37,.85),.52,.35,.44,"joint");n.rotation.y=i*.81
+	for row in 3:
+		for j in 8:
+			var n:=rect("Collapse",28.46+j*.72,.30+row*.51,6.85+row*.15,.80,.64,.74,"joint");n.rotation.y=sin(row*9+j)*.32
+	for tilt in [-.25,.23]:
+		var brace:=rect("SplinteredBrace",31,1.32,6.43,5.3,.23,.18,"book");brace.rotation.z=tilt
 	label_at("←  ARCHIVE",Vector3(31,2.3,7.35),PI)
 	panel=rect("BrassIsolator",36.3,1.08,7.45,.77,.95,.23,"brass");beam(Vector3(36.3,.96,7.62),Vector3(36.3,1.49,7.94),.065,"iron")
-	for pair in [[Vector3(36.3,1.45,7.52),Vector3(36.3,3.2,7.52)],[Vector3(36.3,3.2,7.52),Vector3(36.3,3.2,0)]]:beam(pair[0],pair[1],.075,"brass")
-	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("OilTin",34,.26,14.85,.3,.52,.30,"brass");rect("ClockworkMetronome",34.45,.2,14.85,.22,.4,.23,"book");section=root_group;label_at("B5  /  MASTER RELEASE",Vector3(36.8,2.35,7.34))
-	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);wall(true,7.2,36,37.9,2.4);slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[],true)
+	# Pipe follows the panel wall, corridor return and gate arch. All pipework is non-colliding.
+	wall(false,36.0,2.18,7.2,3.8)
+	var route:=[Vector3(36.3,1.48,7.42),Vector3(36.3,3.06,7.42),Vector3(36.18,3.06,7.42),Vector3(36.18,3.06,2.05),Vector3(36.18,4.98,2.05),Vector3(36.18,4.98,0)]
+	for i in route.size()-1:beam(route[i],route[i+1],.10,"brass")
+	for z in [2.68,4.48,6.28]:rect("PipeClamp",36.1,3.06,z,.27,.28,.09,"iron",false)
+	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);rect("OilTin",34,.26,14.85,.3,.52,.30,"brass");rect("ClockworkMetronome",34.45,.2,14.85,.22,.4,.23,"book");section=root_group;label_at("B5  /  MASTER RELEASE",Vector3(36.8,2.35,7.34))
+	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[],true)
 func shelf(x:float,z:float)->void:
 	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()
 	bookcase.recipe_parameters.merge({"width":3.2,"height":1.0,"depth":.48,"shelves":2,"bays":2},true)
@@ -79,35 +91,32 @@ func band(id:String,r0:float,r1:float,y0:float,y1:float,a:float,b:float,k:String
 	return n
 func shaft()->void:
 	group("C1_C4_SourceCaisson");platform(-1,2.5);platform(1,3.);slab(CX-14.45,CZ,1.2,2.65);bridge=rect("SingleGazeSpan",CX,-.11,CZ,18,.22,3.6,"amber")
-	for side in [-1,1]:
-		rect("BridgeAbutment",CX+side*10.0,-5,CZ+.8,1.9,10,2.8,"joint")
 	var roof:=MeshInstance3D.new();var cap:=CylinderMesh.new();cap.top_radius=14.45;cap.bottom_radius=14.45;cap.height=.32;cap.radial_segments=56;roof.mesh=cap;roof.material_override=mat("chalk");section.add_child(roof);roof.position=Vector3(CX,10.16,CZ);cut.append(roof)
-	var bottom:=MeshInstance3D.new();var disc:=CylinderMesh.new();disc.top_radius=14;disc.bottom_radius=14;disc.height=.2;bottom.mesh=disc;bottom.material_override=mat("dark");section.add_child(bottom);bottom.position=Vector3(CX,-10.1,CZ)
+	var bottom:=MeshInstance3D.new();var disc:=CylinderMesh.new();disc.top_radius=14;disc.bottom_radius=14;disc.height=.2;bottom.mesh=disc;bottom.material_override=mat("abyss");section.add_child(bottom);bottom.position=Vector3(CX,-10.1,CZ)
 	for i in 56:
 		var a:=TAU*i/56.;var b:=TAU*(i+1)/56.;var mid:=(a+b)*.5;var entrance:=absf(mid-PI)<.115;var reveal:=cos(mid-1.03)>.52
-		var lower:=band("LowerCaisson",14,14.45,-10,0,a,b,"joint");if reveal:cut.append(lower)
-		if not entrance:
+		var lower:=band("LowerCaisson",14,14.45,-10,0,a,b,"pit");if reveal:cut.append(lower)
+		if i==1:
+			band("ReturnThreshold",14,14.45,0,4.8,a,b,"chalk")
+			band("ReturnLintel",14,14.45,7.48,10,a,b,"chalk")
+		elif not entrance:
 			var upper:=band("UpperCaisson",14,14.45,0,10,a,b,"chalk");if reveal:cut.append(upper)
-		if sin(mid)<-.24:
-			band("LowerServiceGallery",12.1,13.99,-.25,0,a,b,"joint")
-			band("ServiceHandrail",12.12,12.18,.83,.9,a,b,"iron",false)
-			beam(polar(12.15,a,0),polar(12.15,a,.84),.025,"iron")
-			if i%6==0:box("GallerySupport",polar(13.4,mid,2.32),Vector3(1.1,4.65,.72),"joint",true,-mid)
 		if entrance:band("PortalHead",14,14.45,2.8,10,a,b,"chalk")
 		var corn:=band("Coping",13.85,14.54,9.68,10,a,b,"trim",false);if reveal:cut.append(corn)
 		if i%4==1:
 			var rib:=box("BrickPilaster",polar(13.87,mid,0),Vector3(.34,20,.48),"joint",false,-mid);if reveal:cut.append(rib)
 		if sin(mid)>0:
-			var service:=band("ServiceWalk",11.95,13.95,-.22,0,a,b,"joint");cut.append(service)
+			band("SouthServiceWalk",12.70,13.95,-.16,0,a,b,"iron")
 		var stair_gap:=absf(sin(mid))<.35
 		if stair_gap:continue
-		var floor_ring:=band("ObservationRing",11.55,13.95,4.54,4.8,a,b,"floor");if reveal:cut.append(floor_ring)
+		var floor_ring:=band("ObservationRing",11.55,13.95,4.54,4.8,a,b,"floor");if reveal and absf(mid-PI*.5)>.115:cut.append(floor_ring)
 		for tier in [[4.8,5.8,"chalk"],[5.8,6.94,"glass"],[6.94,7.02,"trim"]]:
 			var rail:=band("GalleryScreen",11.55,11.63,tier[0],tier[1],a,b,tier[2]);if reveal:cut.append(rail)
 		var post:=box("GlazingBar",polar(11.6,a,6.38),Vector3(.07,1.16,.07),"joint",false);if reveal:cut.append(post)
-	for deg in [218,322,90]:
-		var pier:=box("SightBreak",polar(11.95,deg_to_rad(deg),6.3),Vector3(1.2,3,1.6),"joint",true,-deg_to_rad(deg))
-		if deg==90:cut.append(pier)
+	for deg in BLIND_ANGLES:
+		var az:=deg_to_rad(deg);var foot:=polar(11.8,az,4.8)
+		box("BlindPier",foot+Vector3.UP*1.75,Vector3(.85,3.5,1.6),"brick",true,-az)
+		for h in [.10,1.14,2.28,3.42]:box("PierCourse",foot+Vector3.UP*h,Vector3(.90,.09,1.64),"joint",false,-az)
 	for side in [-1,1]:
 		var origin:=Vector3(CX+side*12.35,0,CZ-2.0);beam(origin+Vector3.DOWN*.2,origin+Vector3.UP*5.6,.10,"iron")
 		if side==-1:beam(origin+Vector3.DOWN*10,origin,.10,"iron")
@@ -117,6 +126,9 @@ func shaft()->void:
 			if side==-1 and i>=0:stair_path.append(p)
 			if i%3==0:beam(p+Vector3(.87*cos(a),0,.87*sin(a)),p+Vector3(.87*cos(a),.85,.87*sin(a)),.027,"iron")
 	# Upper landing connects the last spiral tread to the gallery. Shortcut opens from the core side.
+	slab(CX+14.53,CZ+2.35,2.0,2.18,4.8)
+	for z in [CZ+1.30,CZ+3.4]:rect("ReturnPassageWall",CX+14.53,6.14,z,2.0,2.68,.17)
+	rect("ReturnPassageRoof",CX+14.53,7.55,CZ+2.35,2.0,.16,2.18)
 	leaf=rect("EmeraldReturnLeaf",CX+13.54,6.1,CZ+2.35,.16,2.6,1.8,"green");core=rect("SourceCore",CX+10.8,1,CZ,.42,.68,.42,"amber");rect("CorePlinth",CX+10.8,.31,CZ,.85,.62,.85,"joint")
 	label_at("01   /   SOURCE CAISSON",Vector3(46.1,2.9,CZ),-PI/2)
 
@@ -134,6 +146,8 @@ func arcade_details()->void:
 	rect("PortalHead",31,2.74,2.18,2.27,.28,.34,"trim",false)
 func archive_details()->void:
 	# The A/B party wall belongs to A. Only duplicate its sliced silhouette in a B plate.
+	for part in [[31.,7.5,6.,.36,"joint"],[34.82,15.2,14.1,.48,"dark"]]:
+		var sill:=rect("SectionSill",part[0],part[3]*.5,part[1],part[2],part[3],.22,part[4],false);plates.append(sill);sill.hide()
 	for interval in [[28.,30.1],[31.9,34.1]]:
 		var edge:=rect("SectionReturn",(interval[0]+interval[1])*.5,.6,2.2,interval[1]-interval[0],1.2,.24,"chalk",false);plates.append(edge);edge.hide()
 	for x in [30.02,31.98]:rect("ArchiveEntryJamb",x,1.27,2.34,.18,2.54,.24,"trim",false)

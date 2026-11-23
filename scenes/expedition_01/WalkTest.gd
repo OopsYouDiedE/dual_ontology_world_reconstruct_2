@@ -11,14 +11,45 @@ func go(x:float,z:float,limit:=2000)->bool:
 		level.walker.rotation.y=atan2(-d.x,-d.z);await physics_frame
 	for k in level.walker.get_slide_collision_count():print(level.walker.get_slide_collision(k).get_collider().get_path(),level.walker.get_slide_collision(k).get_normal())
 	Input.action_release("move_up");push_error("Blocked at %s approaching %s"%[level.walker.position,target]);failures+=1;return false
+func audit()->bool:
+	var kit=level.kit;var space=level.get_world_3d().direct_space_state
+	for i in range(6,23):
+		var a:=TAU*(i+.5)/56.
+		for sign_z in [-1,1]:
+			var top:Vector3=kit.polar(13.25,sign_z*a,1.)
+			var hit=space.intersect_ray(PhysicsRayQueryParameters3D.create(top,top+Vector3.DOWN*2.,1))
+			if hit.is_empty()!=(sign_z<0):push_error("Mid-level floor mismatch at %s"%top);return false
+	for deg in kit.BLIND_ANGLES:
+		if level.sees_span(kit.polar(12.55,deg_to_rad(deg),6.42)):push_error("Sight leak at %d degrees"%deg);return false
+	if not level.sees_span(kit.polar(12.45,1.5*PI,6.42)):push_error("North window blocked");return false
+	for x in [28.45,29.5,31.,32.55,33.65]:
+		var start:=Vector3(x,1.25,5.95)
+		if space.intersect_ray(PhysicsRayQueryParameters3D.create(start,start+Vector3.BACK*1.85,1)).is_empty():push_error("Collapse gap");return false
+	return true
 func run()->void:
 	level=preload("Expedition.tscn").instantiate();root.add_child(level);await physics_frame
-	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[20.95,5.5],[20.95,9.8],[23.85,9.8],[23.85,12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
+	await physics_frame
+	if not audit():quit(1);return
+	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):quit(1);return
+		if absf(point[0]-24.65)<.01:
+			level.eye.look_at(Vector3(24.65,1.57,4.0));for frame in 95:await physics_frame
+			if level.kit.test_board.position.y>-.53:push_error("Unwatched demo stayed up");quit(1);return
+			level.eye.look_at(Vector3(23.85,.10,12.02));for frame in 90:await physics_frame
+			if level.kit.test_board.position.y<.04:push_error("Watched demo stayed down");quit(1);return
+			level.eye.rotation=Vector3.ZERO
 		if absf(point[0]-34)<.01:level.use()
 	level.use();if not (level.learned and level.released and level.equipped):push_error("Archive state incomplete");quit(1);return
 	for point in [[39,10.1],[48.8,10.1]]:
 		if not await go(point[0],point[1]):quit(1);return
+	var oil_before:float=level.oil
+	for i in range(33):
+		var pt:Vector3=level.kit.polar(13.3,PI*(1.-i/32.),0.)
+		if not await go(pt.x,pt.z):quit(1);return
+	if level.oil>oil_before-15.:push_error("Unpriced southern bypass");quit(1);return
+	for i in range(33):
+		var pt:Vector3=level.kit.polar(13.3,PI*i/32.,0.)
+		if not await go(pt.x,pt.z):quit(1);return
 	level.order();for i in 950:await physics_frame
 	if not level.holding:push_error("Hale did not reach north window");quit(1);return
 	level.use();if not await go(70.95,10.1):quit(1);return

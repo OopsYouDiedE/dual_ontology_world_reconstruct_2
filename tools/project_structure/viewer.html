@@ -7,18 +7,21 @@
 :root{color-scheme:light dark;--page:#f6f3e8;--ink:#272f2d;--muted:#4d615c;--edge:#c4ccbc;--accent:#205f66;--panel:#fffcf3;--warn:#90441a}
 @media(prefers-color-scheme:dark){:root{--page:#1d2826;--ink:#eeeade;--muted:#b8c7bc;--edge:#53615b;--accent:#98d0ce;--panel:#263431;--warn:#ffbc8d}}
 *{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 system-ui,sans-serif}main{max-width:76rem;margin:auto;padding:clamp(1rem,3vw,2.75rem)}h1{margin:.25em 0;font-size:clamp(1.8rem,5vw,3rem);line-height:1.15}h2{font-size:1.07rem;margin:0 0 .3em}header p{margin:.45em 0}.kicker,.muted,small{color:var(--muted)}.kicker{font-weight:700;letter-spacing:.12em}code,.tree{font-family:ui-monospace,Consolas,monospace}a{color:var(--accent)}.warn{color:var(--warn)}.toolbar{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.4rem 0 .7rem;align-items:end}.field{display:grid;gap:.2rem}.search{flex:1 1 19rem}input,select,button{font:inherit;padding:.45rem .6rem;border:1px solid var(--edge);border-radius:.35rem;background:var(--panel);color:var(--ink)}button,summary{cursor:pointer}a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.tree{padding:.65rem .8rem;background:var(--panel);border-block:1px solid var(--edge);font-size:.89rem;overflow-wrap:anywhere}.tree ul{margin:0;padding-inline-start:.85rem;list-style:none;border-inline-start:1px solid var(--edge)}.tree>ul{border:0;padding:0}.tree li{margin:.13em 0}.tree summary{width:fit-content;max-width:100%}.tag{color:var(--muted);font-size:.83em;padding-inline-start:.5em}.dir{font-weight:650;color:var(--accent)}.symbol{color:var(--ink);font-weight:600}.issues{margin-top:1.1rem}.issues li{overflow-wrap:anywhere}.details-meta{margin:1.1rem 0}.details-meta li{overflow-wrap:anywhere}.signature{color:var(--muted)}
+.exclusions{margin:1rem 0;padding:.65rem 1rem;border-inline-start:3px solid var(--accent);background:var(--panel)}.exclusions ul{margin:.3rem 0;padding-inline-start:1.4rem}.purpose{color:var(--muted);font-family:system-ui,sans-serif;font-size:.94em}.gallery{margin:1rem 0}.media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:1rem}.media-grid figure{margin:.6rem 0}.media-grid img{display:block;width:100%;height:auto;border:1px solid var(--edge);border-radius:.25rem}.media-grid ol{padding-inline-start:1.6rem;color:var(--muted);font-size:.9em}.media-grid li{margin-block:.25rem}.media-chart-link{padding-inline-start:.55em;white-space:nowrap}
 </style>
 <main>
 <header><div class="kicker">DUAL ONTOLOGY / SOURCE ATLAS</div><h1>项目结构树</h1><p id="snapshot" class="muted"></p><p id="totals"></p><a href="tree.txt">纯文本全树</a> · <a href="index.json">JSON 索引</a></header>
+<section class="exclusions" aria-labelledby="exclusion-title"><h2 id="exclusion-title">索引排除规则</h2><ul id="exclusions"></ul><small id="excluded-count"></small></section>
+<details class="gallery" id="gallery"><summary id="gallery-title">资产拼图与批量识别</summary><p class="muted">OBJ 每格显示两个观察角度；图像格按原图等比缩放。编号对应下方用途，也可在树里搜文件名。</p><div class="media-grid" id="media-grid"></div></details>
 <div class="toolbar">
-<label class="field search">搜路径、函数或签名<input id="query" type="search" placeholder="例如 FirstWatch.gd 或 _ready" autocomplete="off"></label>
+<label class="field search">搜路径、函数、签名或用途<input id="query" type="search" placeholder="例如 FirstWatch.gd 或 _ready" autocomplete="off"></label>
 <label class="field">范围<select id="scope"><option value="all">主项目与子模块</option><option value="project">仅主项目</option><option value="vendor">仅子模块内容</option></select></label>
-<label class="field">文件<select id="mode"><option value="all">全部</option><option value="functions">有函数的文件</option><option value="notices">有解析提示</option><option value="working">有本地改动</option></select></label>
+<label class="field">文件<select id="mode"><option value="all">全部</option><option value="functions">有函数的文件</option><option value="notices">有解析提示</option><option value="working">有本地改动</option><option value="purpose">按用途说明</option><option value="media">有拼图预览</option></select></label>
 <button type="button" id="collapse">收起树</button>
 </div>
 <p id="result" class="muted" role="status"></p>
 <div class="tree" id="tree" aria-label="文件与函数树"></div>
-<details id="meta" class="details-meta"><summary>快照范围、Git 子模块与缺失路径</summary><p>包括 Git 跟踪且当前存在的文件、未被忽略的本地新增，以及已检出的子模块文件。路径后的 M、?? 等是 Git 工作树状态。<code>.git</code>、忽略的缓存、运行时输出和未初始化子模块的内容不在扫描范围内。</p><p>函数计入方法、构造器、匿名函数、访问器、委托签名、带参数的宏和 PowerShell 脚本块。类、命名空间等作为容器；汇编/批处理标签单独列出。解析提示显示语法恢复发生的位置；二进制和未设解析器的格式保留文件节点。</p><ul id="repositories"></ul><details id="absent-list"><summary id="absent-summary"></summary><ul id="absent"></ul></details></details>
+<details id="meta" class="details-meta"><summary>快照范围、Git 子模块与缺失路径</summary><p>按顶部排除规则筛选 Git 跟踪且当前存在的文件、未被忽略的本地新增，以及已检出的子模块文件。路径后的 M、?? 等是 Git 工作树状态。<code>.git</code>、忽略的缓存、运行时输出和未初始化子模块的内容不在扫描范围内。</p><p>函数计入方法、构造器、匿名函数、访问器、委托签名、带参数的宏和 PowerShell 脚本块。类、命名空间等作为容器；汇编/批处理标签单独列出。解析提示显示语法恢复发生的位置；二进制和未设解析器的格式保留文件节点。</p><ul id="repositories"></ul><details id="absent-list"><summary id="absent-summary"></summary><ul id="absent"></ul></details></details>
 </main>
 <script id="data" type="application/json"><!-- SNAPSHOT --></script>
 <script>
@@ -28,6 +31,29 @@ const el=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textConten
 const project=data.totals.project, vendor=data.totals.vendor;
 const issues=f=>f.issues.length>0, tag=text=>el('span',text,'tag');
 const short=hash=>hash.slice(0,12);
+const byPath = new Map(data.files.map(f=>[f.path,f]));
+for(const rule of data.exclusions.rules)$('exclusions').append(el('li',rule));
+const count = Object.values(data.exclusions.counts).reduce((a,b)=>a+b,0);
+$('excluded-count').textContent=`按文件规则从已存在的 Git 工作树中排除 ${count.toLocaleString()} 项。`;
+const mediaCount=data.gallery.reduce((n,s)=>n+s.paths.length,0);
+$('gallery-title').textContent=`资产拼图与批量识别 · ${mediaCount} 项 / ${data.gallery.length} 张`;
+$('gallery').addEventListener('toggle',()=>{if($('gallery').open)drawGallery()});
+function drawGallery(){
+    const grid=$('media-grid'); if(grid.childElementCount)return;
+    for(const item of data.gallery){
+        const fig=el('figure'), caption=el('figcaption',`${item.group==='obj'?'OBJ 双视角':'截图／位图'} · ${item.sheet}`), img=el('img'), href=el('a');
+        fig.id='sheet-'+item.sheet;
+        img.src=item.sheet; img.alt=caption.textContent; img.loading='lazy'; href.href=item.sheet; href.append(img);
+        const list=el('ol');
+        for(const p of item.paths){const f=byPath.get(p), li=el('li'), action=el('button',p.split('/').at(-1)); action.type='button'; action.title=p;
+            action.addEventListener('click',()=>{ $('query').value=p; $('scope').value='all'; $('mode').value='all'; render(); $('query').scrollIntoView({block:'center'}); $('query').focus({preventScroll:true}); });
+            li.append(action,el('span',' '+(f.purpose||''),'purpose')); list.append(li);
+        }fig.append(caption,href,list); grid.append(fig);
+    }
+}
+function mediaLink(f){const a=el('a',`拼图 #${String(f.media.card).padStart(2,'0')}`,'media-chart-link'); a.href='#sheet-'+f.media.sheet;
+    a.addEventListener('click',event=>{event.preventDefault();$('gallery').open=true;drawGallery();$('sheet-'+f.media.sheet).scrollIntoView({block:'start'})}); return a;
+}
 $('snapshot').textContent=`${data.root} · ${short(data.repositories[0].commit)} · ${data.created}`;
 $('totals').textContent=`主项目 ${project.files.toLocaleString()} 文件 / ${project.functions.toLocaleString()} 函数条目  ·  子模块 ${vendor.files.toLocaleString()} 文件 / ${vendor.functions.toLocaleString()} 函数条目`;
 for(const r of data.repositories)$('repositories').append(el('li',`${r.path} @ ${r.commit}`));
@@ -64,17 +90,19 @@ function subtree(n, auto, depth=0){
             const label=[el('span',k.name),tag([f.status,f.count?`${f.count} 函数`:'',issues(f)?`${f.issues.length} 条解析提示`:'',f.kind==='symlink'?'符号链接':''].filter(Boolean).join(' · '))];
             if(k.symbols.length||issues(f))lazy(li,label,d=>{
                 d.append(el('div',`${f.path}${f.parser?' · '+f.parser:''}`,'muted'));
+                if(f.purpose)d.append(el('div',f.purpose,'purpose'));
+                if(f.media)d.append(mediaLink(f));
                 if(k.symbols.length)d.append(lineTree(k.symbols));
                 if(issues(f)){const u=el('ul','','warn');for(const i of f.issues)u.append(el('li',i));d.append(u)}
-            },auto===Infinity);else {li.append(...label);li.title=f.path;}
+            },auto===Infinity);else {li.append(...label);li.title=f.path;if(f.purpose)li.append(el('span',' — '+f.purpose,'purpose'));if(f.media)li.append(mediaLink(f));}
         } ul.append(li);
     }return ul;
 }
 function render(){
     const q=$('query').value.trim().toLowerCase(), scope=$('scope').value, mode=$('mode').value, matched=[];
     for(const f of data.files){if((scope==='project'&&f.repo!=='.')||(scope==='vendor'&&f.repo==='.'&&f.kind!=='gitlink'))continue;
-        if((mode==='functions'&&!f.count)||(mode==='notices'&&!issues(f))||(mode==='working'&&!f.status))continue;
-        const fileHit=!q||f.path.toLowerCase().includes(q), syms=fileHit?f.symbols:symbolMatch(f.symbols,q);
+        if((mode==='functions'&&!f.count)||(mode==='notices'&&!issues(f))||(mode==='working'&&!f.status)||(mode==='purpose'&&!f.purpose)||(mode==='media'&&!f.media))continue;
+        const fileHit=!q||f.path.toLowerCase().includes(q)||(f.purpose||'').toLowerCase().includes(q), syms=fileHit?f.symbols:symbolMatch(f.symbols,q);
         if(fileHit||syms.length)matched.push([f,syms]);
     }
     const n=matched.filter(([f])=>f.kind!=='gitlink').length, links=matched.length-n;

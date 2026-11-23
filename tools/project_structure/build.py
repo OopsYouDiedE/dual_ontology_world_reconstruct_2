@@ -15,6 +15,9 @@ import tokenize
 
 from tree_sitter_language_pack import get_parser
 
+from media import write_sheets
+from purpose import EXCLUSION_RULES, exclusion, purpose
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 LANG = {
@@ -293,7 +296,16 @@ def collect(include_vendored=True):
         files = [f for f in files if f['repo'] == '.']
         repositories = repositories[:1]
         absent = [f for f in absent if not f.startswith('vendor/')]
-    files.sort(key=lambda f: (f['path'].casefold(), f['path']))
+    excluded = Counter()
+    kept = []
+    for f in files:
+        reason = exclusion(f['path'], ROOT) if f['kind'] != 'gitlink' else ''
+        if reason:
+            excluded[reason] += 1
+        else:
+            kept.append(f)
+    files = sorted(kept, key=lambda f: (f['path'].casefold(), f['path']))
+    absent = [p for p in absent if not exclusion(p, ROOT)]
     ps_paths = [str(ROOT / f['path']) for f in files if f['kind'] == 'file' and f['path'].lower().endswith('.ps1')]
     ps = {}
     if ps_paths:
@@ -311,6 +323,8 @@ def collect(include_vendored=True):
                 f['issues'] = [f'{lang}: {ex}']
                 f['parser'] = f'{lang}/failed'
             f['count'] = sum(s['kind'] not in GROUPS and s['kind'] != 'label' for s in walk_symbols(f['symbols']))
+        if not f['count'] and f['kind'] != 'gitlink':
+            f['purpose'] = purpose(f['path'], ROOT, f['kind'])
     totals = {}
     for key, selection in [('project', [f for f in files if f['repo'] == '.']),
                            ('vendor', [f for f in files if f['repo'] != '.'])]:
@@ -319,6 +333,7 @@ def collect(include_vendored=True):
                            issues=sum(bool(f['issues']) for f in selection),
                            parsers=dict(Counter(f['parser'] for f in selection if f['parser'])))
     return dict(root=ROOT.name, created=datetime.now(timezone(timedelta(hours=8))).isoformat(timespec='seconds'),
+                exclusions=dict(rules=EXCLUSION_RULES, counts=dict(excluded)),
                 repositories=repositories, absent=sorted(absent), totals=totals, files=files)
 
 
@@ -350,11 +365,16 @@ def text_tree(data):
                     label += f' [{f["status"]}]'
                 if f['issues']:
                     label += f' [parse notices: {len(f["issues"])}]'
+                if f.get('purpose'):
+                    label += ' — ' + f['purpose']
+                if f.get('media'):
+                    label += f' [{f["media"]["sheet"]} #{f["media"]["card"]:02}]'
             lines.append(prefix+('└── ' if last else '├── ')+label)
             emit(child, sub, lines)
             if f:
                 emit_symbols(f['symbols'], sub, lines)
-    lines = [data['root'] + '/', f'Git 工作树 · {data["created"]} · {data["repositories"][0]["commit"]}', '']
+    lines = [data['root'] + '/', f'Git 工作树 · {data["created"]} · {data["repositories"][0]["commit"]}', '排除规则：',
+             *('  - '+rule for rule in data['exclusions']['rules']), '']
     emit(tree, '', lines)
     lines.append('\n解析提示：')
     lines.extend(f'{f["path"]}: ' + '; '.join(f['issues']) for f in data['files'] if f['issues'])
@@ -370,12 +390,14 @@ def main():
     data = collect(not args.project_only)
     out = ROOT / '.runtime' / 'project-tree'
     out.mkdir(parents=True, exist_ok=True)
+    data['gallery'] = write_sheets(data, ROOT, out)
     blob = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
     (out / 'index.json').write_text(blob+'\n', encoding='utf-8')
     (out / 'tree.txt').write_text(text_tree(data), encoding='utf-8')
     template = (HERE / 'viewer.html').read_text(encoding='utf-8')
     (out / 'index.html').write_text(template.replace('<!-- SNAPSHOT -->', blob.replace('<', '\\u003c')), encoding='utf-8')
-    print(json.dumps(data['totals'], indent=2))
+    print(json.dumps(dict(totals=data['totals'], exclusions=data['exclusions']['counts'],
+                          sheets=len(data['gallery'])), indent=2))
 
 
 if __name__ == '__main__':

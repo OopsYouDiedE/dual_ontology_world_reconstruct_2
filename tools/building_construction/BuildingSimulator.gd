@@ -190,6 +190,8 @@ func _make_ui() -> void:
 	button(header,"Split View",func(): blueprint.show(); view3.show())
 	button(header,"2D Only",func(): blueprint.show(); view3.hide())
 	button(header,"3D Only",func(): blueprint.hide(); view3.show())
+	button(header,"Structure Lab",func():
+		if not has_node("StructureLab"): add_child(preload("production/building/StructureLab.tscn").instantiate()))
 	button(header,"Generate Layout",preview_generated_layout,"Preview a new single-storey layout")
 	header.add_child(VSeparator.new())
 	button(header,"Undo",func(): if state.undo(-1): refresh(),"Ctrl+Z")
@@ -1104,6 +1106,7 @@ func _update_camera() -> void:
 	camera.look_at(target)
 	if auto_cutaway and candidates != null: apply_visibility()
 func _camera_input(event: InputEvent) -> void:
+	if has_node("StructureLab"): return
 	if event is InputEventMouseMotion:
 		if event.button_mask&MOUSE_BUTTON_MASK_RIGHT:
 			if event.shift_pressed: target += Vector3(-event.relative.x,0,-event.relative.y)*distance*0.002
@@ -1142,6 +1145,7 @@ func rotate_selected() -> void:
 		item.yaw = fposmod(item.get("yaw", 0) + (45 if sel.kind == "prop" else 90), 360), true)
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if has_node("StructureLab"): return
 	if pending_build != null: return
 	if not event is InputEventKey or not event.pressed: return
 	if gesture_build != null:

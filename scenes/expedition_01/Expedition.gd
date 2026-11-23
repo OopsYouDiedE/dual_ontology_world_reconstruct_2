@@ -18,7 +18,7 @@ var page:=RichTextLabel.new()
 var book_page:=0
 var caption_toast:=Label.new()
 var toast_time:=0.
-var lantern:=SpotLight3D.new()
+var lantern:=OmniLight3D.new()
 var hale_lantern:=OmniLight3D.new()
 var hale_prop:Node3D
 var hale_rig:Skeleton3D
@@ -73,6 +73,7 @@ var sounds:={}
 var tutorial_room:=false
 var hale_gate_attempt:=false
 var hale_gate_target:=Vector3.ZERO
+const HALE_GATE_DURATION:=1.14
 var hale_gate_effort:=0.
 var hale_speed:=0.
 var hale_loco:AnimationNodeStateMachinePlayback
@@ -80,7 +81,11 @@ var hale_clip:=&""
 var watch_route:=PackedVector3Array()
 var hale_return_path:=PackedVector3Array()
 var shortcut_open:=false
-var shortcut_time:=0.
+var return_started:=false
+var return_gate_open:=false
+var shaft_mix:=0.
+var shaft_bed:=AudioStreamPlayer.new()
+var score:=AudioStreamPlayer.new()
 var shortcut_used:=false
 var exit_open:=false
 var reunited:=false
@@ -118,8 +123,8 @@ func _ready()->void:
 	caption_toast.add_theme_constant_override("outline_size",6);caption_toast.hide()
 	plate_finish.shader=preload("GazePlate.gdshader");kit.test_board.material_override=plate_finish
 	player_lamp=Node3D.new();eye.add_child(player_lamp);player_lamp.position=Vector3(.34,-.42,-.25)
-	player_lamp.add_child(lantern);lantern.position=Vector3(0,.065,-.08);lantern.rotation.x=-.17
-	lantern.light_color=Color("ffcc8c");lantern.spot_attenuation=1.1;lantern.spot_angle_attenuation=1.25
+	player_lamp.add_child(lantern);lantern.position=Vector3(0,.065,-.08)
+	lantern.light_color=Color("ffd09b");lantern.omni_attenuation=2.05
 	lantern.shadow_enabled=true;lantern.shadow_bias=.045;lantern.shadow_normal_bias=.40
 	hale_prop=build_lantern(Vector3(-.27,1.06,.27));hale_prop.hide()
 	hale_rig=hale.get_meta("skeleton");hale_hand=hale_rig.find_bone("hand_l")
@@ -130,14 +135,19 @@ func _ready()->void:
 	kit.section=kit.get_child(0);kit.plaque("稳压室",Vector3(.25,2.94,0),.98,PI*.5)
 	kit.section=kit.get_child(2);kit.plaque("北窗",kit.polar(10.9,1.5*PI,6.82),.68)
 	sounds=Sound.clips()
-	add_child(ambient_bed);ambient_bed.stream=sounds.ambience;ambient_bed.volume_db=-42.;ambient_bed.play()
+	add_child(ambient_bed);ambient_bed.stream=sounds.ambience;ambient_bed.volume_db=-26.;ambient_bed.play()
+	add_child(shaft_bed);shaft_bed.stream=sounds.shaft;shaft_bed.volume_db=-70.;shaft_bed.play()
+	add_child(score);score.stream=sounds.cello;score.volume_db=-70.
+	sound_at("opening_tail",Vector3(-.58,1.15,0),-24.,9.)
 	add_child(foot);add_child(chime);add_child(board_audio);foot.volume_db=-21;chime.volume_db=-14;board_audio.position=Vector3(23.85,.4,12.02);board_audio.max_distance=12;board_audio.volume_db=-9
 	for pos in [Vector3(23.6,2.1,4.),Vector3(24.65,2.7,8.1),Vector3(23.85,2.4,12),Vector3(36.3,2.4,8.2),Vector3(.8,2.55,0)]:
 		var lamp:=OmniLight3D.new();lamp.position=pos;lamp.omni_range=4.;lamp.light_energy=.62;lamp.light_color=Color("ffebc5");lamp.omni_attenuation=1.3;lamp.shadow_enabled=true;lamp.shadow_bias=.035;lamp.shadow_normal_bias=.42;add_child(lamp)
 	var annex:=OmniLight3D.new();add_child(annex);annex.position=Vector3(-3.4,2.22,0)
 	annex.omni_range=6.2;annex.light_energy=2.4;annex.light_color=Color("ffc475");annex.shadow_enabled=true
-	var return_lamp:=OmniLight3D.new();add_child(return_lamp);return_lamp.position=Vector3(78.72,6.92,12.45)
-	return_lamp.omni_range=4.1;return_lamp.light_energy=.81;return_lamp.light_color=Color("ffd99d");return_lamp.shadow_enabled=true
+	for marker in kit.find_children("GalleryLamp*","Marker3D",true,false):
+		var service_light:=OmniLight3D.new();add_child(service_light);service_light.position=marker.global_position
+		service_light.omni_range=6.;service_light.light_energy=.81;service_light.light_color=Color("ffd99d");service_light.shadow_enabled=true
+		service_light.shadow_bias=.06;service_light.shadow_normal_bias=.5
 	add_child(hunter);hale.add_child(metal_foot);metal_foot.stream=sounds.iron;metal_foot.volume_db=-12;add_child(siren);siren.position=Vector3(73.15,5.25,9.25);siren.max_distance=24.;siren.volume_db=-17.
 	add_child(halo);halo.position=Vector3(31,2.1,2.9);halo.light_color=Color("ffbd70");halo.omni_range=6;halo.light_energy=1.4;halo.shadow_enabled=true
 	add_child(emergency);emergency.position=Vector3(73.15,5.25,9.25);emergency.light_color=Color("ff5234");emergency.omni_range=5.6;emergency.omni_attenuation=1.7;emergency.hide()
@@ -157,9 +167,9 @@ func toggle_book()->void:
 	manual.visible=not manual.visible;read_book=true
 	if manual.visible:
 		book_page=0;render_book();toast_time=0.;caption_toast.hide()
-		if captions.entries.has("Hale") and captions.entries.Hale.id=="start" and captions.entries.Hale.remaining<2.6:
-			captions.remove_speaker("Hale")
-	play_ui("page",-19.)
+		captions.clear();evidence_thought_delay=-1.
+		play_ui("page",-19.)
+	else:play_ui("book_close",-19.)
 	prompt.visible=not manual.visible;captions.visible=not manual.visible;polish.on_book(manual.visible)
 func render_book()->void:
 	if book_page==0:
@@ -184,8 +194,13 @@ func build_lantern(offset:Vector3)->Node3D:
 	return prop
 func toast(text:String)->void:
 	caption_toast.text=text;caption_toast.show();toast_time=captions.reading_time(text)
-func sound_at(kind:String,pos:Vector3,db:float)->void:
-	var audio:=AudioStreamPlayer3D.new();add_child(audio);audio.position=pos;audio.stream=sounds[kind];audio.volume_db=db;audio.max_distance=90;audio.finished.connect(audio.queue_free);audio.play()
+# Keep close-range distance gain from turning small mechanical cues into stingers.
+const CLOSE_CUE_CAPS := {"opening_tail": -17., "gate": -8., "airlock": -4.}
+func sound_at(kind:String,pos:Vector3,db:float,distance:=90.)->void:
+	var audio:=AudioStreamPlayer3D.new();add_child(audio);audio.position=pos;audio.stream=sounds[kind]
+	audio.volume_db=db;audio.max_distance=distance
+	if CLOSE_CUE_CAPS.has(kind):audio.max_db=CLOSE_CUE_CAPS[kind]
+	audio.finished.connect(audio.queue_free);audio.play()
 func light_stage()->void:
 	var w:=WorldEnvironment.new();var e:=Environment.new()
 	e.background_mode=Environment.BG_COLOR;e.background_color=Color("e3e2d9")
@@ -284,7 +299,7 @@ func use()->void:
 	match target:
 		"gate":
 			polish.kick(.22)
-			sound_at("gate",Vector3(36.,1.46,0),-6.)
+			sound_at("gate",Vector3(36.,1.46,0),-14.,12.)
 			thought("gate_test","插销从里面闩死了。")
 			confirm_gate_locked()
 		"note":say("残页：隔着玻璃也有反应。昨夜值班记录的最后一行被撕掉了。")
@@ -294,7 +309,7 @@ func use()->void:
 			thought("bait_hint","上了发条扔下去，能把井底的耳朵引开。")
 		"lever":
 			if not learned:return
-			hale_gate_attempt=false;hale.rotation.x=0.
+			hale_gate_attempt=false
 			released=true;kit.gate.position.y=4.;checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();polish.kick(.5);polish.punch(-5.);sound_at("lever",kit.panel.position,-4.);sound_at("chain",Vector3(36.,2.,0.),-3.);line_once("release","主闸通了！放轻脚步，铁网会把声音传到井底。")
 		"core":
 			collected=true;begin_hale_return();polish.kick(.32);polish.punch(-4.);kit.core.hide();emergency.show();siren.stream=sounds.alarm;siren.play();line_once("core","源核离座，井底已经听见了！别回桥，上左侧楼梯，撞开绿漆应急门！")
@@ -309,8 +324,10 @@ func use()->void:
 func finish_expedition()->void:
 	finished=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	hud.text="撤离成功　·　备用源核已送回稳压室"
-	polish.finish("撤 离 成 功","备用源核已送回稳压室 · 远征记录已归档")
-	captions.hide();caption_toast.hide();prompt.hide();siren.stop();hunter.stop_audio();returned.emit()
+	var ending:Tween=polish.finish("撤 离 成 功","备用源核已送回稳压室 · 远征记录已归档")
+	# The host removes this scene on return. Give the fade and title time to play first.
+	ending.finished.connect(func():returned.emit())
+	captions.hide();caption_toast.hide();prompt.hide();siren.stop();hunter.stop_audio()
 func begin_hale_return()->void:
 	if not (holding or posting):
 		# The south bypass also rejoins the evacuation route: Hale waits by the west entrance.
@@ -327,7 +344,7 @@ func order()->void:
 	var target:=focus()
 	if target=="gate":
 		if hale_gate_attempt:return
-		hale_gate_attempt=true;hale_gate_effort=.82
+		hale_gate_attempt=true;hale_gate_effort=HALE_GATE_DURATION
 		hale_gate_target=kit.gate_spots[0 if walker.position.z>=0. else 1].global_position
 		trail.clear()
 		return
@@ -341,21 +358,14 @@ func order()->void:
 	line_once("post","明白！桥面只能承住一道目光。过桥时看前方，别低头看桥！")
 func _physics_process(dt:float)->void:
 	if finished:
-		ambient_bed.volume_db=move_toward(ambient_bed.volume_db,-72.,54.*dt)
-		if ambient_bed.volume_db<=-72.:ambient_bed.stop()
+		for track in [ambient_bed,shaft_bed,score]:
+			track.volume_db=move_toward(track.volume_db,-72.,46.*dt)
+			if track.volume_db<=-72. and track.playing:track.stop()
 		return
-	if manual.visible:
-		if captions.entries.has("Hale") and captions.entries.Hale.id=="start":captions.advance(dt)
-		return
+	if manual.visible:return
 	prompt.visible=mode<0;captions.visible=mode<0
 	if mode>=0 and detail_view>=0:hud.text="EYE HEIGHT   /   %s     F6  next sightline    F4  leave"%["B2 · OBSERVATION WINDOW","B5 · MASTER RELEASE","C1 · GAZE SPAN"][detail_view];return
 	if mode>=0:hud.text="SECTION PLATE  %s    /    F4  next view   /   F5  shell or cutaway   /   F6  eye height"%["A · IMMERSION ARCADE","B · ARCHIVE WING","C · SOURCE CAISSON"][mode];return
-	if shortcut_time>0.:
-		shortcut_time-=dt
-		if shortcut_time<=0.:
-			walker.position=Vector3(38.7,.10,8.6);walker.velocity=Vector3.ZERO
-			walker.rotation.y=0.;eye.rotation=Vector3.ZERO;polish.reset_beat()
-		return
 	var axis:=Input.get_vector("move_left","move_right","move_up","move_down");var dir:=walker.basis*Vector3(axis.x,0,axis.y);var speed:=5.8 if running else 3.8
 	if Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet"):speed=2.2
 	if retry>0:
@@ -374,8 +384,7 @@ func _physics_process(dt:float)->void:
 			var up:=walker.transform;up.origin.y+=.19
 			if not walker.test_move(up,step):walker.position.y+=.19
 		walker.move_and_slide();walking_feedback(dt)
-		if shortcut_open and not shortcut_used and walker.position.x>kit.RETURN_DEPTH and walker.position.y>4.55 and absf(walker.position.z-12.45)<.8:
-			shortcut_used=true;shortcut_time=.26;polish.fade_to(1.,.23);return
+		update_return_route(walker.position)
 		if exit_open and walker.position.x<kit.AIRLOCK_DEPTH:exit_requested=true
 		if exit_requested and walker.position.x<kit.AIRLOCK_DEPTH and hale.position.x< -1.85 and hale_return_path.is_empty() and not captions.entries.has("Hale"):
 			finish_expedition();return
@@ -385,7 +394,7 @@ func _physics_process(dt:float)->void:
 	toast_time-=dt;caption_toast.visible=toast_time>0. and mode<0
 	north_beacon.visible=holding
 	update_lantern(dt)
-	ambient_bed.volume_db=move_toward(ambient_bed.volume_db,-29. if collected else -35. if walker.position.x>46. else -42.,5.*dt)
+	update_soundscape(dt)
 	if evidence_thought_delay>0.:
 		evidence_thought_delay-=dt
 		if evidence_thought_delay<=0.:thought("thought","单道目光反而锁住了它。把这条记下来。")
@@ -394,6 +403,31 @@ func _physics_process(dt:float)->void:
 	var hints:={"gate":"Hale 正在试铁闸…" if hale_gate_attempt else "[E] 晃动铁闸　[Q] 请 Hale 试试","note":"[E] 阅读残页","loot":"[E] 拾取补给","lever":"[E] 扳下总闸","core":"[E] 拔出源核","return":"[E] 撞开应急门","exit":"[E] 开启气密门","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器（诱饵）"}
 	var seen:=focus();polish.focus_id=seen
 	var hint:=str(hints.get(seen,""));prompt.text=hint if hint!="" else notice if msg_time>0 else "[1] 打开规则手册" if not read_book else ""
+func in_return_gallery(p:Vector3)->bool:
+	return return_started and (p.x>75.55 or p.z>25.15 or (absf(p.x-kit.RETURN_WEST)<1.45 and p.z>=kit.RETURN_GATE_Z-.2))
+
+func update_return_route(p:Vector3)->void:
+	if shortcut_open and p.x>75.60 and p.y>4.48 and absf(p.z-12.45)<1.0:
+		if not return_started:hunter.stop_audio()
+		return_started=true
+	if not return_started or absf(p.x-kit.RETURN_WEST)>1.18 or p.y>.60:return
+	if not return_gate_open and p.z>kit.RETURN_GATE_Z and p.z<14.5:
+		return_gate_open=true
+		var gate:Node3D=kit.return_exit_gate
+		create_tween().tween_property(gate,"position:y",2.74,.62).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		sound_at("chain",gate.position+Vector3.UP*1.6,-17.,12.)
+	if return_gate_open and p.z<kit.RETURN_GATE_Z-.12:shortcut_used=true
+
+func update_soundscape(dt:float)->void:
+	var p:=walker.position
+	var shaft:=released and p.x>46.2 and not in_return_gallery(p)
+	shaft_mix=move_toward(shaft_mix,1. if shaft else 0.,dt*.72)
+	ambient_bed.volume_db=linear_to_db(lerpf(.056,.029,shaft_mix))
+	shaft_bed.volume_db=linear_to_db(maxf(.00032,shaft_mix*.080))
+	if shaft and not score.playing:score.play()
+	elif not shaft and shaft_mix<=0. and score.playing:score.stop()
+	score.volume_db=linear_to_db(maxf(.00032,shaft_mix*(.041 if collected else .025)))
+
 func update_lantern(dt:float)->void:
 	var p:=walker.position
 	var dark:=p.z>13.05 and p.z<15.15 and p.x>27.8 and p.x<41.8
@@ -403,8 +437,8 @@ func update_lantern(dt:float)->void:
 	env.sdfgi_energy=lerpf(.90,.48,darkroom_mix)
 	var fuel:=sqrt(oil/100.)
 	var flicker:=1.+.045*sin(phase*15.7)+.026*sin(phase*27.3)
-	lantern.light_energy=2.85*fuel*flicker
-	lantern.spot_range=lerpf(1.8,8.3,fuel);lantern.spot_angle=lerpf(26.,50.,fuel)
+	lantern.light_energy=(1.18+.54*darkroom_mix)*fuel*flicker
+	lantern.omni_range=lerpf(1.45,6.9,fuel)
 	player_lamp.position=Vector3(.34+.024*sin(TAU*stride),-.42+.023*cos(TAU*stride),-.25)
 	hale_prop.visible=released
 	if released and hale_hand>=0:
@@ -415,6 +449,7 @@ func update_target()->void:
 	var goal:="取回深井对岸的备用源核"
 	if exit_requested:goal="进入稳压室门厅"
 	elif shortcut_used:goal="沿主廊返回稳压室"
+	elif return_started:goal="沿检修回廊返回主廊"
 	elif collected:goal="上螺旋梯 · 经绿门撤离"
 	elif holding:goal="Hale 已就位 · 看前方过桥"
 	elif posting:goal="Hale 正前往北窗"
@@ -488,17 +523,19 @@ func advance_hale(dt:float)->void:
 		return
 	if hale_gate_attempt:
 		if released or walker.position.x<31. or absf(walker.position.z)>2.:
-			hale_gate_attempt=false;hale.rotation.x=0.
+			hale_gate_attempt=false
 		else:
 			if hale.position.distance_to(hale_gate_target)>.025:
 				hale.position=hale.position.move_toward(hale_gate_target,dt*3.8)
 			else:
 				hale.rotation.y=lerp_angle(hale.rotation.y,PI*.5,1.-exp(-15.*dt))
-				if hale_gate_effort==.82:sound_at("gate",hale_gate_target+Vector3(.64,1.22,0),-5.)
+				var before:=HALE_GATE_DURATION-hale_gate_effort
 				hale_gate_effort-=dt
-				hale.rotation.x=.045*sin(TAU*clampf(hale_gate_effort/.82,0.,1.))
+				for hit in [.36,.69]:
+					if before<hit and before+dt>=hit:sound_at("gate",Vector3(35.97,1.24,hale_gate_target.z),-13.,12.)
+
 				if hale_gate_effort<=0.:
-					hale_gate_attempt=false;hale.rotation.x=0.;confirm_gate_locked()
+					hale_gate_attempt=false;confirm_gate_locked()
 					show_line("hale_gate","纹丝不动。绕右边的档案侧门，去找总闸。")
 			return
 	if tutorial_room and not learned and not holding:
@@ -536,7 +573,7 @@ func rules(dt:float)->void:
 	var p:=walker.position
 	update_demo(p,dt)
 	if phase>=2 and not cues.has("start"):
-		kit.airlock.position.y=2.4;polish.kick(.55);polish.punch(4.);sound_at("airlock",Vector3(.2,1,0),-7.);sound_at("bell",Vector3(25,2,0),2);line_once("start","稳压室撑不到天亮。前班撤离时，把备用源核留在了深井对岸。")
+		kit.airlock.position.y=2.4;line_once("start","稳压室撑不到天亮。前班撤离时，把备用源核留在了深井对岸。")
 	if not released and not tutorial_room and p.x>30. and p.x<36. and absf(p.z)<2.3:
 		halo.light_energy=2.3
 	oil=maxf(0.,oil-dt*.11)
@@ -563,7 +600,7 @@ func rules(dt:float)->void:
 		if hazard>=(40 if watchers==2 else 60):fail("桥面过载")
 	else:
 		hazard=0;paint_bridge(Color("94b7be") if holding else Color("a9824f"),.30 if holding else .19,dt)
-	if released:
+	if released and not in_return_gallery(p):
 		var grate:=posting and hale_speed>.35 and hale.position.y>1.
 		metal_beat-=dt
 		if grate and metal_beat<=0:metal_foot.play();metal_beat=.55
@@ -573,7 +610,10 @@ func rules(dt:float)->void:
 			cues["bait_answer"]=true;polish.signal_bait()
 		if collected:
 			emergency.light_energy=.38+.34*(.5+.5*sin(phase*5.))
-			if not siren.playing:siren.play()
+			if p.x>46. and not siren.playing:siren.play()
+	elif return_started:
+		siren.volume_db=move_toward(siren.volume_db,-48.,20.*dt)
+		if siren.volume_db<=-48. and siren.playing:siren.stop()
 # Glass transmits gaze; the plate never occludes its own samples.
 func paint_bridge(tint:Color,glow:float,dt:float)->void:
 	var m:=kit.bridge.material_override as StandardMaterial3D
@@ -645,9 +685,9 @@ func sees_span(origin:Vector3)->bool:
 	return false
 func fail(reason:String)->void:retry=3.;polish.fail_beat();say(reason+"　·　正在返回折返点…")
 func reset_at_checkpoint()->void:
-	shortcut_open=false;shortcut_used=false;shortcut_time=0.;exit_requested=false;exit_open=false;reunited=false;evidence_thought_delay=-1.;cues.erase("bait_answer")
+	shortcut_open=false;shortcut_used=false;return_started=false;return_gate_open=false;kit.return_exit_gate.position.y=0.;siren.volume_db=-17.;exit_requested=false;exit_open=false;reunited=false;evidence_thought_delay=-1.;cues.erase("bait_answer")
 	kit.leave_pivot.rotation.y=0.;kit.airlock.position.y=2.4;hale_return_path.clear()
-	hale_gate_attempt=false;hale.rotation.x=0.
+	hale_gate_attempt=false
 	crossing=false;crossing_locked=false;distraction=0.;running=false;collected=false;kit.core.show();siren.stop();emergency.hide();cues.erase("core");cues.erase("post");captions.clear()
 	if released:hunter.wake();oil=checkpoint_oil;equipped=checkpoint_item
 	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);polish.reset_beat();hazard=0;holding=false;posting=false;trail.clear();command_path.clear()

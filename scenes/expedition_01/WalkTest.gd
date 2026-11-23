@@ -5,10 +5,10 @@ var failures:=0
 var gaze:=false
 var south_only:=false
 func _initialize()->void:run.call_deferred()
-func go(x:float,z:float,limit:=2000,portal:=false)->bool:
+func go(x:float,z:float,limit:=2000)->bool:
 	var target:=Vector3(x,0,z);Input.action_press("move_up")
 	for i in limit:
-		if level.finished or (portal and level.shortcut_used):Input.action_release("move_up");return true
+		if level.finished:Input.action_release("move_up");return true
 		var p:Vector3=level.walker.position;var d:Vector3=target-p;d.y=0
 		if d.length()<.12:Input.action_release("move_up");return true
 		level.walker.rotation.y=atan2(-d.x,-d.z)
@@ -103,12 +103,13 @@ func run()->void:
 	level.eye.look_at(level.kit.leaf.global_position);level.use()
 	if not level.shortcut_open:push_error("Return leaf out of reach");quit(1);return
 	for i in 35:await physics_frame
-	if not await go(77.08,12.45,200,true):quit(1);return
-	for i in 30:await physics_frame
-	if level.walker.position.x>40:push_error("Return threshold did not transfer player");quit(1);return
-	for point in [[38.7,7.2],[38.7,0],[34,0],[1.5,0]]:
+	for point:Vector2 in level.kit.RETURN_PATH:
+		if not await go(point.x,point.y,900):quit(1);return
+	if not level.shortcut_used or level.walker.position.distance_to(Vector3(43.8,0,10.1))>.4:
+		push_error("Physical return gallery did not reach B5");quit(1);return
+	for point in [[38.7,10.1],[38.7,7.2],[38.7,0],[34,0],[1.5,0]]:
 		if not await go(point[0],point[1]):quit(1);return
-	var completed:=[false];level.returned.connect(func():completed[0]=true)
+	var completed:=[false];level.returned.connect(func():completed[0]=level.polish.fade_a>.999 and level.polish.end_card.modulate.a>.999)
 	for i in 15:await physics_frame
 	level.eye.look_at(Vector3(.37,1.5,0));level.use()
 	for i in 35:await physics_frame

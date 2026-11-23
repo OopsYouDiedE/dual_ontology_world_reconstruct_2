@@ -40,12 +40,15 @@ func post(id:String,speaker:String,text:String)->void:
 	line.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	line.add_theme_font_override("font",thought_face if speaker.is_empty() else typeface)
 	line.add_theme_font_size_override("font_size",20)
-	line.add_theme_color_override("font_color",Color("dbd1bb") if speaker.is_empty() else Color("fff3df"))
+	line.add_theme_color_override("font_color",Color("fff1d7") if speaker.is_empty() else Color("fff3df"))
 	var plate:=StyleBoxFlat.new();plate.bg_color=Color(.035,.029,.023,.89);plate.set_corner_radius_all(4)
 	plate.content_margin_left=18.;plate.content_margin_right=18.;plate.content_margin_top=7.;plate.content_margin_bottom=7.
 	if speaker.is_empty():
-		line.add_theme_color_override("font_outline_color",Color(.07,.04,.02,.86))
-		line.add_theme_constant_override("outline_size",5)
+		line.add_theme_color_override("font_outline_color",Color("2d170f"))
+		line.add_theme_constant_override("outline_size",7)
+		line.add_theme_color_override("font_shadow_color",Color(.09,.045,.022,.91))
+		line.add_theme_constant_override("shadow_offset_y",2)
+		line.add_theme_constant_override("shadow_outline_size",4)
 	else:line.add_theme_stylebox_override("normal",plate)
 	add_child(line)
 	entries[speaker]={"id":id,"label":line,"remaining":reading_time(text)}

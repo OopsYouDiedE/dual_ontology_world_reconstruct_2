@@ -6,7 +6,12 @@ var gate:Node3D
 var leaf:Node3D
 var leave_pivot:Node3D
 const AIRLOCK_DEPTH := -2.65
-const RETURN_DEPTH := 76.82
+const RETURN_ELBOW := 77.62
+const RETURN_SOUTH := 26.65
+const RETURN_WEST := 43.80
+const RETURN_GATE_Z := 11.52
+const RETURN_PATH := [Vector2(RETURN_ELBOW,12.45),Vector2(RETURN_ELBOW,RETURN_SOUTH),Vector2(RETURN_WEST,RETURN_SOUTH),Vector2(RETURN_WEST,10.1)]
+var return_exit_gate:Node3D
 var gate_spots:Array[Marker3D]=[]
 var north_spot:Marker3D
 var bridge:Node3D
@@ -18,7 +23,7 @@ var core:Node3D
 var supplies:Node3D
 var stair_path:=PackedVector3Array()
 func build()->void:
-	arcade();arcade_details();archive();archive_details();shaft();shaft_details();hardware()
+	arcade();arcade_details();archive();archive_details();shaft();shaft_details();hardware();return_gallery()
 func marker(id:String,where:Vector3)->Marker3D:
 	var spot:=Marker3D.new();spot.name=id;section.add_child(spot);spot.position=where;return spot
 func arcade()->void:
@@ -52,16 +57,28 @@ func arcade()->void:
 		rect("AirlockSkirt",-1.96,.07,z-signf(z)*.13,4.28,.19,.12,"iron",false)
 	lid(-1.98,0,4.34,3.48,2.82)
 	rect("AirlockFarWall",-4.06,1.38,0,.30,3.08,3.50,"brick")
-	rect("StabilizerInnerDoor",-3.89,1.07,0,.11,2.16,1.77,"iron")
-	for z in [-.95,.95]:rect("InnerDoorRail",-3.80,1.22,z,.15,2.44,.13,"brass",false)
+	for side in [-1.,1.]:
+		var z:float=.54*side
+		rect("AnchorHallDoorLeaf",-3.88,1.21,z,.13,2.43,1.06,"door_green")
+		for y in [.49,1.74]:
+			rect("AnchorHallRaisedPanel",-3.793,y,z,.046,.72,.78,"iron",false)
+			for dz in [-.40,.40]:rect("AnchorHallPanelBead",-3.757,y,z+dz,.036,.76,.038,"brass",false)
+		beam(Vector3(-3.73,1.07,.16*side),Vector3(-3.73,1.32,.16*side),.026,"brass")
+		rect("AnchorHallDoorJamb",-3.78,1.23,1.14*side,.26,2.48,.16,"iron",false)
+	rect("AnchorHallDoorCrown",-3.78,2.49,0,.28,.17,2.45,"iron",false)
+	plaque("ANCHOR HALL",Vector3(-3.60,2.52,0),1.01,PI*.5)
 	for z in [-1.18,1.18]:rect("AirlockLampBody",-3.64,2.19,z,.24,.25,.15,"brass",false)
 	gate=Node3D.new();section.add_child(gate);section=gate
 	for i in 21:
 		var z:float=(i-10)*.174;var h:=3.1+sqrt(1.76*1.76-z*z);rect("Picket",36,h*.5,z,.085,h,.036,"iron",false)
 	for y in [.18,1.25,2.68,3.12]:rect("Strap",36,y,0,.10,.075,2.8,"iron",false)
+	# Riveted near-side iron grips let Hale plant his fists without reaching through the bars.
+	for z in [-1.22,-.50,.50,1.22]:
+		for y in [1.065,1.208]:rect("GateGripFastener",35.94,y,z,.09,.048,.075,"iron",false)
+		beam(Vector3(35.925,1.065,z),Vector3(35.925,1.208,z),.018,"iron")
 	invisible_block(Vector3(36,1.6,0),Vector3(.15,3.2,2.8));section=root_group
-	gate_spots.append(marker("HaleGateNear",Vector3(35.34,0.,-.86)))
-	gate_spots.append(marker("HaleGateFar",Vector3(35.34,0.,.86)))
+	gate_spots.append(marker("HaleGateNear",Vector3(35.43,0.,-.86)))
+	gate_spots.append(marker("HaleGateFar",Vector3(35.43,0.,.86)))
 	for x in range(1,36,2):rect("PavingJoint",x,.002,0,.034,.008,4.16,"joint",false)
 	for z in [-.15,.15]:rect("GuideInlay",18,.006,z,36,.012,.032,"joint",false)
 func invisible_block(p:Vector3,s:Vector3)->void:
@@ -114,7 +131,7 @@ func archive()->void:
 	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);rect("OilTin",34,.26,14.85,.3,.52,.30,"brass");rect("ClockworkMetronome",34.45,.2,14.85,.22,.4,.23,"book");section=root_group;plaque("B5  /  MASTER RELEASE",Vector3(36.31,3.43,7.34),1.90)
 	for x in [37.86,39.54]:rect("ShortcutReceiverStile",x,1.24,7.33,.14,2.48,.14,"door_green",false)
 	rect("ShortcutReceiverHead",38.7,2.48,7.33,1.81,.16,.14,"door_green",false)
-	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[],true)
+	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[[42.63,44.97,0,2.65]],true)
 func shelf(x:float,z:float)->void:
 	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()
 	bookcase.recipe_parameters.merge({"width":3.2,"height":1.0,"depth":.48,"shelves":2,"bays":2},true)
@@ -170,14 +187,6 @@ func shaft()->void:
 			if side==-1 and i>=0:stair_path.append(p)
 			if i%3==0:beam(p+Vector3(.87*cos(a),0,.87*sin(a)),p+Vector3(.87*cos(a),.85,.87*sin(a)),.027,"iron")
 	# Upper landing connects the last spiral tread to the gallery. Shortcut opens from the core side.
-	slab(CX+15.87,CZ+2.35,4.88,2.37,4.8)
-	for z in [CZ+1.30,CZ+3.4]:rect("ReturnPassageWall",CX+15.87,6.12,z,4.88,2.72,.22,"brick")
-	rect("ReturnPassageRoof",CX+15.87,7.53,CZ+2.35,4.89,.24,2.37,"brick")
-	rect("ReturnPassageEnd",CX+18.22,6.12,CZ+2.35,.24,2.85,2.41,"iron")
-	for z in [CZ+1.49,CZ+3.21]:
-		rect("ReturnFinishSkirt",CX+15.86,4.87,z,4.82,.15,.11,"iron",false)
-		rect("ReturnEndDoorRail",CX+18.05,6.10,z,.13,2.62,.1,"brass",false)
-	rect("ReturnGuideLamp",CX+18.04,7.15,CZ+2.35,.16,.14,.26,"brass",false)
 	var center:=Vector3(CX+13.54,6.1,CZ+2.35)
 	for side in [-1.,1.]:rect("ReturnJamb",center.x,center.y,center.z+side*.98,.28,2.7,.16,"iron")
 	rect("ReturnHead",center.x,7.47,center.z,.28,.17,2.11,"iron")
@@ -189,6 +198,73 @@ func shaft()->void:
 	section=door_section
 	core=rect("SourceCore",CX+10.8,1,CZ,.42,.68,.42,"amber");rect("CorePlinth",CX+10.8,.31,CZ,.85,.62,.85,"joint")
 	label_at("01   /   SOURCE CAISSON",Vector3(46.1,2.9,CZ),-PI/2)
+
+## The green door leads to the actual south service gallery. Its roof and slope
+## stay outside the caisson shell; the far grille opens only from this side.
+func return_gallery()->void:
+	group("C5_SouthReturnGallery")
+	var start:=Vector3(CX+13.43,4.8,CZ+2.35)
+	var inner_elbow:=Vector3(RETURN_ELBOW,4.8,start.z)
+	var outer_elbow:=Vector3(RETURN_ELBOW,4.8,RETURN_SOUTH)
+	var lower_elbow:=Vector3(RETURN_WEST,0.,RETURN_SOUTH)
+	var outlet:=Vector3(RETURN_WEST,0.,11.32)
+	# Exterior corner pieces overlap at the seams. At each elbow, the inner
+	# wall is cut back by half the clear width so the turn remains full size.
+	var w:=1.17
+	gallery_plane("StoneTread",start,inner_elbow+w*Vector3.RIGHT,2.*w+.33,-.105,.21,"floor")
+	gallery_plane("StoneTread",inner_elbow-w*Vector3.BACK,outer_elbow+w*Vector3.BACK,2.*w+.33,-.105,.21,"floor")
+	gallery_plane("StoneTread",outer_elbow,lower_elbow,2.*w+.35,-.12,.24,"floor")
+	gallery_plane("StoneTread",lower_elbow+w*Vector3.BACK,outlet,2.*w+.33,-.105,.21,"floor")
+	var ramp_start:=outer_elbow+Vector3.LEFT*w
+	var ramp_end:=lower_elbow+Vector3.RIGHT*w
+	# Lift the flat west/east elbow slab above the ends of the shallow taper.
+	gallery_plane("BarrelSoffit",start,inner_elbow+w*Vector3.RIGHT,2.*w+.38,2.75,.27,"brick")
+	gallery_plane("BarrelSoffit",inner_elbow-w*Vector3.BACK,outer_elbow+w*Vector3.BACK,2.*w+.38,2.75,.27,"brick")
+	gallery_plane("BarrelSoffit",outer_elbow,lower_elbow,2.*w+.38,2.76,.28,"brick")
+	gallery_plane("BarrelSoffit",lower_elbow+w*Vector3.BACK,outlet,2.*w+.38,2.75,.27,"brick")
+	gallery_wall(start-w*Vector3.BACK,inner_elbow+w*Vector3.RIGHT-w*Vector3.BACK)
+	gallery_wall(start+w*Vector3.BACK,inner_elbow-w*Vector3.RIGHT+w*Vector3.BACK)
+	gallery_wall(inner_elbow+w*Vector3.RIGHT-w*Vector3.BACK,outer_elbow+w*Vector3.RIGHT+w*Vector3.BACK)
+	gallery_wall(inner_elbow-w*Vector3.RIGHT+w*Vector3.BACK,outer_elbow-w*Vector3.RIGHT-w*Vector3.BACK)
+	gallery_wall(outer_elbow+w*Vector3.RIGHT+w*Vector3.BACK,lower_elbow-w*Vector3.RIGHT+w*Vector3.BACK)
+	gallery_wall(ramp_start-w*Vector3.BACK,ramp_end-w*Vector3.BACK)
+	gallery_wall(lower_elbow-w*Vector3.RIGHT+w*Vector3.BACK,outlet-w*Vector3.RIGHT)
+	gallery_wall(lower_elbow+w*Vector3.RIGHT-w*Vector3.BACK,outlet+w*Vector3.RIGHT)
+	# Enamel arrows, copper supply pipe and regularly spaced wall sconces break up the long slope.
+	plaque("SERVICE RETURN   ↱",inner_elbow+Vector3(w-.15,2.09,0),1.21,-PI*.5)
+	plaque("SERVICE RETURN   ↱",outer_elbow+Vector3(0,2.12,w-.15),1.32,PI)
+	plaque("ARCADE   ↱",lower_elbow+Vector3(-w+.15,2.08,0),1.09,PI*.5)
+	for i in range(1,8):
+		var point:=outer_elbow.lerp(lower_elbow,i/8.)
+		for side in [-1.,1.]:
+			box("Rib",point+Vector3(0,1.31,side*1.12),Vector3(.18,2.62,.19),"trim",false)
+		box("Header",point+Vector3(0,2.60,0),Vector3(.20,.18,2.32),"trim",false)
+	var pipe_offset:=Vector3(0,2.26,1.03)
+	beam(outer_elbow+pipe_offset,lower_elbow+pipe_offset,.046,"brass")
+	var lamp_index:=0
+	for d in [Vector3(77.95,7.06,12.0),Vector3(78.45,6.98,20.03),Vector3(77.55,7.05,27.44),Vector3(69.34,5.96,27.46),Vector3(60.71,4.79,27.46),Vector3(52.28,3.58,27.46),Vector3(43.3,2.29,27.46),Vector3(42.97,2.26,18.71),Vector3(43.15,2.30,12.31)]:
+		box("ServiceSconce",d,Vector3(.17,.20,.19),"brass",false)
+		marker("GalleryLamp%d"%lamp_index,d);lamp_index+=1
+	return_exit_gate=Node3D.new();section.add_child(return_exit_gate)
+	return_exit_gate.position=Vector3(RETURN_WEST,0,RETURN_GATE_Z);section=return_exit_gate
+	for i in 13:rect("ServiceGrillePicket",i*.17-1.02,1.33,0,.045,2.66,.07,"iron",false)
+	for y in [.15,1.1,2.54]:rect("ServiceGrilleRail",0,y,0,2.32,.085,.11,"iron",false)
+	invisible_block(Vector3(0,1.33,0),Vector3(2.34,2.66,.14));section=root_group
+
+func gallery_plane(id:String,a:Vector3,b:Vector3,width:float,lift:float,depth:float,k:String)->void:
+	var slope:=b-a
+	var n:=box(id,(a+b)*.5+Vector3.UP*lift,Vector3(slope.length()+.08,depth,width),k)
+	var across:=slope.cross(Vector3.UP).normalized()
+	n.basis=Basis(slope.normalized(),across.cross(slope).normalized(),across).scaled_local(n.scale)
+
+func gallery_wall(a:Vector3,b:Vector3)->void:
+	var delta:=b-a
+	var planar:=Vector3(delta.x,0,delta.z)
+	var n:=box("GalleryMasonry",(a+b)*.5+Vector3.UP*1.30,Vector3(planar.length()+.22,2.92,.24),"brick")
+	var across:=planar.cross(Vector3.UP).normalized()
+	n.basis=Basis(delta.normalized(),across.cross(delta).normalized(),across).scaled_local(n.scale)
+	var rail_offset:=Vector3.UP*.08
+	if absf(delta.y)>.001:beam(a+rail_offset,b+rail_offset,.055,"iron")
 
 func arcade_details()->void:
 	# In a section drawing the far spring stays, while the cut side keeps a low plinth.

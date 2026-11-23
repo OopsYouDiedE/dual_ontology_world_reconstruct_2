@@ -92,12 +92,17 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis, expe
 	var library := AnimationLibrary.new()
 	var path := body.get_path_to(skeleton)
 	var lengths := {&"idle": 2.4, &"walk": 0.9, &"run": 0.65, &"interact": 0.85, &"signal": 2.0, &"examine": 2.0, &"listen": 2.0}
-	if expedition_hale:lengths[&"gate_effort"]=.82
+	var clip_bones:=BONES.duplicate()
+	if expedition_hale:
+		lengths[&"gate_effort"]=1.14
+		for side in ["l","r"]:
+			for digit in ["index","middle","ring","pinky","thumb"]:
+				for joint in range(1,4):clip_bones.append("%s_%02d_%s"%[digit,joint,side])
 	for clip: StringName in lengths:
 		var anim := Animation.new()
 		anim.length = lengths[clip]
 		anim.loop_mode = Animation.LOOP_NONE if clip in [&"interact",&"gate_effort"] else Animation.LOOP_LINEAR
-		for bone_name: String in BONES:
+		for bone_name: String in clip_bones:
 			var bone := skeleton.find_bone(bone_name)
 			if bone < 0: continue
 			var track := anim.add_track(Animation.TYPE_ROTATION_3D)
@@ -105,10 +110,17 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis, expe
 			var rest := skeleton.get_bone_pose_rotation(bone)
 			var axis := (skeleton.get_bone_global_pose(bone).basis.inverse() * to_rig * Vector3.RIGHT).normalized()
 			var roll := (skeleton.get_bone_global_pose(bone).basis.inverse() * to_rig * Vector3.BACK).normalized()
-			for k in 9:
-				var t := k / 8.0
-				anim.rotation_track_insert_key(track, t * anim.length,
-					rest * Quaternion(roll, _roll(clip,bone_name,t)) * Quaternion(axis, _angle(clip, bone_name, t)+_hale_rest_pitch(bone_name,clip) if expedition_hale else _angle(clip, bone_name, t)))
+			var samples:=33 if clip==&"gate_effort" else 9
+			for k in samples:
+				var t:=float(k)/(samples-1)
+				var pitch:=_angle(clip,bone_name,t)
+				var sway:=_roll(clip,bone_name,t)
+				var curl:=0.
+				if expedition_hale:
+					pitch+=_hale_rest_pitch(bone_name,clip,t)
+					sway+=_hale_stance_roll(bone_name,clip)
+					curl=_hale_finger_curl(bone_name,clip,t)
+				anim.rotation_track_insert_key(track,t*anim.length,rest*Quaternion(roll,sway)*Quaternion(axis,pitch)*Quaternion(Vector3.RIGHT,curl))
 		library.add_animation(clip, anim)
 	return library
 
@@ -126,10 +138,13 @@ static func _angle(clip: StringName, bone: String, t: float) -> float:
 	if clip == &"listen":
 		return hold * float({"thigh_l":-.13,"calf_l":.20,"upperarm_l":-.56,"lowerarm_l":-2.24,"head":.16,"spine_03":.08}.get(bone,0.0))
 	if clip == &"gate_effort":
-		var effort:=hold*(.91+.09*sin(TAU*3.*t))
-		if bone.begins_with("upperarm"):return -.64*effort
-		if bone.begins_with("lowerarm"):return -.91*effort
-		if bone=="spine_03":return .065*effort
+		var reach:=_gate_reach(t)
+		# Two shoulder pulls around planted knuckles; the elbow gives slightly on each pull.
+		var thrust:=reach*maxf(0.,cos(TAU*(t-.32)/.29))
+		if bone.begins_with("upperarm"):return -.53*reach-.08*thrust
+		if bone.begins_with("lowerarm"):return -.64*reach+.047*thrust
+		if bone=="spine_01":return .035*thrust
+		if bone=="spine_03":return .075*thrust
 		return 0.
 	if clip == &"interact":
 		var reach := sin(PI * t)
@@ -149,11 +164,33 @@ static func _angle(clip: StringName, bone: String, t: float) -> float:
 	if bone.begins_with("lowerarm"): return -0.10 - 0.18 * maxf(0.0, stride) * vigor
 	return 0.0
 
-static func _hale_rest_pitch(bone:String,clip:StringName)->float:
-	if clip==&"gate_effort":return 0.
-	if bone.begins_with("upperarm"):return .18
-	if bone.begins_with("lowerarm"):return .23
+static func _gate_reach(t:float)->float:
+	return smoothstep(.02,.26,t)*(1.-smoothstep(.69,1.,t))
+
+static func _hale_rest_pitch(bone:String,clip:StringName,t:float)->float:
+	var neutral:=1.-_gate_reach(t) if clip==&"gate_effort" else 1.
+	if bone.begins_with("upperarm"):return .18*neutral
+	if bone.begins_with("lowerarm"):return .23*neutral
+	if clip not in [&"idle",&"gate_effort"]:return 0.
+	var step:=1. if bone.ends_with("_l") else -1.
+	if bone.begins_with("thigh"):return .047*step
+	if bone.begins_with("foot"):return -.047*step
 	return 0.
+
+static func _hale_stance_roll(bone:String,clip:StringName)->float:
+	if clip not in [&"idle",&"gate_effort"]:return 0.
+	var side:=1. if bone.ends_with("_l") else -1.
+	if bone.begins_with("thigh"):return -.071*side
+	if bone.begins_with("foot"):return .071*side
+	return 0.
+
+static func _hale_finger_curl(bone:String,clip:StringName,t:float)->float:
+	if bone.get_slice("_",0) not in ["index","middle","ring","pinky","thumb"]:return 0.
+	var joint:=int(bone.get_slice("_",1))-1
+	var grip:=_gate_reach(t) if clip==&"gate_effort" else 0.
+	if bone.ends_with("_l") and clip!=&"gate_effort":grip=.27 # relaxed carry hand
+	if bone.begins_with("thumb"):return float([.12,.38,.38][joint])*grip
+	return float([.10,.09,.06][joint])+float([.81,1.02,.68][joint])*grip
 
 # Expedition-only grooming; preserve skin weights and the shared production rig.
 static func _groom_hale(body:Node3D)->void:
@@ -165,15 +202,21 @@ static func _groom_hale(body:Node3D)->void:
 		var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
 		for i in vertices.size():
 			var v:=vertices[i]
-			var back:=1.-smoothstep(-.040,.057,v.z)
-			var temple:=smoothstep(.047,.076,absf(v.x))*smoothstep(.022,.068,v.z)*(1.-smoothstep(.098,.122,v.z))
+			var back:=1.-smoothstep(-.037,.052,v.z)
+			var lateral:=smoothstep(.048,.078,absf(v.x))
+			var temple:=lateral*smoothstep(.035,.077,v.z)*(1.-smoothstep(.102,.124,v.z))
+			var azimuth:=atan2(v.x,v.z-.052)
 			if cap:
-				var edge:=1.-smoothstep(1.646,1.765,v.y)
-				v.y-=edge*(.039*back+.024*temple)
-				v.z-=edge*.003*back
+				var edge:=1.-smoothstep(1.645,1.762,v.y)
+				var locks:=pow(.5+.5*cos(19.*azimuth+.7*sin(7.*azimuth)),2.)
+				v.y-=edge*(.064*back+.065*temple+.013*locks*maxf(back,temple))
+				v.z-=edge*(.010+.003*locks)*back
+				v.x+=signf(v.x)*edge*(.010*temple+.005*lateral*back+.003*locks*lateral)
 			else:
-				var fringe:=(1.-smoothstep(1.72,1.787,v.y))*(1.-smoothstep(.022,.085,v.z))
-				v.y-=.023*fringe
+				var fringe:=(1.-smoothstep(1.715,1.784,v.y))*(1.-smoothstep(.073,.118,v.z))
+				v.y-=.051*fringe
+				v.z-=.014*fringe
+				v.x+=.003*fringe*signf(v.x)
 			vertices[i]=v
 		arrays[Mesh.ARRAY_VERTEX]=vertices
 		var groom:=ArrayMesh.new();groom.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)

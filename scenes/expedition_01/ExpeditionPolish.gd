@@ -43,6 +43,7 @@ var prev_hunter:=""
 var bait_time:=0.
 var was_captured:=false
 var fade_a:=1.
+var end_fade:=false
 var fade_target:=0.
 var fade_rate:=.7
 var bars:=0.
@@ -143,8 +144,14 @@ func reset_beat()->void:
 func on_book(open:bool)->void:
 	if open:was_captured=Input.mouse_mode==Input.MOUSE_MODE_CAPTURED;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	elif was_captured:Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
-func finish(title:String,sub:String)->void:
-	end_card.text=title+"\n\n"+sub;fade_to(.8,2.2);bars_timer=0.;create_tween().tween_property(end_card,"modulate:a",1.,1.6).set_delay(.8)
+func finish(title:String,sub:String)->Tween:
+	end_card.text=title+"\n\n"+sub;bars_timer=0.;end_fade=true
+	var sequence:=create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	sequence.tween_property(self,"fade_a",1.,1.55)
+	sequence.tween_interval(.18)
+	sequence.tween_property(end_card,"modulate:a",1.,1.15)
+	sequence.tween_interval(2.8)
+	return sequence
 
 # ---- per-frame --------------------------------------------------------------
 func _process(dt:float)->void:
@@ -156,7 +163,8 @@ func _process(dt:float)->void:
 		_look_stick(dt);_dread(dt);_rig(dt);_hud(dt)
 
 func _overlay(dt:float)->void:
-	fade_a=move_toward(fade_a,fade_target,dt*fade_rate);fade.color.a=fade_a
+	if not end_fade:fade_a=move_toward(fade_a,fade_target,dt*fade_rate)
+	fade.color.a=fade_a
 	bars_timer=maxf(0.,bars_timer-dt);bars=move_toward(bars,1. if bars_timer>0. else 0.,dt*1.6)
 	var bar_h:=LETTERBOX_PX*smoothstep(0.,1.,bars)
 	bar_top.offset_bottom=bar_h;bar_bottom.offset_top=-bar_h
@@ -181,11 +189,11 @@ func _look_stick(dt:float)->void:
 func _dread(dt:float)->void:
 	var target:=0.
 	var h=lv.hunter;var p:Vector3=lv.walker.position
-	if lv.released and h.visible and p.x>46. and lv.retry<=0.:
+	if lv.released and h.visible and p.x>46. and not lv.in_return_gallery(p) and lv.retry<=0.:
 		var d:=Vector2(p.x-h.position.x,p.z-h.position.z).length()
 		var mood:float=1. if h.state=="hunt" else .6 if h.state in ["investigate","lure"] else .3
 		target=clampf(1.-d/20.,0.,1.)*mood
-	if lv.collected and p.x>46.:target=minf(.36,maxf(target,.12+.09*sin(lv.phase*5.)))
+	if lv.collected and p.x>46. and not lv.in_return_gallery(p):target=minf(.36,maxf(target,.12+.09*sin(lv.phase*5.)))
 	dread=lerpf(dread,target,1.-exp(-3.*dt))
 	if h.state!=prev_hunter:
 		if h.state=="hunt":kick(.55);punch(7.)

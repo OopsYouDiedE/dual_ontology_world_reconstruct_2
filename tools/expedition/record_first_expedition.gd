@@ -14,14 +14,14 @@ func check(ok:bool,message:String)->bool:
 		push_error(message);quit(1)
 	return ok
 
-func go(x:float,z:float,limit:=1400,portal:=false)->bool:
+func go(x:float,z:float,limit:=1400)->bool:
 	var target:=Vector3(x,0,z)
 	Input.action_press("move_up")
 	var last:=Vector3.INF
 	var stalled:=0
 	for i in limit:
 		if not check(level.retry<=0.,"Gameplay failure: "+level.notice):return false
-		if level.finished or (portal and level.shortcut_used):
+		if level.finished:
 			Input.action_release("move_up");return true
 		var p:Vector3=level.walker.position
 		var d:=target-p;d.y=0.
@@ -98,6 +98,7 @@ func run()->void:
 			await look_at_point(Vector3(29.,1.55,14.1),55)
 			press(KEY_1);await wait_frames(280)
 			if not check(level.manual.visible and level.page.get_parsed_text().contains("若两目交错恐生变故") and not level.caption_toast.visible,"Missing handwritten annotation"):return
+			if not check(level.captions.entries.is_empty(),"Old drama captions survived opening the book"):return
 			press(KEY_1);await wait_frames(40)
 		if point==[34,14.1]:
 			if not await interact(Vector3(34.14,.5,14.67),"loot",55):return
@@ -145,10 +146,11 @@ func run()->void:
 	await wait_frames(15)
 	if not await interact(level.kit.leaf.global_position,"return",44):return
 	await wait_frames(30)
-	if not await go(77.08,12.45,260,true):return
-	await wait_frames(35);look_yaw=level.walker.rotation.y
-	if not check(level.shortcut_used and level.walker.position.x<40.,"Return passage did not connect"):return
-	for point in [[38.7,7.2],[38.7,0],[34,0],[7.6,0]]:
+	for point:Vector2 in level.kit.RETURN_PATH:
+		if not await go(point.x,point.y,900):return
+		if not check(level.polish.fade_a<.03,"Unexpected fade in the service gallery"):return
+	if not check(level.shortcut_used and level.walker.position.distance_to(Vector3(43.8,0,10.1))<.4,"Return gallery did not reach B5"):return
+	for point in [[38.7,10.1],[38.7,7.2],[38.7,0],[34,0],[7.6,0]]:
 		if not await go(point[0],point[1]):return
 	press(KEY_SHIFT);await wait_frames(14)
 	for i in 430:
@@ -167,7 +169,7 @@ func run()->void:
 		if level.hale.position.x< -2.15:break
 	if not check(level.hale.position.x< -1.85,"Hale did not walk into the airlock foyer"):return
 	if not check(not level.finished,"Airlock finished before entering the warm hall"):return
-	await look_at_point(Vector3(-3.89,1.45,0),28)
+	await look_at_point(Vector3(-3.89,1.75,0),28)
 	if not await go(-2.95,0):return
 	for i in 950:
 		if level.finished:break
@@ -176,4 +178,10 @@ func run()->void:
 		await physics_frame
 	if not check(level.finished and level.reunited,"Evacuation or Hale reunion did not finish"):return
 	print("PASS: Expedition complete; split captions, annotated handbook, north-window arrival, physical door crossing, reunion and airlock verified.")
-	await wait_frames(310);quit(0)
+	for i in 310:
+		if not check(level.polish.end_card.modulate.a<.01 or level.polish.fade_a>.999,"Evacuation text appeared ahead of full blackout"):return
+		await physics_frame
+	if not check(level.polish.fade_a>.999 and level.polish.end_card.modulate.a>.999,"Blackout and ending card did not complete"):return
+	level.queue_free();level=null
+	await process_frame
+	quit(0)

@@ -10,6 +10,11 @@ const Crew := preload("res://scenes/rogue_rules/ExpeditionCrew.gd")
 const Camp := preload("res://scenes/rogue_camp/CampResidents.gd")
 const MARGINS := "user://night_watch_margins.txt"
 
+const FirstExpedition := preload("res://scenes/expedition_01/Expedition.tscn")
+const FIRST_SEAL := "user://expedition_01_returned"
+var first_sortie
+var first_returned := false
+
 var pack := {"felt":0, "ratchet":0}
 var recalled := false
 var house: RefCounted
@@ -55,6 +60,7 @@ func _ready() -> void:
 	_make_hud()
 	_no_save = "--no-rule-save" in OS.get_cmdline_user_args()
 	if not _no_save and FileAccess.file_exists(MARGINS): margins = FileAccess.get_file_as_string(MARGINS).left(180)
+	first_returned = not _no_save and FileAccess.file_exists(FIRST_SEAL)
 	var chosen_seed := int(randi())
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--run-seed=") and arg.get_slice("=", 1).is_valid_int(): chosen_seed = int(arg.get_slice("=", 1))
@@ -234,6 +240,7 @@ func _can_agree() -> bool:
 	return prospect >= 4 and party.all(func(id): return crew.people[id].trust >= 3 and crew.people[id].stress < 3)
 
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(first_sortie): return
 	if _performing or not event is InputEventKey or not event.pressed or event.echo or house == null: return
 	if event.physical_keycode == KEY_TAB and handbook:
 		if modal == "guide": _close()
@@ -393,8 +400,39 @@ func _update_hall(dt: float) -> void:
 	var rows: Array[Dictionary] = camp_actors.sync(camp.snapshot().residents, dt)
 	room_view.set_witness_targets(rows)
 
+func _depart_first() -> void:
+	_close()
+	phase = "first_expedition"
+	room_view.set_modal(true)
+	for child in get_children():
+		if child is Control:
+			child.hide()
+			child.process_mode = Node.PROCESS_MODE_DISABLED
+	first_sortie = FirstExpedition.instantiate()
+	first_sortie.returned.connect(_return_first, CONNECT_DEFERRED)
+	add_child(first_sortie)
+
+func _return_first() -> void:
+	first_sortie.queue_free()
+	first_sortie = null
+	first_returned = true
+	if not _no_save:
+		var f := FileAccess.open(FIRST_SEAL, FileAccess.WRITE)
+		if f: f.store_line("Source recovered")
+	for child in get_children():
+		if child is Control:
+			child.process_mode = Node.PROCESS_MODE_INHERIT
+			child.visible = child != _overlay
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	phase = "camp"
+	message = "Hale filed the source. The expedition chart is open."
+	_refresh()
+
 func travel(index: int) -> void:
 	if _performing or phase in ["lost", "won"] or not modal.is_empty() or not cleared.has(current) or index < 0 or index >= destinations.size(): return
+	if not first_returned and phase == "camp":
+		_depart_first()
+		return
 	_leave_hall()
 	var previous := current
 	current = destinations[index]
@@ -439,10 +477,12 @@ func _reward(id: String) -> String:
 func _routes() -> PackedStringArray:
 	if phase == "camp" and recalled: return PackedStringArray(["turntable"])
 	var choices := PackedStringArray(house.forward(current))
+	if phase == "camp" and not first_returned: return choices.slice(0,1)
 	if current == "turntable" and not recalled: choices.append(house.camp_room())
 	return choices
 
 func _route_name(id: String) -> String:
+	if phase == "camp" and not first_returned: return "First Expedition · Hale"
 	if id == house.camp_room(): return "Return to camp · recover"
 	if id == "turntable": return "Return Junction"
 	var reward := _reward(id)
@@ -451,6 +491,9 @@ func _route_name(id: String) -> String:
 func _chart() -> void:
 	_open("chart", "Expedition chart", "PUBLIC HALL   /   WATCH %d" % run_seed)
 	_button(_sheet, "Fold chart", _close)
+	if phase == "camp" and not first_returned:
+		_label("Public Hall  →  Immersion Arcade  →  Archive  →  Source Caisson", 16)
+		return
 	var map := preload("RouteChart.gd").new()
 	map.chart = house
 	map.here = current
@@ -492,6 +535,7 @@ func _refresh() -> void:
 		if current == "turntable" and message.is_empty(): _instruction.text = "The return tram is behind this shutter. Release the drawbar to board or push on."
 		if cleared.has(current): _instruction.text += "\nPassage open · Follow a named doorway and press E."
 		if phase == "camp" and message.is_empty(): _instruction.text = "Choose a supply route. Speak to a resident to recruit before leaving."
+		if phase == "camp" and not first_returned: _instruction.text = "First departure: meet Hale at the immersion arcade."
 		for i in destinations.size(): _button(_flow, _route_name(destinations[i]), travel.bind(i))
 		_button(_flow,"Route chart",_chart).disabled = _performing
 		if handbook: _button(_flow, "Field manual · Tab", _read_guide).disabled = _performing
@@ -511,6 +555,7 @@ func _process(dt: float) -> void:
 		_update_hall(Camp.TICK_SECONDS)
 
 func mcp_observe() -> Dictionary:
+	if is_instance_valid(first_sortie): return first_sortie.observation()
 	var buttons := []
 	var ui: Container = _flow if modal.is_empty() else _sheet
 	for node in ui.get_children():

@@ -31,7 +31,7 @@ docs/research/expedition/
 
 **首轮制作顺序：** 用折返闸验证路线图、物理门与第一人称读图，再复查营地与天文台。沿用已接入的固定地标、一次折返和晨钟三解。正式人物已统一使用 MPFB2 R-05 基模和动作库；逐个完善居民的脸型、裁片与动作。
 
-建筑生成：[房间结构分步工序图](room-structure-steps.html)（[PDF](room-structure-steps.pdf)）。
+建筑生成：查当前实现用[房间结构分步工序图](room-structure-steps.html)（[PDF](room-structure-steps.pdf)）；设计后续构件用[学院建筑生成规格与逐件工序](architecture-generation-spec.html)（[PDF](architecture-generation-spec.pdf)）。
 
 ## 现役链路
 

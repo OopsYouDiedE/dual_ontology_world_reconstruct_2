@@ -1,0 +1,6 @@
+# Parser versions for the project inventory (Python 3.10+).
+tree-sitter-language-pack==0.13.0
+tree-sitter==0.26.1
+tree-sitter-c-sharp==0.24.0
+tree-sitter-embedded-template==0.25.0
+tree-sitter-yaml==0.7.2

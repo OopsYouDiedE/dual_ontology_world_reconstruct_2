@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hans">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>项目结构树 · Dual Ontology</title>
+<style>
+:root{color-scheme:light dark;--page:#f6f3e8;--ink:#272f2d;--muted:#4d615c;--edge:#c4ccbc;--accent:#205f66;--panel:#fffcf3;--warn:#90441a}
+@media(prefers-color-scheme:dark){:root{--page:#1d2826;--ink:#eeeade;--muted:#b8c7bc;--edge:#53615b;--accent:#98d0ce;--panel:#263431;--warn:#ffbc8d}}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 system-ui,sans-serif}main{max-width:76rem;margin:auto;padding:clamp(1rem,3vw,2.75rem)}h1{margin:.25em 0;font-size:clamp(1.8rem,5vw,3rem);line-height:1.15}h2{font-size:1.07rem;margin:0 0 .3em}header p{margin:.45em 0}.kicker,.muted,small{color:var(--muted)}.kicker{font-weight:700;letter-spacing:.12em}code,.tree{font-family:ui-monospace,Consolas,monospace}a{color:var(--accent)}.warn{color:var(--warn)}.toolbar{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.4rem 0 .7rem;align-items:end}.field{display:grid;gap:.2rem}.search{flex:1 1 19rem}input,select,button{font:inherit;padding:.45rem .6rem;border:1px solid var(--edge);border-radius:.35rem;background:var(--panel);color:var(--ink)}button,summary{cursor:pointer}a:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.tree{padding:.65rem .8rem;background:var(--panel);border-block:1px solid var(--edge);font-size:.89rem;overflow-wrap:anywhere}.tree ul{margin:0;padding-inline-start:.85rem;list-style:none;border-inline-start:1px solid var(--edge)}.tree>ul{border:0;padding:0}.tree li{margin:.13em 0}.tree summary{width:fit-content;max-width:100%}.tag{color:var(--muted);font-size:.83em;padding-inline-start:.5em}.dir{font-weight:650;color:var(--accent)}.symbol{color:var(--ink);font-weight:600}.issues{margin-top:1.1rem}.issues li{overflow-wrap:anywhere}.details-meta{margin:1.1rem 0}.details-meta li{overflow-wrap:anywhere}.signature{color:var(--muted)}
+</style>
+<main>
+<header><div class="kicker">DUAL ONTOLOGY / SOURCE ATLAS</div><h1>项目结构树</h1><p id="snapshot" class="muted"></p><p id="totals"></p><a href="tree.txt">纯文本全树</a> · <a href="index.json">JSON 索引</a></header>
+<div class="toolbar">
+<label class="field search">搜路径、函数或签名<input id="query" type="search" placeholder="例如 FirstWatch.gd 或 _ready" autocomplete="off"></label>
+<label class="field">范围<select id="scope"><option value="all">主项目与子模块</option><option value="project">仅主项目</option><option value="vendor">仅子模块内容</option></select></label>
+<label class="field">文件<select id="mode"><option value="all">全部</option><option value="functions">有函数的文件</option><option value="notices">有解析提示</option><option value="working">有本地改动</option></select></label>
+<button type="button" id="collapse">收起树</button>
+</div>
+<p id="result" class="muted" role="status"></p>
+<div class="tree" id="tree" aria-label="文件与函数树"></div>
+<details id="meta" class="details-meta"><summary>快照范围、Git 子模块与缺失路径</summary><p>包括 Git 跟踪且当前存在的文件、未被忽略的本地新增，以及已检出的子模块文件。路径后的 M、?? 等是 Git 工作树状态。<code>.git</code>、忽略的缓存、运行时输出和未初始化子模块的内容不在扫描范围内。</p><p>函数计入方法、构造器、匿名函数、访问器、委托签名、带参数的宏和 PowerShell 脚本块。类、命名空间等作为容器；汇编/批处理标签单独列出。解析提示显示语法恢复发生的位置；二进制和未设解析器的格式保留文件节点。</p><ul id="repositories"></ul><details id="absent-list"><summary id="absent-summary"></summary><ul id="absent"></ul></details></details>
+</main>
+<script id="data" type="application/json"><!-- SNAPSHOT --></script>
+<script>
+'use strict';
+const data=JSON.parse(document.getElementById('data').textContent), $=id=>document.getElementById(id);
+const el=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e};
+const project=data.totals.project, vendor=data.totals.vendor;
+const issues=f=>f.issues.length>0, tag=text=>el('span',text,'tag');
+const short=hash=>hash.slice(0,12);
+$('snapshot').textContent=`${data.root} · ${short(data.repositories[0].commit)} · ${data.created}`;
+$('totals').textContent=`主项目 ${project.files.toLocaleString()} 文件 / ${project.functions.toLocaleString()} 函数条目  ·  子模块 ${vendor.files.toLocaleString()} 文件 / ${vendor.functions.toLocaleString()} 函数条目`;
+for(const r of data.repositories)$('repositories').append(el('li',`${r.path} @ ${r.commit}`));
+for(const f of data.files.filter(f=>f.kind==='gitlink'))$('repositories').append(el('li',`${f.path} · Git 索引 ${f.commit} · ${f.initialized?'已检出':'未初始化'}`));
+$('absent-summary').textContent=`${data.absent.length.toLocaleString()} 个索引路径在工作树缺失`;
+$('absent-list').addEventListener('toggle',()=>{if($('absent-list').open&&!$('absent').childElementCount)for(const p of data.absent)$('absent').append(el('li',p))});
+function build(rows){
+    const root={children:new Map(),n:0};
+    for(const [f,symbols] of rows){let n=root;const parts=f.path.split('/');
+        for(const part of parts){if(!n.children.has(part))n.children.set(part,{name:part,children:new Map(),n:0}); n=n.children.get(part);n.n+=f.kind==='gitlink'?0:1}
+        n.f=f;n.symbols=symbols;
+    }return root;
+}
+function symbolMatch(nodes, q, context=''){
+    const out=[];
+    for(const s of nodes){const qualified=context+s.name;const own=`${qualified} ${s.signature} ${s.kind}`.toLowerCase().includes(q);
+        const children=own?(s.children||[]):symbolMatch(s.children||[],q,qualified+'.');
+        if(own||children.length) out.push({...s,children});
+    }return out;
+}
+function lineTree(symbols){const ul=el('ul');for(const s of symbols){const li=el('li');li.append(el('span',s.name,'symbol'),el('span',s.signature,'signature'),tag(`${s.kind} · L${s.line}:${s.col}${s.end>s.line?'–'+s.end:''}`));if(s.children?.length)li.append(lineTree(s.children));ul.append(li)}return ul}
+function lazy(li,label,draw,open){
+    const d=el('details'), s=el('summary');s.append(...label);d.append(s);li.append(d);
+    let rendered=false;const fill=()=>{if(d.open&&!rendered){rendered=true;draw(d)}};
+    d.open=open;fill();d.addEventListener('toggle',fill);
+}
+function subtree(n, auto, depth=0){
+    const ul=el('ul'), children=[...n.children.values()].sort((a,b)=>Number(!!b.children.size||b.f?.kind==='gitlink')-Number(!!a.children.size||a.f?.kind==='gitlink')||a.name.localeCompare(b.name));
+    for(const k of children){const li=el('li'), f=k.f;
+        if(!f||f.kind==='gitlink'){
+            const label=[el('span',k.name+'/','dir'),tag(`${k.n} 文件${f?' · '+short(f.commit)+(f.initialized?'':' · 未初始化'):''}`)];
+            if(k.children.size)lazy(li,label,d=>d.append(subtree(k,auto,depth+1)),auto>0&&depth<auto);else li.append(...label);
+        }else{
+            const label=[el('span',k.name),tag([f.status,f.count?`${f.count} 函数`:'',issues(f)?`${f.issues.length} 条解析提示`:'',f.kind==='symlink'?'符号链接':''].filter(Boolean).join(' · '))];
+            if(k.symbols.length||issues(f))lazy(li,label,d=>{
+                d.append(el('div',`${f.path}${f.parser?' · '+f.parser:''}`,'muted'));
+                if(k.symbols.length)d.append(lineTree(k.symbols));
+                if(issues(f)){const u=el('ul','','warn');for(const i of f.issues)u.append(el('li',i));d.append(u)}
+            },auto===Infinity);else {li.append(...label);li.title=f.path;}
+        } ul.append(li);
+    }return ul;
+}
+function render(){
+    const q=$('query').value.trim().toLowerCase(), scope=$('scope').value, mode=$('mode').value, matched=[];
+    for(const f of data.files){if((scope==='project'&&f.repo!=='.')||(scope==='vendor'&&f.repo==='.'&&f.kind!=='gitlink'))continue;
+        if((mode==='functions'&&!f.count)||(mode==='notices'&&!issues(f))||(mode==='working'&&!f.status))continue;
+        const fileHit=!q||f.path.toLowerCase().includes(q), syms=fileHit?f.symbols:symbolMatch(f.symbols,q);
+        if(fileHit||syms.length)matched.push([f,syms]);
+    }
+    const n=matched.filter(([f])=>f.kind!=='gitlink').length, links=matched.length-n;
+    $('result').textContent=`${n.toLocaleString()} 个文件${links?' · '+links+' 个子模块入口':''}`;
+    $('tree').replaceChildren(matched.length?subtree(build(matched),q&&matched.length<=35?Infinity:q&&matched.length<150?2:0):el('p','没有匹配项'));
+}
+let timer;
+$('query').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(render,100)});
+for(const id of ['scope','mode'])$(id).addEventListener('change',render);
+$('collapse').addEventListener('click',()=>{for(const d of $('tree').querySelectorAll('details[open]'))d.open=false});
+render();
+</script>
+</html>

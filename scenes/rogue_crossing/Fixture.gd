@@ -27,6 +27,7 @@ func install(chapter: String, frame: Transform3D, side_guest: String, variant: b
 	var asset := load("res://assets/architecture/night_crossing/%s.glb" % chapter) as PackedScene
 	assert(asset, "Missing authored fixture for " + chapter)
 	fixtures = asset.instantiate()
+	preload("res://scenes/components/rendering/surfaces/PaintedSurface.gd").finish_kit(fixtures)
 	add_child(fixtures)
 	for part in ["MainAction", "AuxAction", "ReceiptLeaf"]:
 		var node := fixtures.find_child(part, true, false) as Node3D

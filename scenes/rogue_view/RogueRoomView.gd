@@ -395,7 +395,8 @@ func _build_window(wall_center: Vector3, basis: Basis, width: float) -> void:
 	anchor.transform = Transform3D(basis, Vector3(wall_center.x, 0, wall_center.z))
 	var plaster := _material(Color("aeb8b5"))
 	var frame := _material(Color("43362f"))
-	var glass := _material(Color(0.39, 0.74, 0.89, 0.30))
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.39, 0.74, 0.89, 0.30)
 	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	glass.roughness = 0.18
 	_window_part(anchor, Vector3(0, 0.40, 0), Vector3(width, 0.80, 0.13), plaster)
@@ -853,14 +854,8 @@ func _exit_label(index: int) -> String:
 	return text
 
 
-func _material(color: Color, emission := Color.BLACK) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.roughness = 0.89
-	if emission != Color.BLACK:
-		material.emission_enabled = true
-		material.emission = emission
-	return material
+func _material(color: Color, emission := Color.BLACK) -> ShaderMaterial:
+	return preload("res://scenes/components/rendering/surfaces/PaintedSurface.gd").make(color, 0.89, emission)
 
 ## The camp AI and the player use the same floor, furniture and wall edges.
 func camp_layout(names: Array) -> Dictionary:

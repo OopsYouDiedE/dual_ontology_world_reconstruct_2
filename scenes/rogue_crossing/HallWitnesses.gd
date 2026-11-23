@@ -32,3 +32,11 @@ func sync(rows: Dictionary, step_seconds: float) -> Array[Dictionary]:
 		if anim and anim.has_animation(clip) and anim.current_animation != clip: anim.play(clip, .15)
 		targets.append({"kind":"witness", "id":id, "label":id, "position":actor.position})
 	return targets
+
+## Keep a resident crossing the first-person camera from filling the entire frame.
+func _process(_delta: float) -> void:
+	var camera := get_viewport().get_camera_3d()
+	if not camera: return
+	for actor: Node3D in actors.values():
+		var local_eye := actor.to_local(camera.global_position)
+		actor.visible = not (local_eye.y > 0 and local_eye.y < 2.1 and Vector2(local_eye.x, local_eye.z).length_squared() < 0.16)

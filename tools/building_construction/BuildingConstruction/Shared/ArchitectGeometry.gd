@@ -3,8 +3,12 @@ extends RefCounted
 const COLORS = {"wood":0x6D3C28,"wood_dark":0x402319,"wood_light":0x915A3D,"wall":0xAD8158,"stone":0xC9B698,"stone_dark":0x82756A,"grout":0x483C32,"gold":0xCAA15A,"green":0x40563C,"leaf":0x52613A,"cream":0xE7D6AA,"emission":0xFFD58B,"glass":0x8BAAB7,"tile_light":0xE8DAC3,"tile_dark":0x262220,"blackboard":0x243328,"book_red":0x8A3324,"book_blue":0x2F4858,"book_green":0x335C43,"fabric_bed":0xDFD5C6}
 static var materials: Dictionary = {}
 
-static func material(key: String) -> StandardMaterial3D:
+static func material(key: String) -> Material:
 	if materials.has(key): return materials[key]
+	if key not in ["glass", "emission", "gold"]:
+		var color := Color.hex((int(COLORS.get(key, 0xAD8158)) << 8) | 255)
+		materials[key] = preload("res://scenes/components/rendering/surfaces/PaintedSurface.gd").make(color, 0.75 if "dark" in key or "stone" in key else 0.58)
+		return materials[key]
 	var mat = StandardMaterial3D.new()
 	mat.albedo_color = Color.hex((int(COLORS.get(key,0xAD8158)) << 8) | 255)
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED

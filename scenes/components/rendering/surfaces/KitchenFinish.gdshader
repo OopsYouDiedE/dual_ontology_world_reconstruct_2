@@ -1,4 +1,5 @@
 shader_type spatial;
+#include "SoftToonLight.gdshaderinc"
 
 uniform sampler2D wear_masks : repeat_enable, filter_linear_mipmap_anisotropic;
 uniform vec4 base : source_color;

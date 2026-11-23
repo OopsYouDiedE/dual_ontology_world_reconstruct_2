@@ -1,35 +1,13 @@
-# 验证｜先锁规则，再走进房间
+# 正式验收：从公共大厅走到晨钟
 
-在仓库根目录运行。首次从干净检出启动，先用项目环境的 `prepare` 准备 Godot 4.7.2 .NET 和 .NET 8。Windows PowerShell：
-
-```powershell
-$g = (Resolve-Path .runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe).Path
-dotnet build DualOntologyWorldReconstruct2.csproj
-& $g --headless --editor --import --path .
-```
-
-**规则测试回答「每种选择是否成立」。** 固定营地、闸、天文台，检查 256 个种子各生成两次、六张房牌不重、全部可达、每条边向前。战役集成实际做招募、过实体门、返营、恢复和敲钟。检查退出码及日志内的错误；正常结算应走完三局。
+准备 Godot 4.7.2 .NET、.NET 8 和装有项目 MCP 依赖及 Pillow 的 Python。在仓库根运行同一个[验收入口](../../tools/expedition/verify.py)：
 
 ```powershell
-dotnet run --project core/rogue_topology/tests/DuelView.RogueTopology.Tests.csproj
-& $g --headless --path . -s res://tools/expedition/route_test.gd
-& $g --headless --path . -s res://tools/test/night_watch.gd -- --no-rule-save
+& .runtime/python/Scripts/python.exe tools/expedition/verify.py
 ```
 
-**资产测试回答「实际放进房间的东西是否正确」。** 建筑测试覆盖调参、连接与墙洞；改墙时还应从洞中央和两侧实体分别测通行。光照检查普通室内灯与外窗的分工。人物检查正式加载器、骨架、测量记录与逐表面 Toon；非无头运行另拍三视图。活动角色按[人物放行标准](characters.md)验证动作与身份迁移。人物检查覆盖 16 位居民的变体、骨骼动作与侦探三视图，使用真实 Forward+。
+依次构建、导入资源、验证拓扑与 256 个种子、检查 ArchBuilder 构件和窗光、完成三次战役集成、在 Forward+ 验证 6.5 头身角色，最后用项目 MCP 分别跑东西两线。任一阶段失败即停止；按阶段命名的日志和路线截图保存在 `.runtime/production-check/`。没有图形设备时加 `--logic-only` 只跑前面的非图形检查。`DV_GODOT` 可指定同版本控制台程序。
 
-```powershell
-& $g --headless --path . -s res://tools/building_construction/tests/production_pipeline_test.gd
-& $g --headless --path . -s res://tools/test/room_daylight.gd
-& $g --path . --rendering-method forward_plus -s res://tools/expedition/production_cast_test.gd
-```
-
-**实机测试回答「人能否看懂并走过去」。** [游戏 MCP](../../mcp/game/README.md) 用 `on(scene="rogue", seed=2)` 进真实 Forward+，查看 `room=camp`、`phase=camp`、`moves=0`、手册已发、两个可选出口。通过 `step` 操作、`observe` 查看、`close` 回收本次进程。自动走线复用同一输入桥，项目 Python 需已装 MCP 依赖与 Pillow：
-
-```powershell
-$env:DV_GODOT = $g
-& .runtime/python/Scripts/python.exe tools/expedition/viewport_run.py --seed 1 --lane east --out .runtime/route-east
-& .runtime/python/Scripts/python.exe tools/expedition/viewport_run.py --seed 2 --lane west --out .runtime/route-west
-```
+人工复核同样从 [Run.tscn](../../scenes/rogue/Run.tscn) 进入：项目 MCP `on(scene="rogue", seed=2)` 应显示 `room=camp`、`phase=camp`、两条路线和 16 名居民。使用 `step` 操作、`observe` 截图、`close` 结束。大厅 04 原图见[画面基准](art.md)。
 
 每局保存六张 1080×720 JPG 和一份 `frames.json`。先核对折返前后库存与结局，再按[入口全景、走近操作](art.md)复看画面。沿[布局](layout.md)记录入口、操作位和出口回望；检查路线图预告、门牌与实体门指向一致。给第一次玩的玩家遮掉提示，问「哪边能回营？为什么留这个工具？」把答错的位置记到该房的修改单。独立物理实验、规则解题基准在各自场景验证，不能代替这条出征测试。

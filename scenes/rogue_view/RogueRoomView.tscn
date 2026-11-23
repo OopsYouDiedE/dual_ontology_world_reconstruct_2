@@ -2,16 +2,7 @@
 
 [ext_resource type="Script" path="res://scenes/rogue_view/RogueRoomView.gd" id="1"]
 
-[sub_resource type="Environment" id="Environment_room"]
-background_mode = 1
-background_color = Color(0.025, 0.032, 0.05, 1)
-ambient_light_source = 2
-ambient_light_color = Color(0.63, 0.72, 1, 1)
-ambient_light_energy = 0.42
-tonemap_mode = 2
-sdfgi_enabled = true
-sdfgi_cascades = 4
-sdfgi_min_cell_size = 0.16
+[ext_resource type="Environment" path="res://scenes/components/rendering/post/Hall04.tres" id="04"]
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_room"]
 resource_local_to_scene = true
@@ -34,7 +25,7 @@ size = Vector2i(1280, 720)
 render_target_update_mode = 2
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="RoomViewport"]
-environment = SubResource("Environment_room")
+environment = ExtResource("04")
 
 [node name="Geometry" type="Node3D" parent="RoomViewport"]
 

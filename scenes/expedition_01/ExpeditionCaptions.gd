@@ -2,9 +2,12 @@ extends VBoxContainer
 ## A live caption per speaker; different speakers and thoughts coexist.
 var entries:={}
 var typeface:Font
+var thought_face:FontVariation
 
 func setup(font:Font)->void:
 	typeface=font
+	thought_face=FontVariation.new();thought_face.base_font=font
+	thought_face.variation_transform=Transform2D(Vector2.RIGHT,Vector2(-.16,1.),Vector2.ZERO)
 	set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	offset_left=56.;offset_right=-56.;offset_top=-245.;offset_bottom=-52.
 	alignment=BoxContainer.ALIGNMENT_END
@@ -35,12 +38,15 @@ func post(id:String,speaker:String,text:String)->void:
 	line.size_flags_horizontal=Control.SIZE_SHRINK_CENTER
 	line.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	line.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	line.add_theme_font_override("font",typeface)
+	line.add_theme_font_override("font",thought_face if speaker.is_empty() else typeface)
 	line.add_theme_font_size_override("font_size",20)
 	line.add_theme_color_override("font_color",Color("dbd1bb") if speaker.is_empty() else Color("fff3df"))
 	var plate:=StyleBoxFlat.new();plate.bg_color=Color(.035,.029,.023,.89);plate.set_corner_radius_all(4)
 	plate.content_margin_left=18.;plate.content_margin_right=18.;plate.content_margin_top=7.;plate.content_margin_bottom=7.
-	line.add_theme_stylebox_override("normal",plate)
+	if speaker.is_empty():
+		line.add_theme_color_override("font_outline_color",Color(.07,.04,.02,.86))
+		line.add_theme_constant_override("outline_size",5)
+	else:line.add_theme_stylebox_override("normal",plate)
 	add_child(line)
 	entries[speaker]={"id":id,"label":line,"remaining":reading_time(text)}
 	_fit(line)

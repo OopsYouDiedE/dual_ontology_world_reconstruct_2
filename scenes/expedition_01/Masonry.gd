@@ -51,5 +51,10 @@ func wall(x_axis:bool,f:float,a:float,b:float,h:float,holes:Array=[],remove:=fal
 		pos=u
 func slab(x:float,z:float,w:float,d:float,y:=0.0)->void:rect("Slab",x,y-.12,z,w,.24,d,"floor")
 func lid(x:float,z:float,w:float,d:float,y:float)->void:cut.append(rect("Ceiling",x,y+.1,z,w,.2,d))
+func plaque(text:String,p:Vector3,width:float,yaw:=0.)->void:
+	var facing:=Vector3.BACK.rotated(Vector3.UP,yaw)
+	box("LetteredEnamelPlaque",p,Vector3(width,.27,.055),"iron",false,yaw)
+	var n:=Label3D.new();n.text=text;n.font_size=38;n.pixel_size=.00285;n.modulate=Color("eddfa9");n.outline_size=0
+	n.rotation.y=yaw;n.double_sided=false;section.add_child(n);n.position=p+facing*.031
 func label_at(text:String,p:Vector3,yaw:=0.0)->void:
 	var n:=Label3D.new();n.text=text;n.font_size=40;n.pixel_size=.004;n.modulate=Color("eddfa9");n.outline_size=5;n.double_sided=true;n.rotation.y=yaw;section.add_child(n);n.position=p

@@ -5,6 +5,8 @@ const BLIND_ANGLES := [90,210,330]
 var gate:Node3D
 var leaf:Node3D
 var leave_pivot:Node3D
+const AIRLOCK_DEPTH := -2.65
+const RETURN_DEPTH := 76.82
 var gate_spots:Array[Marker3D]=[]
 var north_spot:Marker3D
 var bridge:Node3D
@@ -44,16 +46,22 @@ func arcade()->void:
 	for z in [-1.5,1.5]:rect("ExitJamb",-.04,1.43,z,.44,2.86,.35,"iron")
 	rect("ExitLintel",-.04,2.88,0,.44,.28,3.35,"iron")
 	rect("ExitLantern",.24,2.55,0,.12,.17,.47,"brass",false)
-	for z in [-1.55,1.55]:rect("AirlockReturnWall",-.89,1.47,z,1.74,2.94,.23,"iron")
-	lid(-.9,0,1.8,3.2,2.92)
-	rect("AirlockFarGate",-1.64,1.43,0,.21,2.86,3.0,"iron")
+	slab(-1.99,0,4.30,3.50)
+	for z in [-1.55,1.55]:
+		rect("AirlockReturnWall",-1.98,1.41,z,4.30,3.03,.30,"brick")
+		rect("AirlockSkirt",-1.96,.07,z-signf(z)*.13,4.28,.19,.12,"iron",false)
+	lid(-1.98,0,4.34,3.48,2.82)
+	rect("AirlockFarWall",-4.06,1.38,0,.30,3.08,3.50,"brick")
+	rect("StabilizerInnerDoor",-3.89,1.07,0,.11,2.16,1.77,"iron")
+	for z in [-.95,.95]:rect("InnerDoorRail",-3.80,1.22,z,.15,2.44,.13,"brass",false)
+	for z in [-1.18,1.18]:rect("AirlockLampBody",-3.64,2.19,z,.24,.25,.15,"brass",false)
 	gate=Node3D.new();section.add_child(gate);section=gate
 	for i in 21:
 		var z:float=(i-10)*.174;var h:=3.1+sqrt(1.76*1.76-z*z);rect("Picket",36,h*.5,z,.085,h,.036,"iron",false)
 	for y in [.18,1.25,2.68,3.12]:rect("Strap",36,y,0,.10,.075,2.8,"iron",false)
 	invisible_block(Vector3(36,1.6,0),Vector3(.15,3.2,2.8));section=root_group
-	gate_spots.append(marker("HaleGateNear",Vector3(35.30,0.,-.83)))
-	gate_spots.append(marker("HaleGateFar",Vector3(35.30,0.,.83)))
+	gate_spots.append(marker("HaleGateNear",Vector3(35.34,0.,-.86)))
+	gate_spots.append(marker("HaleGateFar",Vector3(35.34,0.,.86)))
 	for x in range(1,36,2):rect("PavingJoint",x,.002,0,.034,.008,4.16,"joint",false)
 	for z in [-.15,.15]:rect("GuideInlay",18,.006,z,36,.012,.032,"joint",false)
 func invisible_block(p:Vector3,s:Vector3)->void:
@@ -103,9 +111,9 @@ func archive()->void:
 	var route:=[Vector3(36.3,1.48,7.42),Vector3(36.3,3.06,7.42),Vector3(36.18,3.06,7.42),Vector3(36.18,3.06,2.05),Vector3(36.18,4.98,2.05),Vector3(36.18,4.98,0)]
 	for i in route.size()-1:beam(route[i],route[i+1],.10,"brass")
 	for z in [2.68,4.48,6.28]:rect("PipeClamp",36.1,3.06,z,.27,.28,.09,"iron",false)
-	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);rect("OilTin",34,.26,14.85,.3,.52,.30,"brass");rect("ClockworkMetronome",34.45,.2,14.85,.22,.4,.23,"book");section=root_group;label_at("B5  /  MASTER RELEASE",Vector3(36.8,2.35,7.34))
-	for x in [37.86,39.54]:rect("ShortcutReceiverStile",x,1.36,9.2,.14,2.72,.26,"door_green",false)
-	rect("ShortcutReceiverHead",38.7,2.68,9.2,1.81,.17,.26,"door_green",false)
+	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);rect("OilTin",34,.26,14.85,.3,.52,.30,"brass");rect("ClockworkMetronome",34.45,.2,14.85,.22,.4,.23,"book");section=root_group;plaque("B5  /  MASTER RELEASE",Vector3(36.31,3.43,7.34),1.90)
+	for x in [37.86,39.54]:rect("ShortcutReceiverStile",x,1.24,7.33,.14,2.48,.14,"door_green",false)
+	rect("ShortcutReceiverHead",38.7,2.48,7.33,1.81,.16,.14,"door_green",false)
 	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[],true)
 func shelf(x:float,z:float)->void:
 	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()
@@ -139,7 +147,7 @@ func shaft()->void:
 			var upper:=band("UpperCaisson",14,14.45,0,10,a,b,"chalk");if reveal:cut.append(upper)
 		if entrance:band("PortalHead",14,14.45,2.8,10,a,b,"chalk")
 		var corn:=band("Coping",13.85,14.54,9.68,10,a,b,"trim",false);if reveal:cut.append(corn)
-		if i%4==1:
+		if i%4==1 and i!=1:
 			var rib:=box("BrickPilaster",polar(13.87,mid,0),Vector3(.34,20,.48),"joint",false,-mid);if reveal:cut.append(rib)
 		if sin(mid)>0:
 			band("SouthServiceWalk",12.70,13.95,-.16,0,a,b,"iron")
@@ -162,9 +170,14 @@ func shaft()->void:
 			if side==-1 and i>=0:stair_path.append(p)
 			if i%3==0:beam(p+Vector3(.87*cos(a),0,.87*sin(a)),p+Vector3(.87*cos(a),.85,.87*sin(a)),.027,"iron")
 	# Upper landing connects the last spiral tread to the gallery. Shortcut opens from the core side.
-	slab(CX+14.53,CZ+2.35,2.0,2.18,4.8)
-	for z in [CZ+1.30,CZ+3.4]:rect("ReturnPassageWall",CX+14.53,6.14,z,2.0,2.68,.17)
-	rect("ReturnPassageRoof",CX+14.53,7.55,CZ+2.35,2.0,.16,2.18)
+	slab(CX+15.87,CZ+2.35,4.88,2.37,4.8)
+	for z in [CZ+1.30,CZ+3.4]:rect("ReturnPassageWall",CX+15.87,6.12,z,4.88,2.72,.22,"brick")
+	rect("ReturnPassageRoof",CX+15.87,7.53,CZ+2.35,4.89,.24,2.37,"brick")
+	rect("ReturnPassageEnd",CX+18.22,6.12,CZ+2.35,.24,2.85,2.41,"iron")
+	for z in [CZ+1.49,CZ+3.21]:
+		rect("ReturnFinishSkirt",CX+15.86,4.87,z,4.82,.15,.11,"iron",false)
+		rect("ReturnEndDoorRail",CX+18.05,6.10,z,.13,2.62,.1,"brass",false)
+	rect("ReturnGuideLamp",CX+18.04,7.15,CZ+2.35,.16,.14,.26,"brass",false)
 	var center:=Vector3(CX+13.54,6.1,CZ+2.35)
 	for side in [-1.,1.]:rect("ReturnJamb",center.x,center.y,center.z+side*.98,.28,2.7,.16,"iron")
 	rect("ReturnHead",center.x,7.47,center.z,.28,.17,2.11,"iron")
@@ -233,7 +246,7 @@ func stair_wedge(origin:Vector3,index:int,inner:float,outer:float)->void:
 			for h in [-.16,.015]:pts.append(Vector3(radius*cos(angle),4.8*j/41.+h,radius*sin(angle)))
 	var shape:=ConvexPolygonShape3D.new();shape.points=pts
 	var col:=CollisionShape3D.new();col.shape=shape
-	var body:=StaticBody3D.new();body.position=origin;body.add_child(col);section.add_child(body)
+	var body:=StaticBody3D.new();body.position=origin;body.add_child(col);section.add_child(body);body.add_to_group("expedition_iron_tread")
 
 # Clip each rectangular landing against the inner shaft radius, leaving the portal throat separate.
 func platform(side:int,half_width:float)->void:

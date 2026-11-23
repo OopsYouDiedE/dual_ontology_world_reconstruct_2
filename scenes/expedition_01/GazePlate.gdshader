@@ -4,7 +4,8 @@ uniform float sight : hint_range(0.0, 1.0) = 0.0;
 uniform float overload : hint_range(0.0, 1.0) = 0.0;
 uniform float presence : hint_range(0.0, 1.0) = 1.0;
 void fragment() {
-	vec2 grid = abs(fract(UV * vec2(8.0, 12.0)) - 0.5);
+	vec2 disturbed = UV + vec2(sin(UV.y*34.0 + TIME*22.0), cos(UV.x*23.0 - TIME*13.0)) * overload * 0.018;
+	vec2 grid = abs(fract(disturbed * vec2(8.0, 12.0)) - 0.5);
 	float inlay = smoothstep(0.45, 0.49, max(grid.x, grid.y));
 	float tremor = sin(UV.y * 57.0 + TIME * 18.0 + sin(UV.x * 29.0)) * 0.5 + 0.5;
 	vec3 amber = mix(vec3(0.21, 0.10, 0.028), vec3(0.57, 0.32, 0.10), sight);

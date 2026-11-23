@@ -40,6 +40,7 @@ var last_y:=0.
 var last_vy:=0.
 var was_floor:=true
 var prev_hunter:=""
+var bait_time:=0.
 var was_captured:=false
 var fade_a:=1.
 var fade_target:=0.
@@ -113,7 +114,7 @@ func _build_hud(canvas:CanvasLayer)->void:
 		cross.draw_circle(Vector2.ZERO,2.,Color(1,1,1,.55+.35*ring))
 		if ring>.02:cross.draw_arc(Vector2.ZERO,6.+7.*ring,0,TAU,40,Color(ACCENT,ring*.9),1.8,true))
 	# Interaction prompt sits just under the reticle, subtitle gets a backing plate.
-	var p:Label=lv.prompt;p.offset_top=34;p.offset_bottom=96;p.add_theme_font_size_override("font_size",19)
+	var p:Label=lv.prompt;p.offset_top=27;p.offset_bottom=65;p.add_theme_font_size_override("font_size",19)
 
 func _tune_camera()->void:
 	var eye:Camera3D=lv.eye;eye.fov=BASE_FOV;eye.near=.05;eye.far=180.
@@ -224,7 +225,10 @@ func _rig(dt:float)->void:
 	fov_off=lerpf(fov_off,0.,1.-exp(-4.5*dt))
 	eye.fov=lerpf(eye.fov,f+fov_off,1.-exp(-6.*dt))
 
+func signal_bait()->void:bait_time=3.2
+
 func _hud(dt:float)->void:
+	bait_time=maxf(0.,bait_time-dt)
 	var oil:float=lv.oil
 	oil_bar.value=lerpf(oil_bar.value,oil,1.-exp(-8.*dt))
 	var low:=oil<22.
@@ -238,4 +242,5 @@ func _hud(dt:float)->void:
 	var note:=""
 	if well:note="　· 静步压住了脚音" if quiet else ("　· 井底已闻声" if lv.hunter.state=="hunt" else "　· 留意铁网上的脚音")
 	if well and not quiet:tint=Color("ffbf75")
+	if well and bait_time>0. and not lv.collected:note="　· 井底的动静被引开了";tint=Color("ffda91")
 	state_label.text="▸ %s%s\n[Shift] 走跑　[Ctrl] 静步　[1] 手册"%[mode_name,note];state_label.modulate=tint

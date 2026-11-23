@@ -13,7 +13,9 @@ var lure:=MeshInstance3D.new()
 var voice:=AudioStreamPlayer3D.new()
 var clock:=AudioStreamPlayer3D.new()
 var t:=0.
-var metal_timer:=0.
+var bait_played:=false
+var bait_answered:=false
+var bait_ticks:=0.
 var cast_time:=0.
 var cast_start:=Vector3.ZERO
 func finish(color:Color)->StandardMaterial3D:
@@ -26,20 +28,27 @@ func _ready()->void:
 	add_child(lure);lure.top_level=true;lure.global_position=BAIT+Vector3.UP*.4;lure.hide()
 	add_child(voice);add_child(clock);clock.top_level=true;clock.global_position=BAIT;voice.max_distance=46;clock.max_distance=42;hide()
 func throw_from(origin:Vector3)->void:
-	cast_time=.65;cast_start=origin;lure.global_position=origin;lure.show()
+	cast_time=.65;cast_start=origin;bait_played=false;bait_answered=false;bait_ticks=0.;lure.global_position=origin;lure.show()
+func stop_audio()->void:
+	voice.stop();clock.stop()
 func wake()->void:
-	show();state="patrol";angle=PI;position=CENTER+Vector3(-8,0,0);ticks=0;exposure=0;quiet=0;cast_time=0;lure.hide()
+	stop_audio();bait_answered=false;show();state="patrol";angle=PI;position=CENTER+Vector3(-8,0,0);ticks=0;exposure=0;quiet=0;cast_time=0;lure.hide()
 func tone(player:AudioStreamPlayer3D,sound:AudioStream,db:float)->void:
 	player.stream=sound;player.volume_db=db;player.play()
 func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:Dictionary)->bool:
-	t+=dt;metal_timer-=dt
+	t+=dt
 	var in_well:=p.x>46
 	var floor_pos:=Vector3(p.x,CENTER.y,p.z)
 	if bait>0 and not rage:
 		cast_time=maxf(0.,cast_time-dt);var fraction:=1.-cast_time/.65
 		lure.global_position=cast_start.lerp(BAIT+Vector3.UP*.4,fraction)+Vector3.UP*2.*sin(fraction*PI)
-		state="lure";target=BAIT;ticks=0;exposure=0;quiet=0;lure.show()
-		if metal_timer<=0:tone(clock,sounds.tick,-1);metal_timer=.44
+		state="lure";ticks=0;exposure=0;quiet=0;lure.show()
+		if cast_time<=0.:
+			if not bait_played:
+				bait_played=true;bait_ticks=.77;voice.stop();tone(clock,sounds.tick,0.)
+			bait_ticks-=dt
+			if bait_ticks<=0. and not bait_answered:
+				bait_answered=true;target=BAIT;tone(voice,sounds.rumble,3.)
 	else:
 		lure.hide()
 		if state=="lure":state="investigate"
@@ -55,12 +64,12 @@ func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:D
 			if quiet>=4. or not in_well:state="patrol";ticks=0
 	if state=="patrol":
 		angle+=dt*.25;target=CENTER+Vector3(cos(angle)*8,0,sin(angle)*8);position=position.move_toward(target,2.*dt)
-		if not voice.playing:tone(voice,sounds.breath,-11)
+		if in_well and not voice.playing:tone(voice,sounds.breath,-6)
 	elif state=="hunt":
 		ticks+=1
 		# The upper landing is separated from the well by the gallery floor.
 		var reachable:=Vector3(p.x,minf(p.y,2.85) if rage else p.y,p.z)
 		position=position.move_toward(reachable,dt*(5. if rage else 12.))
 		if ticks>=40 and position.distance_to(p)<1.45:return true
-	else:position=position.move_toward(target,4.6*dt)
+	elif state!="lure" or bait_answered:position=position.move_toward(target,4.6*dt)
 	var r:=.5+fmod(t*(2.8 if state=="hunt" else 1.),1.)*2.5;pulse.scale=Vector3(r,.28,r);return false

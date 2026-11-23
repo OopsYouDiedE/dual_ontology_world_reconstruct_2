@@ -20,6 +20,8 @@ func run()->void:
 	if not demand(h.state=="patrol","Hunter did not calm down"):return
 	h.throw_from(pos);for i in 720:
 		if not demand(not h.step(1./60,pos,true,true,12.-i/60.,false,level.sounds),"Lure lost priority"):return
+		if i==42 and not demand(not h.bait_answered,"Hunter moved before the two beats"):return
+		if i==92 and not demand(h.bait_answered,"Hunter did not respond after the two beats"):return
 	if not demand(h.position.distance_to(h.BAIT)<.1,"Hunter did not reach lure"):return
 	level.released=true;level.checkpoint_oil=51;level.checkpoint_item=true;level.collected=true;level.fail("test");for i in 184:await physics_frame
 	if not demand(not level.collected and level.equipped and level.walker.position.x<41 and level.kit.core.visible,"Checkpoint inventory/position invalid"):return

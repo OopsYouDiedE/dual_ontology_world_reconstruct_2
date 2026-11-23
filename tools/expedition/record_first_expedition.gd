@@ -4,6 +4,7 @@ var level
 var look_yaw:float
 var pitch_goal:=0.
 var precise_look:=false
+var gaze_lock_point:=Vector3.INF
 
 func _initialize()->void: run.call_deferred()
 
@@ -30,6 +31,13 @@ func go(x:float,z:float,limit:=1400,portal:=false)->bool:
 		else:stalled=0;last=p
 		if stalled>90:break
 		var yaw:=atan2(-d.x,-d.z)
+		if gaze_lock_point.is_finite():
+			var sight:Vector3=gaze_lock_point-level.eye.global_position
+			look_yaw=atan2(-sight.x,-sight.z)
+			level.walker.rotation.y=yaw;level.eye.rotation.y=angle_difference(yaw,look_yaw)
+			level.eye.rotation.x=atan2(sight.y,Vector2(sight.x,sight.z).length())
+			await physics_frame
+			continue
 		look_yaw=yaw if precise_look else lerp_angle(look_yaw,yaw,.16)
 		level.walker.rotation.y=yaw
 		level.eye.rotation.y=angle_difference(yaw,look_yaw)
@@ -76,28 +84,35 @@ func run()->void:
 		if point==[24.65,7.75]:
 			await look_at_point(Vector3(23.85,.10,12.02),100)
 		if point==[23.85,9.8]:
-			pitch_goal=-1.35;precise_look=true
+			await look_at_point(Vector3(23.85,.11,12.02),55)
+			if not check(level.cues.has("red") and not level.demo_locked,"B3 did not show the unstable phase before lock"):return
+			await wait_frames(118)
+			if not check(level.demo_locked and not level.learned,"B3 should lock after the sustained gaze, before crossing"):return
+			gaze_lock_point=Vector3(23.85,.11,13.0)
+		if point==[23.85,14.12]:gaze_lock_point=Vector3.INF
 		if point==[25.5,14.1]:
 			pitch_goal=0.;precise_look=false
 			if not check(level.learned,"Missing crossing proof"):return
+			await wait_frames(40)
 			if not check(level.captions.entries.has("") and level.captions.entries.has("Hale"),"Expected stacked thought and Hale subtitle"):return
 			await look_at_point(Vector3(29.,1.55,14.1),55)
 			press(KEY_1);await wait_frames(280)
-			if not check(level.manual.visible and level.page.get_parsed_text().contains("手写批注"),"Missing handwritten annotation"):return
+			if not check(level.manual.visible and level.page.get_parsed_text().contains("若两目交错恐生变故") and not level.caption_toast.visible,"Missing handwritten annotation"):return
 			press(KEY_1);await wait_frames(40)
 		if point==[34,14.1]:
 			if not await interact(Vector3(34.14,.5,14.67),"loot",55):return
 			await wait_frames(60)
-	if not await interact(Vector3(36.3,1.35,7.72),"lever",55):return
+	await look_at_point(Vector3(36.34,2.67,7.34),49)
+	if not await interact(Vector3(36.3,1.35,7.72),"lever",39):return
 	if not check(level.released and level.equipped,"Archive state incomplete"):return
 	await wait_frames(65)
 	for point in [[39,10.1],[48.8,10.1]]:
 		if not await go(point[0],point[1]):return
 	Input.action_press("expedition_quiet")
 	var window:Vector3=level.kit.north_spot.global_position+Vector3.UP*1.62
-	await look_at_point(window,40);press(KEY_Q);await wait_frames(2)
+	await look_at_point(window,40);var ordered:float=level.phase;press(KEY_Q);await wait_frames(2)
 	if not check(level.posting and level.captions.entries.has("我") and level.captions.entries.has("Hale"),"North-window order or stacked speakers missing"):return
-	for i in 980:
+	for i in 240:
 		if not check(level.retry<=0.,"Gameplay failure while Hale was traveling"):return
 		if level.holding:break
 		# Follow his lamp during the climb; keep the window in frame as he approaches it.
@@ -106,9 +121,13 @@ func run()->void:
 			if subject.distance_to(level.eye.global_position)>.7:await look_at_point(subject,6)
 		await physics_frame
 	if not check(level.holding and level.subtitle_id=="north_ready","Hale did not reach the north window"):return
+	print("NORTH WINDOW %.2fs"%(level.phase-ordered))
+	if not check(level.phase-ordered<=4.05,"Hale took more than four seconds to reach the north window"):return
 	await look_at_point(window,80)
 	if not await interact(level.hunter.BAIT,"throw",30):return
 	if not check(level.distraction>0.,"Lure not thrown"):return
+	await wait_frames(92)
+	if not check(level.hunter.bait_answered and level.polish.bait_time>0.,"Missing bait response"):return
 	await look_at_point(Vector3(70.95,1.8,10.1),19)
 	if not await go(70.95,10.1):return
 	if not await interact(level.kit.core.position,"core",26):return
@@ -126,7 +145,7 @@ func run()->void:
 	await wait_frames(15)
 	if not await interact(level.kit.leaf.global_position,"return",44):return
 	await wait_frames(30)
-	if not await go(75.65,12.45,260,true):return
+	if not await go(77.08,12.45,260,true):return
 	await wait_frames(35);look_yaw=level.walker.rotation.y
 	if not check(level.shortcut_used and level.walker.position.x<40.,"Return passage did not connect"):return
 	for point in [[38.7,7.2],[38.7,0],[34,0],[7.6,0]]:
@@ -142,7 +161,14 @@ func run()->void:
 	await wait_frames(15)
 	if not await interact(Vector3(.37,1.5,0),"exit",40):return
 	await wait_frames(35)
-	if not await go(-.95,0):return
+	if not await go(-.95,-.25):return
+	for i in 8:
+		await look_at_point(level.hale.position+Vector3.UP*1.15,8)
+		if level.hale.position.x< -2.15:break
+	if not check(level.hale.position.x< -1.85,"Hale did not walk into the airlock foyer"):return
+	if not check(not level.finished,"Airlock finished before entering the warm hall"):return
+	await look_at_point(Vector3(-3.89,1.45,0),28)
+	if not await go(-2.95,0):return
 	for i in 950:
 		if level.finished:break
 		if not level.reunited and i%30==0 and level.hale.position.x<11.:

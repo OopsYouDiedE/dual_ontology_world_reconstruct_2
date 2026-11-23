@@ -29,15 +29,29 @@ func audit()->bool:
 func run()->void:
 	level=preload("Expedition.tscn").instantiate();root.add_child(level);await physics_frame
 	await physics_frame
+	# Start on the actual pit floor with the plate faded, then walk out at each flank.
+	level.holding=true;level.hale.position=Vector3(1,0,0)
+	for side:float in [-1.,1.]:
+		level.walker.position=Vector3(23.85+side*.82,-.59,12.02);level.walker.velocity=Vector3.ZERO
+		level.walker.rotation.y=-side*PI/2.;level.eye.rotation=Vector3.ZERO
+		for f in 90:await physics_frame
+		if level.walker.position.y>-.52:push_error("Expected to start on recess floor");quit(1);return
+		if not await go(23.9+side*3.,12.02,60):quit(1);return
+		if level.walker.position.y<-.04:push_error("Ramp did not reach grade");quit(1);return
+	level.reset_at_checkpoint();level.walker.rotation.y=-PI/2;level.trail.clear();level.holding=false
 	if not audit():quit(1);return
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):quit(1);return
 		if absf(point[0]-24.65)<.01:
+			level.holding=true;level.hale.rotation.y=PI
 			level.eye.look_at(Vector3(24.65,1.57,4.0));for frame in 95:await physics_frame
-			if level.kit.test_board.position.y>-.53:push_error("Unwatched demo stayed up");quit(1);return
+			if level.observers!=0 or level.kit.test_board.get_child(0).collision_layer!=0 or level.kit.test_board.position.y>-.53:push_error("Unwatched demo stayed up");quit(1);return
 			level.eye.look_at(Vector3(23.85,.10,12.02));for frame in 90:await physics_frame
-			if level.kit.test_board.position.y<.04:push_error("Watched demo stayed down");quit(1);return
-			level.eye.rotation=Vector3.ZERO
+			if level.observers!=1 or level.kit.test_board.get_child(0).collision_layer==0 or level.kit.test_board.position.y<.04:push_error("Watched demo stayed down");quit(1);return
+			level.hale.position=Vector3(24.5,0,7.7);level.hale.rotation.y=0
+			for frame in 3:await physics_frame
+			if level.observers!=2:push_error("Missing double exposure");quit(1);return
+			level.holding=false;level.trail.clear();level.eye.rotation=Vector3.ZERO
 		if absf(point[0]-34)<.01:level.use()
 	level.use();if not (level.learned and level.released and level.equipped):push_error("Archive state incomplete");quit(1);return
 	for point in [[39,10.1],[48.8,10.1]]:

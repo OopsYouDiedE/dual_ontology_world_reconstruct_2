@@ -43,7 +43,7 @@ func arcade()->void:
 func invisible_block(p:Vector3,s:Vector3)->void:
 	var n:=rect("Barrier",p.x,p.y,p.z,s.x,s.y,s.z,"iron");n.hide()
 func archive()->void:
-	group("B1_B5_Archive");slab(31,4.85,6,5.3);slab(23.85,5.55,8.3,6.7);rect("RecessFloor",23.9,-.72,12,7.7,.24,6.2,"pit");slab(34.75,14.1,14,2);slab(38.5,10.1,6.5,5.8)
+	group("B1_B5_Archive");slab(31,4.85,6,5.3);slab(23.85,5.55,8.3,6.7);rect("RecessFloor",23.9,-.72,12,7.7,.24,6.2,"trim");slab(34.75,14.1,14,2);slab(38.5,10.1,6.5,5.8)
 	wall(false,27.9,2.3,8.9,3.8,[[4.1,5.7,0,2.4]]);wall(false,34.1,2.3,7.5,3.8);wall(true,7.5,28,34,3.8,[],true);wall(false,19.7,2.3,8.9,3.8,[[3.2,4.4,1,3.2],[6,7.2,1,3.2]]);wall(true,2.2,19.7,28,3.8,[],true)
 	wall(true,8.95,19.8,27.9,4,[[20.15,21.75,0,2.4],[22.25,27.05,.38,2.75]])
 	rect("ObservationGlass",24.65,1.565,8.95,4.8,2.37,.055,"glass");for x in [22.25,23.85,25.45,27.05]:rect("Mullion",x,1.565,8.95,.045,2.37,.09,"iron",false)
@@ -52,7 +52,17 @@ func archive()->void:
 	slab(23.9,9.57,7.7,1.26);slab(23.9,14.48,7.7,1.26);slab(20.65,12.02,1.2,3.65);slab(27.15,12.02,1.2,3.65)
 	# A single thin span crosses the recessed floor. The air pocket remains visible from B2.
 	test_board=rect("AmberTestPlate",23.85,.045,12.02,1.30,.09,3.83,"test_amber")
-	var ramp:=rect("PitRamp",21.94,-.34,12,1.67,.12,1.15,"joint");ramp.rotation.z=-.40
+	# Both top faces meet the rim at grade and the recess at -0.60.
+	for side:float in [-1.,1.]:
+		var edge:=21.25 if side<0 else 26.55
+		var slope:=atan2(.60,1.65)*side
+		var normal:=Vector3(-sin(slope),cos(slope),0)
+		var center:=Vector3(edge-side*.825,-.30,12.02)-normal*.05
+		var ramp:=box("PitExit",center,Vector3(Vector2(1.65,.60).length()+.04,.10,2.2),"floor");ramp.rotation.z=slope
+		for i in 18:
+			rect("EdgeMarker",edge,.006,10.30+i*.20,.11,.012,.19,"brass" if i%2==0 else "iron",false)
+	for z in [10.16,13.89]:
+		for i in 26:rect("EdgeMarker",21.35+i*.20,.006,z,.19,.012,.11,"brass" if i%2==0 else "iron",false)
 	wall(true,13,27.8,41.8,2.4,[[38.1,39.7,0,2.4]],false,"dark");wall(true,15.2,27.8,41.8,2.4,[],true,"dark");wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14,2,2.4)
 	wall(true,7.2,35.25,41.75,3.8,[[36.68,37.72,.83,2.35],[37.9,39.5,0,2.4]]);wall(false,35.15,7.2,13,3.8);wall(false,41.85,7.2,13,3.8,[[8.9,11.3,0,2.8]])
 	for v in [[31,4.85,6,5],[23.85,5.6,8,6.5],[23.9,12,7.5,6],[38.5,10.1,6.5,5.5]]:lid(v[0],v[1],v[2],v[3],4 if v[0]==23.9 else 3.8)

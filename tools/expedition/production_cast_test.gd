@@ -17,7 +17,7 @@ func _roster_works() -> bool:
 		var player := holder.get_meta("animation_player") as AnimationPlayer
 		var skeleton := holder.get_meta("skeleton") as Skeleton3D
 		var model := holder.get_child(0) as Node3D
-		var torso := skeleton.find_bone("Thigh.L")
+		var torso := skeleton.find_bone("thigh_l")
 		ok = torso >= 0 and model.scale.is_equal_approx(Vector3.ONE * model.scale.x)
 		ok = ok and player.has_animation(&"idle") and player.has_animation(&"walk") and player.has_animation(&"interact")
 		if ok:
@@ -30,7 +30,7 @@ func _roster_works() -> bool:
 		for mesh: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
 			for i in mesh.mesh.get_surface_count():
 				var imported := mesh.mesh.surface_get_material(i)
-				if not imported.resource_name.begins_with("Coat | matte"): continue
+				if imported.resource_name != "Human.male_elegantsuit01": continue
 				var mat := mesh.get_active_material(i) as ShaderMaterial
 				if mat == null: continue
 				uniforms[mat.get_shader_parameter("base_color")] = true
@@ -46,12 +46,11 @@ func run() -> void:
 		printerr("Cast requires distinct uniform recipes and working bone animation for every resident"); quit(1); return
 	var model := Node3D.new()
 	root.add_child(model)
-	var receipt: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/characters/toon_cast/detective-measurement.json"))
-	if not Cast.attach(model, "detective") or model.get_meta("model_source", "") != Body.MODEL.resource_path or absf(float(receipt.barefoot_m) / float(receipt.head_m) - 6.5) > 0.01:
-		printerr("Production detective loader or measured body proportions changed"); quit(1); return
+	if not Cast.attach(model, "detective") or model.get_meta("model_source", "") != "res://assets/characters/mpfb/r05_formal.glb":
+		printerr("Production detective must load the approved MPFB2 R-05"); quit(1); return
 	var skeletons := model.find_children("*", "Skeleton3D", true, false)
-	if skeletons.size() != 1 or (skeletons[0] as Skeleton3D).get_bone_count() != 24:
-		printerr("Expected one 24-bone detective skeleton"); quit(1); return
+	if skeletons.size() != 1 or (skeletons[0] as Skeleton3D).get_bone_count() != 53:
+		printerr("Expected one 53-bone R-05 skeleton"); quit(1); return
 	var count := 0
 	for mesh: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
 		for i in mesh.mesh.get_surface_count():
@@ -61,7 +60,7 @@ func run() -> void:
 			count += 1
 	if count == 0:
 		printerr("No detective mesh surfaces"); quit(1); return
-	print("Detective 6.5: ", count, " Toon surfaces; source head units ", receipt.head_units)
+	print("MPFB2 R-05: ", count, " Toon surfaces")
 	if DisplayServer.get_name() != "headless":
 		if RenderingServer.get_current_rendering_method() != "forward_plus":
 			printerr("Character capture requires Forward+"); quit(1); return
@@ -101,5 +100,5 @@ func run() -> void:
 		DirAccess.make_dir_recursive_absolute(path)
 		if image.get_size() != Vector2i(1080,720) or image.save_jpg(path+"/detective-toon.jpg",0.94) != OK:
 			printerr("Expected a 1080x720 JPG capture"); quit(1); return
-	print("PASS: one 6.5-head Toon roster (16 animated residents and captain)")
+	print("PASS: one MPFB2 R-05 Toon roster (16 animated residents and captain)")
 	quit(0)

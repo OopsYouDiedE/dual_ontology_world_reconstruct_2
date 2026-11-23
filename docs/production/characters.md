@@ -1,6 +1,6 @@
 # 人物｜一套写实 6.5 头身制作管线
 
-正式大厅、出征伙伴、沿途居民和暗房留影共用 [Roster](../../scenes/rogue_crossing/Roster.gd) → [ProductionCast](../../scenes/rogue_crossing/ProductionCast.gd) → **6.5 头身 GLB + CastDielectric Toon**。角色 ID、职业、证词、招募和行动规则沿用原数据；旧编号小人及其手办材质已退出运行与测试。
+正式大厅、出征伙伴、沿途居民和暗房留影共用 [Roster](../../scenes/rogue_crossing/Roster.gd) → [ProductionCast](../../scenes/rogue_crossing/ProductionCast.gd) → **MPFB2 R-05 正装 GLB + CastDielectric Toon**。角色 ID、职业、证词、招募和行动规则沿用原数据；旧编号小人及其手办材质已退出运行与测试。
 
 | 项目 | 约定 |
 |---|---|
@@ -9,6 +9,6 @@
 | 绑定与动作 | 同一骨架和播放协议统一站立、行走、跑步和短时操作。新增独立体型或坐姿时，核对脚底接地、手到交互点及衣领袖口穿插。 |
 | 关卡接入 | 保留角色 ID；在营地招募和出征/折返回归中核对身份。所有最终导入的角色走同一个加载器，服装变体有自己的材质配方。 |
 
-[侦探](../../assets/characters/toon_cast/detective-6p5.glb)是实测基模，由[生成器](../../tools/detective_study/build_detective.py)读取 Blender Studio Human Base Meshes v1.3.0 的 Realistic Male Body（CC0）。[测量记录](../../assets/characters/toon_cast/detective-measurement.json)：身高 177.00 cm、头高 27.23 cm，6.5000 头身。当前 16 名居民先共享这个基模和动作库，用身高、外套／马甲配色和名牌辨认；独立脸型、服装剪裁与完整动作是后续角色美术工作。
+正式人物使用 [MPFB2 R-05 Formal](../../assets/characters/mpfb/r05_formal.glb)，即 Hall 04 对照中的 B。保留原版西装贴图、发型和站姿；16 名居民共享骨架，通过身高、服装色调和名牌区分。6.5 头身是制作验收目标，R-05 的赤足比例待复测。
 
-![6.5 头身侦探的静态三视图](media/detective-toon.jpg)
+![R-05 实机全身](media/r05-formal.jpg)

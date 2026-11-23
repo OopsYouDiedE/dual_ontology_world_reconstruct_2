@@ -53,7 +53,7 @@ VISUAL = {
     'C-bridge.png':'Gyroscope Well 上层环廊机位：检视桥面与中心转轴的衔接。',
     'D-half-cycle.png':'Gyroscope Well 半周期姿态剖面：展示转环旋转后的朝向。',
     'hall-04.jpg':'大厅候选 04 原始实机参考：连续拱廊与灯、石像和门洞，用于核对柔色阶、薄线和间接光。',
-    'detective-toon.jpg':'正式 6.5 头身侦探的正面、斜面和背面三渲二审样图。',
+    'r05-formal.jpg':'正式 MPFB2 R-05 的正面、斜面和背面三渲二审样图。',
     'ChapterInk.png':'表盘章环的透明字样贴图，含 Vianney Halter 与 Deep Space。',
     'ArchivePrint.png':'档案界面用的棕色人物肖像印刷贴图。',
     'Feeds.jpg':'监控 CRT 使用的八格摄像画面图集。',
@@ -126,7 +126,6 @@ EXACT = {
     '.vscode/tasks.json':'声明 VS Code 中可直接执行的项目任务。', 'AGENTS.md':'给仓库协作者的工作、运行与交付约定。',
     'global.json':'固定仓库使用的 .NET SDK 及版本选择规则。','project.godot':'Godot 项目入口、Autoload、输入映射和渲染设置。',
     'goal.md':'当前工作目标与任务运行窗口的记录。','NuGet.Config':'配置 .NET 依赖还原使用的 NuGet 源。',
-    'assets/characters/toon_cast/detective-measurement.json':'记录正式侦探模型的人体比例和测量数据，供 6.5 头身验收。',
     'assets/imported/kaykit/animations/source.json':'追踪 KayKit 动画资源来源与原始文件信息。',
     'content/academy_lots/plan_landmarks.json':'记录 FreeSO 学院八间房的原始地块对应关系与建筑地标。',
     'content/archbuilder/hot-kitchen.json':'ArchBuilder 可编辑热厨布局、分层和构件参数。',
@@ -169,7 +168,7 @@ def glb(path):
     if path.stem.startswith('Rig_Medium_'):
         label = {'General':'通用动作','MovementBasic':'基础移动','Simulation':'生活模拟动作','Tools':'工具动作'}.get(path.stem.split('_')[-1],path.stem)
         return f'KayKit Medium 骨架的{label}动画库。'
-    return {'detective-6p5':'正式 6.5 头身侦探角色的模型资产。','r05_formal':'MPFB R05 正装人体样机模型。',
+    return {'r05_formal':'正式人物共用的 MPFB2 R-05 正装基模。',
             'academy_side_chair':'学院室内边椅的可渲染模型，配合同名碰撞资源。','spinning-top':'动力原型用陀螺网格源资产。'}.get(path.stem,f'{path.stem} 的 glTF 三维资源。')
 
 

@@ -1,6 +1,6 @@
 extends RefCounted
-## Production cast: one measured rig, common animated poses and one Toon finish.
-const MODEL := preload("res://assets/characters/toon_cast/detective-6p5.glb")
+## Production cast: one MPFB2 R-05 rig, common animated poses and one Toon finish.
+const MODEL := preload("res://assets/characters/mpfb/r05_formal.glb")
 const FINISH := preload("res://scenes/components/rendering/actors/CastDielectric.gdshader")
 const BODIES := [
 	[1.66, "36586a", "775a36"], [1.73, "69483c", "81643b"],
@@ -12,8 +12,8 @@ const BODIES := [
 	[1.72, "3d535d", "8b714a"], [1.82, "62523f", "527476"],
 	[1.67, "63516e", "786647"], [1.71, "4f6271", "75594d"],
 ]
-const BONES := ["Spine", "Chest", "Head", "UpperArm.L", "UpperArm.R", "Forearm.L",
-	"Forearm.R", "Thigh.L", "Thigh.R", "Shin.L", "Shin.R", "Foot.L", "Foot.R"]
+const BONES := ["spine_01", "spine_03", "head", "upperarm_l", "upperarm_r", "lowerarm_l",
+	"lowerarm_r", "thigh_l", "thigh_r", "calf_l", "calf_r", "foot_l", "foot_r"]
 static var _library: AnimationLibrary
 static var _materials := {}
 
@@ -27,9 +27,21 @@ static func attach(parent: Node3D, variant := -1) -> bool:
 		return false
 	var skeleton := skeletons[0] as Skeleton3D
 	var recipe: Array = BODIES[variant] if variant >= 0 else []
-	if not recipe.is_empty(): body.scale = Vector3.ONE * (float(recipe[0]) / 1.77)
+	if not recipe.is_empty(): body.scale = Vector3.ONE * (float(recipe[0]) / 1.802522)
 	_apply_finish(body, variant, recipe)
-	if _library == null: _library = _build_clips(body, skeleton)
+	# Preserve the approved R-05 neutral pose, including fingers and shoulders.
+	var native := body.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
+	native.play(&"MPFB_Pose_Check")
+	native.seek(0.0, true)
+	native.pause()
+	var to_rig := _relative_to_body(body, skeleton).basis.inverse()
+	for shoulder in ["upperarm_l", "upperarm_r"]:
+		var i := skeleton.find_bone(shoulder)
+		var joint := skeleton.get_bone_global_pose(i)
+		var side := signf((to_rig.inverse() * joint.origin).x)
+		var axis := (joint.basis.inverse() * to_rig * Vector3.BACK).normalized() * -side
+		skeleton.set_bone_pose_rotation(i, skeleton.get_bone_pose_rotation(i) * Quaternion(axis, 0.26))
+	if _library == null: _library = _build_clips(body, skeleton, to_rig)
 	var animation := AnimationPlayer.new()
 	body.add_child(animation)
 	animation.add_animation_library(&"", _library)
@@ -56,10 +68,8 @@ static func _apply_finish(body: Node3D, variant: int, recipe: Array) -> void:
 				mat.set_shader_parameter("toon_strength", 0.86)
 				var color := stock.albedo_color
 				if not recipe.is_empty():
-					if stock.resource_name.begins_with("Coat"):
-						color = Color(recipe[1]).darkened(0.18 if stock.resource_name.contains("liner") else 0.0)
-					elif stock.resource_name.begins_with("Waistcoat"):
-						color = Color(recipe[2]).darkened(0.18 if stock.resource_name.contains("edge") else 0.0)
+					if stock.resource_name == "Human.male_elegantsuit01": color *= Color(recipe[1]).lightened(0.35)
+					elif stock.resource_name == "Human.shoes04": color *= Color(recipe[2]).lightened(0.35)
 				mat.set_shader_parameter("base_color", color)
 				mat.set_shader_parameter("surface_roughness", stock.roughness)
 				mat.set_shader_parameter("double_sided", stock.cull_mode == BaseMaterial3D.CULL_DISABLED)
@@ -67,7 +77,14 @@ static func _apply_finish(body: Node3D, variant: int, recipe: Array) -> void:
 				finishes[stock] = mat
 			mesh.set_surface_override_material(i, finishes[stock])
 
-static func _build_clips(body: Node3D, skeleton: Skeleton3D) -> AnimationLibrary:
+static func _relative_to_body(body: Node3D, node: Node3D) -> Transform3D:
+	var result := Transform3D.IDENTITY
+	while node != body:
+		result = node.transform * result
+		node = node.get_parent_node_3d()
+	return result
+
+static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis) -> AnimationLibrary:
 	var library := AnimationLibrary.new()
 	var path := body.get_path_to(skeleton)
 	var lengths := {&"idle": 2.4, &"walk": 0.9, &"run": 0.65, &"interact": 0.85}
@@ -80,8 +97,8 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D) -> AnimationLibrary
 			if bone < 0: continue
 			var track := anim.add_track(Animation.TYPE_ROTATION_3D)
 			anim.track_set_path(track, NodePath("%s:%s" % [path, bone_name]))
-			var rest := skeleton.get_bone_rest(bone).basis.get_rotation_quaternion()
-			var axis := (skeleton.get_bone_global_rest(bone).basis.inverse() * Vector3.RIGHT).normalized()
+			var rest := skeleton.get_bone_pose_rotation(bone)
+			var axis := (skeleton.get_bone_global_pose(bone).basis.inverse() * to_rig * Vector3.RIGHT).normalized()
 			for k in 9:
 				var t := k / 8.0
 				anim.rotation_track_insert_key(track, t * anim.length,
@@ -93,17 +110,17 @@ static func _angle(clip: StringName, bone: String, t: float) -> float:
 	if clip == &"interact":
 		var reach := sin(PI * t)
 		match bone:
-			"UpperArm.R": return -0.56 * reach
-			"Forearm.R": return -0.68 * reach
-			"Chest": return 0.10 * reach
+			"upperarm_r": return -0.56 * reach
+			"lowerarm_r": return -0.68 * reach
+			"spine_03": return 0.10 * reach
 		return 0.0
 	if clip == &"idle":
-		return 0.027 * sin(TAU * t) if bone == "Chest" else 0.0
-	var stride := sin(TAU * t) * (-1.0 if bone.ends_with(".R") else 1.0)
+		return 0.027 * sin(TAU * t) if bone == "spine_03" else 0.0
+	var stride := sin(TAU * t) * (-1.0 if bone.ends_with("_r") else 1.0)
 	var vigor := 1.48 if clip == &"run" else 1.0
-	if bone.begins_with("Thigh"): return -0.34 * stride * vigor
-	if bone.begins_with("Shin"): return 0.46 * maxf(0.0, -stride) * vigor
-	if bone.begins_with("Foot"): return -0.15 * maxf(0.0, -stride) * vigor
-	if bone.begins_with("UpperArm"): return 0.22 * stride * vigor
-	if bone.begins_with("Forearm"): return -0.10 - 0.18 * maxf(0.0, stride) * vigor
+	if bone.begins_with("thigh"): return -0.34 * stride * vigor
+	if bone.begins_with("calf"): return 0.46 * maxf(0.0, -stride) * vigor
+	if bone.begins_with("foot"): return -0.15 * maxf(0.0, -stride) * vigor
+	if bone.begins_with("upperarm"): return 0.22 * stride * vigor
+	if bone.begins_with("lowerarm"): return -0.10 - 0.18 * maxf(0.0, stride) * vigor
 	return 0.0

@@ -21,16 +21,39 @@ static func dress(s,k:String,b:Vector3,t:int,hole:String,up:String)->void:
 	var bay:float=s.BAY;var center=b+Vector3(bay/2,0,bay/2)
 	if hole=="" and up=="":
 		if t in [0,3]:
-			# Insets form a coffer aligned to the column bay. Keep the stair envelope empty.
-			for d in [-1,1]:
-				s.box(k+"/cofferX",center+Vector3(0,2.98,d*1.77),Vector3(3.66,.13,.12),"cream",0)
-				s.box(k+"/cofferZ",center+Vector3(d*1.77,2.98,0),Vector3(.12,.13,3.44),"cream",0)
-		if t==5:
-			for i in 10:s.box(k+"/grate",center+Vector3(.5,.023,(i-4.5)*.12),Vector3(.62,.036,.045),"grout",0)
+			s.box(k+"/coffer-soffit",center+Vector3.UP*3.106,Vector3(bay-.18,.026,bay-.18),"cream",0)
+			for tier in [[1.85,2.98,.22,.18,"wood_dark"],[1.69,3.025,.12,.12,"cream"],[1.59,3.067,.08,.08,"gold"]]:
+				frame(s,k,center,tier)
+			# Four ceiling fields around the pendant; the perimeter steps down toward the room.
+			for axis in [Vector3.RIGHT,Vector3.BACK]:
+				for sign_ in [-1,1]:
+					var size=axis*1.56+Vector3.UP*.10+Vector3(axis.z,0,axis.x)*.10
+					s.box(k+"/ceiling-rib",center+axis*sign_*.81+Vector3.UP*3.052,size,"cream",0)
+		if t==5:pump_tray(s,k,center)
 		if t==0 or t==2:
 			for x in 4:
 				for z in 4:
 					var p=b+Vector3((x+.5)*bay/4,.006,(z+.5)*bay/4);var h=bay/8-.008;var a=Vector3(h,0,0);var v=Vector3(0,0,h);quad(s,k,"tile_light" if (x+z)%2 else ("stone" if t==0 else "green"),p-a-v,p+a-v,p+a+v,p-a+v)
+static func frame(s,k,c,tier:Array)->void:
+	var r:float=tier[0];var w:float=tier[2];var h:float=tier[3]
+	for d in [-1,1]:
+		s.box(k+"/coffer",c+Vector3(0,tier[1],r*d),Vector3(2*r+w,h,w),tier[4],0)
+		s.box(k+"/coffer",c+Vector3(r*d,tier[1],0),Vector3(w,h,2*r-w),tier[4],0)
+
+static func pump_tray(s,k,c)->void:
+	# Four slab bands frame this recessed service channel; flush bars bridge it.
+	var o:Vector3=c+Vector3(.62,-.145,0)
+	s.box(k+"/channel",o+Vector3.UP*.012,Vector3(.56,.024,1.72),"grout",3)
+	var pipe=PackedVector2Array()
+	for i in 8:pipe.append(Vector2(cos(TAU*i/8),sin(TAU*i/8))*.038)
+	for side in [-1,1]:
+		var run=o+Vector3(side*.13,.066,0)
+		sweep(s,k,"gold",PackedVector3Array([run+Vector3.FORWARD*.83,run+Vector3.BACK*.83]),pipe)
+		s.box(k+"/channel-rim",o+Vector3(side*.27,.065,0),Vector3(.035,.13,1.72),"stone_dark",0)
+	for z in [-.58,.58]:
+		sweep(s,k,"gold",PackedVector3Array([o+Vector3(-.13,.066,z),o+Vector3(.13,.066,z)]),pipe)
+	for i in 9:s.box(k+"/grate",o+Vector3(0,.139,(i-4)*.20),Vector3(.56,.024,.045),"stone_dark",1)
+
 static func arch(s,k:String,center:Vector3,along:Vector3,n:Vector3,r:float)->void:
 	for i in 11:
 		var a=i*PI/11.+.006;var b=(i+1)*PI/11.-.006;var rings=[]
@@ -38,13 +61,32 @@ static func arch(s,k:String,center:Vector3,along:Vector3,n:Vector3,r:float)->voi
 			var q=[];for uv in [[a,r],[b,r],[b,r+.12],[a,r+.12]]:q.append(center+(along*cos(uv[0])+Vector3.UP*sin(uv[0]))*uv[1]-n*depth)
 			rings.append(q)
 		var f=rings[1];var back=rings[0];quad(s,k,"stone",f[3],f[2],f[1],f[0]);quad(s,k,"stone",back[0],back[1],back[2],back[3]);for j in 4:quad(s,k,"stone_dark",f[j],back[j],back[(j+1)%4],f[(j+1)%4])
-static func wall_trim(s,k:String,id:String,center:Vector3,along:Vector3,n:Vector3,w:float,t:int)->void:
-	var profile=PackedVector2Array([Vector2(-.04,-.06),Vector2(.04,-.06),Vector2(.04,.025),Vector2(.015,.06),Vector2(-.04,.06)])
+static func wall_trim(s,k:String,id:String,center:Vector3,along:Vector3,n:Vector3,w:float,t:int,door:bool)->void:
+	var yaw=-atan2(along.z,along.x)
+	var hi:float=s.BAY*.5-.12
 	for side in [-1,1]:
-		var lo=w/2+.07;var hi=s.BAY/2-.17;var net=hi-lo;var count=maxi(1,roundi(net/.62));var a=center+along*side*lo-n*.14;var b=center+along*side*hi-n*.14
-		for y in [.12,.89]:sweep(s,k,"wood",PackedVector3Array([a+Vector3.UP*y,b+Vector3.UP*y]),profile)
+		var lo=w*.5+.08 if door else 0.;var span=hi-lo
+		if span<.16:continue
+		var mid=center+along*side*(lo+span*.5)
+		# All layers project inward from the finished wall face (depth .122).
+		for rail in [[.10,.16,.17],[.82,.11,.16],[.91,.06,.19]]:
+			s.box(id+"/rail",mid-n*(.122+rail[2]*.25)+Vector3.UP*rail[0],Vector3(span,rail[1],rail[2]*.5),"wood_dark",0,yaw)
+		var count=maxi(1,roundi(span/.54));var pitch=span/count
 		for j in count:
-			var p=a.lerp(b,(j+.5)/count)+Vector3.UP*.50;s.box(id+"/panel",p,Vector3(net/count-.045,.63,.035),"wood_light" if t!=5 else "stone_dark",0,-atan2(along.z,along.x))
+			var p=center+along*side*(lo+pitch*(j+.5))+Vector3.UP*.47
+			s.box(id+"/panel-field",p-n*.143,Vector3(pitch,.64,.04),"wood_dark",0,yaw)
+			s.box(id+"/panel-frame",p-n*.17,Vector3(pitch-.04,.56,.024),"wood_light",0,yaw)
+			s.box(id+"/panel-inset",p-n*.186,Vector3(pitch-.10,.46,.014),"wood",0,yaw)
+# Call once per solved beam; endpoints already include column overrides.
+static func beam_corbels(s,id:String,a:Vector3,b:Vector3)->void:
+	var axis=a.direction_to(b);var yaw=-atan2(axis.z,axis.x)
+	for i in 2:
+		var post=a if i==0 else b
+		var inward=axis if i==0 else -axis
+		for tier in [[.30,2.78,.20],[.41,2.93,.10],[.52,2.99,.04]]:
+			var length:float=tier[0]-.08
+			var p=post+inward*(.08+length*.5)+Vector3.UP*tier[1]
+			s.box(id+"/corbel%d"%i,p,Vector3(length,tier[2],.30),"cream" if tier[1]>2.9 else "stone",0,yaw)
 static func dome(s,k:String,pts:Array)->void:
 	# Reuse the actual heights of the eight roof edge stations; the surrounding hip stays watertight.
 	var c:Vector3=pts[0];var spring=c.y+.12;var rings=[];var n=32;var radius=1.62

@@ -21,6 +21,7 @@ static func example()->Dictionary:
 			for x in 4:
 				if z==2 and x>=2: continue
 				p.cells[key(x,z,l)] = (0 if x<2 else 2) if l==0 else (3 if x<2 else 4)
+	p.cells[key(3,1,0)]=5 # Pump annex beside the laboratory and riser.
 	p.cores[key(0,0,0)]="stair"; p.cores[key(3,0,0)]="service"
 	return p
 static func valid(p:Variant)->bool:
@@ -105,7 +106,7 @@ func build(plan:Dictionary)->void:
 		cell_owner=k;var c=address(k);var x=c.x;var z=c.y;var l=c.z;var t=int(plan.cells[k]);var y=l*RISE;var base=Vector3(x*BAY,y,z*BAY);var mid=base+Vector3(BAY/2,0,BAY/2);var below=key(x,z,l-1)
 		if l>0 and not plan.cells.has(below):notes.append(k+" · unsupported floor: extend lower storey")
 		var hole=str(active_cores.get(below,""));var up=str(active_cores.get(k,""))
-		floor_plate(k,base,hole)
+		floor_plate(k,base,"trench" if t==5 and hole=="" and up=="" else hole)
 		preload("BayDetails.gd").dress(self,k,base,t,hole,up)
 		if up!="":core(k,base,up)
 		for dx in 2:
@@ -130,6 +131,7 @@ func build(plan:Dictionary)->void:
 	for e in beams:
 		var row=beams[e];cell_owner=row[2];var aa:Vector3=columns[row[0]];var bb:Vector3=columns[row[1]];var v=bb-aa
 		box("beam/"+e,(aa+bb)/2+Vector3.UP*3.15,Vector3(v.length(),0.3,0.21),"wood_dark",3,-atan2(v.z,v.x))
+		preload("BayDetails.gd").beam_corbels(self,"beam/"+e,aa,bb)
 	make_roofs()
 
 func find_entries(keys:Array)->void:
@@ -146,15 +148,19 @@ func find_entries(keys:Array)->void:
 				elif not seen.has(nb):seen[nb]=true;queue.append(nb)
 func floor_plate(k:String,b:Vector3,hole:String)->void:
 	var lo=Vector2.ZERO;var hi=Vector2.ZERO
-	if hole=="service":lo=Vector2(.6,.6);hi=Vector2(1.28,1.28)
-	elif hole=="stair":lo=Vector2(.45,.5);hi=Vector2(2.85,3.85)
+	if hole=="trench":lo=Vector2(2.44,1.24);hi=Vector2(3.0,2.96)
+	elif hole=="service":lo=Vector2(.6,.6);hi=Vector2(1.28,1.28)
+	elif hole=="stair":lo=Vector2(.43,.18);hi=Vector2(2.85,3.84)
 	elif hole=="spiral":lo=Vector2(.5,.5);hi=Vector2(3.7,3.7)
 	var rects=[[0,0,BAY,BAY]] if hole=="" else [[0,0,lo.x,BAY],[hi.x,0,BAY,BAY],[lo.x,0,hi.x,lo.y],[lo.x,hi.y,hi.x,BAY]]
 	for i in rects.size():
 		var r=rects[i];box(k+"/slab%d"%i,b+Vector3((r[0]+r[2])/2,-.09,(r[1]+r[3])/2),Vector3(r[2]-r[0],.18,r[3]-r[1]),"stone")
-	if hole!="":
+	if hole not in ["","trench"]:
 		for rx in [lo.x,hi.x]:box(k+"/guard",b+Vector3(rx,.53,(lo.y+hi.y)/2),Vector3(.055,1.06,hi.y-lo.y),"gold",1)
-		box(k+"/guard",b+Vector3((lo.x+hi.x)/2,.53,hi.y),Vector3(hi.x-lo.x,1.06,.055),"gold",1)
+		if hole=="stair":
+			box(k+"/guard-low-end",b+Vector3(1.055,.53,hi.y),Vector3(1.25,1.06,.055),"gold",1)
+		var closed_z=lo.y if hole=="stair" else hi.y
+		box(k+"/guard",b+Vector3((lo.x+hi.x)/2,.53,closed_z),Vector3(hi.x-lo.x,1.06,.055),"gold",1)
 func core(k:String,b:Vector3,kind:String)->void:
 	if kind=="service":
 		box(k+"/riser",b+Vector3(.94,RISE/2,.94),Vector3(.34,RISE,.34),"gold");socket("valve/"+k,"valve",b+Vector3(.94,1.2,1.2),{"network":"riser/%d/%d"%[address(k).x,address(k).y]});return
@@ -169,19 +175,28 @@ func core(k:String,b:Vector3,kind:String)->void:
 			if i==0:start=p+Vector3.UP*.1
 		end=center+Vector3(0,RISE,-1.62);box(k+"/landing",end-Vector3.UP*.075,Vector3(.9,.15,.56),"wood")
 	else:
-		for i in 18:
-			var pos=b+Vector3(.99 if i<9 else 2.29,(i+1)*RISE/18.-.08,.64+(i if i<9 else 17-i)*.31)
-			var edge=pos+Vector3(-.50 if i<9 else .50,1.,0);rails[0 if i<9 else 1].append(edge)
-			if i%2==0:box(k+"/baluster%d"%i,edge-Vector3.UP*.46,Vector3(.04,.92,.04),"gold",1)
-			box(k+"/tread%d"%i,pos,Vector3(1.1,.16,.32),"wood_light");if i==0:start=pos
-		box(k+"/landing",b+Vector3(1.64,RISE*.5-.08,3.50),Vector3(2.4,.16,.78),"wood");end=b+Vector3(2.29,RISE,.40)
+		var turn_z=1.08;var entry_z=3.84;var half=RISE*.5
+		for flight in 2:
+			var x=.99 if flight==0 else 2.29
+			var foot=b+Vector3(x,half*flight,entry_z if flight==0 else turn_z)
+			var head=b+Vector3(x,half*(flight+1),turn_z if flight==0 else entry_z)
+			var side=Vector3.RIGHT*.55*(1 if flight==0 else -1)
+			facet(k,"walk_proxy",foot-side,head+side,foot+side,MOVE)
+			facet(k,"walk_proxy",foot-side,head-side,head+side,MOVE)
+			for i in 9:
+				var pos=foot.lerp(head,(i+.5)/9.)+Vector3.UP*(half/18.-.08)
+				var edge=pos+Vector3(-.50 if flight==0 else .50,1.,0);rails[flight].append(edge)
+				if i%2==0:box(k+"/baluster%d"%(flight*9+i),edge-Vector3.UP*.46,Vector3(.04,.92,.04),"gold",MOVE)
+				box(k+"/tread%d"%(flight*9+i),pos,Vector3(1.1,.16,(entry_z-turn_z)/9.),"wood_light",SIGHT)
+		start=b+Vector3(.99,0,entry_z);end=b+Vector3(2.29,RISE,entry_z)
+		box(k+"/landing",b+Vector3(1.64,half-.08,(.18+turn_z)*.5),Vector3(2.4,.16,turn_z-.18),"wood")
 	for path in rails:
 		preload("BayDetails.gd").sweep(self,k,"wood_dark",path,PackedVector2Array([Vector2(-.035,-.03),Vector2(-.035,.03),Vector2(.035,.03),Vector2(.035,-.03)]))
 	links.append([k,start,end]);socket("stairs/"+k,"link",start,{"end":end})
 func wall(id:String,center:Vector3,d:Vector2i,t:int,other:int,k:String,nb:String)->void:
 	var n=Vector3(d.x,0,d.y);var along=Vector3(-n.z,0,n.x);var yaw=-atan2(along.z,along.x);var shared=other>=0
 	var entrance=entries.get(k,Vector2i.ZERO)==d
-	var door=shared or entrance;var w=1.35 if door else 1.95;var low=0.0 if door else 1.05;var high=2.38;var thick=.22
+	var door=shared or entrance;var w=1.35 if door else 1.95;var low=0.0 if door else 1.05;var high=2.38;var thick=.44 if t==5 and not shared and d==Vector2i.RIGHT else .22
 	var spans=[[-BAY/2,-w/2,0,RISE],[w/2,BAY/2,0,RISE],[-w/2,w/2,high,RISE]]
 	var niche=not door and t==5 and d==Vector2i.RIGHT
 	if niche:
@@ -202,7 +217,8 @@ func wall(id:String,center:Vector3,d:Vector2i,t:int,other:int,k:String,nb:String
 		for side in [-1,1]:
 			var mat=FINISH[t] if side<0 else (FINISH[other] if shared else "stone_dark")
 			box(id+"/finish",p+n*side*(thick*.5+.006),Vector3(sz.x,sz.y,.012),mat,0,yaw)
-	preload("BayDetails.gd").wall_trim(self,k,id,center,along,n,w,t)
+	preload("BayDetails.gd").wall_trim(self,k,id,center,along,n,w,t,door)
+	if shared:preload("BayDetails.gd").wall_trim(self,k,id+"/reverse",center,-along,-n,w,other,door)
 	if door:
 		preload("BayDetails.gd").arch(self,k,center+Vector3.UP*high,along,n,w/2)
 		var did="door/"+id;var o=pick(did,"door",center);var style=o.get("style","iron" if 5 in [t,other] else "oak")
@@ -213,9 +229,13 @@ func wall(id:String,center:Vector3,d:Vector2i,t:int,other:int,k:String,nb:String
 		box(id+"/glass",center+Vector3.UP*((low+high)/2),Vector3(w,high-low,.035),"glass",MOVE,yaw)
 		for i in 4:box(id+"/mullion",center+along*((i/3.-.5)*w)+Vector3.UP*((low+high)/2),Vector3(.045,high-low,.07),"wood_dark",MOVE,yaw)
 		box(id+"/sill",center+Vector3.UP*low,Vector3(w+.12,.07,.33),"cream",3,yaw)
-		# A full bracket would cross the glazing at the centre. Prefer a shallow steel seat above the lintel.
-		if high+0.9>3.14:
-			if repair(id,"bracket intersects glazing → shallow lintel seat"):box(id+"/seat",center-n*.21+Vector3.UP*2.99,Vector3(.28,.26,.24),"gold",3,yaw)
+		# Test the candidate's actual vertical interval; if needed, fit it on a jamb.
+		var depth_y=.46;var beam_soffit=3.0;var clear=.05;var seat_x=0.
+		if beam_soffit-depth_y<high+clear:
+			seat_x=w*.5+clear+.14
+		if seat_x+.14<BAY*.5-.12:
+			box(id+"/seat",center+along*seat_x-n*.21+Vector3.UP*(beam_soffit-depth_y*.5),Vector3(.28,depth_y,.24),"wood_dark",3,yaw)
+		else:notes.append(id+" · no clear lintel or jamb for bracket")
 		var h=absi((id+str(layout.seed)).hash());var sign_side=1 if h%2 else -1
 		var at=center+along*sign_side*(BAY/2-.50)-n*.43
 		if not active_cores.has(k) and not active_cores.has(key(address(k).x,address(k).y,address(k).z-1)) and h%3==0:

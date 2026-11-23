@@ -37,10 +37,11 @@ func render(s,level:int,cutaway:bool,stage:=5)->void:
 	for n in get_children():remove_child(n);n.queue_free()
 	batches.clear();physics.clear();doors.clear();panels.clear();valves.clear();regions.clear()
 	for r in s.pieces:
+		if cutaway and "/coffer-soffit" in r.id and S.address(r.owner).z==level:continue
 		if visible_owner(r.owner) and block_stage(r.id)<=stage:block(r)
 	for f in s.facets:
 		if stage<4 or not visible_owner(f[0]) or ((stage<5 or cutaway) and str(f[1])=="book_blue"):continue
-		var normal:Vector3=(f[4]-f[2]).cross(f[3]-f[2]).normalized();tri(f[0],f[1],f[2],f[3],f[4],normal,f[5],true,f[6])
+		var normal:Vector3=(f[4]-f[2]).cross(f[3]-f[2]).normalized();tri(f[0],f[1],f[2],f[3],f[4],normal,f[5],f[1]!="walk_proxy",f[6])
 	for r in s.roofs:
 		if stage<5 or not visible_owner(r[0]) or cutaway:continue
 		var n:Vector3=(r[3]-r[1]).cross(r[2]-r[1]).normalized();tri(r[0],"book_blue",r[1],r[2],r[3],n,3);tri(r[0],"cream",r[1],r[3],r[2],-n,0)

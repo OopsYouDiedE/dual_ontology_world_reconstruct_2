@@ -24,7 +24,7 @@ func _ready()->void:
 	caption(params,"Pin ΔX / ΔZ");for spin in [dx_input,dz_input]:spin.min_value=-.65;spin.max_value=.65;spin.step=.05;params.add_child(spin)
 	dx_input.value=.35
 	var split=HSplitContainer.new();split.size_flags_vertical=SIZE_EXPAND_FILL;col.add_child(split);grid.size_flags_horizontal=SIZE_EXPAND_FILL;grid.custom_minimum_size.x=220;split.add_child(grid);grid.stroke.connect(paint);section.size_flags_horizontal=SIZE_EXPAND_FILL;section.custom_minimum_size.x=320;section.stretch=true;split.add_child(section);split.split_offset=-170;viewport.own_world_3d=true;viewport.use_occlusion_culling=true;section.add_child(viewport);viewport.add_child(view);viewport.add_child(cam);cam.current=true
-	var env=WorldEnvironment.new();var e=preload("res://scenes/components/rendering/post/Hall04.tres").duplicate();e.background_mode=Environment.BG_COLOR;e.background_color=Color("303c47");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("e9ddc6");e.ambient_light_energy=.85;env.environment=e;viewport.add_child(env);var sun=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-54,-32,0);sun.shadow_enabled=true;viewport.add_child(sun);section.gui_input.connect(orbit)
+	var env=WorldEnvironment.new();var e=preload("res://scenes/components/rendering/post/Hall04.tres").duplicate();e.background_mode=Environment.BG_COLOR;e.background_color=Color("303c47");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("e9ddc6");e.ambient_light_energy=.85;env.environment=e;viewport.add_child(env);var sun=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-54,-32,0);sun.shadow_enabled=true;viewport.add_child(sun);section.gui_input.connect(orbit);var ink=preload("res://scenes/components/rendering/post/InkPass.gd").create();ink.material_override.set_shader_parameter("opacity",.40);viewport.add_child(ink)
 	var row=HBoxContainer.new();col.add_child(row);opt(row,["Columns","Doors","Lights","Valves"],func(i):filter=i;fill_list());list.custom_minimum_size.x=175;row.add_child(list);btn(row,"Pin / update",override_part);btn(row,"Clear override",clear_part);btn(row,"Operate",operate);btn(row,"Diagnostics",diagnostics)
 	var seq=opt(row,["1 · Slabs","2 · Frame","3 · Walls","4 · Detail","5 · Full"],func(i):stage=i+1;rebuild());seq.select(4)
 	report.custom_minimum_size.y=60;report.fit_content=false;col.add_child(report);rebuild()
@@ -48,7 +48,7 @@ func paint(a:Vector2i,b:Vector2i)->void:
 				5:plan.cores.erase(k)
 	rebuild()
 func rebuild()->void:
-	solver.build(plan);view.render(solver,level if cut else -1,cut,stage);grid.plan=plan;grid.level=level;grid.queue_redraw();seed_input.value=plan.seed;radius.set_value_no_signal(plan.get("spiral_radius",1.6));repairs.set_pressed_no_signal(plan.mode=="repair");fill_list();camera_fit();summary="%d bays   ·   %d wall segments   ·   %d portals/vertical links   ·   %d overrides   ·   %d diagnostics"%[plan.cells.size(),solver.wall_hosts.size(),solver.links.size(),plan.overrides.size(),solver.notes.size()];report.text=summary+"\nDrag grid to paint (4.2 m snap). RMB orbit · wheel zoom. Pin saves column shift / door finish / lamp suppression."
+	solver.build(plan);view.render(solver,level if cut else -1,cut,stage);grid.plan=plan;grid.level=level;grid.queue_redraw();seed_input.value=plan.seed;radius.set_value_no_signal(plan.get("spiral_radius",1.6));repairs.set_pressed_no_signal(plan.mode=="repair");fill_list();camera_fit();summary="%d bays   ·   %d wall segments   ·   %d portals/vertical links   ·   %d overrides   ·   %d diagnostics"%[plan.cells.size(),solver.wall_hosts.size(),solver.links.size(),plan.overrides.size(),solver.notes.size()];report.text=summary+"\nDrag grid to paint · RMB orbit · wheel zoom · F: walk inside at 1.60 m."
 func fill_list()->void:
 	var old=list.get_item_text(list.selected) if list.selected>=0 else "";list.clear();var prefix=["column/","door/","light/","valve/"][filter];var ids=solver.choices.keys() if filter!=3 else view.valves.keys();if filter==3:ids=[];for o in solver.sockets:if o.kind=="valve" and view.visible_owner(o.owner):ids.append(o.id)
 	ids.sort();for id in ids:
@@ -79,14 +79,51 @@ func camera_fit()->void:
 		var b=AABB(Vector3(c.x*S.BAY,c.z*S.RISE,c.y*S.BAY),Vector3(S.BAY,S.RISE,S.BAY));bounds=b if first else bounds.merge(b);first=false
 	var target=bounds.get_center();var dist=maxf(6,bounds.size.length()*1.16)*zoom;cam.position=target+Vector3(cos(az)*cos(el),sin(el),sin(az)*cos(el))*dist;cam.look_at(target)
 func orbit(e:InputEvent)->void:
+	if is_instance_valid(walker):return
 	if e is InputEventMouseMotion and e.button_mask&MOUSE_BUTTON_MASK_RIGHT:az-=e.relative.x*.008;el=clampf(el+e.relative.y*.006,.12,1.5);camera_fit()
 	if e is InputEventMouseButton and e.pressed:
 		if e.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:zoom=clampf(zoom*(.88 if e.button_index==MOUSE_BUTTON_WHEEL_UP else 1.14),.25,3);camera_fit()
 		elif e.button_index==MOUSE_BUTTON_LEFT:
-			var a=cam.project_ray_origin(e.position);var q=PhysicsRayQueryParameters3D.create(a,a+cam.project_ray_normal(e.position)*180,S.USE|S.SIGHT);q.collide_with_areas=true;var hit=viewport.world_3d.direct_space_state.intersect_ray(q);if hit and hit.collider.has_meta("socket_id"):report.text="Interaction: "+str(view.use_socket(hit.collider.get_meta("socket_id")))
+			var a=cam.project_ray_origin(e.position);var q=PhysicsRayQueryParameters3D.create(a,a+cam.project_ray_normal(e.position)*180,S.USE|S.SIGHT);q.collide_with_areas=true;var hit=view.get_world_3d().direct_space_state.intersect_ray(q);if hit and hit.collider.has_meta("socket_id"):report.text="Interaction: "+str(view.use_socket(hit.collider.get_meta("socket_id")))
 func save_plan()->void:
 	var f=FileAccess.open(SAVE,FileAccess.WRITE);if f:f.store_string(JSON.stringify(plan,"  "));report.text="Saved: "+ProjectSettings.globalize_path(SAVE)
 func load_plan()->void:
 	var p=JSON.parse_string(FileAccess.get_file_as_string(SAVE)) if FileAccess.file_exists(SAVE) else null
 	if not S.valid(p):report.text="No valid saved plan. Current drawing retained.";return
 	remember();plan=p;rebuild()
+
+# F enters a full-building inspection using the actual expedition capsule.
+var walker:CharacterBody3D
+var hidden_walk_controls:Array[Control]=[]
+func walk_toggle()->void:
+	if is_instance_valid(walker):
+		Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
+		viewport.remove_child(walker);walker.queue_free();walker=null
+		for control in hidden_walk_controls:control.show()
+		hidden_walk_controls.clear();cam.make_current();rebuild();return
+	var cells=plan.cells.keys();cells.sort();var spawn_key=""
+	for k in cells:
+		var c=S.address(k)
+		if c.z!=0 or solver.active_cores.has(k):continue
+		if spawn_key=="" or (int(plan.cells[k])==0 and c.y>S.address(spawn_key).y):spawn_key=k
+	if spawn_key=="":report.text="Paint a ground-floor bay without a shaft to enter.";return
+	var c=S.address(spawn_key);var feet=Vector3((c.x+.55)*S.BAY,.035,(c.y+.65)*S.BAY)
+	view.render(solver,-1,false);walker=preload("res://scenes/rogue_player/RoguePlayer.tscn").instantiate();walker.set_script(preload("InspectionPlayer.gd"));walker.first_person=true;walker.collision_layer=0;viewport.add_child(walker);walker.enter(feet,-.40);walker.camera().fov=70
+	var split=section.get_parent();var col=split.get_parent()
+	for control in col.get_children():
+		if control!=split and control!=report and control.visible:hidden_walk_controls.append(control);control.hide()
+	hidden_walk_controls.append(grid);grid.hide();Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
+	report.text="SPACE INSPECTION   ·   1.60 m eye   |   WASD move   ·   mouse look   ·   E operate ahead   ·   F / Esc return"
+
+func _input(e:InputEvent)->void:
+	if e is InputEventKey and e.pressed and not e.echo:
+		if e.keycode==KEY_F or (e.keycode==KEY_ESCAPE and is_instance_valid(walker)):
+			walk_toggle();get_viewport().set_input_as_handled();return
+		if is_instance_valid(walker) and e.keycode==KEY_E:
+			var eye=walker.camera().global_position;var ray=PhysicsRayQueryParameters3D.create(eye,eye-walker.camera().global_basis.z*3,S.USE|S.SIGHT);ray.collide_with_areas=true
+			var hit=view.get_world_3d().direct_space_state.intersect_ray(ray)
+			if hit and hit.collider.has_meta("socket_id"):view.use_socket(hit.collider.get_meta("socket_id"))
+	if is_instance_valid(walker) and e is InputEventMouseMotion:walker.orbit_by(e.relative);get_viewport().set_input_as_handled()
+
+func _exit_tree()->void:
+	if is_instance_valid(walker):Input.mouse_mode=Input.MOUSE_MODE_VISIBLE

@@ -134,7 +134,7 @@ func operate()->void:
 func diagnostics()->void:report.text=summary+"\n"+"\n".join(solver.notes)
 func camera_fit()->void:
 	if detective_focus and detective.visible:
-		cam.position=detective.base+Vector3(.88,1.40,1.75);cam.look_at(detective.base+Vector3.UP*.98);return
+		cam.position=detective.base+Vector3(.10,1.35,2.28);cam.look_at(detective.base+Vector3.UP*.98);return
 	var bounds=AABB();var first=true;for k in plan.cells:
 		var c=S.address(k);if cut and c.z>level:continue
 		var b=AABB(Vector3(c.x*S.BAY,solver.datum(c.z),c.y*S.BAY),Vector3(S.BAY,solver.room_height(k),S.BAY));bounds=b if first else bounds.merge(b);first=false
@@ -182,10 +182,13 @@ func _input(e:InputEvent)->void:
 		if not is_instance_valid(walker) and not get_viewport().gui_get_focus_owner() is LineEdit:
 			if e.keycode==KEY_P:
 				if not detective.visible:report.text="No clear bay for the detective on this level.";return
-				detective_focus=not detective_focus;detective.choose(0,true);camera_fit()
-				report.text="DETECTIVE  ·  1 Idle   2 Walk   3 Run   4 Reach   0 Cycle   P Return" if detective_focus else summary
+				detective_focus=not detective_focus;detective.choose(0,true)
+				view.render(solver,level if cut and not detective_focus else -1,cut and not detective_focus,stage);camera_fit()
+				report.text="DETECTIVE + VALE  ·  1–4 Basics   5 Signal   6 Examine   7 Listen   0 Cycle   N Next bay   P Return" if detective_focus else summary
 				get_viewport().set_input_as_handled();return
-			if detective_focus and e.keycode>=KEY_0 and e.keycode<=KEY_4:
+			if detective_focus and e.keycode==KEY_N:
+				detective.show_room(1);camera_fit();get_viewport().set_input_as_handled();return
+			if detective_focus and e.keycode>=KEY_0 and e.keycode<=KEY_7:
 				var number=e.keycode-KEY_0;detective.choose(maxi(0,number-1),number==0);get_viewport().set_input_as_handled();return
 		if e.keycode==KEY_K and not is_instance_valid(walker) and not get_viewport().gui_get_focus_owner() is LineEdit:load_example(1);get_viewport().set_input_as_handled();return
 		if e.keycode==KEY_F or (e.keycode==KEY_ESCAPE and is_instance_valid(walker)):

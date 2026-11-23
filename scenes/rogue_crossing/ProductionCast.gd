@@ -87,7 +87,7 @@ static func _relative_to_body(body: Node3D, node: Node3D) -> Transform3D:
 static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis) -> AnimationLibrary:
 	var library := AnimationLibrary.new()
 	var path := body.get_path_to(skeleton)
-	var lengths := {&"idle": 2.4, &"walk": 0.9, &"run": 0.65, &"interact": 0.85}
+	var lengths := {&"idle": 2.4, &"walk": 0.9, &"run": 0.65, &"interact": 0.85, &"signal": 2.0, &"examine": 2.0, &"listen": 2.0}
 	for clip: StringName in lengths:
 		var anim := Animation.new()
 		anim.length = lengths[clip]
@@ -107,6 +107,13 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis) -> A
 	return library
 
 static func _angle(clip: StringName, bone: String, t: float) -> float:
+	var hold := smoothstep(0.0, .23, t) * (1.0 - smoothstep(.78, 1.0, t))
+	if clip == &"signal":
+		return hold * float({"upperarm_r":-1.06,"lowerarm_r":-.85,"head":-.10}.get(bone,0.0))
+	if clip == &"examine":
+		return hold * float({"spine_01":.27,"spine_03":.29,"head":.26,"upperarm_l":-.65,"lowerarm_l":-.75,"upperarm_r":-.52,"lowerarm_r":-.72}.get(bone,0.0))
+	if clip == &"listen":
+		return hold * float({"upperarm_l":-.52,"lowerarm_l":-1.65,"head":.16,"spine_03":.08}.get(bone,0.0))
 	if clip == &"interact":
 		var reach := sin(PI * t)
 		match bone:

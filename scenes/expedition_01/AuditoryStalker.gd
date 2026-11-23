@@ -21,7 +21,10 @@ func finish(color:Color)->StandardMaterial3D:
 func _ready()->void:
 	var figure:=MeshInstance3D.new();var cap:=CapsuleMesh.new();cap.height=2.4;cap.radius=.48;figure.mesh=cap;figure.position.y=1.2;figure.material_override=finish(Color(.68,.016,.025,.82));add_child(figure)
 	var ring:=TorusMesh.new();ring.inner_radius=.88;ring.outer_radius=1.;pulse.mesh=ring;pulse.position.y=.08;pulse.material_override=finish(Color(.9,.025,.025,.65));add_child(pulse)
-	var box:=BoxMesh.new();box.size=Vector3(.45,.75,.36);lure.mesh=box;lure.material_override=finish(Color.GOLD);add_child(lure);lure.top_level=true;lure.global_position=BAIT+Vector3.UP*.4;lure.hide();add_child(voice);add_child(clock);clock.top_level=true;clock.global_position=BAIT;voice.max_distance=46;clock.max_distance=42;hide()
+	var metronome:=PrismMesh.new();metronome.size=Vector3(.085,.19,.084);lure.mesh=metronome
+	var wood:=StandardMaterial3D.new();wood.albedo_color=Color("8d6039");wood.roughness=.78;lure.material_override=wood
+	add_child(lure);lure.top_level=true;lure.global_position=BAIT+Vector3.UP*.4;lure.hide()
+	add_child(voice);add_child(clock);clock.top_level=true;clock.global_position=BAIT;voice.max_distance=46;clock.max_distance=42;hide()
 func throw_from(origin:Vector3)->void:
 	cast_time=.65;cast_start=origin;lure.global_position=origin;lure.show()
 func wake()->void:
@@ -54,6 +57,10 @@ func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:D
 		angle+=dt*.25;target=CENTER+Vector3(cos(angle)*8,0,sin(angle)*8);position=position.move_toward(target,2.*dt)
 		if not voice.playing:tone(voice,sounds.breath,-11)
 	elif state=="hunt":
-		ticks+=1;position=position.move_toward(p,dt*(5. if rage else 12.));if ticks>=40 and position.distance_to(p)<1.45:return true
+		ticks+=1
+		# The upper landing is separated from the well by the gallery floor.
+		var reachable:=Vector3(p.x,minf(p.y,2.85) if rage else p.y,p.z)
+		position=position.move_toward(reachable,dt*(5. if rage else 12.))
+		if ticks>=40 and position.distance_to(p)<1.45:return true
 	else:position=position.move_toward(target,4.6*dt)
 	var r:=.5+fmod(t*(2.8 if state=="hunt" else 1.),1.)*2.5;pulse.scale=Vector3(r,.28,r);return false

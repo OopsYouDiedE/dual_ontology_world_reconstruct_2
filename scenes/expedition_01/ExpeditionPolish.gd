@@ -114,10 +114,6 @@ func _build_hud(canvas:CanvasLayer)->void:
 		if ring>.02:cross.draw_arc(Vector2.ZERO,6.+7.*ring,0,TAU,40,Color(ACCENT,ring*.9),1.8,true))
 	# Interaction prompt sits just under the reticle, subtitle gets a backing plate.
 	var p:Label=lv.prompt;p.offset_top=34;p.offset_bottom=96;p.add_theme_font_size_override("font_size",19)
-	var s:Label=lv.subtitle;s.offset_left=210;s.offset_right=-210;s.offset_top=-132;s.offset_bottom=-64;s.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	s.add_theme_stylebox_override("normal",box(Color(.03,.03,.03,.62),4,Vector2(22,10)))
-	var m:PanelContainer=lv.manual;var paper:StyleBoxFlat=m.get_theme_stylebox("panel").duplicate();paper.bg_color=Color(.1,.1,.09,.96);paper.set_corner_radius_all(4);paper.shadow_color=Color(0,0,0,.55);paper.shadow_size=22;paper.content_margin_top=22;paper.content_margin_bottom=22
-	m.add_theme_stylebox_override("panel",paper)
 
 func _tune_camera()->void:
 	var eye:Camera3D=lv.eye;eye.fov=BASE_FOV;eye.near=.05;eye.far=180.
@@ -169,7 +165,9 @@ func _overlay(dt:float)->void:
 	var m:ShaderMaterial=shade.material
 	var low:float=clampf(1.-lv.oil/22.,0.,1.)
 	m.set_shader_parameter("strength",.34+.22*low);m.set_shader_parameter("dread",dread)
-	m.set_shader_parameter("pulse",.0);shade.visible=lv.mode<0
+	var in_shaft:bool=lv.released and lv.walker.position.x>46.
+	var pressure:float=clampf(lv.hunter.exposure/1.45,0.,1.) if in_shaft and not lv.collected else 0.
+	m.set_shader_parameter("pulse",pressure*(.24+.18*sin(lv.phase*7.)));shade.visible=lv.mode<0
 	var want:float=1. if (focus_id!="" and live) else 0.
 	ring=lerpf(ring,want,1.-exp(-14.*dt));cross.queue_redraw()
 
@@ -186,7 +184,7 @@ func _dread(dt:float)->void:
 		var d:=Vector2(p.x-h.position.x,p.z-h.position.z).length()
 		var mood:float=1. if h.state=="hunt" else .6 if h.state in ["investigate","lure"] else .3
 		target=clampf(1.-d/20.,0.,1.)*mood
-	if lv.collected:target=maxf(target,.22+.16*sin(lv.phase*7.))
+	if lv.collected and p.x>46.:target=minf(.36,maxf(target,.12+.09*sin(lv.phase*5.)))
 	dread=lerpf(dread,target,1.-exp(-3.*dt))
 	if h.state!=prev_hunter:
 		if h.state=="hunt":kick(.55);punch(7.)
@@ -238,6 +236,6 @@ func _hud(dt:float)->void:
 	var mode_name:="静步" if quiet else "奔跑" if lv.running else "步行"
 	var tint:=Color("9fd6e8") if quiet else Color("ff9a80") if lv.running else Color("f4ead8")
 	var note:=""
-	if well:note="　· 无声" if quiet else "　· 会被听见"
+	if well:note="　· 静步压住了脚音" if quiet else ("　· 井底已闻声" if lv.hunter.state=="hunt" else "　· 留意铁网上的脚音")
 	if well and not quiet:tint=Color("ffbf75")
 	state_label.text="▸ %s%s\n[Shift] 走跑　[Ctrl] 静步　[1] 手册"%[mode_name,note];state_label.modulate=tint

@@ -3,9 +3,10 @@ extends SceneTree
 var level
 var failures:=0
 func _initialize()->void:run.call_deferred()
-func go(x:float,z:float,limit:=2000)->bool:
+func go(x:float,z:float,limit:=2000,portal:=false)->bool:
 	var target:=Vector3(x,0,z);Input.action_press("move_up")
 	for i in limit:
+		if level.finished or (portal and level.shortcut_used):Input.action_release("move_up");return true
 		var p:Vector3=level.walker.position;var d:Vector3=target-p;d.y=0
 		if d.length()<.12:Input.action_release("move_up");return true
 		level.walker.rotation.y=atan2(-d.x,-d.z);await physics_frame
@@ -55,8 +56,7 @@ func run()->void:
 		if absf(point[0]-23.85)<.01:level.eye.rotation.x=-1.35
 		if absf(point[0]-25.5)<.01:
 			if not level.learned:push_error("Missing crossing proof");quit(1);return
-			for frame in 335:await physics_frame
-			if level.subtitle_id!="thought":push_error("Missing B3 inner thought");quit(1);return
+			if not level.captions.entries.has(""):push_error("Missing B3 inner thought");quit(1);return
 		if absf(point[0]-28.3)<.01:
 			for bypass in [[29.35,14.1],[29.35,12.1],[36.2,12.1],[29.35,12.1],[29.35,14.1]]:
 				if not await go(bypass[0],bypass[1]):quit(1);return
@@ -85,9 +85,22 @@ func run()->void:
 		if not await go(73.35+1.02*cos(a),8.1+1.02*sin(a),250):quit(1);return
 	if level.walker.position.y<4.5:push_error("Missed upper landing: %s"%level.walker.position);quit(1);return
 	if not await go(73.35,12.1):quit(1);return
-	level.eye.look_at(level.kit.leaf.position);level.use();if level.walker.position.x>40:push_error("Return leaf out of reach");quit(1);return
+	for i in 15:await physics_frame
+	level.eye.look_at(level.kit.leaf.global_position);level.use()
+	if not level.shortcut_open:push_error("Return leaf out of reach");quit(1);return
+	for i in 35:await physics_frame
+	if not await go(75.65,12.45,200,true):quit(1);return
+	for i in 30:await physics_frame
+	if level.walker.position.x>40:push_error("Return threshold did not transfer player");quit(1);return
 	for point in [[38.7,7.2],[38.7,0],[34,0],[1.5,0]]:
 		if not await go(point[0],point[1]):quit(1);return
-	var completed:=[false];level.returned.connect(func():completed[0]=true);level.eye.look_at(Vector3(.16,1.5,0));level.use()
+	var completed:=[false];level.returned.connect(func():completed[0]=true)
+	for i in 15:await physics_frame
+	level.eye.look_at(Vector3(.37,1.5,0));level.use()
+	for i in 35:await physics_frame
+	if not await go(-.95,0):quit(1);return
+	for i in 950:
+		if completed[0]:break
+		await physics_frame
 	if not completed[0]:push_error("Exit signal missing");quit(1);return
 	print("PASS: A1 → B1 → B2 → B3 → B4 → B5 → C1 → C2 → C4 → upper return → B5 → A1 exit; Hale watches through glazing.");quit(0)

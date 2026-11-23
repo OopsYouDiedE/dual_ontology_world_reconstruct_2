@@ -4,6 +4,9 @@ const CZ:=10.1
 const BLIND_ANGLES := [90,210,330]
 var gate:Node3D
 var leaf:Node3D
+var leave_pivot:Node3D
+var gate_spots:Array[Marker3D]=[]
+var north_spot:Marker3D
 var bridge:Node3D
 var evidence_gate:Node3D
 var airlock:Node3D
@@ -14,8 +17,10 @@ var supplies:Node3D
 var stair_path:=PackedVector3Array()
 func build()->void:
 	arcade();arcade_details();archive();archive_details();shaft();shaft_details();hardware()
+func marker(id:String,where:Vector3)->Marker3D:
+	var spot:=Marker3D.new();spot.name=id;section.add_child(spot);spot.position=where;return spot
 func arcade()->void:
-	group("A1_ImmersionArcade");slab(18,0,36,4.4);lid(18,0,36,4.4,5.2)
+	group("A1_ImmersionArcade");slab(17.15,0,37.7,4.4);lid(18,0,36,4.4,5.2)
 	var lights:=[]
 	for i in 6:lights.append([i*6+1,i*6+5,3.6,4.85])
 	wall(true,-2.2,0,36,5.2,lights);wall(true,2.2,0,36,5.2,[[30.1,31.9,0,2.6]],true)
@@ -36,11 +41,19 @@ func arcade()->void:
 			var parts:=[rect("Pier",x,1.55,z,.6,3.1,.38),rect("Plinth",x,.13,z,.71,.26,.46,"joint"),rect("Capital",x,3.03,z,.72,.16,.52,"trim")]
 			if z>0 and not end_wall:cut.append_array(parts)
 	airlock=rect("RearSeal",.12,6.,0,.22,4.8,4.2,"iron")
+	for z in [-1.5,1.5]:rect("ExitJamb",-.04,1.43,z,.44,2.86,.35,"iron")
+	rect("ExitLintel",-.04,2.88,0,.44,.28,3.35,"iron")
+	rect("ExitLantern",.24,2.55,0,.12,.17,.47,"brass",false)
+	for z in [-1.55,1.55]:rect("AirlockReturnWall",-.89,1.47,z,1.74,2.94,.23,"iron")
+	lid(-.9,0,1.8,3.2,2.92)
+	rect("AirlockFarGate",-1.64,1.43,0,.21,2.86,3.0,"iron")
 	gate=Node3D.new();section.add_child(gate);section=gate
 	for i in 21:
 		var z:float=(i-10)*.174;var h:=3.1+sqrt(1.76*1.76-z*z);rect("Picket",36,h*.5,z,.085,h,.036,"iron",false)
 	for y in [.18,1.25,2.68,3.12]:rect("Strap",36,y,0,.10,.075,2.8,"iron",false)
 	invisible_block(Vector3(36,1.6,0),Vector3(.15,3.2,2.8));section=root_group
+	gate_spots.append(marker("HaleGateNear",Vector3(35.30,0.,-.83)))
+	gate_spots.append(marker("HaleGateFar",Vector3(35.30,0.,.83)))
 	for x in range(1,36,2):rect("PavingJoint",x,.002,0,.034,.008,4.16,"joint",false)
 	for z in [-.15,.15]:rect("GuideInlay",18,.006,z,36,.012,.032,"joint",false)
 func invisible_block(p:Vector3,s:Vector3)->void:
@@ -51,19 +64,31 @@ func archive()->void:
 	wall(true,8.95,19.8,27.9,4,[[20.15,21.75,0,2.4],[22.25,27.05,.38,2.75]])
 	rect("ObservationGlass",24.65,1.565,8.95,4.8,2.37,.055,"glass");for x in [22.25,23.85,25.45,27.05]:rect("Mullion",x,1.565,8.95,.045,2.37,.09,"iron",false)
 	wall(false,20,9.05,15.05,4);wall(true,15.15,20,27.75,4,[],true);wall(false,27.8,9.05,15.05,4,[[13.3,14.9,0,2.4]])
+	# The recess is below the archive slab. Carry the room enclosure down past it.
+	for x in [20.,27.8]:rect("RecessFoundation",x,-.36,12.06,.23,.77,6.28,"brick")
+	for z in [8.98,15.15]:rect("RecessFoundation",23.9,-.36,z,7.99,.77,.23,"brick")
+	# Fillets cover the lid joints from the occupied side, away from the windows.
+	for z in [2.31,8.84]:rect("ArchiveCeilingFillet",23.85,3.70,z,8.16,.15,.18,"brick",false)
+	for x in [19.81,27.78]:rect("ArchiveCeilingFillet",x,3.70,5.57,.18,.15,6.64,"brick",false)
+	for z in [9.07,15.03]:rect("TrialCeilingFillet",23.90,3.92,z,7.85,.15,.18,"brick",false)
+	for x in [20.11,27.69]:rect("TrialCeilingFillet",x,3.92,12.05,.18,.15,6.10,"brick",false)
 	# A single walkable crossing: the pit ramp lands on the entry bank only.
 	slab(23.9,9.68,7.7,1.48);slab(23.9,14.39,7.7,1.54)
 	test_board=rect("AmberTestPlate",23.85,.045,12.02,1.8,.09,3.20,"test_amber")
 	for ramp_x in [21.5,26.2]:
-		var ramp:=rect("EntryRecoveryRamp",ramp_x,-.35,11.22,2.2,.10,1.80,"floor");ramp.rotation.x=atan2(.60,1.65)
+		var ramp:=rect("EntryRecoveryRamp",ramp_x,-.35,11.22,2.2,.10,1.80,"brick");ramp.rotation.x=atan2(.60,1.65)
+	for x in [21.5,26.2]:
+		rect("RampApron",x,-.645,12.09,2.22,.23,.44,"joint",false)
 	for x in [21.49,26.24]:
 		var width:=2.92 if x<24 else 3.0
 		rect("IronGuard",x,.54,13.66,width,1.10,.12,"iron");rect("BrassCap",x,1.10,13.66,width,.06,.15,"brass",false)
 	for i in 38:rect("LipStripe",20.15+i*.2,.006,10.38,.19,.012,.10,"brass" if i%2==0 else "iron",false)
 	evidence_gate=rect("TrialInterlock",27.8,1.25,14.1,.19,2.5,1.6,"iron")
-	wall(true,13,27.8,41.8,2.4,[[28.6,30.1,0,2.3],[38.1,39.7,0,2.4]],false,"dark");wall(true,15.2,27.8,41.8,2.4,[],true,"dark");wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14,2,2.4)
+	wall(true,13,27.8,41.8,2.4,[[28.6,30.1,0,2.3],[38.1,39.7,0,2.4]],false,"dark");wall(true,15.2,27.8,41.8,2.4,[],true,"dark");wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14.23,2.33,2.38)
+	for edge in [[27.81,41.84,15.06],[27.81,28.58,13.13],[30.12,38.07,13.13],[39.73,41.84,13.13]]:
+		for h in [.075,2.34]:rect("B4SeamCover",(edge[0]+edge[1])*.5,h,edge[2],edge[1]-edge[0],.16,.095,"dark",false)
 	wall(true,7.2,35.25,41.75,3.8,[[36.68,37.72,.83,2.35],[37.9,39.5,0,2.4]]);wall(false,35.15,7.2,13,3.8,[[11.3,12.9,0,2.6]]);slab(31.47,12.05,7.4,1.95);wall(true,11.02,27.8,35.15,2.6);lid(31.47,12.05,7.4,1.95,2.6);wall(false,41.85,7.2,13,3.8,[[8.9,11.3,0,2.8]])
-	for v in [[31,4.85,6,5],[23.85,5.6,8,6.5],[23.9,12,7.5,6],[38.5,10.1,6.5,5.5]]:lid(v[0],v[1],v[2],v[3],4 if v[0]==23.9 else 3.8)
+	for v in [[31,4.85,6,5],[23.85,5.6,8,6.5],[23.9,12,7.5,6],[38.5,10.1,6.5,5.5]]:lid(v[0],v[1],v[2]+.32,v[3]+.34,3.98 if v[0]==23.9 else 3.73)
 	for z in [4.0,6.9]:shelf(23.65,z)
 	# Rubble in the blind opening beyond B1, visible across a broken barricade.
 	for row in 3:
@@ -79,6 +104,8 @@ func archive()->void:
 	for i in route.size()-1:beam(route[i],route[i+1],.10,"brass")
 	for z in [2.68,4.48,6.28]:rect("PipeClamp",36.1,3.06,z,.27,.28,.09,"iron",false)
 	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);rect("OilTin",34,.26,14.85,.3,.52,.30,"brass");rect("ClockworkMetronome",34.45,.2,14.85,.22,.4,.23,"book");section=root_group;label_at("B5  /  MASTER RELEASE",Vector3(36.8,2.35,7.34))
+	for x in [37.86,39.54]:rect("ShortcutReceiverStile",x,1.36,9.2,.14,2.72,.26,"door_green",false)
+	rect("ShortcutReceiverHead",38.7,2.68,9.2,1.81,.17,.26,"door_green",false)
 	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[],true)
 func shelf(x:float,z:float)->void:
 	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()
@@ -99,7 +126,8 @@ func band(id:String,r0:float,r1:float,y0:float,y1:float,a:float,b:float,k:String
 	return n
 func shaft()->void:
 	group("C1_C4_SourceCaisson");platform(-1,2.5);platform(1,3.);slab(CX-14.45,CZ,1.2,2.65);bridge=rect("SingleGazeSpan",CX,-.11,CZ,18,.22,3.6,"amber");bridge.material_override=mat("amber").duplicate()
-	var roof:=MeshInstance3D.new();var cap:=CylinderMesh.new();cap.top_radius=14.45;cap.bottom_radius=14.45;cap.height=.32;cap.radial_segments=56;roof.mesh=cap;roof.material_override=mat("chalk");section.add_child(roof);roof.position=Vector3(CX,10.16,CZ);cut.append(roof)
+	north_spot=marker("HaleNorthWindow",polar(12.45,1.5*PI,4.8))
+	var roof:=MeshInstance3D.new();var cap:=CylinderMesh.new();cap.top_radius=14.60;cap.bottom_radius=14.60;cap.height=.32;cap.radial_segments=56;roof.mesh=cap;roof.material_override=mat("chalk");section.add_child(roof);roof.position=Vector3(CX,10.10,CZ);cut.append(roof)
 	var bottom:=MeshInstance3D.new();var disc:=CylinderMesh.new();disc.top_radius=14;disc.bottom_radius=14;disc.height=.2;bottom.mesh=disc;bottom.material_override=mat("abyss");section.add_child(bottom);bottom.position=Vector3(CX,-10.1,CZ)
 	for i in 56:
 		var a:=TAU*i/56.;var b:=TAU*(i+1)/56.;var mid:=(a+b)*.5;var entrance:=absf(mid-PI)<.115;var reveal:=cos(mid-1.03)>.52
@@ -137,7 +165,16 @@ func shaft()->void:
 	slab(CX+14.53,CZ+2.35,2.0,2.18,4.8)
 	for z in [CZ+1.30,CZ+3.4]:rect("ReturnPassageWall",CX+14.53,6.14,z,2.0,2.68,.17)
 	rect("ReturnPassageRoof",CX+14.53,7.55,CZ+2.35,2.0,.16,2.18)
-	leaf=rect("EmeraldReturnLeaf",CX+13.54,6.1,CZ+2.35,.16,2.6,1.8,"green");core=rect("SourceCore",CX+10.8,1,CZ,.42,.68,.42,"amber");rect("CorePlinth",CX+10.8,.31,CZ,.85,.62,.85,"joint")
+	var center:=Vector3(CX+13.54,6.1,CZ+2.35)
+	for side in [-1.,1.]:rect("ReturnJamb",center.x,center.y,center.z+side*.98,.28,2.7,.16,"iron")
+	rect("ReturnHead",center.x,7.47,center.z,.28,.17,2.11,"iron")
+	leave_pivot=Node3D.new();leave_pivot.name="ReturnDoorHinge";section.add_child(leave_pivot);leave_pivot.position=center+Vector3(0,0,-.90)
+	var door_section:=section;section=leave_pivot
+	leaf=rect("EmeraldReturnLeaf",0,0,.90,.14,2.6,1.8,"door_green")
+	for z in [.44,1.36]:rect("PressedDoorPanel",-.084,0,z,.035,2.24,.81,"door_green",false)
+	rect("BrassPanicBar",-.16,-.15,.90,.09,.09,1.38,"brass",false)
+	section=door_section
+	core=rect("SourceCore",CX+10.8,1,CZ,.42,.68,.42,"amber");rect("CorePlinth",CX+10.8,.31,CZ,.85,.62,.85,"joint")
 	label_at("01   /   SOURCE CAISSON",Vector3(46.1,2.9,CZ),-PI/2)
 
 func arcade_details()->void:

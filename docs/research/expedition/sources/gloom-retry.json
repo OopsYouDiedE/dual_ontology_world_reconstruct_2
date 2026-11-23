@@ -1,0 +1,34 @@
+[
+  {
+    "id": "gloom-retry-1",
+    "page": "https://store.steampowered.com/app/1150760/?l=english",
+    "video": "https://video.fastly.steamstatic.com/store_trailers/1150760/795214/b8c6bd0d2666112eafbf753a7e2793d3f2bae74e/1750628920/hls_264_master.m3u8?t=1733361840",
+    "frames": [
+      [
+        3,
+        "gloom-retry-1-03.jpg"
+      ],
+      [
+        8,
+        "gloom-retry-1-08.jpg"
+      ],
+      [
+        13,
+        "gloom-retry-1-13.jpg"
+      ],
+      [
+        18,
+        "gloom-retry-1-18.jpg"
+      ],
+      [
+        23,
+        "gloom-retry-1-23.jpg"
+      ]
+    ],
+    "size": [
+      1920,
+      1080
+    ],
+    "duration": 25.033333
+  }
+]

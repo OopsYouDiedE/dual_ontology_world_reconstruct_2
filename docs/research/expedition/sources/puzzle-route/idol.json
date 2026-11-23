@@ -1,0 +1,49 @@
+[
+  {
+    "id": "idol",
+    "page": "https://store.steampowered.com/app/1677770/?l=english",
+    "frames": [
+      [
+        5,
+        "idol-05.jpg"
+      ],
+      [
+        10,
+        "idol-10.jpg"
+      ],
+      [
+        15,
+        "idol-15.jpg"
+      ],
+      [
+        20,
+        "idol-20.jpg"
+      ],
+      [
+        25,
+        "idol-25.jpg"
+      ],
+      [
+        30,
+        "idol-30.jpg"
+      ],
+      [
+        36,
+        "idol-36.jpg"
+      ],
+      [
+        42,
+        "idol-42.jpg"
+      ]
+    ],
+    "video": "https://video.fastly.steamstatic.com/store_trailers/1677770/504469/fc7854729ce68dfcf7645508b2e28339414bbc6a/1750724476/hls_264_master.m3u8?t=1684338125",
+    "alternates": [
+      "https://video.fastly.steamstatic.com/store_trailers/1677770/603067/3998332c236345416d26cdfdb063ac1fff21f862/1750724519/hls_264_master.m3u8?t=1693497058",
+      "https://video.fastly.steamstatic.com/store_trailers/1677770/564616/61fafc46a4601e51a00bb14a510376f808367806/1750724501/hls_264_master.m3u8?t=1693497062",
+      "https://video.fastly.steamstatic.com/store_trailers/1677770/504479/c9732fc16eba36ad49b9bc5f44d71be7a7928f5b/1750724497/hls_264_master.m3u8?t=1684338121"
+    ],
+    "initial_error": null,
+    "issues": [],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/1677770/504469/fc7854729ce68dfcf7645508b2e28339414bbc6a/1750724476/hls_264_3_video.m3u8"
+  }
+]

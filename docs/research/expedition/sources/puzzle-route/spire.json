@@ -1,0 +1,73 @@
+[
+  {
+    "id": "spire",
+    "page": "https://store.steampowered.com/app/646570/?l=english",
+    "frames": [
+      [
+        5,
+        "spire-05.jpg"
+      ],
+      [
+        10,
+        "spire-10.jpg"
+      ],
+      [
+        15,
+        "spire-15.jpg"
+      ],
+      [
+        20,
+        "spire-20.jpg"
+      ],
+      [
+        25,
+        "spire-25.jpg"
+      ],
+      [
+        30,
+        "spire-30.jpg"
+      ],
+      [
+        36,
+        "spire-36.jpg"
+      ],
+      [
+        42,
+        "spire-42.jpg"
+      ],
+      [
+        48,
+        "spire-48.jpg"
+      ],
+      [
+        54,
+        "spire-54.jpg"
+      ],
+      [
+        60,
+        "spire-60.jpg"
+      ],
+      [
+        66,
+        "spire-66.jpg"
+      ],
+      [
+        72,
+        "spire-72.jpg"
+      ],
+      [
+        80,
+        "spire-80.jpg"
+      ],
+      [
+        90,
+        "spire-90.jpg"
+      ]
+    ],
+    "video": "https://video.fastly.steamstatic.com/store_trailers/646570/205320/640196deb3169b2a1667340ab45f229af73caba7/1750566635/hls_264_master.m3u8?t=1548258737",
+    "alternates": [],
+    "initial_error": null,
+    "issues": [],
+    "variant": "https://video.fastly.steamstatic.com/store_trailers/646570/205320/640196deb3169b2a1667340ab45f229af73caba7/1750566635/hls_264_3_video.m3u8"
+  }
+]

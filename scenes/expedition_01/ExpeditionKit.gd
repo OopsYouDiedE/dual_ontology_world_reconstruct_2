@@ -6,7 +6,8 @@ var gate:Node3D
 var leaf:Node3D
 var leave_pivot:Node3D
 const AIRLOCK_DEPTH := -2.65
-const RETURN_ELBOW := 77.62
+const RETURN_ELBOW := 78.52
+const WEST_STAIR_X := 49.15
 const RETURN_SOUTH := 26.65
 const RETURN_WEST := 43.80
 const RETURN_GATE_Z := 11.52
@@ -184,8 +185,9 @@ func band(id:String,r0:float,r1:float,y0:float,y1:float,a:float,b:float,k:String
 	if solid:
 		var body:=StaticBody3D.new();body.collision_layer=5 if k=="glass" else 3;var col:=CollisionShape3D.new();var shape:=ConvexPolygonShape3D.new();shape.points=v;col.shape=shape;body.add_child(col);n.add_child(body)
 	return n
+func west_stair_entry()->Vector3:return Vector3(WEST_STAIR_X,0.,9.27)
 func shaft()->void:
-	group("C1_C4_SourceCaisson");platform(-1,2.5);platform(1,3.);slab(CX-14.45,CZ,1.2,2.65);bridge=rect("SingleGazeSpan",CX,-.11,CZ,18,.22,3.6,"amber");bridge.material_override=mat("amber").duplicate()
+	group("C1_C4_SourceCaisson");platform(-1,2.5);platform(1,3.);slab(CX-14.45,CZ,1.2,2.65,-.018);bridge=rect("SingleGazeSpan",CX,-.11,CZ,18,.22,3.6,"amber");bridge.material_override=mat("amber").duplicate()
 	north_spot=marker("HaleNorthWindow",polar(12.45,1.5*PI,4.8))
 	var roof:=MeshInstance3D.new();var cap:=CylinderMesh.new();cap.top_radius=14.60;cap.bottom_radius=14.60;cap.height=.32;cap.radial_segments=56;roof.mesh=cap;roof.material_override=mat("chalk");section.add_child(roof);roof.position=Vector3(CX,10.10,CZ);cut.append(roof)
 	var bottom:=MeshInstance3D.new();var disc:=CylinderMesh.new();disc.top_radius=14;disc.bottom_radius=14;disc.height=.2;bottom.mesh=disc;bottom.material_override=mat("abyss");section.add_child(bottom);bottom.position=Vector3(CX,-10.1,CZ)
@@ -202,7 +204,9 @@ func shaft()->void:
 		if i%4==1 and i!=1:
 			var rib:=box("BrickPilaster",polar(13.87,mid,0),Vector3(.34,20,.48),"joint",false,-mid);if reveal:cut.append(rib)
 		if sin(mid)>0:
-			band("SouthServiceWalk",12.70,13.95,-.16,0,a,b,"iron")
+			# The walk passes below the two clipped stone landings at each root;
+			# the slight step keeps their top faces from fighting at the portal.
+			band("SouthServiceWalk",12.70,13.95,-.184,-.024,a,b,"iron")
 		var stair_gap:=absf(sin(mid))<.35
 		if stair_gap:continue
 		var floor_ring:=band("ObservationRing",11.55,13.95,4.54,4.8,a,b,"floor");if reveal and absf(mid-PI*.5)>.115:cut.append(floor_ring)
@@ -214,13 +218,18 @@ func shaft()->void:
 		box("BlindPier",foot+Vector3.UP*1.75,Vector3(.85,3.5,1.6),"brick",true,-az)
 		for h in [.10,1.14,2.28,3.42]:box("PierCourse",foot+Vector3.UP*h,Vector3(.90,.09,1.64),"joint",false,-az)
 	for side in [-1,1]:
-		var origin:=Vector3(CX+side*12.35,0,CZ-2.0);beam(origin+Vector3.DOWN*.2,origin+Vector3.UP*5.6,.10,"iron")
+		var origin:=Vector3(WEST_STAIR_X if side==-1 else CX+12.35,0,CZ-2.0);beam(origin+Vector3.DOWN*.2,origin+Vector3.UP*5.6,.10,"iron")
 		if side==-1:beam(origin+Vector3.DOWN*10,origin,.10,"iron")
 		for i in range(-85 if side==-1 else 0,42):
-			var a:=PI*.5+TAU*i/41.;var p:=origin+Vector3(1.02*cos(a),4.8*i/41.,1.02*sin(a));box("HelicalTread",p-Vector3.UP*.09,Vector3(1.84,.18,.37),"trim",false,-a)
-			for strip in 5:stair_wedge(origin,i,.13+strip*.356,.486+strip*.356)
+			var a:=PI*.5+TAU*i/41.;var p:=origin+Vector3(1.02*cos(a),4.8*i/41.,1.02*sin(a))
+			if i<41:
+				box("HelicalTread",p-Vector3.UP*.09,Vector3(1.84,.18,.37),"trim",false,-a)
+				for strip in 5:stair_wedge(origin,i,.13+strip*.356,.486+strip*.356)
 			if side==-1 and i>=0:stair_path.append(p)
-			if i%3==0:beam(p+Vector3(.87*cos(a),0,.87*sin(a)),p+Vector3(.87*cos(a),.85,.87*sin(a)),.027,"iron")
+			if i>=0:
+				var edge:=stair_edge(origin,i)
+				if i%3==0 or i==41:beam(edge,edge+Vector3.UP*.95,.029,"iron")
+				if i<41:beam(edge+Vector3.UP*.95,stair_edge(origin,i+1)+Vector3.UP*.95,.039,"iron")
 	# Upper landing connects the last spiral tread to the gallery. Shortcut opens from the core side.
 	var center:=Vector3(CX+13.54,6.1,CZ+2.35)
 	for side in [-1.,1.]:rect("ReturnJamb",center.x,center.y,center.z+side*.98,.28,2.7,.16,"iron")
@@ -236,6 +245,10 @@ func shaft()->void:
 
 ## The green door leads to the actual south service gallery. Its roof and slope
 ## stay outside the caisson shell; the far grille opens only from this side.
+func stair_edge(origin:Vector3,i:int)->Vector3:
+	var a:=PI*.5+TAU*i/41.
+	return origin+Vector3(1.83*cos(a),4.8*i/41.,1.83*sin(a))
+
 func return_gallery()->void:
 	group("C5_SouthReturnGallery")
 	var start:=Vector3(CX+13.43,4.8,CZ+2.35)
@@ -246,22 +259,29 @@ func return_gallery()->void:
 	# Exterior corner pieces overlap at the seams. At each elbow, the inner
 	# wall is cut back by half the clear width so the turn remains full size.
 	var w:=1.17
-	gallery_plane("StoneTread",start,inner_elbow+w*Vector3.RIGHT,2.*w+.33,-.105,.21,"floor")
-	gallery_plane("StoneTread",inner_elbow-w*Vector3.BACK,outer_elbow+w*Vector3.BACK,2.*w+.33,-.105,.21,"floor")
-	gallery_plane("StoneTread",outer_elbow,lower_elbow,2.*w+.35,-.12,.24,"floor")
-	gallery_plane("StoneTread",lower_elbow+w*Vector3.BACK,outlet,2.*w+.33,-.105,.21,"floor")
 	var ramp_start:=outer_elbow+Vector3.LEFT*w
 	var ramp_end:=lower_elbow+Vector3.RIGHT*w
-	# Lift the flat west/east elbow slab above the ends of the shallow taper.
-	gallery_plane("BarrelSoffit",start,inner_elbow+w*Vector3.RIGHT,2.*w+.38,2.75,.27,"brick")
-	gallery_plane("BarrelSoffit",inner_elbow-w*Vector3.BACK,outer_elbow+w*Vector3.BACK,2.*w+.38,2.75,.27,"brick")
-	gallery_plane("BarrelSoffit",outer_elbow,lower_elbow,2.*w+.38,2.76,.28,"brick")
-	gallery_plane("BarrelSoffit",lower_elbow+w*Vector3.BACK,outlet,2.*w+.38,2.75,.27,"brick")
+	# One roof plate over each elbow. The orthogonal legs meet it at a butt joint,
+	# and the graded leg starts/ends at the flat elbow edges, not their centers.
+	var runs:=[[start,inner_elbow-Vector3.RIGHT*w],[inner_elbow+Vector3.BACK*w,outer_elbow-Vector3.BACK*w],[ramp_start,ramp_end],[lower_elbow-Vector3.BACK*w,outlet]]
+	for i in runs.size():
+		gallery_plane("StoneTread",runs[i][0],runs[i][1],2.*w+.33,-.109,.215,"floor")
+		gallery_plane("BarrelSoffit",runs[i][0],runs[i][1],2.*w+.38,2.772,.28,"brick")
+	for elbow in [inner_elbow,outer_elbow,lower_elbow]:
+		box("FlatElbowTread",elbow+Vector3.DOWN*.113,Vector3(2.*w+.08,.237,2.*w+.08),"floor")
+		box("FlatElbowSoffit",elbow+Vector3.UP*2.764,Vector3(2.*w+.30,.28,2.*w+.30),"brick")
 	gallery_wall(start-w*Vector3.BACK,inner_elbow+w*Vector3.RIGHT-w*Vector3.BACK)
 	gallery_wall(start+w*Vector3.BACK,inner_elbow-w*Vector3.RIGHT+w*Vector3.BACK)
 	gallery_wall(inner_elbow+w*Vector3.RIGHT-w*Vector3.BACK,outer_elbow+w*Vector3.RIGHT+w*Vector3.BACK)
 	gallery_wall(inner_elbow-w*Vector3.RIGHT+w*Vector3.BACK,outer_elbow-w*Vector3.RIGHT-w*Vector3.BACK)
-	gallery_wall(outer_elbow+w*Vector3.RIGHT+w*Vector3.BACK,lower_elbow-w*Vector3.RIGHT+w*Vector3.BACK)
+	var outer_pad:=w*Vector3.BACK
+	gallery_wall(outer_elbow+w*Vector3.RIGHT+outer_pad,ramp_start+outer_pad)
+	gallery_wall(ramp_start+outer_pad,ramp_end+outer_pad)
+	gallery_wall(ramp_end+outer_pad,lower_elbow-w*Vector3.RIGHT+outer_pad)
+	for ramp_tip in [ramp_start,ramp_end]:
+		box("GradeJointSeal",ramp_tip+Vector3.UP*2.614,Vector3(.26,.22,2.67),"brick",false)
+		for edge in [-w,w]:
+			box("GradeJointPier",ramp_tip+Vector3(0,1.41,edge),Vector3(.36,3.15,.32),"brick")
 	gallery_wall(ramp_start-w*Vector3.BACK,ramp_end-w*Vector3.BACK)
 	gallery_wall(lower_elbow-w*Vector3.RIGHT+w*Vector3.BACK,outlet-w*Vector3.RIGHT)
 	gallery_wall(lower_elbow+w*Vector3.RIGHT-w*Vector3.BACK,outlet+w*Vector3.RIGHT)
@@ -275,9 +295,11 @@ func return_gallery()->void:
 			box("Rib",point+Vector3(0,1.31,side*1.12),Vector3(.18,2.62,.19),"trim",false)
 		box("Header",point+Vector3(0,2.60,0),Vector3(.20,.18,2.32),"trim",false)
 	var pipe_offset:=Vector3(0,2.26,1.03)
-	beam(outer_elbow+pipe_offset,lower_elbow+pipe_offset,.046,"brass")
+	beam(outer_elbow+pipe_offset,ramp_start+pipe_offset,.046,"brass")
+	beam(ramp_start+pipe_offset,ramp_end+pipe_offset,.046,"brass")
+	beam(ramp_end+pipe_offset,lower_elbow+pipe_offset,.046,"brass")
 	var lamp_index:=0
-	for d in [Vector3(77.95,7.06,12.0),Vector3(78.45,6.98,20.03),Vector3(77.55,7.05,27.44),Vector3(69.34,5.96,27.46),Vector3(60.71,4.79,27.46),Vector3(52.28,3.58,27.46),Vector3(43.3,2.29,27.46),Vector3(42.97,2.26,18.71),Vector3(43.15,2.30,12.31)]:
+	for d in [Vector3(78.85,7.06,12.0),Vector3(79.35,6.98,20.03),Vector3(78.45,7.05,27.44),Vector3(69.34,5.96,27.46),Vector3(60.71,4.79,27.46),Vector3(52.28,3.58,27.46),Vector3(43.3,2.29,27.46),Vector3(42.97,2.26,18.71),Vector3(43.15,2.30,12.31)]:
 		box("ServiceSconce",d,Vector3(.17,.20,.19),"brass",false)
 		marker("GalleryLamp%d"%lamp_index,d);lamp_index+=1
 	return_exit_gate=Node3D.new();section.add_child(return_exit_gate)
@@ -293,13 +315,27 @@ func gallery_plane(id:String,a:Vector3,b:Vector3,width:float,lift:float,depth:fl
 	n.basis=Basis(slope.normalized(),across.cross(slope).normalized(),across).scaled_local(n.scale)
 
 func gallery_wall(a:Vector3,b:Vector3)->void:
-	var delta:=b-a
-	var planar:=Vector3(delta.x,0,delta.z)
-	var n:=box("GalleryMasonry",(a+b)*.5+Vector3.UP*1.30,Vector3(planar.length()+.22,2.92,.24),"brick")
-	var across:=planar.cross(Vector3.UP).normalized()
-	n.basis=Basis(delta.normalized(),across.cross(delta).normalized(),across).scaled_local(n.scale)
-	var rail_offset:=Vector3.UP*.08
-	if absf(delta.y)>.001:beam(a+rail_offset,b+rail_offset,.055,"iron")
+	var axis:=Vector3(b.x-a.x,0.,b.z-a.z).normalized()
+	var across:=axis.cross(Vector3.UP)
+	# Grade changes need vertical miter faces. Rotating a whole cuboid tilts
+	# those faces and opens a triangular slit against the adjoining flat wall.
+	var vertices:=PackedVector3Array()
+	for endpoint in [a-axis*.095,b+axis*.095]:
+		for dy in [-.19,2.98]:
+			for dz in [-.12,.12]:vertices.append(endpoint+Vector3.UP*dy+across*dz)
+	var surface:=SurfaceTool.new();surface.begin(Mesh.PRIMITIVE_TRIANGLES);surface.set_smooth_group(-1)
+	for face in [[0,4,6,2],[1,3,7,5],[0,1,5,4],[2,6,7,3],[0,2,3,1],[4,5,7,6]]:
+		for j in [0,1,2,0,2,3]:surface.add_vertex(vertices[face[j]])
+	surface.generate_normals()
+	var n:=MeshInstance3D.new();n.name="GalleryMasonry";n.mesh=surface.commit();n.material_override=mat("brick");section.add_child(n)
+	var body:=StaticBody3D.new();body.collision_layer=3;n.add_child(body)
+	var shape:=ConvexPolygonShape3D.new();shape.points=vertices
+	var col:=CollisionShape3D.new();col.shape=shape;body.add_child(col)
+	if absf(b.y-a.y)>.001:beam(a+Vector3.UP*.08,b+Vector3.UP*.08,.055,"iron")
+	# Cornice bands cap the roof/wall seam for both flat and graded legs.
+	var d:=b-a
+	var finish:=box("SoffitSeamBead",(a+b)*.5+Vector3.UP*2.63,Vector3(d.length()+.18,.16,.31),"brick",false)
+	finish.basis=Basis(d.normalized(),across.cross(d).normalized(),across).scaled_local(finish.scale)
 
 func arcade_details()->void:
 	# In a section drawing the far spring stays, while the cut side keeps a low plinth.
@@ -343,10 +379,30 @@ func shaft_details()->void:
 			if absf(sin((a+b)*.5))>.35:band("SillCap",11.49,11.68,5.75,5.83,a,b,"trim",false)
 	# Tangential landings, beyond the final riser, bridge the stair opening to the gallery.
 	for side in [-1,1]:
-		slab(CX+side*12.35,CZ+1.94,2.,5.16,4.8)
+		var stair_x:=WEST_STAIR_X if side==-1 else CX+12.35
+		# Meet the true last nosing without a fictitious 42nd uphill wedge.
+		slab(stair_x,CZ+1.94,2.,5.16,4.8)
+		var landing_edge:float=stair_x-side*.98
+		guard_segment(Vector3(landing_edge,4.8,10.02),Vector3(landing_edge,4.8,14.54))
+		var ring_port:=polar(11.61,PI*.122 if side==1 else PI*.878,4.8)
+		guard_segment(Vector3(landing_edge,4.8,14.54),ring_port)
+		for tip in [-1.,1.]:
+			var bridge_end:float=CX+side*9.04
+			guard_segment(Vector3(bridge_end,0.,CZ+tip*1.84),Vector3(bridge_end,0.,CZ+tip*(2.46 if side==-1 else 2.96)),.90,.45)
 	for z in [CZ-1.84,CZ+1.84]:
 		beam(Vector3(CX-9,.45,z),Vector3(CX+9,.45,z),.030,"brass")
 		for i in 10:beam(Vector3(CX-9+i*2,0,z),Vector3(CX-9+i*2,.45,z),.029,"iron")
+
+func guard_segment(a:Vector3,b:Vector3,h:=1.04,rail:=.96)->void:
+	for y in [.43,rail]:
+		if y>.43 or rail>.46:beam(a+Vector3.UP*y,b+Vector3.UP*y,.033,"iron")
+	var posts:=maxi(1,ceili(a.distance_to(b)/1.1))
+	for i in posts+1:
+		var foot:=a.lerp(b,float(i)/posts)
+		beam(foot,foot+Vector3.UP*h,.031,"iron")
+	var d:=b-a
+	var guard:=box("GuardCollision",(a+b)*.5+Vector3.UP*h*.5,Vector3(d.length(),h,.06),"iron",true,-atan2(d.z,d.x))
+	guard.hide();guard.get_child(0).collision_layer=1
 
 # Continuous walk surface follows the nosings. A capsule need not step over box corners.
 func stair_wedge(origin:Vector3,index:int,inner:float,outer:float)->void:

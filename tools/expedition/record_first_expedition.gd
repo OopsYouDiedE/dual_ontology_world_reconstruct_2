@@ -72,8 +72,8 @@ func interact(target:Vector3,id:String,frames:=35)->bool:
 func run()->void:
 	level=preload("res://scenes/expedition_01/Expedition.tscn").instantiate();root.add_child(level)
 	look_yaw=level.walker.rotation.y
-	await wait_frames(270)
-	press(KEY_1);await wait_frames(320);press(KEY_RIGHT);await wait_frames(205);press(KEY_1)
+	await wait_frames(642)
+	press(KEY_1);await wait_frames(335);press(KEY_RIGHT);await wait_frames(175);press(KEY_1)
 	await wait_frames(45)
 	if not await go(35.55,0,650):return
 	await wait_frames(50);press(KEY_E);await wait_frames(210);press(KEY_Q)
@@ -82,22 +82,35 @@ func run()->void:
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):return
 		if point==[24.65,7.75]:
-			await look_at_point(Vector3(23.85,.10,12.02),100)
+			await look_at_point(Vector3(23.85,.10,12.02),23)
+			var dual:=false
+			for f in 285:
+				if level.observers==2 and level.overload_blend>.8:dual=true
+				if level.archive.paired and level.observers==1 and level.overload_blend<.19:break
+				await physics_frame
+			if not check(dual and level.archive.paired and level.observers==1,"Missing witnessed B2 overload and recoil"):return
+			print("B2 CONTROL %.2fs"%level.phase)
+			await look_at_point(level.hale.position+Vector3.UP*1.43,47)
+		if point==[20.95,7.75]:
+			await look_at_point(level.archive.DOOR+Vector3.UP*1.48,100)
+			if not check(level.cues.has("ward") and level.hale.position.z<8.95,"Hale did not stage the doorway warning"):return
+			await wait_frames(78)
 		if point==[23.85,9.8]:
 			await look_at_point(Vector3(23.85,.11,12.02),55)
 			if not check(level.cues.has("red") and not level.demo_locked,"B3 did not show the unstable phase before lock"):return
 			await wait_frames(118)
-			if not check(level.demo_locked and not level.learned,"B3 should lock after the sustained gaze, before crossing"):return
+			if not check(level.demo_locked and level.archive.note and not level.learned and level.hale.position.z<8.95,"B3 should lock after the sustained gaze, before crossing"):return
+			print("B3 PROOF %.2fs"%level.phase)
 			gaze_lock_point=Vector3(23.85,.11,13.0)
 		if point==[23.85,14.12]:gaze_lock_point=Vector3.INF
 		if point==[25.5,14.1]:
 			pitch_goal=0.;precise_look=false
 			if not check(level.learned,"Missing crossing proof"):return
-			await wait_frames(40)
+			await wait_frames(7)
 			if not check(level.captions.entries.has("") and level.captions.entries.has("Hale"),"Expected stacked thought and Hale subtitle"):return
 			await look_at_point(Vector3(29.,1.55,14.1),55)
 			press(KEY_1);await wait_frames(280)
-			if not check(level.manual.visible and level.page.get_parsed_text().contains("若两目交错恐生变故") and not level.caption_toast.visible,"Missing handwritten annotation"):return
+			if not check(level.manual.visible and level.page.get_parsed_text().contains("双目同视即刻失控") and not level.caption_toast.visible,"Missing handwritten annotation"):return
 			if not check(level.captions.entries.is_empty(),"Old drama captions survived opening the book"):return
 			press(KEY_1);await wait_frames(40)
 		if point==[34,14.1]:
@@ -111,8 +124,14 @@ func run()->void:
 		if not await go(point[0],point[1]):return
 	Input.action_press("expedition_quiet")
 	var window:Vector3=level.kit.north_spot.global_position+Vector3.UP*1.62
-	await look_at_point(window,40);var ordered:float=level.phase;press(KEY_Q);await wait_frames(2)
-	if not check(level.posting and level.captions.entries.has("我") and level.captions.entries.has("Hale"),"North-window order or stacked speakers missing"):return
+	await look_at_point(Vector3(58.,.15,10.10),94)
+	if not check(level.cues.has("shaft_doubt"),"Missing Hale's bridge objection"):return
+	await look_at_point(window,40)
+	for f in 225:
+		if level.hale.position.distance_to(level.walker.position)<6. and level.archive.beat==level.archive.Beat.DONE:break
+		await physics_frame
+	var ordered:float=level.phase;press(KEY_Q);await wait_frames(2)
+	if not check(level.posting and level.north_pause>0. and level.captions.entries.has("我"),"North-window order or stacked speakers missing"):return
 	for i in 240:
 		if not check(level.retry<=0.,"Gameplay failure while Hale was traveling"):return
 		if level.holding:break
@@ -125,6 +144,7 @@ func run()->void:
 	print("NORTH WINDOW %.2fs"%(level.phase-ordered))
 	if not check(level.phase-ordered<=4.05,"Hale took more than four seconds to reach the north window"):return
 	await look_at_point(window,80)
+	if not check(level.captions.entries.has("Hale") and level.subtitle_id=="north_ready","Missing Hale's north-window confirmation"):return
 	if not await interact(level.hunter.BAIT,"throw",30):return
 	if not check(level.distraction>0.,"Lure not thrown"):return
 	await wait_frames(92)
@@ -146,10 +166,13 @@ func run()->void:
 	await wait_frames(15)
 	if not await interact(level.kit.leaf.global_position,"return",44):return
 	await wait_frames(30)
+	print("GREEN DOOR %.2fs"%level.phase)
+	var heard_tail:=false
 	for point:Vector2 in level.kit.RETURN_PATH:
 		if not await go(point.x,point.y,900):return
+		if level.gallery_bell.playing and level.gallery_impact.playing:heard_tail=true
 		if not check(level.polish.fade_a<.03,"Unexpected fade in the service gallery"):return
-	if not check(level.shortcut_used and level.walker.position.distance_to(Vector3(43.8,0,10.1))<.4,"Return gallery did not reach B5"):return
+	if not check(heard_tail and not level.gallery_bell.playing and not level.gallery_impact.playing and level.shortcut_used and level.walker.position.distance_to(Vector3(43.8,0,10.1))<.4,"Return gallery did not reach B5"):return
 	for point in [[38.7,10.1],[38.7,7.2],[38.7,0],[34,0],[7.6,0]]:
 		if not await go(point[0],point[1]):return
 	press(KEY_SHIFT);await wait_frames(14)
@@ -177,6 +200,7 @@ func run()->void:
 			await look_at_point(level.hale.position+Vector3.UP*1.45,18)
 		await physics_frame
 	if not check(level.finished and level.reunited,"Evacuation or Hale reunion did not finish"):return
+	print("ENDING %.2fs"%level.phase)
 	print("PASS: Expedition complete; split captions, annotated handbook, north-window arrival, physical door crossing, reunion and airlock verified.")
 	for i in 310:
 		if not check(level.polish.end_card.modulate.a<.01 or level.polish.fade_a>.999,"Evacuation text appeared ahead of full blackout"):return

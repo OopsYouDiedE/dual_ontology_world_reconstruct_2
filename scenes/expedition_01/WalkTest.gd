@@ -8,6 +8,8 @@ func _initialize()->void:run.call_deferred()
 func go(x:float,z:float,limit:=2000)->bool:
 	var target:=Vector3(x,0,z);Input.action_press("move_up")
 	for i in limit:
+		if level.retry>0.:
+			Input.action_release("move_up");push_error("Gameplay failure: "+level.notice);return false
 		if level.finished:Input.action_release("move_up");return true
 		var p:Vector3=level.walker.position;var d:Vector3=target-p;d.y=0
 		if d.length()<.12:Input.action_release("move_up");return true
@@ -30,6 +32,12 @@ func audit()->bool:
 	for x in [28.45,29.5,31.,32.55,33.65]:
 		var start:=Vector3(x,1.25,5.95)
 		if space.intersect_ray(PhysicsRayQueryParameters3D.create(start,start+Vector3.BACK*1.85,1)).is_empty():push_error("Collapse gap");return false
+	for joint in [Vector2(kit.RETURN_ELBOW-1.17,4.8),Vector2(kit.RETURN_WEST+1.17,0.)]:
+		for dx in [-.23,-.08,0.,.08,.23]:
+			for h in [.14,1.18,2.46,2.74]:
+				var inside:=Vector3(joint.x+dx,joint.y+h,kit.RETURN_SOUTH+.71)
+				if space.intersect_ray(PhysicsRayQueryParameters3D.create(inside,inside+Vector3.BACK*.87,2)).is_empty():
+					push_error("Open wall joint at the return ramp: %s"%inside);return false
 	return true
 func run()->void:
 	south_only=OS.get_cmdline_user_args().has("--south")
@@ -48,27 +56,33 @@ func run()->void:
 	if not audit():quit(1);return
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):quit(1);return
-		if absf(point[0]-24.65)<.01:
-			level.holding=true;level.hale.rotation.y=PI
-			level.eye.look_at(Vector3(24.65,1.57,4.0));for frame in 95:await physics_frame
-			if level.observers!=0 or level.kit.test_board.get_child(0).collision_layer!=0 or level.kit.test_board.position.y>-.53:push_error("Unwatched demo stayed up");quit(1);return
-			level.eye.look_at(Vector3(23.85,.10,12.02));for frame in 90:await physics_frame
-			if level.observers!=1 or level.kit.test_board.get_child(0).collision_layer==0 or level.kit.test_board.position.y<.04:push_error("Watched demo stayed down");quit(1);return
-			level.hale.position=Vector3(24.5,0,7.7);level.hale.rotation.y=0
-			for frame in 3:await physics_frame
-			if level.observers!=2:push_error("Missing double exposure");quit(1);return
-			level.holding=false;level.trail.clear();level.eye.rotation=Vector3.ZERO
+		if point==[24.65,7.75]:
+			level.eye.look_at(Vector3(23.85,.10,12.02))
+			var two:=false;var withdrew:=false
+			for frame in 240:
+				await physics_frame
+				if level.observers==2 and level.overload_blend>.80:two=true
+				if two and level.observers==1 and level.overload_blend<.22 and level.archive.paired:
+					withdrew=true;break
+			if not withdrew:push_error("Hale did not trigger and withdraw from the two-observer overload");quit(1);return
+			if level.archive.note or level.learned:push_error("B2 alone wrote the proof");quit(1);return
+			level.eye.rotation=Vector3.ZERO
+		if point==[20.95,7.75]:
+			for frame in 52:await physics_frame
+			if not level.cues.has("ward") or level.hale.position.z>=8.95:
+				push_error("Hale did not bar the B3 door from the B2 side");quit(1);return
 		if point==[23.85,9.8]:
 			level.eye.look_at(Vector3(23.85,.11,12.02))
 			for f in 44:await physics_frame
 			if level.demo_locked or not level.cues.has("red"):push_error("Missing early red phase");quit(1);return
 			for f in 116:await physics_frame
-			if not level.demo_locked:push_error("Missing timed lock");quit(1);return
+			if not level.demo_locked or not level.archive.note or level.learned or level.hale.position.z>=8.95:
+				push_error("The single-gaze proof or Hale doorstep constraint failed");quit(1);return
 			gaze=true
 		if point==[23.85,14.12]:gaze=false;level.eye.rotation=Vector3.ZERO
 		if absf(point[0]-25.5)<.01:
 			if not level.learned:push_error("Missing crossing proof");quit(1);return
-			for f in 46:await physics_frame
+			for f in 5:await physics_frame
 			if not level.captions.entries.has(""):push_error("Missing B3 inner thought");quit(1);return
 		if absf(point[0]-28.3)<.01:
 			if south_only:
@@ -92,7 +106,9 @@ func run()->void:
 			if not await go(pt.x,pt.z):quit(1);return
 		if level.oil>oil_before-15.:push_error("Unpriced southern bypass");quit(1);return
 	else:
-		level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order();for i in 950:await physics_frame
+		level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order()
+		if not level.posting or level.north_pause<=0.:push_error("Hale agreement was skipped");quit(1);return
+		for i in 950:await physics_frame
 		if not level.holding:push_error("Hale did not reach north window");quit(1);return
 		level.eye.rotation=Vector3.ZERO;level.walker.rotation.y=-PI/2;level.eye.look_at(level.hunter.BAIT);level.use();level.eye.rotation=Vector3.ZERO;if level.distraction<=0:push_error("Lure not thrown");quit(1);return
 	if not await go(72.9 if south_only else 70.95,10.1):quit(1);return
@@ -111,7 +127,7 @@ func run()->void:
 	for i in 35:await physics_frame
 	for point:Vector2 in level.kit.RETURN_PATH:
 		if not await go(point.x,point.y,900):quit(1);return
-	if not level.shortcut_used or level.walker.position.distance_to(Vector3(43.8,0,10.1))>.4:
+	if level.gallery_bell.playing or level.gallery_impact.playing or not level.shortcut_used or level.walker.position.distance_to(Vector3(43.8,0,10.1))>.4:
 		push_error("Physical return gallery did not reach B5");quit(1);return
 	for point in [[38.7,10.1],[38.7,7.2],[38.7,0],[34,0],[1.5,0]]:
 		if not await go(point[0],point[1]):quit(1);return
@@ -126,5 +142,8 @@ func run()->void:
 	if not completed[0]:push_error("Exit signal missing");quit(1);return
 	print("PASS: south walkway evacuation without supplies, lure or north assignment." if south_only else "PASS: A1 → B1 → B2 → B3 → B4 → B5 → C1 → C2 → C4 → upper return → B5 → A1 exit; Hale watches through glazing.")
 	level.queue_free()
-	for i in 12:await process_frame
+	# Fixed-FPS headless runs outrun the asynchronous Vorbis mixer on Windows.
+	for i in 26:
+		OS.delay_msec(8)
+		await process_frame
 	quit(0)

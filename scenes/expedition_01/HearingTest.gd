@@ -25,4 +25,9 @@ func run()->void:
 	if not demand(h.position.distance_to(h.BAIT)<.1,"Hunter did not reach lure"):return
 	level.released=true;level.checkpoint_oil=51;level.checkpoint_item=true;level.collected=true;level.fail("test");for i in 184:await physics_frame
 	if not demand(not level.collected and level.equipped and level.walker.position.x<41 and level.kit.core.visible,"Checkpoint inventory/position invalid"):return
-	print("PASS: quiet / metal / silence / warned hunt / 12s lure / B5 restore");quit()
+	print("PASS: quiet / metal / silence / warned hunt / 12s lure / B5 restore")
+	level.queue_free()
+	for i in 26:
+		OS.delay_msec(8)
+		await process_frame
+	quit()

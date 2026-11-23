@@ -95,6 +95,7 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis, expe
 	var clip_bones:=BONES.duplicate()
 	if expedition_hale:
 		lengths[&"gate_effort"]=1.14
+		lengths[&"ward"]=1.65;lengths[&"watch_plate"]=1.9;lengths[&"peek"]=2.2
 		for side in ["l","r"]:
 			for digit in ["index","middle","ring","pinky","thumb"]:
 				for joint in range(1,4):clip_bones.append("%s_%02d_%s"%[digit,joint,side])
@@ -125,6 +126,8 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis, expe
 	return library
 
 static func _roll(clip:StringName,bone:String,t:float)->float:
+	if clip==&"ward":return float({"upperarm_r":.32,"spine_01":-.09,"head":.09}.get(bone,0.))
+	if clip==&"peek":return float({"head":-.12,"spine_03":-.11}.get(bone,0.))
 	if clip not in [&"signal",&"examine",&"listen"]:return 0.
 	var w=smoothstep(0.,.23,t)*(1.-smoothstep(.78,1.,t))
 	return w*float({"head":.26 if clip==&"listen" else -.07,"upperarm_l":-.22,"upperarm_r":.22,"spine_01":.065}.get(bone,0.))
@@ -146,6 +149,9 @@ static func _angle(clip: StringName, bone: String, t: float) -> float:
 		if bone=="spine_01":return .035*thrust
 		if bone=="spine_03":return .075*thrust
 		return 0.
+	if clip==&"watch_plate":return float({"head":.25,"spine_03":.12}.get(bone,0.))
+	if clip==&"ward":return float({"upperarm_r":-.91,"lowerarm_r":-.75,"upperarm_l":-.20,"head":-.10,"spine_03":-.09}.get(bone,0.))
+	if clip==&"peek":return float({"head":.09,"spine_01":.07,"spine_03":.17,"upperarm_l":-.15}.get(bone,0.))
 	if clip == &"interact":
 		var reach := sin(PI * t)
 		match bone:
@@ -171,14 +177,14 @@ static func _hale_rest_pitch(bone:String,clip:StringName,t:float)->float:
 	var neutral:=1.-_gate_reach(t) if clip==&"gate_effort" else 1.
 	if bone.begins_with("upperarm"):return .18*neutral
 	if bone.begins_with("lowerarm"):return .23*neutral
-	if clip not in [&"idle",&"gate_effort"]:return 0.
+	if clip not in [&"idle",&"gate_effort",&"ward",&"watch_plate",&"peek"]:return 0.
 	var step:=1. if bone.ends_with("_l") else -1.
 	if bone.begins_with("thigh"):return .047*step
 	if bone.begins_with("foot"):return -.047*step
 	return 0.
 
 static func _hale_stance_roll(bone:String,clip:StringName)->float:
-	if clip not in [&"idle",&"gate_effort"]:return 0.
+	if clip not in [&"idle",&"gate_effort",&"ward",&"watch_plate",&"peek"]:return 0.
 	var side:=1. if bone.ends_with("_l") else -1.
 	if bone.begins_with("thigh"):return -.071*side
 	if bone.begins_with("foot"):return .071*side
@@ -209,12 +215,12 @@ static func _groom_hale(body:Node3D)->void:
 			if cap:
 				var edge:=1.-smoothstep(1.645,1.762,v.y)
 				var locks:=pow(.5+.5*cos(19.*azimuth+.7*sin(7.*azimuth)),2.)
-				v.y-=edge*(.064*back+.065*temple+.013*locks*maxf(back,temple))
-				v.z-=edge*(.010+.003*locks)*back
+				v.y-=edge*(.096*back+.102*temple+.019*locks*maxf(back,temple))
+				v.z-=edge*(.014+.003*locks)*back
 				v.x+=signf(v.x)*edge*(.010*temple+.005*lateral*back+.003*locks*lateral)
 			else:
 				var fringe:=(1.-smoothstep(1.715,1.784,v.y))*(1.-smoothstep(.073,.118,v.z))
-				v.y-=.051*fringe
+				v.y-=.072*fringe
 				v.z-=.014*fringe
 				v.x+=.003*fringe*signf(v.x)
 			vertices[i]=v

@@ -3,6 +3,8 @@ const S=preload("BuildingSolver.gd")
 const V=preload("BuildingView.gd")
 const Grid=preload("PlanCanvas.gd")
 const SAVE="user://academy-structure-v1.json"
+var detective=preload("DetectivePreview.gd").new()
+var detective_focus:=false
 var dx_input=SpinBox.new();var dz_input=SpinBox.new();var radius=SpinBox.new();var room_number=1;var plan=S.example();var solver=S.new();var view=V.new();var grid=Grid.new();var level=0;var brush=0;var tool=0;var cut=true;var history=[];var redo=[]
 var list=OptionButton.new();var report=RichTextLabel.new();var cam=Camera3D.new();var section=SubViewportContainer.new();var viewport=SubViewport.new();var az=.64;var el=.64;var stage=5;var zoom=.70;var summary="";var filter=0;var repairs=CheckButton.new();var seed_input=SpinBox.new()
 func btn(parent:Control,title:String,action:Callable)->void:
@@ -31,6 +33,7 @@ func _ready()->void:
 	dx_input.value=.35
 	var split=HSplitContainer.new();split.size_flags_vertical=SIZE_EXPAND_FILL;col.add_child(split);grid.size_flags_horizontal=SIZE_EXPAND_FILL;grid.custom_minimum_size.x=220;split.add_child(grid);grid.stroke.connect(paint);section.size_flags_horizontal=SIZE_EXPAND_FILL;section.custom_minimum_size.x=320;section.stretch=true;split.add_child(section);split.split_offset=-170;viewport.own_world_3d=true;viewport.use_occlusion_culling=true;section.add_child(viewport);viewport.add_child(view);viewport.add_child(cam);cam.current=true
 	configure_indoor_light()
+	viewport.add_child(detective)
 	section.gui_input.connect(orbit)
 	var row=HBoxContainer.new();col.add_child(row);opt(row,["Columns","Doors","Lights","Valves","Prefab slots"],func(i):filter=i;fill_list());list.custom_minimum_size.x=175;row.add_child(list);btn(row,"Pin / update",override_part);btn(row,"Clear override",clear_part);btn(row,"Operate",operate);btn(row,"Diagnostics",diagnostics)
 	var seq=opt(row,["1 · Slabs","2 · Frame","3 · Walls","4 · Detail","5 · Full"],func(i):stage=i+1;rebuild());seq.select(4)
@@ -90,7 +93,7 @@ func paint(a:Vector2i,b:Vector2i)->void:
 				5:plan.cores.erase(k)
 	rebuild()
 func rebuild()->void:
-	solver.build(plan);view.render(solver,level if cut else -1,cut,stage);grid.plan=plan;grid.level=level;grid.queue_redraw();seed_input.value=plan.seed;radius.set_value_no_signal(plan.get("spiral_radius",1.6));repairs.set_pressed_no_signal(plan.mode=="repair");fill_list();camera_fit();summary="%d bays   ·   %d wall segments   ·   %d portals/vertical links   ·   %d overrides   ·   %d diagnostics"%[plan.cells.size(),solver.wall_hosts.size(),solver.links.size(),plan.overrides.size(),solver.notes.size()];report.text=summary+"\nDrag grid to paint · RMB orbit · wheel zoom · F: walk inside at 1.60 m."
+	solver.build(plan);view.render(solver,level if cut else -1,cut,stage);detective.place(solver,level,stage);grid.plan=plan;grid.level=level;grid.queue_redraw();seed_input.value=plan.seed;radius.set_value_no_signal(plan.get("spiral_radius",1.6));repairs.set_pressed_no_signal(plan.mode=="repair");fill_list();camera_fit();summary="%d bays   ·   %d wall segments   ·   %d portals/vertical links   ·   %d overrides   ·   %d diagnostics"%[plan.cells.size(),solver.wall_hosts.size(),solver.links.size(),plan.overrides.size(),solver.notes.size()];report.text=summary+"\nDrag grid to paint · RMB orbit · wheel zoom · F: walk at 1.60 m · P: detective actions."
 func fill_list()->void:
 	var old=list.get_item_text(list.selected) if list.selected>=0 else "";list.clear()
 	if filter==4:
@@ -130,6 +133,8 @@ func operate()->void:
 		var door=view.doors[id];report.text="%s · %s · %s dB · nav link %s"%[id,"open" if door.open else "closed",door.port.get_meta("loss_db"),door.link.enabled]
 func diagnostics()->void:report.text=summary+"\n"+"\n".join(solver.notes)
 func camera_fit()->void:
+	if detective_focus and detective.visible:
+		cam.position=detective.base+Vector3(.88,1.40,1.75);cam.look_at(detective.base+Vector3.UP*.98);return
 	var bounds=AABB();var first=true;for k in plan.cells:
 		var c=S.address(k);if cut and c.z>level:continue
 		var b=AABB(Vector3(c.x*S.BAY,solver.datum(c.z),c.y*S.BAY),Vector3(S.BAY,solver.room_height(k),S.BAY));bounds=b if first else bounds.merge(b);first=false
@@ -174,6 +179,14 @@ func walk_toggle()->void:
 
 func _input(e:InputEvent)->void:
 	if e is InputEventKey and e.pressed and not e.echo:
+		if not is_instance_valid(walker) and not get_viewport().gui_get_focus_owner() is LineEdit:
+			if e.keycode==KEY_P:
+				if not detective.visible:report.text="No clear bay for the detective on this level.";return
+				detective_focus=not detective_focus;detective.choose(0,true);camera_fit()
+				report.text="DETECTIVE  ·  1 Idle   2 Walk   3 Run   4 Reach   0 Cycle   P Return" if detective_focus else summary
+				get_viewport().set_input_as_handled();return
+			if detective_focus and e.keycode>=KEY_0 and e.keycode<=KEY_4:
+				var number=e.keycode-KEY_0;detective.choose(maxi(0,number-1),number==0);get_viewport().set_input_as_handled();return
 		if e.keycode==KEY_K and not is_instance_valid(walker) and not get_viewport().gui_get_focus_owner() is LineEdit:load_example(1);get_viewport().set_input_as_handled();return
 		if e.keycode==KEY_F or (e.keycode==KEY_ESCAPE and is_instance_valid(walker)):
 			walk_toggle();get_viewport().set_input_as_handled();return

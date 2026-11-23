@@ -158,6 +158,19 @@ func save_portrait()->void:
 	report.text="Portrait saved: "+path if err==OK else "Portrait export failed: "+error_string(err)
 	target.queue_free();portrait_busy=false
 
+## Full-resolution scene plate: both actors, room and lighting share the live world.
+func save_room_plate()->void:
+	if portrait_busy:return
+	portrait_busy=true
+	var target:=SubViewport.new();target.size=Vector2i(3840,2160);target.world_3d=viewport.find_world_3d();target.msaa_3d=viewport.msaa_3d;add_child(target)
+	var shot:=Camera3D.new();target.add_child(shot);shot.current=true;shot.fov=54.
+	shot.global_position=detective.base+Vector3(.23,1.46,2.67);shot.look_at(detective.base+Vector3(0,1.02,.08))
+	target.render_target_update_mode=SubViewport.UPDATE_ONCE;await RenderingServer.frame_post_draw
+	var dir=ProjectSettings.globalize_path("res://.runtime/room-plates");DirAccess.make_dir_recursive_absolute(dir)
+	var path=dir.path_join("bay-%d.png"%detective.room_index);var err=target.get_texture().get_image().save_png(path)
+	report.text="4K room saved: "+path if err==OK else "Room export failed: "+error_string(err)
+	target.queue_free();portrait_busy=false
+
 func orbit(e:InputEvent)->void:
 	if is_instance_valid(walker):return
 	if e is InputEventMouseMotion and e.button_mask&MOUSE_BUTTON_MASK_RIGHT:az-=e.relative.x*.008;el=clampf(el+e.relative.y*.006,.12,1.5);camera_fit()
@@ -203,8 +216,10 @@ func _input(e:InputEvent)->void:
 				if not detective.visible:report.text="No clear bay for the detective on this level.";return
 				detective_focus=not detective_focus;detective.choose(0,true)
 				view.render(solver,level if cut and not detective_focus else -1,cut and not detective_focus,stage);camera_fit()
-				report.text="DETECTIVE + VALE  ·  1–4 Basics   5 Signal   6 Examine   7 Listen   0 Cycle   N Next bay   H Portrait (1600px)   P Return" if detective_focus else summary
+				report.text="DETECTIVE + VALE  ·  1–4 Basics   5 Signal   6 Examine   7 Listen   0 Cycle   N Next bay   H Portrait   J 4K room   P Return" if detective_focus else summary
 				get_viewport().set_input_as_handled();return
+			if detective_focus and e.keycode==KEY_J:
+				save_room_plate();get_viewport().set_input_as_handled();return
 			if detective_focus and e.keycode==KEY_H:
 				save_portrait();get_viewport().set_input_as_handled();return
 			if detective_focus and e.keycode==KEY_N:

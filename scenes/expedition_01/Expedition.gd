@@ -12,7 +12,25 @@ var hud:=Label.new()
 var plinth:=MeshInstance3D.new()
 var review_witness:=Node3D.new()
 var warning:=AudioStreamPlayer3D.new()
-var chase:=0.0
+var hunter:=preload("AuditoryStalker.gd").new()
+var manual:=PanelContainer.new()
+var page:=Label.new()
+var prompt:=Label.new()
+var read_book:=false
+var running:=false
+var subtitle_id:=""
+var next_thought:=false
+var crossing:=false
+var backed_off:=false
+var checkpoint_oil:=65.
+var checkpoint_item:=false
+var metal_foot:=AudioStreamPlayer3D.new()
+var metal_beat:=0.
+var emergency:=OmniLight3D.new()
+var siren:=AudioStreamPlayer.new()
+var halo:=OmniLight3D.new()
+var finished:=false
+var practice_note:=false
 var shell_closed:=false
 var detail_view:=-1
 var mode:=-1
@@ -51,7 +69,7 @@ func _ready()->void:
 	var c:=CollisionShape3D.new();var shape:=CapsuleShape3D.new();shape.radius=.32;shape.height=1.75;c.shape=shape;c.position.y=.875;walker.add_child(c);walker.floor_max_angle=deg_to_rad(60);walker.floor_constant_speed=true;walker.floor_snap_length=.28;add_child(walker);walker.position=Vector3(1,.03,0);walker.rotation.y=-PI/2;walker.add_child(eye);eye.position.y=1.57;eye.fov=73;eye.current=true
 	add_child(hale);Cast.attach(hale,1);hale.position=Vector3(.1,0,.7);add_child(survey);survey.far=600;survey.projection=Camera3D.PROJECTION_ORTHOGONAL
 	var canvas:=CanvasLayer.new();canvas.layer=8;add_child(canvas);canvas.add_child(hud);hud.position=Vector2(22,17);hud.add_theme_font_size_override("font_size",17);hud.add_theme_constant_override("outline_size",6)
-	for a in ["expedition_use","expedition_section","expedition_watch","expedition_shell","expedition_detail"]:
+	for a in ["expedition_quiet","expedition_use","expedition_section","expedition_watch","expedition_shell","expedition_detail"]:
 		if not InputMap.has_action(a):InputMap.add_action(a)
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	canvas.add_child(subtitle);subtitle.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE);subtitle.offset_top=-94;subtitle.offset_bottom=-28;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;subtitle.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
@@ -59,20 +77,38 @@ func _ready()->void:
 	for text in [hud,subtitle]:
 		text.add_theme_font_override("font",font);text.add_theme_constant_override("outline_size",6);text.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	subtitle.add_theme_font_size_override("font_size",22)
-	for kind in ["stone","wood","iron","hum","tick","cue"]:sounds[kind]=Sound.make(kind)
-	add_child(foot);add_child(chime);add_child(board_audio);foot.volume_db=-13;chime.volume_db=-14;board_audio.position=Vector3(23.85,.4,12.02);board_audio.max_distance=12;board_audio.volume_db=-9
+	for kind in ["stone","wood","iron","hum","tick","cue","bell","slam","scream","breath","alarm"]:sounds[kind]=Sound.make(kind)
+	add_child(foot);add_child(chime);add_child(board_audio);foot.volume_db=-21;chime.volume_db=-14;board_audio.position=Vector3(23.85,.4,12.02);board_audio.max_distance=12;board_audio.volume_db=-9
 	for mesh in hale.find_children("*","MeshInstance3D",true,false):
 		for i in mesh.mesh.get_surface_count():
 			if mesh.mesh.surface_get_material(i).resource_name=="Human.male_elegantsuit01":
 				var coat:=StandardMaterial3D.new();coat.albedo_color=Color("d5cfc0");coat.roughness=.92;coat.rim_enabled=true;coat.rim=.42;mesh.set_surface_override_material(i,coat)
-	for pos in [Vector3(24.65,2.7,8.1),Vector3(23.85,2.4,12),Vector3(36.3,2.4,8.2)]:
+	for pos in [Vector3(23.6,2.1,4.),Vector3(24.65,2.7,8.1),Vector3(23.85,2.4,12),Vector3(36.3,2.4,8.2)]:
 		var lamp:=OmniLight3D.new();lamp.position=pos;lamp.omni_range=4.;lamp.light_energy=.85;lamp.light_color=Color("ffebc5");add_child(lamp)
+	add_child(hunter);hale.add_child(metal_foot);metal_foot.stream=sounds.iron;metal_foot.volume_db=-12;add_child(siren)
+	add_child(halo);halo.position=Vector3(31,2.1,2.9);halo.light_color=Color("ffbd70");halo.omni_range=6;halo.light_energy=1.4
+	add_child(emergency);emergency.position=Vector3(71,3.2,10);emergency.light_color=Color.RED;emergency.omni_range=17;emergency.hide()
+	canvas.add_child(prompt);prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER);prompt.offset_left=-320;prompt.offset_right=320;prompt.offset_top=-10;prompt.offset_bottom=76;prompt.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;prompt.add_theme_font_override("font",font);prompt.add_theme_constant_override("outline_size",6);prompt.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	canvas.add_child(manual);manual.set_anchors_and_offsets_preset(Control.PRESET_CENTER);manual.offset_left=-267;manual.offset_right=267;manual.offset_top=-155;manual.offset_bottom=155
+	var paper:=StyleBoxFlat.new();paper.bg_color=Color("282a25");paper.border_color=Color("ac9568");paper.set_border_width_all(2);paper.content_margin_left=32;paper.content_margin_right=32;manual.add_theme_stylebox_override("panel",paper);manual.add_child(page);page.vertical_alignment=VERTICAL_ALIGNMENT_CENTER;page.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_theme_font_override("font",font);page.add_theme_font_size_override("font_size",19);manual.hide()
+func toggle_book()->void:
+	manual.visible=not manual.visible;read_book=true
+	page.text="远征员随身规则手册　／　01\n━━━━━━━━━━━━━━━━━━━━\n井区交班记录：异常板遇到目光时会改变。玻璃后的目击也须登记。\n\n值守须知：铁网上的响动会传到井底。\n\nShift　切换走／跑　　 Ctrl　按住静步\n1　合上手册"
+	if learned:page.text=page.text.replace("异常板遇到目光时会改变。玻璃后的目击也须登记。","我的实测：独自注视时，板面承住了我。Hale 记得的条文却禁止直视。")
+	prompt.visible=not manual.visible;subtitle.visible=not manual.visible and sub_time>0
+func sound_at(kind:String,pos:Vector3,db:float)->void:
+	var audio:=AudioStreamPlayer3D.new();add_child(audio);audio.position=pos;audio.stream=sounds[kind];audio.volume_db=db;audio.max_distance=90;audio.finished.connect(audio.queue_free);audio.play()
 func light_stage()->void:
 	var w:=WorldEnvironment.new();var e:=Environment.new();e.background_mode=Environment.BG_COLOR;e.background_color=Color("e3e2d9");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("c4ccd3");e.ambient_light_energy=.48;e.tonemap_mode=Environment.TONE_MAPPER_ACES;e.tonemap_exposure=.68;e.ssao_enabled=true;e.sdfgi_enabled=true;w.environment=e;add_child(w)
 	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-33,0);sun.light_energy=.78;sun.shadow_enabled=true;sun.directional_shadow_max_distance=90;add_child(sun)
 	for p in [Vector3(6,3.9,0),Vector3(20,4.1,0),Vector3(32,3.9,0),Vector3(24,3,5),Vector3(24,3,12),Vector3(39,3,10),Vector3(61,6,10)]:
 		var l:=OmniLight3D.new();l.position=p;l.omni_range=12;l.light_energy=.52;l.light_color=Color("ffe9cb");add_child(l)
 func _input(ev:InputEvent)->void:
+	if finished:return
+	if ev is InputEventKey and ev.pressed and not ev.echo and mode<0:
+		if ev.physical_keycode in [KEY_1,KEY_KP_1]:toggle_book();return
+		if ev.physical_keycode==KEY_SHIFT and not manual.visible:running=not running;return
+	if manual.visible:return
 	if ev is InputEventMouseButton and ev.button_index==MOUSE_BUTTON_LEFT and ev.pressed and mode<0:Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 	if ev is InputEventMouseMotion and mode<0 and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
 		walker.rotate_y(-ev.relative.x*.0025);eye.rotation.x=clampf(eye.rotation.x-ev.relative.y*.0025,-1.48,1.48)
@@ -110,30 +146,49 @@ func show_shell()->void:
 	for n in kit.plates:n.visible=mode>=0 and not shell_closed
 func say(t:String)->void:notice=t;msg_time=4.
 func near(p:Vector3,d:=2.1)->bool:return walker.position.distance_to(p)<d
+func aimed(pos:Vector3,reach:float,cone:=.96)->bool:
+	var delta:=pos-eye.global_position
+	if delta.length()>reach or (-eye.global_basis.z).dot(delta.normalized())<cone:return false
+	var hit:=get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(eye.global_position,pos,2))
+	return hit.is_empty() or Vector3(hit.position).distance_to(pos)<.65
+func focus()->String:
+	if not taken and aimed(Vector3(34.14,.5,14.67),2.8):return "loot"
+	if aimed(Vector3(23.6,1.03,4),2.8):return "note"
+	if not released and aimed(Vector3(36.3,1.35,7.72),3.):return "lever"
+	if released and not collected and aimed(kit.core.position,2.8):return "core"
+	if collected and aimed(kit.leaf.position,3.5):return "return"
+	if collected and aimed(Vector3(.16,1.5,0),3.):return "exit"
+	if learned and released and near(Vector3(49,0,10),4.5) and aimed(kit.polar(12.45,1.5*PI,6.42),24,.976):return "north"
+	if equipped and walker.position.x>46:
+		var landing:Variant=Plane(Vector3.UP,hunter.CENTER.y).intersects_ray(eye.global_position,-eye.global_basis.z)
+		if landing!=null and landing.distance_to(hunter.CENTER)<13.:return "throw"
+	return ""
 func use()->void:
-	if retry>0:return
-	if near(Vector3(23.6,0,4.)):
-		say("守则：视线可穿过玻璃。只留一人注视。");return
-	if near(Vector3(34,0,14.6)) and not taken:taken=true;equipped=true;oil+=35;kit.supplies.hide();say("灯油 +35，已收起节拍器。");return
-	if near(Vector3(36.4,0,8.3)):
-		if not learned:say("先去测试室观察琥珀板。");return
-		released=true;kit.gate.position.y=4.;say("铁栅已开启，已记录折返点。");return
-	if near(Vector3(71.8,0,10.1)) and released:collected=true;kit.core.hide();say("已取得源核，登上二层寻找绿色回程门。");return
-	if collected and near(kit.leaf.position,3.):walker.position=Vector3(38.7,.1,8.6);trail.clear();hale.position=walker.position+Vector3.RIGHT;say("沿黄铜管返回长廊。");return
-	if collected and walker.position.x<2.3:returned.emit();return
-	if equipped and walker.position.x>46:equipped=false;distraction=14.;say("节拍器已启动，脚步声将被掩盖 14 秒。");return
-	say("靠近装置后按 E。")
+	if retry>0 or manual.visible:return
+	match focus():
+		"note":say("残页：隔着玻璃也有反应。昨夜值班记录的最后一行被撕掉了。")
+		"loot":taken=true;equipped=true;oil=minf(100.,oil+35);kit.supplies.hide();say("收起了发条节拍器与煤油罐。")
+		"lever":
+			if not learned:return
+			released=true;kit.gate.position.y=4.;checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();sound_at("slam",kit.panel.position,2);sound_at("scream",hunter.position,4);line_once("release","主闸开了！……嘘，听见井底的声音没？压低脚步，别跑！")
+		"core":
+			collected=true;kit.core.hide();emergency.show();siren.stream=sounds.alarm;siren.play();line_once("core","拿到手了！别走回头桥，上右边楼梯踹开绿门直接冲回主廊！")
+		"return":walker.position=Vector3(38.7,.1,8.6);trail.clear();holding=false;posting=false;command_path.clear();hale.position=walker.position+Vector3.RIGHT
+		"exit":
+			finished=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;hud.text="撤离成功　·　备用源核已送回稳压室";subtitle.hide();prompt.hide();returned.emit()
+		"throw":equipped=false;distraction=12.;hunter.throw_from(eye.global_position);sound_at("iron",hunter.BAIT,2)
 func order()->void:
-	if posting or holding:posting=false;holding=false;command_path.clear();trail.clear();say("Hale：收到，我跟着你。");return
-	if not learned or not near(Vector3(49,0,10),4.):say("观察测试板后，在源井入口按 Q。");return
+	if focus()!="north" or manual.visible or retry>0:return
+	if posting or holding:posting=false;holding=false;command_path.clear();trail.clear();return
 	posting=true;command_path=kit.stair_path.duplicate();for i in 20:command_path.append(kit.polar(12.45,PI+(PI*.5)*i/19.,4.8));
-	say("Hale：我去北侧观察窗。")
+	line_once("post","明白，我去北窗帮你盯死桥面——过桥时千万别回头跟我对看！")
 func _physics_process(dt:float)->void:
+	if manual.visible or finished:return
+	prompt.visible=mode<0;subtitle.visible=mode<0 and sub_time>0
 	if mode>=0 and detail_view>=0:hud.text="EYE HEIGHT   /   %s     F6  next sightline    F4  leave"%["B2 · OBSERVATION WINDOW","B5 · MASTER RELEASE","C1 · GAZE SPAN"][detail_view];return
 	if mode>=0:hud.text="SECTION PLATE  %s    /    F4  next view   /   F5  shell or cutaway   /   F6  eye height"%["A · IMMERSION ARCADE","B · ARCHIVE WING","C · SOURCE CAISSON"][mode];return
-	var p:=walker.position
-	var axis:=Input.get_vector("move_left","move_right","move_up","move_down");var dir:=walker.basis*Vector3(axis.x,0,axis.y);var speed:=3.8
-	if Input.is_physical_key_pressed(KEY_CTRL):speed=2.2
+	var axis:=Input.get_vector("move_left","move_right","move_up","move_down");var dir:=walker.basis*Vector3(axis.x,0,axis.y);var speed:=5.8 if running else 3.8
+	if Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet"):speed=2.2
 	if retry>0:
 		retry-=dt;if retry<=0:reset_at_checkpoint()
 	else:
@@ -148,20 +203,17 @@ func _physics_process(dt:float)->void:
 		var prior:=hale.position;advance_hale(dt);animate_hale(prior,dt);rules(dt)
 	msg_time-=dt;distraction=maxf(0,distraction-dt)
 	sub_time-=dt;subtitle.visible=sub_time>0
-	var goal:="沿长廊前进，在铁栅前走右侧门。" if p.z<2.3 else "从档案翼观察窗看向琥珀板。"
-	if tutorial_room:goal="去总控室，沿黄铜导管找到拉杆。" if learned else "观察板面，试着移开视线。"
-	if released:goal="到源井入口按 Q 派驻 Hale，再渡桥取回源核。"
-	if released and holding:goal="Hale 已就位。避开双重注视，按住 Ctrl 静步过桥。"
-	if p.x<4 and p.z<2.3 and Input.mouse_mode!=Input.MOUSE_MODE_CAPTURED:goal="单击画面后用 WASD 前进；Esc 释放鼠标。"
-	if collected:goal="从绿色回程门折返，到长廊入口按 E 撤离。"
-	if near(Vector3(36.4,0,8.3)):goal="E　操作黄铜拉杆"
-	if near(Vector3(34,0,14.6)) and not taken:goal="E　收取灯油与节拍器"
-	if near(Vector3(71.8,0,10.1)) and not collected:goal="E　取走源核"
-	hud.text="首次远征　·　灯油 %d\n%s"%[ceili(oil),notice if msg_time>0 else goal]
+	subtitle.modulate.a=clampf(sub_time/.35,0.,1.)
+	if sub_time<=0 and next_thought:
+		next_thought=false;subtitle_id="thought";subtitle.text="我心想：难道他所记忆的规则和我的不同吗？";sub_time=4.5
+	hud.text="灯油 %d%%\n目标：%s"%[ceili(oil),"从绿色捷径门撤回大厅" if collected else "绕过铁闸，取回深井对岸的备用源核"]
+	hud.modulate=Color("ffbf75") if oil<15 and sin(phase*5)>0 else Color.WHITE
+	var hints:={"note":"[E] 阅读残页","loot":"[E] 拾取补给","lever":"[E] 拉下主闸","core":"[E] 拔出源核","return":"[E] 推开捷径门","exit":"[E] 返回大厅","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器"}
+	var hint:=str(hints.get(focus(),""));prompt.text="·\n"+(notice if msg_time>0 else hint if hint!="" else "[1] 打开规则手册" if not read_book else "")
 func walking_feedback(dt:float)->void:
 	var distance:=Vector2(walker.get_position_delta().x,walker.get_position_delta().z).length()
 	if walker.is_on_floor() and distance>.001:
-		stride+=distance/.88
+		stride+=distance/(1.75 if running else 1.55)
 		if stride>=1.:
 			stride=fmod(stride,1.);var kind:="stone"
 			for i in walker.get_slide_collision_count():
@@ -180,21 +232,33 @@ func animate_hale(prior:Vector3,dt:float)->void:
 	if anim.current_animation!=clip:anim.play(clip,.16)
 	anim.speed_scale=clampf(hale_speed/2.5,.75,1.7) if clip==&"walk" else 1.
 	if speed>.1:hale.rotation.y=lerp_angle(hale.rotation.y,atan2(d.x,d.z),1.-exp(-12.*dt))
-func line_once(id:String,text:String)->void:
+func line_once(id:String,text:String,duration:=4.5)->void:
 	if cues.has(id):return
-	cues[id]=true;subtitle.text="Hale："+text;sub_time=4.;chime.stream=sounds.cue;chime.play()
+	cues[id]=true;subtitle_id=id;subtitle.text="Hale："+text;sub_time=duration;chime.stream=sounds.cue;chime.play()
 func advance_hale(dt:float)->void:
+	if tutorial_room and not learned and not holding:
+		var station:=Vector3(21.1,0,9.6);hale.position=hale.position.move_toward(station,dt*3.8)
+		if hale.position.distance_to(station)<.15:hale.rotation.y=lerp_angle(hale.rotation.y,-PI/2 if backed_off else .78,1.-exp(-8*dt))
+		trail.clear();return
 	if posting:
 		if command_path.is_empty():posting=false;holding=true;return
 		hale.position=hale.position.move_toward(command_path[0],3.8*dt);if hale.position.distance_to(command_path[0])<.04:command_path.remove_at(0)
 	elif not holding:
 		if last_pos.distance_to(walker.position)>.22:trail.append(walker.position);last_pos=walker.position
 		if trail.size()>5:hale.position=hale.position.move_toward(trail[0],4.5*dt);if hale.position.distance_to(trail[0])<.1:trail.remove_at(0)
+func in_archive_without_proof(p:Vector3)->bool:
+	return not learned and p.distance_to(Vector3(27.4,0,14.1))<1.1
 func rules(dt:float)->void:
 	var p:=walker.position
 	update_demo(p,dt)
-	if tutorial_room and observers==1:learned=true
+	if phase>=2 and not cues.has("start"):
+		kit.airlock.position.y=2.4;sound_at("slam",Vector3(.2,1,0),0);sound_at("bell",Vector3(25,2,0),2);line_once("start","稳压室撑不到天亮了。前组把备用源核掉在深井对岸——先去前面看看铁闸。")
+	if not released and not tutorial_room and p.x>30 and absf(p.z)<2.3:
+		line_once("gate","从里头反锁了。走右边侧门，穿档案翼找总闸。",3.5);halo.light_energy=2.3
+	oil=maxf(0.,oil-dt*.025)
 	if p.x>44 and not released:walker.position=Vector3(39,0,10);say("先拉开黄铜总闸。")
+	if in_archive_without_proof(p) and not practice_note:
+		practice_note=true;say("门闩上刻着一块板。刚才的通行记录还是空白。")
 	if p.x<0:walker.position.x=.05
 	if p.y < -1.8:fail("坠入源井");return
 	var radial:=Vector2(p.x-kit.CX,p.z-kit.CZ)
@@ -211,16 +275,24 @@ func rules(dt:float)->void:
 		var watchers:=int(watching)+int(looking);hazard=hazard+1 if watchers!=1 else 0
 		if hazard==1 or hazard==25:warning.play()
 		if hazard>0:notice="红光：两道视线重合" if watchers==2 else "桥面正在失去支撑";msg_time=.2
-		var m:=kit.mat("amber");m.emission=Color.RED if hazard>0 else Color("ffc35a")
+		var m:=kit.bridge.material_override as StandardMaterial3D;m.albedo_color=Color("ff1930") if watchers==2 else Color("8e6337") if watchers==0 else Color("d4f1ff");m.emission=m.albedo_color
 		if hazard>=(40 if watchers==2 else 60):fail("桥面过载")
-	else:hazard=0;kit.mat("amber").emission=Color("ffc35a")
-	if on_bridge and walker.velocity.slide(Vector3.UP).length()>2.2 and distraction<=0:
-		chase+=dt
-		if chase>1.4:notice="下方有脚步声，按住 Ctrl 静步。";msg_time=.3
-		if chase>3.6:fail("井底巡行者已抵达桥面")
-	else:chase=maxf(0,chase-2*dt)
+	else:
+		hazard=0;var m:=kit.bridge.material_override as StandardMaterial3D;m.albedo_color=Color("d4f1ff") if holding else Color("ffc35a");m.emission=m.albedo_color
+	if released:
+		var grate:=posting and hale_speed>.35 and hale.position.y>1.
+		metal_beat-=dt
+		if grate and metal_beat<=0:metal_foot.play();metal_beat=.55
+		var loud:=walker.is_on_floor() and Vector2(walker.velocity.x,walker.velocity.z).length()>2.35
+		if hunter.step(dt,p,loud,grate,distraction,collected,sounds):fail("听觉猎手扑到了你身上")
+		if collected:
+			emergency.light_energy=1.8+1.4*sin(phase*7.)
+			if not siren.playing:siren.play()
 # Glass transmits gaze; the plate never occludes its own samples.
 func board_seen(origin:Vector3,forward:Vector3)->bool:
+	var intersection:Variant=Plane(Vector3.UP,.11).intersects_ray(origin,forward)
+	if intersection!=null and absf(intersection.x-23.85)<.90 and absf(intersection.z-12.02)<1.60 and origin.distance_to(intersection)<9.:
+		var direct:=PhysicsRayQueryParameters3D.create(origin,intersection,2,[kit.test_board.get_child(0).get_rid()]);if get_world_3d().direct_space_state.intersect_ray(direct).is_empty():return true
 	for z in [10.6,12.02,13.4]:
 		var target:=Vector3(23.85,.11,z);var d:=target-origin
 		if d.length()>9. or forward.dot(d.normalized())<.90:continue
@@ -229,9 +301,17 @@ func board_seen(origin:Vector3,forward:Vector3)->bool:
 func update_demo(p:Vector3,dt:float)->void:
 	phase+=dt
 	var in_b3:=p.x>20 and p.x<27.8 and p.z>9. and p.z<15.1
-	if in_b3:tutorial_room=true;line_once("door","坑底两侧都有缓坡。你看板，我来换位。")
-	elif p.distance_to(Vector3(24.65,0,7.71))<2.3:line_once("window","看窗后的板。一个人看能托住，两个人看会过载。")
-	var count:=int(board_seen(eye.global_position,-eye.global_basis.z))+int(board_seen(hale.position+Vector3.UP*1.57,hale.basis.z))
+	if in_b3:tutorial_room=true
+	elif p.z<8.95 and board_seen(eye.global_position,-eye.global_basis.z):line_once("window","停下！那是凝视异常板——学院守则写了，直视它的人都会出事，别碰！")
+	var self_sees:=board_seen(eye.global_position,-eye.global_basis.z)
+	var count:=int(self_sees)+int(board_seen(hale.position+Vector3.UP*1.57,hale.basis.z))
+	if subtitle_id=="double" and count!=2:sub_time=minf(sub_time,.35)
+	if not learned and in_b3:
+		if p.z<10.45 or p.y<-.10:crossing=false
+		if absf(p.x-23.85)<.92 and p.z>10.48 and p.z<12.8 and p.y>=0 and self_sees and count==1:crossing=true
+		if crossing and p.z<13.4 and (count!=1 or not self_sees):crossing=false
+		if crossing and p.z>=13.65 and p.y>=0:
+			learned=true;kit.evidence_gate.position.y=4.;line_once("evidence","等等……你一个人盯着它居然撑住了？官方守则根本是怕误看才一刀切封禁的……",5.5);next_thought=true
 	var changed:=count!=observers;observers=count
 	demo_grace=1. if count else maxf(0.,demo_grace-dt)
 	var faded:=count==0 and demo_grace<=0.
@@ -246,7 +326,7 @@ func update_demo(p:Vector3,dt:float)->void:
 	if count==2:
 		alarm_time-=dt
 		if alarm_time<=0.:board_audio.stream=sounds.tick;board_audio.play();alarm_time=.16
-		if changed and in_b3:line_once("double","红了！移开视线，留一个人看。")
+		if changed and in_b3:backed_off=true;line_once("double","红了！快别看——我早说过看它要命！")
 # Three longitudinal × three transverse × three height samples. Glass is on layer 4;
 # masonry is on layer 2. Stop as soon as any part of the span is visible.
 func sees_span(origin:Vector3)->bool:
@@ -257,8 +337,10 @@ func sees_span(origin:Vector3)->bool:
 				var ray:=PhysicsRayQueryParameters3D.create(origin,Vector3(kit.CX+x,h,kit.CZ+z),2)
 				if space.intersect_ray(ray).is_empty():return true
 	return false
-func fail(reason:String)->void:retry=2.6;say(reason+"　·　正在返回折返点…")
+func fail(reason:String)->void:retry=3.;say(reason+"　·　正在返回折返点…")
 func reset_at_checkpoint()->void:
+	crossing=false;distraction=0.;running=false;collected=false;kit.core.show();siren.stop();emergency.hide();cues.erase("core");cues.erase("post");sub_time=0
+	if released:hunter.wake();oil=checkpoint_oil;equipped=checkpoint_item
 	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);hazard=0;holding=false;posting=false;trail.clear();command_path.clear()
 func observation()->Dictionary:return {"phase":"first_expedition","section":mode,"position":str(walker.position),"checkpoint":released,"learned":learned,"core":collected,"hale_posted":holding}
 

@@ -5,13 +5,15 @@ const BLIND_ANGLES := [90,210,330]
 var gate:Node3D
 var leaf:Node3D
 var bridge:Node3D
+var evidence_gate:Node3D
+var airlock:Node3D
 var test_board:Node3D
 var panel:Node3D
 var core:Node3D
 var supplies:Node3D
 var stair_path:=PackedVector3Array()
 func build()->void:
-	arcade();arcade_details();archive();archive_details();shaft();shaft_details()
+	arcade();arcade_details();archive();archive_details();shaft();shaft_details();hardware()
 func arcade()->void:
 	group("A1_ImmersionArcade");slab(18,0,36,4.4);lid(18,0,36,4.4,5.2)
 	var lights:=[]
@@ -33,6 +35,7 @@ func arcade()->void:
 		for z in [-1.98,1.98]:
 			var parts:=[rect("Pier",x,1.55,z,.6,3.1,.38),rect("Plinth",x,.13,z,.71,.26,.46,"joint"),rect("Capital",x,3.03,z,.72,.16,.52,"trim")]
 			if z>0 and not end_wall:cut.append_array(parts)
+	airlock=rect("RearSeal",.12,6.,0,.22,4.8,4.2,"iron")
 	gate=Node3D.new();section.add_child(gate);section=gate
 	for i in 21:
 		var z:float=(i-10)*.174;var h:=3.1+sqrt(1.76*1.76-z*z);rect("Picket",36,h*.5,z,.085,h,.036,"iron",false)
@@ -48,23 +51,18 @@ func archive()->void:
 	wall(true,8.95,19.8,27.9,4,[[20.15,21.75,0,2.4],[22.25,27.05,.38,2.75]])
 	rect("ObservationGlass",24.65,1.565,8.95,4.8,2.37,.055,"glass");for x in [22.25,23.85,25.45,27.05]:rect("Mullion",x,1.565,8.95,.045,2.37,.09,"iron",false)
 	wall(false,20,9.05,15.05,4);wall(true,15.15,20,27.75,4,[],true);wall(false,27.8,9.05,15.05,4,[[13.3,14.9,0,2.4]])
-	# Narrow rim at grade around a genuine sunken test pit, with a walkable ramp.
-	slab(23.9,9.57,7.7,1.26);slab(23.9,14.48,7.7,1.26);slab(20.65,12.02,1.2,3.65);slab(27.15,12.02,1.2,3.65)
-	# A single thin span crosses the recessed floor. The air pocket remains visible from B2.
-	test_board=rect("AmberTestPlate",23.85,.045,12.02,1.30,.09,3.83,"test_amber")
-	# Both top faces meet the rim at grade and the recess at -0.60.
-	for side:float in [-1.,1.]:
-		var edge:=21.25 if side<0 else 26.55
-		var slope:=atan2(.60,1.65)*side
-		var normal:=Vector3(-sin(slope),cos(slope),0)
-		var center:=Vector3(edge-side*.825,-.30,12.02)-normal*.05
-		var ramp:=box("PitExit",center,Vector3(Vector2(1.65,.60).length()+.04,.10,2.2),"floor");ramp.rotation.z=slope
-		for i in 18:
-			rect("EdgeMarker",edge,.006,10.30+i*.20,.11,.012,.19,"brass" if i%2==0 else "iron",false)
-	for z in [10.16,13.89]:
-		for i in 26:rect("EdgeMarker",21.35+i*.20,.006,z,.19,.012,.11,"brass" if i%2==0 else "iron",false)
-	wall(true,13,27.8,41.8,2.4,[[38.1,39.7,0,2.4]],false,"dark");wall(true,15.2,27.8,41.8,2.4,[],true,"dark");wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14,2,2.4)
-	wall(true,7.2,35.25,41.75,3.8,[[36.68,37.72,.83,2.35],[37.9,39.5,0,2.4]]);wall(false,35.15,7.2,13,3.8);wall(false,41.85,7.2,13,3.8,[[8.9,11.3,0,2.8]])
+	# A single walkable crossing: the pit ramp lands on the entry bank only.
+	slab(23.9,9.68,7.7,1.48);slab(23.9,14.39,7.7,1.54)
+	test_board=rect("AmberTestPlate",23.85,.045,12.02,1.8,.09,3.20,"test_amber")
+	for ramp_x in [21.5,26.2]:
+		var ramp:=rect("EntryRecoveryRamp",ramp_x,-.35,11.22,2.2,.10,1.80,"floor");ramp.rotation.x=atan2(.60,1.65)
+	for x in [21.49,26.24]:
+		var width:=2.92 if x<24 else 3.0
+		rect("IronGuard",x,.54,13.66,width,1.10,.12,"iron");rect("BrassCap",x,1.10,13.66,width,.06,.15,"brass",false)
+	for i in 38:rect("LipStripe",20.15+i*.2,.006,10.38,.19,.012,.10,"brass" if i%2==0 else "iron",false)
+	evidence_gate=rect("TrialInterlock",27.8,1.25,14.1,.19,2.5,1.6,"iron")
+	wall(true,13,27.8,41.8,2.4,[[28.6,30.1,0,2.3],[38.1,39.7,0,2.4]],false,"dark");wall(true,15.2,27.8,41.8,2.4,[],true,"dark");wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14,2,2.4)
+	wall(true,7.2,35.25,41.75,3.8,[[36.68,37.72,.83,2.35],[37.9,39.5,0,2.4]]);wall(false,35.15,7.2,13,3.8,[[11.3,12.9,0,2.6]]);slab(31.47,12.05,7.4,1.95);wall(true,11.02,27.8,35.15,2.6);lid(31.47,12.05,7.4,1.95,2.6);wall(false,41.85,7.2,13,3.8,[[8.9,11.3,0,2.8]])
 	for v in [[31,4.85,6,5],[23.85,5.6,8,6.5],[23.9,12,7.5,6],[38.5,10.1,6.5,5.5]]:lid(v[0],v[1],v[2],v[3],4 if v[0]==23.9 else 3.8)
 	for z in [4.0,6.9]:shelf(23.65,z)
 	# Rubble in the blind opening beyond B1, visible across a broken barricade.
@@ -100,7 +98,7 @@ func band(id:String,r0:float,r1:float,y0:float,y1:float,a:float,b:float,k:String
 		var body:=StaticBody3D.new();body.collision_layer=5 if k=="glass" else 3;var col:=CollisionShape3D.new();var shape:=ConvexPolygonShape3D.new();shape.points=v;col.shape=shape;body.add_child(col);n.add_child(body)
 	return n
 func shaft()->void:
-	group("C1_C4_SourceCaisson");platform(-1,2.5);platform(1,3.);slab(CX-14.45,CZ,1.2,2.65);bridge=rect("SingleGazeSpan",CX,-.11,CZ,18,.22,3.6,"amber")
+	group("C1_C4_SourceCaisson");platform(-1,2.5);platform(1,3.);slab(CX-14.45,CZ,1.2,2.65);bridge=rect("SingleGazeSpan",CX,-.11,CZ,18,.22,3.6,"amber");bridge.material_override=mat("amber").duplicate()
 	var roof:=MeshInstance3D.new();var cap:=CylinderMesh.new();cap.top_radius=14.45;cap.bottom_radius=14.45;cap.height=.32;cap.radial_segments=56;roof.mesh=cap;roof.material_override=mat("chalk");section.add_child(roof);roof.position=Vector3(CX,10.16,CZ);cut.append(roof)
 	var bottom:=MeshInstance3D.new();var disc:=CylinderMesh.new();disc.top_radius=14;disc.bottom_radius=14;disc.height=.2;bottom.mesh=disc;bottom.material_override=mat("abyss");section.add_child(bottom);bottom.position=Vector3(CX,-10.1,CZ)
 	for i in 56:
@@ -208,3 +206,29 @@ func platform(side:int,half_width:float)->void:
 		outline.append(Vector2(CX+side*sqrt(14.*14.-z*z),CZ+z))
 	outline.append(Vector2(CX+side*9,CZ+half_width))
 	var mesh:=CSGPolygon3D.new();mesh.name="ClippedLanding";mesh.polygon=outline;mesh.depth=.24;mesh.rotation.x=PI/2;mesh.position.y=-.24;mesh.material=mat("floor");mesh.use_collision=true;section.add_child(mesh)
+
+# Hardware follows its moving leaf. Relief stays off the collision layer.
+func hardware()->void:
+	section=airlock
+	for side:float in [-1.,1.]:
+		rect("PressedDoorSkin",.54,0,side*.245,.16,.88,.465,"joint",false)
+		for i in 5:rect("InsetRib",.66,-.36+i*.16,side*.245,.06,.008,.35,"trim",false)
+	section=get_child(1)
+	for x in [21.5,26.2]:
+		for dx in [-.95,-.47,0.,.47,.95]:
+			rect("CastStanchion",x+dx,.59,13.57,.065,1.12,.12,"joint",false)
+			rect("AnchorShoe",x+dx,.065,13.57,.17,.13,.22,"brass",false)
+		for y in [.20,.86]:rect("GuardRail",x,y,13.53,2.72,.06,.08,"trim",false)
+	for z in [10.32,13.73]:
+		for side in [-1.,1.]:
+			var x:float=23.85+.94*side;rect("PlateSocket",x,.025,z,.26,.05,.23,"iron",false)
+			beam(Vector3(x,.05,z),Vector3(x,.069,z),.047,"brass")
+	for x in [35.98,36.62]:
+		for y in [.78,1.39]:beam(Vector3(x,y,7.58),Vector3(x,y,7.61),.045,"iron")
+	section=get_child(2)
+	for side in [-1.,1.]:
+		for dx in [-.42,.42]:
+			var x:float=CX+side*9.66+dx
+			for z in [CZ-1.72,CZ+1.72]:rect("SpanAnchor",x,.055,z,.30,.11,.34,"iron",false);beam(Vector3(x,.11,z),Vector3(x,.14,z),.056,"brass")
+	# Stepped instrument mount makes the source readable in silhouette.
+	for i in 3:rect("CoreCollar",CX+10.8,.64+i*.07,CZ,.69-i*.09,.07,.69-i*.09,"brass",false)

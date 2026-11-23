@@ -29,16 +29,16 @@ func audit()->bool:
 func run()->void:
 	level=preload("Expedition.tscn").instantiate();root.add_child(level);await physics_frame
 	await physics_frame
-	# Start on the actual pit floor with the plate faded, then walk out at each flank.
-	level.holding=true;level.hale.position=Vector3(1,0,0)
-	for side:float in [-1.,1.]:
-		level.walker.position=Vector3(23.85+side*.82,-.59,12.02);level.walker.velocity=Vector3.ZERO
-		level.walker.rotation.y=-side*PI/2.;level.eye.rotation=Vector3.ZERO
-		for f in 90:await physics_frame
-		if level.walker.position.y>-.52:push_error("Expected to start on recess floor");quit(1);return
-		if not await go(23.9+side*3.,12.02,60):quit(1);return
-		if level.walker.position.y<-.04:push_error("Ramp did not reach grade");quit(1);return
-	level.reset_at_checkpoint();level.walker.rotation.y=-PI/2;level.trail.clear();level.holding=false
+	var key:=InputEventKey.new();key.physical_keycode=KEY_1;key.pressed=true
+	level._input(key);if not level.manual.visible:quit(1);return
+	level._input(key);if level.manual.visible:quit(1);return
+	key.physical_keycode=KEY_SHIFT;level._input(key);if not level.running:quit(1);return
+	level._input(key);if level.running:quit(1);return
+	for ramp_x in [21.5,26.2]:
+		level.walker.position=Vector3(ramp_x,-.59,12.45);level.walker.rotation.y=0
+		for f in 10:await physics_frame
+		if not await go(ramp_x,9.96,60) or level.walker.position.y<-.04:push_error("Entry ramp failed");quit(1);return
+	level.reset_at_checkpoint();level.walker.rotation.y=-PI/2;level.tutorial_room=false
 	if not audit():quit(1);return
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):quit(1);return
@@ -52,11 +52,19 @@ func run()->void:
 			for frame in 3:await physics_frame
 			if level.observers!=2:push_error("Missing double exposure");quit(1);return
 			level.holding=false;level.trail.clear();level.eye.rotation=Vector3.ZERO
-		if absf(point[0]-34)<.01:level.use()
-	level.use();if not (level.learned and level.released and level.equipped):push_error("Archive state incomplete");quit(1);return
+		if absf(point[0]-23.85)<.01:level.eye.rotation.x=-1.35
+		if absf(point[0]-25.5)<.01:
+			if not level.learned:push_error("Missing crossing proof");quit(1);return
+			for frame in 335:await physics_frame
+			if level.subtitle_id!="thought":push_error("Missing B3 inner thought");quit(1);return
+		if absf(point[0]-28.3)<.01:
+			for bypass in [[29.35,14.1],[29.35,12.1],[36.2,12.1],[29.35,12.1],[29.35,14.1]]:
+				if not await go(bypass[0],bypass[1]):quit(1);return
+		if absf(point[0]-34)<.01:level.eye.look_at(Vector3(34.14,.5,14.67));level.use()
+	level.eye.look_at(Vector3(36.3,1.35,7.72));level.use();if not (level.learned and level.released and level.equipped):push_error("Archive state incomplete");quit(1);return
 	for point in [[39,10.1],[48.8,10.1]]:
 		if not await go(point[0],point[1]):quit(1);return
-	var oil_before:float=level.oil
+	Input.action_press("expedition_quiet");var oil_before:float=level.oil
 	for i in range(33):
 		var pt:Vector3=level.kit.polar(13.3,PI*(1.-i/32.),0.)
 		if not await go(pt.x,pt.z):quit(1);return
@@ -64,10 +72,11 @@ func run()->void:
 	for i in range(33):
 		var pt:Vector3=level.kit.polar(13.3,PI*i/32.,0.)
 		if not await go(pt.x,pt.z):quit(1);return
-	level.order();for i in 950:await physics_frame
+	level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order();for i in 950:await physics_frame
 	if not level.holding:push_error("Hale did not reach north window");quit(1);return
-	level.use();if not await go(70.95,10.1):quit(1);return
-	level.use();if not level.collected:quit(1);return
+	level.eye.rotation=Vector3.ZERO;level.walker.rotation.y=-PI/2;level.eye.look_at(level.hunter.BAIT);level.use();level.eye.rotation=Vector3.ZERO;if level.distraction<=0:push_error("Lure not thrown");quit(1);return
+	if not await go(70.95,10.1):quit(1);return
+	level.eye.look_at(level.kit.core.position);level.use();Input.action_release("expedition_quiet");level.running=true;if not level.collected:quit(1);return
 	if not await go(70.95,11.45):quit(1);return
 	if not await go(73.35,11.45):quit(1);return
 	if not await go(73.35,9.12):quit(1);return
@@ -76,9 +85,9 @@ func run()->void:
 		if not await go(73.35+1.02*cos(a),8.1+1.02*sin(a),250):quit(1);return
 	if level.walker.position.y<4.5:push_error("Missed upper landing: %s"%level.walker.position);quit(1);return
 	if not await go(73.35,12.1):quit(1);return
-	level.use();if level.walker.position.x>40:push_error("Return leaf out of reach");quit(1);return
+	level.eye.look_at(level.kit.leaf.position);level.use();if level.walker.position.x>40:push_error("Return leaf out of reach");quit(1);return
 	for point in [[38.7,7.2],[38.7,0],[34,0],[1.5,0]]:
 		if not await go(point[0],point[1]):quit(1);return
-	var completed:=[false];level.returned.connect(func():completed[0]=true);level.use()
+	var completed:=[false];level.returned.connect(func():completed[0]=true);level.eye.look_at(Vector3(.16,1.5,0));level.use()
 	if not completed[0]:push_error("Exit signal missing");quit(1);return
 	print("PASS: A1 → B1 → B2 → B3 → B4 → B5 → C1 → C2 → C4 → upper return → B5 → A1 exit; Hale watches through glazing.");quit(0)

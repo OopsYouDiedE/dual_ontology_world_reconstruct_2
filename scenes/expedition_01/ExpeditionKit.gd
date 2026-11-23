@@ -109,8 +109,8 @@ func archive()->void:
 		rect("IronGuard",x,.54,13.66,width,1.10,.12,"iron");rect("BrassCap",x,1.10,13.66,width,.06,.15,"brass",false)
 	for i in 38:rect("LipStripe",20.15+i*.2,.006,10.38,.19,.012,.10,"brass" if i%2==0 else "iron",false)
 	evidence_gate=rect("TrialInterlock",27.8,1.25,14.1,.19,2.5,1.6,"iron")
-	wall(true,13,27.8,41.8,2.4,[[28.6,30.1,0,2.3],[38.1,39.7,0,2.4]],false,"dark");wall(true,15.2,27.8,41.8,2.4,[],true,"dark");wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14.23,2.33,2.38)
-	for edge in [[27.81,41.84,15.06],[27.81,28.58,13.13],[30.12,38.07,13.13],[39.73,41.84,13.13]]:
+	wall(true,13,27.8,41.8,2.4,[[28.6,30.1,0,2.3],[38.1,39.7,0,2.4]],false,"dark");service_loft();wall(false,41.85,13,15.2,2.4,[],false,"dark");lid(34.75,14.1,14.23,2.33,2.38)
+	for edge in [[27.81,29.0,15.06],[30.8,32.9,15.06],[35.7,38.15,15.06],[39.95,41.84,15.06],[27.81,28.58,13.13],[30.12,38.07,13.13],[39.73,41.84,13.13]]:
 		for h in [.075,2.34]:rect("B4SeamCover",(edge[0]+edge[1])*.5,h,edge[2],edge[1]-edge[0],.16,.095,"dark",false)
 	wall(true,7.2,35.25,41.75,3.8,[[36.68,37.72,.83,2.35],[37.9,39.5,0,2.4]]);wall(false,35.15,7.2,13,3.8,[[11.3,12.9,0,2.6]]);slab(31.47,12.05,7.4,1.95);wall(true,11.02,27.8,35.15,2.6);lid(31.47,12.05,7.4,1.95,2.6);wall(false,41.85,7.2,13,3.8,[[8.9,11.3,0,2.8]])
 	for v in [[31,4.85,6,5],[23.85,5.6,8,6.5],[23.9,12,7.5,6],[38.5,10.1,6.5,5.5]]:lid(v[0],v[1],v[2]+.32,v[3]+.34,3.98 if v[0]==23.9 else 3.73)
@@ -128,10 +128,45 @@ func archive()->void:
 	var route:=[Vector3(36.3,1.48,7.42),Vector3(36.3,3.06,7.42),Vector3(36.18,3.06,7.42),Vector3(36.18,3.06,2.05),Vector3(36.18,4.98,2.05),Vector3(36.18,4.98,0)]
 	for i in route.size()-1:beam(route[i],route[i+1],.10,"brass")
 	for z in [2.68,4.48,6.28]:rect("PipeClamp",36.1,3.06,z,.27,.28,.09,"iron",false)
-	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);rect("OilTin",34,.26,14.85,.3,.52,.30,"brass");rect("ClockworkMetronome",34.45,.2,14.85,.22,.4,.23,"book");section=root_group;plaque("B5  /  MASTER RELEASE",Vector3(36.31,3.43,7.34),1.90)
+	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);inspection_tools();section=root_group;plaque("B5  /  MASTER RELEASE",Vector3(36.31,3.43,7.34),1.90)
 	for x in [37.86,39.54]:rect("ShortcutReceiverStile",x,1.24,7.33,.14,2.48,.14,"door_green",false)
 	rect("ShortcutReceiverHead",38.7,2.48,7.33,1.81,.16,.14,"door_green",false)
 	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[[42.63,44.97,0,2.65]],true)
+func inspection_tools()->void:
+	rect("OilTin",33.95,.74,14.65,.34,.44,.22,"brass")
+	for x in [33.86,34.04]:beam(Vector3(x,.96,14.65),Vector3(x,1.05,14.65),.016,"iron")
+	beam(Vector3(33.86,1.05,14.65),Vector3(34.04,1.05,14.65),.016,"iron")
+	rect("MetronomeFoot",34.45,.55,14.65,.29,.06,.22,"book")
+	var case_mesh:=CylinderMesh.new();case_mesh.radial_segments=4;case_mesh.rings=0;case_mesh.bottom_radius=.172;case_mesh.top_radius=.054;case_mesh.height=.34
+	var case_body:=MeshInstance3D.new();case_body.mesh=case_mesh;case_body.material_override=mat("book");section.add_child(case_body);case_body.position=Vector3(34.45,.75,14.65);case_body.rotation.y=PI/4
+	for side in [-1.,1.]:beam(Vector3(34.42,.61,14.65+side*.125),Vector3(34.50,.91,14.65+side*.057),.015,"brass")
+## A second section through B4: two thresholds, a raised inspection bench and a
+## sealed sightline back to the oil chest. Both exits remain downstream of B3.
+func service_loft()->void:
+	wall(true,15.2,27.8,41.8,2.4,[[29.,30.8,0,2.3],[32.9,35.7,.52,2.20],[38.15,39.95,0,2.3]],true,"dark")
+	rect("InspectionGlass",34.3,1.36,15.2,2.8,1.68,.07,"glass")
+	# Hooded practical picks out the tools without filling the darkroom.
+	rect("BenchLampHood",34.2,1.88,14.98,.56,.09,.22,"iron",false)
+	rect("BenchLampLens",34.2,1.82,14.98,.48,.035,.14,"amber",false)
+	var bench_light:=SpotLight3D.new();section.add_child(bench_light)
+	bench_light.position=Vector3(34.2,1.79,14.95);bench_light.rotation.x=deg_to_rad(-74.)
+	bench_light.light_color=Color("ffd39b");bench_light.light_energy=2.4;bench_light.spot_range=2.2;bench_light.spot_angle=48.
+	for x in [32.92,35.68]:rect("InspectionJamb",x,1.36,15.2,.075,1.72,.16,"brass",false)
+	for y in [.52,2.20]:rect("InspectionFrame",34.3,y,15.2,2.85,.08,.16,"brass",false)
+	slab(34.5,16.42,12.,2.52)
+	wall(true,17.68,28.5,40.5,3.15,[],true,"brick")
+	for x in [28.5,40.5]:wall(false,x,15.2,17.68,3.15,[],false,"brick")
+	wall(true,15.2,28.5,40.5,3.15,[[28.5,40.5,0,2.4]],false,"brick")
+	lid(34.5,16.43,12.2,2.64,3.15)
+	# Ramp tops meet the deck at +0.60 m; landings at either end are level.
+	for side in [-1.,1.]:
+		var ramp:=rect("ServiceIncline",34.5+side*2.6,.238,16.44,sqrt(4.36),.12,2.44,"iron")
+		ramp.rotation.z=-side*atan2(.6,2.)
+	rect("InspectionDeck",34.5,.30,16.44,3.2,.60,2.44,"iron")
+	for x in [29.9,39.05]:plaque("INSPECTION",Vector3(x,2.37,15.07),1.36,PI)
+	for x in [31.,32.5,34.,35.5,37.,38.]:
+		beam(Vector3(x,1.38,17.46),Vector3(x,1.38,17.59),.085,"iron")
+	beam(Vector3(29.05,1.38,17.43),Vector3(40.05,1.38,17.43),.052,"brass")
 func shelf(x:float,z:float)->void:
 	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()
 	bookcase.recipe_parameters.merge({"width":3.2,"height":1.0,"depth":.48,"shelves":2,"bays":2},true)
@@ -286,7 +321,7 @@ func archive_details()->void:
 		var edge:=rect("SectionReturn",(interval[0]+interval[1])*.5,.6,2.2,interval[1]-interval[0],1.2,.24,"chalk",false);plates.append(edge);edge.hide()
 	for x in [30.02,31.98]:rect("ArchiveEntryJamb",x,1.27,2.34,.18,2.54,.24,"trim",false)
 	rect("ArchiveEntryHead",31,2.6,2.34,2.13,.16,.24,"trim",false)
-	for x in [30.,32.,34.]:
+	for x in [31.5,32.45,35.95]:
 		beam(Vector3(x,.12,14.94),Vector3(x,1.99,14.94),.09,"iron")
 	for z in [3.5,5.4,7.4]:rect("LibraryDado",19.84,.49,z,.10,.09,1.8,"trim",false)
 	for data in [[27.9,4.9,PI/2],[20.95,8.95,0.],[27.8,14.1,PI/2],[38.9,13.,0.],[38.7,7.2,0.]]:
@@ -295,7 +330,7 @@ func archive_details()->void:
 		box("DoorLintel",center+Vector3.UP*2.49,Vector3(1.94,.18,.31),"trim",false,-yaw)
 	for x in [35.65,36.32,37.0]:
 		beam(Vector3(x,1.92,7.39),Vector3(x,1.92,7.51),.19,"brass");beam(Vector3(x,1.92,7.515),Vector3(x,1.92,7.53),.15,"trim");beam(Vector3(x,1.92,7.55),Vector3(x+.08,2.01,7.55),.012,"iron")
-	for x in [37.,34.8]:beam(Vector3(x,.12,14.94),Vector3(x,2.2,14.94),.09,"iron")
+	for x in [37.,36.35]:beam(Vector3(x,.12,14.94),Vector3(x,2.2,14.94),.09,"iron")
 	for z in [3.2,4.4,6.,7.2]:rect("WindowCasing",19.74,2.1,z,.31,2.32,.095,"trim",false)
 	for z in [3.8,6.6]:
 		for y in [1.,2.,3.2]:rect("ArchiveSash",19.74,y,z,.22,.07,1.26,"trim",false)

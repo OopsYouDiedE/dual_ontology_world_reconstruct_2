@@ -71,21 +71,27 @@ func run()->void:
 			for f in 46:await physics_frame
 			if not level.captions.entries.has(""):push_error("Missing B3 inner thought");quit(1);return
 		if absf(point[0]-28.3)<.01:
+			if south_only:
+				for loft in [[29.9,14.1],[29.9,16.45],[34.3,16.45],[39.05,16.45],[39.05,14.1],[29.35,14.1]]:
+					if not await go(loft[0],loft[1]):quit(1);return
+					if loft==[34.3,16.45]:
+						level.eye.look_at(Vector3(34.14,.5,14.67))
+						if level.walker.position.y<.55 or level.focus()=="loot" or not level.in_b4(level.walker.position):push_error("Inspection deck elevation, glazing or dark zone failed");quit(1);return
+						level.eye.rotation=Vector3.ZERO
 			for bypass in [[29.35,14.1],[29.35,12.1],[36.2,12.1],[29.35,12.1],[29.35,14.1]]:
 				if not await go(bypass[0],bypass[1]):quit(1);return
 		if absf(point[0]-34)<.01 and not south_only:level.eye.look_at(Vector3(34.14,.5,14.67));level.use()
 	level.eye.look_at(Vector3(36.3,1.35,7.72));level.use();if not (level.learned and level.released and level.equipped!=south_only):push_error("Archive state incomplete");quit(1);return
+	Input.action_press("expedition_quiet")
 	for point in [[39,10.1],[48.8,10.1]]:
 		if not await go(point[0],point[1]):quit(1);return
-	Input.action_press("expedition_quiet");var oil_before:float=level.oil
-	for i in range(33):
-		var pt:Vector3=level.kit.polar(13.3,PI*(1.-i/32.),0.)
-		if not await go(pt.x,pt.z):quit(1);return
-	if level.oil>oil_before-15.:push_error("Unpriced southern bypass");quit(1);return
-	if not south_only:
+	if south_only:
+		var oil_before:float=level.oil
 		for i in range(33):
-			var pt:Vector3=level.kit.polar(13.3,PI*i/32.,0.)
+			var pt:Vector3=level.kit.polar(13.3,PI*(1.-i/32.),0.)
 			if not await go(pt.x,pt.z):quit(1);return
+		if level.oil>oil_before-15.:push_error("Unpriced southern bypass");quit(1);return
+	else:
 		level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order();for i in 950:await physics_frame
 		if not level.holding:push_error("Hale did not reach north window");quit(1);return
 		level.eye.rotation=Vector3.ZERO;level.walker.rotation.y=-PI/2;level.eye.look_at(level.hunter.BAIT);level.use();level.eye.rotation=Vector3.ZERO;if level.distraction<=0:push_error("Lure not thrown");quit(1);return

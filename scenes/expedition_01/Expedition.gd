@@ -274,6 +274,8 @@ func say(t:String)->void:notice=t;msg_time=4.
 func thought(id:String,text:String)->void:
 	subtitle_id=id;captions.post(id,"",text)
 func near(p:Vector3,d:=2.1)->bool:return walker.position.distance_to(p)<d
+func in_b4(p:Vector3)->bool:
+	return (p.x>27.8 and p.x<41.8 and p.z>13.05 and p.z<=15.2) or (p.x>28.5 and p.x<40.5 and p.z>15.2 and p.z<17.68)
 func aimed(pos:Vector3,reach:float,cone:=.96)->bool:
 	var delta:=pos-eye.global_position
 	if delta.length()>reach or (-eye.global_basis.z).dot(delta.normalized())<cone:return false
@@ -281,7 +283,7 @@ func aimed(pos:Vector3,reach:float,cone:=.96)->bool:
 	return hit.is_empty() or Vector3(hit.position).distance_to(pos)<.65
 func focus()->String:
 	if not released and walker.position.x<35.9 and aimed(Vector3(36.,1.57,0),2.,.91):return "gate"
-	if not taken and aimed(Vector3(34.14,.5,14.67),2.8):return "loot"
+	if not taken and walker.position.z<15.2 and aimed(Vector3(34.14,.5,14.67),2.8):return "loot"
 	if aimed(Vector3(23.6,1.03,4),2.8):return "note"
 	if learned and not released and aimed(Vector3(36.3,1.35,7.72),3.):return "lever"
 	if released and not collected and aimed(kit.core.position,2.8):return "core"
@@ -430,7 +432,7 @@ func update_soundscape(dt:float)->void:
 
 func update_lantern(dt:float)->void:
 	var p:=walker.position
-	var dark:=p.z>13.05 and p.z<15.15 and p.x>27.8 and p.x<41.8
+	var dark:=in_b4(p)
 	darkroom_mix=move_toward(darkroom_mix,1. if dark else 0.,dt*4.)
 	var env:Environment=get_world_3d().environment
 	env.ambient_light_energy=lerpf(.55,.09,darkroom_mix)
@@ -584,7 +586,7 @@ func rules(dt:float)->void:
 	if p.y < -1.8:fail("坠入源井");return
 	var radial:=Vector2(p.x-kit.CX,p.z-kit.CZ)
 	var service:=radial.y>2.65 and radial.length()>12.35 and radial.length()<14.25 and absf(p.y)<.35
-	if service or (p.z>13.05 and p.z<15.15 and p.x>27.8 and p.x<41.8):oil=maxf(0,oil-dt*(2.5 if service else 1.))
+	if service or in_b4(p):oil=maxf(0,oil-dt*(2.5 if service else 1.))
 	if service and oil<=0:fail("检修栈桥：灯油耗尽");return
 	var on_bridge:=absf(p.x-61)<9 and absf(p.z-10.1)<1.8 and absf(p.y)<.5
 	if on_bridge:

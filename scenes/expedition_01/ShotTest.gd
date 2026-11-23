@@ -30,6 +30,7 @@ func run()->void:
 	if beat in ["all","intro"]:await shot("01_intro",3)
 	if beat in ["all","arcade"]:put(Vector3(1,.05,0),-PI/2);await shot("02_arcade",60)
 	if beat in ["all","board"]:put(Vector3(24.65,.05,7.7),PI,-.45);await shot("03_b3_board",60)
+	if beat in ["all","loft"]:put(Vector3(33.3,.64,17.05),-PI/2);level.eye.look_at(Vector3(34.3,.73,14.75));await shot("08_inspection",60)
 	if beat in ["all","lever"]:put(Vector3(38.2,.05,10.2),0.,0.);level.eye.look_at(Vector3(36.3,1.35,7.72));level.learned=true;await shot("04_b5_lever",60)
 	if beat in ["all","shaft"]:
 		level.line_once("release","主闸开了！……嘘，听见井底的声音没？压低脚步，别跑！")

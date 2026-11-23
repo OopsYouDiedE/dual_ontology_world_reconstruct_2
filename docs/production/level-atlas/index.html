@@ -1,51 +1,236 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>沉睡学院｜箱庭关卡设计手册</title>
-<style>*{box-sizing:border-box}html{background:#dce5df;color:#1a3937;font:16px/1.65 "Microsoft YaHei",sans-serif}body{margin:0}section{max-width:810px;margin:25px auto;background:#fffdf6;padding:38px 49px 44px;border-top:7px solid #235451}header{font-size:11px;border-bottom:1px solid #9fb4a9;padding-bottom:9px;margin-bottom:25px;letter-spacing:1px}header span{float:right}small{font-weight:bold;color:#a34e2d;letter-spacing:2px}h1{font-size:34px;line-height:1.3;margin:10px 0}h2{font-size:19px;margin:0 0 5px}p{margin:0}.lead{font-size:18px;margin:0 0 20px;color:#46605b}.band,nav{background:#e6eee5;padding:12px 16px;margin:16px 0}article{border-top:1px solid #c1d1c6;padding:13px 0 9px}a{color:#166e71;text-underline-offset:3px}table{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}td,th{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid #c1d1c6}th{background:#245652;color:white}td:first-child{font-weight:bold;min-width:6em}svg{width:100%;display:block;margin:7px auto}nav{font-size:14px}@page{size:A4;margin:0}@media print{html{font-size:11pt;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}section{width:210mm;max-width:none;margin:0;padding:12mm 14mm;break-after:page}section:last-child{break-after:auto}.lead{font-size:13pt}h1{font-size:26pt}h2{font-size:14pt}article{padding:10px 0}svg{max-height:47mm}table{font-size:10.5pt}}@media screen and (max-width:600px){section{margin:0 0 12px;padding:22px 15px}header span{letter-spacing:0}h1{font-size:27px}td,th{padding:5px}}</style>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>沉睡学院｜箱庭关卡设计指南</title>
+<style>
+:root{--ink:#203432;--deep:#173b3b;--muted:#506461;--paper:#fffdf6;--pale:#e8eee7;--line:#b6c6ba;--teal:#176b64;--rust:#973d24;--blue:#315d80;--sand:#f3e8d5;--mono:Consolas,'Microsoft YaHei',monospace}
+*{box-sizing:border-box}html{background:#dce6df;color:var(--ink);font:16px/1.58 'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif}body{margin:0}a{color:#135d69;text-underline-offset:.18em}a:focus-visible{outline:2px solid var(--rust);outline-offset:3px}p{margin:.38em 0 .65em}strong{color:var(--deep)}code{font-family:var(--mono);font-size:.92em;overflow-wrap:anywhere}h1,h2,h3{color:var(--deep);line-height:1.24;margin:0}h1{font-size:clamp(38px,7vw,67px);letter-spacing:-.045em}h2{font-size:clamp(26px,4vw,37px);letter-spacing:-.035em;margin:3px 0 8px}h3{font-size:1.07em;margin:0 0 .28em}main{padding:0 16px 22px}.utility{position:sticky;top:0;z-index:2;background:var(--deep);color:white;display:flex;justify-content:space-between;gap:1em;padding:9px max(16px,calc((100% - 850px)/2));font-size:.82rem}.utility a{color:white;white-space:nowrap}.page{max-width:850px;margin:18px auto;background:var(--paper);padding:31px 43px 36px;border-top:5px solid var(--deep);box-shadow:0 3px 14px #19352c18;scroll-margin-top:48px}.folio{display:flex;justify-content:space-between;gap:1em;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:18px;color:var(--muted);font:600 .71em/1.5 var(--mono);letter-spacing:.07em}.kicker{color:var(--rust);font:700 .77em/1.5 var(--mono);letter-spacing:.09em}.lead{font-size:1.12em;color:var(--muted);margin:.35em 0 .9em}.cover{border-top-width:10px}.cover .folio{margin-bottom:29px}.cover h1{margin:.10em 0 .15em}.cover .lead{max-width:36em}.callout{background:var(--pale);border-left:4px solid var(--teal);padding:8px 12px;margin:11px 0}.callout p:last-child,.card p:last-child,.case p:last-child{margin-bottom:0}.warm{background:var(--sand);border-color:var(--rust)}.mini,.note,figcaption{font-size:.84em;color:var(--muted)}.chain{background:var(--deep);color:white;padding:10px 13px;margin:10px 0;font-family:var(--mono);font-size:.91em;overflow-wrap:anywhere}.chain strong{color:#fff1c5}.duo,.trio,.contents,.pattern-grid{display:grid;gap:9px}.duo,.contents,.pattern-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.trio{grid-template-columns:repeat(3,minmax(0,1fr))}.card,.case,.pattern{background:#f5f7ef;border:1px solid var(--line);padding:8px 11px}.case{margin:.55em 0}.pattern p,.card p{margin:.25em 0}.pattern{display:grid;grid-template-columns:minmax(70px,31%) 1fr;gap:9px;align-items:center}.pattern svg{width:100%;height:auto}.contents a{display:flex;gap:8px;align-items:baseline;border-top:1px solid var(--line);padding:4px 1px;font-size:.92em;color:var(--deep);text-decoration:none}.contents a:hover,.contents a:focus{text-decoration:underline}.contents b{font-family:var(--mono);color:var(--rust)}table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.92em}th,td{text-align:left;vertical-align:top;padding:6px 8px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}th{background:var(--deep);color:white;font-weight:650}tbody tr:nth-child(even){background:#eef2e9}td:first-child{font-weight:650;color:var(--deep)}figure{margin:9px 0 12px}figure svg{display:block;width:100%;height:auto;background:#f2f5ed;border:1px solid var(--line)}figcaption{margin-top:4px}.source-list{padding-left:1.6em;margin:.4em 0}.source-list li{margin:.28em 0}.source-list li::marker{color:var(--rust);font-weight:bold}.cite{white-space:nowrap;font-size:.85em}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.84em;margin:4px 0}.key{padding-left:7px;border-left:4px solid var(--teal)}.key.blue{border-color:var(--blue)}.key.rust{border-color:var(--rust)}.key.dim{border-color:#69736d}.diagram text,.pattern text{fill:var(--deep);font:600 14px 'Microsoft YaHei',sans-serif}.diagram .tiny{font-size:11px;fill:var(--muted)}.diagram .legend-label{font-size:12px;fill:var(--muted)}.diagram .walk,.pattern .walk{fill:none;stroke:var(--teal);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.diagram .sight,.pattern .sight{fill:none;stroke:var(--blue);stroke-width:2;stroke-dasharray:6 4}.diagram .changed,.pattern .changed{fill:none;stroke:var(--rust);stroke-width:3;stroke-dasharray:7 4}.diagram .muted{fill:none;stroke:#6b7873;stroke-width:2;stroke-dasharray:4 4}.diagram .node,.pattern .node{fill:var(--paper);stroke:var(--deep);stroke-width:1.6}.diagram .hot,.pattern .hot{fill:#ecd1ab;stroke:var(--rust);stroke-width:1.6}.diagram .box{fill:var(--pale);stroke:var(--line)}.diagram .route{stroke:var(--teal);stroke-width:12;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.21}.diagram .floor{fill:var(--paper);stroke:var(--line)}.diagram .void{fill:#e4eae2;stroke:#adbdb1;stroke-dasharray:4 3}.diagram .label{paint-order:stroke;stroke:#f2f5ed;stroke-width:3px;stroke-linejoin:round}.floorplans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.worksheet{margin-top:15px}.worksheet p{border-bottom:1px solid var(--line);min-height:2.55em;margin:0;font-size:.88em;color:var(--muted)}.screen-only{display:inline}
+@media(max-width:635px){main{padding:0}.page{padding:21px 15px;margin:0 0 12px}.folio{margin-bottom:15px}.duo,.trio,.pattern-grid,.floorplans{grid-template-columns:1fr}.utility{position:static}.pattern{grid-template-columns:86px 1fr}th,td{padding:5px}.contents{column-gap:9px}.cover .folio{margin-bottom:21px}}
+@page{size:A4;margin:0}
+@media print{html{font-size:12pt;line-height:1.58;background:white;print-color-adjust:exact;-webkit-print-color-adjust:exact}main{padding:0}.utility,.screen-only{display:none!important}.page{width:210mm;max-width:none;min-height:296mm;margin:0;padding:10mm 13mm 11mm;box-shadow:none;border-top-width:2mm;break-after:page;scroll-margin:0}.page:last-child{break-after:auto}.cover{border-top-width:3mm}.folio{margin-bottom:5mm}.cover .folio{margin-bottom:9mm}h1{font-size:43pt}h2{font-size:24pt}.lead{font-size:13.3pt}th,td{padding:7px 8px}.diagram text{font-size:14px}.page h2,.page h3{break-after:avoid}.card,.case,.pattern,figure,tr{break-inside:avoid}.duo,.contents,.pattern-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.trio{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="utility"><a href="#p1">沉睡学院 / LEVEL DESIGN</a><span><a href="#p12">索引与来源</a>　<a href="guide.pdf">A4 PDF</a></span></div>
 <main>
-<section id="p1"><header>沉睡学院　/　关卡设计手册 <span>FIELD NOTES　·　01 / 06</span></header><small>01　/　读图</small><h1>先画出玩家的决定</h1><p class="lead">在泵房门口，玩家看见对岸的闸。左边是能看清闸灯的楼梯，右边是贴着水管的短桥。要让这次选路成立，两条线得让玩家承担不同的代价。</p>
-<div class="band">工作顺序　　拆一段实玩 → 画三张图 → 指走一遍 → 进引擎核对视点</div>
-<table><thead>
-<tr><th>同一个关卡，描三遍</th><th>纸上保留什么</th><th>用它回答什么</th></tr></thead><tbody>
-<tr><td>步行图</td><td>圆点是停下来做决定的位置；实线是可走的边，箭头标方向。</td><td>封住最短边，还能从哪里到达？</td></tr>
-<tr><td>视线图</td><td>虚线从眼睛连到物件；写明隔着窗、栏杆还是挑空。</td><td>做决定之前，哪条信息已经到手？</td></tr>
-<tr><td>状态图</td><td>复制步行图；操作后只重描开、关或换向的边。</td><td>同一扇门第二次经过时，有何新用途？</td></tr></tbody></table>
-<article><h2>按尺度选结构</h2><p>走廊适合让人按顺序看到征兆与后果；枢纽适合比较目的地；回环把两处旧空间接成新路线。三条路都必须由大厅原路往返时，图是辐射形；把其中两条的远端接上，才出现可绕行的一圈。参见 <a href="https://book.leveldesignbook.com/process/layout/typology">Typology</a> 与 <a href="https://book.leveldesignbook.com/process/layout/flow/circulation">Circulation</a>。</p></article>
-<article><h2>学院在哪一层使用这套方法？</h2><p>大地图从公共大厅出发，营地、折返闸和天文台保留原位置与机制；种子替换沿途房牌与可选连线。以下练习发生在一张候选房牌内部。画完内部回路，再把入口、出口接回房牌声明的门位。</p></article>
-<nav>翻到　<a href="#p2">案例拆解</a>　/　<a href="#p3">重玩成本</a>　/　<a href="#p4">四步造图</a>　/　<a href="#p5">双层图纸</a>　/　<a href="#p6">评审记录</a></nav></section>
-<section id="p2"><header>沉睡学院　/　关卡设计手册 <span>FIELD NOTES　·　02 / 06</span></header><small>02　/　案例档案</small><h1>五个关卡，五种改图动作</h1><p class="lead">拆案例时保留三件事：玩家原先能去哪，什么改变了选择，以及把同一手法移到学院时，要改哪一条边。</p>
-<article><h2>01　《杀手》｜给边界开不同用途的孔</h2><p><a href="https://www.youtube.com/watch?v=56iiP2xQn74">迈阿密 · GMTK 访谈 IO 设计师</a>：比赛把人引向公共看台，工作人员却需要往返维修区。把这些身份画在同一张图上，同一扇门就有了不同的通行代价。对照<a href="https://www.pcgamer.com/the-making-of-sapienza-hitmans-best-level/">萨皮恩扎制作访谈</a>，沿街道找别墅边界与侧面入口。学院练习：主门给最清楚的目标视线，维修梯给较低的暴露；分别写出谁会选它。</p></article>
-<article><h2>02　《掠食：月陨》｜让上一个人的动作留在地图上</h2><p><a href="https://media.gdcvault.com/gdc2019/presentations/Mooncrash_%20Resetting%20the%20Immersive%20Simulation.pdf">Arkane · GDC 演讲图稿</a>：一轮模拟中，不同角色接续逃生；工程师修好的设施能改变后来者的选择。分别画「换角色」与「重置模拟」两条时间线。学院练习：队长先放下维修梯，让后到的队员从下层赶来；在状态表写明梯子保持到何时。</p></article>
-<article><h2>03　《梅祖拉的假面》｜只重画发生变化的边</h2><p><a href="https://www.youtube.com/watch?v=pmOVS-qLG6o">GMTK · Boss Keys 原作分析</a>：海湾神殿的水轮与中央水流相关。反转水流后，从同一水室可以顺流进入另一组通道。描两次水室，保留房间位置，只换通道箭头。玩家记住水室的布局，就能预测下一步；学院的配电线也应允许这种预测。</p></article>
-<article><h2>04　《网络奇兵 2》｜让修复设施改写返程</h2><p>工程甲板恢复动力后，主电梯接回航路。去程的任务对象成了后来往返甲板的交通工具。拆图时分别描出修复前的步行段与修复后的电梯站点。工程侧可对读<a href="https://media.gdcvault.com/GD_Mag_Archives/GDM_November_1999.pdf">开发团队 1999 年复盘</a>中关于关卡构建成本的回顾。学院练习：先在梯脚发现空挂钩，稍后从上层放梯，马上用它回到原处。</p></article>
-<article><h2>05　Jennell Jaquays 的地牢｜保留遭遇，改两处连接</h2><p><a href="https://thealexandrian.net/wordpress/13132/roleplaying-games/xandering-the-dungeon-part-5-xandering-for-fun-and-profit">Justin Alexander · Shadowfell 改图前后对照</a>：作者保留原遭遇表，重接楼层和入口，并引述 Jaquays 对上下洞穴交叠的设计意图。纸上复做：把 A—B—C—D 折起，加 A—C 的高窗、D→B 的落梯。窗让玩家预判 C，梯让玩家跳过回程的 C；分别擦掉一笔，检查损失了哪种选择。</p></article></section>
-<section id="p3"><header>沉睡学院　/　关卡设计手册 <span>FIELD NOTES　·　03 / 06</span></header><small>03　/　重玩成本</small><h1>第二次来，还会怎么走？</h1><p class="lead">让同一位测试者再走一遍。第一次的犹豫可能是在读建筑；第二次仍然耗时的地方，往往更值得动刀。</p>
-<article><h2>案例 A　固定目标把人拉回了同一间地下室</h2><p>在<a href="https://www.youtube.com/watch?v=sQ0LlNfr8ZI&t=944s">纽约银行制作访谈 · 约 16 分钟</a>里，设计师谈到萨皮恩扎病毒目标带来的重复感。纽约的任务保留取数据这一意图：玩家可以进入金库，也可以从人身上取得备份盘。两种做法改变了玩家关注的对象：一个读建筑，一个读人的动线。</p></article>
-<article><h2>学院改图　把选择放在固定终点之前</h2><p>天文台仍是同一座，终局仍敲晨钟。先在沿途测试房给同一闸门准备两种抵达操作台的方式：新玩家沿安全梯观察灯号，熟手读懂桥的征兆后直接穿过。回放第二局，标出玩家靠已有知识省掉的路段。</p></article>
-<article><h2>案例 B　Witchyworld 的碰碰车为什么显得远？</h2><p><a href="https://gmtk.substack.com/p/the-world-design-of-banjo-kazooie">Mark Brown 的 Banjo-Tooie 拆解</a>逐项列出了这段路：换 Mumbo 给设施通电，换回主角，再变成厢式车去付费，最后恢复主角才能游玩。玩家早已理解解法，余下的工作是反复往返角色切换点。这里记录的是评论者的分析。</p></article>
-<article><h2>学院改图　把口令放回发生选择的位置</h2><p>在控制台放一个可俯瞰桥面的指挥位：队长在此下令，队员原地应答。独行则走旁边有掩护的楼梯。观察员把每次折返记成「获得新信息」「改变状态」「仅换人」；出现连续两次仅换人，就把发令点挪到作业面重测。</p></article>
-<div class="band">评审问句　　删去一次往返之后，玩家失去了哪一个判断？若说不出来，先试删。</div></section>
-<section id="p4"><header>沉睡学院　/　关卡设计手册 <span>FIELD NOTES　·　04 / 06</span></header><small>04　/　绘图工序</small><h1>用四步画出一张可测的房牌</h1><p class="lead">纸、两种颜色的笔、两枚棋子就够。每一步结束前，请旁边的人沿图走一遍，让他指出自己下一步想去哪。</p>
-<article><h2>①　定两端，再接三路　｜　产出：步行图</h2><p>圈出本房的中庭 H 与远端操作台 V，给 H 放一只两层都能认出的压力表。在 H、V 之间画西梯、中央桥、东廊。把棋子从西梯送上去，再沿东廊送回来：玩家第二次回到 H 时，应从另一侧认出同一块表。闭合后再加一条由 V 放下的直梯，形成第三个独立回路。</p></article>
-<article><h2>②　把目标放进视野　｜　产出：锁钥与两帧</h2><p>在 H 旁画出口 D；把解锁杆放到二楼 V。入口机位先看见闸上落下的挡杆和灭灯；操作位透过 W2 看见同一挡杆抬起。多条件版本给每个条件一根有编号的管线和一盏独立灯。用棋子模拟从每个合法入口进房，查谁会先摸到解法。参照 <a href="https://book.leveldesignbook.com/process/layout/typology/gates">Gates</a>。</p></article>
-<article><h2>③　先凿观察孔，再放压力　｜　产出：规则交会点</h2><p>W1 只透视，仍挡住身体。从窗外先看桥板亮起、缩回、复位一遍。规则 A：观察桥面标记时桥板保持展开；规则 B：手灯在桥上耗电，熄灭后标记难辨。两条规则只在 X 叠加。新手可退回门槛，改走西梯；熟手可估算电量直接上桥。掩体是否挡视线、是否挡身体分别标注，见 <a href="https://book.leveldesignbook.com/process/combat/cover">Cover</a>。</p></article>
-<article><h2>④　从深处放梯，把奖励留在外围　｜　产出：状态图</h2><p>在 V 拉绳，从 H 挂钩处放下直梯；以后双向可走。东廊挂一个可错过的电池柜 G，支线终点让玩家转身看见回程楼梯。拿走 G 棋子后独行重走主线；仍能开闸才交图。最后只给 ArchBuilder 门洞、楼板、玻璃和楼梯的位置，先查碰撞与视线，再补陈设。</p></article></section>
-<section id="p5"><header>沉睡学院　/　关卡设计手册 <span>FIELD NOTES　·　05 / 06</span></header><small>05　/　原创图纸 · 待白盒验证</small><h1>表盘桥厅 / Gauge Hall</h1><p class="lead">双层房牌练习。两图上北下南、楼梯同位；走廊用双线画，蓝虚线仅可看，棕色短线为出口闸。尺寸是首轮摆件起点。</p>
-<svg viewBox="0 0 640 180" role="img" aria-label="一楼桥厅路径图"><rect x="1" y="1" width="638" height="178" rx="8" fill="#edf3ee"/><text x="85" y="24" text-anchor="middle" font-size="14" fill="#143b3b">L1　±0.0 m</text><path d="M42 130 H320 H545 V65 M95 65 V130 M320 130 V65 M320 130 H385 M545 95 H605" fill="none" stroke="#446761" stroke-width="20" stroke-linejoin="round" stroke-dasharray=""/><path d="M42 130 H320 H545 V65 M95 65 V130 M320 130 V65 M320 130 H385 M545 95 H605" fill="none" stroke="#fcf7e9" stroke-width="16" stroke-linejoin="round" stroke-dasharray=""/><path d="M255 130 L317 87" fill="none" stroke="#418eaa" stroke-width="3" stroke-linejoin="round" stroke-dasharray="6 5"/><path d="M415 130 V162" fill="none" stroke="#b7653c" stroke-width="8" stroke-linejoin="round" stroke-dasharray=""/><text x="430" y="177" text-anchor="middle" font-size="14" fill="#143b3b">D · 出口闸</text><circle cx="95" cy="65" r="6" fill="#bd663b"/><text x="95" y="50" text-anchor="middle" font-size="14" fill="#143b3b">A · 西梯</text><circle cx="320" cy="65" r="6" fill="#bd663b"/><text x="320" y="50" text-anchor="middle" font-size="14" fill="#143b3b">B · 桥梯</text><circle cx="545" cy="65" r="6" fill="#bd663b"/><text x="545" y="50" text-anchor="middle" font-size="14" fill="#143b3b">C · 东梯</text><circle cx="605" cy="95" r="6" fill="#bd663b"/><text x="605" y="80" text-anchor="middle" font-size="14" fill="#143b3b">G · 柜</text><circle cx="320" cy="92" r="6" fill="#bd663b"/><text x="320" y="77" text-anchor="middle" font-size="14" fill="#143b3b">X</text><text x="236" y="111" text-anchor="middle" font-size="14" fill="#143b3b">W1</text><text x="65" y="153" text-anchor="middle" font-size="14" fill="#143b3b">入口 →</text><text x="308" y="154" text-anchor="middle" font-size="14" fill="#143b3b">H · 表盘</text><text x="383" y="119" text-anchor="middle" font-size="14" fill="#143b3b">S · 挂钩</text></svg>
-<svg viewBox="0 0 640 180" role="img" aria-label="二楼阀廊路径图"><rect x="1" y="1" width="638" height="178" rx="8" fill="#edf3ee"/><text x="85" y="24" text-anchor="middle" font-size="14" fill="#143b3b">L2　+3.2 m</text><path d="M95 65 H320 H545 M320 65 V125 H385" fill="none" stroke="#446761" stroke-width="20" stroke-linejoin="round" stroke-dasharray=""/><path d="M95 65 H320 H545 M320 65 V125 H385" fill="none" stroke="#fcf7e9" stroke-width="16" stroke-linejoin="round" stroke-dasharray=""/><path d="M320 125 L415 162" fill="none" stroke="#418eaa" stroke-width="3" stroke-linejoin="round" stroke-dasharray="6 5"/><circle cx="320" cy="65" r="6" fill="#bd663b"/><text x="320" y="50" text-anchor="middle" font-size="14" fill="#143b3b">B · 桥顶</text><circle cx="95" cy="65" r="6" fill="#bd663b"/><text x="95" y="50" text-anchor="middle" font-size="14" fill="#143b3b">A · 西梯顶</text><circle cx="545" cy="65" r="6" fill="#bd663b"/><text x="545" y="50" text-anchor="middle" font-size="14" fill="#143b3b">C · 东梯顶</text><circle cx="320" cy="125" r="6" fill="#bd663b"/><text x="320" y="110" text-anchor="middle" font-size="14" fill="#143b3b">V · 闸杆</text><circle cx="385" cy="125" r="6" fill="#bd663b"/><text x="385" y="110" text-anchor="middle" font-size="14" fill="#143b3b">S · 梯绳</text><text x="482" y="152" text-anchor="middle" font-size="14" fill="#143b3b">W2 ↘ 下望出口灯</text></svg>
-<table><thead>
-<tr><th>构件</th><th>摆法与反馈</th></tr></thead><tbody>
-<tr><td>A / B / C</td><td>自西向东三组楼梯上下对位。以 2 m 净宽摆西梯，中央桥试 1.5 m；东廊绕电池柜再上楼。橙点标定位，不是阻挡。</td></tr>
-<tr><td>W1 / W2</td><td>W1 设在 H 西肩，朝东北看 X 的收板示范；W2 设在 V 东南窗，斜向下看 D。V 与 H 同轴叠放，窗下给视锥留挑空。</td></tr>
-<tr><td>V / S / D</td><td>V 控制 D：Closed → Open。S 的绳只在上端可操作：Stowed → Deployed，随后双向通行。两项独立，整次访问保留。</td></tr></tbody></table>
-<div class="band">用手指走　　空电独行：入口 → H → A ↑ → V 开闸 → S 放梯 ↓ → D。<br>熟手：H → X → B ↑ → V；贪心路线：从 C ↓，取 G，再回 D。</div></section>
-<section id="p6"><header>沉睡学院　/　关卡设计手册 <span>FIELD NOTES　·　06 / 06</span></header><small>06　/　评审与交接</small><h1>把一次试玩记成一次改图</h1><p class="lead">先让陌生玩家独行；第二遍请他换条路。观察员只记录站位、看到的东西和接下来的动作，走完再问理由。</p>
-<table><thead>
-<tr><th>走查条件</th><th>观察 / 通过信号</th><th>失败先改什么</th></tr></thead><tbody>
-<tr><td>初见、合规入口种子各一局</td><td>入门先指出 D；经过 W1 能描述桥板变化。</td><td>转动门框或移动观察窗，复查首帧。</td></tr>
-<tr><td>零电、独行、跳过 G</td><td>走 A，启动 V，能从已开放的 D 离开。</td><td>移开主线上的物资门槛。</td></tr>
-<tr><td>桥中耗尽电量</td><td>桥下接安全坡回 H；同一存档可再走 A。</td><td>加回收平台，封住会卡人的缝。</td></tr>
-<tr><td>双人、两层各站一人</td><td>在 V 能看清 D；队长就地下令，楼下有可辨回应。</td><td>挪指挥点或给灯加形状反馈。</td></tr>
-<tr><td>重玩，先开闸、暂不放梯</td><td>可由 A 或 C 返回；放梯后回程明显变短。</td><td>拉开远路与直梯的距离。</td></tr>
-<tr><td>换房牌或删掉可选连线</td><td>从公共大厅到固定终点仍可达；折返闸返营一次后可续行。</td><td>区分房内边和大地图边，恢复必需连接。</td></tr></tbody></table>
-<article><h2>白盒取证</h2><p>用 ArchBuilder 放门框、窗洞和双层楼板。先以角色眼高检查 W1 和 W2，再用项目游戏 MCP 在真实 Forward+ 视口留三帧：入口看锁、阀边看灯、出口回望表盘。日照只从外窗进入；W1/W2 是室内观察窗。逻辑检查另存种子、门状态和路径。</p></article>
-<article><h2>一房一单　/　复制到评审记录</h2><p>房牌 ____　种子 / 入口 ____　人数 / 电量 ____　首选路 ____<br>首次停步的位置 ____　玩家当时看见什么 ____　以为将发生什么 ____<br>第二次选路 ____　纯折返耗时 ____　改动哪一扇门或一条边 ____　复测结果 ____</p></article>
-<nav><a href="#p1">↑ 回到读图方法</a>　·　项目规范：单房与楼层布局 / 路线与事件 / 运行与测试</nav></section></main></html>
+<section class="page cover" id="p1" aria-labelledby="title">
+<div class="folio"><span>THE SLEEPING ACADEMY / DESIGN MANUAL</span><span>01 / 12</span></div>
+<div class="kicker">FIELD GUIDE 02 · 2026-11-24</div>
+<h1 id="title">箱庭关卡<br>设计指南</h1>
+<p class="lead">先画玩家在哪儿做决定、凭什么决定，再画墙。让玩家先看见一扇当前过不去的门，绕上楼理解它的机关，从另一侧打开一条回程路。</p>
+<figure>
+<svg class="diagram" viewBox="0 0 720 175" role="img" aria-label="从入口看出口，经长路抵达控制台，再开启回程捷径的概念图">
+<path class="route" d="M91 114 H236 V51 H497 V113 H625"/><path class="walk" d="M91 114 H236 V51 H497 V113 H625"/><path class="sight" d="M99 113 H620"/><path class="changed" d="M497 52 L368 113 H240"/>
+<circle class="node" cx="91" cy="114" r="9"/><circle class="node" cx="236" cy="114" r="9"/><circle class="hot" cx="497" cy="51" r="9"/><circle class="hot" cx="625" cy="113" r="9"/>
+<text x="91" y="142" text-anchor="middle">入口</text><text x="236" y="142" text-anchor="middle">选择点</text><text x="497" y="30" text-anchor="middle">控制台</text><text x="625" y="142" text-anchor="middle">出口</text><text class="tiny" x="310" y="45">先走长路</text><text class="tiny" x="275" y="100">开梯后可回到选择点</text><text class="tiny" x="465" y="138">入门已看见出口</text>
+</svg>
+</figure>
+<div class="callout"><strong>第一份评审稿：</strong>一句空间构想 + 通行图、视线图、状态表 + 两条完整走法 + 三个第一人称截图机位。带着这份稿子进 ArchBuilder。</div>
+<nav class="contents" aria-label="目录">
+<a href="#p2"><b>02</b> 怎样拆真实关卡</a><a href="#p3"><b>03</b> 拓扑构件与选型</a>
+<a href="#p4"><b>04</b> 门控、状态与可达性</a><a href="#p5"><b>05</b> 三个实际关卡拆解</a>
+<a href="#p6"><b>06</b> 三款学院参考怎样借</a><a href="#p7"><b>07</b> 学院路线与房牌契约</a>
+<a href="#p8"><b>08</b> 从空白纸到白盒</a><a href="#p9"><b>09</b> 表盘桥厅：两层图纸</a>
+<a href="#p10"><b>10</b> 表盘桥厅：状态与走法</a><a href="#p11"><b>11</b> 试玩、诊断与放行</a>
+<a href="#p12"><b>12</b> 复用模板与来源</a></nav>
+</section>
+
+<section class="page" id="p2" aria-labelledby="analysis-title">
+<div class="folio"><span>METHOD / REVERSE ENGINEERING</span><span>02 / 12</span></div>
+<div class="kicker">01 / 读图</div><h2 id="analysis-title">把一段实玩拆成三张图</h2>
+<p class="lead">每次选一个问题，例如「玩家为什么愿意离开眼前的门，转身绕路？」先截在决定发生前，再顺走一条路，最后重走并尝试另一条。</p>
+<table><thead><tr><th style="width:15%">图层</th><th>保留的证据</th><th>作图与反查</th></tr></thead><tbody>
+<tr><td>通行 M</td><td>入口、停步点、楼梯端点、机关、出口；各段实际能从哪里走到哪里。</td><td>双向写 <code>A ↔ B</code>，落差写 <code>A → B</code>。换层要有对位端点，图面交叉处检查是否真的连通。</td></tr>
+<tr><td>视线 V</td><td>哪个站位、朝哪个方向、何时看见哪件事，是否有足够信息做决定。</td><td>从眼位 F 连虚线到门、刻度或指示；标窗、栏杆、遮挡和状态。反向再拍一帧。</td></tr>
+<tr><td>状态 S</td><td>谁在何处操作，改变什么，影响哪些边，变化保持多久。</td><td>用同一组节点 ID 比较 S0/S1。记当前值、前置、失败去向和重置边界。</td></tr>
+</tbody></table>
+<div class="duo">
+<div class="card"><h3>记录一次选择</h3><p>版本 / 时间码 / 视点 → 可见选项与线索 → 玩家选哪条边 → 行走、资源和暴露代价 → 到达后确认了什么。给实拍画面与你的解释分别加标签。</p></div>
+<div class="card"><h3>动一笔验证解释</h3><p>擦掉预告窗、封住捷径或挪动操作台，每次只改一项。预测哪一个停步点、错门或回程段会变；白盒中再对照。</p></div>
+</div>
+<div class="case"><h3>示范观察单｜折返闸（依据制作规范）</h3><p><strong>通行：</strong>入口 → 钟与制动柄 → 前行口 / 返营口。<strong>视线：</strong>拉杆站位应可分别指出两个门。<strong>状态：</strong>闸解锁后才分流；休整后回同一闸，库存与已领取奖励保持原样。<strong>验证动作：</strong>遮 HUD 站在柄前，让玩家指回营的门并说出依据。</p></div>
+<div class="callout"><strong>成本写成一组值：</strong>实际步行秒数 / 游戏时钟分钟 / 消耗品 / 风险 / 所得线索。纸上先写相对关系，白盒再填实测值；尺上的短路未必是玩家眼里的轻松路。</div>
+<p class="note">阅读依据：Research、Layout、Flow、Parti、How to study a level。假设与观察的分栏、三图共用 ID 是学院交接约定。<a class="cite" href="#s1">[1]</a> <a class="cite" href="#s2">[2]</a> <a class="cite" href="#s4">[4]</a></p>
+</section>
+
+<section class="page" id="p3" aria-labelledby="pattern-title">
+<div class="folio"><span>PATTERNS / ROUTE OPERATIONS</span><span>03 / 12</span></div>
+<div class="kicker">02 / 选型</div><h2 id="pattern-title">六种拓扑，六种改图动作</h2>
+<p class="lead">先给体验配一条边，再给边安排形体。一本房牌可以用走廊开场、在中厅展开绕路、在出口前汇合。</p>
+<div class="pattern-grid">
+<div class="pattern"><svg viewBox="0 0 112 62" aria-hidden="true"><path class="walk" d="M15 31 H96"/><circle class="node" cx="15" cy="31" r="5"/><circle class="node" cx="55" cy="31" r="5"/><circle class="hot" cx="96" cy="31" r="5"/></svg><div><h3>走廊 / Corridor</h3><p>沿链顺序揭示征兆、演示与后果。转角控制先读到的东西；加凹室可供停看。</p></div></div>
+<div class="pattern"><svg viewBox="0 0 112 62" aria-hidden="true"><path class="walk" d="M16 14 H87 V42 H16"/><path class="sight" d="M24 42 V14"/><circle class="node" cx="16" cy="14" r="5"/><circle class="hot" cx="16" cy="42" r="5"/></svg><div><h3>折线 / Hairpin</h3><p>让去程遮住一个出口，回望时揭开。若尽头无可发现之物，把折角缩短。</p></div></div>
+<div class="pattern"><svg viewBox="0 0 112 62" aria-hidden="true"><path class="walk" d="M17 31 H55 M55 31 L90 10 M55 31 H99 M55 31 L90 52"/><circle class="hot" cx="55" cy="31" r="6"/><circle class="node" cx="90" cy="10" r="4"/><circle class="node" cx="99" cy="31" r="4"/><circle class="node" cx="90" cy="52" r="4"/></svg><div><h3>枢纽辐射 / Hub-and-spoke</h3><p>中心负责定向与比较，支路各给不同兑现。频繁回中心时，让状态也随回访更新。</p></div></div>
+<div class="pattern"><svg viewBox="0 0 112 62" aria-hidden="true"><path class="walk" d="M15 31 L35 12 H78 L97 31 L78 50 H35 Z"/><rect class="hot" x="48" y="23" width="17" height="16"/></svg><div><h3>绕核场地 / Bowl、Arena</h3><p>在中央体块两侧留可走面。两边能看见的证物、目标或风险各异，才值得选。</p></div></div>
+<div class="pattern"><svg viewBox="0 0 112 62" aria-hidden="true"><path class="walk" d="M12 31 H25 L44 12 H68 L87 31 H101 M25 31 L44 50 H68 L87 31"/><circle class="hot" cx="87" cy="31" r="5"/></svg><div><h3>分支再汇合 / Branch &amp; merge</h3><p>从同一决策点分两路，再接一个共用检验。让选择改变取得的工具、信息或到场顺序。</p></div></div>
+<div class="pattern"><svg viewBox="0 0 112 62" aria-hidden="true"><path class="walk" d="M14 45 H85 V13 H41"/><path class="changed" d="M41 13 L14 45"/><circle class="node" cx="14" cy="45" r="5"/><circle class="hot" cx="41" cy="13" r="5"/></svg><div><h3>回环与捷径 / Loopback</h3><p>从深处接回起点或旧路；先见梯脚，再从上端放梯。开通后用一次回程兑现。</p></div></div>
+</div>
+<div class="callout"><strong>叠两个独立选择：</strong>连房间与看房间分别落笔。把窗开进回环可预告对岸，却保留绕路；再添加跨层楼梯才会改变步行图。多层图用同一朝向、标高和梯口编号。</div>
+<div class="case"><h3>小公式｜一次连接增加几种走法？</h3><p>冻结门态，将<strong>双向</strong>通行画成无向图。连通区域的独立回路数 = 边数 − 节点数 + 1：沿链加一个新房，只拉一根线，回路数不变；在两个已有房间间开一条新边，回路数加一。把新旧走法的耗时、所见和风险写在图旁，决定那条边值不值得做。方向门与动态门按第 4 页检查。</p></div>
+<p class="note">本页把书中的房间、关卡类型与学院常用的合流动作并排使用。Hairpin 强调回头才看到出口；习惯上称「回环」的走廊也可由脚本重置，分析时标清真正的边。<a class="cite" href="#s2">[2]</a> <a class="cite" href="#s3">[3]</a></p>
+</section>
+
+<section class="page" id="p4" aria-labelledby="gates-title">
+<div class="folio"><span>GATES / REACHABLE STATES</span><span>04 / 12</span></div>
+<div class="kicker">03 / 状态</div><h2 id="gates-title">每道门都有条件、反馈和复位</h2>
+<p class="lead">画完地图后，用棋子把「我站在哪」和「此时能走哪条边」一起推进。先测最贫穷的初始状态，再把道具和伙伴加回去。</p>
+<table><thead><tr><th style="width:18%">门控</th><th>学院用法</th><th>纸上验收</th></tr></thead><tbody>
+<tr><td>硬门</td><td>机关没完成就关，如 V 扳杆控制出口 D。</td><td>从入口可到 V；在 D 识别关闭，从 V 确认开启，开后能到 D。</td></tr>
+<tr><td>软门 / 代价</td><td>徒手可过但更慢；包里的工具换时间或收益。</td><td>同一起点用空包和带工具实走，分别结算；工具消耗后仍可继续。</td></tr>
+<tr><td>方向门</td><td>深处放梯后双向开；下落口只能往下。</td><td>画单向箭头。逐条检查落地后的恢复路，以及逆向逼近时的读图。</td></tr>
+<tr><td>知识与时机</td><td>先在安全位置观察征兆，再做跨越或同时动作。</td><td>在危险前能观察一轮；预判错误有明确后果与回收站位。</td></tr>
+</tbody></table>
+<div class="chain"><strong>判定规则：</strong>站位 × 门态 × 剩余资源 × 必需事实 × 一次性标记 → 可执行动作 → 新状态</div>
+<div class="case"><h3>一张连通图，两个完全不同的结果</h3><p><strong>初稿：</strong><code>入口 ↔ 岔口 → D[钥匙] → 储物间[拿钥匙]</code>。普通连通检查会穿过 D；按状态走，棋子只能到岔口。<strong>改稿：</strong>把钥匙挪到岔口的可达支间，或把支间改成纯奖励并给 D 一个可达的徒手操作点。重跑从岔口沿每条合法单向边出发的情况。</p></div>
+<div class="duo"><div class="card"><h3>判定一｜存在解</h3><p>用队列搜状态。初始状态入队，枚举可走边和操作，跳过已访问状态；遇到出口就保存动作序列。每个合法入口 × 空包独行各跑一次。</p></div><div class="card"><h3>判定二｜失败后还能解</h3><p>从终局沿已生成的状态转移反向标记；正向可达但无法抵达终局的存活状态，给出失败路径。检查掉落、道具耗尽、单向边和返营次数。</p></div></div>
+<p class="note">Gates、Critical path 提供门控与主路径语言；展开有限状态与反向走查是学院的测试办法。<a class="cite" href="#s3">[3]</a></p>
+</section>
+
+<section class="page" id="p5" aria-labelledby="case-title">
+<div class="folio"><span>CASEBOOK / FROM DUNGEONS TO IMMERSIVE SIMS</span><span>05 / 12</span></div>
+<div class="kicker">04 / 真实案例</div><h2 id="case-title">拆出一条能移植的边</h2>
+<p class="lead">以下用文字拓扑追踪公开案例中的局部路段。每个案例只提取一个可在学院白盒里验证的动作。</p>
+<div class="case"><h3>01　Caverns of Thracia｜给两层交叠的洞室留接点</h3><p><strong>作者证据：</strong>Jennell Jaquays 在访谈中谈到让开阔的上层洞室位于开阔的下层洞室上方，让遭遇跨越两个高度。这条方法线在早期桌游地牢已出现。Justin Alexander 后来公开了自己重排 Keep on the Shadowfell 的前后图：用同一批遭遇验证连接方式的改变。<a class="cite" href="#s5">[5]</a></p><p><strong>移植：</strong>先保留机关和证物，试画「一层 H → 西梯 → 二层 V」与「二层 V → 东梯 → 一层 H」。玩家在两层都能认出同一个地标；删掉东梯，比较回程与探索选择少了什么。</p></div>
+<div class="case"><h3>02　Dark Souls · Undead Burg｜可丢掉的探索回路</h3><p><strong>逐段证据：</strong>手册实玩拆解标出主线 1→2：近楼梯、过桥、到雾门。站在雾门附近能向下看到战利品；可选线 3→4 是掉下去取物、穿屋爬梯、从城墙落回熟悉的楼梯。高处先给方向，回程重认地标；不下去也可继续主线。<a class="cite" href="#s6">[6]</a></p><p><strong>移植：</strong>东廊让补给吸引人下楼，下层再把玩家送回能看到出口的中庭。白盒反查：移除补给，空包主线仍通；保留补给时，从打开柜子的位置能指出回路的下一段。</p></div>
+<div class="case"><h3>03　Prey: Mooncrash｜把状态生命周期画在地图旁</h3><p><strong>开发者证据：</strong>Arkane Austin 关卡设计负责人 Rich Wilson 的 GDC 图稿第 53–60 页连讲多角色、持久化与模拟重置，第 87–91 页单列逃离方式。读图时把同轮换角和重置模拟画成两条不同的时间线。<a class="cite" href="#s7">[7]</a></p><p><strong>移植：</strong>给每项操作声明保留范围。「梯子放下」「闸已开」「奖励已取」分别记一次。伙伴到了可以走已放的梯；正式出征返营后继续读原闸状态；新局才初始化。对照首访、折返和新局三个存档点。</p></div>
+<div class="callout warm"><strong>复做练习：</strong>拿一张现有房间草图，先固定站位与事件，只允许增删一条路、一条视线。写下预期变化，再请一人按图指走。出现新停步点时把原因和位置写回图纸。</div>
+</section>
+
+<section class="page" id="p6" aria-labelledby="reference-title">
+<div class="folio"><span>CASEBOOK / ACADEMY REFERENCE SET</span><span>06 / 12</span></div>
+<div class="kicker">05 / 帧证据与改稿</div><h2 id="reference-title">三款参考，各管一个尺度</h2>
+<p class="lead">用仓库里的取帧索引定位原片，再把看到的证据翻译成「我应该在学院改哪里」。时间码对应研究清单中的片源。<a class="cite" href="#s8">[8]</a></p>
+<table><thead><tr><th style="width:24%">拆哪个片段</th><th style="width:38%">图上提取什么</th><th>学院的可测改稿</th></tr></thead><tbody>
+<tr><td>《蓝图王子》<br><span class="mini">alt1 00:36 / alt2 00:48</span></td><td>在门前比较候选房，房卡边框、门向和轮廓让玩家预估将来的连接。把房牌图例和现场门位并排。<a class="cite" href="#s8">[8]</a> <a class="cite" href="#s9">[9]</a></td><td>让路线图与实体门共用目的地 ID 和可辨标识。走到门前问「这道门去哪、可能带回什么？」学院由种子分配房牌和边，门前读的是当局可选路径。</td></tr>
+<tr><td>《邪恶冥刻》<br><span class="mini">Notlad 01:02–01:42</span></td><td>从路线图标识进入节点事件。标出选择发生在地图哪里，结果又在何时可见。<a class="cite" href="#s8">[8]</a> <a class="cite" href="#s9">[9]</a></td><td>把选路 → 房内操作 → 结算 → 再选路画成节拍。若两扇门给同样的后果，先改收益或规则，再考虑开第三扇门。</td></tr>
+<tr><td>《巴别塔圣歌》<br><span class="mini">连续实玩 03:02 / 03:14 / 03:26</span></td><td>黄阶、红墙和低处水渠各占大块面。描出人体尺寸、落差边缘和可走面，检查转机位后还有哪个形状可以延续方向。<a class="cite" href="#s8">[8]</a> <a class="cite" href="#s9">[9]</a></td><td>在白盒入口先分踏步、立面、低处三块；再走到二层回拍同一地标。遮 HUD、看灰度，仍应能区分楼梯、窗洞与出口。</td></tr>
+</tbody></table>
+<div class="callout"><strong>一项选择的完整节拍：</strong>预告（我能选什么）→ 练习（在安全处看见规则）→ 承诺（过门或跨桥）→ 反馈（物件或门在变）→ 兑现（奖励、捷径或新路线）。节拍慢时先找重复往返，快时看玩家是否来得及读征兆。<a class="cite" href="#s1">[1]</a></div>
+<div class="case"><h3>重玩专查｜哪些路只值得走一次？</h3><p>同种子换路再走，把每段折返标为「取得新事实」「改变状态」「只搬运」。若玩家已知道解法却频繁回发令点，试把发令点搬到看得见作业面的站位；观察理解是否保留、纯折返是否缩短。</p></div>
+</section>
+
+<section class="page" id="p7" aria-labelledby="contract-title">
+<div class="folio"><span>PRODUCTION / TWO TOPOLOGY SCALES</span><span>07 / 12</span></div>
+<div class="kicker">06 / 接正式出征</div><h2 id="contract-title">固定大关，变量留在房牌和边</h2>
+<p class="lead">从公共大厅出发，固定折返闸检验推进，固定天文台兑现一路选择。先在一张房牌内部做出有效绕路，再考虑全局加边。</p>
+<figure><svg class="diagram" viewBox="0 0 720 166" role="img" aria-label="公共大厅至天文台的常规槽位示意，折返闸一次往返营地；灰虚线是种子可能提供的第一至第二层连接">
+<path class="walk" d="M69 78 L154 44 M261 44 L364 78 L473 44 L625 78 M69 78 L154 111 M261 111 L364 78 L473 111 L625 78"/>
+<path class="muted" d="M154 44 H261 M154 111 H261 M154 44 L261 111 M154 111 L261 44"/><path class="changed" d="M71 93 V146 H365 V95"/>
+<circle class="hot" cx="69" cy="78" r="9"/><circle class="node" cx="154" cy="44" r="6"/><circle class="node" cx="261" cy="44" r="6"/><circle class="node" cx="154" cy="111" r="6"/><circle class="node" cx="261" cy="111" r="6"/><circle class="hot" cx="364" cy="78" r="9"/><circle class="node" cx="473" cy="44" r="6"/><circle class="node" cx="473" cy="111" r="6"/><circle class="hot" cx="625" cy="78" r="9"/>
+<text text-anchor="middle" x="69" y="62">公共大厅</text><text text-anchor="middle" x="154" y="30">西 1</text><text text-anchor="middle" x="261" y="30">西 2</text><text text-anchor="middle" x="154" y="134">东 1</text><text text-anchor="middle" x="261" y="134">东 2</text><text text-anchor="middle" x="364" y="61">折返闸</text><text text-anchor="middle" x="473" y="30">西 3</text><text text-anchor="middle" x="473" y="134">东 3</text><text text-anchor="middle" x="625" y="62">天文台</text><text class="tiny" x="378" y="151">每局一次回营休整、原闸恢复</text>
+</svg><figcaption>常规出征槽位示意，第一层到第二层的四条候选边由种子筛选，灰虚线表示可能接通。首次出发脚本单列：在 2026-11-24 的 Forward+ 检查中，seed 2 从大厅出生，当前入口为 <code>First Expedition · Hale</code>；实测常规分支时应在完成首段后核对实际地图。</figcaption></figure>
+<table><thead><tr><th style="width:23%">改动层</th><th>必须写进房牌或验收单</th></tr></thead><tbody>
+<tr><td>跨房端口</td><td>入口/出口边位、方向、连接标签、允许的镜像或旋转、门前预告。对照 <code>HouseMap</code>、路线图、门牌，以及相邻房真实墙洞；关掉可选边再测。</td></tr>
+<tr><td>房内必要解</td><td>合法入口都能独行、空包到出口。障碍所需的证物放在本房可达区，奖励、工具和队友扩展选择。营地由居民自主决策，出征中由队长指挥。</td></tr>
+<tr><td>结算与返程</td><td>写出取得、花费、保留资源以及对下一站的影响。折返只一次，背包、领奖和闸状态保持；晨钟复测毛毡、棘轮、徒手三格。</td></tr>
+<tr><td>两重可达</td><td>拓扑求解器查端口匹配和起终点连通；关卡另查条件门下的真实推进。用不同种子、合法端口组合和空包，确认任何合法出路都有推进或恢复路径。</td></tr>
+</tbody></table>
+<p class="note">制作基准与代码入口见 <a href="../gameplay.md">路线与事件</a>、<a href="../../../core/rogue_topology/README.md">拓扑模块</a>、<a href="../verification.md">正式验收</a>。<a class="cite" href="#s10">[10]</a></p>
+</section>
+
+<section class="page" id="p8" aria-labelledby="workflow-title">
+<div class="folio"><span>WORKFLOW / FROM PAPER TO BLOCKOUT</span><span>08 / 12</span></div>
+<div class="kicker">07 / 造图工序</div><h2 id="workflow-title">六步把纸图交给白盒</h2>
+<p class="lead">先锁玩家要做的决定，之后逐段增加制作成本。每一步都交一样能让同事继续工作的东西。</p>
+<table><thead><tr><th style="width:22%">工序</th><th style="width:39%">动手做</th><th>带什么过评审</th></tr></thead><tbody>
+<tr><td>① 一句构想<br>Parti</td><td>写「先从楼下看见锁，绕上楼开锁，再从近处回到那扇门」。圈入口、最终目的、一次回看。</td><td>同事只看简图，复述空间体验与要做的选择。</td></tr>
+<tr><td>② 节拍与主路径</td><td>先连最小徒手链，标入场预告、首次操作、反馈、离场。给链加一个可略过的探索回路。</td><td>删除可选线路，用棋子仍能走完全程。</td></tr>
+<tr><td>③ 拆图与试方位</td><td>画楼层和剖面，叠三层图；给窗、边与机关编 ID。两路至少比较一种真实代价。</td><td>A/B 两张小图；指出各自第一个疑惑点，选一张进白盒。</td></tr>
+<tr><td>④ 标尺先行</td><td>在基准白盒测角色眼位、门净宽/净高、拐角、楼梯落脚、操作射线、队友交会、窗后遮挡；用 ArchBuilder 接墙洞、楼板、梯、栏与窗。</td><td>表上写「候选尺寸 → 实测 → 选值理由」。用角色、镜头与碰撞核实标尺。</td></tr>
+<tr><td>⑤ 最小交互版</td><td>只实现必经操作、结果反馈、可选捷径和回收。先用占位灯与形状，玩家文字用英文并与门牌统一。</td><td>每条状态边可复现；入口、操作点、回望分别截图。</td></tr>
+<tr><td>⑥ 试玩后再细化</td><td>独行首测，再跑同种子换路；只改一个变量复测。随后补材质、音响和室内氛围灯；时间光由外窗进入。</td><td>一条观测、一项修改、一轮对照；按第 11 页分别签逻辑和实机。</td></tr>
+</tbody></table>
+<div class="callout"><strong>先走四个易漏位置：</strong>门槛同时站两人，梯顶转身，栏杆前看下层目标，控制台贴身操作后立即抬头。一个位置同时测试身体通行和相机读图。</div>
+<p class="note">流程来自 Layout、Parti、Blockout、Metrics、Wayfinding、Playtesting 的组合；灯光和工具按学院制作约定落地。<a class="cite" href="#s2">[2]</a> <a class="cite" href="#s4">[4]</a> <a class="cite" href="#s10">[10]</a></p>
+</section>
+
+<section class="page" id="p9" aria-labelledby="plan-title">
+<div class="folio"><span>GAUGE HALL / WHITEBOX PLAN</span><span>09 / 12</span></div>
+<div class="kicker">08 / 原创练习 · 待白盒</div><h2 id="plan-title">表盘桥厅：先看见门，再改写回程</h2>
+<p class="lead"><b>场地构想：</b>进中庭 H 看见挡杆 D，从安全西梯或短桥到上层闸杆 V。开闸后可从近处放梯，看着同一只表盘返回。</p>
+<figure><div class="floorplans"><svg class="diagram" viewBox="0 0 342 295" role="img" aria-label="表盘桥厅一楼平面，北在上；桥下落区 R 通向中庭 H，E 为入口，D 为出口闸">
+<defs><marker id="arrow-r" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L6 3 L0 6 Z" fill="#973d24"/></marker></defs>
+<rect class="floor" x="0" y="0" width="342" height="295"/>
+<text x="15" y="25">L1 / 0.0 m</text><text class="tiny" x="289" y="25">↑ 北</text>
+<path class="route" d="M143 266 V220 H53 V82 M143 220 H112 V127 H120 V82 M143 220 H286 V82 M143 220 L196 260 H299 M214 220 V173"/>
+<path class="walk" d="M143 266 V220 H53 V82 M143 220 H112 V127 H120 V82 M143 220 H286 V82 M143 220 L196 260 H299"/>
+<path class="changed" d="M214 220 V173"/><path class="changed" d="M171 106 V143 L147 204" marker-end="url(#arrow-r)"/>
+<path class="sight" d="M143 262 L289 260 M191 213 L171 86"/>
+<circle class="node" cx="53" cy="82" r="6"/><circle class="node" cx="120" cy="82" r="6"/><circle class="hot" cx="171" cy="106" r="6"/><circle class="node" cx="214" cy="173" r="6"/><circle class="node" cx="286" cy="82" r="6"/><circle class="hot" cx="286" cy="164" r="6"/><circle class="node" cx="143" cy="220" r="7"/><circle class="node" cx="143" cy="266" r="6"/><path d="M299 248 V272" stroke="#973d24" stroke-width="5"/>
+<text class="label" x="37" y="67">A0</text><text class="label" x="103" y="67">P0</text><text class="label" x="155" y="95">R</text><text class="label" x="220" y="188">S0 梯脚</text><text class="label" x="271" y="67">C0</text><text class="label" x="276" y="151" text-anchor="end">G 柜</text><text class="label" x="127" y="239">H 表盘</text><text class="label" x="112" y="287">E / Entry</text><text class="label" x="214" y="280">D / Exit Gate</text><text class="label" x="181" y="207">W1</text>
+</svg><svg class="diagram" viewBox="0 0 342 295" role="img" aria-label="表盘桥厅二楼平面，北在上；V 透过 W2 看楼下的 D，X 为单向条件桥">
+<defs><marker id="arrow-x" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L6 3 L0 6 Z" fill="#973d24"/></marker></defs>
+<rect class="floor" x="0" y="0" width="342" height="295"/>
+<text x="15" y="25">L2 / +3.2 m</text><text class="tiny" x="289" y="25">↑ 北</text>
+<path class="void" d="M131 64 H198 V151 H70 V109 H131 Z"/>
+<path class="route" d="M53 82 V46 H214 V82 H286 M214 82 V173"/>
+<path class="walk" d="M53 82 V46 H214 V82 H286 M214 82 V173"/><path class="changed" d="M120 82 H201" marker-end="url(#arrow-x)"/><path class="walk" d="M203 82 H214"/>
+<path class="sight" d="M214 82 L299 260"/><path class="muted" d="M123 220 H162 M143 200 V240 M289 260 H309 M299 250 V270"/>
+<circle class="node" cx="53" cy="82" r="6"/><circle class="node" cx="120" cy="82" r="6"/><circle class="hot" cx="214" cy="82" r="7"/><circle class="node" cx="214" cy="173" r="6"/><circle class="node" cx="286" cy="82" r="6"/>
+<text class="label" x="37" y="69">A1</text><text class="label" x="105" y="69">P1</text><text class="label" x="152" y="73">X</text><text class="label" x="221" y="67">V 闸杆</text><text class="label" x="271" y="69">C1</text><text class="label" x="222" y="176">S1 放梯</text><text class="label" x="231" y="142">W2</text><text class="tiny" x="116" y="136">挑空 / 桥下 R</text><text class="tiny" x="113" y="238">H 表盘投影</text><text class="tiny" x="226" y="280">下层 D 位置</text>
+</svg></div>
+<figcaption>概念图，非比例。A、P、C 为跨层梯，S 为待部署直梯；各编号上下对位。粗实线是结构通行，棕色间断线是条件边或落点回收，蓝虚线只传信息。W1 的视线斜向上看 X，W2 的视线斜向下看 D。</figcaption></figure>
+<table><thead><tr><th style="width:23%">首轮摆件</th><th>用身体与相机检查什么</th></tr></thead><tbody>
+<tr><td>A / P / C / S</td><td>西梯试 2.0 m 净宽；中央桥试 1.5 m。标高先用 +3.2 m。梯脚、净空、栏杆、回望均按实际控制器重测。</td></tr>
+<tr><td>W1 / W2 / H</td><td>室内窗和栏杆先挡身体、透视线。W1 能完整看到灯灭、收板、复位；V 站位透过 W2 看到 D 挡杆升起；两层都能认出 H 的表盘。</td></tr>
+<tr><td>X / R / G</td><td>桥下做截落的平台与回收坡，坡尽头回 H。G 是东廊可错过的补给柜；开柜后看得见回 H 的方向。</td></tr>
+</tbody></table>
+<figure><svg class="diagram" viewBox="0 0 720 102" role="img" aria-label="局部剖面：W1 向上看桥，桥下有安全落台，V 向下看门"><path class="walk" d="M42 76 H150 M192 25 H251 M388 25 H474 M286 71 H366 M566 76 H661"/><path class="changed" d="M251 25 H388 M328 30 V66"/><path class="sight" d="M136 62 L319 24 M448 14 L624 61"/><text class="label" x="78" y="94">W1 / 室内窗</text><text class="label" x="250" y="18">X / 条件桥</text><text class="label" x="296" y="91">R / 落台</text><text class="label" x="421" y="45">V / 闸杆</text><text class="label" x="602" y="94">D / 挡杆</text></svg><figcaption>局部剖面示意，两条视线分别投影，走线见平面。白盒首查 W1→X、V→D、X↓R，优先移动遮挡视线的窗沿、退台或机关。</figcaption></figure>
+</section>
+
+<section class="page" id="p10" aria-labelledby="state-title">
+<div class="folio"><span>GAUGE HALL / STATE SHEET</span><span>10 / 12</span></div>
+<div class="kicker">09 / 机关交接 · 初版假设</div><h2 id="state-title">三条走法，同一扇出口闸</h2>
+<p class="lead">西梯稳定，中央桥短但有时限，东梯可取补给。即使先去摸门、桥上失手或忘放梯，仍能推进。</p>
+<div class="chain"><strong>常驻边：</strong>E ↔ H ↔ A0 ↔ A1 ↔ V ↔ C1 ↔ C0 ↔ G ↔ H；<br>H ↔ P0 ↔ P1；V ↔ S1；H ↔ S0；H ↔ D；R → H。</div>
+<table><thead><tr><th style="width:23%">事件 / 初态</th><th style="width:44%">触发与反馈</th><th>之后可以去哪里</th></tr></thead><tbody>
+<tr><td>V · 闸杆<br><code>gate=closed</code></td><td>在 V 单次锁存开闸，W2 可见 D 挡杆升起；未开时反馈 <code>Gate Locked</code>。</td><td><code>gate=open</code> 后 D → 下一房；D 关闭时可退回 H。</td></tr>
+<tr><td>S1 · 放梯<br><code>ladder=stowed</code></td><td>只在上端拉绳，锁存放梯；下端可看空挂钩，上端可看梯落位。</td><td><code>ladder=deployed</code> 后 S1 ↔ S0。A / C 仍通。</td></tr>
+<tr><td>X · 观察桥<br><code>charge=0..3</code></td><td>W1 的样机演示与桥的通行独立。P1 的可选灯临时点亮反光标；持续看准才维持桥板，每跨一段耗一格，三段到 V。</td><td>只从 P1 入桥，零格时显示 <code>No Charge</code> 并留在 P1。跨桥途中电尽或失焦则坠 R → H。末段先判抵达 V、再判电尽；V 侧挡板禁止逆行。</td></tr>
+<tr><td>G · 补给柜<br><code>claimed=false</code></td><td>在东廊领取一次打包物，打开后保持开盖；补给与桥灯分开。</td><td>继续沿东梯或回 H；回访读已领取状态。</td></tr>
+</tbody></table>
+<div class="trio"><div class="card"><h3>A / 徒手</h3><p>E → H → A0 ↑ A1 → V；先开闸再放梯，S1 ↓ S0 → H → D。也可不放梯，从 A 或 C 回去。</p></div><div class="card"><h3>X / 熟手</h3><p>E → H → P0 ↑ P1；有三格时跨 X → V 开闸。仅两格或中途移开视线：落 R → H，改走 A。</p></div><div class="card"><h3>C / 探索</h3><p>E → H → 东廊 G → C0 ↑ C1 → V 开闸。折返东廊时柜子仍开，也可用已放的 S。</p></div></div>
+<p class="note"><strong>保留：</strong>V、S、G 和剩余电量分别锁存于本局该房状态；重新读入同一房实例时保持，新局清零后按用例设种初始电量。房牌首次落位可用空电或三格测试档。E 仅进、D 仅出；提案先做双端口白盒。接入多出口的槽位时需另做门组，逐一重跑逻辑、首帧与出口朝向。</p>
+</section>
+
+<section class="page" id="p11" aria-labelledby="test-title">
+<div class="folio"><span>REVIEW / OBSERVE, CHANGE, RETEST</span><span>11 / 12</span></div>
+<div class="kicker">10 / 验收</div><h2 id="test-title">把一次试玩记成一次改图</h2>
+<p class="lead">先让第一次见房的玩家独行，观察员只记站位、视野、动作。离场后追问当时以为会发生什么。同种子换路重走，衡量已知解法后的纯折返。</p>
+<table><thead><tr><th style="width:24%">走查条件</th><th style="width:42%">通过信号 / 采样</th><th>失败先改一项</th></tr></thead><tbody>
+<tr><td>入口首见</td><td>玩家能指向 D、说出它关着；站 W1 能描述桥灯与桥板的因果关系。</td><td>挪入口或窗，压低背景对比；再拍同机位。</td></tr>
+<tr><td>0 格、独行、跳过 G</td><td>西梯可摸到 V、开 D；不放 S 也能离开。D 开启时站在 V 能看见实体反馈。</td><td>清掉主路上的资源门槛；对齐 W2 与挡杆。</td></tr>
+<tr><td>1 / 2 / 3 格；移开视线</td><td>1 / 2 格在桥内失败后到 R，徒手能恢复；3 格满程正好到 V；中途失焦可复现安全落点。</td><td>先改落区覆盖、护栏与坡道；锁定每段耗电与成功判定顺序。</td></tr>
+<tr><td>二人 / 返回 / 领取两次</td><td>队长在 V 有作业视野，队友不堵梯；S 双向、G 只发一次；房间重入的状态一致。</td><td>移动指挥位；给门槛和梯顶留会车位；记录重入前后值。</td></tr>
+<tr><td>种子 / 端口变体</td><td>对照地图、门牌和墙洞；每个合法入口和空包至少有一条解。删可选边、返营再续行仍通到晨钟。</td><td>先复查宏观端口分配，再查室内硬门的前置可达状态。</td></tr>
+</tbody></table>
+<div class="duo"><div class="card"><h3>逻辑签字</h3><p>保存版本、种子、入口、状态路径以及首个失败条件。跑正式 <code>verify.py --logic-only</code> 或对应房牌的状态走查；用状态图另外覆盖回收和重入。</p></div><div class="card"><h3>实机签字</h3><p>Forward+ 通过项目游戏 MCP 留入口、操作、出口回望三帧，另拍一次失败回收。保留真实碰撞、眼高、灯光和英文反馈；同种子复测一项修改。</p></div></div>
+<div class="callout"><strong>给评审一个可执行结论：</strong>「第二位试玩者在 H 把亮窗当成门，走错 1 次。先把窗沿抬高、保留门框净空；复测首个视点与错门次数。」单次记录写成假设，下一轮用同条件复看。</div>
+<p class="note">试玩流程来源与正式入口：<a class="cite" href="#s4">[4]</a> <a class="cite" href="#s10">[10]</a>。上表是提案的放行条件，项目实机只核对了第 7 页所记大厅起步。</p>
+</section>
+
+<section class="page" id="p12" aria-labelledby="source-title">
+<div class="folio"><span>HANDOFF / SOURCES &amp; REPRODUCTION</span><span>12 / 12</span></div>
+<div class="kicker">11 / 复用索引</div><h2 id="source-title">每张房牌附一张这样的单</h2>
+<div class="callout"><strong>房牌 ID / 版本：</strong>＿＿　<strong>种子 / 入口 / 人数：</strong>＿＿　<strong>起始背包或灯态：</strong>＿＿<br><strong>想让玩家做的决定：</strong>＿＿　<strong>必经链 / 备选链：</strong>＿＿　<strong>失败如何恢复：</strong>＿＿<br><strong>三图位置 / 三个机位：</strong>＿＿　<strong>首停点 / 当时所见 / 实际动作：</strong>＿＿<br><strong>改哪一处 / 预期变化 / 复测：</strong>＿＿　<strong>逻辑与实机结论：</strong>＿＿</div>
+<h3>原著、案例和项目索引</h3>
+<ol class="source-list">
+<li id="s1"><b>The Level Design Book · 前期。</b><a href="https://book.leveldesignbook.com/process/overview">How to make a level</a>、<a href="https://book.leveldesignbook.com/process/preproduction/research">Research</a>、<a href="https://book.leveldesignbook.com/process/preproduction/pacing">Pacing</a>：设计问题、证据与节拍。</li>
+<li id="s2"><b>布局。</b><a href="https://book.leveldesignbook.com/process/layout">Layout</a>、<a href="https://book.leveldesignbook.com/process/layout/parti">Parti</a>、<a href="https://book.leveldesignbook.com/process/layout/typology">Typology</a>、<a href="https://book.leveldesignbook.com/process/layout/flow">Flow</a>：图式、构想和空间类型。</li>
+<li id="s3"><b>动线与门控。</b><a href="https://book.leveldesignbook.com/process/layout/flow/circulation">Circulation</a>、<a href="https://book.leveldesignbook.com/process/layout/flow/verticality">Verticality</a>、<a href="https://book.leveldesignbook.com/process/layout/criticalpath">Critical path</a>、<a href="https://book.leveldesignbook.com/process/layout/typology/gates">Gates</a>。</li>
+<li id="s4"><b>白盒、拆解与试玩。</b><a href="https://book.leveldesignbook.com/process/blockout">Blockout</a>、<a href="https://book.leveldesignbook.com/process/blockout/metrics">Metrics</a>、<a href="https://book.leveldesignbook.com/process/blockout/wayfinding">Wayfinding</a>、<a href="https://book.leveldesignbook.com/process/blockout/playtesting">Playtesting</a>、<a href="https://book.leveldesignbook.com/studies/overview">How to study a level</a>。</li>
+<li id="s5"><b>桌游作者资料。</b><a href="https://grognardia.blogspot.com/2010/07/interview-paul-jaquays-part-i.html">Jennell Jaquays 原访谈 Part I</a>（历史页面沿用旧标题）；<a href="https://thealexandrian.net/wordpress/13132/roleplaying-games/xandering-the-dungeon-part-5-xandering-for-fun-and-profit">Justin Alexander 的 Shadowfell 改图</a>（图纸前后对读）。</li>
+<li id="s6"><b>实玩拆解。</b><a href="https://book.leveldesignbook.com/studies/sp/undead-burg">The Level Design Book · Undead Burg</a>，查 Upper Undead Burg / Fog Gate，图中 path 1–5。</li>
+<li id="s7"><b>开发者复盘。</b><a href="https://media.gdcvault.com/gdc2019/presentations/Mooncrash_%20Resetting%20the%20Immersive%20Simulation.pdf">Rich Wilson · Mooncrash: Resetting the Immersive Simulation</a>（GDC 2019），图稿 53–60、87–91。</li>
+<li id="s8"><b>学院实玩参考。</b><a href="../../research/expedition/README.md">参考研究总表</a>、<a href="../../research/expedition/frames.csv">帧索引</a>；总表列出片源与时间码，帧索引记录本地取样证据。</li>
+<li id="s9"><b>游戏官方入口。</b><a href="https://www.blueprincegame.com/">Blue Prince</a>、<a href="https://www.inscryption.com/">Inscryption</a>、<a href="https://www.focus-entmt.com/en/games/chants-of-sennaar">Chants of Sennaar</a>。</li>
+<li id="s10"><b>实现和制作约定。</b><a href="../README.md">制作入口</a>、<a href="../gameplay.md">出征路线</a>、<a href="../layout.md">单房布局</a>、<a href="../verification.md">正式验收</a>、<a href="../../../mcp/game/README.md">项目 MCP</a>、<a href="../../../tools/building_construction/production/README.zh-CN.md">ArchBuilder</a>。</li>
+</ol>
+<div class="worksheet" aria-label="纸上评审补记"><h3>本轮评审补记</h3><p>观察到的第一处犹豫</p><p>先改哪一条边，或哪一个视点</p><p>下轮怎么判断改动有效</p></div>
+<p class="note">本指南把原书的布局方法、公开关卡证据与学院约定分层记录。所有示意图均为本项目原创草图；表盘桥厅为待实现、待实机试玩的设计样张。HTML 与 PDF 同源，维护时先改 HTML，再用支持 CSS 打印的 Chromium 按 A4 导出，启用背景、关闭浏览器页眉页脚。</p>
+</section>
+</main>
+</body>
+</html>

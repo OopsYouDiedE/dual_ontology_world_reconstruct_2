@@ -40,4 +40,4 @@ docs/research/expedition/
 - **验收：** [verify.py](../../tools/expedition/verify.py) 是统一测试入口，运行方法见[验证](verification.md)。建筑参考保留为[可重组组件](../../scenes/blue_prince_lab/README.md)；物理 L03、规则评测和白盒保留各自的专项用途。L03 的旧角色是其观测实验的固定夹具。
 - **历史查阅：** 旧交接 PDF、旧人物研究和前代战役由 Git 历史保存。制作变更更新本目录及配套测试。
 
-箱庭关卡设计手册：[在线下读 HTML](level-atlas/index.html) · [打印 A4 PDF](level-atlas/guide.pdf)。含五组案例、四步造图、双层表盘桥厅图纸与试玩记录单。
+[箱庭关卡设计指南（HTML）](level-atlas/index.html) · [A4 PDF](level-atlas/guide.pdf)。六种拓扑、真实关卡拆解、六步白盒工序，以及表盘桥厅双层图纸、状态表和试玩验收单。

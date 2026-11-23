@@ -24,10 +24,42 @@ func _ready()->void:
 	caption(params,"Pin ΔX / ΔZ");for spin in [dx_input,dz_input]:spin.min_value=-.65;spin.max_value=.65;spin.step=.05;params.add_child(spin)
 	dx_input.value=.35
 	var split=HSplitContainer.new();split.size_flags_vertical=SIZE_EXPAND_FILL;col.add_child(split);grid.size_flags_horizontal=SIZE_EXPAND_FILL;grid.custom_minimum_size.x=220;split.add_child(grid);grid.stroke.connect(paint);section.size_flags_horizontal=SIZE_EXPAND_FILL;section.custom_minimum_size.x=320;section.stretch=true;split.add_child(section);split.split_offset=-170;viewport.own_world_3d=true;viewport.use_occlusion_culling=true;section.add_child(viewport);viewport.add_child(view);viewport.add_child(cam);cam.current=true
-	var env=WorldEnvironment.new();var e=preload("res://scenes/components/rendering/post/Hall04.tres").duplicate();e.background_mode=Environment.BG_COLOR;e.background_color=Color("303c47");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("e9ddc6");e.ambient_light_energy=.85;env.environment=e;viewport.add_child(env);var sun=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-54,-32,0);sun.shadow_enabled=true;viewport.add_child(sun);section.gui_input.connect(orbit);var ink=preload("res://scenes/components/rendering/post/InkPass.gd").create();ink.material_override.set_shader_parameter("opacity",.40);viewport.add_child(ink)
+	configure_indoor_light()
+	section.gui_input.connect(orbit)
 	var row=HBoxContainer.new();col.add_child(row);opt(row,["Columns","Doors","Lights","Valves"],func(i):filter=i;fill_list());list.custom_minimum_size.x=175;row.add_child(list);btn(row,"Pin / update",override_part);btn(row,"Clear override",clear_part);btn(row,"Operate",operate);btn(row,"Diagnostics",diagnostics)
 	var seq=opt(row,["1 · Slabs","2 · Frame","3 · Walls","4 · Detail","5 · Full"],func(i):stage=i+1;rebuild());seq.select(4)
 	report.custom_minimum_size.y=60;report.fit_content=false;col.add_child(report);rebuild()
+func configure_indoor_light()->void:
+	viewport.msaa_3d=Viewport.MSAA_2X
+	var env=WorldEnvironment.new()
+	var e:Environment=preload("res://scenes/components/rendering/post/Hall04.tres").duplicate()
+	e.background_mode=Environment.BG_COLOR
+	e.background_color=Color("495766")
+	e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
+	e.ambient_light_color=Color("abbcda")
+	e.ambient_light_energy=.85
+	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
+	e.glow_enabled=false
+	e.sdfgi_enabled=false
+	e.adjustment_enabled=false
+	e.fog_enabled=true
+	e.fog_density=.0025
+	e.fog_light_color=Color("91a4b9")
+	e.fog_sky_affect=0
+	e.fog_sun_scatter=0
+	env.environment=e
+	viewport.add_child(env)
+	var sun=DirectionalLight3D.new()
+	sun.rotation_degrees=Vector3(-42,-32,0)
+	sun.light_color=Color("fff0d8")
+	sun.light_energy=1.28
+	sun.shadow_enabled=true
+	viewport.add_child(sun)
+	var ink=preload("res://scenes/components/rendering/post/InkPass.gd").create()
+	ink.material_override.set_shader_parameter("opacity",.68)
+	ink.material_override.set_shader_parameter("ink_radius",.90)
+	viewport.add_child(ink)
+
 func remember()->void:
 	history.append(plan.duplicate(true));if history.size()>40:history.pop_front()
 	redo.clear()
@@ -95,6 +127,7 @@ func load_plan()->void:
 # F enters a full-building inspection using the actual expedition capsule.
 var walker:CharacterBody3D
 var hidden_walk_controls:Array[Control]=[]
+var capture_settle_frame:=0
 func walk_toggle()->void:
 	if is_instance_valid(walker):
 		Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
@@ -112,7 +145,7 @@ func walk_toggle()->void:
 	var split=section.get_parent();var col=split.get_parent()
 	for control in col.get_children():
 		if control!=split and control!=report and control.visible:hidden_walk_controls.append(control);control.hide()
-	hidden_walk_controls.append(grid);grid.hide();Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
+	hidden_walk_controls.append(grid);grid.hide();capture_settle_frame=Engine.get_process_frames()+2;Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 	report.text="SPACE INSPECTION   ·   1.60 m eye   |   WASD move   ·   mouse look   ·   E operate ahead   ·   F / Esc return"
 
 func _input(e:InputEvent)->void:
@@ -123,7 +156,10 @@ func _input(e:InputEvent)->void:
 			var eye=walker.camera().global_position;var ray=PhysicsRayQueryParameters3D.create(eye,eye-walker.camera().global_basis.z*3,S.USE|S.SIGHT);ray.collide_with_areas=true
 			var hit=view.get_world_3d().direct_space_state.intersect_ray(ray)
 			if hit and hit.collider.has_meta("socket_id"):view.use_socket(hit.collider.get_meta("socket_id"))
-	if is_instance_valid(walker) and e is InputEventMouseMotion:walker.orbit_by(e.relative);get_viewport().set_input_as_handled()
+	if is_instance_valid(walker) and e is InputEventMouseMotion:
+		# Ignore pointer recentering on capture; each review starts at the authored yaw.
+		if Engine.get_process_frames()>capture_settle_frame:walker.orbit_by(e.relative)
+		get_viewport().set_input_as_handled()
 
 func _exit_tree()->void:
 	if is_instance_valid(walker):Input.mouse_mode=Input.MOUSE_MODE_VISIBLE

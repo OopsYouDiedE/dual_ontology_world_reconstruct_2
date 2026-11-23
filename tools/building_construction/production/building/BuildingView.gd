@@ -7,12 +7,30 @@ var batches={};var physics={};var doors={};var valves={};var panels={};var regio
 var hide_roof:=false
 var slice:=-1
 var model
+# View-local materials: keep the component library and its cached originals intact.
+const PIGMENTS={"wall":"c8b99f","stone":"b4afa5","stone_dark":"757988","wood":"916e58","wood_dark":"635052","wood_light":"ab8970","cream":"e1d6ba","tile_dark":"48515e","tile_light":"d9d4c5","grout":"797b82"}
+var paints:Dictionary={}
+func finish(key:String)->Material:
+	if paints.has(key):return paints[key]
+	var mat:Material=Geo.material(key).duplicate()
+	if mat is ShaderMaterial:
+		if PIGMENTS.has(key):mat.set_shader_parameter("pigment",Color(PIGMENTS[key]))
+		mat.set_shader_parameter("clearline",true)
+		mat.set_shader_parameter("roughness",.93)
+		mat.set_shader_parameter("specular_amount",.06)
+		if key=="wall":mat.set_shader_parameter("wall_lift",.07)
+	elif key in ["gold","glass"]:
+		mat.roughness=.32 if key=="gold" else .20
+		mat.metallic_specular=.32
+	elif mat is StandardMaterial3D:mat.roughness=.93
+	paints[key]=mat
+	return mat
 const NORMALS=[Vector3.RIGHT,Vector3.LEFT,Vector3.UP,Vector3.DOWN,Vector3.BACK,Vector3.FORWARD]
 func tri(tag:String,mat:String,a:Vector3,b:Vector3,c:Vector3,n:Vector3,mask:int,visual:=true,smooth:Array=[])->void:
 	if visual:
 		var id=tag+"|"+mat
 		if not batches.has(id):
-			var st=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES);st.set_material(Geo.material(mat));batches[id]=st
+			var st=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES);st.set_material(finish(mat));batches[id]=st
 		var st:SurfaceTool=batches[id];var u=Vector3.RIGHT if absf(n.y)>.9 else Vector3.UP.cross(n).normalized();var v=n.cross(u)
 		var i=0
 		for p in [a,b,c]:
@@ -60,7 +78,7 @@ func render(s,level:int,cutaway:bool,stage:=5)->void:
 	make_zones();batches.clear();physics.clear()
 func visible_owner(k:String)->bool:return slice<0 or S.address(k).z<=slice
 func solid(parent:Node3D,sz:Vector3,p:Vector3,mat:String,mask:int)->Node3D:
-	var m=Geo.box(sz,mat,p);parent.add_child(m)
+	var m=Geo.box(sz,mat,p);m.material_override=finish(mat);parent.add_child(m)
 	if mask:
 		var body=StaticBody3D.new();body.collision_layer=mask;m.add_child(body);var col=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=sz;col.shape=shape;body.add_child(col)
 	return m
@@ -71,7 +89,7 @@ func emit_socket(o:Dictionary)->void:
 	var root=Node3D.new();root.position=o.p;root.rotation.y=o.get("yaw",0.);root.set_meta("structure_id",o.id);add_child(root)
 	match o.kind:
 		"light":
-			solid(root,Vector3(.28,.14,.28),Vector3.ZERO,"emission",0);var lamp=OmniLight3D.new();lamp.position.y=-.13;lamp.light_color=Color("ffdda9");lamp.omni_range=4.2;lamp.omni_attenuation=1.6;lamp.light_energy=.65;lamp.distance_fade_enabled=true;lamp.distance_fade_begin=22;root.add_child(lamp)
+			solid(root,Vector3(.28,.14,.28),Vector3.ZERO,"emission",0);var lamp=OmniLight3D.new();lamp.position.y=-.30;lamp.light_color=Color("ffd29a");lamp.omni_range=4.2;lamp.omni_attenuation=1.6;lamp.light_energy=.60;lamp.distance_fade_enabled=true;lamp.distance_fade_begin=22;root.add_child(lamp)
 		"door":
 			var pivot=Node3D.new();pivot.position.x=-o.width/2;root.add_child(pivot);var iron=o.style=="iron"
 			if iron:
@@ -91,9 +109,14 @@ func emit_socket(o:Dictionary)->void:
 			var link=NavigationLink3D.new();link.end_position=o.end-o.p;root.add_child(link)
 		"fixture":
 			var paths=["Props/RecipeStorageRack","Props/RecipeCrockeryShelf","Tables/RecipeInstrumentTable","Tables/RecipeTable","Tables/RecipeSlateTable","Props/RecipeValveStation"]
-			var obj=Factory.create(Factory.COMPONENT_ROOT+paths[int(o.type)]+".gd");if obj:obj.scale=Vector3.ONE*.48;root.add_child(obj)
+			var obj=Factory.create(Factory.COMPONENT_ROOT+paths[int(o.type)]+".gd")
+			if obj:
+				obj.scale=Vector3.ONE*.48;root.add_child(obj)
+				for mesh in obj.find_children("*","MeshInstance3D",true,false):
+					var key=Geo.materials.find_key(mesh.material_override)
+					if key!=null:mesh.material_override=finish(key)
 		"valley":
-			var dir:Vector3=o.end-o.p;var rail=Geo.box(Vector3(.09,.05,dir.length()),"gold",dir*.5+Vector3.UP*.03);root.add_child(rail);rail.look_at(to_global(o.end+Vector3.UP*.03),Vector3.UP)
+			var dir:Vector3=o.end-o.p;var rail=Geo.box(Vector3(.09,.05,dir.length()),"gold",dir*.5+Vector3.UP*.03);rail.material_override=finish("gold");root.add_child(rail);rail.look_at(to_global(o.end+Vector3.UP*.03),Vector3.UP)
 func switch_door(id:String)->bool:
 	if not doors.has(id):return false
 	var d=doors[id];if not d.open and d.group!="":

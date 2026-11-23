@@ -52,3 +52,9 @@ Godot 4.7.2 .NET 在仓库根目录运行 `--headless --path . --script res://to
 - 区分 **Save drawing**（现有编辑器 JSON）与 **Export playable room**（后续正式 RoomIR / 场景资源）。导出验收应由游戏现有加载器回读，再验证玩家出生点、门状态、碰撞与着色。当前 F 漫游直接消费现场求解结果。
 
 实机留档：[默认 Example 剖切](../../../../docs/production/structure-lab-review/example-cutaway.png) · [1.60 m 大厅视角](../../../../docs/production/structure-lab-review/example-eye-160.png)。
+
+### 清线室内验收机位
+
+默认 Example（seed 17），Ground / Cutaway / Full，初始轨道视角向上滚一格；按 F 后保持出生朝向，眼高 1.60 m、FOV 70°。两张原始视口：[俯视剖切](../../../../docs/production/structure-lab-review/clearline-cutaway.png) · [第一人称](../../../../docs/production/structure-lab-review/clearline-eye-160.png)。
+
+室内复制 Hall04 环境，使用 Filmic、MSAA 2×、冷灰蓝环境光、带阴影的方向光、琥珀吊灯与密度 0.0025 的距离雾；关闭 Glow、SDFGI 和颜色校正。建筑漆面启用三阶漫反射，粗糙度 0.93。HallInk 用深度辨轮廓、用法线辨折角，近景采样半径约 1 px，远景降低覆盖率。正式大厅沿用原环境。

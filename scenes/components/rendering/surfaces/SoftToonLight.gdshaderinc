@@ -3,10 +3,14 @@
 
 uniform bool toon_on = true;
 uniform float toon_strength = 0.86;
+uniform bool clearline = false;
 uniform bool two_tone = false;
 uniform float stone_sheen = 0.0;
 
 float soft_toon_response(float lambert) {
+	if (toon_on && clearline) {
+		return 0.46 * smoothstep(0.27, 0.30, lambert) + 0.54 * smoothstep(0.68, 0.71, lambert);
+	}
 	// Quantize surface response, not distance or shadow. Lantern falloff stays continuous.
 	float bands = 0.27 * smoothstep(0.17, 0.25, lambert)
 		+ 0.31 * smoothstep(0.42, 0.53, lambert)

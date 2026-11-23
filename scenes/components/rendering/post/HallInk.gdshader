@@ -4,6 +4,7 @@ render_mode unshaded, cull_disabled, depth_test_disabled, depth_draw_never, fog_
 uniform sampler2D z_buffer : hint_depth_texture, repeat_disable, filter_nearest;
 uniform sampler2D normals : hint_normal_roughness_texture, repeat_disable, filter_linear;
 uniform sampler2D opaque_scene : hint_screen_texture, repeat_disable, filter_linear_mipmap;
+uniform float ink_radius = 1.0;
 uniform float opacity = 0.84;
 
 void vertex() {
@@ -24,7 +25,7 @@ void fragment() {
 	vec2 uv = SCREEN_UV;
 	float mid = view_depth(uv, INV_PROJECTION_MATRIX);
 	float distance_fade = smoothstep(4.5, 19.0, mid);
-	vec2 px = mix(1.12, 0.74, distance_fade) / VIEWPORT_SIZE;
+	vec2 px = mix(1.12, 0.74, distance_fade) * ink_radius / VIEWPORT_SIZE;
 	vec2 x = vec2(px.x,0.0);
 	vec2 y = vec2(0.0,px.y);
 	float left = view_depth(uv - x, INV_PROJECTION_MATRIX);

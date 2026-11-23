@@ -12,16 +12,14 @@ static func dress(person:Node3D,tech:bool)->void:
 		if not old:continue
 		var mat:ShaderMaterial
 		var id=String(n.name)
-		if id.contains("Outfit") or id.contains("HeadBody"):
-			var skin=id.contains("HeadBody");var arr=n.mesh.surface_get_arrays(0);var verts:PackedVector3Array=arr[Mesh.ARRAY_VERTEX];var normals:PackedVector3Array=arr[Mesh.ARRAY_NORMAL];var mask:=PackedColorArray();mask.resize(verts.size())
+		if id.contains("Outfit"):
+			var arr=n.mesh.surface_get_arrays(0);var verts:PackedVector3Array=arr[Mesh.ARRAY_VERTEX];var mask:=PackedColorArray();mask.resize(verts.size())
 			for i in verts.size():
 				var v=verts[i];var w=smoothstep(.90,.97,v.y)
 				if tech:w*=1.-smoothstep(.14,.21,absf(v.x))
 				mask[i]=Color(w,smoothstep(.91,.97,v.y),w,1)
-				if skin and v.y>1.49 and absf(v.x)<.115:
-					var egg=((v-Vector3(0,1.63,.049))/Vector3(.009,.022,.011)).normalized();normals[i]=normals[i].lerp(egg,.58*smoothstep(1.49,1.56,v.y)).normalized()
-			arr[Mesh.ARRAY_NORMAL]=normals;arr[Mesh.ARRAY_COLOR]=mask;var copy:=ArrayMesh.new();copy.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arr,[],{},n.mesh.surface_get_format(0)&Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS);n.mesh=copy
-			mat=dye(("cba17c" if tech else "e4ba9c") if skin else ("52716f" if tech else "b39c78"),3 if skin else (2 if tech else 1));mat.set_shader_parameter("secondary",Color("b7ad95" if tech else "64606a"))
+			arr[Mesh.ARRAY_COLOR]=mask;var copy:=ArrayMesh.new();copy.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arr,[],{},n.mesh.surface_get_format(0)&Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS);n.mesh=copy
+			mat=dye("52716f" if tech else "b39c78",2 if tech else 1);mat.set_shader_parameter("secondary",Color("b7ad95" if tech else "64606a"))
 		elif id.contains("Hair"):mat=dye("514335" if tech else "604939",5);n.visible=not id.contains("Locks")
 		elif id.contains("Eyes"):mat=dye("ffffff",4)
 		else:continue

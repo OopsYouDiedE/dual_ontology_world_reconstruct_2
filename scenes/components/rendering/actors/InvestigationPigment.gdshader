@@ -3,7 +3,7 @@ render_mode cull_disabled, specular_disabled;
 uniform vec4 pigment : source_color = vec4(1.);
 uniform vec4 secondary : source_color = vec4(1.);
 uniform sampler2D textile : source_color, hint_default_white, filter_linear_mipmap;
-// 0 accessory, 1 detective coat, 2 Vale waistcoat, 3 skin, 4 eyes, 5 hair
+// 0 accessory, 1 detective coat, 2 Vale waistcoat, 4 eyes, 5 hair
 uniform int part = 0;
 varying float elevation;
 void vertex(){ elevation=VERTEX.y; }
@@ -12,7 +12,6 @@ void fragment(){
  vec3 col=pigment.rgb;
  if(part==1 || part==2){col=mix(secondary.rgb,pigment.rgb,COLOR.r);col*=.80+.40*sqrt(dot(tex,vec3(.30,.59,.11)));}
  if(part==2){col=mix(vec3(.112,.123,.132),col,COLOR.g);}
- if(part==3){col*=mix(vec3(.63),vec3(1.25),sqrt(tex));}
  if(part==6){float seam=abs(fract(UV.x*2.+.5)-.5);col*=mix(.77,1.,smoothstep(.002,.012,seam));}
  if(part==4){col=tex*pigment.rgb;}
  if(part==5){col*=mix(.82,1.18,smoothstep(.42,.50,UV.y)*(1.-smoothstep(.53,.60,UV.y)));}
@@ -21,7 +20,6 @@ void fragment(){
 void light(){
  float d=dot(NORMAL,LIGHT);float band=smoothstep(.16,.20,d);float high=smoothstep(.65,.69,d);
  vec3 tone=mix(vec3(.31,.36,.47),vec3(.77,.76,.72),band);
- if(part==3){tone=mix(vec3(.51,.36,.39),vec3(.91,.57,.42),smoothstep(.08,.12,d));tone=mix(tone,vec3(.94,.85,.77),smoothstep(.19,.24,d));}
  tone=mix(tone,vec3(1.),high);float rim=smoothstep(.82,.91,1.-max(dot(NORMAL,VIEW),0.))*smoothstep(.08,.5,d);
  DIFFUSE_LIGHT+=(tone+vec3(.09,.10,.12)*rim)*ATTENUATION*LIGHT_COLOR/PI;
 }

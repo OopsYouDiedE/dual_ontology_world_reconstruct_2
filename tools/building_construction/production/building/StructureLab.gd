@@ -5,6 +5,8 @@ const Grid=preload("PlanCanvas.gd")
 const SAVE="user://academy-structure-v1.json"
 var detective=preload("DetectivePreview.gd").new()
 var detective_focus:=false
+var portrait_index:=0
+var portrait_busy:=false
 var dx_input=SpinBox.new();var dz_input=SpinBox.new();var radius=SpinBox.new();var room_number=1;var plan=S.example();var solver=S.new();var view=V.new();var grid=Grid.new();var level=0;var brush=0;var tool=0;var cut=true;var history=[];var redo=[]
 var list=OptionButton.new();var report=RichTextLabel.new();var cam=Camera3D.new();var section=SubViewportContainer.new();var viewport=SubViewport.new();var az=.64;var el=.64;var stage=5;var zoom=.70;var summary="";var filter=0;var repairs=CheckButton.new();var seed_input=SpinBox.new()
 func btn(parent:Control,title:String,action:Callable)->void:
@@ -139,6 +141,23 @@ func camera_fit()->void:
 		var c=S.address(k);if cut and c.z>level:continue
 		var b=AABB(Vector3(c.x*S.BAY,solver.datum(c.z),c.y*S.BAY),Vector3(S.BAY,solver.room_height(k),S.BAY));bounds=b if first else bounds.merge(b);first=false
 	var target=bounds.get_center();var dist=maxf(6,bounds.size.length()*1.16)*zoom;cam.position=target+Vector3(cos(az)*cos(el),sin(el),sin(az)*cos(el))*dist;cam.look_at(target)
+## Separate native render target: face detail is independent of the editor panel size.
+func save_portrait()->void:
+	if portrait_busy:return
+	portrait_busy=true
+	var actor:Node3D=detective.get_node(["detective","Vale"][portrait_index]);portrait_index=1-portrait_index
+	var target:=SubViewport.new();target.size=Vector2i(1600,1600);target.world_3d=viewport.find_world_3d();target.msaa_3d=viewport.msaa_3d;add_child(target)
+	var portrait:=Camera3D.new();target.add_child(portrait);portrait.fov=30.;portrait.current=true
+	var rig:Skeleton3D=actor.get_meta("skeleton");var eyes:Node3D=actor.find_child("Eyes",true,false);var bone=rig.find_bone("head")
+	var eye_center=Vector3(0,1.634,.136) if not eyes is MeshInstance3D else eyes.get_aabb().get_center()
+	var face=rig.to_global(rig.get_bone_global_pose(bone)*rig.get_bone_global_rest(bone).affine_inverse()*eye_center)
+	portrait.global_position=face+actor.global_basis*Vector3(.19,.028,.77);portrait.look_at(face-Vector3.UP*.018)
+	target.render_target_update_mode=SubViewport.UPDATE_ONCE;await RenderingServer.frame_post_draw
+	var folder=ProjectSettings.globalize_path("res://.runtime/portraits");DirAccess.make_dir_recursive_absolute(folder)
+	var path=folder.path_join("%s.png"%actor.name);var err=target.get_texture().get_image().save_png(path)
+	report.text="Portrait saved: "+path if err==OK else "Portrait export failed: "+error_string(err)
+	target.queue_free();portrait_busy=false
+
 func orbit(e:InputEvent)->void:
 	if is_instance_valid(walker):return
 	if e is InputEventMouseMotion and e.button_mask&MOUSE_BUTTON_MASK_RIGHT:az-=e.relative.x*.008;el=clampf(el+e.relative.y*.006,.12,1.5);camera_fit()
@@ -184,8 +203,10 @@ func _input(e:InputEvent)->void:
 				if not detective.visible:report.text="No clear bay for the detective on this level.";return
 				detective_focus=not detective_focus;detective.choose(0,true)
 				view.render(solver,level if cut and not detective_focus else -1,cut and not detective_focus,stage);camera_fit()
-				report.text="DETECTIVE + VALE  ·  1–4 Basics   5 Signal   6 Examine   7 Listen   0 Cycle   N Next bay   P Return" if detective_focus else summary
+				report.text="DETECTIVE + VALE  ·  1–4 Basics   5 Signal   6 Examine   7 Listen   0 Cycle   N Next bay   H Portrait (1600px)   P Return" if detective_focus else summary
 				get_viewport().set_input_as_handled();return
+			if detective_focus and e.keycode==KEY_H:
+				save_portrait();get_viewport().set_input_as_handled();return
 			if detective_focus and e.keycode==KEY_N:
 				detective.show_room(1);camera_fit();get_viewport().set_input_as_handled();return
 			if detective_focus and e.keycode>=KEY_0 and e.keycode<=KEY_7:

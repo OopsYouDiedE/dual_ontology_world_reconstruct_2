@@ -51,6 +51,7 @@ var board_audio:=AudioStreamPlayer3D.new()
 var sounds:={}
 var alarm_time:=0.
 var tutorial_room:=false
+var gate_rattle:Tween
 var hale_speed:=0.
 var learned:=false
 var released:=false
@@ -176,6 +177,7 @@ func aimed(pos:Vector3,reach:float,cone:=.96)->bool:
 	var hit:=get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(eye.global_position,pos,2))
 	return hit.is_empty() or Vector3(hit.position).distance_to(pos)<.65
 func focus()->String:
+	if not released and walker.position.x<35.9 and aimed(Vector3(36.,1.57,0),2.,.91):return "gate"
 	if not taken and aimed(Vector3(34.14,.5,14.67),2.8):return "loot"
 	if aimed(Vector3(23.6,1.03,4),2.8):return "note"
 	if not released and aimed(Vector3(36.3,1.35,7.72),3.):return "lever"
@@ -192,10 +194,21 @@ func use()->void:
 	var target:=focus()
 	if target!="":polish.kick(.07)
 	match target:
+		"gate":
+			if gate_rattle and gate_rattle.is_running():gate_rattle.kill()
+			kit.gate.position.x=0.
+			gate_rattle=create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+			gate_rattle.tween_property(kit.gate,"position:x",.055,.055)
+			gate_rattle.tween_property(kit.gate,"position:x",-.018,.075)
+			gate_rattle.tween_property(kit.gate,"position:x",0.,.09)
+			say("铁闸从里面闩住了。")
+			line_once("gate","走右边侧门，穿过档案翼找总闸。",4.5)
 		"note":say("残页：隔着玻璃也有反应。昨夜值班记录的最后一行被撕掉了。")
 		"loot":taken=true;equipped=true;oil=minf(100.,oil+35);kit.supplies.hide();say("收起了发条节拍器与煤油罐。")
 		"lever":
 			if not learned:return
+			if gate_rattle and gate_rattle.is_running():gate_rattle.kill()
+			kit.gate.position.x=0.
 			released=true;kit.gate.position.y=4.;checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();polish.kick(.5);polish.punch(-5.);sound_at("slam",kit.panel.position,2);sound_at("scream",hunter.position,4);line_once("release","主闸开了！……嘘，听见井底的声音没？压低脚步，别跑！")
 		"core":
 			collected=true;polish.kick(.45);polish.punch(-4.);kit.core.hide();emergency.show();siren.stream=sounds.alarm;siren.play();line_once("core","拿到手了！别走回头桥，上右边楼梯踹开绿门直接冲回主廊！")
@@ -237,9 +250,9 @@ func _physics_process(dt:float)->void:
 	subtitle.modulate.a=clampf(sub_time/.35,0.,1.)
 	if sub_time<=0 and next_thought:
 		next_thought=false;subtitle_id="thought";subtitle.text="我心想：难道他所记忆的规则和我的不同吗？";sub_time=4.5
-	hud.text="目标：%s"%["从绿色捷径门撤回大厅" if collected else "绕过铁闸，取回深井对岸的备用源核"]
+	hud.text="目标：%s"%["从绿色捷径门撤回大厅" if collected else ("从右侧门去档案翼找总闸" if cues.has("gate") and not released else "取回深井对岸的备用源核")]
 	hud.modulate=Color.WHITE
-	var hints:={"note":"[E] 阅读残页","loot":"[E] 拾取补给","lever":"[E] 拉下主闸","core":"[E] 拔出源核","return":"[E] 推开捷径门","exit":"[E] 返回大厅","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器"}
+	var hints:={"gate":"[E] 试推铁闸","note":"[E] 阅读残页","loot":"[E] 拾取补给","lever":"[E] 拉下主闸","core":"[E] 拔出源核","return":"[E] 推开捷径门","exit":"[E] 返回大厅","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器"}
 	var seen:=focus();polish.focus_id=seen;var hint:=str(hints.get(seen,""));prompt.text=(notice if msg_time>0 else hint if hint!="" else "[1] 打开规则手册" if not read_book else "")
 func walking_feedback(dt:float)->void:
 	var distance:=Vector2(walker.get_position_delta().x,walker.get_position_delta().z).length()
@@ -285,8 +298,7 @@ func rules(dt:float)->void:
 	update_demo(p,dt)
 	if phase>=2 and not cues.has("start"):
 		kit.airlock.position.y=2.4;polish.kick(.55);polish.punch(4.);sound_at("slam",Vector3(.2,1,0),0);sound_at("bell",Vector3(25,2,0),2);line_once("start","稳压室撑不到天亮了。前组把备用源核掉在深井对岸——先去前面看看铁闸。")
-	if not released and not tutorial_room and p.x>30 and absf(p.z)<2.3:
-		line_once("gate","从里头反锁了。走右边侧门，穿档案翼找总闸。",3.5);halo.light_energy=2.3
+	if not released and not tutorial_room and p.x>30 and absf(p.z)<2.3:halo.light_energy=2.3
 	oil=maxf(0.,oil-dt*.025)
 	if p.x>44 and not released:walker.position=Vector3(39,0,10);say("先拉开黄铜总闸。")
 	if in_archive_without_proof(p) and not practice_note:

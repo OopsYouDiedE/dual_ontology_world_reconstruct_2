@@ -47,7 +47,7 @@ func block(r:Dictionary)->void:
 # Cumulative construction preview. Stages use the very same solved geometry as Full.
 static func block_stage(id:String)->int:
 	if "/slab" in id:return 1
-	if id.begins_with("column/") or id.begins_with("capital/") or id.begins_with("beam/"):return 2
+	if id.begins_with("column/") or id.begins_with("plinth/") or id.begins_with("capital/") or id.begins_with("beam/"):return 2
 	if "/wall" in id or "/finish" in id or "/niche" in id:return 3
 	return 4
 func render(s,level:int,cutaway:bool,stage:=5)->void:
@@ -96,7 +96,19 @@ func emit_socket(o:Dictionary)->void:
 				for i in 8:solid(pivot,Vector3(.035,o.height,.06),Vector3(.03+i*(o.width-.06)/7,o.height/2,0),"gold",0)
 				for h in [.12,o.height-.12]:solid(pivot,Vector3(o.width,.09,.07),Vector3(o.width/2,h,0),"wood_dark",0)
 				var b=StaticBody3D.new();b.collision_layer=S.MOVE;pivot.add_child(b);var c=CollisionShape3D.new();var sh=BoxShape3D.new();sh.size=Vector3(o.width,o.height,.06);c.shape=sh;c.position=Vector3(o.width/2,o.height/2,0);b.add_child(c)
-			else:solid(pivot,Vector3(o.width,o.height,.09),Vector3(o.width/2,o.height/2,0),"wood",3)
+			else:
+				solid(pivot,Vector3(o.width,o.height,.09),Vector3(o.width/2,o.height/2,0),"wood",3)
+				for face in [-1,1]:
+					for section in [[.23,.31],[.68,.47]]:
+						var h:float=o.height*section[1];var cy:float=o.height*section[0]
+						solid(pivot,Vector3(o.width-.24,h,.025),Vector3(o.width*.5,cy,face*.056),"wood_light",0)
+						solid(pivot,Vector3(o.width-.32,h-.08,.02),Vector3(o.width*.5,cy,face*.078),"wood",0)
+					solid(pivot,Vector3(.05,.17,.055),Vector3(o.width-.085,1.01,face*.069),"gold",0)
+					solid(pivot,Vector3(.12,.032,.07),Vector3(o.width-.115,1.01,face*.119),"gold",0)
+			for face in [-1,1]:
+				var z:float=face*(o.wall_depth*.5+.03)
+				for side in [-1,1]:solid(root,Vector3(.105,o.height,.064),Vector3(side*(o.width*.5+.0525),o.height*.5,z),"wood_dark",0)
+				solid(root,Vector3(o.width+.21,.09,.064),Vector3(0,o.height+.045,z),"wood_light",0)
 			var port=trigger(root,o.id,Vector3(o.width,o.height,.22),S.SOUND);port.position.y=o.height/2
 			var nav=NavigationLink3D.new();nav.start_position=Vector3(0,.02,-.42);nav.end_position=Vector3(0,.02,.42);nav.enabled=false;root.add_child(nav)
 			doors[o.id]={"pivot":pivot,"open":false,"group":o.interlock,"port":port,"link":nav,"closed_db":6 if iron else 24};port.set_meta("loss_db",doors[o.id].closed_db)

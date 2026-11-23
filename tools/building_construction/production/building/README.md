@@ -58,3 +58,5 @@ Godot 4.7.2 .NET 在仓库根目录运行 `--headless --path . --script res://to
 默认 Example（seed 17），Ground / Cutaway / Full，初始轨道视角向上滚一格；按 F 后保持出生朝向，眼高 1.60 m、FOV 70°。两张原始视口：[俯视剖切](../../../../docs/production/structure-lab-review/clearline-cutaway.png) · [第一人称](../../../../docs/production/structure-lab-review/clearline-eye-160.png)。
 
 室内复制 Hall04 环境，使用 Filmic、MSAA 2×、冷灰蓝环境光、带阴影的方向光、琥珀吊灯与密度 0.0025 的距离雾；关闭 Glow、SDFGI 和颜色校正。建筑漆面启用三阶漫反射，粗糙度 0.93。HallInk 用深度辨轮廓、用法线辨折角，近景采样半径约 1 px，远景降低覆盖率。正式大厅沿用原环境。
+
+同机位构造精修：[1.60 m 门厅](../../../../docs/production/structure-lab-review/refined-eye-160.png)。楼梯两跑沿坡设侧梁、双侧扶手和中栏；平台边梁落在四根支柱上。默认入口移出半层平台下方，实机空间测试覆盖开门后的胶囊穿越和门前、中、后三点净高。柱础与柱头共用偏移轴；托座只从已求解主梁的端点生成。每侧护墙按实际墙厚贴面并铺到开间轴线，门套绕净洞收口。室内环境能量 0.74，SSAO 半径 0.24 m、强度 0.50。

@@ -37,7 +37,11 @@ func configure_indoor_light()->void:
 	e.background_color=Color("495766")
 	e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR
 	e.ambient_light_color=Color("abbcda")
-	e.ambient_light_energy=.85
+	e.ambient_light_energy=.74
+	e.ssao_enabled=true
+	e.ssao_radius=.24
+	e.ssao_intensity=.50
+	e.ssao_power=1.1
 	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC
 	e.glow_enabled=false
 	e.sdfgi_enabled=false

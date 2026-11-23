@@ -115,6 +115,8 @@ func build(plan:Dictionary)->void:
 				if not columns.has(ci):
 					var axis_id="column/"+key(x+dx,z+dz,0);var o=pick("column/"+ci,"column",cp);var shift=plan.overrides.get(axis_id,o).get("shift",[0,0]);cp+=Vector3(shift[0],0,shift[1]);columns[ci]=cp
 					box("column/"+ci,cp+Vector3.UP*1.55,Vector3(0.23,3.1,0.23),"stone")
+					for tier in [[.42,.045,.09],[.36,.121,.062],[.29,.19,.076]]:
+						box("plinth/"+ci,cp+Vector3.UP*tier[1],Vector3(tier[0],tier[2],tier[0]),"stone_dark" if tier[1]<.1 else "cream")
 					box("capital/"+ci,cp+Vector3.UP*3.03,Vector3(0.36,0.14,0.36),"cream")
 		for d in [Vector2i.LEFT,Vector2i.RIGHT,Vector2i.UP,Vector2i.DOWN]:
 			var nb=key(x+d.x,z+d.y,l);var horizontal=d.y!=0;var sx=x+int(d.x>0);var sz=z+int(d.y>0);var edge=("X" if horizontal else "Z")+key(sx,sz,l)
@@ -138,13 +140,16 @@ func find_entries(keys:Array)->void:
 	entries.clear();var seen={}
 	for k in keys:
 		if seen.has(k) or address(k).z!=0:continue
-		var queue=[k];seen[k]=true;var found=false
+		var queue=[k];seen[k]=true;var best=-1;var entry_key=""
 		while not queue.is_empty():
 			var at=queue.pop_front();var c=address(at)
 			for d in [Vector2i.UP,Vector2i.LEFT,Vector2i.RIGHT,Vector2i.DOWN]:
 				var nb=key(c.x+d.x,c.y+d.y,0)
 				if not layout.cells.has(nb):
-					if not found:entries[at]=d;found=true
+					# Prefer a free approach over routing the entrance beneath the half landing.
+					var rank=3 if not layout.cores.has(at) else (2 if d==Vector2i.RIGHT else 0)
+					if rank>best:
+						entries.erase(entry_key);entries[at]=d;entry_key=at;best=rank
 				elif not seen.has(nb):seen[nb]=true;queue.append(nb)
 func floor_plate(k:String,b:Vector3,hole:String)->void:
 	var lo=Vector2.ZERO;var hi=Vector2.ZERO
@@ -183,13 +188,23 @@ func core(k:String,b:Vector3,kind:String)->void:
 			var side=Vector3.RIGHT*.55*(1 if flight==0 else -1)
 			facet(k,"walk_proxy",foot-side,head+side,foot+side,MOVE)
 			facet(k,"walk_proxy",foot-side,head-side,head+side,MOVE)
+			var detail=preload("BayDetails.gd")
+			for dx in [-.50,.50]:
+				var offset=Vector3.RIGHT*dx
+				detail.stair_guard(self,k,foot+offset,head+offset)
+				var underside=offset-Vector3.UP*.10
+				detail.sweep(self,k,"wood_dark",PackedVector3Array([foot+underside,head+underside]),PackedVector2Array([Vector2(-.05,-.09),Vector2(-.05,.09),Vector2(.05,.09),Vector2(.05,-.09)]),3)
 			for i in 9:
 				var pos=foot.lerp(head,(i+.5)/9.)+Vector3.UP*(half/18.-.08)
-				var edge=pos+Vector3(-.50 if flight==0 else .50,1.,0);rails[flight].append(edge)
-				if i%2==0:box(k+"/baluster%d"%(flight*9+i),edge-Vector3.UP*.46,Vector3(.04,.92,.04),"gold",MOVE)
 				box(k+"/tread%d"%(flight*9+i),pos,Vector3(1.1,.16,(entry_z-turn_z)/9.),"wood_light",SIGHT)
 		start=b+Vector3(.99,0,entry_z);end=b+Vector3(2.29,RISE,entry_z)
 		box(k+"/landing",b+Vector3(1.64,half-.08,(.18+turn_z)*.5),Vector3(2.4,.16,turn_z-.18),"wood")
+		var perimeter=[Vector3(.49,half,turn_z),Vector3(.49,half,.22),Vector3(2.79,half,.22),Vector3(2.79,half,turn_z)]
+		for i in 3:preload("BayDetails.gd").stair_guard(self,k,b+perimeter[i],b+perimeter[i+1])
+		for z in [.30,turn_z-.06]:
+			box(k+"/landing-joist",b+Vector3(1.64,half-.25,z),Vector3(2.4,.18,.14),"wood_dark")
+			for x in [.52,2.76]:
+				box(k+"/landing-post",b+Vector3(x,(half-.34)*.5,z),Vector3(.14,half-.34,.14),"wood")
 	for path in rails:
 		preload("BayDetails.gd").sweep(self,k,"wood_dark",path,PackedVector2Array([Vector2(-.035,-.03),Vector2(-.035,.03),Vector2(.035,.03),Vector2(.035,-.03)]))
 	links.append([k,start,end]);socket("stairs/"+k,"link",start,{"end":end})
@@ -217,25 +232,18 @@ func wall(id:String,center:Vector3,d:Vector2i,t:int,other:int,k:String,nb:String
 		for side in [-1,1]:
 			var mat=FINISH[t] if side<0 else (FINISH[other] if shared else "stone_dark")
 			box(id+"/finish",p+n*side*(thick*.5+.006),Vector3(sz.x,sz.y,.012),mat,0,yaw)
-	preload("BayDetails.gd").wall_trim(self,k,id,center,along,n,w,t,door)
-	if shared:preload("BayDetails.gd").wall_trim(self,k,id+"/reverse",center,-along,-n,w,other,door)
+	preload("BayDetails.gd").wall_trim(self,k,id,center,along,n,w,thick,door)
+	if shared:preload("BayDetails.gd").wall_trim(self,k,id+"/reverse",center,-along,-n,w,thick,door)
 	if door:
 		preload("BayDetails.gd").arch(self,k,center+Vector3.UP*high,along,n,w/2)
 		var did="door/"+id;var o=pick(did,"door",center);var style=o.get("style","iron" if 5 in [t,other] else "oak")
-		socket(did,"door",center,{"yaw":yaw,"width":w,"height":high,"style":style,"rooms":[k,nb],"interlock":"airlock/%d/"%address(k).z+room_tag(layout,k if t==5 else nb) if 5 in [t,other] else ""})
+		socket(did,"door",center,{"yaw":yaw,"width":w,"wall_depth":thick,"height":high,"style":style,"rooms":[k,nb],"interlock":"airlock/%d/"%address(k).z+room_tag(layout,k if t==5 else nb) if 5 in [t,other] else ""})
 		var mount=center+along*(w/2+.26)-n*(thick/2+.045)+Vector3.UP*1.6
 		socket("panel/"+id,"panel",mount,{"target":did,"yaw":yaw,"normal":-n,"caption":TYPES[t]});links.append([did,k,nb])
 	else:
 		box(id+"/glass",center+Vector3.UP*((low+high)/2),Vector3(w,high-low,.035),"glass",MOVE,yaw)
 		for i in 4:box(id+"/mullion",center+along*((i/3.-.5)*w)+Vector3.UP*((low+high)/2),Vector3(.045,high-low,.07),"wood_dark",MOVE,yaw)
 		box(id+"/sill",center+Vector3.UP*low,Vector3(w+.12,.07,.33),"cream",3,yaw)
-		# Test the candidate's actual vertical interval; if needed, fit it on a jamb.
-		var depth_y=.46;var beam_soffit=3.0;var clear=.05;var seat_x=0.
-		if beam_soffit-depth_y<high+clear:
-			seat_x=w*.5+clear+.14
-		if seat_x+.14<BAY*.5-.12:
-			box(id+"/seat",center+along*seat_x-n*.21+Vector3.UP*(beam_soffit-depth_y*.5),Vector3(.28,depth_y,.24),"wood_dark",3,yaw)
-		else:notes.append(id+" · no clear lintel or jamb for bracket")
 		var h=absi((id+str(layout.seed)).hash());var sign_side=1 if h%2 else -1
 		var at=center+along*sign_side*(BAY/2-.50)-n*.43
 		if not active_cores.has(k) and not active_cores.has(key(address(k).x,address(k).y,address(k).z-1)) and h%3==0:

@@ -2,7 +2,7 @@ extends RefCounted
 ## Bay-local detailing, in the same metre coordinate system as shell and cutbacks.
 static func quad(s,k,m,a,b,c,d,mask:=0)->void:
 	s.facet(k,m,a,b,c,mask);s.facet(k,m,a,c,d,mask)
-static func sweep(s,k,mat,path:PackedVector3Array,section:PackedVector2Array)->void:
+static func sweep(s,k,mat,path:PackedVector3Array,section:PackedVector2Array,mask:=0)->void:
 	if path.size()<2:return
 	var rings=[];var last_side=Vector3.ZERO
 	for i in path.size():
@@ -14,9 +14,9 @@ static func sweep(s,k,mat,path:PackedVector3Array,section:PackedVector2Array)->v
 		rings.append(ring);last_side=side
 		if i>0:
 			for j in section.size():
-				var jj=(j+1)%section.size();quad(s,k,mat,rings[i-1][j],ring[j],ring[jj],rings[i-1][jj])
+				var jj=(j+1)%section.size();quad(s,k,mat,rings[i-1][j],ring[j],ring[jj],rings[i-1][jj],mask)
 	for end in [0,rings.size()-1]:
-		var ring=rings[end];for j in range(1,ring.size()-1):s.facet(k,mat,ring[0],ring[j if end==0 else j+1],ring[j+1 if end==0 else j])
+		var ring=rings[end];for j in range(1,ring.size()-1):s.facet(k,mat,ring[0],ring[j if end==0 else j+1],ring[j+1 if end==0 else j],mask)
 static func dress(s,k:String,b:Vector3,t:int,hole:String,up:String)->void:
 	var bay:float=s.BAY;var center=b+Vector3(bay/2,0,bay/2)
 	if hole=="" and up=="":
@@ -61,9 +61,10 @@ static func arch(s,k:String,center:Vector3,along:Vector3,n:Vector3,r:float)->voi
 			var q=[];for uv in [[a,r],[b,r],[b,r+.12],[a,r+.12]]:q.append(center+(along*cos(uv[0])+Vector3.UP*sin(uv[0]))*uv[1]-n*depth)
 			rings.append(q)
 		var f=rings[1];var back=rings[0];quad(s,k,"stone",f[3],f[2],f[1],f[0]);quad(s,k,"stone",back[0],back[1],back[2],back[3]);for j in 4:quad(s,k,"stone_dark",f[j],back[j],back[(j+1)%4],f[(j+1)%4])
-static func wall_trim(s,k:String,id:String,center:Vector3,along:Vector3,n:Vector3,w:float,t:int,door:bool)->void:
+static func wall_trim(s,k:String,id:String,center:Vector3,along:Vector3,n:Vector3,w:float,thick:float,door:bool)->void:
 	var yaw=-atan2(along.z,along.x)
-	var hi:float=s.BAY*.5-.12
+	center-=n*(thick*.5-.11)
+	var hi:float=s.BAY*.5
 	for side in [-1,1]:
 		var lo=w*.5+.08 if door else 0.;var span=hi-lo
 		if span<.16:continue
@@ -83,10 +84,20 @@ static func beam_corbels(s,id:String,a:Vector3,b:Vector3)->void:
 	for i in 2:
 		var post=a if i==0 else b
 		var inward=axis if i==0 else -axis
-		for tier in [[.30,2.78,.20],[.41,2.93,.10],[.52,2.99,.04]]:
+		for tier in [[.30,2.79,.20],[.41,2.925,.07],[.52,2.98,.04]]:
 			var length:float=tier[0]-.08
 			var p=post+inward*(.08+length*.5)+Vector3.UP*tier[1]
 			s.box(id+"/corbel%d"%i,p,Vector3(length,tier[2],.30),"cream" if tier[1]>2.9 else "stone",0,yaw)
+# A rail follows the actual flight pitch; end posts terminate on the landing or tread.
+static func stair_guard(s,k:String,a:Vector3,b:Vector3)->void:
+	var lift=Vector3.UP*.94
+	var count=maxi(1,ceili(Vector2(b.x-a.x,b.z-a.z).length()/.40))
+	for i in range(count+1):
+		var foot=a.lerp(b,float(i)/count)
+		s.box(k+"/guard-post",foot+lift*.5,Vector3(.032,.94,.032),"gold",1)
+	for h in [.45,.94]:
+		var path=PackedVector3Array([a+Vector3.UP*h,b+Vector3.UP*h]);var r=.035 if h>.5 else .018
+		sweep(s,k,"wood_dark",path,PackedVector2Array([Vector2(-r,-r),Vector2(-r,r),Vector2(r,r),Vector2(r,-r)]),1)
 static func dome(s,k:String,pts:Array)->void:
 	# Reuse the actual heights of the eight roof edge stations; the surrounding hip stays watertight.
 	var c:Vector3=pts[0];var spring=c.y+.12;var rings=[];var n=32;var radius=1.62

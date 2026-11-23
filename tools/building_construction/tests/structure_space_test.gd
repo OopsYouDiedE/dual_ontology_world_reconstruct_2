@@ -30,5 +30,17 @@ func run()->void:
 		var p=door.p+Basis(Vector3.UP,door.yaw)*Vector3(dx,1.60,0);var expected=absf(dx)>.675;check(not space.intersect_ray(PhysicsRayQueryParameters3D.create(p-n*.35,p+n*.35,S.SIGHT)).is_empty()==expected,"jamb section x="+str(dx))
 	for h in [2.365,2.395]:
 		var p=door.p+Vector3.UP*h;check(not space.intersect_ray(PhysicsRayQueryParameters3D.create(p-n*.35,p+n*.35,S.SIGHT)).is_empty()==(h>2.38),"lintel section y="+str(h))
+	# The ground entrance used to open into the 1.65 m half landing. Test the
+	# approach as well as the threshold, using the same standing player capsule.
+	for ext in s.sockets:
+		if ext.kind!="door" or plan.cells.has(ext.rooms[1]):continue
+		check(not s.active_cores.has(ext.rooms[0]),"Example entrance under stair")
+		v.switch_door(ext.id);await physics_frame;await physics_frame
+		var normal=Basis(Vector3.UP,ext.yaw)*Vector3.BACK
+		q.transform.origin=ext.p+Vector3.UP*.90-normal*1.1;q.motion=normal*2.2
+		check(space.cast_motion(q)[0]>.99,"blocked exterior entrance approach")
+		for step in [-.8,0.,.8]:
+			var head=ext.p+normal*step+Vector3.UP*.05
+			check(space.intersect_ray(PhysicsRayQueryParameters3D.create(head,head+Vector3.UP*2.32,S.MOVE)).is_empty(),"tread or support in entrance headroom")
 	plan.cells[S.key(9,9,2)]=0;s.build(plan);check(s.notes.any(func(m):return "unsupported floor" in m),"unsupported floors must remain reported")
 	print("Example · %d eave ray samples · door 1.35 × 2.38 m · beam soffit 3.00 m · %d failures"%[joints,failures.size()]);v.free();quit(0 if failures.is_empty() else 1)

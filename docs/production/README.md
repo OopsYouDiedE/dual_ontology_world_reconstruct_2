@@ -31,7 +31,7 @@ docs/research/expedition/
 
 **首轮制作顺序：** 用折返闸验证路线图、物理门与第一人称读图，再复查营地与天文台。沿用已接入的固定地标、一次折返和晨钟三解。正式人物已统一使用 MPFB2 R-05 基模和动作库；逐个完善居民的脸型、裁片与动作。
 
-建筑定位：[从墙体、地板、门窗等结构找到生成脚本](room-structure-scripts.md) · [离线图解：从构件找到脚本](room-structure-atlas.html)。
+建筑定位：[从墙体、地板、门窗等结构找到生成脚本](room-structure-scripts.md) · [离线图解：从构件找到脚本](room-structure-atlas.html) · [分步工序图](room-structure-steps.html)（[PDF](room-structure-steps.pdf)）。
 
 ## 现役链路
 

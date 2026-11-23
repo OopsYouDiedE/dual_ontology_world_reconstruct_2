@@ -99,21 +99,27 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis) -> A
 			anim.track_set_path(track, NodePath("%s:%s" % [path, bone_name]))
 			var rest := skeleton.get_bone_pose_rotation(bone)
 			var axis := (skeleton.get_bone_global_pose(bone).basis.inverse() * to_rig * Vector3.RIGHT).normalized()
+			var roll := (skeleton.get_bone_global_pose(bone).basis.inverse() * to_rig * Vector3.BACK).normalized()
 			for k in 9:
 				var t := k / 8.0
 				anim.rotation_track_insert_key(track, t * anim.length,
-					rest * Quaternion(axis, _angle(clip, bone_name, t)))
+					rest * Quaternion(roll, _roll(clip,bone_name,t)) * Quaternion(axis, _angle(clip, bone_name, t)))
 		library.add_animation(clip, anim)
 	return library
+
+static func _roll(clip:StringName,bone:String,t:float)->float:
+	if clip not in [&"signal",&"examine",&"listen"]:return 0.
+	var w=smoothstep(0.,.23,t)*(1.-smoothstep(.78,1.,t))
+	return w*float({"head":.26 if clip==&"listen" else -.07,"upperarm_l":-.22,"upperarm_r":.22,"spine_01":.065}.get(bone,0.))
 
 static func _angle(clip: StringName, bone: String, t: float) -> float:
 	var hold := smoothstep(0.0, .23, t) * (1.0 - smoothstep(.78, 1.0, t))
 	if clip == &"signal":
-		return hold * float({"upperarm_r":-1.06,"lowerarm_r":-.85,"head":-.10}.get(bone,0.0))
+		return hold * float({"thigh_l":-.16,"calf_l":.22,"upperarm_r":-.85,"lowerarm_r":-.46,"head":-.10}.get(bone,0.0))
 	if clip == &"examine":
-		return hold * float({"spine_01":.27,"spine_03":.29,"head":.26,"upperarm_l":-.65,"lowerarm_l":-.75,"upperarm_r":-.52,"lowerarm_r":-.72}.get(bone,0.0))
+		return hold * float({"spine_01":.27,"spine_03":.29,"head":.26,"thigh_r":-.42,"calf_r":.55,"foot_r":-.14,"upperarm_l":.16,"lowerarm_l":-.26,"upperarm_r":-.39,"lowerarm_r":-.20}.get(bone,0.0))
 	if clip == &"listen":
-		return hold * float({"upperarm_l":-.52,"lowerarm_l":-1.65,"head":.16,"spine_03":.08}.get(bone,0.0))
+		return hold * float({"thigh_l":-.13,"calf_l":.20,"upperarm_l":-.56,"lowerarm_l":-2.24,"head":.16,"spine_03":.08}.get(bone,0.0))
 	if clip == &"interact":
 		var reach := sin(PI * t)
 		match bone:

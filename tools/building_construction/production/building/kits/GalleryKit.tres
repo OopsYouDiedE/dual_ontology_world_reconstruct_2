@@ -1,0 +1,6 @@
+[gd_resource type="Resource" format=3]
+[ext_resource type="Script" path="res://tools/building_construction/production/building/kits/RoomStyleKit.gd" id="RoomStyleKit"]
+
+[resource]
+script = ExtResource("RoomStyleKit")
+variants = {"ColumnSlot": "square", "BeamSlot": "arcade", "CeilingSlot": "flat", "WallFinishSlot": "wood", "WindowSlot": "tall", "DoorSlot": "oak", "CeilingLightSlot": "pendant", "Blind": "blind", "Flush": "flush"}

@@ -1,4 +1,5 @@
 extends RefCounted
+const KitType=preload("kits/RoomStyleKit.gd")
 ## Integer building-space addresses remain stable across redraws and serialisation.
 const BAY := 4.2
 const RISE := 3.3
@@ -6,8 +7,8 @@ const MOVE := 1
 const SIGHT := 2
 const USE := 4
 const SOUND := 8
-const TYPES := ["Hall", "Gallery", "Laboratory", "Mezzanine", "Observatory", "Pump room"]
-const FINISH := ["cream","wood_light","green","stone","book_blue","stone_dark"]
+const TYPES := ["Hall", "Gallery", "Laboratory", "Mezzanine", "Observatory", "Pump room","Dark cell"]
+const FINISH := ["cream","wood_light","green","stone","book_blue","stone_dark","stone_dark"]
 const GRID := 12
 const LEVELS := 4
 
@@ -24,6 +25,10 @@ static func example()->Dictionary:
 	p.cells[key(3,1,0)]=5 # Pump annex beside the laboratory and riser.
 	p.cores[key(0,0,0)]="stair"; p.cores[key(3,0,0)]="service"
 	return p
+static func triple(a)->bool:
+	if not a is Array or a.size()!=3:return false
+	for v in a:if typeof(v) not in [TYPE_INT,TYPE_FLOAT] or not is_finite(v):return false
+	return true
 static func valid(p:Variant)->bool:
 	if not p is Dictionary or p.get("version")!=1: return false
 	if not p.get("rooms",{}) is Dictionary:return false
@@ -47,6 +52,31 @@ static func valid(p:Variant)->bool:
 			if not o.shift is Array or o.shift.size()!=2:return false
 			for n in o.shift:
 				if not (n is float or n is int) or absf(n)>0.65:return false
+	if not p.get("profiles",{}) is Dictionary or not p.get("reservations",[]) is Array or not p.get("mounts",[]) is Array:return false
+	for cfg in p.get("profiles",{}).values():
+		if not cfg is Dictionary or typeof(cfg.get("room_height",RISE)) not in [TYPE_INT,TYPE_FLOAT] or not (float(cfg.get("room_height",RISE))>=2.4 and float(cfg.get("room_height",RISE))<=6.):return false
+		if typeof(cfg.get("allow_windows",true))!=TYPE_BOOL:return false
+		if cfg.has("kit"):
+			if not cfg.kit is String or not cfg.kit.begins_with("res://") or not cfg.kit.ends_with(".tres") or not ResourceLoader.exists(cfg.kit):return false
+			if not load(cfg.kit) is KitType:return false
+	for o in p.overrides.values():
+		if o.has("scene") and (not o.scene is String or not scene_ok(o.scene)):return false
+	var edges={}
+	for r in p.get("reservations",[]):
+		if not r is Dictionary:return false
+		match r.get("kind",""):
+			"footprint","operation":
+				if not triple(r.get("min")) or not triple(r.get("size")) or r.size.min()<=0:return false
+			"cone":
+				if not triple(r.get("apex")) or not triple(r.get("end")) or preload("kits/MechanismHost.gd").vec(r.apex).is_equal_approx(preload("kits/MechanismHost.gd").vec(r.end)) or typeof(r.get("radius")) not in [TYPE_INT,TYPE_FLOAT] or r.radius<=0:return false
+			"opening":
+				if not r.get("edge") is String or edges.has(r.edge) or r.get("type") not in ["door","window"]:return false
+				edges[r.edge]=true
+				for n in ["head","sill","width"]:if r.has(n) and typeof(r[n]) not in [TYPE_FLOAT,TYPE_INT]:return false
+				if r.get("width",1.35)<=.1 or r.get("width",1.35)>BAY-.45 or r.get("head",2.24)<=r.get("sill",0.) or r.get("sill",0.)<0:return false
+			_:return false
+	for m in p.get("mounts",[]):
+		if not m is Dictionary or not m.get("id") is String or not m.get("anchor") is String or not triple(m.get("near")) or not m.get("scene") is String or not scene_ok(m.scene):return false
 	return true
 
 static func generate(seed_value:int)->Dictionary:
@@ -60,7 +90,7 @@ static func generate(seed_value:int)->Dictionary:
 		if l>0:p.cores[key(0,0,l-1)]="spiral" if seed_value%2 else "stair"
 	p.cores[key(bays-1,0,0)]="service";return p
 
-static func room_tag(p:Dictionary,k:String)->String:return str(p.get("rooms",{}).get(k,p.cells.get(k,-1)))
+static func room_tag(p:Dictionary,k:String)->String:return str(p.get("rooms",{}).get(k,int(p.cells.get(k,-1))))
 var pieces:Array=[]
 var skins:Array=[]
 var sockets:Array=[]
@@ -75,6 +105,34 @@ var wall_hosts:Dictionary={}
 var active_cores:Dictionary={}
 var links:Array=[]
 var cell_owner:String
+const KITS=[preload("kits/HallKit.tres"),preload("kits/GalleryKit.tres"),preload("kits/HallKit.tres"),preload("kits/HallKit.tres"),preload("kits/ObservatoryKit.tres"),preload("kits/PumpRoomKit.tres"),preload("kits/DarkCellKit.tres")]
+var host=preload("kits/MechanismHost.gd").new()
+var slots:Dictionary={}
+var emissions:Array=[]
+var pass_order:Array=[]
+var heights:Array=[]
+var envelope_queue:Array=[]
+var finish_queue:Array=[]
+var supported:Dictionary={}
+func profile(k:String)->Dictionary:return layout.get("profiles",{}).get(room_tag(layout,k),{})
+func kit(k:String):
+	var path=profile(k).get("kit","")
+	return load(path) if path!="" else KITS[int(layout.cells[k])]
+func room_height(k:String)->float:return float(profile(k).get("room_height",RISE))
+func datum(level:int)->float:
+	var y=0.;for i in level:y+=heights[i]
+	return y
+func enabled(k:String,pass_name:String)->bool:return pass_name in kit(k).passes
+func run_extensions(phase:String,keys:Array)->void:
+	for k in keys:
+		cell_owner=k
+		if phase!="ReservationPass" and not enabled(k,phase):continue
+		for script in kit(k).extensions.get(phase,[]):script.new().run(self,k)
+func slot(kind:String,id:String,k:String,p:Vector3,args:Dictionary={},style=null)->Dictionary:
+	var q={"id":id,"kind":kind,"owner":k,"p":p,"height":room_height(k),"yaw":0.};q.merge(args,true);slots[id]=q
+	emissions.append([q,kit(k) if style==null else style]);return q
+
+static func scene_ok(path:String)->bool:return path.begins_with("res://") and path.ends_with(".tscn") and ResourceLoader.exists(path,"PackedScene")
 func box(id:String,p:Vector3,sz:Vector3,mat:String,mask:=3,axis:=0.0)->void:
 	pieces.append({"id":id,"owner":cell_owner,"p":p,"size":sz,"mat":mat,"mask":mask,"yaw":axis})
 func socket(id:String,kind:String,p:Vector3,more:Dictionary={})->void:
@@ -85,14 +143,39 @@ func repair(id:String,message:String)->bool:
 	notes.append(id+" · "+message);return layout.mode=="repair"
 func build(plan:Dictionary)->void:
 	layout=plan;pieces.clear();skins.clear();facets.clear();roofs.clear();sockets.clear();choices.clear();notes.clear();hull.clear();links.clear();active_cores.clear();wall_hosts.clear()
-	var keys=plan.cells.keys();keys.sort();find_entries(keys);var columns={};var beams={};var lit_rooms={}
+	var keys=plan.cells.keys();keys.sort();slots.clear();emissions.clear();supported.clear();envelope_queue.clear();finish_queue.clear();pass_order.clear()
+	pass_order.append("ReservationPass");host.reset(plan);heights=[]
+	for l in LEVELS:heights.append(0.)
+	for k in keys:var l=address(k).z;heights[l]=maxf(heights[l],room_height(k))
+	for l in LEVELS:if heights[l]==0.:heights[l]=RISE
+	run_extensions("ReservationPass",keys);find_entries(keys);reserve_cores(plan)
+	pass_order.append("StructurePass");build_frame(keys);run_extensions("StructurePass",keys)
+	pass_order.append("EnvelopePass")
+	for row in envelope_queue:
+		cell_owner=row[5];wall.callv(row)
+	for edge in host.holes:
+		if not wall_hosts.has(edge):notes.append(edge+" · required opening has no host wall")
+	make_roofs();run_extensions("EnvelopePass",keys)
+	pass_order.append("FinishPass")
+	for job in finish_queue:
+		cell_owner=job[0]
+		if enabled(cell_owner,"FinishPass"):job[1].callv(job[2])
+	finish_queue.clear();run_extensions("FinishPass",keys)
+	for job in emissions:
+		cell_owner=job[0].owner;preload("kits/SlotCompiler.gd").emit(self,job[0],job[1])
+	emissions.clear()
+	for inst in plan.get("mounts",[]):
+		var a=host.nearest(inst.anchor,host.vec(inst.near),inst.get("owner",""))
+		if a.is_empty():notes.append(inst.id+" · no matching anchor");continue
+		cell_owner=a.owner;socket(inst.id,"custom",a.p,{"scene":inst.scene,"normal":a.normal,"yaw":atan2(a.normal.x,a.normal.z)})
+func reserve_cores(plan:Dictionary)->void:
 	for k in plan.cores.keys():
 		var v=address(k);var above=key(v.x,v.y,v.z+1)
 		if not plan.cells.has(k) or not plan.cells.has(above): notes.append(k+" · shaft needs two occupied levels");continue
 		var kind=plan.cores[k]
 		if kind=="spiral":
 			# Standard compact spiral: 10 risers/turn, 18 risers total. Expand to 14/turn when the bay permits.
-			if RISE*10/18.0-0.16<2.0:
+			if float(heights[v.z])*10/18.0-0.16<2.0:
 				if not repair(k,"compact spiral headroom → expanded radius / 14 risers per turn"):continue
 		if kind=="spiral" and float(plan.get("spiral_radius",1.60))<1.50:
 			if not repair(k,"enlarged spiral exceeds reserved radius → U stair"):continue
@@ -102,39 +185,58 @@ func build(plan:Dictionary)->void:
 			for h in range(v.z+1,LEVELS-1):
 				var next=key(v.x,v.y,h);if not plan.cells.has(next) or not plan.cells.has(key(v.x,v.y,h+1)) or plan.cores.has(next):break
 				active_cores[next]=kind
+func build_frame(keys:Array)->void:
+	var plan=layout;var columns={};var beams={};var lit_rooms={}
 	for k in keys:
-		cell_owner=k;var c=address(k);var x=c.x;var z=c.y;var l=c.z;var t=int(plan.cells[k]);var y=l*RISE;var base=Vector3(x*BAY,y,z*BAY);var mid=base+Vector3(BAY/2,0,BAY/2);var below=key(x,z,l-1)
+		cell_owner=k;var c=address(k);var x=c.x;var z=c.y;var l=c.z;var t=int(plan.cells[k]);var y=datum(l);var base=Vector3(x*BAY,y,z*BAY);var mid=base+Vector3(BAY/2,0,BAY/2);var below=key(x,z,l-1)
 		if l>0 and not plan.cells.has(below):notes.append(k+" · unsupported floor: extend lower storey")
 		var hole=str(active_cores.get(below,""));var up=str(active_cores.get(k,""))
-		floor_plate(k,base,"trench" if t==5 and hole=="" and up=="" else hole)
-		preload("BayDetails.gd").dress(self,k,base,t,hole,up)
-		if up!="":core(k,base,up)
+		slot("SlabSlot","slab/"+k,k,base,{"hole":"trench" if kit(k).service_floor and hole=="" and up=="" else hole})
+		finish_queue.append([k,slot,["FloorFinishSlot","paving/"+k,k,base,{"type":5 if kit(k).service_floor else (0 if t==5 else t),"hole":hole,"up":up}]])
+		host.anchor("center/"+k,"BayCenter",k,mid)
+		if up=="" and hole=="" and not host.blocked(AABB(base+Vector3(0,room_height(k)-.35,0),Vector3(BAY,.35,BAY))):finish_queue.append([k,slot,["CeilingSlot","ceiling/"+k,k,mid,{"polygon":PackedVector3Array([base,base+Vector3.RIGHT*BAY,base+Vector3(BAY,0,BAY),base+Vector3.BACK*BAY])}]])
+		if up!="":slot("CoreSlot","core/"+k,k,base,{"core":up})
 		for dx in 2:
 			for dz in 2:
 				var ci=key(x+dx,z+dz,l);var cp=Vector3((x+dx)*BAY,y,(z+dz)*BAY)
 				if not columns.has(ci):
+					var owner=k
+					for ox in [-1,0]:
+						for oz in [-1,0]:
+							var neighbour=key(x+dx+ox,z+dz+oz,l)
+							if not plan.cells.has(neighbour) or not enabled(neighbour,"StructurePass") or kit(neighbour).variants.get("ColumnSlot")=="none":continue
+							if not enabled(owner,"StructurePass") or kit(owner).variants.get("ColumnSlot")=="none" or room_height(neighbour)>room_height(owner):owner=neighbour
 					var axis_id="column/"+key(x+dx,z+dz,0);var o=pick("column/"+ci,"column",cp);var shift=plan.overrides.get(axis_id,o).get("shift",[0,0]);cp+=Vector3(shift[0],0,shift[1]);columns[ci]=cp
-					box("column/"+ci,cp+Vector3.UP*1.55,Vector3(0.23,3.1,0.23),"stone")
-					for tier in [[.42,.045,.09],[.36,.121,.062],[.29,.19,.076]]:
-						box("plinth/"+ci,cp+Vector3.UP*tier[1],Vector3(tier[0],tier[2],tier[0]),"stone_dark" if tier[1]<.1 else "cream")
-					box("capital/"+ci,cp+Vector3.UP*3.03,Vector3(0.36,0.14,0.36),"cream")
+					var size=Vector3(.44,room_height(owner),.44);var orig=cp;var clear=false
+					for offset in [Vector3.ZERO,Vector3.RIGHT*.55,Vector3.LEFT*.55,Vector3.BACK*.55,Vector3.FORWARD*.55]:
+						cp=orig+offset
+						if host.blocked(AABB(cp-Vector3(.22,0,.22),size)):continue
+						columns[ci]=cp;clear=true
+						if enabled(owner,"StructurePass"):
+							slot("ColumnSlot","column/"+ci,owner,cp,{"radius":.22});
+							if kit(owner).variants.get("ColumnSlot","")!="none":supported[ci]=true
+						break
+					if not clear and enabled(owner,"StructurePass") and kit(owner).variants.get("ColumnSlot")!="none":notes.append("column/"+ci+" · all support positions reserved")
 		for d in [Vector2i.LEFT,Vector2i.RIGHT,Vector2i.UP,Vector2i.DOWN]:
 			var nb=key(x+d.x,z+d.y,l);var horizontal=d.y!=0;var sx=x+int(d.x>0);var sz=z+int(d.y>0);var edge=("X" if horizontal else "Z")+key(sx,sz,l)
 			var a=key(sx,sz,l);var b=key(sx+int(horizontal),sz+int(not horizontal),l)
-			beams[edge]=[a,b,k];var exterior=not plan.cells.has(nb)
-			if not exterior and (room_tag(plan,nb)==room_tag(plan,k) or wall_hosts.has(edge)):continue
+			if not beams.has(edge) or (enabled(k,"StructurePass") and kit(k).variants.get("BeamSlot")!="none" and (not enabled(beams[edge][2],"StructurePass") or kit(beams[edge][2]).variants.get("BeamSlot")=="none" or room_height(k)>=room_height(beams[edge][2]))):beams[edge]=[a,b,k]
+			var exterior=not plan.cells.has(nb)
+			if not exterior and (wall_hosts.has(edge) or (room_tag(plan,nb)==room_tag(plan,k) and not host.holes.has(edge))):continue
 			wall_hosts[edge]=[k,nb if not exterior else ""];var center=mid+Vector3(d.x,0,d.y)*BAY/2
-			wall(edge,center,d,t,-1 if exterior else int(plan.cells[nb]),k,nb)
+			if enabled(k,"EnvelopePass"):envelope_queue.append([edge,center,d,t,-1 if exterior else int(plan.cells[nb]),k,nb])
 		if up=="" and hole=="":
 			var lid="light/"+k;var override=pick(lid,"light",mid+Vector3.UP*2.8)
-			if not override.get("hidden",false):socket(lid,"light",mid+Vector3.UP*2.8)
+			if not override.get("hidden",false):
+				for offset in [Vector3.ZERO,Vector3.RIGHT*.86,Vector3.LEFT*.86,Vector3.BACK*.86]:
+					if not host.blocked(AABB(mid+offset+Vector3(-.18,room_height(k)-.70,-.18),Vector3(.36,.70,.36))):
+						finish_queue.append([k,slot,["CeilingLightSlot",lid,k,mid+offset]]);break
 		var rid="%d/%s"%[t,l];if not lit_rooms.has(rid):socket("zone/"+k,"zone",mid+Vector3.UP*RISE/2);lit_rooms[rid]=true
 		if not plan.cells.has(key(x,z,l+1)):hull[k]=true
 	for e in beams:
 		var row=beams[e];cell_owner=row[2];var aa:Vector3=columns[row[0]];var bb:Vector3=columns[row[1]];var v=bb-aa
-		box("beam/"+e,(aa+bb)/2+Vector3.UP*3.15,Vector3(v.length(),0.3,0.21),"wood_dark",3,-atan2(v.z,v.x))
-		preload("BayDetails.gd").beam_corbels(self,"beam/"+e,aa,bb)
-	make_roofs()
+		var h=room_height(cell_owner);var top=Vector3.UP*(h-(1.35 if kit(cell_owner).variants.get("BeamSlot")=="arcade" else .65));var bounds=AABB(aa+top,Vector3.ZERO).expand(bb+Vector3.UP*h).grow(.16)
+		if enabled(cell_owner,"StructurePass") and not host.blocked(bounds):slot("BeamSlot","beam/"+e,cell_owner,(aa+bb)*.5,{"a":aa,"b":bb,"yaw":-atan2(v.z,v.x),"seated":supported.has(row[0]) and supported.has(row[1])})
 
 func find_entries(keys:Array)->void:
 	entries.clear();var seen={}
@@ -151,104 +253,41 @@ func find_entries(keys:Array)->void:
 					if rank>best:
 						entries.erase(entry_key);entries[at]=d;entry_key=at;best=rank
 				elif not seen.has(nb):seen[nb]=true;queue.append(nb)
-func floor_plate(k:String,b:Vector3,hole:String)->void:
-	var lo=Vector2.ZERO;var hi=Vector2.ZERO
-	if hole=="trench":lo=Vector2(2.44,1.24);hi=Vector2(3.0,2.96)
-	elif hole=="service":lo=Vector2(.6,.6);hi=Vector2(1.28,1.28)
-	elif hole=="stair":lo=Vector2(.43,.18);hi=Vector2(2.85,3.84)
-	elif hole=="spiral":lo=Vector2(.5,.5);hi=Vector2(3.7,3.7)
-	var rects=[[0,0,BAY,BAY]] if hole=="" else [[0,0,lo.x,BAY],[hi.x,0,BAY,BAY],[lo.x,0,hi.x,lo.y],[lo.x,hi.y,hi.x,BAY]]
-	for i in rects.size():
-		var r=rects[i];box(k+"/slab%d"%i,b+Vector3((r[0]+r[2])/2,-.09,(r[1]+r[3])/2),Vector3(r[2]-r[0],.18,r[3]-r[1]),"stone")
-	if hole not in ["","trench"]:
-		for rx in [lo.x,hi.x]:box(k+"/guard",b+Vector3(rx,.53,(lo.y+hi.y)/2),Vector3(.055,1.06,hi.y-lo.y),"gold",1)
-		if hole=="stair":
-			box(k+"/guard-low-end",b+Vector3(1.055,.53,hi.y),Vector3(1.25,1.06,.055),"gold",1)
-		var closed_z=lo.y if hole=="stair" else hi.y
-		box(k+"/guard",b+Vector3((lo.x+hi.x)/2,.53,closed_z),Vector3(hi.x-lo.x,1.06,.055),"gold",1)
-func core(k:String,b:Vector3,kind:String)->void:
-	if kind=="service":
-		box(k+"/riser",b+Vector3(.94,RISE/2,.94),Vector3(.34,RISE,.34),"gold");socket("valve/"+k,"valve",b+Vector3(.94,1.2,1.2),{"network":"riser/%d/%d"%[address(k).x,address(k).y]});return
-	var start:Vector3;var end:Vector3;var rails=[PackedVector3Array(),PackedVector3Array()]
-	if kind=="spiral":
-		var center=b+Vector3(2.1,0,2.1);var delta=TAU/14.;var offset=-PI/2-17*delta
-		for i in 18:
-			var a=offset+i*delta;var p=center+Vector3(cos(a),0,sin(a))*.88+Vector3.UP*((i+1)*RISE/18.-.075)
-			box(k+"/tread%d"%i,p,Vector3(1.45,.15,.69),"wood_light",3,-a)
-			var edge=p+Vector3(cos(a)*.69,1.,sin(a)*.69);rails[0].append(edge)
-			if i%2==0:box(k+"/baluster%d"%i,edge-Vector3.UP*.46,Vector3(.04,.92,.04),"gold",1)
-			if i==0:start=p+Vector3.UP*.1
-		end=center+Vector3(0,RISE,-1.62);box(k+"/landing",end-Vector3.UP*.075,Vector3(.9,.15,.56),"wood")
-	else:
-		var turn_z=1.08;var entry_z=3.84;var half=RISE*.5
-		for flight in 2:
-			var x=.99 if flight==0 else 2.29
-			var foot=b+Vector3(x,half*flight,entry_z if flight==0 else turn_z)
-			var head=b+Vector3(x,half*(flight+1),turn_z if flight==0 else entry_z)
-			var side=Vector3.RIGHT*.55*(1 if flight==0 else -1)
-			facet(k,"walk_proxy",foot-side,head+side,foot+side,MOVE)
-			facet(k,"walk_proxy",foot-side,head-side,head+side,MOVE)
-			var detail=preload("BayDetails.gd")
-			for dx in [-.50,.50]:
-				var offset=Vector3.RIGHT*dx
-				detail.stair_guard(self,k,foot+offset,head+offset)
-				var underside=offset-Vector3.UP*.10
-				detail.sweep(self,k,"wood_dark",PackedVector3Array([foot+underside,head+underside]),PackedVector2Array([Vector2(-.05,-.09),Vector2(-.05,.09),Vector2(.05,.09),Vector2(.05,-.09)]),3)
-			for i in 9:
-				var pos=foot.lerp(head,(i+.5)/9.)+Vector3.UP*(half/18.-.08)
-				box(k+"/tread%d"%(flight*9+i),pos,Vector3(1.1,.16,(entry_z-turn_z)/9.),"wood_light",SIGHT)
-		start=b+Vector3(.99,0,entry_z);end=b+Vector3(2.29,RISE,entry_z)
-		box(k+"/landing",b+Vector3(1.64,half-.08,(.18+turn_z)*.5),Vector3(2.4,.16,turn_z-.18),"wood")
-		var perimeter=[Vector3(.49,half,turn_z),Vector3(.49,half,.22),Vector3(2.79,half,.22),Vector3(2.79,half,turn_z)]
-		for i in 3:preload("BayDetails.gd").stair_guard(self,k,b+perimeter[i],b+perimeter[i+1])
-		for z in [.30,turn_z-.06]:
-			box(k+"/landing-joist",b+Vector3(1.64,half-.25,z),Vector3(2.4,.18,.14),"wood_dark")
-			for x in [.52,2.76]:
-				box(k+"/landing-post",b+Vector3(x,(half-.34)*.5,z),Vector3(.14,half-.34,.14),"wood")
-	for path in rails:
-		preload("BayDetails.gd").sweep(self,k,"wood_dark",path,PackedVector2Array([Vector2(-.035,-.03),Vector2(-.035,.03),Vector2(.035,.03),Vector2(.035,-.03)]))
-	links.append([k,start,end]);socket("stairs/"+k,"link",start,{"end":end})
+func shell_rise(k:String)->float:
+	var c=address(k)
+	return heights[c.z] if layout.cells.has(key(c.x,c.y,c.z+1)) else room_height(k)
 func wall(id:String,center:Vector3,d:Vector2i,t:int,other:int,k:String,nb:String)->void:
 	var n=Vector3(d.x,0,d.y);var along=Vector3(-n.z,0,n.x);var yaw=-atan2(along.z,along.x);var shared=other>=0
+	var hgt=room_height(k);var boundary:float=maxf(shell_rise(k),shell_rise(nb)) if shared else shell_rise(k);var req:Dictionary=host.holes.get(id,{})
 	var entrance=entries.get(k,Vector2i.ZERO)==d
-	var door=shared or entrance;var w=1.35 if door else 1.95;var low=0.0 if door else 1.05;var high=2.38;var thick=.44 if t==5 and not shared and d==Vector2i.RIGHT else .22
-	var spans=[[-BAY/2,-w/2,0,RISE],[w/2,BAY/2,0,RISE],[-w/2,w/2,high,RISE]]
-	var niche=not door and t==5 and d==Vector2i.RIGHT
-	if niche:
-		var depth=.34;var back=.075
-		if depth+back>thick:
-			niche=repair(id,"valve niche deeper than wall → project exterior backing pier")
-		if niche:
-			# Carve a local rectangle in the positive jamb, retain material around its perimeter.
-			var jamb=spans[1];spans.remove_at(1);var middle=(jamb[0]+jamb[1])*.5;var left=middle-.31;var right=middle+.31
-			spans.append_array([[jamb[0],left,0,RISE],[right,jamb[1],0,RISE],[left,right,0,1.08],[left,right,1.85,RISE]])
-			var origin=center+along*middle-n*thick/2;box(id+"/niche-back",origin+n*(depth+back*.5)+Vector3.UP*1.465,Vector3(.62+2*back,.77+2*back,back),"stone_dark",3,yaw)
-			for h in [1.08,1.85]:box(id+"/niche-return",origin+n*depth/2+Vector3.UP*h,Vector3(.62,back,depth),"stone",3,yaw)
-			for j in [-1,1]:box(id+"/niche-side",origin+n*depth/2+along*j*.31+Vector3.UP*1.465,Vector3(back,.77,depth),"stone",3,yaw)
-	if low>0:spans.append([-w/2,w/2,0,low])
-	for i in spans.size():
-		var r=spans[i];var p=center+along*((r[0]+r[1])*.5)+Vector3.UP*((r[2]+r[3])*.5);var sz=Vector3(r[1]-r[0],r[3]-r[2],thick)
-		box(id+"/wall%d"%i,p,sz,"stone",3,yaw)
-		for side in [-1,1]:
-			var mat=FINISH[t] if side<0 else (FINISH[other] if shared else "stone_dark")
-			box(id+"/finish",p+n*side*(thick*.5+.006),Vector3(sz.x,sz.y,.012),mat,0,yaw)
-	preload("BayDetails.gd").wall_trim(self,k,id,center,along,n,w,thick,door)
-	if shared:preload("BayDetails.gd").wall_trim(self,k,id+"/reverse",center,-along,-n,w,thick,door)
+	var door=req.get("type","door" if shared or entrance else "window")=="door"
+	var w:float=req.get("width",1.35 if door else 1.95);var low:float=0. if door else req.get("sill",1.05);var high:float=req.get("head",minf(2.38,hgt-.16) if door or hgt<=4.8 else hgt-.55)
+	var opened=door or req.has("type") or (not shared and profile(k).get("allow_windows",kit(k).exterior_windows) and kit(k).variants.get("WindowSlot")!="blind");var thick=.44 if t==5 and not shared and d==Vector2i.RIGHT else .22
+	var host_height=minf(hgt,room_height(nb)) if shared else hgt
+	if high>host_height-.04:
+		notes.append(id+" · opening head exceeds host");high=host_height-.04
+	if req.is_empty() and not door and hgt>4.8:low=hgt-1.65
+	if low>=high:low=maxf(0.,high-.4)
+	if req.has("type") and not door:opened=true
+	var geo={"n":n,"along":along,"yaw":yaw,"w":w,"thick":thick,"door":door,"low":low,"high":high,"open":opened,"edge":id,"boundary":boundary,"d":d,"type":t,"other":other,"required":req.has("type")}
+	slot("ShellSlot","shell/"+id,k,center,geo)
+	for face in ([-1,1] if shared else [-1]):
+		var owner=k if face<0 else nb;var side=geo.duplicate();side.n=-face*n;side.along=-face*along
+		var finish_id=id+"/trim"+("/reverse" if face>0 else "")
+		finish_queue.append([owner,slot,["WallFinishSlot",finish_id,owner,center,side]])
+		host.anchor(finish_id,"WallPanelCenter",owner,center+along*(w*.5+.35)+n*face*(thick*.5+.013)+Vector3.UP*1.5,n*face)
 	if door:
-		preload("BayDetails.gd").arch(self,k,center+Vector3.UP*high,along,n,w/2)
-		var did="door/"+id;var o=pick(did,"door",center);var style=o.get("style","iron" if 5 in [t,other] else "oak")
-		socket(did,"door",center,{"yaw":yaw,"width":w,"wall_depth":thick,"height":high,"style":style,"rooms":[k,nb],"interlock":"airlock/%d/"%address(k).z+room_tag(layout,k if t==5 else nb) if 5 in [t,other] else ""})
+		var did="door/"+id;pick(did,"door",center);geo.rooms=[k,nb];geo.interlock="airlock/%d/"%address(k).z+room_tag(layout,k if t==5 else nb) if 5 in [t,other] else ""
+		slot("DoorSlot",did,k,center,geo,kit(nb) if shared and other==5 and t!=5 else kit(k));host.anchor(did,"Threshold",k,center,-n)
 		var mount=center+along*(w/2+.26)-n*(thick/2+.045)+Vector3.UP*1.6
 		socket("panel/"+id,"panel",mount,{"target":did,"yaw":yaw,"normal":-n,"caption":TYPES[t]});links.append([did,k,nb])
 	else:
-		box(id+"/glass",center+Vector3.UP*((low+high)/2),Vector3(w,high-low,.035),"glass",MOVE,yaw)
-		for i in 4:box(id+"/mullion",center+along*((i/3.-.5)*w)+Vector3.UP*((low+high)/2),Vector3(.045,high-low,.07),"wood_dark",MOVE,yaw)
-		box(id+"/sill",center+Vector3.UP*low,Vector3(w+.12,.07,.33),"cream",3,yaw)
+		slot("WindowSlot","window/"+id,k,center,geo)
 		var h=absi((id+str(layout.seed)).hash());var sign_side=1 if h%2 else -1
 		var at=center+along*sign_side*(BAY/2-.50)-n*.43
-		if not active_cores.has(k) and not active_cores.has(key(address(k).x,address(k).y,address(k).z-1)) and h%3==0:
+		if not active_cores.has(k) and not active_cores.has(key(address(k).x,address(k).y,address(k).z-1)) and t<6 and h%3==0 and not host.blocked(AABB(at-Vector3(.55,0,.55),Vector3(1.1,2,1.1))):
 			socket("fixture/"+id,"fixture",at,{"type":t,"yaw":yaw})
-		box(id+"/patina",center+along*sign_side*(BAY*.5-.32)-n*.12+Vector3.UP*.09,Vector3(.54,.12,.012),"stone_dark",0,yaw)
+
 
 func facet(k:String,mat:String,a:Vector3,b:Vector3,c:Vector3,mask:=0,normals:Array=[])->void:
 	facets.append([k,mat,a,b,c,mask,normals])
@@ -262,16 +301,19 @@ func make_roofs()->void:
 	for k in hull:
 		var c=address(k);if not borders.has(c.z):borders[c.z]=[]
 		for dir in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
-			if hull.has(key(c.x+dir.x,c.y+dir.y,c.z)):continue
+			var neighbour=key(c.x+dir.x,c.y+dir.y,c.z);if hull.has(neighbour) and is_equal_approx(room_height(k),room_height(neighbour)):continue
 			var a=Vector2(c.x+int(dir.x>0),c.y+int(dir.y>0))*BAY;var b=a+(Vector2.RIGHT if dir.y!=0 else Vector2.DOWN)*BAY;borders[c.z].append([a,b])
 	for k in hull:
+		if not enabled(k,"EnvelopePass"):continue
 		var c=address(k);cell_owner=k;var pts=[]
 		for uv in [Vector2(.5,.5),Vector2.ZERO,Vector2(.5,0),Vector2(1,0),Vector2(1,.5),Vector2.ONE,Vector2(.5,1),Vector2(0,1),Vector2(0,.5)]:
-			var x=(c.x+uv.x)*BAY;var z=(c.y+uv.y)*BAY;pts.append(Vector3(x,(c.z+1)*RISE+height_at(x,z,borders[c.z]),z))
-		if int(layout.cells[k])==4 and not hull.has(key(c.x-1,c.y,c.z)) or (int(layout.cells[k])==4 and layout.cells.get(key(c.x-1,c.y,c.z),-1)!=4):
-			preload("BayDetails.gd").dome(self,k,pts);continue
+			var x=(c.x+uv.x)*BAY;var z=(c.y+uv.y)*BAY;pts.append(Vector3(x,datum(c.z)+room_height(k)+height_at(x,z,borders[c.z]),z))
+		var west=key(c.x-1,c.y,c.z)
+		if kit(k).dome and (not hull.has(west) or not kit(west).dome):
+			slot("DomeSlot","dome/"+k,k,pts[0],{"points":pts});continue
+		slot("RoofSlot","roof/"+k,k,pts[0],{"points":pts})
 		for i in 8:
-			var a:Vector3=pts[0];var b:Vector3=pts[1+i];var v:Vector3=pts[1+(i+1)%8];roofs.append([k,a,b,v]);var n=(v-a).cross(b-a).normalized()
+			var a:Vector3=pts[0];var b:Vector3=pts[1+i];var v:Vector3=pts[1+(i+1)%8];var n=(v-a).cross(b-a).normalized()
 			for pair in [[a,b,v],[b,v,a],[v,a,b]]:
 				var u:Vector3=pair[0];var w:Vector3=pair[1];var key1=str(u.snapped(Vector3.ONE*.001));var key2=str(w.snapped(Vector3.ONE*.001));var id=key1+key2 if key1<key2 else key2+key1
 				if seams.has(id):

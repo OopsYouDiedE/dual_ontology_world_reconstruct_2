@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[sub_resource type="BoxMesh" id="Plaque"]
+size = Vector3(0.24, 0.2, 0.06)
+
+[node name="CalibrationMarker" type="Node3D"]
+[node name="Plaque" type="MeshInstance3D" parent="."]
+mesh = SubResource("Plaque")

@@ -84,15 +84,27 @@ func solid(parent:Node3D,sz:Vector3,p:Vector3,mat:String,mask:int)->Node3D:
 	return m
 func trigger(parent:Node3D,id:String,sz:Vector3,mask:int)->Area3D:
 	var a=Area3D.new();a.set_meta("socket_id",id);a.collision_layer=mask;a.collision_mask=0;parent.add_child(a);var col=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=sz;col.shape=shape;a.add_child(col);return a
+func mount_scene(parent:Node3D,path:String,contract:Dictionary)->void:
+	var prefab=load(path).instantiate()
+	if not prefab is Node3D:prefab.free();push_error("Slot prefab needs a Node3D root: "+path);return
+	parent.add_child(prefab)
+	if prefab.has_method("configure_slot"):prefab.configure_slot(contract)
 func emit_socket(o:Dictionary)->void:
 	if o.kind=="zone" or (o.kind=="valley" and hide_roof):return
 	var root=Node3D.new();root.position=o.p;root.rotation.y=o.get("yaw",0.);root.set_meta("structure_id",o.id);add_child(root)
 	match o.kind:
+		"custom":mount_scene(root,o.scene,o.get("slot",o))
 		"light":
-			solid(root,Vector3(.28,.14,.28),Vector3.ZERO,"emission",0);var lamp=OmniLight3D.new();lamp.position.y=-.30;lamp.light_color=Color("ffd29a");lamp.omni_range=4.2;lamp.omni_attenuation=1.6;lamp.light_energy=.60;lamp.distance_fade_enabled=true;lamp.distance_fade_begin=22;root.add_child(lamp)
+			solid(root,Vector3(.34,.05,.34) if o.get("flush",false) else Vector3(.28,.14,.28),Vector3.ZERO,"emission",0);var lamp=OmniLight3D.new();lamp.position.y=-.30;lamp.light_color=Color("ffd29a");lamp.omni_range=4.2;lamp.omni_attenuation=1.6;lamp.light_energy=.60;lamp.distance_fade_enabled=true;lamp.distance_fade_begin=22;root.add_child(lamp)
 		"door":
 			var pivot=Node3D.new();pivot.position.x=-o.width/2;root.add_child(pivot);var iron=o.style=="iron"
-			if iron:
+			if o.get("scene","")!="":
+				var leaf=Node3D.new();leaf.position.x=o.width*.5;pivot.add_child(leaf);mount_scene(leaf,o.scene,model.slots[o.id])
+				var body=StaticBody3D.new();body.collision_layer=3;leaf.add_child(body);var col=CollisionShape3D.new();var sh=BoxShape3D.new();sh.size=Vector3(o.width,o.height,.09);col.shape=sh;col.position.y=o.height*.5;body.add_child(col)
+			elif o.style in ["steel","sliding"]:
+				solid(pivot,Vector3(o.width,o.height,.09),Vector3(o.width*.5,o.height*.5,0),"stone_dark",3)
+				for h in [.28,o.height-.28]:solid(pivot,Vector3(o.width,.065,.12),Vector3(o.width*.5,h,0),"grout",0)
+			elif iron:
 				for i in 8:solid(pivot,Vector3(.035,o.height,.06),Vector3(.03+i*(o.width-.06)/7,o.height/2,0),"gold",0)
 				for h in [.12,o.height-.12]:solid(pivot,Vector3(o.width,.09,.07),Vector3(o.width/2,h,0),"wood_dark",0)
 				var b=StaticBody3D.new();b.collision_layer=S.MOVE;pivot.add_child(b);var c=CollisionShape3D.new();var sh=BoxShape3D.new();sh.size=Vector3(o.width,o.height,.06);c.shape=sh;c.position=Vector3(o.width/2,o.height/2,0);b.add_child(c)
@@ -111,7 +123,7 @@ func emit_socket(o:Dictionary)->void:
 				solid(root,Vector3(o.width+.21,.09,.064),Vector3(0,o.height+.045,z),"wood_light",0)
 			var port=trigger(root,o.id,Vector3(o.width,o.height,.22),S.SOUND);port.position.y=o.height/2
 			var nav=NavigationLink3D.new();nav.start_position=Vector3(0,.02,-.42);nav.end_position=Vector3(0,.02,.42);nav.enabled=false;root.add_child(nav)
-			doors[o.id]={"pivot":pivot,"open":false,"group":o.interlock,"port":port,"link":nav,"closed_db":6 if iron else 24};port.set_meta("loss_db",doors[o.id].closed_db)
+			doors[o.id]={"slide":o.style=="sliding","width":o.width,"pivot":pivot,"open":false,"group":o.interlock,"port":port,"link":nav,"closed_db":6 if iron else 24};port.set_meta("loss_db",doors[o.id].closed_db)
 		"panel","valve":
 			solid(root,Vector3(.26,.2,.075),Vector3.ZERO,"gold",0);var area=trigger(root,o.id,Vector3(.32,.28,.16),S.USE);area.set_meta("target",o.get("target",o.get("network","")))
 			if o.kind=="panel":
@@ -134,7 +146,10 @@ func switch_door(id:String)->bool:
 	var d=doors[id];if not d.open and d.group!="":
 		for other in doors.values():
 			if other.group==d.group and other.open:return false
-	d.open=not d.open;d.pivot.rotation.y=PI*.5 if d.open else 0.;d.link.enabled=d.open;d.port.set_meta("loss_db",2 if d.open else d.closed_db);return true
+	d.open=not d.open
+	if d.slide:d.pivot.position.x=d.width*(.52 if d.open else -.5)
+	else:d.pivot.rotation.y=PI*.5 if d.open else 0.
+	d.link.enabled=d.open;d.port.set_meta("loss_db",2 if d.open else d.closed_db);return true
 func use_socket(id:String)->bool:
 	if panels.has(id):return switch_door(panels[id])
 	for o in model.sockets:
@@ -146,7 +161,7 @@ func make_zones()->void:
 		if seen.has(k) or not visible_owner(k):continue
 		var queue=[k];seen[k]=true;var area=Area3D.new();area.collision_layer=S.SOUND;area.collision_mask=S.MOVE;add_child(area);var bounds=AABB();var first=true
 		while not queue.is_empty():
-			var at=queue.pop_back();var c=S.address(at);var p=Vector3(c.x*S.BAY,c.z*S.RISE,c.y*S.BAY);var sz=Vector3(S.BAY,S.RISE,S.BAY);var cell=AABB(p,sz);bounds=cell if first else bounds.merge(cell);first=false
+			var at=queue.pop_back();var c=S.address(at);var p=Vector3(c.x*S.BAY,model.datum(c.z),c.y*S.BAY);var sz=Vector3(S.BAY,model.room_height(at),S.BAY);var cell=AABB(p,sz);bounds=cell if first else bounds.merge(cell);first=false
 			var col=CollisionShape3D.new();var box=BoxShape3D.new();box.size=sz;col.shape=box;col.position=p+sz/2;area.add_child(col)
 			for dir in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
 				var nb=S.key(c.x+dir.x,c.y+dir.y,c.z);if not seen.has(nb) and model.layout.cells.has(nb) and S.room_tag(model.layout,nb)==S.room_tag(model.layout,k):seen[nb]=true;queue.append(nb)

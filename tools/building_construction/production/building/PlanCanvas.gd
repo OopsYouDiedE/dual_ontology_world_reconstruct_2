@@ -1,7 +1,7 @@
 extends Control
 const S=preload("BuildingSolver.gd")
 signal stroke(a:Vector2i,b:Vector2i)
-const PALETTE=[Color("b99671"),Color("b6a989"),Color("789c92"),Color("ab9aae"),Color("7c92b0"),Color("9e916e")]
+const PALETTE=[Color("b99671"),Color("b6a989"),Color("789c92"),Color("ab9aae"),Color("7c92b0"),Color("9e916e"),Color("606778")]
 var plan:Dictionary;var level:=0;var brush:=0;var tool:=0;var show_grid:=true;var hover=Vector2i(-1,-1);var drag=Vector2i(-1,-1)
 func pitch()->float:return maxf(1,minf((size.x-28)/S.GRID,(size.y-28)/S.GRID))
 func offset()->Vector2:return (size-Vector2.ONE*S.GRID*pitch())*.5

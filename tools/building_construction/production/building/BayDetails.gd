@@ -20,15 +20,6 @@ static func sweep(s,k,mat,path:PackedVector3Array,section:PackedVector2Array,mas
 static func dress(s,k:String,b:Vector3,t:int,hole:String,up:String)->void:
 	var bay:float=s.BAY;var center=b+Vector3(bay/2,0,bay/2)
 	if hole=="" and up=="":
-		if t in [0,3]:
-			s.box(k+"/coffer-soffit",center+Vector3.UP*3.106,Vector3(bay-.18,.026,bay-.18),"cream",0)
-			for tier in [[1.85,2.98,.22,.18,"wood_dark"],[1.69,3.025,.12,.12,"cream"],[1.59,3.067,.08,.08,"gold"]]:
-				frame(s,k,center,tier)
-			# Four ceiling fields around the pendant; the perimeter steps down toward the room.
-			for axis in [Vector3.RIGHT,Vector3.BACK]:
-				for sign_ in [-1,1]:
-					var size=axis*1.56+Vector3.UP*.10+Vector3(axis.z,0,axis.x)*.10
-					s.box(k+"/ceiling-rib",center+axis*sign_*.81+Vector3.UP*3.052,size,"cream",0)
 		if t==5:pump_tray(s,k,center)
 		if t==0 or t==2:
 			for x in 4:
@@ -54,11 +45,11 @@ static func pump_tray(s,k,c)->void:
 		sweep(s,k,"gold",PackedVector3Array([o+Vector3(-.13,.066,z),o+Vector3(.13,.066,z)]),pipe)
 	for i in 9:s.box(k+"/grate",o+Vector3(0,.139,(i-4)*.20),Vector3(.56,.024,.045),"stone_dark",1)
 
-static func arch(s,k:String,center:Vector3,along:Vector3,n:Vector3,r:float)->void:
+static func arch(s,k:String,center:Vector3,along:Vector3,n:Vector3,r:float,rise_ratio:=1.0)->void:
 	for i in 11:
 		var a=i*PI/11.+.006;var b=(i+1)*PI/11.-.006;var rings=[]
 		for depth in [.13,.21]:
-			var q=[];for uv in [[a,r],[b,r],[b,r+.12],[a,r+.12]]:q.append(center+(along*cos(uv[0])+Vector3.UP*sin(uv[0]))*uv[1]-n*depth)
+			var q=[];for uv in [[a,r],[b,r],[b,r+.12],[a,r+.12]]:q.append(center+(along*cos(uv[0])+Vector3.UP*sin(uv[0])*rise_ratio)*uv[1]-n*depth)
 			rings.append(q)
 		var f=rings[1];var back=rings[0];quad(s,k,"stone",f[3],f[2],f[1],f[0]);quad(s,k,"stone",back[0],back[1],back[2],back[3]);for j in 4:quad(s,k,"stone_dark",f[j],back[j],back[(j+1)%4],f[(j+1)%4])
 static func wall_trim(s,k:String,id:String,center:Vector3,along:Vector3,n:Vector3,w:float,thick:float,door:bool)->void:
@@ -100,7 +91,7 @@ static func stair_guard(s,k:String,a:Vector3,b:Vector3)->void:
 		sweep(s,k,"wood_dark",path,PackedVector2Array([Vector2(-r,-r),Vector2(-r,r),Vector2(r,r),Vector2(r,-r)]),1)
 static func dome(s,k:String,pts:Array)->void:
 	# Reuse the actual heights of the eight roof edge stations; the surrounding hip stays watertight.
-	var c:Vector3=pts[0];var spring=c.y+.12;var rings=[];var n=32;var radius=1.62
+	var c:Vector3=pts[0];var spring=c.y+.52;var rings=[];var n=32;var radius=1.62
 	for j in 8:
 		var row=[];var phi=j*PI/16.
 		for i in n:
@@ -109,7 +100,8 @@ static func dome(s,k:String,pts:Array)->void:
 	var top=Vector3(c.x,spring+1.35,c.z)
 	for i in n:
 		var ix=(i+1)%n;var a:Vector3=rings[0][i];var b:Vector3=rings[0][ix];var j0=(i/4+3)%8;var j1=(j0+1)%8;var e:Vector3=pts[j0+1].lerp(pts[j1+1],(i%4)/4.);var f:Vector3=pts[j0+1].lerp(pts[j1+1],(i%4+1)/4.)
-		quad(s,k,"book_blue",e,f,b,a,3)
+		var foot_a:Vector3=a-Vector3.UP*.4;var foot_b:Vector3=b-Vector3.UP*.4
+		quad(s,k,"book_blue",e,f,foot_b,foot_a,3);quad(s,k,"stone",foot_a,foot_b,b,a,3)
 		for j in 7:
 			var p=[rings[j][i],rings[j][ix],rings[j+1][ix],rings[j+1][i]]
 			for ids in [[0,1,2],[0,2,3]]:

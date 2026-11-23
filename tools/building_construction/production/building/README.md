@@ -2,6 +2,8 @@
 
 在 ArchBuilder 顶栏点 **Structure Lab**，或在 Godot 里打开同目录 `StructureLab.tscn`，按 F6。左侧是平面输入，右侧是用同一份求解结果生成的 Godot 现场。示例是两层 L 形建筑。右键拖动旋转，滚轮缩放。
 
+房型装配、机关预留、主题 Recipe 与单槽替换见 [结构生成契约与三房示例](kits/README.md)。
+
 ## 第一次试画
 
 1. 选 Ground → Hall → Paint room，在左侧空白区拖出两格。鼠标位置向下取整到所在的 4.2 m 开间；矩形笔刷包含起止两格，四层共用同一组轴线。

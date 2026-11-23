@@ -1,0 +1,12 @@
+{
+  "version":1,"seed":17,"mode":"strict","cores":{},"overrides":{},
+  "cells":{"0:0:0":0,"1:0:0":5,"2:0:0":6},
+  "profiles":{"0":{"room_height":6.0},"5":{"room_height":3.3},"6":{"room_height":2.4,"allow_windows":false}},
+  "reservations":[
+    {"kind":"footprint","min":[-0.24,0,-0.24],"size":[0.48,2.0,0.48]},
+    {"kind":"operation","min":[1.65,0,1.65],"size":[0.9,1.9,0.9]},
+    {"kind":"cone","apex":[0.65,1.6,2.1],"end":[3.7,1.6,2.1],"radius":0.24},
+    {"kind":"opening","edge":"Z2:0:0","type":"door","width":1.5,"head":2.2}
+  ],
+  "mounts":[{"id":"study/marker","anchor":"WallPanelCenter","owner":"2:0:0","near":[10,1.6,0],"scene":"res://tools/building_construction/production/building/kits/CalibrationMarker.tscn"}]
+}

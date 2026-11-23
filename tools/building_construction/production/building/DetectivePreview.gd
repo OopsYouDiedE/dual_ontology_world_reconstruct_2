@@ -20,6 +20,7 @@ func _ready()->void:
 		person.position.x=-.56 if id=="detective" else .56
 		person.rotation.y=.65 if id=="detective" else -.65
 		if Roster.attach(person,id):
+			preload("InquiryClips.gd").install(person)
 			preload("res://tools/building_construction/production/building/InvestigationWardrobe.gd").dress(person,id=="Vale")
 			var gesture=preload("res://tools/building_construction/production/building/InquiryGesture.gd").new();person.get_meta("skeleton").add_child(gesture);gestures.append(gesture)
 			if id=="detective":player=person.get_meta("animation_player")
@@ -47,11 +48,11 @@ func show_room(step:int)->void:
 		person.rotation.y=atan2(aim.x,aim.z)
 func choose(index:int,sequence:bool)->void:
 	action_index=index;elapsed=0.;playing_sequence=sequence
-	if player:player.stop();player.play(ACTIONS[index])
+	if player:player.stop();player.play(&"kaykit/interact" if index==3 else ACTIONS[index])
 	if partner:partner.stop();partner.play(RESPONSES[index])
 func _process(delta:float)->void:
 	if not visible or not player:return
 	elapsed+=delta
 	for i in gestures.size():
 		gestures[i].motion=ACTIONS[action_index] if i==0 else RESPONSES[action_index];gestures[i].weight=smoothstep(0.,.35,elapsed)*(1.-smoothstep(1.55,2.,elapsed))
-	if elapsed>=DURATIONS[action_index]:choose((action_index+1)%ACTIONS.size() if playing_sequence else action_index,playing_sequence)
+	if elapsed>=(player.get_animation(&"kaykit/interact").length if action_index==3 else DURATIONS[action_index]):choose((action_index+1)%ACTIONS.size() if playing_sequence else action_index,playing_sequence)

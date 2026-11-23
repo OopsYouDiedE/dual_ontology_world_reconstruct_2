@@ -117,7 +117,7 @@ static func _angle(clip: StringName, bone: String, t: float) -> float:
 	if clip == &"signal":
 		return hold * float({"thigh_l":-.16,"calf_l":.22,"upperarm_r":-.85,"lowerarm_r":-.46,"head":-.10}.get(bone,0.0))
 	if clip == &"examine":
-		return hold * float({"spine_01":.27,"spine_03":.29,"head":.26,"thigh_r":-.42,"calf_r":.55,"foot_r":-.14,"upperarm_l":.16,"lowerarm_l":-.26,"upperarm_r":-.39,"lowerarm_r":-.20}.get(bone,0.0))
+		return hold * float({"spine_01":.18,"spine_03":.17,"head":.17,"thigh_r":-.42,"calf_r":.55,"foot_r":-.14,"upperarm_l":.16,"lowerarm_l":-.26,"upperarm_r":-.39,"lowerarm_r":-.20}.get(bone,0.0))
 	if clip == &"listen":
 		return hold * float({"thigh_l":-.13,"calf_l":.20,"upperarm_l":-.56,"lowerarm_l":-2.24,"head":.16,"spine_03":.08}.get(bone,0.0))
 	if clip == &"interact":

@@ -2,7 +2,6 @@ extends SceneTree
 
 const Main := preload("res://scenes/rogue/Run.tscn")
 const Rules := preload("res://scenes/rogue_crossing/Crossing.gd")
-const Cast := preload("res://scenes/rogue_crossing/Roster.gd")
 var errors: Array[String] = []
 var completed_routes := 0
 
@@ -59,12 +58,6 @@ func _logic() -> void:
 		var bar := Rules.new("shutter", mirror)
 		expect(bar.act(2,"early",protocols).damage == 3 and not bar.completed, "red amendment requires pressure work even with the seal")
 		expect(play(bar, [[2,"bleed"],[2,"shoe"]],protocols).clear, "failure at the shutter is recoverable")
-	var all_models := {}
-	for id in Cast.NAMES + ["detective"]:
-		var n := Cast.model_number(id)
-		all_models[n] = true
-		expect(ResourceLoader.exists("res://assets/characters/UserModels/model_%02d.glb" % n), "restored model %d" % n)
-	expect(all_models.size() == 17, "discrete original character meshes")
 
 func _activate(game: Node, predicate: Callable) -> bool:
 	var rv: Control = game.room_view
@@ -79,7 +72,8 @@ func _activate(game: Node, predicate: Callable) -> bool:
 
 func _route(game: Node, seed: int, explore: bool) -> void:
 	game.new_run(seed)
-	expect(game.phase == "camp" and game.camp_actors.actors.size() == 16, "native camp and original residents")
+	expect(game.phase == "camp" and game.current == "camp" and game.moves == 0 and game.modal.is_empty() and game.handbook, "new run starts in Public Hall with its handbook and no mandatory intake")
+	expect(game.camp_actors.actors.size() == 16, "camp residents available for recruitment")
 	if explore:
 		if await _activate(game, func(t): return t.kind == "witness" and t.id == "Ada"):
 			game._hall_recruit("Ada")

@@ -23,8 +23,6 @@ SCENES = {
     "observer_airlock": "res://scenes/physics_lab/airlock/Airlock.tscn",
     "rule_evaluation": "res://scenes/rule_evaluation/Evaluation.tscn",
     "gyro06": "res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
-    "r05_native_motion": "res://scenes/character_review/R05NativeMotion.tscn",
-    "mpfb_wardrobe": "res://tools/mpfb2_test/WardrobeReview.tscn",
     "shadecloth": "res://scenes/rubber_whitebox/shadecloth/Shadecloth.tscn",
     "bellflower": "res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",
     "whitebox": "res://scenes/rubber_whitebox/RubberYard.tscn",
@@ -50,7 +48,7 @@ def readiness(scene_key="rogue"):
 
 
 class Run:
-    def __init__(self, seed, architecture_lab=False, *, hall_a26_preview=False, scene_key="rogue", eval_review=False, eval_rehearse_warning=None):
+    def __init__(self, seed, *, scene_key="rogue", eval_review=False, eval_rehearse_warning=None):
         self.scene = SCENES[scene_key]
         godot = Path(environment.resolve_godot()).resolve()
         if os.name == "nt" and godot.name.lower().endswith("_console.exe"):
@@ -94,10 +92,6 @@ class Run:
                 command.append("--eval-review")
             if eval_rehearse_warning is not None:
                 command.append(f"--eval-rehearse-warning={int(eval_rehearse_warning)}")
-        if architecture_lab:
-            command.append("--architecture-lab")
-            if hall_a26_preview:
-                command.append("--hall-a26-preview")
         with (self.directory / "process.log").open("wb") as log:
             self.process = subprocess.Popen(command, cwd=ROOT, env=env, stdin=subprocess.DEVNULL,
                                             stdout=log, stderr=subprocess.STDOUT,
@@ -174,20 +168,18 @@ def game_server():
         return readiness()
 
     @server.tool(structured_output=False)
-    def on(seed: int = 1, screenshot: bool = True, architecture_lab: bool = False,
-           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "r05_native_motion", "mpfb_wardrobe", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock"] = "rogue",
+    def on(seed: int = 1, screenshot: bool = True,
+           scene: Literal["rogue", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock"] = "rogue",
            eval_review: bool = False):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run
         with lock:
             if run is not None:
                 raise ValueError("Close the current session before starting another")
-            if scene != "rogue" and architecture_lab:
-                raise ValueError("Architecture lab mode requires the rogue scene")
             state = readiness(scene)
             if not state["ready"]:
                 raise ValueError("; ".join(state["reasons"]))
-            candidate = Run(seed, architecture_lab, scene_key=scene, eval_review=eval_review)
+            candidate = Run(seed, scene_key=scene, eval_review=eval_review)
             try:
                 result = candidate.request("observe", screenshot=screenshot, timeout=40)
             except BaseException:

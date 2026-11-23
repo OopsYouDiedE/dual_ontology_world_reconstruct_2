@@ -50,15 +50,8 @@ var _overlay: ColorRect
 var _sheet: VBoxContainer
 var _scroll: ScrollContainer
 var _entry: LineEdit
-var _lab: Node3D
 
 func _ready() -> void:
-	if "--architecture-lab" in OS.get_cmdline_user_args():
-		mouse_filter = MOUSE_FILTER_IGNORE
-		var lab: GDScript = load("res://scenes/blue_prince_lab/Hall.gd")
-		_lab = lab.new()
-		add_child(_lab)
-		return
 	_make_hud()
 	_no_save = "--no-rule-save" in OS.get_cmdline_user_args()
 	if not _no_save and FileAccess.file_exists(MARGINS): margins = FileAccess.get_file_as_string(MARGINS).left(180)
@@ -241,7 +234,7 @@ func _can_agree() -> bool:
 	return prospect >= 4 and party.all(func(id): return crew.people[id].trust >= 3 and crew.people[id].stress < 3)
 
 func _input(event: InputEvent) -> void:
-	if _lab or _performing or not event is InputEventKey or not event.pressed or event.echo or house == null: return
+	if _performing or not event is InputEventKey or not event.pressed or event.echo or house == null: return
 	if event.physical_keycode == KEY_TAB and handbook:
 		if modal == "guide": _close()
 		else: _read_guide()
@@ -518,7 +511,6 @@ func _process(dt: float) -> void:
 		_update_hall(Camp.TICK_SECONDS)
 
 func mcp_observe() -> Dictionary:
-	if is_instance_valid(_lab): return _lab.snapshot()
 	var buttons := []
 	var ui: Container = _flow if modal.is_empty() else _sheet
 	for node in ui.get_children():

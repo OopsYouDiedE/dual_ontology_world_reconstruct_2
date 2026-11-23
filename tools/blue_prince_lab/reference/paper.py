@@ -3,7 +3,7 @@ from pathlib import Path
 import random,math,json
 from mesh import OUT
 from desks import CRTS
-D=OUT/'interface';D.mkdir(exist_ok=True)
+D=OUT/'interface';D.mkdir(parents=True,exist_ok=True)
 r=random.Random(733)
 def svg(name,w,h,lines): (D/(name+'.svg')).write_text(f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'+''.join(lines)+'</svg>',encoding='utf8')
 def rect(x,y,w,h,c,stroke='none',s=1):return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{c}" stroke="{stroke}" stroke-width="{s}"/>'

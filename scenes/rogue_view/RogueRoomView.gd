@@ -111,13 +111,8 @@ func _resize_render_target() -> void:
 func _ready() -> void:
 	_pixels.resized.connect(_resize_render_target)
 	_resize_render_target.call_deferred()
-	if expedition_view:
-		var world: WorldEnvironment = $RoomViewport/WorldEnvironment
-		world.environment = world.environment.duplicate() as Environment
-		world.environment.adjustment_enabled = true
-		world.environment.adjustment_saturation = 0.76
 	if expedition_view and RenderingServer.get_current_rendering_method() == &"forward_plus":
-		var ink := preload("res://scenes/blue_prince_lab/HallLook.gd").ink_pass()
+		var ink := preload("res://scenes/components/rendering/post/InkPass.gd").create()
 		ink.name = "ExpeditionInk"
 		ink.material_override.set_shader_parameter("opacity", 0.40)
 		_viewport.add_child(ink)
@@ -838,17 +833,14 @@ func _update_lot_avatars() -> void:
 		var last := _avatar_root.get_child(-1)
 		_avatar_root.remove_child(last)
 		last.queue_free()
-	var silhouette := CapsuleMesh.new()
-	silhouette.radius = 0.19
-	silhouette.height = 0.88
-	silhouette.material = _material(Color("eab46e"), Color("986034"))
+	var cast := preload("res://scenes/rogue_crossing/Roster.gd")
 	for i in positions.size():
 		if i == _avatar_root.get_child_count():
-			var marker := MeshInstance3D.new()
-			marker.mesh = silhouette
-			_avatar_root.add_child(marker)
-		var marker := _avatar_root.get_child(i) as MeshInstance3D
-		marker.position = Vector3(positions[i].x, 0.44, positions[i].y)
+			var actor := Node3D.new()
+			_avatar_root.add_child(actor)
+			cast.attach(actor, cast.NAMES[i % cast.NAMES.size()])
+		var actor := _avatar_root.get_child(i) as Node3D
+		actor.position = Vector3(positions[i].x, 0, positions[i].y)
 
 
 func _exit_label(index: int) -> String:

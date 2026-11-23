@@ -1,8 +1,7 @@
 extends CharacterBody3D
 ## Feet-origin actor. Add to the lot's SubViewport (not to rebuildable geometry).
 
-const Visual := preload("res://scenes/rogue_player/ImportedCharacter.gd")
-const Detective := preload("res://assets/characters/UserModels/model_06.glb")
+const Visual := preload("res://scenes/rogue_crossing/Roster.gd")
 const DEFAULT_YAW := 0.65
 const DEFAULT_PITCH := 1.25
 const DEFAULT_DISTANCE := 9.5
@@ -30,12 +29,12 @@ var _has_pending_spawn := false
 func _ready() -> void:
 	_camera_shape.radius = 0.20
 	_visual.visible = not first_person
-	if not first_person and Visual.attach(_visual, Detective.resource_path, 1.38, -90.0, "detective"):
+	if not first_person and Visual.attach(_visual, "detective"):
 		_animation = _visual.get_meta("animation_player", null) as AnimationPlayer
 		if _animation != null:
 			_animation.animation_finished.connect(_on_animation_finished)
 	if _animation == null and not first_person:
-		push_error("RoguePlayer could not load the original detective rig and animation library")
+		push_error("RoguePlayer could not load the 6.5-head rig and animation library")
 	if _has_pending_spawn:
 		global_position = _pending_spawn
 	_visual.rotation.y = _yaw + PI

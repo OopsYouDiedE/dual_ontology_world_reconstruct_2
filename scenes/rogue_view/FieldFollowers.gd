@@ -1,8 +1,7 @@
 extends Node3D
 ## Presentation only. Crew decisions remain in ExpeditionCrew. Follow the captain's walked trail,
 ## rather than cutting straight through room walls between formation points.
-const Visual := preload("res://scenes/rogue_player/ImportedCharacter.gd")
-const Model := preload("res://assets/characters/UserModels/model_06.glb")
+const Visual := preload("res://scenes/rogue_crossing/Roster.gd")
 const STEP := 0.15
 var captain: CharacterBody3D
 var _model: Callable
@@ -32,11 +31,11 @@ func sync(names: Array) -> void:
 		add_child(actor)
 		actor.position = _slot(i)
 		if _model.is_valid(): _model.call(actor, id)
-		else: Visual.attach(actor, Model.resource_path, 1.38, -90.0, id)
+		else: Visual.attach(actor, id)
 		var label := Label3D.new()
 		label.text = id
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.position.y = 1.54
+		label.position.y = 2.00
 		label.pixel_size = 0.0023
 		label.modulate = Color("eed4a4")
 		actor.add_child(label)

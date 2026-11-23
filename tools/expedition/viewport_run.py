@@ -1,13 +1,11 @@
 """Replay a fixed expedition using only player inputs; keep an auditable frame manifest."""
 import argparse
 import json
-import sys
 from pathlib import Path
 from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "tools/night_crossing"))
-from viewport_run import Player, Run
+from player_input import Player, Run
 
 PLANS = {
     "returns": [(1, "Tie off"), (2, "Use the porter")],

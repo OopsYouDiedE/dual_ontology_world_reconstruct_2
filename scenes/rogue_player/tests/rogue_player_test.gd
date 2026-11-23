@@ -11,7 +11,7 @@ func _run() -> void:
 		push_error(error)
 		quit(1)
 	else:
-		print("RoguePlayer: original rig + bone clips, walk, sprint, orbit, floor/wall, camera collision, action and respawn passed")
+		print("RoguePlayer: 6.5-head rig + bone clips, walk, sprint, orbit, floor/wall, camera collision, action and respawn passed")
 		quit(0)
 
 func _exercise() -> String:
@@ -30,11 +30,11 @@ func _exercise() -> String:
 	var visual: Node3D = player.get_node("Visual")
 	var animation := visual.get_meta("animation_player", null) as AnimationPlayer
 	var skeleton := visual.get_meta("skeleton", null) as Skeleton3D
-	if animation == null or skeleton == null or not str(player.snapshot().rig).ends_with("model_06.glb"):
-		return "Original detective rig unavailable"
+	if animation == null or skeleton == null or not str(player.snapshot().rig).ends_with("detective-6p5.glb"):
+		return "Production detective rig unavailable"
 	for clip in [&"idle", &"walk", &"run", &"interact"]:
 		if not animation.has_animation(clip) or animation.get_animation(clip).get_track_count() < 10:
-			return "Missing retargeted bone tracks for %s" % clip
+			return "Missing production bone tracks for %s" % clip
 	Input.action_press("move_up")
 	await _frames(18)
 	Input.action_release("move_up")

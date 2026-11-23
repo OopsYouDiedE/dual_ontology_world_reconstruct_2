@@ -1,6 +1,6 @@
 """Fixtures for three reference studies. Units are metres. Screens are fitted at runtime."""
 from math import sin,cos,tau
-from mesh import Mesh, Scene, shade
+from mesh import Mesh, shade
 
 # x, bottom, width, height; the staggered rows leave the wall clock visible.
 CRTS=[(-3.18,1.72,.96,1.06),(-2.03,1.94,.91,.73),(-.94,1.99,.91,.79),(-.05,1.96,.78,.75),(.83,1.94,.59,.60),(1.45,1.94,.62,.64),(2.32,1.35,1.12,.92),(3.55,1.15,.98,1.02),(-3.32,.83,.96,.86),(-2.12,1.24,1.10,.73),(-1.03,1.18,.90,.80),(-.10,1.18,.92,.79),(.72,1.18,.68,.76),(1.51,1.18,.88,.79),(-2.18,.51,1.23,.74),(-.98,.47,1.15,.72),(.15,.49,1.07,.70),(1.23,.48,1.06,.71),(2.58,.52,1.58,.84)]
@@ -80,6 +80,6 @@ def lobby():
     m.rod((-.65,1.14,-.81),(-.65,1.14,-.74),.043,'c0ac7e');m.rod((-.67,1.14,-.73),(-.48,1.14,-.73),.028,'c0ac7e');save(m,'DraftLobby')
 
 def save(m,name):
-    m.save(name+'Fixtures');sc=Scene(name);sc.add(name+'Fixtures');sc.save()
+    m.save(name+'Fixtures')
 
 if __name__=='__main__':security();darkroom();lobby()

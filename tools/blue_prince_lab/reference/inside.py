@@ -1,7 +1,7 @@
 """Interior carpentry and masonry. Openings are holes in the shell, with independent reveals."""
 import random
 from math import sin,cos,tau,pi,sqrt
-from mesh import Mesh,Scene,shade
+from mesh import Mesh,shade
 
 WOOD='524239'; IRON='343438'; STONE='62616d'
 
@@ -76,29 +76,22 @@ def pew():
 
 def chapel():
     for variant in range(3): glass_bay(variant)
-    pew();sc=Scene('Chapel');m=Mesh();rng=random.Random(47)
+    pew();m=Mesh();rng=random.Random(47)
     for i in range(8):
         for j in range(11):m.box(((i-3.5)*1.32,-.09,(j-5)*1.12),(1.31,.18,1.11),shade('96929b',rng.uniform(.89,1.04)))
     m.box((0,.023,.26),(10.46,.044,1.63),'9a3a40');
-    for side in [-1,1]:
-        for x in [-3.75,-2.43,-1.11,.21,1.53]:sc.add('Pew',(x,0,side*2.44),pi/2)
-    for j in range(5):sc.add(['VioletBay','BlueBay','LeadedBay'][j%3],(5.28,0,5.34-j*2.672),-pi/2,(1,1.10,1))
     # Opposite the hero window: a real recessed door below a high, wider painted light.
-    for z in [-4.74,4.67]:sc.add('VioletBay',(-5.28,0,z),pi/2,(1.31,1.10,1))
     span=1.27;center=-.16
     for z0,z1 in [(-3.1,center-span),(center+span,3.06)]:m.box((-5.28,2.75,(z0+z1)/2),(.31,5.50,z1-z0),STONE)
     for side in [-1,1]:m.box((-5.28,1.53,center+side*.995),(.32,3.06,.56),STONE)
     m.box((-5.28,2.82,center),(.33,.48,1.44),STONE)
     m.box((-5.42,1.24,center),(.12,2.47,1.42),'493a42');m.box((-5.30,1.24,center),(.06,2.38,1.29),'5a4852')
     for j in range(6):m.box((-5.25,1.15,center+(j-2.5)*.209),(.032,2.18,.194),'50414c')
-    sc.add('BlueBay',(-5.28,1.86,center),pi/2,(.97,.73,1))
     for y in [.19,2.87,3.07]:m.box((-5.06,y,-.09),(.19,.12,6.12),'4c4956')
-    sc.add('LeadedBay',(4.08,0,1.40),-.90,(1,1.14,1))
     for j in range(3):m.box((3.04,1.84+j*.092,1.92),(.86+.11*j,.085,.46+.10*j),'535360',-.9)
     m.box((3.04,.91,1.92),(.68,1.82,.39),'4c4956',-.9)
     for x,z in [(2.96,1.84),(-4.96,1.08),(-1.94,-5.01),(1.86,-5.01)]:
         m.rod((x,.04,z),(x,2.14,z),.042,'675341',8);m.rod((x,.04,z),(x,.16,z),.14,'7d6652',8,.065);m.rod((x,2.04,z),(x,2.25,z),.09,'b89867',8,.064);m.rod((x,2.24,z),(x+.018,2.36,z),.04,'ffc16c',6,.004,'glass')
-    for x in [-3.944,3.944]:sc.add('LeadedBay',(x,0,-6.20),0,(1,1.10,1))
     # Door recess, timber leaves, hood and two freestanding sculptural niches.
     for s in [-1,1]:m.box((s*1.74,2.75,-6.2),(1.74,5.5,.32),STONE)
     m.box((0,4.45,-6.20),(1.78,2.10,.32),STONE);m.ring((0,2.53,-5.99),.79,.91,.19,'524c53',20,0,pi)
@@ -116,10 +109,10 @@ def chapel():
     for z in [-5.94,-2.75,.44,3.63,6.37]:
         m.box((0,5.27,z),(10.65,.26,.24),'483b3e');
         for s in [-1,1]:m.board((s*5.24,5.45,z),(0,7.84,z),.22,.27,'463a3f');m.board((s*4.98,5.29,z),(s*3.73,6.15,z),.15,.19,'4c3e40')
-    m.save('ChapelShell');sc.add('ChapelShell');sc.save()
+    m.save('ChapelShell')
 
 def attic():
-    sc=Scene('Attic');m=Mesh();rng=random.Random(89);back=-4.95;window=(-1.02,2.96);r=.72;edge=.94
+    m=Mesh();rng=random.Random(89);back=-4.95;window=(-1.02,2.96);r=.72;edge=.94
     for i in range(31):
         x=(i-15)*.293
         for j in range(4):m.box((x,-.065,-3.48+j*3.0+.03*(i%3)),(.282,.13,2.98),shade('776453',rng.uniform(.80,1.14)))
@@ -139,7 +132,7 @@ def attic():
     for i in range(8):
         a=tau*i/8;m.board((cx,cy,back+.085),(cx+r*cos(a),cy+r*sin(a),back+.085),.040,.090,'635348')
     m.rod((cx,cy,back+.025),(cx,cy,back+.15),.075,'554638',10)
-    m.save("SpokeWindow");sc.add("SpokeWindow",(*window,-4.95));m=shell;back=-4.95
+    m.save("SpokeWindow");m=shell;back=-4.95
     # Roof sheathing is continuous above the open trusses. Sloping boards carry physical gaps.
     for s in [-1,1]:
         for i in range(22):
@@ -179,4 +172,4 @@ def attic():
     x=3.27;z=.15;m.rod((x,.03,z),(x,2.37,z),.059,'514b40',8,.042)
     for i in range(5):
         a=i*tau/5;dx=.27*cos(a);dz=.27*sin(a);m.rod((x,1.77,z),(x+dx,2.19,z+dz),.032,'635c4d',6);m.rod((x,.37,z),(x+dx,.02,z+dz),.041,'60574a',6)
-    m.save('AtticJoinery');sc.add('AtticJoinery');sc.save()
+    m.save('AtticJoinery')

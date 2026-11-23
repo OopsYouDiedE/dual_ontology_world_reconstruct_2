@@ -62,7 +62,7 @@ class Mesh:
             for j in [2,0]+([1] if i==0 and end-start<tau-.001 else [])+([3] if i==n-1 and end-start<tau-.001 else []):self.face([lo[j-1],lo[j],hi[j],hi[j-1]],c,mat)
 
     def save(self,name):
-        path=OUT/'meshes'/(name+'.glb'); raw=bytearray(); views=[]; access=[]; primitives=[]; materials=[]
+        path=OUT/'meshes'/(name+'.glb'); path.parent.mkdir(parents=True,exist_ok=True); raw=bytearray(); views=[]; access=[]; primitives=[]; materials=[]
         def attr(arr,kind,ctype=5126,normalized=False):
             while len(raw)%4: raw.append(0)
             data=arr.tobytes(); views.append(dict(buffer=0,byteOffset=len(raw),byteLength=len(data))); raw.extend(data)
@@ -82,15 +82,3 @@ class Mesh:
         while len(raw)%4: raw.append(0)
         doc=dict(asset={'version':'2.0'},extensionsUsed=['KHR_materials_unlit'],scene=0,scenes=[{'nodes':[0]}],nodes=[dict(name=name,mesh=0)],meshes=[dict(primitives=primitives)],materials=materials,accessors=access,bufferViews=views,buffers=[dict(byteLength=len(raw))]); j=json.dumps(doc,separators=(',',':')).encode();j+=b' '*(-len(j)%4)
         path.write_bytes(struct.pack('<4sII',b'glTF',2,28+len(j)+len(raw))+struct.pack('<I4s',len(j),b'JSON')+j+struct.pack('<I4s',len(raw),b'BIN\x00')+raw)
-
-class Scene:
-    def __init__(self,name): self.name=name; self.items=[]
-    def add(self,mesh,p=(0,0,0),yaw=0,scale=(1,1,1)): self.items.append((mesh,p,yaw,scale))
-    def save(self):
-        assets=list(dict.fromkeys(m for m,*_ in self.items)); txt=['[gd_scene format=3]','']
-        for i,m in enumerate(assets): txt.append(f'[ext_resource type="PackedScene" path="res://scenes/blue_prince_lab/reference/meshes/{m}.glb" id="{i+1}"]')
-        txt+=['',f'[node name="{self.name}" type="Node3D"]']
-        for i,(m,p,yaw,s) in enumerate(self.items):
-            vec=lambda q:', '.join(f'{v:.6f}' for v in q)
-            txt+=['',f'[node name="{m}_{i}" parent="." instance=ExtResource("{assets.index(m)+1}")]',f'position = Vector3({vec(p)})',f'rotation = Vector3(0, {yaw:.6f}, 0)',f'scale = Vector3({vec(s)})']
-        (OUT/(self.name+'.tscn')).write_text('\n'.join(txt)+'\n',encoding='utf8')

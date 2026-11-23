@@ -1,6 +1,6 @@
 extends RefCounted
-## Original numbered models, restored from the academy's character import commit.
-const Importer := preload("res://scenes/rogue_player/ImportedCharacter.gd")
+## Stable expedition identities; visuals are supplied by the production cast.
+const Cast := preload("ProductionCast.gd")
 const NAMES := ["Quer", "Ada", "Silas", "Ione", "Cedric", "Shen", "Alma", "Noor", "Lucian", "Vale", "Lidia", "Felix", "Blythe", "Oren", "Sera", "Qingyue"]
 const COBALT := ["Quer", "Silas", "Shen", "Noor", "Lucian", "Felix", "Sera", "Qingyue"]
 const OCHRE := ["Ada", "Ione", "Alma", "Vale", "Lidia", "Oren"]
@@ -35,15 +35,10 @@ static func witness(id: String) -> String:
 static func job(id: String) -> String:
 	return JOBS[NAMES.find(id)]
 
-static func model_number(id: String) -> int:
-	if id == "detective": return 6
-	var i := NAMES.find(id)
-	return 0 if i < 0 else (i + 1 if i < 5 else i + 2)
-
 static func attach(parent: Node3D, id: String) -> bool:
-	var number := model_number(id)
-	if number <= 0: return false
-	return Importer.attach(parent, "res://assets/characters/UserModels/model_%02d.glb" % number, 1.64, -90.0, id)
+	if id == "detective": return Cast.attach(parent)
+	var variant := NAMES.find(id)
+	return variant >= 0 and Cast.attach(parent, variant)
 
 static func encounter(seed_value: int, slot: int) -> String:
 	var candidates := COBALT if slot == 0 else OCHRE

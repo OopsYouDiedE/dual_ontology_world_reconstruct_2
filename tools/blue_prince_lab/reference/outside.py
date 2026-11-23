@@ -2,7 +2,7 @@
 import random
 from math import sin,cos,tau,pi
 import numpy as np
-from mesh import Mesh,Scene,shade
+from mesh import Mesh,shade
 
 def spruce(variant):
     rng=random.Random(610+variant); m=Mesh(); top=1.; m.rod((0,0,0),(.012,.87,.008),.036,'504741',7,.009)
@@ -71,50 +71,24 @@ def backdrop(m,rng):
                 m.face([a[i-1],b[i-1],a[i]],shade(col,rng.uniform(.91,1.05)));m.face([a[i],b[i-1],b[i]],shade(col,rng.uniform(.91,1.05)))
 
 def outside(camp):
-    name='ForestCamp' if camp else 'GardenGate';sc=Scene(name);m=Mesh();rng=random.Random(523 if camp else 209);backdrop(m,rng)
+    name='ForestCamp' if camp else 'GardenGate';m=Mesh();rng=random.Random(523 if camp else 209);backdrop(m,rng)
     m.box((0,-.21,-22),(138,.4,100),'375b4e' if camp else '30594f');
     path=lambda z:(-.39*z-.6+.65*sin(z*.28)) if camp else 1.32-.34*z-.038*z*z
     if camp:
         for i in range(55):
             z=9-i*.47;zz=z-.47;w=1.1+.9*(z+17)/26
             m.face([(path(z)-w,.015,z),(path(z)+w,.015,z),(path(zz)+w,.015,zz),(path(zz)-w,.015,zz)],shade('474b4c',rng.uniform(.95,1.02)))
-        sc.add('RidgeTent',(1.60,.02,-3.1),-.48);fire=(-.10,.04,-1.1)
+        fire=(-.10,.04,-1.1)
         for s in [-1,1]:m.rod((fire[0]+s*.70,.02,fire[2]),(fire[0]+s*.65,1.40,fire[2]),.055,'514635',6)
         m.rod((-.95,1.34,-1.1),(.78,1.34,-1.1),.064,'4e4130',7);m.rod((-.12,.82,-1.09),(-.12,1.34,-1.09),.012,'302e2c',5);m.rod((-.12,.58,-1.09),(-.12,.84,-1.09),.16,'333a34',8,.21)
-        for tier,count in [(0,13),(1,9)]:
-            for i in range(count):
-                a=tau*(i+.41*tier)/count; r=.63-tier*.07+rng.uniform(-.045,.045)
-                sc.add('Fieldstone',(fire[0]+r*cos(a),.025+.144*tier+rng.uniform(-.025,.025),fire[2]+r*.85*sin(a)),a+pi/2+rng.uniform(-.25,.25),(.19+rng.random()*.10,.34+rng.random()*.10,.24))
         for i in range(4):
             a=.37+i*1.26; m.rod((fire[0]-.35*cos(a),.10+i*.031,fire[2]-.35*sin(a)),(fire[0]+.35*cos(a),.11+i*.031,fire[2]+.35*sin(a)),.091,'4a322a',8)
         for x,z in [(1.53,-.9),(1.8,-1.13),(-3.4,-4)]:m.rod((x,.21,z),(x+.9,.23,z-.36),.21,'65503b',8)
     else:
-        sc.add('MoonGate',(1.45,0,-5.55));
-        for i in range(6):
-            sc.add('GardenWall',(1.45-4.56-i*4.8,0,-5.6));sc.add('GardenWall',(1.45+4.56+i*4.8,0,-5.6),pi)
-        for i in range(25):
-            z=10-i*.68;sc.add('Fieldstone',(path(z)+rng.uniform(-.17,.17),.004,z),rng.uniform(-.6,.6),(.38+rng.random()*.23,.09,.41))
         for i in range(5):
             x=7+9*i;z=-23-i*7;m.rod((x,0,z),(x,7,z),.10,'555954',7);m.box((x,6.75,z),(2.4,.095,.11),'464f52');
             for s in [-.8,.8]:
                 for j in range(6):
                     def wire(t): return (x+s-9*t,6.86-.48*sin(pi*t),z+7*t)
                     m.rod(wire(j/6),wire((j+1)/6),.023,'464f51',4)
-    # Graduated depths; no near trunks in the gate clearing. Camp has a deliberate foreground frame.
-    trees=[]
-    for row in range(6):
-        z=(-8.1 if not camp else -6.1)-row*4.8
-        for i in range(-8,9):
-            x=i*3.74+rng.uniform(-1.4,1.4); zz=z+rng.uniform(-1.35,1.35);h=rng.uniform(4.6,9.2) if row<3 else rng.uniform(4,7)
-            if not camp and row==0 and abs(x-1.45)<2.15:continue
-            trees.append((x,zz,h*(.79 if row<3 else .68)))
-    if camp:trees += [(-4.8,4.8,9.6),(-5.65,-.25,8.7),(5.72,1.07,8.65),(4.6,-2.5,6.7),(-3.9,-4.8,5.4),(6.7,-3.7,7.1)]
-    else:trees += [(-5.2,-7.4,8.8),(-2.4,-9,8.3),(4.7,-8.9,9.2),(9.8,-7.9,8.7)]
-    for i,(x,z,h) in enumerate(trees):sc.add('Spruce'+str(rng.choice([0,1,1,2,3]) if camp else rng.choice([0,1,3])),(x,0,z),rng.uniform(0,tau),(h*.96,h,h*.96))
-    for i in range(33 if camp else 8):
-        z=rng.uniform(-16,6);x=rng.uniform(-15,15)
-        if abs(x-path(z))<2.1 or (camp and abs(x-1)<2.8 and -5<z<2):continue
-        s=rng.uniform(.37,1.24);sc.add('Fieldstone',(x,0,z),rng.uniform(0,tau),(s,.86*s,s))
-    if camp:
-        for x,z,s in [(-.72,3.7,.82),(4.1,2.7,1.12),(1.47,4.55,.49)]:sc.add('Fieldstone',(x,.02,z),x,(s,s*.83,s))
-    m.save(name+'Land');sc.add(name+'Land');sc.save()
+    m.save(name+'Land')

@@ -1,0 +1,11 @@
+{
+  "source": "Blender Studio Human Base Meshes v1.3.0, Realistic Male Body (CC0); eyes constructed for this study",
+  "barefoot_vertex": 6152,
+  "menton_vertex": 8064,
+  "cranium_vertex": 8063,
+  "barefoot_m": 1.7699999809265137,
+  "head_m": 0.2723076343536377,
+  "head_units": 6.500001313322961,
+  "visible_parts": 99,
+  "bones": 24
+}

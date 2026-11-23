@@ -5,7 +5,6 @@
 ## 试玩
 
 - 正常种子局：到达 **Public Hall → Investigate Vesper Index**。点击模型或底栏操作。**Return to hall / Esc** 暂停调查，可在本局继续。取回夜间登记簿后，Field card 留档并一次性发放 1 份补给；不改主线所需的三条规则，也不占用拓扑中的出口。
-- 快速美术检查：从 `Run.tscn` 加 `-- --architecture-lab --lab-gi`，选择 **Vesper Index**。`H` 隐藏实验工具栏。**Reopen case** 复位；重选实验机位也会复位。
 
 <details><summary>查看解法</summary>
 
@@ -19,5 +18,5 @@
 
 - `VesperRules.gd` 是无场景依赖的离散模型；输入为翻页、转灯、上弦、过桥。它在世界几何中取样手轮、配重、门和桥面两端。基础时态与光罩内外做异或。持续状态是门闩释放；完成状态锁定交互，仍可重开。
 - `Exposure.gdshaderinc` 与规则使用同一光源、方向、半角和射程。两套实体几何在片元阶段裁切，石柱和地毯保留原 Grand Stair Hall 的原生分辨率、色阶与笔触。转灯时光罩和桥碰撞用同一瞬时光轴更新。固定调查机位通过后沿桥移到登记簿；这一版使用轨道式过桥。
-- `VesperShell.gd` 复用大楼梯厅石作，只替换地板和地基；井口有真实开口。`VesperVisit.gd` 在公共大厅打开独立视口，保持既有 ArchBuilder 营地和队伍。建筑实验与正式调查共用房间；正式调查使用 Forward+、SDFGI、室内灯和 `HallLook` 原画面参数。
-- 回归：`tools/blue_prince_lab/vesper_rules_test.gd` 穷举 13 个可达状态、检查每个状态都能完成且最短解为 6 步。`vesper_visit_test.gd` 从种子局走到营地，验证暂停、继续、留档、奖励幂等和跨局清理。两个脚本均可用 Godot `--headless --path . -s res://tools/blue_prince_lab/<文件名> -- --no-rule-save` 运行。`tools/blue_prince_lab/vesper_e2e.py` 使用实机 MCP 点击道具，通过前会尝试三种错误过桥状态；五张原尺寸实机图写至 `.runtime/vesper-index/`。
+- `VesperShell.gd` 复用拱顶与石作，保留井口、探灯、手轮和断桥所需的场景部件。参考展厅已退役；整景接入由后续正式房间决定。
+- 回归：`tools/blue_prince_lab/vesper_rules_test.gd` 穷举 13 个可达状态、检查每个状态都能完成且最短解为 6 步。

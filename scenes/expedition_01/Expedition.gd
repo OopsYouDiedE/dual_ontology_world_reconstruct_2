@@ -35,6 +35,9 @@ var shell_closed:=false
 var detail_view:=-1
 var mode:=-1
 const Sound=preload("FeedbackSound.gd")
+const Polish=preload("ExpeditionPolish.gd")
+var polish:=Polish.new()
+var look_sens:=.0022
 var demo_grace:=1.
 var observers:=-1
 var phase:=0.
@@ -73,7 +76,7 @@ func _ready()->void:
 		if not InputMap.has_action(a):InputMap.add_action(a)
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	canvas.add_child(subtitle);subtitle.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE);subtitle.offset_top=-94;subtitle.offset_bottom=-28;subtitle.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;subtitle.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
-	var font:=SystemFont.new();font.font_names=PackedStringArray(["Microsoft YaHei UI","Noto Sans CJK SC"])
+	var font:=Polish.make_font()
 	for text in [hud,subtitle]:
 		text.add_theme_font_override("font",font);text.add_theme_constant_override("outline_size",6);text.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	subtitle.add_theme_font_size_override("font_size",22)
@@ -84,25 +87,44 @@ func _ready()->void:
 			if mesh.mesh.surface_get_material(i).resource_name=="Human.male_elegantsuit01":
 				var coat:=StandardMaterial3D.new();coat.albedo_color=Color("d5cfc0");coat.roughness=.92;coat.rim_enabled=true;coat.rim=.42;mesh.set_surface_override_material(i,coat)
 	for pos in [Vector3(23.6,2.1,4.),Vector3(24.65,2.7,8.1),Vector3(23.85,2.4,12),Vector3(36.3,2.4,8.2)]:
-		var lamp:=OmniLight3D.new();lamp.position=pos;lamp.omni_range=4.;lamp.light_energy=.85;lamp.light_color=Color("ffebc5");add_child(lamp)
+		var lamp:=OmniLight3D.new();lamp.position=pos;lamp.omni_range=4.;lamp.light_energy=.85;lamp.light_color=Color("ffebc5");lamp.omni_attenuation=1.3;lamp.shadow_enabled=pos.z>=11.9 and pos.x<30;add_child(lamp)
 	add_child(hunter);hale.add_child(metal_foot);metal_foot.stream=sounds.iron;metal_foot.volume_db=-12;add_child(siren)
-	add_child(halo);halo.position=Vector3(31,2.1,2.9);halo.light_color=Color("ffbd70");halo.omni_range=6;halo.light_energy=1.4
+	add_child(halo);halo.position=Vector3(31,2.1,2.9);halo.light_color=Color("ffbd70");halo.omni_range=6;halo.light_energy=1.4;halo.shadow_enabled=true
 	add_child(emergency);emergency.position=Vector3(71,3.2,10);emergency.light_color=Color.RED;emergency.omni_range=17;emergency.hide()
 	canvas.add_child(prompt);prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER);prompt.offset_left=-320;prompt.offset_right=320;prompt.offset_top=-10;prompt.offset_bottom=76;prompt.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;prompt.add_theme_font_override("font",font);prompt.add_theme_constant_override("outline_size",6);prompt.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	canvas.add_child(manual);manual.set_anchors_and_offsets_preset(Control.PRESET_CENTER);manual.offset_left=-267;manual.offset_right=267;manual.offset_top=-155;manual.offset_bottom=155
 	var paper:=StyleBoxFlat.new();paper.bg_color=Color("282a25");paper.border_color=Color("ac9568");paper.set_border_width_all(2);paper.content_margin_left=32;paper.content_margin_right=32;manual.add_theme_stylebox_override("panel",paper);manual.add_child(page);page.vertical_alignment=VERTICAL_ALIGNMENT_CENTER;page.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;page.add_theme_font_override("font",font);page.add_theme_font_size_override("font_size",19);manual.hide()
+	add_child(polish);polish.setup(self,canvas)
 func toggle_book()->void:
 	manual.visible=not manual.visible;read_book=true
-	page.text="远征员随身规则手册　／　01\n━━━━━━━━━━━━━━━━━━━━\n井区交班记录：异常板遇到目光时会改变。玻璃后的目击也须登记。\n\n值守须知：铁网上的响动会传到井底。\n\nShift　切换走／跑　　 Ctrl　按住静步\n1　合上手册"
+	page.text="远征员随身规则手册　／　01\n━━━━━━━━━━━━━━━━━━━━\n井区交班记录：异常板遇到目光时会改变。玻璃后的目击也须登记。\n\n值守须知：铁网上的响动会传到井底。\n\nShift　切换走／跑　　 Ctrl　按住静步\nE　互动　　Q　指派 Hale　　[ ]　调整视角灵敏度\n1　合上手册"
 	if learned:page.text=page.text.replace("异常板遇到目光时会改变。玻璃后的目击也须登记。","我的实测：独自注视时，板面承住了我。Hale 记得的条文却禁止直视。")
-	prompt.visible=not manual.visible;subtitle.visible=not manual.visible and sub_time>0
+	prompt.visible=not manual.visible;subtitle.visible=not manual.visible and sub_time>0;polish.on_book(manual.visible)
 func sound_at(kind:String,pos:Vector3,db:float)->void:
 	var audio:=AudioStreamPlayer3D.new();add_child(audio);audio.position=pos;audio.stream=sounds[kind];audio.volume_db=db;audio.max_distance=90;audio.finished.connect(audio.queue_free);audio.play()
 func light_stage()->void:
-	var w:=WorldEnvironment.new();var e:=Environment.new();e.background_mode=Environment.BG_COLOR;e.background_color=Color("e3e2d9");e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("c4ccd3");e.ambient_light_energy=.48;e.tonemap_mode=Environment.TONE_MAPPER_ACES;e.tonemap_exposure=.68;e.ssao_enabled=true;e.sdfgi_enabled=true;w.environment=e;add_child(w)
-	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-33,0);sun.light_energy=.78;sun.shadow_enabled=true;sun.directional_shadow_max_distance=90;add_child(sun)
+	var w:=WorldEnvironment.new();var e:=Environment.new()
+	e.background_mode=Environment.BG_COLOR;e.background_color=Color("e3e2d9")
+	e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("c9d0d8");e.ambient_light_energy=.55
+	# Tone: ACES kept for contrast, exposure lifted from .68 so the vaults read without washing the walls out.
+	e.tonemap_mode=Environment.TONE_MAPPER_ACES;e.tonemap_exposure=.84;e.tonemap_white=6.
+	e.adjustment_enabled=true;e.adjustment_contrast=1.1;e.adjustment_saturation=1.0
+	# Contact shading + one-bounce GI. SDFGI is trimmed to 3 cascades (the level is ~75 m long).
+	e.ssao_enabled=true;e.ssao_radius=1.3;e.ssao_intensity=2.2;e.ssao_power=1.6;e.ssao_detail=.6;e.ssao_light_affect=.25
+	e.sdfgi_enabled=true;e.sdfgi_cascades=3;e.sdfgi_min_cell_size=.3;e.sdfgi_use_occlusion=true;e.sdfgi_bounce_feedback=.45;e.sdfgi_energy=.9;e.sdfgi_y_scale=Environment.SDFGI_Y_SCALE_75_PERCENT
+	# Soft bloom for lamps, emissive boards and the alarm; thin aerial fog for depth down the long arcade.
+	e.glow_enabled=true;e.glow_intensity=.3;e.glow_strength=.85;e.glow_bloom=.02;e.glow_hdr_threshold=1.3;e.glow_blend_mode=Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	e.fog_enabled=true;e.fog_light_color=Color("e7e0d0");e.fog_density=.0028;e.fog_aerial_perspective=.2;e.fog_sky_affect=0.
+	w.environment=e;add_child(w)
+	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-33,0);sun.light_energy=.8;sun.light_color=Color("fff1dc");sun.shadow_enabled=true
+	sun.directional_shadow_max_distance=64;sun.directional_shadow_mode=DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS;sun.directional_shadow_blend_splits=true
+	sun.shadow_bias=.04;sun.shadow_normal_bias=1.4;sun.light_angular_distance=.45;add_child(sun)
 	for p in [Vector3(6,3.9,0),Vector3(20,4.1,0),Vector3(32,3.9,0),Vector3(24,3,5),Vector3(24,3,12),Vector3(39,3,10),Vector3(61,6,10)]:
-		var l:=OmniLight3D.new();l.position=p;l.omni_range=12;l.light_energy=.52;l.light_color=Color("ffe9cb");add_child(l)
+		var l:=OmniLight3D.new();l.position=p;l.omni_range=12;l.light_energy=.52;l.light_color=Color("ffe9cb");l.omni_attenuation=1.25;add_child(l)
+	# Extra fills: arcade bays that were left murky, and a cold under-light that makes the shaft floor readable.
+	for x in [13.,26.]:
+		var f:=OmniLight3D.new();f.position=Vector3(x,3.2,0);f.omni_range=9;f.light_energy=.38;f.light_color=Color("ffdcae");f.omni_attenuation=1.4;add_child(f)
+	var well:=OmniLight3D.new();well.position=Vector3(61,-8.2,10.1);well.omni_range=16;well.light_energy=.7;well.light_color=Color("8fc4d8");well.omni_attenuation=1.2;add_child(well)
 func _input(ev:InputEvent)->void:
 	if finished:return
 	if ev is InputEventKey and ev.pressed and not ev.echo and mode<0:
@@ -111,7 +133,7 @@ func _input(ev:InputEvent)->void:
 	if manual.visible:return
 	if ev is InputEventMouseButton and ev.button_index==MOUSE_BUTTON_LEFT and ev.pressed and mode<0:Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 	if ev is InputEventMouseMotion and mode<0 and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
-		walker.rotate_y(-ev.relative.x*.0025);eye.rotation.x=clampf(eye.rotation.x-ev.relative.y*.0025,-1.48,1.48)
+		walker.rotate_y(-ev.relative.x*look_sens);eye.rotation.x=clampf(eye.rotation.x-ev.relative.y*look_sens,-1.48,1.48)
 	var key:=0
 	if ev is InputEventKey and ev.pressed and not ev.echo:key=ev.physical_keycode
 	if key==KEY_F4 or ev.is_action_pressed("expedition_section"):section_view();return
@@ -119,6 +141,8 @@ func _input(ev:InputEvent)->void:
 		if key==KEY_F6 or ev.is_action_pressed("expedition_detail"):detail_camera();return
 		if key==KEY_F5 or ev.is_action_pressed("expedition_shell"):shell_closed=not shell_closed;show_shell()
 		return
+	if key==KEY_BRACKETLEFT or key==KEY_BRACKETRIGHT:
+		look_sens=clampf(look_sens*(1.12 if key==KEY_BRACKETRIGHT else 1./1.12),.0008,.006);say("视角灵敏度 %d%%"%roundi(look_sens/.0022*100.));return
 	if key==KEY_ESCAPE:Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	if key==KEY_E or ev.is_action_pressed("expedition_use"):use()
 	if key==KEY_Q or ev.is_action_pressed("expedition_watch"):order()
@@ -137,7 +161,7 @@ func section_view()->void:
 func detail_camera()->void:
 	detail_view=(detail_view+1)%3;shell_closed=true;show_shell()
 	for room in kit.get_children():room.show()
-	plinth.hide();review_witness.hide();survey.projection=Camera3D.PROJECTION_PERSPECTIVE;survey.fov=eye.fov
+	plinth.hide();review_witness.hide();survey.projection=Camera3D.PROJECTION_PERSPECTIVE;survey.fov=Polish.BASE_FOV
 	var stations:=[Vector3(24.65,1.57,7.71),Vector3(38.45,1.57,10.42),Vector3(49.4,1.57,10.5)]
 	var sights:=[Vector3(23.85,.05,12.02),Vector3(36.3,1.46,7.42),Vector3(61.,.38,10.1)]
 	survey.position=stations[detail_view];survey.look_at(sights[detail_view]);survey.current=true
@@ -165,18 +189,20 @@ func focus()->String:
 	return ""
 func use()->void:
 	if retry>0 or manual.visible:return
-	match focus():
+	var target:=focus()
+	if target!="":polish.kick(.07)
+	match target:
 		"note":say("残页：隔着玻璃也有反应。昨夜值班记录的最后一行被撕掉了。")
 		"loot":taken=true;equipped=true;oil=minf(100.,oil+35);kit.supplies.hide();say("收起了发条节拍器与煤油罐。")
 		"lever":
 			if not learned:return
-			released=true;kit.gate.position.y=4.;checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();sound_at("slam",kit.panel.position,2);sound_at("scream",hunter.position,4);line_once("release","主闸开了！……嘘，听见井底的声音没？压低脚步，别跑！")
+			released=true;kit.gate.position.y=4.;checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();polish.kick(.5);polish.punch(-5.);sound_at("slam",kit.panel.position,2);sound_at("scream",hunter.position,4);line_once("release","主闸开了！……嘘，听见井底的声音没？压低脚步，别跑！")
 		"core":
-			collected=true;kit.core.hide();emergency.show();siren.stream=sounds.alarm;siren.play();line_once("core","拿到手了！别走回头桥，上右边楼梯踹开绿门直接冲回主廊！")
+			collected=true;polish.kick(.45);polish.punch(-4.);kit.core.hide();emergency.show();siren.stream=sounds.alarm;siren.play();line_once("core","拿到手了！别走回头桥，上右边楼梯踹开绿门直接冲回主廊！")
 		"return":walker.position=Vector3(38.7,.1,8.6);trail.clear();holding=false;posting=false;command_path.clear();hale.position=walker.position+Vector3.RIGHT
 		"exit":
-			finished=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;hud.text="撤离成功　·　备用源核已送回稳压室";subtitle.hide();prompt.hide();returned.emit()
-		"throw":equipped=false;distraction=12.;hunter.throw_from(eye.global_position);sound_at("iron",hunter.BAIT,2)
+			finished=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;hud.text="撤离成功　·　备用源核已送回稳压室";polish.finish("撤 离 成 功","备用源核已送回稳压室");subtitle.hide();prompt.hide();returned.emit()
+		"throw":equipped=false;polish.kick(.14);polish.punch(-2.);distraction=12.;hunter.throw_from(eye.global_position);sound_at("iron",hunter.BAIT,2)
 func order()->void:
 	if focus()!="north" or manual.visible or retry>0:return
 	if posting or holding:posting=false;holding=false;command_path.clear();trail.clear();return
@@ -192,7 +218,12 @@ func _physics_process(dt:float)->void:
 	if retry>0:
 		retry-=dt;if retry<=0:reset_at_checkpoint()
 	else:
-		var planar:=Vector2(walker.velocity.x,walker.velocity.z).move_toward(Vector2(dir.x,dir.z)*speed,dt*(26. if dir.length_squared()>0 else 32.))
+		var current:=Vector2(walker.velocity.x,walker.velocity.z);var wish:=Vector2(dir.x,dir.z)*speed
+		# Snappier reversals, a soft start, and a short glide-to-stop; weak steering in the air.
+		var accel:=24. if dir.length_squared()>0 else 30.
+		if dir.length_squared()>0 and current.dot(wish)<0.:accel=46.
+		if not walker.is_on_floor():accel*=.25
+		var planar:=current.move_toward(wish,dt*accel)
 		walker.velocity.x=planar.x;walker.velocity.z=planar.y;walker.velocity.y-=18*dt
 		# Low tread risers: lift only on a grounded horizontal obstruction and verify clearance.
 		var step:=dir*speed*dt
@@ -206,10 +237,10 @@ func _physics_process(dt:float)->void:
 	subtitle.modulate.a=clampf(sub_time/.35,0.,1.)
 	if sub_time<=0 and next_thought:
 		next_thought=false;subtitle_id="thought";subtitle.text="我心想：难道他所记忆的规则和我的不同吗？";sub_time=4.5
-	hud.text="灯油 %d%%\n目标：%s"%[ceili(oil),"从绿色捷径门撤回大厅" if collected else "绕过铁闸，取回深井对岸的备用源核"]
-	hud.modulate=Color("ffbf75") if oil<15 and sin(phase*5)>0 else Color.WHITE
+	hud.text="目标：%s"%["从绿色捷径门撤回大厅" if collected else "绕过铁闸，取回深井对岸的备用源核"]
+	hud.modulate=Color.WHITE
 	var hints:={"note":"[E] 阅读残页","loot":"[E] 拾取补给","lever":"[E] 拉下主闸","core":"[E] 拔出源核","return":"[E] 推开捷径门","exit":"[E] 返回大厅","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器"}
-	var hint:=str(hints.get(focus(),""));prompt.text="·\n"+(notice if msg_time>0 else hint if hint!="" else "[1] 打开规则手册" if not read_book else "")
+	var seen:=focus();polish.focus_id=seen;var hint:=str(hints.get(seen,""));prompt.text=(notice if msg_time>0 else hint if hint!="" else "[1] 打开规则手册" if not read_book else "")
 func walking_feedback(dt:float)->void:
 	var distance:=Vector2(walker.get_position_delta().x,walker.get_position_delta().z).length()
 	if walker.is_on_floor() and distance>.001:
@@ -222,9 +253,9 @@ func walking_feedback(dt:float)->void:
 				var surface:=str(contact.get_collider().get_parent().name)
 				if "SouthServiceWalk" in surface:kind="iron"
 				elif "Plate" in surface or "Span" in surface:kind="wood"
-			foot.stream=sounds[kind];foot.play()
-		eye.position.y=lerpf(eye.position.y,1.57+.025*sin(TAU*stride),1.-exp(-22.*dt))
-	else:eye.position.y=lerpf(eye.position.y,1.57,1.-exp(-16.*dt))
+			foot.stream=sounds[kind];foot.pitch_scale=randf_range(.93,1.07);foot.volume_db=-27. if speed_quiet() else (-17. if running else -21.);foot.play()
+
+func speed_quiet()->bool:return Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")
 func animate_hale(prior:Vector3,dt:float)->void:
 	var d:=hale.position-prior;d.y=0;var speed:=d.length()/dt
 	hale_speed=lerpf(hale_speed,speed,1.-exp(-10.*dt))
@@ -234,7 +265,8 @@ func animate_hale(prior:Vector3,dt:float)->void:
 	if speed>.1:hale.rotation.y=lerp_angle(hale.rotation.y,atan2(d.x,d.z),1.-exp(-12.*dt))
 func line_once(id:String,text:String,duration:=4.5)->void:
 	if cues.has(id):return
-	cues[id]=true;subtitle_id=id;subtitle.text="Hale："+text;sub_time=duration;chime.stream=sounds.cue;chime.play()
+	cues[id]=true;if id in Polish.CINEMATIC_LINES:polish.letterbox(duration+.6)
+	subtitle_id=id;subtitle.text="Hale："+text;sub_time=duration;chime.stream=sounds.cue;chime.play()
 func advance_hale(dt:float)->void:
 	if tutorial_room and not learned and not holding:
 		var station:=Vector3(21.1,0,9.6);hale.position=hale.position.move_toward(station,dt*3.8)
@@ -252,7 +284,7 @@ func rules(dt:float)->void:
 	var p:=walker.position
 	update_demo(p,dt)
 	if phase>=2 and not cues.has("start"):
-		kit.airlock.position.y=2.4;sound_at("slam",Vector3(.2,1,0),0);sound_at("bell",Vector3(25,2,0),2);line_once("start","稳压室撑不到天亮了。前组把备用源核掉在深井对岸——先去前面看看铁闸。")
+		kit.airlock.position.y=2.4;polish.kick(.55);polish.punch(4.);sound_at("slam",Vector3(.2,1,0),0);sound_at("bell",Vector3(25,2,0),2);line_once("start","稳压室撑不到天亮了。前组把备用源核掉在深井对岸——先去前面看看铁闸。")
 	if not released and not tutorial_room and p.x>30 and absf(p.z)<2.3:
 		line_once("gate","从里头反锁了。走右边侧门，穿档案翼找总闸。",3.5);halo.light_energy=2.3
 	oil=maxf(0.,oil-dt*.025)
@@ -337,11 +369,11 @@ func sees_span(origin:Vector3)->bool:
 				var ray:=PhysicsRayQueryParameters3D.create(origin,Vector3(kit.CX+x,h,kit.CZ+z),2)
 				if space.intersect_ray(ray).is_empty():return true
 	return false
-func fail(reason:String)->void:retry=3.;say(reason+"　·　正在返回折返点…")
+func fail(reason:String)->void:retry=3.;polish.fail_beat();say(reason+"　·　正在返回折返点…")
 func reset_at_checkpoint()->void:
 	crossing=false;distraction=0.;running=false;collected=false;kit.core.show();siren.stop();emergency.hide();cues.erase("core");cues.erase("post");sub_time=0
 	if released:hunter.wake();oil=checkpoint_oil;equipped=checkpoint_item
-	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);hazard=0;holding=false;posting=false;trail.clear();command_path.clear()
+	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);polish.reset_beat();hazard=0;holding=false;posting=false;trail.clear();command_path.clear()
 func observation()->Dictionary:return {"phase":"first_expedition","section":mode,"position":str(walker.position),"checkpoint":released,"learned":learned,"core":collected,"hale_posted":holding}
 
 func review_props()->void:

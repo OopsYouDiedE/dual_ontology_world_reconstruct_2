@@ -79,6 +79,9 @@ static func validate(layout: Dictionary) -> Array[String]:
 			errors.append('out_of_room:' + id)
 		if hits_route(a, layout.route):
 			errors.append('route:' + id)
+		for station in layout.get('stations', []):
+			if hits_route(a, station.route):
+				errors.append('approach:' + station.id + ':' + id)
 	# Accumulate uniform-density load of each descendant into each ancestor.
 	var loads := {}
 	for id in by_id:

@@ -41,3 +41,18 @@ Generation reserves a dogleg with a 1.16 m wide by 2 m high clearance envelope, 
 `--self-test` covers repeatability, adjacent seeds, signed seed extremes, three-layer stacking, and six negative controls: air gap, unstable overhang, volume overlap, cumulative load shift, door obstruction and headroom obstruction. The last two must physically stall and name the injected collider in addition to failing geometry.
 
 `--sweep` emits `clutter-sweep/v1`: seeds 0–999 for each of 20 density/layer strata (`0, .25, .5, .75, 1` × `1, 2, 3, 5`); the report stores aggregated geometry counts, exact failing inputs and capsule summaries, not coordinates. Seeds 0, 499 and 999 are walked in both directions in each stratum; add `--layout-only` for just geometry.
+
+## Furnished design prototype
+
+`mode: "furnished"` is opt-in per request (CLI `--mode furnished` or Python `generate_layout(..., mode="furnished")`). Omitted `mode` and explicit `"stress"` preserve the old stress generator and report shape. The two layouts use the same 10 x 8 m envelope, door geometry and seed input.
+
+- The **workshop** groups a pedestal workbench, tool cupboard, stool and optional tool tray. The opposite **dispatch** wall groups a drawer counter, stock cupboard, optional outgoing parcel and stock crates. The seed mirrors the groups between the long walls and varies portable dressing. The fixed furniture remains at density 0; density samples the three portable dressing sites. `max_layers` applies to loose floor crates, which intentionally stop at two. Exported `layer` still records the full structural support chain (e.g. pedestal, worktop, tray).
+- A straight through aisle joins the doors. `layout.stations[]` gives each work group's `id`, `function`, furniture `target` and approach `route`. `layout.items[]` adds `kind` and `station` for consumers; the usual box collider/support fields still apply. Station approaches reserve the same clearance envelope as the aisle. `rooms[].station_traversals[]` reports `approach` and `return` per station, and both must pass along with `traversals[]` for overall acceptance. These tests walk to the operating position; furniture interaction is outside the fixture.
+- `furnished_control=True` runs a negative control with the same stool moved into the workshop approach. The capsule must stall against the stool assembly while the door-to-door aisle still passes.
+
+```powershell
+python -B "$clutter/run.py" --room-id prototype/workshop-dispatch --seed 31 --mode furnished
+python -B "$clutter/design_review.py"
+```
+
+`design_review.py` uses Pillow to draw the same tested collider exports as a labeled axonometric cutaway and top plan. It writes `.runtime/design-review/clutter/before-after.png` (1600 x 960) and `acceptance.json`. The comparison is the first two rows in the report; additional furnished runs cover 16 seeds at three dressing settings. Drawer/door markings in the illustration are graphical details; the export contains the underlying box colliders.

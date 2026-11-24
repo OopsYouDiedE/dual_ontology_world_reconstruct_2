@@ -38,3 +38,22 @@ Deltas are B minus A. First-sample passage means the walker center reaches `x â‰
 **What moved:** Both cautious runs shifted their approach toward the opening and reached the threshold one or two samples later. Both curious traces followed the same approach and subsequent actions in A and B. Direct crossed on the same sampled ticks in both layouts, but seed 31 produced a different later sequence: A logged the gate prompt and accumulated 138.57 m of travel; B logged Hale's lock confirmation and accumulated 65.04 m. Keep that seed-specific downstream change separate from the local portal crossing metric.
 
 **Design use:** This is evidence about simulated sightline response, route progress, and policy sensitivity. The next useful comparison would isolate visibility from clearance and use human observation to assess whether players notice and understand the opening. This run measured no player enjoyment, perceived legibility, or rendered visual quality.
+
+### Offline design-review page
+
+Starting with a completed structure matrix, the exported scene collision footprint file and the local render dependencies, run the following from the repository root. The page reads no remote resources. Its default film uses the **live** input captures; the expandable second film uses a fixed-heading path replay. The two candidate whole-map plans are graph proposals and their video is an animated topology diagram.
+
+```powershell
+$p = 'docs/production/expedition-01/playtest'
+$o = '.runtime/design-review'
+python -B "$p/structure/film_live.py"
+python -B "$p/structure/film.py"
+python -B "$p/structure/join_films.py" "$o/live-A.mp4" "$o/live-B.mp4" "$o/live-paired.mp4"
+python -B "$p/structure/join_films.py" "$o/A.mp4" "$o/B.mp4" "$o/paired.mp4"
+python -B "$p/complexity/review_plans.py"
+python -B "$p/complexity/review_video.py"
+python -B "$p/clutter/design_review.py"
+python -B "$p/structure/review.py" .runtime/structure-565b9cfbef .runtime/collision_fixture_geometry.json $o
+```
+
+On this run, both live recordings reproduced every sampled player position and decision in the first 720 ticks of their corresponding historical trace. Route maps show player and companion positions sampled every 12 ticks; the event list preserves the event's own tick and world X/Z. The overview contains six independently selectable pairs. The 12-second video is available for cautious seed 31.

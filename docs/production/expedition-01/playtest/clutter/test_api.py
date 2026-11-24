@@ -41,6 +41,29 @@ class ClutterApiTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 generate_layout(**key, density=density, max_layers=max_layers)
 
+    def test_furnished_same_envelope_and_obstructed_work_bay(self):
+        key = {'room_id': 'prototype/workshop-dispatch', 'seed': 31}
+        report = evaluate_rooms([key, dict(key, mode='furnished'),
+                                 dict(key, mode='furnished', density=0)], furnished_control=True)
+        self.assertTrue(report['ok'])
+        before, after, empty_dressing = report['rooms']
+        for field in ('room_size', 'room_id', 'seed', 'door_width'):
+            self.assertEqual(before['layout'][field], after['layout'][field])
+        self.assertNotEqual(before['layout']['items'], after['layout']['items'])
+        self.assertEqual(len(empty_dressing['layout']['items']), 8)
+        self.assertEqual(len(after['station_traversals']), 4)
+        self.assertEqual({(t['station'], t['direction']) for t in after['station_traversals']},
+                         {(s, d) for s in ('workshop', 'dispatch') for d in ('approach', 'return')})
+        self.assertTrue(all(t['status'] == 'pass' and not t['contacts'] and not t['off_floor_frames']
+                            for t in after['station_traversals']))
+        control, = report['controls']
+        self.assertEqual(control['traversal']['status'], 'blocked')
+        self.assertTrue({'work_stool', 'stool_seat'} & control['traversal']['contacts'].keys())
+        self.assertEqual(control['main_aisle']['status'], 'pass')
+        self.assertEqual(after['layout'], generate_layout(**key, mode='furnished'))
+        with self.assertRaises(ValueError):
+            generate_layout(**key, mode='unknown')
+
     def test_invalid_seed(self):
         for seed in (True, 1.0, 2**53):
             with self.assertRaises(ValueError):

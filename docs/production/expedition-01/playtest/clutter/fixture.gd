@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Layout = preload("res://layout.gd")
+const Furnishing = preload('res://furnishing.gd')
 const SPEED := 3.0
 const RADIUS := 0.32
 const HEIGHT := 1.75
@@ -21,7 +22,7 @@ func solid(id: String, center: Vector3, size: Vector3) -> void:
 	body.add_child(collider)
 	world.add_child(body)
 
-func walk(layout: Dictionary, reverse: bool) -> Dictionary:
+func walk(layout: Dictionary, reverse: bool, station: Dictionary = {}) -> Dictionary:
 	world = Node3D.new()
 	root.add_child(world)
 	solid('floor', Vector3(0,-0.15,0), Vector3(14,0.3,8.4))
@@ -45,7 +46,7 @@ func walk(layout: Dictionary, reverse: bool) -> Dictionary:
 	collider.position.y = HEIGHT/2
 	collider.shape = capsule
 	walker.add_child(collider)
-	var route: Array = layout.route.duplicate()
+	var route: Array = station.get('route', layout.route).duplicate()
 	if reverse:
 		route.reverse()
 	walker.position = Layout.xyz(route[0]) + Vector3.UP * 0.03
@@ -83,7 +84,8 @@ func walk(layout: Dictionary, reverse: bool) -> Dictionary:
 	var status := 'pass' if target == route.size() and contacts.is_empty() and off_floor == 0 else ('blocked' if stalled >= 30 and not contacts.is_empty() else 'fail')
 	world.queue_free()
 	await process_frame
-	return {'direction': 'east_to_west' if reverse else 'west_to_east', 'status': status,
+	var direction := ('east_to_west' if reverse else 'west_to_east') if station.is_empty() else ('return' if reverse else 'approach')
+	return {'direction': direction, 'status': status,
 		'frames': frames, 'waypoints_reached': target, 'off_floor_frames': off_floor,
 		'contacts': contacts, 'end': [end.x, end.y, end.z]}
 
@@ -99,26 +101,57 @@ func _run() -> void:
 		var seed := int(request.seed)
 		var density := float(request.density)
 		var max_layers := int(request.max_layers)
-		var layout := Layout.generate(seed, request.room_id, density, max_layers)
+		var furnished: bool = request.get('mode', 'stress') == 'furnished'
+		var generator = Furnishing if furnished else Layout
+		var layout: Dictionary = generator.generate(seed, request.room_id, density, max_layers)
 		var errors := Layout.validate(layout)
 		var passes := []
-		var repeat := Layout.generate(seed, request.room_id, density, max_layers)
-		var neighbor := Layout.generate(seed ^ 1, request.room_id, density, max_layers)
-		var stable_seed: bool = layout == repeat and (layout.items != neighbor.items or layout.route != neighbor.route)
+		var repeat: Dictionary = generator.generate(seed, request.room_id, density, max_layers)
+		var stable_seed: bool = layout == repeat
+		if not furnished:
+			var neighbor := Layout.generate(seed ^ 1, request.room_id, density, max_layers)
+			stable_seed = stable_seed and (layout.items != neighbor.items or layout.route != neighbor.route)
 		var deepest := 0
 		for item in layout.items:
 			deepest = maxi(deepest, item.layer)
-		var status := 'pass' if errors.is_empty() and stable_seed and (deepest == 0 if layout.items.is_empty() else deepest == max_layers) else 'fail'
+		var status := 'pass' if errors.is_empty() and stable_seed and (furnished or deepest == (0 if layout.items.is_empty() else max_layers)) else 'fail'
 		if input.physics and errors.is_empty():
 			for reverse in [false, true]:
 				var result := await walk(layout, reverse)
 				passes.append(result)
 				if result.status != 'pass':
 					status = 'fail'
+		var station_traversals := []
+		if input.physics and errors.is_empty():
+			for station in layout.get('stations', []):
+				for reverse in [false, true]:
+					var result := await walk(layout, reverse, station)
+					result['station'] = station.id
+					station_traversals.append(result)
+					if result.status != 'pass':
+						status = 'fail'
 		ok = ok and status == 'pass'
 		report.rooms.append({'room_id': request.room_id, 'seed': seed,
 			'layout': layout, 'layout_errors': errors, 'seed_check': stable_seed, 'max_layer': deepest,
 			'status': status if input.physics or status == 'fail' else 'layout_only', 'traversals': passes})
+		if furnished:
+			report.rooms[-1]['station_traversals'] = station_traversals
+	if input.get('furnished_control', false):
+		var blocked := Furnishing.generate(31, 'prototype/workshop-dispatch', 1.0, 3)
+		var station: Dictionary = blocked.stations[0]
+		var stop: Array = station.route[-1]
+		# Move the existing stool into the work bay, seat included.
+		for item in blocked.items:
+			if item.id in ['work_stool', 'stool_seat']:
+				item.center[0] = stop[0]
+				item.center[2] = stop[2] * 0.68
+		var errors := Layout.validate(blocked)
+		var bay_walk := await walk(blocked, false, station)
+		var aisle_walk := await walk(blocked, false)
+		var caught: bool = errors.has('approach:workshop:work_stool') and bay_walk.status == 'blocked' and (bay_walk.contacts.has('work_stool') or bay_walk.contacts.has('stool_seat')) and aisle_walk.status == 'pass'
+		report.controls.append({'case': 'stool_in_workshop_approach', 'caught': caught,
+			'layout_errors': errors, 'traversal': bay_walk, 'main_aisle': aisle_walk})
+		ok = ok and caught
 	if input.controls:
 		var base := Layout.generate(31)
 		for kind in ['floating', 'overhang', 'overlap', 'shifted_load', 'door_block', 'head_block']:

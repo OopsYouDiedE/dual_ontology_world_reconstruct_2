@@ -27,6 +27,8 @@ var branch_attempts:={}
 var scan_index:=0
 var route_anchor:=Vector2.INF
 var archive_approached:=false
+var gate_released:=false
+var core_escape:=false
 var invitation_used:=false
 var follow_budget:=0
 var follow_misses:=0
@@ -83,12 +85,18 @@ func decide(o:Dictionary)->Dictionary:
 		var cue:=caption.to_lower()
 		if not invitation_used and invites_companion(cue):
 			invitation_used=true;follow_budget=13
-		if "侧门" in cue or "档案翼" in cue or "旁边有没有路" in cue or "side door" in cue or "archive wing" in cue:
+		if "侧门" in cue or "档案翼" in cue or "绿漆门" in cue or "绿门" in cue or "旁边有没有路" in cue or "side door" in cue or "archive wing" in cue or "green door" in cue:
 			side_hint=true
-		if not heard_gate and ("纹丝不动" in cue or "闸门推不开" in cue or "won't budge" in cue or "拉杆彻底卡死" in cue or "dead-bolted from the inside" in cue):
+		if not heard_gate and ("纹丝不动" in cue or "闸门推不开" in cue or "推不开" in cue or "锁死了" in cue or "won't budge" in cue or "拉杆卡死" in cue or "拉杆彻底卡死" in cue or "dead-bolted" in cue):
 			heard_gate=true;confirmed_dead=p
 			rewind_index=breadcrumbs.size()-1
 			route_anchor=p
+		if not gate_released and ("闸门和铁闸都开了" in cue or "隔离闸开了" in cue or "井筒闸门" in cue or "both open" in cue or "isolating gate is up" in cue):
+			gate_released=true;archive_approached=true;blocked_edges.clear();confirmed_dead=Vector2.INF;visits.clear();no_progress=0;recovery_step=-1
+		if "升闸" in cue or "中央柜门已打开" in cue:
+			blocked_edges.clear()
+		if not core_escape and ("拿到了" in cue or "源核脱槽" in cue or "got the core" in cue or "core extracted" in cue):
+			core_escape=true;blocked_edges.clear();confirmed_dead=Vector2.INF;visits.clear();plate_phase=0;follow_budget=0;no_progress=0;recovery_step=-1
 	var plate:=try_plate(o,p,heading)
 	if not plate.is_empty():return plate
 	if follow_budget>0:
@@ -111,13 +119,15 @@ func decide(o:Dictionary)->Dictionary:
 	if heard_gate and side_hint and not archive_approached:
 		var detour:=look_for_side_door(o,p,heading)
 		if not detour.is_empty():return detour
+	var guided:=follow_goal_sign(o,p,heading)
+	if not guided.is_empty():return guided
 	if wall_mode:return follow_wall(o,heading,p)
 	var best:Dictionary={}
 	var top:=-INF
 	for lane:Dictionary in o.lanes:
 		var count:=int(visits.get(cell(lane.end),0))
 		var score:float=lane.depth*.53 - dead_penalty(p,lane.end) - count*1.75 - absf(lane.turn)*profile.inertia + lane.turn*spin*.09
-		if lane.depth<1.25 or int(blocked_edges.get(edge(p,heading+float(lane.turn)),0))>=2 or (stuck and absf(lane.turn)<.23):continue
+		if lane.depth<.85 or int(blocked_edges.get(edge(p,heading+float(lane.turn)),0))>=2 or (stuck and absf(lane.turn)<.23):continue
 		if score>top:top=score;best=lane
 	if best.is_empty() or drought>=2 or (top<-.35 and scanning<8):
 		drought=0
@@ -141,7 +151,7 @@ func tracked_walk(lane:Dictionary,p:Vector2,heading:float,tag:String,limit:float
 	last_move=absf(turn)<limit
 	last_tracked_walk=last_move
 	attempted_edge=edge(p,heading+turn)
-	var intent:={"turn":turn,"move":last_move,"pitch":pitch,"quiet":profile.quiet,"hold":hold}
+	var intent:={"turn":turn,"move":last_move,"pitch":pitch,"quiet":false if core_escape else profile.quiet,"hold":hold}
 	if not tag.is_empty():intent["probe"]=tag
 	return intent
 
@@ -198,6 +208,28 @@ func trail_gap(p:Vector2)->float:
 
 func yaw_to(delta:Vector2)->float:
 	return atan2(-delta.x,-delta.y)
+
+func follow_goal_sign(o:Dictionary,p:Vector2,heading:float)->Dictionary:
+	if not gate_released and not core_escape:return {}
+	var targets:Array=["EMERGENCY","ANCHOR HALL","EXIT","应急","锚定"] if core_escape else ["SHAFT","井筒"]
+	for sign:Dictionary in o.get("signs",[]):
+		var upper:=String(sign.text).to_upper()
+		var matched:=false
+		for tok in targets:
+			if tok in upper or tok in String(sign.text):matched=true;break
+		if not matched:continue
+		var best:Dictionary={}
+		var top:=-INF
+		for lane:Dictionary in o.lanes:
+			var err:=absf(angle_difference(float(sign.turn),float(lane.turn)))
+			if err>.62 or int(blocked_edges.get(edge(p,heading+float(lane.turn)),0))>=2:continue
+			var score:=minf(float(lane.depth),3.8)*.50-err*1.4-minf(3.,float(visits.get(cell(lane.end),0)))*.25
+			if score>top:top=score;best=lane
+		if not best.is_empty():
+			return tracked_walk(best,p,heading,"follow_escape_sign" if core_escape else "follow_shaft_sign",.44,-.38,profile.hold)
+		if absf(float(sign.turn))>.32:
+			return {"turn":clampf(float(sign.turn),-.85,.85),"pitch":-.35,"hold":52,"probe":"align_goal_sign"}
+	return {}
 
 func look_for_side_door(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 	if door_pressure>0 and trail_gap(p)>2.2:

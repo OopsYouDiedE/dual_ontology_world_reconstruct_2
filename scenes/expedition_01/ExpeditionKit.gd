@@ -4,6 +4,7 @@ const CX:=61.0
 const CZ:=10.1
 const BLIND_ANGLES := [90,210,330]
 var shaft_shutter:Node3D
+var shaft_lamp:OmniLight3D
 var gate:Node3D
 var leaf:Node3D
 var leave_pivot:Node3D
@@ -60,6 +61,7 @@ func arcade()->void:
 	rect("ArchiveSign",30.05,2.68,1.57,.07,.44,.96,"door_green",false)
 	label_at("ARCHIVE",Vector3(30.,2.68,1.57),-PI/2)
 	label_at("ARCHIVE",Vector3(30.10,2.68,1.57),PI/2)
+	var arch_lamp:=OmniLight3D.new();add_child(arch_lamp);arch_lamp.position=Vector3(31.0,2.45,1.88);arch_lamp.light_color=Color(.58,.95,.76);arch_lamp.light_energy=1.35;arch_lamp.omni_range=4.8
 	for i in 6:
 		var x:=3.+6*i;arch(Vector3(x,1.72,-1.97),1.67,.19,.27,false,"trim")
 		for dx in [-1.77,1.77]:rect("NicheJamb",x+dx,.86,-1.98,.2,1.72,.26,"trim")
@@ -168,6 +170,8 @@ func archive()->void:
 	for z in [4.0,6.9]:shelf(23.65,z)
 	# Both ends of the isolating pipe are visible pieces of the same mechanism.
 	shaft_shutter=rect("ShaftIsolationShutter",44.65,1.46,10.10,.18,2.92,2.78,"iron")
+	shaft_lamp=OmniLight3D.new();add_child(shaft_lamp);shaft_lamp.position=Vector3(41.65,2.52,10.10);shaft_lamp.light_color=Color(.88,.34,.24);shaft_lamp.light_energy=.85;shaft_lamp.omni_range=6.2
+	label_at("SHAFT →",Vector3(41.78,2.35,10.10),-PI/2)
 	plaque("CONTROL ROOM  ↶",Vector3(43.35,1.77,8.82),1.42)
 	for z in [8.76,11.44]:rect("ShutterGuide",44.65,1.55,z,.30,3.1,.13,"brass",false)
 	# Rubble in the blind opening beyond B1, visible across a broken barricade.

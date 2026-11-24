@@ -34,6 +34,8 @@ var visible_person_samples:=0
 var reading:=""
 var read_pages:=[]
 var careful_from_manual:=false
+var shaft_threat:=false
+var escaping:=false
 var hint_samples:=0
 var hint_reads:=0
 var foot_progress_start:=235
@@ -182,6 +184,7 @@ func run()->void:
 		var region:=text_of(level.polish.card_title)
 		if not region.is_empty() and region not in regions:
 			regions.append(region);record("region_card",region)
+			if "源井" in region or "井区" in region or "Caisson" in region:shaft_threat=true
 		var prompt:=text_of(level.prompt)
 		if not prompt.is_empty() and prompt!=last_prompt:record("prompt",prompt)
 		last_prompt=prompt
@@ -192,7 +195,10 @@ func run()->void:
 		var lines:=subtitles()
 		for line:String in lines:
 			if line not in last_subtitles:record("caption",line)
-			if "纹丝不动" in line:heard_side_door=true
+			var low:=line.to_lower()
+			if "纹丝不动" in line or "拉杆卡死" in line or "拉杆彻底卡死" in line or "推不开" in line or "锁死了" in line or "dead-bolted" in low or "won't budge" in low:heard_side_door=true
+			if "动静" in line or "听声" in line or "苏醒" in line or "回声" in line or "脚步声" in line or "just woke" in low or "pacing" in low:shaft_threat=true
+			if "拿到了" in line or "源核脱槽" in line or "got the core" in low or "core extracted" in low:escaping=true;shaft_threat=false
 		last_subtitles=lines
 		var failure:=text_of(level.polish.fail_title)
 		var ending:=text_of(level.polish.end_card)
@@ -220,7 +226,8 @@ func run()->void:
 		if tick==next:
 			assert(tick-observed_tick==delay and not perception.is_empty())
 			last_intent=policy.decide(perception);decisions+=1
-			if careful_from_manual and last_intent.get("move",false):last_intent["quiet"]=true
+			if careful_from_manual and shaft_threat and not escaping and last_intent.get("move",false):last_intent["quiet"]=true
+			if escaping and last_intent.get("move",false):last_intent["quiet"]=false
 			var motor_text:="轻步前进" if last_intent.get("move",false) and last_intent.get("quiet",false) else "向前走" if last_intent.get("move",false) else "站定"
 			var turn_deg:=rad_to_deg(float(last_intent.get("turn",0.)))
 			if absf(turn_deg)>=1.:motor_text+="，向%s转 %.0f°"%["左" if turn_deg>0 else "右",absf(turn_deg)]
@@ -231,7 +238,7 @@ func run()->void:
 				decision_trace.append({"tick":tick,"observed_tick":observed_tick,
 					"hold_ticks":int(last_intent.get("hold",policy.profile.hold)),"intent":last_intent.duplicate(true)})
 			if not perception.people.is_empty():visible_person_samples+=1
-			close_floor=policy.heard_gate
+			close_floor=policy.heard_gate or policy.gate_released or policy.core_escape
 			previous_probe=last_intent.get("probe","")
 			if last_intent.has("probe"):
 				var name:String=last_intent.probe

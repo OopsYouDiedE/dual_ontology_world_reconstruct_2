@@ -1,4 +1,5 @@
 extends RefCounted
+const R18n=preload("res://scenes/components/shared/R18n.gd")
 ## Hale's side of the B2/B3 experiment. No cutscene or camera override:
 ## the evidence is made from the same unobstructed rays that drive the plate.
 enum Beat { FOLLOW, WINDOW, WITHDRAW, DOOR, WAIT, PEEK, CROSS, DONE }
@@ -90,9 +91,9 @@ func step(lv,dt:float)->bool:
 					var can_speak:bool=not lv.captions.entries.has("Hale") or prev_id in ["start","sealed_well","collapse","hale_gate"]
 					if not lv.cues.has("ward_paired") and not lv.cues.has("ward_unseen") and can_speak:
 						if facts.evaluate("door_paired"):
-							lv.line_once("ward_paired","别迈过那道门槛！《守则》写着双人互保，可刚才我们隔着窗同看，板子差点炸裂……你若非要独身试板，我就在门外替你守着退路。")
+							lv.line_once("ward_paired",R18n.pick("别跨进去！守则写双人互保，但刚才隔窗同看它差点崩了。你要独自试板，我在门外守退路。","Stay out! Manual says pair up, yet our shared gaze nearly broke it. If you test it solo, I'll hold the door."))
 						else:
-							lv.line_once("ward_unseen","里面是琥珀测试室，师兄的抄表记录就断在这里。我不敢违背旧守则贸然进去——我在门边守着，有异动立刻退回来。")
+							lv.line_once("ward_unseen",R18n.pick("我在门外守着，有异动立刻退回来。里面是琥珀测试室，前班记录断在这儿，我不敢破旧守则硬进。","I'll hold the door—fall back if anything shifts. That's the amber test room where night shift's log stopped; I won't break manual rules."))
 					if lv.cues.has("ward_paired") or lv.cues.has("ward_unseen"):beat=Beat.WAIT
 				if entered_trial and (at_door or lv.cues.has("ward_paired") or lv.cues.has("ward_unseen")):beat=Beat.PEEK
 			return true
@@ -131,7 +132,7 @@ func compare(lv,count:int,dt:float)->void:
 	overlap=overlap+dt if count==2 else 0.
 	if overlap<.44:return
 	facts.record("dual_gaze_b2","two unobstructed window rays for 0.44 s")
-	lv.line_once("window","糟了——板面翻红了！玻璃挡不住视线，我们俩同时盯着它了！快，谁先看到的谁立刻移开眼！")
+	lv.line_once("window",R18n.pick("移开眼！谁先看到的立刻转头——玻璃挡不住视线，咱俩同时看把板面看红了！","Look away! Whoever saw it first, turn now—glass didn't block our gaze and the plate went red!"))
 	if lv.contracts.a_role==lv.contracts.Seer.HALE:
 		beat=Beat.WITHDRAW;recoil_left=.65;lv.polish.kick(.14)
 
@@ -169,4 +170,4 @@ func record_crossing(lv, crossed_in_hale_view:bool)->void:
 	if crossed_in_hale_view:
 		facts.record("hale_saw_crossing_b3","Hale had a clear doorway sightline during the locked crossing")
 	if facts.evaluate("hale_comparison"):
-		lv.line_once("hale_evidence","……我真不敢相信。在窗边我们俩同看，它几乎当场崩塌；刚才你在里面孤身盯住它，竟稳稳走了过去。旧守则……真的写反了。")
+		lv.line_once("hale_evidence",R18n.pick("旧守则真的写反了。刚隔窗同看差点崩，你刚才独自盯住却稳稳走了过去。","The old manual really had it backwards. Shared gaze nearly broke it, and you just walked right across alone."))

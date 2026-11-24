@@ -31,6 +31,11 @@ func run()->void:
 	check(vision.hit(eye,space,RID(),Vector3(4,0,-1)).is_empty(),"Offscreen probe")
 	check(vision.hit(eye,space,RID(),Vector3(0,0,3)).is_empty(),"Behind camera")
 	check(vision.hit(eye,space,RID(),Vector3(0,0,-11)).is_empty(),"Beyond range")
+	var landing:=CSGBox3D.new();landing.position.z=-2.;landing.use_collision=true;root.add_child(landing)
+	for i in 3:await physics_frame
+	var direct_hit:=vision.hit(eye,space,RID(),probe)
+	check(direct_hit.has("point") and absf(direct_hit.get("point",Vector3.ZERO).z+1.5)<.02,"Visible CSG platform is its own collision owner")
+	landing.hide();check(absf(vision.hit(eye,space,RID(),probe).get("point",Vector3.ZERO).z+4.5)<.02,"Hidden CSG ignored")
 	var body:=CharacterBody3D.new();root.add_child(body)
 	var sign:=Label3D.new();sign.text="档案室 / ARCHIVE";sign.pixel_size=.013
 	sign.position=Vector3(0.,0.,-4.);root.add_child(sign)

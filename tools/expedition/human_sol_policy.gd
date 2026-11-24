@@ -384,11 +384,6 @@ var plate_retry:=0
 func try_plate(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 	if plate_retry>0:
 		plate_retry-=1;return {}
-	if not doused and o.get("oil_warning",false):
-		doused=true;return {"key":KEY_R,"probe":"reserve_lamp_oil"}
-	var area:=String(o.get("region","" )).to_lower()
-	if gate_released and not surveyed_shaft and ("源井" in area or "caisson" in area):
-		surveyed_shaft=true;shaft_survey=9
 	for caption:String in o.captions:
 		if "稳住视线两秒" in caption or "独自试板" in caption or "我一人注视" in caption or "hold steady two more seconds" in caption.to_lower() or "lone gaze" in caption.to_lower():amber_lesson=true
 	if plate_phase==0:

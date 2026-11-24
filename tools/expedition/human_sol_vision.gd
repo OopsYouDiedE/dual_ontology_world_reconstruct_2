@@ -16,7 +16,9 @@ func hit(eye:Camera3D, space:PhysicsDirectSpaceState3D, excluded:RID, probe:Vect
 		var result:=space.intersect_ray(query)
 		if result.is_empty():return {"empty":true}
 		var shape_owner:=result.collider as Node3D
-		if shape_owner!=null and shape_owner.is_visible_in_tree() and result.collider.get_parent() is GeometryInstance3D:
+		var surface:=shape_owner as GeometryInstance3D
+		if surface==null and shape_owner!=null:surface=shape_owner.get_parent() as GeometryInstance3D
+		if surface!=null and shape_owner.is_visible_in_tree() and (surface.layers & eye.cull_mask)!=0:
 			return {"point":result.position,"normal":result.normal}
 		var omit:=query.exclude;omit.append(result.rid);query.exclude=omit
 	return {}

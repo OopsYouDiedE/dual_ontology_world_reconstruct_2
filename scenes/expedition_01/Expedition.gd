@@ -1054,6 +1054,9 @@ func animate_hale(prior:Vector3,dt:float)->void:
 	hale.rotation.y=rotate_toward(hale_yaw_before_step,target_yaw,HALE_TURN_RATE*dt)
 func line_once(id:String,text:String)->void:
 	if cues.has(id):return
+	# Only mark delivered when Hale is actually in earshot so rushing ahead
+	# does not permanently swallow critical narrative cues.
+	if not hale_in_earshot():return
 	cues[id]=true
 	show_line(id,text)
 func hale_in_earshot()->bool:

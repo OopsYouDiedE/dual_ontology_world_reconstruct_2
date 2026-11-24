@@ -36,3 +36,11 @@
 3. **首轮顺序**：先做折返闸，再用相同验收方法复查大厅与天文台。通过项目 MCP 在真实 Forward+ 拍摄，截图统一为 1080×720 JPEG。旧截图归入迭代记录。
 
 图像出处与逐帧读图见[参考研究](../research/expedition/README.md)。
+
+## 锁版渲染规范（2026-11-24 验收固定）
+
+本轮实机验收已确认与《蓝图王子》（Blue Prince）一致的正式三渲二渲染风格为全项目锁版标准，后续所有关卡（含 `Expedition-01`、公共大厅与肉鸽房牌）必须严格沿用，不得回退为纯 PBR 素面或高饱和光晕：
+
+- **建筑与道具着色器**：全部不透明建筑体块与常规道具统一使用 `res://scenes/blue_prince_lab/HallFinish.gdshader`（手绘水彩笔触噪点 + 木纹/石面/金属粗糙度分化 + `toon_on = true, toon_strength = 0.86`）；透明玻璃与特殊发光板（如 `GazePlate.gdshader`）按各自物理/规则用途保留专用着色器。
+- **原分辨率细墨线**：视口挂载 `res://scenes/components/rendering/post/InkPass.gd`（`HallInk` 细线轮廓），配合角色中亮/中灰 1900 年代服装与中深栗棕发色（禁止纯黑吞没描边）。
+- **色调与环境分级**：Filmic 色调映射、`adjustment_contrast = 1.08`、`adjustment_saturation = 0.80`（大厅基准 `Hall04.tres` 为 `0.76`）；区域冷暖光雾与柔和灯源衰减统一由 `AcademyRenderProfile.gd` 驱动，室内氛围光与外窗时间光严格分离。

@@ -28,6 +28,7 @@ func reset_motion(downstream:bool)->void:
 	route.clear();overlap=0.;entered_trial=false;pose=&"";gaze=Vector3.ZERO
 
 func in_window(p:Vector3)->bool:return p.x>21.9 and p.x<27.7 and p.z>=7.29 and p.z<8.88
+func in_doorway(p:Vector3)->bool:return p.x>=19.8 and p.x<=22.8 and p.z>=7.2 and p.z<=9.2
 
 func move(lv,point:Vector3,dt:float,speed:=4.8)->bool:
 	lv.hale.position=lv.hale.position.move_toward(point,dt*speed)
@@ -47,7 +48,7 @@ func step(lv,dt:float)->bool:
 		entered_trial=true
 		facts.decide("trial_entry",true,"B3 is open; the window trial is optional")
 	if lv.hale_hold and beat!=Beat.FOLLOW and beat!=Beat.DONE:return true
-	if beat==Beat.FOLLOW and not lv.hale_hold and h.distance_to(p)<16. and (in_window(p) or entered_trial):
+	if beat==Beat.FOLLOW and not lv.hale_hold and h.distance_to(p)<18. and (in_window(p) or in_doorway(p) or entered_trial):
 		beat=Beat.WINDOW;lv.trail.clear();lv.hale_hold=false;route.clear()
 		if h.x>27.72:
 			if h.z<2.32:
@@ -80,17 +81,20 @@ func step(lv,dt:float)->bool:
 			if recoil_left<=0.:beat=Beat.DOOR
 			return true
 		Beat.DOOR:
-			if move(lv,DOOR,dt,5.2):
+			var at_door:=move(lv,DOOR,dt,5.2)
+			if at_door or h.distance_to(DOOR)<1.25:
 				pose=&"ward"
 				face(lv,Vector3(20.37,0.,7.59),dt)
-				if p.distance_to(DOOR)<2.60:
-					if not lv.cues.has("ward_paired") and not lv.cues.has("ward_unseen") and not lv.captions.entries.has("Hale"):
+				if p.distance_to(DOOR)<3.25:
+					var prev_id:String=lv.captions.entries.get("Hale",{}).get("id","")
+					var can_speak:bool=not lv.captions.entries.has("Hale") or prev_id in ["start","sealed_well","collapse","hale_gate"]
+					if not lv.cues.has("ward_paired") and not lv.cues.has("ward_unseen") and can_speak:
 						if facts.evaluate("door_paired"):
 							lv.line_once("ward_paired","别迈过那道门槛！《守则》写着双人互保，可刚才我们隔着窗同看，板子差点炸裂……你若非要独身试板，我就在门外替你守着退路。")
 						else:
 							lv.line_once("ward_unseen","里面是琥珀测试室，师兄的抄表记录就断在这里。我不敢违背旧守则贸然进去——我在门边守着，有异动立刻退回来。")
 					if lv.cues.has("ward_paired") or lv.cues.has("ward_unseen"):beat=Beat.WAIT
-				if entered_trial:beat=Beat.PEEK
+				if entered_trial and (at_door or lv.cues.has("ward_paired") or lv.cues.has("ward_unseen")):beat=Beat.PEEK
 			return true
 		Beat.WAIT:
 			face(lv,Vector3(20.35,0.,7.58),dt)

@@ -15,6 +15,7 @@ const ROSE_NORTH_TEX := "res://tools/research/french_gothic_nodes/rose_register.
 const ROSE_SOUTH_TEX := "res://tools/research/french_gothic_nodes/rose_botanical.png"
 
 const SPRING_H := 4.80
+const ARCADE_INSET := 0.30
 const PIER_INSET := 0.29
 const CROWN_RISE := 6.25
 const CROWN_H := SPRING_H + CROWN_RISE
@@ -106,19 +107,19 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	var bay_len := span_z / float(bays_z)
 
 	# 1. Single grand clear-span Gothic nave vault (NO center columns!)
-	_build_nave_vault_and_ribs(min_x, max_x, min_z, max_z, bays_z, bay_len)
+	_build_nave_vault_and_ribs(min_x + ARCADE_INSET, max_x - ARCADE_INSET, min_z, max_z, bays_z, bay_len)
 
 	# 2. Perimeter clustered Gothic piers along West & East walls ONLY
 	for iz in range(bays_z + 1):
 		var pz := min_z + float(iz) * bay_len
-		_build_clustered_pier(Vector3(min_x + PIER_INSET, 0.0, pz), 1.0)
-		_build_clustered_pier(Vector3(max_x - PIER_INSET, 0.0, pz), -1.0)
+		_build_clustered_pier(Vector3(min_x + ARCADE_INSET + PIER_INSET, 0.0, pz), 1.0)
+		_build_clustered_pier(Vector3(max_x - ARCADE_INSET - PIER_INSET, 0.0, pz), -1.0)
 
 	# 3. Full-height East & West Gothic walls with dark walnut dado + UV-mapped stained glass paired lancets
 	var lancet_tex := _load_texture(LANCET_TEX)
 	for side_i in 2:
 		var is_west := (side_i == 0)
-		var wx := min_x + 0.04 if is_west else max_x - 0.04
+		var wx := min_x + ARCADE_INSET + 0.04 if is_west else max_x - ARCADE_INSET - 0.04
 		var inward_x := 1.0 if is_west else -1.0
 		for bi in bays_z:
 			var bz0 := min_z + float(bi) * bay_len
@@ -286,11 +287,10 @@ func _build_clustered_pier(pos: Vector3, inward_x: float) -> void:
 	_box(pier, Vector3(inward_x * 0.06, SPRING_H - 0.15, 0.0), Vector3(0.48, 0.11, 0.50), _mat_rib)
 	_box(pier, Vector3(inward_x * 0.08, SPRING_H - 0.05, 0.0), Vector3(0.56, 0.10, 0.58), _mat_rib)
 
-func _build_side_lancet_bay(wx: float, inward_x: float, z0: float, z1: float, variant: int, tex: Texture2D) -> void:
+func _build_side_lancet_bay(wx: float, inward_x: float, z0: float, z1: float, variant: int, tex: Texture2D, win_top := SPRING_H + 0.15) -> void:
 	var bay_w := z1 - z0
 	var cz := (z0 + z1) * 0.5
 	var dado_h := 1.38
-	var win_top := SPRING_H + 0.15
 
 	# Lower dark walnut wainscoting dado + stone sill
 	_box(self, Vector3(wx, dado_h * 0.5, cz), Vector3(0.18, dado_h, bay_w), _mat_wood)
@@ -704,24 +704,30 @@ func _build_watch_wings() -> void:
 	# Continuous floors and collision boundaries are authored in public_nave.xml.
 	for side: int in [-1,1]:
 		var cx := 16.0+7.5*side
+		var roof_x := cx - side * ARCADE_INSET * 0.5
 		for z: float in [13,21]:
-			_box(self,Vector3(cx,2.25,z),Vector3(5,4.5,0.12),_mat_wall)
+			_box(self,Vector3(roof_x,2.25,z),Vector3(5+ARCADE_INSET,4.5,0.12),_mat_wall)
 			_box(self,Vector3(cx,0.6,z+(0.08 if z==13 else -0.08)),Vector3(5,1.2,0.12),_mat_wood)
-		_box(self,Vector3(cx+2.5*side,2.25,17),Vector3(0.12,4.5,8),_mat_wall)
-		_box(self,Vector3(cx,4.45,17),Vector3(5,0.18,8),_mat_vault)
+		for bay in 2:
+			var z0 := 13.0 + bay * 4.0
+			_build_side_lancet_bay(cx+2.5*side,-side,z0,z0+4.0,bay+(2 if side>0 else 0),_load_texture(LANCET_TEX),4.45)
+		_box(self,Vector3(roof_x,4.45,17),Vector3(5+ARCADE_INSET,0.18,8),_mat_vault)
 		for z: float in [13.2,17,20.8]:
 			_box(self,Vector3(cx,4.28,z),Vector3(5,0.24,0.23),_mat_rib)
 		_build_wing_partition(cx,side)
-	_prop(self,"Cabinets/LinenCabinet",Vector3(9.5,0,20.7),PI)
+	_prop(self,"Cabinets/LinenCabinet",Vector3(9.5,0,20.65),PI)
+	_reserve_station(Vector3(9.5,0,20.65),Vector2(1.45,0.68),1.9)
 	_prop(self,"Props/Washstand",Vector3(6.53,0,15.15),PI/2)
 	_prop(self,"Tables/WorkCounter",Vector3(24.6,0,13.5))
+	_reserve_station(Vector3(24.6,0,13.5),Vector2(2.05,0.75),0.94)
 	_prop(self,"Props/CrockeryShelf",Vector3(25.75,0,18.2),-PI/2)
 	_camp_cot(self, watch_cot_pos + Vector3(-0.24,0,-1.65))
 	_prop(self,"Props/Screen",Vector3(11.27,0,20.35),PI/2)
 	for z: float in [14.25,15.9,18.45,20.0]:
-		_prop(self,"Beds/Bed",Vector3(7.65,0,z),PI/2,{"medical":z<17.0})
-		_reserve_station(Vector3(7.65,0,z),Vector2(2.15,1.15),0.52)
-	_prop(self,"Cabinets/MedicineCabinet",Vector3(9.75,0,13.36))
+		var bed := Vector3(9.6 if z==14.25 else 7.65,0,z)
+		_prop(self,"Beds/Bed",bed,PI/2,{"medical":z<17.0})
+		_reserve_station(bed,Vector2(2.15,1.15),0.52)
+	_prop(self,"Cabinets/MedicineCabinet",Vector3(7.35,0,13.38))
 	_pool(Vector3(9.8,2.5,16.2),Color("b9dfff"),3.8,6.4)
 	var board := _prop(self,"Props/Chalkboard",Vector3(20.72,0.35,19.75),-1.27)
 	for x: float in [-1.28,1.28]:
@@ -731,14 +737,15 @@ func _build_watch_wings() -> void:
 		_reserve_station(station,Vector2(2.15,3.4),0.75)
 		for dx: float in [-0.78,0.78]:
 			_prop(self,"Chairs/Bench",station+Vector3(dx,0,0),PI/2,{"width":3.1})
-	var stove := Vector3(22.45,0,13.9)
+	var stove := Vector3(22.08,0,13.88)
+	_reserve_station(stove,Vector2(2.05,0.8),0.95)
 	_prop(self,"Props/Stove",stove,0,{"width":2.0})
 	_prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45)
 	var embers := StandardMaterial3D.new()
 	embers.albedo_color = Color("ff862d"); embers.emission_enabled = true
 	embers.emission = Color("ff7022"); embers.emission_energy_multiplier = 3.4
-	_box(self,stove+Vector3(0,0.5,0.38),Vector3(1.44,0.36,0.06),embers)
-	for i in 9: _box(self,stove+Vector3((i-4)*0.16,0.5,0.43),Vector3(0.034,0.41,0.05),_mat_lead)
+	_box(self,stove+Vector3(0,0.5,0.435),Vector3(1.44,0.36,0.06),embers)
+	for i in 9: _box(self,stove+Vector3((i-4)*0.16,0.5,0.48),Vector3(0.034,0.41,0.05),_mat_lead)
 	_pool(stove+Vector3(0,1.02,0.82),Color("ff9e50"),5.4,7.5)
 	_pool(Vector3(21.1,1.45,16.65),Color("ffc182"),1.7,4.4)
 	_prop(self,"Cabinets/Bookshelf",Vector3(16,0,5.38),0,{"width":2.75,"bays":4,"shelves":5})

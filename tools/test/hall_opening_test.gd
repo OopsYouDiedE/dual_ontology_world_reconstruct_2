@@ -12,6 +12,19 @@ func check(ok: bool, msg: String) -> void:
 	if not ok:
 		failed += 1
 
+func reachable_cells(view, start: Vector2i) -> Dictionary:
+	var seen := {}
+	var pending: Array[Vector2i] = [start]
+	seen[start] = true
+	while not pending.is_empty():
+		var cell: Vector2i = pending.pop_back()
+		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var dest := cell + direction
+			if not seen.has(dest) and view._is_clear_cell(dest) and not view._has_wall_between(cell, dest):
+				seen[dest] = true
+				pending.append(dest)
+	return seen
+
 func run() -> void:
 	var entry := ExpeditionEntry.instantiate()
 	root.add_child(entry)
@@ -37,6 +50,9 @@ func run() -> void:
 				var a := Vector2i(door_x-1, arch_z)
 				var b := a+Vector2i.RIGHT
 				check(game.room_view._is_clear_cell(a) and game.room_view._is_clear_cell(b) and not game.room_view._has_wall_between(a,b), "Open side arcade at %s" % str(b))
+		var reachable := reachable_cells(game.room_view, Vector2i(16,24))
+		for interior: Vector2i in [Vector2i(9,15),Vector2i(9,19),Vector2i(24,15),Vector2i(22,19)]:
+			check(reachable.has(interior), "Hall spawn reaches furnished wing interior %s" % str(interior))
 		var desk := gothic.find_child("EssenceCalibrationLectern", true, false) as Node3D
 		check(well != null and well.global_position.distance_to(gothic.pendulum_world_pos) < 0.01, "Flush tourbillon and suspension share one axis")
 		check(desk != null and is_equal_approx(desk.position.x, gothic.pendulum_world_pos.x), "North desk is centered beyond pendulum")

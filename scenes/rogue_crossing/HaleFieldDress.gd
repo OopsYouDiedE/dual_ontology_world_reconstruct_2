@@ -6,7 +6,7 @@ const SIDE_PART := preload("res://scenes/rogue_crossing/HaleSidePart.gdshader")
 static var _tailored := {}
 
 static func fit(body: Node3D) -> void:
-	# Collapse the stock quiff into a close, off-centre comb-over.
+	# Collapse the stock quiff into a close, off-centre comb-over with fuller temples.
 	body.find_child("Hair_SolidLocks", true, false).hide()
 	for label in [&"Hair_Cap", &"Wardrobe_Outfit"]:
 		var node := body.find_child(label, true, false) as MeshInstance3D
@@ -31,8 +31,12 @@ static func _cut(source: Mesh, label: StringName) -> ArrayMesh:
 			if not on_coat: torso = 0.0
 			var waist := exp(-pow((v.y - 1.055) / .042, 2.0)) * torso
 			var skirt := smoothstep(.76, .86, v.y) * (1.0 - smoothstep(.88, 1.10, v.y)) * torso
-			v.x *= 1.0 - .047 * waist + .065 * skirt
-			v.z = .036 + (v.z - .036) * (1.0 - .07 * waist + .085 * skirt)
+			# Structured 1900s Norfolk shoulder pad lift & subtle chest lapel ridge
+			var shoulder := smoothstep(1.37, 1.46, v.y) * smoothstep(.12, .195, absf(v.x)) * (1.0 if on_coat else 0.0)
+			var lapel := exp(-pow((absf(v.x) - .052) / .018, 2.0)) * smoothstep(1.25, 1.40, v.y) * smoothstep(.075, .115, v.z) * torso
+			v.x *= 1.0 - .047 * waist + .065 * skirt + .024 * shoulder
+			v.y += .008 * shoulder
+			v.z = .036 + (v.z - .036) * (1.0 - .07 * waist + .085 * skirt) + .005 * lapel
 			var panel := 0.0
 			for center in [Vector2(.112, .927), Vector2(.101, 1.218)]:
 				var delta: Vector2 = (Vector2(absf(v.x), v.y) - center).abs()
@@ -43,13 +47,14 @@ static func _cut(source: Mesh, label: StringName) -> ArrayMesh:
 			var part := v.x + .031 - .23 * (v.z - .110)
 			var front := smoothstep(.030, .135, v.z)
 			var sweep := smoothstep(-.018, .023, part)
-			v.y += .004 + top * front * (.007 * sweep - .004 * exp(-pow(part / .008, 2.0)))
-			v.x *= 1.025
-
+			# Sculpted 1900s side-part volume & fuller temples/sideburns for clear-line silhouette
+			var temple := smoothstep(.058, .082, absf(v.x)) * smoothstep(1.635, 1.695, v.y) * (1.0 - smoothstep(1.71, 1.76, v.y))
+			v.y += .005 + top * front * (.009 * sweep - .0045 * exp(-pow(part / .008, 2.0)))
+			v.x *= 1.032 + .028 * temple
 			bind_uv.append(Vector2(v.x, v.z))
 			var nape := (1.0 - smoothstep(-.058, .023, v.z)) * (1.0 - smoothstep(1.65, 1.736, v.y))
 			v.y += .028 * nape
-			v.z += .004 * nape
+			v.z += .005 * nape
 		vertices[i] = v
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_TEX_UV2] = bind_uv

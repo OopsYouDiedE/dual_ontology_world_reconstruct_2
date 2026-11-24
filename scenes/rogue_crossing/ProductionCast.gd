@@ -1,5 +1,6 @@
 extends RefCounted
-## Production cast: one MPFB2 R-05 rig, common animated poses and one Toon finish.
+## Production cast: one MPFB2 R-05 rig, 25-sample 3-axis biomechanical poses
+## (pitch + hip/chest counter-yaw + weight roll) and one Toon finish.
 const MODEL := preload("res://assets/characters/mpfb/r05_formal.glb")
 const FINISH := preload("res://scenes/components/rendering/actors/CastDielectric.gdshader")
 const BODIES := [
@@ -91,7 +92,7 @@ static func _relative_to_body(body: Node3D, node: Node3D) -> Transform3D:
 static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis, expedition_hale:=false) -> AnimationLibrary:
 	var library := AnimationLibrary.new()
 	var path := body.get_path_to(skeleton)
-	var lengths := {&"idle": 2.4, &"walk": 0.9, &"run": 0.65, &"interact": 0.85, &"signal": 2.0, &"examine": 2.0, &"listen": 2.0}
+	var lengths := {&"idle": 3.2, &"walk": 0.92, &"run": 0.62, &"interact": 0.85, &"signal": 2.0, &"examine": 2.0, &"listen": 2.0}
 	var clip_bones:=BONES.duplicate()
 	if expedition_hale:
 		lengths[&"gate_effort"]=1.14
@@ -109,23 +110,59 @@ static func _build_clips(body: Node3D, skeleton: Skeleton3D, to_rig: Basis, expe
 			var track := anim.add_track(Animation.TYPE_ROTATION_3D)
 			anim.track_set_path(track, NodePath("%s:%s" % [path, bone_name]))
 			var rest := skeleton.get_bone_pose_rotation(bone)
-			var axis := (skeleton.get_bone_global_pose(bone).basis.inverse() * to_rig * Vector3.RIGHT).normalized()
-			var roll := (skeleton.get_bone_global_pose(bone).basis.inverse() * to_rig * Vector3.BACK).normalized()
-			var samples:=33 if clip==&"gate_effort" else 9
+			var b_inv := skeleton.get_bone_global_pose(bone).basis.inverse()
+			var axis := (b_inv * to_rig * Vector3.RIGHT).normalized()
+			var roll := (b_inv * to_rig * Vector3.BACK).normalized()
+			var yaw_ax := (b_inv * to_rig * Vector3.UP).normalized()
+			var samples:=33 if clip==&"gate_effort" else 25
 			for k in samples:
 				var t:=float(k)/(samples-1)
 				var pitch:=_angle(clip,bone_name,t)
 				var sway:=_roll(clip,bone_name,t)
+				var twist:=_yaw(clip,bone_name,t)
 				var curl:=0.
 				if expedition_hale:
 					pitch+=_hale_rest_pitch(bone_name,clip,t)
 					sway+=_hale_stance_roll(bone_name,clip)
 					curl=_hale_finger_curl(bone_name,clip,t)
-				anim.rotation_track_insert_key(track,t*anim.length,rest*Quaternion(roll,sway)*Quaternion(axis,pitch)*Quaternion(Vector3.RIGHT,curl))
+				var q := rest * Quaternion(yaw_ax, twist) * Quaternion(roll, sway) * Quaternion(axis, pitch) * Quaternion(Vector3.RIGHT, curl)
+				anim.rotation_track_insert_key(track,t*anim.length,q)
 		library.add_animation(clip, anim)
 	return library
 
+static func _yaw(clip:StringName,bone:String,t:float)->float:
+	# Biomechanical hip-vs-chest counter-rotation during locomotion and natural head scan on idle.
+	if clip==&"idle":
+		if bone=="head":return 0.065*sin(TAU*t)+0.025*sin(TAU*2.0*t+.6)
+		if bone=="spine_03":return 0.022*sin(TAU*t+.4)
+		return 0.
+	if clip in [&"walk",&"run"]:
+		var vigor:=1.45 if clip==&"run" else 1.0
+		var phase:=sin(TAU*t)
+		if bone=="spine_01":return 0.055*phase*vigor
+		if bone=="spine_03":return -0.095*phase*vigor
+		if bone=="head":return 0.042*phase*vigor
+		return 0.
+	if clip==&"watch_plate":
+		if bone=="head":return 0.04*sin(TAU*t)
+	if clip==&"peek":
+		if bone=="head":return 0.07*sin(TAU*t)
+	return 0.
+
 static func _roll(clip:StringName,bone:String,t:float)->float:
+	if clip==&"idle":
+		if bone=="spine_01":return 0.016*sin(TAU*t)
+		if bone=="head":return -0.020*sin(TAU*t+.35)
+		if bone=="upperarm_l":return 0.018*sin(TAU*t)
+		if bone=="upperarm_r":return -0.018*sin(TAU*t)
+		return 0.
+	if clip in [&"walk",&"run"]:
+		var vigor:=1.35 if clip==&"run" else 1.0
+		var phase:=cos(TAU*t)
+		if bone=="spine_01":return 0.040*phase*vigor
+		if bone=="spine_03":return -0.032*phase*vigor
+		if bone=="head":return -0.014*phase*vigor
+		return 0.
 	if clip==&"ward":return float({"upperarm_r":.32,"spine_01":-.09,"head":.09}.get(bone,0.))
 	if clip==&"peek":return float({"head":-.12,"spine_03":-.11}.get(bone,0.))
 	if clip not in [&"signal",&"examine",&"listen"]:return 0.
@@ -142,32 +179,49 @@ static func _angle(clip: StringName, bone: String, t: float) -> float:
 		return hold * float({"thigh_l":-.13,"calf_l":.20,"upperarm_l":-.56,"lowerarm_l":-2.24,"head":.16,"spine_03":.08}.get(bone,0.0))
 	if clip == &"gate_effort":
 		var reach:=_gate_reach(t)
-		# Two shoulder pulls around planted knuckles; the elbow gives slightly on each pull.
 		var thrust:=reach*maxf(0.,cos(TAU*(t-.32)/.29))
 		if bone.begins_with("upperarm"):return -.53*reach-.08*thrust
 		if bone.begins_with("lowerarm"):return -.64*reach+.047*thrust
 		if bone=="spine_01":return .035*thrust
 		if bone=="spine_03":return .075*thrust
 		return 0.
-	if clip==&"watch_plate":return float({"head":.25,"spine_03":.12}.get(bone,0.))
-	if clip==&"ward":return float({"upperarm_r":-.91,"lowerarm_r":-.75,"upperarm_l":-.20,"head":-.10,"spine_03":-.09}.get(bone,0.))
-	if clip==&"peek":return float({"head":.09,"spine_01":.07,"spine_03":.17,"upperarm_l":-.15}.get(bone,0.))
+	if clip==&"watch_plate":
+		var breath:=0.018*sin(TAU*t)
+		return float({"head":.25+breath,"spine_03":.12+breath*.7}.get(bone,0.))
+	if clip==&"ward":
+		var breath:=0.02*sin(TAU*t)
+		return float({"upperarm_r":-.91+breath,"lowerarm_r":-.75,"upperarm_l":-.20,"head":-.10,"spine_03":-.09+breath*.6}.get(bone,0.))
+	if clip==&"peek":
+		var breath:=0.018*sin(TAU*t)
+		return float({"head":.09+breath,"spine_01":.07,"spine_03":.17+breath*.6,"upperarm_l":-.15}.get(bone,0.))
 	if clip == &"interact":
 		var reach := sin(PI * t)
 		match bone:
 			"upperarm_r": return -0.56 * reach
 			"lowerarm_r": return -0.68 * reach
-			"spine_03": return 0.10 * reach
+			"spine_03": return 0.12 * reach
+			"head": return 0.08 * reach
 		return 0.0
 	if clip == &"idle":
-		return 0.027 * sin(TAU * t) if bone == "spine_03" else 0.0
+		var breath := sin(TAU * t)
+		match bone:
+			"spine_03": return 0.032 * breath
+			"head": return -0.018 * breath + 0.014 * sin(TAU * 2.0 * t)
+			"upperarm_l", "upperarm_r": return 0.022 * breath
+			"lowerarm_l", "lowerarm_r": return -0.035 - 0.015 * breath
+		return 0.0
 	var stride := sin(TAU * t) * (-1.0 if bone.ends_with("_r") else 1.0)
-	var vigor := 1.48 if clip == &"run" else 1.0
-	if bone.begins_with("thigh"): return -0.34 * stride * vigor
-	if bone.begins_with("calf"): return 0.46 * maxf(0.0, -stride) * vigor
-	if bone.begins_with("foot"): return -0.15 * maxf(0.0, -stride) * vigor
-	if bone.begins_with("upperarm"): return 0.22 * stride * vigor
-	if bone.begins_with("lowerarm"): return -0.10 - 0.18 * maxf(0.0, stride) * vigor
+	var double_bob := cos(TAU * 2.0 * t)
+	var is_run := clip == &"run"
+	var vigor := 1.48 if is_run else 1.0
+	if bone == "spine_01": return (0.11 if is_run else 0.03) + 0.022 * double_bob * vigor
+	if bone == "spine_03": return (0.09 if is_run else 0.02) - 0.018 * double_bob * vigor
+	if bone == "head": return (-0.09 if is_run else -0.02)
+	if bone.begins_with("thigh"): return -0.36 * stride * vigor
+	if bone.begins_with("calf"): return 0.50 * maxf(0.0, -stride) * vigor + (0.06 if is_run else 0.02)
+	if bone.begins_with("foot"): return -0.18 * maxf(0.0, -stride) * vigor + 0.07 * maxf(0.0, stride)
+	if bone.begins_with("upperarm"): return 0.26 * stride * vigor
+	if bone.begins_with("lowerarm"): return (-0.28 if is_run else -0.14) - 0.22 * maxf(0.0, stride) * vigor
 	return 0.0
 
 static func _gate_reach(t:float)->float:

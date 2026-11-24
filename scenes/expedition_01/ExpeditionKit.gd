@@ -35,13 +35,14 @@ var vault_can:Node3D
 var niche_oil:Node3D
 var pilgrim_run:Marker3D
 var run_lamp:OmniLight3D
+var pump_wheel:Node3D
 const NICHE_DOOR_X:=9.2
 const NICHE_Z:=5.1
 
 const Maintenance:=preload("MaintenanceLoop.gd")
 var maintenance:Maintenance
 func build()->void:
-	arcade();arcade_details();archive();archive_details();side_niche();side_niche_details();shaft();shaft_details();hardware();return_gallery()
+	arcade();arcade_details();archive();archive_details();pump_room();side_niche();side_niche_details();shaft();shaft_details();hardware();return_gallery()
 func marker(id:String,where:Vector3)->Marker3D:
 	var spot:=Marker3D.new();spot.name=id;section.add_child(spot);spot.position=where;return spot
 func arcade()->void:
@@ -121,6 +122,12 @@ func arcade()->void:
 	for z in [-.15,.15]:rect("GuideInlay",18,.006,z,36,.012,.032,"joint",false)
 	# 壁龛长椅与练习矮箱：给走跑/跳跃一处有碰撞的练习场。
 	maintenance=Maintenance.new();root_group.add_child(maintenance);maintenance.build()
+	for i in 6:
+		var lx:=3.+6.*i
+		beam(Vector3(lx,4.35,0.),Vector3(lx,5.15,0.),.024,"iron")
+		rect("PendantCap",lx,4.34,0.,.26,.06,.26,"brass",false)
+		rect("PendantGlobe",lx,4.16,0.,.18,.28,.18,"amber",false)
+		rect("PendantBase",lx,3.99,0.,.22,.05,.22,"brass",false)
 	for x in [9.,21.]:
 		rect("NicheBenchSeat",x,.42,-1.72,1.26,.09,.44,"trim")
 		rect("NicheBenchBack",x,.78,-1.92,1.26,.62,.08,"trim")
@@ -184,6 +191,32 @@ func archive()->void:
 ## east door feeds a low earth-cut run that opens into B2 through the old
 ## window bay, so a player who keeps still can skip the B1 vestibule entirely.
 ## Payoff for stillness: the niche lamp oil only lifts from a stopped stance.
+## B6 Counterweight Pump Room: furnishes the north bay off B5 with a vaulted
+## brass manifold, interactive flywheel valve (+oil & counterweight balance), and
+## warm industrial pendant lighting.
+func pump_room()->void:
+	group("B6_CounterweightPumpRoom")
+	lid(38.7,3.1,5.1,8.5,3.55)
+	for z in [1.2,3.1,5.0]:
+		beam(Vector3(40.75,.05,z),Vector3(40.75,3.45,z),.075,"brass")
+		rect("PumpCollar",40.75,1.65,z,.24,.10,.24,"iron",false)
+	beam(Vector3(40.75,2.85,1.0),Vector3(40.75,2.85,5.2),.085,"brass")
+	rect("PumpPlinth",39.8,.52,3.1,1.15,1.04,1.35,"iron")
+	rect("PumpGauge",39.22,1.38,3.1,.08,.34,.34,"brass",false)
+	rect("PumpGaugeDial",39.17,1.38,3.1,.03,.24,.24,"amber",false)
+	pump_wheel=Node3D.new();section.add_child(pump_wheel);pump_wheel.position=Vector3(39.18,1.08,3.1)
+	var rim:=MeshInstance3D.new();var tor:=TorusMesh.new();tor.inner_radius=.24;tor.outer_radius=.30;rim.mesh=tor
+	rim.rotation.z=PI*.5;rim.material_override=mat("brass");pump_wheel.add_child(rim)
+	var pw_parent:=section;section=pump_wheel
+	rect("PumpSpokeV",0,0,0,.04,.52,.05,"iron",false)
+	rect("PumpSpokeH",0,0,0,.04,.05,.52,"iron",false)
+	section=pw_parent
+	for z in [1.6,4.6]:rect("PumpDrainGrate",38.5,.006,z,1.8,.014,.68,"iron",false)
+	plaque("COUNTERWEIGHT PUMP",Vector3(38.7,2.68,7.04),1.78,PI)
+	var plamp:=OmniLight3D.new();add_child(plamp)
+	plamp.position=Vector3(38.7,3.05,3.2);plamp.light_color=Color("ffd093")
+	plamp.omni_range=7.5;plamp.light_energy=1.15;plamp.omni_attenuation=1.45;plamp.shadow_enabled=true
+
 func side_niche()->void:
 	group("A2_QuietNiche")
 	slab(12.075,4.775,7.35,5.15)
@@ -384,6 +417,13 @@ func shaft()->void:
 	rect("BrassPanicBar",-.16,-.15,.90,.09,.09,1.38,"brass",false)
 	section=door_section
 	core=rect("SourceCore",CX+10.8,1,CZ,.42,.68,.42,"amber");rect("CorePlinth",CX+10.8,.31,CZ,.85,.62,.85,"joint")
+	for bx in [52.3,69.7]:
+		for bz in [8.55,11.65]:
+			rect("BridgeBollard",bx,.34,bz,.16,.68,.16,"iron",false)
+			rect("BridgeBollardCap",bx,.72,bz,.12,.10,.12,"amber",false)
+	for k in 6:
+		var ang:=PI*k/6.
+		box("PitGrateBar",Vector3(CX,SHAFT_FLOOR_Y+.012,CZ),Vector3(24.,.024,.16),"iron",false,ang)
 	label_at("SOURCE CAISSON",Vector3(46.1,2.9,CZ),-PI/2)
 
 ## The green door leads to the actual south service gallery. Its roof and slope

@@ -83,6 +83,7 @@ const Contracts=preload("ExpeditionContracts.gd")
 var contracts:=Contracts.new()
 var region:=""
 var niche_taken:=false
+var pump_balanced:=false
 var region_card_time:=0.
 var fail_reason:=""
 var prior_seer:=Contracts.Seer.NONE
@@ -564,6 +565,7 @@ func focus()->String:
 	if not taken and walker.position.z<15.2 and aimed(Vector3(34.14,.5,14.67),2.8):return "loot"
 	if aimed(Vector3(23.6,1.03,4),2.8):return "note"
 	if not niche_taken and aimed(Vector3(13.9,.62,5.9),2.6,.93):return "niche_oil"
+	if not pump_balanced and aimed(Vector3(39.2,1.10,3.1),2.8,.92):return "pump_valve"
 	if not released and aimed(Vector3(36.3,1.35,7.72),3.):return "lever"
 	if released and not collected and aimed(kit.core.position,2.8):return "core"
 	if collected and not shortcut_open and aimed(kit.leaf.global_position,3.5,.94):return "return"
@@ -642,6 +644,13 @@ func use()->void:
 			solo_tw.tween_callback(func()->void:finish_expedition(true))
 		"vault_oil":
 			oil=minf(100.,oil+20.);kit.vault_can.hide();say("已收起备用灯油")
+		"pump_valve":
+			pump_balanced=true;oil=minf(100.,oil+20.)
+			if released:checkpoint_oil=minf(100.,checkpoint_oil+20.)
+			if kit.pump_wheel:create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).tween_property(kit.pump_wheel,"rotation:x",TAU,1.05)
+			sound_at("lever",Vector3(39.2,1.10,3.1),-10.,14.);sound_at("chain",Vector3(40.75,2.2,3.1),-14.,14.)
+			polish.kick(.18);contracts.award("pump_valve")
+			toast(R18n.pick("配重泵已稳压 · 回收副箱灯油 +20%。","Counterweight balanced · +20% auxiliary oil recovered."))
 		"stele1":read_stele("sound")
 		"stele2":read_stele("light")
 		"hale":talk_to_hale()
@@ -900,6 +909,7 @@ func _physics_process(dt:float)->void:
 	hints["maintenance_oil"]=R18n.t("prompt.maint_oil")
 	hints["vault_oil"]=R18n.t("prompt.vault_oil")
 	hints["niche_oil"]=R18n.t("prompt.niche_oil")
+	hints["pump_valve"]=R18n.t("prompt.pump_valve")
 	var seen:=focus();polish.focus_id=seen
 	var hint:=relay_hint() if seen=="relay" else str(hints.get(seen,""))
 	# Two lines, never one replacing the other: the action line stays pinned to
@@ -1514,7 +1524,7 @@ func reset_at_checkpoint()->void:
 	if released:hunter.wake();oil=checkpoint_oil;equipped=checkpoint_item
 	else:
 		taken=false;clock_taken=false;equipped=false;oil=65.;kit.oil_tin.show();kit.clock_cache.show()
-		niche_taken=false;kit.niche_oil.show()
+		niche_taken=false;kit.niche_oil.show();pump_balanced=false
 		service_signal=Relay.new();kit.clock_shutter.position.y=Relay.HATCH.y
 		for i in 3:set_relay_lamp(i,false)
 	kit.test_board.show();kit.vault_can.show();contracts.soft_reset();prior_seer=0

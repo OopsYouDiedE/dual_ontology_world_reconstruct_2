@@ -9,9 +9,16 @@ void fragment() {
 	float seam = exp(-pow(part / .0038, 2.0)) * crown;
 	float sweep = part / (.014 + depth * .009);
 	float grain = sin(6.283 * (sweep + sign(part) * depth * .9));
+	float fine_strand = sin(18.85 * (sweep + sign(part) * depth * 1.1));
 	float comb = (1.0 - smoothstep(.23, .65, fwidth(sweep))) * crown;
-	vec3 brown = vec3(.067, .043, .028);
-	brown *= 1.0 + .25 * grain * comb + .16 * smoothstep(-.009, .010, part) * crown;
-	ALBEDO = mix(brown, vec3(.25, .154, .091), seam * .81);
-	ROUGHNESS = .62;
+	// Mid-dark chestnut base so HallInk outlines remain crisp (never pure black).
+	vec3 brown = vec3(.175, .112, .068);
+	brown *= 1.0 + .22 * grain * comb + .08 * fine_strand * comb + .16 * smoothstep(-.009, .010, part) * crown;
+	// Stylized anisotropic hair sheen band across the crown sweep.
+	float ndv = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
+	float sheen_band = exp(-pow((depth - 0.38 - 0.08 * grain) / 0.14, 2.0)) * crown * (0.45 + 0.55 * ndv);
+	brown += vec3(.22, .15, .09) * sheen_band * 0.42;
+	ALBEDO = mix(brown, vec3(.34, .22, .135), seam * .78);
+	ROUGHNESS = mix(.54, .34, sheen_band);
+	SPECULAR = .55;
 }

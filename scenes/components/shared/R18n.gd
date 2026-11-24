@@ -81,6 +81,7 @@ const STRINGS := {
 	"prompt.maint_oil": {"zh": "[E] 补充灯油", "en": "[E] Refill Lamp Oil"},
 	"prompt.vault_oil": {"zh": "[E] 取备用灯油", "en": "[E] Take Reserve Oil"},
 	"prompt.niche_oil": {"zh": "[E] 取灯油（站稳）", "en": "[E] Take Oil (Stand Still)"},
+	"prompt.pump_valve": {"zh": "[E] 转动稳压飞轮（配重回油）", "en": "[E] Turn Counterweight Flywheel (+Oil)"},
 	# Oil grace warning
 	"warn.catwalk_oil": {"zh": "灯油见底！快退回实墙安全区（%.1fs）", "en": "Oil spent! Step off the catwalk now (%.1fs)"},
 }

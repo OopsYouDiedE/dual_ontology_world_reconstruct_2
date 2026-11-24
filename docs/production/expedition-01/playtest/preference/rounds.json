@@ -73,5 +73,17 @@
     ],
     "question": "同一批家具、同一条主通道。你更愿意采用哪种工位安排？左：两工位隔道相对；右：同侧交接。",
     "gate": "round-02/acceptance-211.json"
+  },
+  {
+    "id": "03-arcade-niche-film", "scope": "architecture", "family": "high-arcade",
+    "contrast": "distributed-versus-local-mark", "edition": "walk-01",
+    "media": "round-03/arcade.mp4", "gate": "round-03/arcade-review.json", "dx": [0,1],
+    "question": "从高拱廊入口走向侧室，哪种做法让你更愿意驻足，同时保留拱廊的完整感？左：沿途壁灯；右：侧室门牌。"
+  },
+  {
+    "id": "03-room-workstations-film", "scope": "furnishing", "family": "workshop",
+    "contrast": "station-adjacency", "edition": "eye-height-01",
+    "media": "round-03/room.mp4", "gate": "round-03/room-review.json", "dx": [0,-1],
+    "question": "从入口走到校准台，再去交接账册，哪种布置更像一间你愿意探索的工房？左：两台隔道；右：两台同侧。"
   }
 ]

@@ -46,3 +46,9 @@ python -B "$p/serve_queue.py"  # 本机 127.0.0.1:18764
 python -B "$p/queue_review.py" next
 python -B "$p/queue_review.py" status
 ```
+
+### 证据返工与再次放映
+
+「看不清差别」记为 `unclear`，「两版都要返工」记为 `rework`。两种回答分别计数，均不参与偏好拟合、预测损失或新家族检验；它们暂停同一 scope/family/contrast/edition 的未判卡。`skip` 保持原义，旧记录不补填动机。重新拍摄用新的卡号、文件名和 edition。历史记录可回看原片。
+
+第三轮录像的发布分两步：先在实际视口核查入口全景、走近时的共同路线和近景差异，并记录控制变量；再运行 `approve_film.py arcade|room --entry ... --approach ... --detail ... --controls ...` 签出带录像 SHA-256 的本地验收文件。放映台只有在 `gate` 存在、验收通过且录像摘要匹配时才会出题。编码与分辨率可由 ffprobe 核对；美术可读性由检查者看画面决定。不要覆盖已开题的文件。

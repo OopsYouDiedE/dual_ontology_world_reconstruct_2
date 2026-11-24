@@ -48,18 +48,30 @@ def predict(c,hist):
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+REWORK = ('unclear', 'rework')
+
+
+def edition(card):
+    return (card['scope'], card['family'], card['contrast'], card.get('edition', 'original'))
+
+
 def select(db,root):
     hist=history(db); used={c['id'] for _,c in hist}
     for r,c in hist:
         if r['choice'] is None:
             if sha(root/c['media'])!=r['sha']:raise ValueError('presented evidence changed')
             return c
+    held={edition(c) for r,c in hist if r['choice'] in REWORK}
     opts=[]
     for i,c in enumerate(catalog(root)):
-        if c['id'] in used or not (root/c['media']).is_file():continue
+        if edition(c) in held or c['id'] in used or not (root/c['media']).is_file():continue
+        if c.get('edition') and not c.get('gate'):continue
         if c.get('gate'):
             gate=(root/c['gate']).resolve();gate.relative_to(root.resolve())
-            if not gate.is_file() or json.loads(gate.read_text(encoding='utf8')).get('ok') is not True:continue
+            if not gate.is_file():continue
+            evidence=json.loads(gate.read_text(encoding='utf-8-sig'))
+            if evidence.get('ok') is not True:continue
+            if c.get('edition') and evidence.get('sha256')!=sha(root/c['media']):continue
         p,b,n=predict(c,hist); repeat=sum(o['contrast']==c['contrast'] for _,o in hist)
         opts.append(((repeat,round(sum(v*math.log(v) for v in p),6),i),c,p,b,n))
     if not opts:return None
@@ -67,7 +79,7 @@ def select(db,root):
 
 
 def vote(db,root,tid,choice,note):
-    if choice not in (*OUTCOMES,'skip') or not isinstance(note,str) or len(note)>600:raise ValueError('invalid response')
+    if choice not in (*OUTCOMES,'skip',*REWORK) or not isinstance(note,str) or len(note)>600:raise ValueError('invalid response')
     row=db.execute('SELECT * FROM trials WHERE id=? AND choice IS NULL',(tid,)).fetchone()
     if not row:raise ValueError('trial already closed or not presented')
     if sha(root/json.loads(row['card'])['media'])!=row['sha']:raise ValueError('evidence changed')
@@ -83,7 +95,7 @@ def report(db):
         wins=sum(json.loads(r['pred'])[OUTCOMES.index(r['choice'])]>json.loads(r['baseline'])[OUTCOMES.index(r['choice'])]+1e-9 for r in blind)
         eligible=len(blind)>=6 and wins/len(blind)>=.8 and loss(blind,'pred')<loss(blind,'baseline')
         readiness[scope]=dict(first_family_votes=len(blind),beats_baseline=wins,eligible_for_shadow_review=eligible)
-    return dict(readiness=readiness,labels=len(labels),prospective=len(checked),transfer=len(novel),prospective_loss=loss(checked,'pred'),baseline=loss(checked,'baseline'),transfer_loss=loss(novel,'pred'),transfer_baseline=loss(novel,'baseline'),skipped=sum(r['choice']=='skip' for r,c in hist),history=[dict(id=c['id'],choice=r['choice'],note=r['note']) for r,c in hist if r['choice']])
+    return dict(quality={k:sum(r['choice']==k for r,c in hist) for k in REWORK},readiness=readiness,labels=len(labels),prospective=len(checked),transfer=len(novel),prospective_loss=loss(checked,'pred'),baseline=loss(checked,'baseline'),transfer_loss=loss(novel,'pred'),transfer_baseline=loss(novel,'baseline'),skipped=sum(r['choice']=='skip' for r,c in hist),history=[dict(id=c['id'],question=c['question'],movie=c['media'].endswith('.mp4'),choice=r['choice'],note=r['note']) for r,c in hist if r['choice']])
 
 
 def import_prior(db,root,tid,choice,note):

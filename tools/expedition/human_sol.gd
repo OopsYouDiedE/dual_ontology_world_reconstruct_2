@@ -31,6 +31,11 @@ var probes:={}
 var sampled_heights:={}
 var previous_probe:=""
 var visible_person_samples:=0
+var reading:=""
+var read_pages:=[]
+var careful_from_manual:=false
+var hint_samples:=0
+var hint_reads:=0
 var foot_progress_start:=235
 const LOOK := ["expedition_look_left","expedition_look_right","expedition_look_up","expedition_look_down"]
 
@@ -116,6 +121,7 @@ func run()->void:
 			var value:=arg.get_slice("=",1)
 			if not value.is_valid_int():push_error("Expected integer --run-seed");quit(2);return
 			run_seed=int(value);seeded=true
+		if arg.begins_with("--reading="):reading=arg.get_slice("=",1)
 		if arg.begins_with("--profile="):profile=arg.get_slice("=",1)
 		if arg.begins_with("--ticks="):budget=int(arg.get_slice("=",1))
 		if arg.begins_with("--capture="):capture=arg.trim_prefix("--capture=")
@@ -141,7 +147,8 @@ func run()->void:
 	if not InputMap.has_action(LOOK[0]):
 		push_error("Pass --rogue-mcp-dir= after -- to enable the game's normal look actions");quit(2);return
 	var decision_trace:=[]
-	var next:=235
+	var next:=235 if reading.is_empty() else 835
+	foot_progress_start=next
 	var observed_tick:=-1
 	var perception:Dictionary={}
 	var outcome:="tick_budget"
@@ -150,6 +157,15 @@ func run()->void:
 	for i in budget+1:
 		await physics_frame
 		tick=i
+		# Equal pre-walk window for all four arms. Use ordinary input and visible page text.
+		if reading.begins_with("book-"):
+			if tick==5:key(KEY_I)
+			if tick in [125,245,365,485]:key(KEY_RIGHT)
+			if tick in [120,240,360,480,600] and level.manual.is_visible_in_tree():
+				var text:String=level.page.get_parsed_text()
+				read_pages.append(text);record("manual_read",text)
+				if "脚步声" in text or "footsteps" in text:careful_from_manual=true
+			if tick==605:key(KEY_I)
 		for action:String in motor_until.keys():
 			if tick>=motor_until[action]:Input.action_release(action);motor_until.erase(action)
 
@@ -188,6 +204,12 @@ func run()->void:
 			Input.action_release("move_up");Input.action_release("expedition_quiet")
 		if tick==next-delay:
 			perception=observe();observed_tick=tick
+			if not reading.is_empty():
+				var textual:bool=perception.prompt!="" or not perception.signs.is_empty() or not perception.captions.is_empty()
+				if textual:hint_samples+=1
+				if reading.ends_with("-skip"):
+					perception.prompt="";perception.signs=[];perception.captions=[]
+				elif textual:hint_reads+=1
 			if previous_probe.ends_with("_low") or previous_probe.ends_with("_middle") or previous_probe.ends_with("_high"):
 				var height:=previous_probe.get_slice("_",1)
 				var band:Dictionary=sampled_heights.get(height,{"samples":0,"prompt_samples":0,"pitch_min":INF,"pitch_max":-INF})
@@ -198,6 +220,7 @@ func run()->void:
 		if tick==next:
 			assert(tick-observed_tick==delay and not perception.is_empty())
 			last_intent=policy.decide(perception);decisions+=1
+			if careful_from_manual and last_intent.get("move",false):last_intent["quiet"]=true
 			var motor_text:="轻步前进" if last_intent.get("move",false) and last_intent.get("quiet",false) else "向前走" if last_intent.get("move",false) else "站定"
 			var turn_deg:=rad_to_deg(float(last_intent.get("turn",0.)))
 			if absf(turn_deg)>=1.:motor_text+="，向%s转 %.0f°"%["左" if turn_deg>0 else "右",absf(turn_deg)]
@@ -234,6 +257,7 @@ func run()->void:
 		report["user_dir"]=user_dir
 		report["policy_parameters"]=policy.profile
 		report["decision_trace"]=decision_trace
+	if not reading.is_empty():report["reading"]={"arm":reading,"pages":read_pages,"text_samples":hint_samples,"read_samples":hint_reads,"careful_from_manual":careful_from_manual}
 	report["fixture"]="light" if light else "full"
 	audit_log.finish(report)
 	print("SOL_RESULT "+JSON.stringify(report))

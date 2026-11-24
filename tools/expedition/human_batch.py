@@ -60,7 +60,7 @@ def inspect_report(report, profile, seed, ticks, user, code, fixture):
                                    'regions', 'longest_dwell', 'policy_parameters')}
 
 
-def run_case(exe, directory, profile, seed, ticks, timeout, fixture):
+def run_case(exe, directory, profile, seed, ticks, timeout, fixture, reading=None):
     directory.mkdir()
     user = directory / 'user'
     user.mkdir()
@@ -68,6 +68,8 @@ def run_case(exe, directory, profile, seed, ticks, timeout, fixture):
            '--log-file', str(directory / 'engine.log'), '-s', 'res://tools/expedition/human_sol.gd',
            '--', f'--{fixture}', '--rogue-mcp-dir=', f'--run-seed={seed}', f'--profile={profile}', f'--ticks={ticks}',
            f'--output={directory / "report.json"}', f'--batch-user-root={user.as_posix()}']
+    if reading:
+        cmd.append(f"--reading={reading}")
     env = dict(os.environ, APPDATA=str(user), LOCALAPPDATA=str(user),
                XDG_DATA_HOME=str(user), XDG_CONFIG_HOME=str(user), XDG_CACHE_HOME=str(user))
     row = dict(profile=profile, seed=seed, directory=directory.name, command=cmd, returncode=None)
@@ -140,6 +142,7 @@ def main():
     run.add_argument('--timeout', type=float, default=120, help='wall seconds per case')
     run.add_argument('--godot', default=os.environ.get('DV_GODOT'))
     run.add_argument('--jobs', type=int, default=1, help='concurrent Godot processes (1-8)')
+    run.add_argument('--reading', choices=('book-hints','book-skip','closed-hints','closed-skip'))
     run.add_argument('--full', action='store_true', help='request the full rendering-effects fixture (still headless)')
     summary = sub.add_parser('summary')
     summary.add_argument('batch', type=Path)
@@ -149,6 +152,8 @@ def main():
     args = parser.parse_args()
     if args.mode == 'summary':
         return summarize(args.batch.resolve(), args.require_completion)
+    if args.reading and args.ticks <= 835:
+        run.error('reading arms need a tick budget greater than 835 for the first decision')
     if not 1 <= args.jobs <= 8:
         run.error('--jobs must be between 1 and 8')
     if not 300 <= args.ticks < 2**31 or not 0 < args.timeout < float('inf'):
@@ -171,12 +176,13 @@ def main():
     fixture = 'full' if args.full else 'strategy-light'
     data = dict(schema=1, fixture=fixture, godot=str(exe), profiles=args.profiles, seeds=args.seeds, ticks=args.ticks,
                 timeout_seconds=args.timeout, planned=len(matrix), jobs=jobs, cases=[])
+    if args.reading: data['reading'] = args.reading
     save(batch / 'batch.json', data)
     finished = {}
     start = time.perf_counter()
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         futures = {pool.submit(run_case, exe, batch / f'{profile}-{seed}', profile, seed,
-                               args.ticks, args.timeout, fixture): i for i, (profile, seed) in enumerate(matrix)}
+                               args.ticks, args.timeout, fixture, args.reading): i for i, (profile, seed) in enumerate(matrix)}
         for future in as_completed(futures):
             row = future.result()
             finished[futures[future]] = row

@@ -1,5 +1,7 @@
 # First expedition · delivered dialogue and layout acceptance
 
+[2026-11-24 · 首征 AI 阅读实验：手册 × 现场提示，四组配对](../../playtest-reading-8e0c31c/index.html)
+
 [2026-11-24 · main 更新后：216 局 AI 自主路线与台词复测](../../playtest-ai-4ff7275/README.md)
 
 [2026-11-24 · 478 局新测：首征剧情概率与返营战役路线](../../playtest-20261124/README.md)

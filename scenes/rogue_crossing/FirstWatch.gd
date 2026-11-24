@@ -11,9 +11,12 @@ const Camp := preload("res://scenes/rogue_camp/CampResidents.gd")
 const MARGINS := "user://night_watch_margins.txt"
 
 const FirstExpedition := preload("res://scenes/expedition_01/Expedition.tscn")
+const HallOpening := preload("HallOpeningSequence.gd")
 const FIRST_SEAL := "user://expedition_01_returned"
 var first_sortie
 var first_returned := false
+var _opening: CanvasLayer
+var _opening_played := false
 
 var pack := {"felt":0, "ratchet":0}
 var recalled := false
@@ -134,6 +137,9 @@ func _make_hud() -> void:
 	_sheet.add_theme_constant_override("separation", 10)
 	_scroll.add_child(_sheet)
 	_overlay.hide()
+	_opening = HallOpening.new()
+	add_child(_opening)
+	_opening.finished.connect(_on_opening_finished)
 
 func _clear(row: Node) -> void:
 	for c in row.get_children():
@@ -177,6 +183,9 @@ func _close() -> void:
 	modal = ""
 	_acting = -1
 	_overlay.hide()
+	_opening = HallOpening.new()
+	add_child(_opening)
+	_opening.finished.connect(_on_opening_finished)
 	room_view.set_modal(phase in ["lost", "won"])
 
 func new_run(value: int) -> void:
@@ -211,6 +220,7 @@ func new_run(value: int) -> void:
 	inherited = false
 	_performing = false
 	_watch_number += 1
+	_opening_played = false
 	message = ""
 	_refresh()
 
@@ -240,7 +250,7 @@ func _can_agree() -> bool:
 	return prospect >= 4 and party.all(func(id): return crew.people[id].trust >= 3 and crew.people[id].stress < 3)
 
 func _input(event: InputEvent) -> void:
-	if is_instance_valid(first_sortie): return
+	if is_instance_valid(first_sortie) or (is_instance_valid(_opening) and _opening.active): return
 	if _performing or not event is InputEventKey or not event.pressed or event.echo or house == null: return
 	if event.physical_keycode == KEY_TAB and handbook:
 		if modal == "guide": _close()
@@ -522,7 +532,11 @@ func _refresh() -> void:
 	if phase != "camp": room_view.set_crossing(_stage(), "", _variant(), nerve, cleared.has(current))
 	room_view.set_field_party([] if phase == "camp" else party)
 	room_view.set_modal(not modal.is_empty() or not alive)
-	if phase == "camp": _enter_hall()
+	if phase == "camp":
+		room_view.set_pendulum_drifting(not first_returned)
+		_enter_hall()
+		if not first_returned and not _opening_played and not _should_skip_opening():
+			play_hall_opening.call_deferred()
 	_status.text = "THE SLEEPING ACADEMY     /     %s     ·     HP %d/9     Nerve %d     Party %d     Crates %d     ·     %02d:%02d" % ["NIGHT WATCH" if phase != "camp" else "PUBLIC HALL", hp, nerve, party.size() + 1, crew.supplies, floori(clock) % 24, floori(fposmod(clock, 1.0) * 60)]
 	_status.text += "     Felt %d  /  Ratchets %d" % [pack.felt,pack.ratchet]
 	if phase == "won":
@@ -555,7 +569,7 @@ func _process(dt: float) -> void:
 		_update_hall(Camp.TICK_SECONDS)
 
 func mcp_observe() -> Dictionary:
-	if is_instance_valid(first_sortie): return first_sortie.observation()
+	if is_instance_valid(first_sortie) or (is_instance_valid(_opening) and _opening.active): return first_sortie.observation()
 	var buttons := []
 	var ui: Container = _flow if modal.is_empty() else _sheet
 	for node in ui.get_children():
@@ -569,3 +583,28 @@ func mcp_observe() -> Dictionary:
 		"exits":Array(destinations), "cleared":cleared.keys(), "route":r.route, "actions":r.moves, "reports":r.report,
 		"walk_grid":room_view.viewport_routes(), "witness_count":camp_actors.actors.size() if is_instance_valid(camp_actors) else 0,
 		"handbook":handbook, "performing":_performing, "buttons":buttons, "prompt":_instruction.text, "player_observation":room_view.player_observation()}
+func _should_skip_opening() -> bool:
+	return DisplayServer.get_name() == "headless" or "--skip-intro" in OS.get_cmdline_user_args()
+
+
+func play_hall_opening(force := false) -> bool:
+	if not is_instance_valid(_opening) or (_opening_played and not force):
+		return false
+	var anchors: Dictionary = room_view.hall_opening_anchors()
+	if anchors.is_empty():
+		return false
+	_opening_played = true
+	room_view.set_modal(true)
+	_opening.start(anchors.viewport, anchors.camera, anchors.cot, anchors.pendulum, anchors.gate)
+	return true
+
+
+func skip_hall_opening() -> void:
+	if is_instance_valid(_opening) and _opening.active:
+		_opening.skip()
+
+
+func _on_opening_finished() -> void:
+	room_view.set_modal(not modal.is_empty() or phase in ["lost", "won"])
+	if phase == "camp" and not first_returned:
+		_instruction.text = "傅科摆进动偏航 · 在中央摆井确认异常后，前往北门与 Hale 汇合取回源质校正。"

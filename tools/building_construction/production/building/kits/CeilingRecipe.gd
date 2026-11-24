@@ -3,7 +3,11 @@ const D=preload("../BayDetails.gd")
 func emit(s,q):
 	var k:String=q.owner;var bay:float=s.BAY;var center:Vector3=q.p+Vector3.UP*(q.height-3.3)
 	if s.kit(k).dome and s.slots.has("dome/"+k):return
-	if q.variant=="coffer" and q.height>=2.8:
+	if q.variant=="gothic_vault" and q.height>=2.8:
+		var spring_y:float=q.p.y+maxf(q.height-1.15,2.1)
+		var rise:float=minf(1.08,q.p.y+q.height-spring_y)
+		D.gothic_vault_web(s,k,Vector3(q.p.x,spring_y,q.p.z),bay*.5,bay*.5,rise,9)
+	elif q.variant=="coffer" and q.height>=2.8:
 		s.box(k+"/coffer-soffit",center+Vector3.UP*3.106,Vector3(bay-.18,.026,bay-.18),"cream",0)
 		for tier in [[1.85,2.98,.22,.18,"wood_dark"],[1.69,3.025,.12,.12,"cream"],[1.59,3.067,.08,.08,"gold"]]:
 			D.frame(s,k,center,tier)

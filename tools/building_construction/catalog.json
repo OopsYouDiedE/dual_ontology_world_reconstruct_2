@@ -1805,6 +1805,61 @@
         "kind": "rule",
         "generator": "res://tools/building_construction/production/rule/StructuralRecipes.gd"
       }
+    },
+    {
+      "id": "RecipeGothicPointedRib",
+      "category": "Walls",
+      "label": "Gothic Pointed Rib",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeGothicPointedRib.gd",
+      "mount": "ground",
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/GothicRecipes.gd"
+      }
+    },
+    {
+      "id": "RecipeGothicVaultBay",
+      "category": "Walls",
+      "label": "Gothic Vault Bay",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeGothicVaultBay.gd",
+      "mount": "ground",
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/GothicRecipes.gd"
+      }
+    },
+    {
+      "id": "RecipeGothicLancetBay",
+      "category": "Windows",
+      "label": "Gothic Lancet Bay",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeGothicLancetBay.gd",
+      "mount": "wall",
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/GothicRecipes.gd"
+      }
+    },
+    {
+      "id": "RecipeGothicRoseWindow",
+      "category": "Windows",
+      "label": "Gothic Rose Window",
+      "path": "res://tools/building_construction/BuildingConstruction/Windows/RecipeGothicRoseWindow.gd",
+      "mount": "wall",
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/GothicRecipes.gd"
+      }
+    },
+    {
+      "id": "RecipeGothicButtress",
+      "category": "Walls",
+      "label": "Gothic Flying Buttress",
+      "path": "res://tools/building_construction/BuildingConstruction/Walls/RecipeGothicButtress.gd",
+      "mount": "ground",
+      "production": {
+        "kind": "rule",
+        "generator": "res://tools/building_construction/production/rule/GothicRecipes.gd"
+      }
     }
   ]
 }

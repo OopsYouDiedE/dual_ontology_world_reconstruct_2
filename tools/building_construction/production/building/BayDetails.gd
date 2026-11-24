@@ -108,3 +108,112 @@ static func dome(s,k:String,pts:Array)->void:
 				var ns=[];for v in ids:ns.append(((p[v]-Vector3(c.x,spring,c.z))/Vector3(radius*radius,1.35*1.35,radius*radius)).normalized())
 				s.facet(k,"book_blue",p[ids[0]],p[ids[1]],p[ids[2]],3,ns)
 		s.facet(k,"book_blue",rings[7][i],rings[7][ix],top,3)
+
+static func _circle_section(radius:float,sides:=8)->PackedVector2Array:
+	var sec=PackedVector2Array()
+	for i in sides:
+		var a=TAU*float(i)/float(sides)
+		sec.append(Vector2(cos(a)*radius,sin(a)*radius))
+	return sec
+
+## French Gothic pointed rib (ported from assembly.py FG | Pointed rib).
+static func pointed_rib(s,k:String,a:Vector3,b:Vector3,rise:float,radius:=.10,mat:="cream",segs:=10)->void:
+	var mid=(a+b)*.5+Vector3.UP*rise
+	var sec=_circle_section(radius,8)
+	for endpoint in [a,b]:
+		var ctrl=endpoint+Vector3.UP*(rise*.64)
+		var path=PackedVector3Array()
+		for i in range(segs+1):
+			var t=float(i)/float(segs);var u=1.-t
+			path.append(endpoint*(u*u)+ctrl*(2.*u*t)+mid*(t*t))
+		sweep(s,k,mat,path,sec,0)
+
+## French Gothic quadripartite groin vault web + diagonal ribs (ported from full_structure.py FG2 | Vault web patch).
+static func gothic_vault_web(s,k:String,spring_center:Vector3,half_x:float,half_z:float,rise:float,res:=9)->void:
+	var n=clampi(res,5,17)
+	var top=[];var bot=[]
+	for iz in n:
+		var nz=-1.+2.*float(iz)/float(n-1)
+		for ix in n:
+			var nx=-1.+2.*float(ix)/float(n-1)
+			var u=minf(absf(nx),absf(nz));var t=sqrt(maxf(0.,1.-u))
+			var dy=.05+rise*t*(1.28-.28*t)
+			var pt=spring_center+Vector3(nx*half_x,dy,nz*half_z)
+			top.append(pt);bot.append(pt-Vector3.UP*.075)
+	for iz in n-1:
+		for ix in n-1:
+			var i0=iz*n+ix;var i1=i0+1;var i2=i0+n+1;var i3=i0+n
+			quad(s,k,"stone",top[i0],top[i1],top[i2],top[i3],0)
+			quad(s,k,"cream",bot[i3],bot[i2],bot[i1],bot[i0],0)
+	var c0=spring_center+Vector3(-half_x,0,-half_z)
+	var c1=spring_center+Vector3(half_x,0,-half_z)
+	var c2=spring_center+Vector3(half_x,0,half_z)
+	var c3=spring_center+Vector3(-half_x,0,half_z)
+	pointed_rib(s,k,c0,c2,rise,.085,"cream",10)
+	pointed_rib(s,k,c1,c3,rise,.085,"cream",10)
+	s.box(k+"/vault-boss",spring_center+Vector3.UP*(rise-.02),Vector3(.30,.14,.30),"gold",0)
+
+## French Gothic lower blind arcade + paired engaged wall shafts (ported from wall_lining.py).
+static func gothic_blind_arcade(s,k:String,id:String,center:Vector3,along:Vector3,n:Vector3,w:float,thick:float,door:bool,height:float)->void:
+	var yaw=-atan2(along.z,along.x)
+	var face_base=center-n*(thick*.5+.025)
+	var hi:float=s.BAY*.5
+	var sec=_circle_section(.036,6)
+	for side in [-1,1]:
+		var lo=w*.5+.08 if door else 0.;var span=hi-lo
+		if span<.25:continue
+		var mid=face_base+along*side*(lo+span*.5)
+		s.box(id+"/dado",mid+Vector3.UP*.55,Vector3(span,1.10,.05),"stone",0,yaw)
+		s.box(id+"/sill-mould",mid+Vector3.UP*1.08-n*.04,Vector3(span,.11,.10),"cream",0,yaw)
+		var count=maxi(1,roundi(span/.72));var pitch=span/count;var hw=pitch*.40
+		for j in count:
+			var ac=face_base+along*side*(lo+pitch*(j+.5))-n*.05
+			var path=PackedVector3Array([ac-along*hw+Vector3.UP*.18,ac-along*hw+Vector3.UP*.64])
+			for st in 7:
+				var tt=-1.+2.*float(st)/6.
+				path.append(ac+along*(tt*hw)+Vector3.UP*(.64+.28*pow(maxf(0.,1.-absf(tt)),.7)))
+			path.append(ac+along*hw+Vector3.UP*.18)
+			sweep(s,k,"cream",path,sec,0)
+	for side in [-1,1]:
+		var sx=face_base+along*(side*(hi-.16))-n*.06
+		s.box(id+"/shaft",sx+Vector3.UP*(height*.5),Vector3(.11,height-.28,.11),"cream",0,yaw)
+		s.box(id+"/shaft-cap",sx+Vector3.UP*(height-.24),Vector3(.26,.12,.22),"cream",0,yaw)
+
+## French Gothic paired pointed lancet window (ported from wall_lining.py).
+static func gothic_lancet_window(s,k:String,id:String,p:Vector3,along:Vector3,n:Vector3,w:float,low:float,high:float,thick:float,yaw:float)->void:
+	var h:float=high-low;var mid_y=(low+high)*.5
+	s.box(id+"/glass",p+Vector3.UP*mid_y,Vector3(w,h,.032),"glass",1,yaw)
+	s.box(id+"/sill",p+Vector3.UP*low,Vector3(w+.14,.09,thick+.14),"cream",3,yaw)
+	s.box(id+"/center-mullion",p+Vector3.UP*mid_y,Vector3(.09,h,.11),"stone",1,yaw)
+	var spring=lerpf(low,high,.56);var peak=high-.05;var lhw=w*.22;var denom=sqrt(1.-pow(.35/1.35,2.))
+	var sec=_circle_section(.034,6)
+	for side in [-1,1]:
+		var cx=p+along*(side*w*.25)-n*(thick*.5+.02)
+		var path=PackedVector3Array([cx-along*lhw+Vector3.UP*low])
+		for i in 11:
+			var lx=-lhw+2.*lhw*float(i)/10.
+			var u=(absf(lx)/lhw+.35)/1.35
+			var ly=spring+(peak-spring)*sqrt(maxf(0.,1.-u*u))/denom
+			path.append(cx+along*lx+Vector3.UP*ly)
+		path.append(cx+along*lhw+Vector3.UP*low)
+		sweep(s,k,"cream",path,sec,0)
+		for frac in [.35,.68]:
+			s.box(id+"/lead",p+along*(side*w*.25)+Vector3.UP*lerpf(low,spring,frac),Vector3(lhw*2.,.025,.05),"stone_dark",0,yaw)
+
+## French Gothic 12-spoke branching rose window (ported from wall_lining.py).
+static func gothic_rose_window(s,k:String,id:String,p:Vector3,along:Vector3,n:Vector3,w:float,low:float,high:float,thick:float,yaw:float)->void:
+	var h:float=high-low;var mid=p+Vector3.UP*((low+high)*.5);var r=minf(w,h)*.44
+	s.box(id+"/glass",mid,Vector3(w,h,.032),"glass",1,yaw)
+	s.box(id+"/sill",p+Vector3.UP*low,Vector3(w+.14,.09,thick+.14),"cream",3,yaw)
+	var face=mid-n*(thick*.5+.025);var ring_sec=_circle_section(.024,6);var spoke_sec=_circle_section(.015,6)
+	for rad in [r,r*.20]:
+		var rpath=PackedVector3Array()
+		for i in 25:
+			var a=TAU*float(i)/24.
+			rpath.append(face+along*(cos(a)*rad)+Vector3.UP*(sin(a)*rad))
+		sweep(s,k,"cream",rpath,ring_sec,0)
+	for sp in 12:
+		var a=(float(sp)+.5)*TAU/12.
+		var p0=face+along*(cos(a)*r*.20)+Vector3.UP*(sin(a)*r*.20)
+		var p1=face+along*(cos(a)*r)+Vector3.UP*(sin(a)*r)
+		sweep(s,k,"cream",PackedVector3Array([p0,p1]),spoke_sec,0)

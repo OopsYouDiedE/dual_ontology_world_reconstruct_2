@@ -1,7 +1,9 @@
 extends RefCounted
 const D=preload("../BayDetails.gd")
 func emit(s,q):
-	if q.variant=="wood":
+	if q.variant=="gothic_arcade":
+		D.gothic_blind_arcade(s,q.owner,q.id,q.p,q.along,q.n,q.w,q.thick,q.door,q.height)
+	elif q.variant=="wood":
 		var first=s.pieces.size();D.wall_trim(s,q.owner,q.id,q.p,q.along,q.n,q.w,q.thick,q.door)
 		if q.height<2.8:
 			for i in range(first,s.pieces.size()):

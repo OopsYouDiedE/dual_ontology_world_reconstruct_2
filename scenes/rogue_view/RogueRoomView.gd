@@ -89,8 +89,11 @@ const Kitchen = preload("res://scenes/rogue_view/render/HotKitchen.gd")
 var _kitchen
 var _kitchen_plan := {}
 const Lighting = preload("res://scenes/rogue_view/render/RoomLighting.gd")
+const PublicHallGothic = preload("res://scenes/rogue_view/render/PublicHallGothic.gd")
 const TileShader = preload("res://scenes/components/rendering/surfaces/AcademyTile.gdshader")
 var _lights: Node3D
+var _gothic_hall: Node3D
+var _pendulum_drifting := true
 var _hour := 12.0
 
 func set_hour(hour: float) -> void:
@@ -295,6 +298,7 @@ func _rebuild() -> void:
 		child.queue_free()
 	_kitchen = null
 	_lights = null
+	_gothic_hall = null
 	_night_root = null
 	_crossing = null
 	_echo_glass = null
@@ -366,7 +370,9 @@ func _rebuild_architecture() -> void:
 			walls.append_from(wall, 0, Transform3D(basis * Basis.from_scale(Vector3(d.length(), 1, 1)), position))
 		_add_shape(static_body, position, Vector3(d.length(), wall.size.y, wall.size.z), basis)
 	_commit_static_mesh(walls, _tile_surface(Color("aa997e"), true))
-	if expedition_view:
+	if expedition_view and _room_label == "Public Hall":
+		_gothic_hall = PublicHallGothic.install(_geometry, _lot, floor_bounds, well, _pendulum_drifting)
+	elif expedition_view:
 		# The old orbit view needed a cutaway roof. First person needs an interior ceiling.
 		var ceiling := SurfaceTool.new()
 		ceiling.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -1302,3 +1308,19 @@ func viewport_routes() -> Array:
 			if all.has(neighbor) and neighbor in all[c]: edge |= 1 << j
 		grid.append([c.x, c.y, edge])
 	return grid
+func set_pendulum_drifting(drifting: bool) -> void:
+	_pendulum_drifting = drifting
+	if is_instance_valid(_gothic_hall) and _gothic_hall.has_method("set_drift_state"):
+		_gothic_hall.set_drift_state(drifting)
+
+
+func hall_opening_anchors() -> Dictionary:
+	if not is_instance_valid(_gothic_hall) or not is_instance_valid(_player):
+		return {}
+	return {
+		"viewport": _viewport,
+		"camera": _player.camera(),
+		"cot": _gothic_hall.watch_cot_pos,
+		"pendulum": _gothic_hall.pendulum_world_pos,
+		"gate": _gothic_hall.north_gate_pos,
+	}

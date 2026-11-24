@@ -86,3 +86,14 @@ python tools/expedition/route_view.py <定路线的route.json> <类人探索的r
 打开生成的离线 HTML，勾选要比较的局（有成功局时，失败局默认收起），可按楼层查看玩家实线与 Hale 虚线。点击动作条目会定位当时的帧与位置：发指令、实际执行、台词和反馈分别记录。多数标记在当时玩家脚下，Hale 动身去北窗和就位两项标在同伴脚下。时间线保留同地发生的多个动作。底图是开局真实碰撞体的投影；动态机关的变化见事件和独立的七态碰撞校验。
 
 进一步查看：[碰撞一致性](../../../tools/expedition/collision_fixture.md)、[类人批跑参数和通关判据](../../../tools/expedition/human_batch_README.md)、[规则遍历的输入边界](../../../tools/expedition/rule_sweep.md)。
+## 返程螺旋梯：24,000 种落脚路线的局部筛查
+
+当整局的失败集中在同一处楼梯，先在那里加密采样。`stair_support_sweep.gd` 常驻一个正式出征场景，直接向 Godot 物理世界查询玩家身上的胶囊。起终半径各选 40–220 厘米（各 10 档），中段内外偏移取 −45 至 +45 厘米（10 档），绕一整圈分 12–35 次转向（24 档）。这些参数共同确定每一条三维折线。采样间隔至多 12 厘米，沿楼梯标称高度上下各 42 厘米扫胶囊，以生产角色可站立坡度判断脚下支撑。单例遇到第一个无支撑点就记录坐标并停止。启动自检包括已知有地面处与悬空处。
+
+```powershell
+$engine = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
+& $engine --headless --path . --fixed-fps 60 --script res://tools/expedition/stair_support_sweep.gd
+python tools/expedition/stair_support_report.py
+```
+
+打开 `.runtime/stair-support/index.html` 查看起终半径矩阵；`cases.csv` 保留每个参数组合和最后探测位置。本项测量脚下支撑，角色的加速度、实际落脚、侧面阻挡和猎手时序由整局测试另行验证。不要把局部筛查行数计入整关场次。

@@ -14,8 +14,12 @@ var replay_path:=""
 var strategy:={}
 var approach_radius:=.12
 var wait_settle:=116
+var stair_radius:=1.02
 var outcome:="interrupted"
 var failure_reason:=""
+var route_start:=0
+var compact:=false
+var death_reported:=false
 func _finalize()->void:
 	if audit_log!=null and audit_log.active:save_replay()
 
@@ -27,6 +31,10 @@ func save_replay()->void:
 	file.store_string(JSON.stringify(report));file.close()
 
 func _initialize()->void:run.call_deferred()
+func observe_death()->void:
+	if not death_reported and is_instance_valid(level) and level.retry>0.:
+		death_reported=true
+		print("WALK_DEATH ",JSON.stringify({"fail_reason":level.fail_reason,"tick":Engine.get_physics_frames()-route_start}))
 func go(x:float,z:float,limit:=2000)->bool:
 	var target:=Vector3(x,0,z);Input.action_press("move_up")
 	for i in limit:
@@ -126,7 +134,7 @@ func run()->void:
 		for f in 10:await physics_frame
 		if not await go(ramp_x,9.96,60) or level.walker.position.y<-.04:push_error("Entry ramp failed");quit(1);return
 	level.queue_free();await wait_ticks(2)
-	var route_start:=Engine.get_physics_frames()
+	route_start=Engine.get_physics_frames()
 	level=preload("Expedition.tscn").instantiate();root.add_child(level)
 	var crossing_arg:="south" if no_clock else "self" if window_skip else "north"
 	var route_seed:=1
@@ -137,8 +145,13 @@ func run()->void:
 		if arg.begins_with("--crossing="):crossing_arg=arg.trim_prefix("--crossing=")
 		if arg.begins_with("--arrival-radius="):approach_radius=float(arg.trim_prefix("--arrival-radius="))
 		if arg.begins_with("--settle-ticks="):wait_settle=int(arg.trim_prefix("--settle-ticks="))
-	if not (.04<=approach_radius and approach_radius<=.25 and wait_settle>=1 and wait_settle<=600):push_error("Invalid strategy parameters");quit(2);return
-	strategy={"seed":route_seed,"approach":"transit" if transit_only else "skip" if window_skip else "witness", "loadout":"oil" if oil_only else "neither" if no_clock else "clock" if clock_only else "both", "crossing":crossing_arg,"arrival_radius_m":approach_radius,"extra_settle_ticks":wait_settle,"fixture":"light" if light else "full"}
+		if arg.begins_with("--stair-radius="):stair_radius=float(arg.trim_prefix("--stair-radius="))
+	if not (.04<=approach_radius and approach_radius<=.25 and wait_settle>=1 and wait_settle<=600 and .85<=stair_radius and stair_radius<=1.18):push_error("Invalid strategy parameters");quit(2);return
+	strategy={"seed":route_seed,"approach":"transit" if transit_only else "skip" if window_skip else "witness", "loadout":"oil" if oil_only else "neither" if no_clock else "clock" if clock_only else "both", "crossing":crossing_arg,"arrival_radius_m":approach_radius,"extra_settle_ticks":null if transit_only else wait_settle,"stair_radius_m":stair_radius,"fixture":"light" if light else "full"}
+	compact=args.has("--walk-compact")
+	if compact:
+		print("WALK_POLICY ",JSON.stringify(strategy))
+		physics_frame.connect(observe_death)
 	if light:preload("res://tools/expedition/collision_fixture.gd").apply_lightweight(level)
 	if replay_path!="":
 		audit_log=preload("res://tools/expedition/strategy_trace.gd").new();audit_log.start(level)
@@ -233,7 +246,7 @@ func run()->void:
 	if not await go(73.35,9.12):quit(1);return
 	for i in range(1,42):
 		var a:=PI*.5+TAU*i/41.
-		if not await go(73.35+1.02*cos(a),8.1+1.02*sin(a),250):quit(1);return
+		if not await go(73.35+stair_radius*cos(a),8.1+stair_radius*sin(a),250):quit(1);return
 	if level.walker.position.y<4.5:push_error("Missed upper landing: %s"%level.walker.position);quit(1);return
 	if not await go(73.35,12.1):quit(1);return
 	for i in 15:await physics_frame
@@ -257,11 +270,18 @@ func run()->void:
 		await physics_frame
 	if not completed[0]:push_error("Exit signal missing");quit(1);return
 	var trace_path:=ProjectSettings.globalize_path("res://.runtime/archive-%s.json"%("transit-evac" if transit_only else "skip-window-evac" if window_skip else "normal"))
+	var explicit_trace:=false
 	for arg in args:
-		if arg.begins_with("--walk-trace="):trace_path=arg.trim_prefix("--walk-trace=")
-	var trace:=FileAccess.open(trace_path,FileAccess.WRITE)
-	if trace==null:push_error("Could not export archive trace");quit(1);return
-	trace.store_string(JSON.stringify(level.archive.facts.snapshot(),"  "));trace.close()
+		if arg.begins_with("--walk-trace="):
+			trace_path=arg.trim_prefix("--walk-trace=")
+			explicit_trace=true
+	var facts:Dictionary=level.archive.facts.snapshot()
+	if compact:
+		print("WALK_WITNESS ",JSON.stringify("dual_gaze_b2" in facts["facts"]))
+	if not compact or explicit_trace:
+		var trace:=FileAccess.open(trace_path,FileAccess.WRITE)
+		if trace==null:push_error("Could not export archive trace");quit(1);return
+		trace.store_string(JSON.stringify(facts,"  "));trace.close()
 	outcome="completed"
 	if audit_log!=null:save_replay()
 	print("ROUTE_TICKS ",Engine.get_physics_frames()-route_start)

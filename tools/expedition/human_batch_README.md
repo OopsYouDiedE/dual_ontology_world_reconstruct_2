@@ -10,7 +10,7 @@ python tools/expedition/human_batch.py summary .runtime/human_batch/<batch-id>
 python tools/expedition/human_batch.py summary .runtime/human_batch/<batch-id> --require-completion
 ```
 
-`run` defaults to all three profiles; `--profiles cautious curious` restricts the matrix. `--godot` (or `DV_GODOT`) selects another executable. On Windows, the official `_console.exe` is resolved to its sibling engine executable so the timeout owns the actual Godot process. `--jobs` is bounded to 1–8, defaults to 1, and runs separate processes. `--timeout` is per process in wall seconds, starting at launch; timed-out cases are killed and the remaining cases continue.
+`run` defaults to all three profiles; `--profiles cautious curious` restricts the matrix. `--godot` (or `DV_GODOT`) selects another executable. On Windows, the official `_console.exe` is resolved to its sibling engine executable so the timeout owns the actual Godot process. `--jobs` accepts 1–12 independent Godot processes. By default the strategy fixture uses the smallest of 8, the available logical CPU count, and the number of cases. The full fixture defaults to one process. This limit applies per batch: run the four reading arms sequentially to share the same machine budget. `--timeout` is per process in wall seconds, starting at launch; timed-out cases are killed and the remaining cases continue.
 
 The runner passes `--strategy-light` to Human Sol by default. Use `run --full` to pass `--full` and request the full rendering-effects fixture. Both modes remain headless; the batch manifest and summary record the requested fixture.
 

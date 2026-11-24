@@ -141,7 +141,7 @@ def main():
     run.add_argument('--ticks', type=int, default=7200)
     run.add_argument('--timeout', type=float, default=120, help='wall seconds per case')
     run.add_argument('--godot', default=os.environ.get('DV_GODOT'))
-    run.add_argument('--jobs', type=int, default=1, help='concurrent Godot processes (1-8)')
+    run.add_argument('--jobs', type=int, default=None, help='concurrent Godot processes (1-12; default: auto)')
     run.add_argument('--reading', choices=('book-hints','book-skip','closed-hints','closed-skip'))
     run.add_argument('--full', action='store_true', help='request the full rendering-effects fixture (still headless)')
     summary = sub.add_parser('summary')
@@ -154,8 +154,8 @@ def main():
         return summarize(args.batch.resolve(), args.require_completion)
     if args.reading and args.ticks <= 835:
         run.error('reading arms need a tick budget greater than 835 for the first decision')
-    if not 1 <= args.jobs <= 8:
-        run.error('--jobs must be between 1 and 8')
+    if args.jobs is not None and not 1 <= args.jobs <= 12:
+        run.error('--jobs must be between 1 and 12')
     if not 300 <= args.ticks < 2**31 or not 0 < args.timeout < float('inf'):
         run.error('requires 300 <= ticks < 2^31 and a finite positive timeout')
     # Godot JSON numeric values round-trip exactly over this seed range.
@@ -172,7 +172,9 @@ def main():
     batch.mkdir(parents=True)
     print(f'Batch: {batch}', flush=True)
     matrix = [(profile, seed) for profile in args.profiles for seed in args.seeds]
-    jobs = min(args.jobs, len(matrix))
+    available_cpus = getattr(os, 'process_cpu_count', os.cpu_count)() or 1
+    auto_jobs = 1 if args.full else min(available_cpus, 8)
+    jobs = min(args.jobs or auto_jobs, len(matrix))
     fixture = 'full' if args.full else 'strategy-light'
     data = dict(schema=1, fixture=fixture, godot=str(exe), profiles=args.profiles, seeds=args.seeds, ticks=args.ticks,
                 timeout_seconds=args.timeout, planned=len(matrix), jobs=jobs, cases=[])

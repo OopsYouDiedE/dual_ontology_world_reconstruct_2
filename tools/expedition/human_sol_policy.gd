@@ -15,6 +15,9 @@ var previous:=Vector2.INF
 var doused:=false
 var spoke_at:={}
 var handled_rings:={}
+var bay_sighting:=Vector2.INF
+var seen_footing:=Vector2.INF
+var bay_scan:=0
 var shaft_axis:=INF
 var shaft_survey:=0
 var surveyed_shaft:=false
@@ -151,7 +154,9 @@ func decide(o:Dictionary)->Dictionary:
 	if gate_released and not core_escape:
 		# A destination on the far bank is a bearing, never evidence of safe footing.
 		for sign:Dictionary in o.get("signs",[]):
-			if sign.text=="CORE BAY":shaft_axis=heading+float(sign.turn)
+			if sign.text=="CORE BAY":
+				shaft_axis=heading+float(sign.turn)
+				bay_sighting=p+Vector2(-sin(shaft_axis),-cos(shaft_axis))*float(sign.distance)
 		if not is_finite(shaft_axis) and shaft_survey>0:
 			shaft_survey-=1
 			return {"turn":.75,"pitch":0.,"hold":int(profile.delay)+32,"probe":"survey_far_bank"}
@@ -159,8 +164,21 @@ func decide(o:Dictionary)->Dictionary:
 			var bearing:=angle_difference(heading,shaft_axis)
 			if absf(bearing)>.24:
 				return {"turn":bearing,"pitch":-.27,"hold":int(profile.delay)+ceili(absf(bearing)/.03)+8,"probe":"align_core_bay"}
+			# As the far marker approaches, keep gaze on the last visible stretch of amber.
+			# At the kerb take a final step along the supported direction, then inspect the plinth.
+			var to_bay:=p.distance_to(bay_sighting)
+			if to_bay<2.6:
+				bay_scan+=1
+				var aim:=angle_difference(heading,yaw_to(bay_sighting-p))
+				if bay_scan<12:return {"turn":aim+sin(bay_scan*1.8)*.15,"pitch":[-.42,-.67,-.25][bay_scan%3],"hold":38,"probe":"inspect_core_plinth"}
+			if to_bay<5. and seen_footing.is_finite() and (seen_footing-p).dot(Vector2(-sin(heading),-cos(heading)))>.35:
+				return {"move":true,"coast":true,"pitch":-1.20,"hold":22,"probe":"step_on_seen_footing"}
 			for lane:Dictionary in o.lanes:
 				if absf(lane.turn)<.01 and lane.depth>=1.25 and not stuck:
+					if to_bay<7.:
+						seen_footing=p+Vector2(-sin(heading),-cos(heading))*lane.depth
+						var step:=tracked_walk(lane,p,heading,"watch_last_span",.3,-1.17,48)
+						step["coast"]=lane.depth>=1.75;return step
 					return tracked_walk(lane,p,heading,"watch_span_ahead",.3,-.42,62)
 			shaft_axis=INF
 	var guided:=follow_goal_sign(o,p,heading)

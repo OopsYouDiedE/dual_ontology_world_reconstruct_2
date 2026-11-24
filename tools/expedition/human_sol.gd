@@ -210,7 +210,7 @@ func run()->void:
 			outcome="failed" if not failure.is_empty() else "completed"
 			reason=failure if not failure.is_empty() else ending
 			break
-		if tick==next-delay-5:
+		if tick==next-delay-5 and not last_intent.get("coast",false):
 			Input.action_release("move_up");Input.action_release("expedition_quiet")
 		if tick==next-delay:
 			perception=observe();observed_tick=tick

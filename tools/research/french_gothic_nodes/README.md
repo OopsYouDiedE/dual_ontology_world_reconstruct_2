@@ -59,3 +59,14 @@ The check evaluates all nine layers individually, exercises a control on each la
 ### Upstream components in an interior bay (isolated test)
 
 Run `& $b -b --factory-startup --python-exit-code 1 -P "$t/source_bay.py" -- $d` after extracting the main library. The output `original-group-bay.blend` reopens with two bays. `ArcsFromEdges` supplies the live contour: its full output includes a wall panel, so the adapter samples the 17 outline points at pinned `DecorRes=3` and builds a rectangular section. Recheck that ordering for another upstream version. `Gothic SupportColumn From EDge` supplies two crossed edge supports per station; alignment, seats and layout are local. `GenerateStairCase` is a separately toggled straight stair sample. The recipe reopens the saved scene, checks group references, seats at 1/2/4 bays, shared-boundary counts for matching dimensions, and stair width response, then writes a PNG and `original-group-checks.json`. This fixture does not modify the whole-church scene or certify watertight joints.
+
+### Whole-building Godot review
+
+With the default `cathedral-structure.blend` generated above, run:
+
+```powershell
+& $b -b --factory-startup "$d/cathedral-structure.blend" --python-exit-code 1 -P "$t/export_whole.py"
+& .runtime/python/Scripts/python.exe "$t/godot_whole.py"
+```
+
+The export verifies the nine branches sum to the default evaluated face count. The game MCP captures six real Forward+ views and checks named layers, shell visibility, native scale, SSAO and SDFGI. Inspect `godot-whole-*.png` and `godot-whole.json` beside the blend. Chalk and wood-toned review overrides are used instead of source textures. The interior pair shares a camera. This is visual QA, not collision or performance certification.

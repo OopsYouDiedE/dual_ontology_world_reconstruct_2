@@ -319,7 +319,7 @@ func try_plate(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 		approach=near_mark+(near_mark-far_mark).normalized()*.70
 		plate_phase=1;plate_attempts=0
 	plate_attempts+=1
-	if plate_attempts>28:
+	if plate_attempts>(80 if plate_phase==3 else 28):
 		plate_phase=0;plate_retry=12;return {}
 	if plate_phase==1 and p.distance_to(approach)<.45:plate_phase=2
 	var axis:=approach.direction_to(far_mark)
@@ -332,4 +332,4 @@ func try_plate(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 		plate_phase=3
 		return {"turn":turn,"pitch":-.65,"hold":165,"probe":"steady_amber"}
 	var walking:=absf(turn)<.20
-	return {"turn":turn,"pitch":-.86 if plate_phase==3 else -.53,"move":walking,"quiet":walking,"hold":int(profile.delay)+maxi(14,ceili(absf(turn)/.03)+3),"probe":"amber_approach" if plate_phase==1 else "amber_cross"}
+	return {"turn":turn,"pitch":-atan2(1.6,maxf(.16,(far_mark-p).dot(axis)-.19)) if plate_phase==3 else -.53,"move":walking,"quiet":walking,"hold":int(profile.delay)+maxi(14,ceili(absf(turn)/.03)+3),"probe":"amber_approach" if plate_phase==1 else "amber_cross"}

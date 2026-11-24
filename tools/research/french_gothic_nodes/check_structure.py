@@ -5,7 +5,7 @@ import bpy
 from mathutils import Vector
 
 out=Path(bpy.data.filepath).parent; obj=bpy.context.view_layer.objects.active; mod=obj.modifiers[0]; ui=mod.node_group.interface.items_tree
-layers=['Exterior','Nave','Vault webs','Aisles and galleries','Transept','Chevet','Timber frames','Flying buttresses','Tower access']
+layers=['Exterior','Nave','Vault webs','Aisles and galleries','Transept','Chevet','Timber frames','Flying buttresses','Tower access','Wall lining']
 def change(**kw):
     for k,v in kw.items(): mod[ui[k].identifier]=v
     obj.update_tag(); bpy.context.view_layer.update()
@@ -29,7 +29,7 @@ ref=bpy.data.objects.new('Upstream reference',bpy.data.meshes.new('Reference hos
 tree=bpy.data.node_groups.new('Reference evaluation','GeometryNodeTree'); tree.interface.new_socket(name='Geometry',in_out='OUTPUT',socket_type='NodeSocketGeometry'); source=tree.nodes.new('GeometryNodeGroup'); source.node_tree=lib.node_groups[0]; realize=tree.nodes.new('GeometryNodeRealizeInstances'); output=tree.nodes.new('NodeGroupOutput'); tree.links.new(source.outputs[0],realize.inputs[0]); tree.links.new(realize.outputs[0],output.inputs[0]); ref.modifiers.new('Reference','NODES').node_group=tree; bpy.context.view_layer.update(); reference=mesh_signature(ref); bpy.data.objects.remove(ref,do_unlink=True)
 record['default exterior comparison']={'reference':reference,'layer':exterior,'identical':reference==exterior}; assert exterior==reference,(exterior,reference)
 assert sum(s['faces'] for s in record['layers'].values())==record['all']['faces']; show([]); assert stats()['faces']==0
-for group,key,val,axis in [('Nave','Bays',8,None),('Vault webs','Web resolution',25,None),('Aisles and galleries','Bays',8,None),('Transept','Spring height',5,2),('Chevet','Apse sectors',12,None),('Timber frames','Trusses per wing',12,None),('Flying buttresses','Buttress projection',3,0),('Tower access','Tower steps',60,None),('Exterior','DomeHeightMultiplyer',1.4*ui['DomeHeightMultiplyer'].default_value,2)]:
+for group,key,val,axis in [('Wall lining','Lining height scale',1.15,2),('Nave','Bays',8,None),('Vault webs','Web resolution',25,None),('Aisles and galleries','Bays',8,None),('Transept','Spring height',5,2),('Chevet','Apse sectors',12,None),('Timber frames','Trusses per wing',12,None),('Flying buttresses','Buttress projection',3,0),('Tower access','Tower steps',60,None),('Exterior','DomeHeightMultiplyer',1.4*ui['DomeHeightMultiplyer'].default_value,2)]:
     show([group]); change(**{key:val}); after=stats(); before=record['layers'][group]; assert (after['faces']>before['faces'] if axis is None else after['size'][axis]>before['size'][axis]),(group,key,before,after); record['edits'][key+' / '+group]=after; change(**{key:ui[key].default_value})
 show(layers); change(**{'Length scale':1.1}); assert abs(stats()['size'][1]/record['all']['size'][1]-1.1)<.001; change(**{'Length scale':1.}); (out/'structure-checks.json').write_text(json.dumps(record,indent=2))
 scene=bpy.context.scene; bpy.ops.object.camera_add(); cam=bpy.context.object; scene.camera=cam; scene.render.engine='BLENDER_WORKBENCH'; shade=scene.display.shading; shade.color_type='MATERIAL'; shade.show_cavity=True; shade.cavity_type='BOTH'; shade.show_shadows=False; shade.background_type='VIEWPORT'; shade.background_color=(.055,.068,.08); scene.render.film_transparent=False

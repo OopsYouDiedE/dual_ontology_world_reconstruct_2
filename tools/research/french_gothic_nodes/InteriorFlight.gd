@@ -5,6 +5,8 @@ const STOPS := [
 	[Vector3(5,1.65,6),Vector3(4,2.3,19)],
 	[Vector3(-6,2,14),Vector3(4,4,16)],
 	[Vector3(1,1.65,21),Vector3(0,4,27)],
+	[Vector3(6.3,2.25,13),Vector3(10.48,2.9,13)],
+	[Vector3(4.45,1.95,6.7),Vector3(6.85,2.65,6.7)],
 	[Vector3(0,9,4.5),Vector3(1,10,9)],
 ]
 func _set_view() -> void:

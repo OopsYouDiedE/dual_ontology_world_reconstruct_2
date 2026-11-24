@@ -21,7 +21,14 @@ func _ready() -> void:
 		var bay := doc.generate_scene(state)
 		add_child(bay)
 		for surface in bay.find_children("*", "MeshInstance3D", true, false):
-			surface.material_override = palette.mat("chalk")
+			if surface.name != &"Wall_lining": surface.material_override = palette.mat("chalk")
+			else:
+				for i in surface.mesh.get_surface_count():
+					var mat := surface.mesh.surface_get_material(i) as StandardMaterial3D
+					if mat and mat.resource_name in ["Lining Ashlar", "Lining Moulding"]:
+						surface.set_surface_override_material(i, palette.mat("chalk" if mat.resource_name == "Lining Ashlar" else "trim"))
+					elif mat and mat.resource_name != "Lining Lead":
+						mat.emission_enabled = true; mat.emission = mat.albedo_color; mat.emission_energy_multiplier = 0.48
 			surface.gi_mode = GeometryInstance3D.GI_MODE_STATIC
 			if surface.name == &"Timber_frames": surface.material_override = palette.mat("book")
 			parts[str(surface.name)] = surface

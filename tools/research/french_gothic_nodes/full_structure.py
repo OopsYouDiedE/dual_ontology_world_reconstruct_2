@@ -79,8 +79,10 @@ proj=num('Buttress projection',2.4,1.4,3.2); g=Kit('FG2 | Flying buttresses',[pr
 
 stairs=num('Tower steps',44,32,80,I); g=Kit('FG2 | Twin tower stairs and landings',[stairs]); n=g.i[stairs[0]]; ix=g.node('GeometryNodeInputIndex').outputs[0]; angle=g.mul(ix,g.math('DIVIDE',4*math.pi,n)); x,y=polar(.84,angle); zz=g.mul(ix,g.math('DIVIDE',8,n)); pts=g.op('GeometryNodeMeshLine',[('Count',n),('Offset',(0,0,0))]); pts=g.deform(pts,x,y,zz); treads=g.op('GeometryNodeInstanceOnPoints',[('Points',pts),('Instance',g.box(1.12,.48,.14)),('Rotation',g.xyz(0,0,angle))]); core=g.beam((0,0,0),(0,0,8.2),.30); land=g.at(g.box(1.3,1.3,.16),1,0,8); towers=g.end(g.paint(g.pair(g.at(g.join(core,treads,land),5.6,-1.7)), 'Stairs | stone',(.54,.49,.42)))
 
-systems=[('Exterior',shell),('Nave',nave),('Vault webs',webs),('Aisles and galleries',aisles),('Transept',transept),('Chevet',apse),('Timber frames',roof),('Flying buttresses',butt),('Tower access',towers)]
-controls=[bay,width,height,rise,col,radius,webres,fan,trusses,timber,proj,stairs]; outer=['FrontRoofHeight','BellTowerRoofHeight','DomeHeightMultiplyer','SpawnCross']
+from wall_lining import build as build_lining
+lining,lining_height=build_lining(Kit)
+systems=[('Exterior',shell),('Nave',nave),('Vault webs',webs),('Aisles and galleries',aisles),('Transept',transept),('Chevet',apse),('Timber frames',roof),('Flying buttresses',butt),('Tower access',towers),('Wall lining',lining)]
+controls=[bay,width,height,rise,col,radius,webres,fan,trusses,timber,proj,stairs,lining_height]; outer=['FrontRoofHeight','BellTowerRoofHeight','DomeHeightMultiplyer','SpawnCross']
 for k in outer:
     q=shell.interface.items_tree[k]; d=q.default_value; controls.append((k,q.socket_type,d,None,None) if type(d)==bool else num(k,d,d*.6,d*1.5))
 g=Kit('FG2 | Whole church',[('Geometry',G,None,None,None),*(toggle(k) for k,_ in systems),*controls,num('Length scale',1,.75,1.25),num('Width scale',1,.75,1.25)])

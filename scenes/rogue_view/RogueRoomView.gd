@@ -484,6 +484,8 @@ func _spawn_if_needed() -> void:
 		_player.orbit_by(Vector2(0.0, -41.0))
 		_player.zoom_by(2.4)
 		if is_instance_valid(_kitchen): _player.set_room_camera(0.20,3.0)
+	elif _template == "public_nave":
+		_player.set_first_person_framing(55.0, deg_to_rad(7.1))
 	else:
 		_player.orbit_by(Vector2(0.0, 380.0))
 	_player.spawn_at(point, _spawn_yaw(point))
@@ -501,7 +503,7 @@ func _drop_player() -> void:
 
 
 func _spawn_point() -> Vector3:
-	if _template == "public_nave": return Vector3(16, 0, 23.7)
+	if _template == "public_nave": return Vector3(16, 0, 24.4)
 	if is_instance_valid(_kitchen): return Kitchen.SPAWN
 	for object: Dictionary in _lot.objects:
 		if object.role == "entry":

@@ -289,7 +289,7 @@ func _apply_camera_shot(shot: String, t: float) -> void:
 			_cutscene_cam.global_position = start_pos.lerp(_player_eye_pos, t)
 			var look_end := _player_eye_pos - _player_eye_basis.z * 3.0
 			_cutscene_cam.look_at(gate_look.lerp(look_end, t), Vector3.UP)
-			_cutscene_cam.fov = lerpf(62.0, 73.0, t)
+			_cutscene_cam.fov = lerpf(62.0, _player_cam.fov, t)
 
 func snapshot() -> Dictionary:
 	return {

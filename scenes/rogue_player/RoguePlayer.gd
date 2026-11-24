@@ -16,6 +16,7 @@ const FP_BASE_FOV := 73.0
 @onready var _camera: Camera3D = $Camera3D
 
 var first_person := false
+var first_person_fov := FP_BASE_FOV
 var _animation: AnimationPlayer
 var _controls := true
 var _yaw := DEFAULT_YAW
@@ -74,6 +75,10 @@ func set_controls_enabled(enabled: bool) -> void:
 	if not enabled:
 		velocity.x = 0.0
 		velocity.z = 0.0
+
+func set_first_person_framing(vertical_fov: float, pitch: float) -> void:
+	first_person_fov = vertical_fov
+	_pitch = pitch
 
 func orbit_by(relative: Vector2) -> void:
 	if not _controls:
@@ -169,7 +174,7 @@ func _update_camera(delta: float) -> void:
 		_roll = lerpf(_roll, -clampf(local_v.x / SPRINT_SPEED, -1.0, 1.0) * 0.018, Feel.exp_damp(8.0, delta))
 		_camera.global_position = global_position + Vector3.UP * (1.48 + bob)
 		_camera.rotation = Vector3(_pitch, _yaw, _roll)
-		var target_fov := FP_BASE_FOV + (4.5 if _sprinting else 0.0)
+		var target_fov := first_person_fov + (4.5 if _sprinting else 0.0)
 		_camera.fov = lerpf(_camera.fov, target_fov, Feel.exp_damp(7.0, delta)) if delta > 0.0 else target_fov
 		return
 	var target_dist := clampf(_distance + (0.35 if _sprinting else 0.0), 3.0, 14.0)

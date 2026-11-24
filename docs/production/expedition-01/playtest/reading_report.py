@@ -30,7 +30,7 @@ def extract(d, arm, lines):
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument('batches',nargs=4,type=Path);parser.add_argument('--out',required=True,type=Path);parser.add_argument('--sites-log',required=True,type=Path);args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument('batches',nargs=4,type=Path);parser.add_argument('--out',required=True,type=Path);parser.add_argument('--sites-log',required=True,type=Path);parser.add_argument('--prior-audit',type=Path);args=parser.parse_args()
     cases=[]; lines=set(catalog()); seeds=None; sources={}; matched={}; pages=[]
     for directory in args.batches:
         manifest=json.loads((directory/'batch.json').read_text('utf8')); arm=manifest['reading']; assert arm in ARMS and arm not in sources
@@ -52,7 +52,11 @@ def main():
     assert {(r['site'],r['enabled']) for r in sites}=={(s,read) for s in ('note','stele1','stele2') for read in (True,False)}
     audit_path=args.out.with_name('ending-audit.json')
     audit=json.loads(audit_path.read_text('utf8')) if audit_path.exists() else None
-    data=dict(audit=audit,steps=STEPS,cases=cases,lines=sorted(lines),sources=sources,pages=pages,sites=sites)
+    prior=json.loads(args.prior_audit.read_text('utf8')) if args.prior_audit else None
+    if prior:
+        keys=lambda a: {(r['arm'],r['seed']) for r in a['rows']}
+        assert audit and keys(prior)==keys(audit) and prior['ticks']==audit['ticks'] and prior['profile']==audit['profile']
+    data=dict(prior=prior,audit=audit,steps=STEPS,cases=cases,lines=sorted(lines),sources=sources,pages=pages,sites=sites)
     template=Path(__file__).with_name('reading_template.html').read_text('utf8'); args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(template.replace('/*PAYLOAD*/',json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')),encoding='utf8')
     print(len(cases),'validated runs;',len(lines),'dialogues;',sources)

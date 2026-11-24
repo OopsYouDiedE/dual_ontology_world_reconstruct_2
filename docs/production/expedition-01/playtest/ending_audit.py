@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 ARMS = {'closed-skip', 'closed-hints', 'book-skip', 'book-hints'}
-STEPS = ['确认铁闸推不开', '检修升闸升起', '独自走过试板', '总闸已合上', '已拔出备用源核', '已进入返回廊', '已开启气密门', '已触发撤离结局']
+STEPS = ['确认铁闸推不开', '检修升闸升起', '试板已稳定', '开始稳定通过试板', '独自走过试板', '总闸已合上', '已拔出备用源核', '已进入返回廊', '已开启气密门', '已触发撤离结局']
 
 
 def build(dirs, revision):
@@ -17,7 +17,8 @@ def build(dirs, revision):
             d = json.loads((folder/case['directory']/'report.json').read_text('utf8'))
             assert d['profile'] == 'curious' and d['reading']['arm'] == batch['reading']
             confirmed = {e['value'] for e in d['events'] if e['event'] == 'confirmed'}
-            rows.append(dict(arm=batch['reading'], seed=d['seed'], outcome=d['outcome'], reason=d['reason'], tick=d['tick'], regions=d['regions'], steps=[s for s in STEPS if s in confirmed], batch=folder.name))
+            rows.append(dict(arm=batch['reading'], seed=d['seed'], outcome=d['outcome'], reason=d['reason'], tick=d['tick'], regions=d['regions'], path=[[round(x,2),round(z,2)] for _,x,_,z in d['path_samples'][::2]],
+                             checkpoints={s:min(e['tick'] for e in d['events'] if e['event']=='confirmed' and e['value']==s) for s in STEPS if s in confirmed}, steps=[s for s in STEPS if s in confirmed], batch=folder.name))
     assert len(rows) == 8 and {(r['arm'],r['seed']) for r in rows} == {(a,s) for a in ARMS for s in (8,12)}
     return dict(revision=revision, ticks=36000, profile='curious', rows=rows)
 

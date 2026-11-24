@@ -113,6 +113,21 @@ func run()->void:
 			if not check(level.manual.visible and level.page.get_parsed_text().contains("双目同视即刻失控") and not level.caption_toast.visible,"Missing handwritten annotation"):return
 			if not check(level.captions.entries.is_empty(),"Old drama captions survived opening the book"):return
 			press(KEY_1);await wait_frames(40)
+		if point==[28.3,14.1]:
+			var ports:Array=level.Relay.PORTS
+			for loft in [[29.9,14.1],[29.9,16.45],[ports[0].x,16.45],[ports[0].x,16.73]]:
+				if not await go(loft[0],loft[1]):return
+			if not await interact(ports[0],"relay"):return
+			await wait_frames(155)
+			if not check(level.service_signal.heard,"Missing relay reply"):return
+			if not await go(ports[1].x,16.73):return
+			if not await interact(ports[1],"relay"):return
+			await wait_frames(35)
+			if not await go(level.Relay.HATCH.x,16.60):return
+			if not await interact(level.Relay.HATCH,"clock"):return
+			await wait_frames(75)
+			for loft in [[39.05,16.45],[39.05,14.1]]:
+				if not await go(loft[0],loft[1]):return
 		if point==[34,14.1]:
 			if not await interact(Vector3(34.14,.5,14.67),"loot",55):return
 			await wait_frames(60)
@@ -201,11 +216,16 @@ func run()->void:
 		await physics_frame
 	if not check(level.finished and level.reunited,"Evacuation or Hale reunion did not finish"):return
 	print("ENDING %.2fs"%level.phase)
-	print("PASS: Expedition complete; split captions, annotated handbook, north-window arrival, physical door crossing, reunion and airlock verified.")
 	for i in 310:
 		if not check(level.polish.end_card.modulate.a<.01 or level.polish.fade_a>.999,"Evacuation text appeared ahead of full blackout"):return
 		await physics_frame
 	if not check(level.polish.fade_a>.999 and level.polish.end_card.modulate.a>.999,"Blackout and ending card did not complete"):return
+	print("PASS: Expedition complete; archive proof, signal loft, shaft crossing, reunion and blackout verified.")
 	level.queue_free();level=null
 	await process_frame
+	# Fixed-FPS headless runs may exit before the asynchronous audio decoder drains.
+	if DisplayServer.get_name()=="headless":
+		for i in 26:
+			OS.delay_msec(8)
+			await process_frame
 	quit(0)

@@ -1,6 +1,8 @@
 extends Node3D
 signal returned
 const Kit=preload("ExpeditionKit.gd")
+const Relay=preload("ServiceSignal.gd")
+const OIL_PICKUP:=35.
 const Cast=preload("res://scenes/rogue_crossing/ProductionCast.gd")
 var kit:=Kit.new()
 var walker:=CharacterBody3D.new()
@@ -101,6 +103,10 @@ var released:=false
 var collected:=false
 var equipped:=false
 var taken:=false
+var clock_taken:=false
+var service_signal:=Relay.new()
+var relay_focus:=-1
+var mcp_controls:=false
 var posting:=false
 var holding:=false
 var command_path:=PackedVector3Array()
@@ -173,6 +179,15 @@ func _ready()->void:
 	page.add_theme_font_size_override("bold_font_size",22);manual.hide()
 	add_child(polish);polish.setup(self,canvas)
 	update_target()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--rogue-mcp-dir="):mcp_controls=true
+	if mcp_controls:
+		for action in ["expedition_look_left","expedition_look_right","expedition_look_up","expedition_look_down"]:
+			if not InputMap.has_action(action):InputMap.add_action(action)
+		if OS.get_cmdline_user_args().has("--expedition-b4-review"):
+			learned=true;kit.evidence_gate.position.y=4.;read_book=true
+			cues["start"]=true;cues["gate"]=true
+			walker.position=Vector3(28.40,.03,14.06);hale.position=Vector3(26.9,0,14.06)
 func toggle_book()->void:
 	manual.visible=not manual.visible;read_book=true
 	if manual.visible:
@@ -205,10 +220,11 @@ func build_lantern(offset:Vector3)->Node3D:
 func toast(text:String)->void:
 	caption_toast.text=text;caption_toast.show();toast_time=captions.reading_time(text)
 # Keep close-range distance gain from turning small mechanical cues into stingers.
-const CLOSE_CUE_CAPS := {"opening_tail": -17., "gate": -8., "airlock": -8.}
+const CLOSE_CUE_CAPS := {"opening_tail": -17., "gate": -8., "airlock": -8., "relay_tap": -16., "relay_answer": -12.}
 func sound_at(kind:String,pos:Vector3,db:float,distance:=90.)->void:
 	var audio:=AudioStreamPlayer3D.new();add_child(audio);audio.position=pos;audio.stream=sounds[kind]
 	audio.volume_db=db;audio.max_distance=distance
+	if kind.begins_with("relay_"):audio.unit_size=2.
 	if CLOSE_CUE_CAPS.has(kind):audio.max_db=CLOSE_CUE_CAPS[kind]
 	audio.finished.connect(audio.queue_free);audio.play()
 func light_stage()->void:
@@ -292,6 +308,13 @@ func aimed(pos:Vector3,reach:float,cone:=.96)->bool:
 	var hit:=get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(eye.global_position,pos,2))
 	return hit.is_empty() or Vector3(hit.position).distance_to(pos)<.65
 func focus()->String:
+	relay_focus=-1
+	if walker.position.z>16.12 and walker.position.y>.48:
+		if service_signal.open and not clock_taken and aimed(Relay.HATCH,1.85,.92):return "clock"
+		if not service_signal.open:
+			for i in Relay.PORTS.size():
+				if aimed(Relay.PORTS[i],1.48,.94):relay_focus=i;return "relay"
+			if aimed(Relay.HATCH,1.65,.94):return "clock_locked"
 	if not released and walker.position.x<35.9 and aimed(Vector3(36.,1.57,0),2.,.91):return "gate"
 	if not taken and walker.position.z<15.2 and aimed(Vector3(34.14,.5,14.67),2.8):return "loot"
 	if aimed(Vector3(23.6,1.03,4),2.8):return "note"
@@ -316,9 +339,14 @@ func use()->void:
 			confirm_gate_locked()
 		"note":say("残页：隔着玻璃也有反应。昨夜值班记录的最后一行被撕掉了。")
 		"loot":
-			taken=true;equipped=true;oil=minf(100.,oil+35);kit.supplies.hide()
-			play_ui("cue",-16.);toast("收起了前班遗落的煤油罐与发条节拍器。")
-			thought("bait_hint","前班的节拍器……上了发条扔出去，能把井底那东西引开。")
+			taken=true;oil=minf(100.,oil+OIL_PICKUP);kit.oil_tin.hide()
+			if released:checkpoint_oil=minf(100.,checkpoint_oil+OIL_PICKUP)
+			play_ui("cue",-16.);toast("Lamp oil recovered.")
+		"clock":
+			clock_taken=true;equipped=true;kit.clock_cache.hide();play_ui("cue",-16.)
+			if released:checkpoint_item=true
+			toast("Metronome recovered. Throw it into the shaft to draw the listener away.")
+		"relay":use_relay(relay_focus)
 		"lever":
 			if not learned:return
 			hale_gate_attempt=false
@@ -336,6 +364,42 @@ func use()->void:
 			sound_at("airlock",Vector3(.1,1.45,0),-6.)
 		"throw":equipped=false;polish.kick(.14);polish.punch(-2.);distraction=12.;hunter.throw_from(eye.global_position,-eye.global_basis.z)
 	update_target()
+func use_relay(port:int)->void:
+	if service_signal.pending():return
+	if service_signal.heard and port==service_signal.target():
+		service_signal.open=true
+		create_tween().tween_property(kit.clock_shutter,"position:y",Relay.HATCH.y+.54,.40)
+		sound_at("lever",Relay.HATCH,-16.,6.)
+		set_relay_lamp(2,true)
+		toast("The center locker is open.")
+		return
+	if not service_signal.on_felt(walker.position,port):
+		toast("Stand on the felt beneath the relay to hear its reply.")
+		return
+	set_relay_lamp(0,false);set_relay_lamp(1,false)
+	service_signal.strike(port)
+	sound_at("relay_tap",Relay.PORTS[port],-14.,6.)
+	toast("Hold still for the reply…")
+func set_relay_lamp(id:int,active:bool)->void:
+	var finish:=kit.relay_lamps[id].material_override as StandardMaterial3D
+	finish.emission=Color("94ffd0") if active else Color("ffd580")
+	finish.emission_energy_multiplier=1.65 if active else .18
+func update_service_signal(dt:float)->void:
+	var speed:=Vector2(walker.velocity.x,walker.velocity.z).length()
+	var event:=service_signal.advance(dt,walker.position,speed)
+	if event.is_empty():return
+	var target:=service_signal.target()
+	var clear:=event in ["pulse","answer"]
+	sound_at("relay_answer",Relay.PORTS[target],-8. if clear else -34.,8.)
+	if event=="answer":
+		set_relay_lamp(target,true)
+		toast("Two knocks from the %s relay. Pull its latch."%("WEST" if target==0 else "EAST"))
+	elif event=="masked":toast("The reply was muffled. Knock again and listen from the felt.")
+func relay_hint()->String:
+	if service_signal.pending():return "Listen for two knocks"
+	if service_signal.heard and relay_focus==service_signal.target():return "[E] Release metronome locker"
+	if service_signal.on_felt(walker.position,relay_focus):return "[E] Knock · hold still on the felt"
+	return "Step onto the felt to listen"
 func finish_expedition()->void:
 	finished=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	hud.text="撤离成功　·　备用源核已送回稳压室"
@@ -382,6 +446,9 @@ func _physics_process(dt:float)->void:
 	prompt.visible=mode<0;captions.visible=mode<0
 	if mode>=0 and detail_view>=0:hud.text="EYE HEIGHT   /   %s     F6  next sightline    F4  leave"%["B2 · OBSERVATION WINDOW","B5 · MASTER RELEASE","C1 · GAZE SPAN"][detail_view];return
 	if mode>=0:hud.text="SECTION PLATE  %s    /    F4  next view   /   F5  shell or cutaway   /   F6  eye height"%["A · IMMERSION ARCADE","B · ARCHIVE WING","C · SOURCE CAISSON"][mode];return
+	if mcp_controls:
+		var turn:=Input.get_vector("expedition_look_left","expedition_look_right","expedition_look_up","expedition_look_down")
+		walker.rotate_y(-turn.x*dt*1.8);eye.rotation.x=clampf(eye.rotation.x-turn.y*dt*1.8,-1.48,1.48)
 	var axis:=Input.get_vector("move_left","move_right","move_up","move_down");var dir:=walker.basis*Vector3(axis.x,0,axis.y);var speed:=5.8 if running else 3.8
 	if Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet"):speed=2.2
 	if retry>0:
@@ -399,7 +466,7 @@ func _physics_process(dt:float)->void:
 		if walker.is_on_floor() and step.length_squared()>.00001 and walker.test_move(walker.transform,step) and not walker.test_move(walker.transform,Vector3.UP*.19):
 			var up:=walker.transform;up.origin.y+=.19
 			if not walker.test_move(up,step):walker.position.y+=.19
-		walker.move_and_slide();walking_feedback(dt)
+		walker.move_and_slide();walking_feedback(dt);update_service_signal(dt)
 		update_return_route(walker.position)
 		if exit_open and walker.position.x<kit.AIRLOCK_DEPTH:exit_requested=true
 		if exit_requested and walker.position.x<kit.AIRLOCK_DEPTH and hale.position.x< -1.85 and hale_return_path.is_empty() and not captions.entries.has("Hale"):
@@ -416,9 +483,9 @@ func _physics_process(dt:float)->void:
 		if evidence_thought_delay<=0.:thought("thought","一人盯着就能锁稳，两人同看立刻失控。记下这两条。")
 	update_target()
 	hud.modulate=Color.WHITE
-	var hints:={"gate":"Hale 正在试铁闸…" if hale_gate_attempt else "[E] 晃动铁闸　[Q] 请 Hale 试试","note":"[E] 阅读残页","loot":"[E] 拾取补给","lever":"[E] 扳下总闸","core":"[E] 拔出源核","return":"[E] 撞开应急门","exit":"[E] 开启气密门","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器（诱饵）"}
+	var hints:={"gate":"Hale 正在试铁闸…" if hale_gate_attempt else "[E] 晃动铁闸　[Q] 请 Hale 试试","note":"[E] 阅读残页","loot":"[E] Take lamp oil","clock":"[E] Take metronome","clock_locked":"Metronome locker · follow the relay knocks","lever":"[E] 扳下总闸","core":"[E] 拔出源核","return":"[E] 撞开应急门","exit":"[E] 开启气密门","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器（诱饵）"}
 	var seen:=focus();polish.focus_id=seen
-	var hint:=str(hints.get(seen,""));prompt.text=hint if hint!="" else notice if msg_time>0 else "[1] 打开规则手册" if not read_book else ""
+	var hint:=relay_hint() if seen=="relay" else str(hints.get(seen,""));prompt.text=hint if hint!="" else notice if msg_time>0 else "[1] 打开规则手册" if not read_book else ""
 func in_return_gallery(p:Vector3)->bool:
 	return return_started and (p.x>75.55 or p.z>25.15 or (absf(p.x-kit.RETURN_WEST)<1.45 and p.z>=kit.RETURN_GATE_Z-.2))
 
@@ -499,9 +566,10 @@ func walking_feedback(dt:float)->void:
 				var contact:=walker.get_slide_collision(i)
 				if contact.get_normal().y<.7:continue
 				var surface:=str(contact.get_collider().get_parent().name)
-				if "SouthServiceWalk" in surface or "Span" in surface or contact.get_collider().is_in_group("expedition_iron_tread"):kind="iron"
+				if "SouthServiceWalk" in surface or "Span" in surface or "InspectionDeck" in surface or "ServiceIncline" in surface or contact.get_collider().is_in_group("expedition_iron_tread"):kind="iron"
 				elif "Plate" in surface:kind="wood"
-			foot.stream=sounds.quiet if speed_quiet() else sounds[kind];foot.pitch_scale=randf_range(.93,1.07);foot.volume_db=-27. if speed_quiet() else (-17. if running else -21.);foot.play()
+			var muffled:=service_signal.on_felt(walker.position,0) or service_signal.on_felt(walker.position,1)
+			foot.stream=sounds.quiet if speed_quiet() or muffled else sounds[kind];foot.pitch_scale=randf_range(.93,1.07);foot.volume_db=-34. if muffled else -27. if speed_quiet() else (-17. if running else -21.);foot.play()
 
 func speed_quiet()->bool:return Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")
 func setup_hale_animation()->void:
@@ -730,8 +798,23 @@ func reset_at_checkpoint()->void:
 	hale_gate_attempt=false
 	crossing=false;crossing_locked=false;distraction=0.;running=false;collected=false;kit.core.show();siren.stop();emergency.hide();cues.erase("core");cues.erase("post");captions.clear()
 	if released:hunter.wake();oil=checkpoint_oil;equipped=checkpoint_item
+	else:
+		taken=false;clock_taken=false;equipped=false;oil=65.;kit.oil_tin.show();kit.clock_cache.show()
+		service_signal=Relay.new();kit.clock_shutter.position.y=Relay.HATCH.y
+		for i in 3:set_relay_lamp(i,false)
 	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);polish.reset_beat();hazard=0;holding=false;posting=false;trail.clear();command_path.clear()
 func observation()->Dictionary:return {"phase":"first_expedition","section":mode,"position":str(walker.position),"checkpoint":released,"learned":learned,"paired_gaze":archive.paired,"annotated":archive.note,"plate_observers":observers,"core":collected,"hale_posted":holding}
+
+func mcp_observe()->Dictionary:
+	var state:=observation()
+	var point:=walker.position
+	state.merge({"feet":[point.x,point.y,point.z],"yaw":walker.rotation.y,"pitch":eye.rotation.x,
+		"b4":in_b4(point),"oil":snappedf(oil,.01),"oil_taken":taken,"metronome":equipped,"clock_taken":clock_taken,
+		"relay_source":service_signal.source,"relay_target":service_signal.target(),
+		"relay_heard":service_signal.heard,"locker_open":service_signal.open,
+		"focus":focus(),"relay_focus":relay_focus,"prompt":prompt.text,
+		"service_caption":caption_toast.text if caption_toast.visible else ""},true)
+	return state
 
 func review_props()->void:
 	var ground:=PlaneMesh.new();ground.size=Vector2(400,400);plinth.mesh=ground;var g:=StandardMaterial3D.new();g.albedo_color=Color("a0998e");plinth.material_override=g;add_child(plinth);plinth.hide()

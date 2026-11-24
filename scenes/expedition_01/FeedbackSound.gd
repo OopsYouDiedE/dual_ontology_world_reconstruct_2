@@ -15,6 +15,7 @@ static func clips()->Dictionary:
 		"bell":preload("audio/bell.ogg"), "alarm":preload("audio/alarm.ogg"), "ambience":loop(preload("audio/ambience.ogg")),
 		"shaft":loop(preload("audio/shaft.ogg")), "cello":loop(preload("audio/cello.ogg")),
 		"stone":preload("audio/stone.ogg"), "wood":preload("audio/wood.ogg"), "iron":preload("audio/iron.ogg"),
+		"relay_tap":preload("audio/wood.ogg"), "relay_answer":preload("audio/iron.ogg"),
 		"quiet":preload("audio/quiet.ogg"), "breath":preload("audio/breath.ogg"),
 		"gallery_bell":loop(preload("audio/gallery_bell.ogg")), "gallery_impact":preload("audio/gallery_impact.ogg"),
 		"glass_breakout":preload("audio/glass_breakout.ogg"), "hale_breath":preload("audio/hale_breath.ogg"),

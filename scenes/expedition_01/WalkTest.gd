@@ -4,6 +4,8 @@ var level
 var failures:=0
 var gaze:=false
 var south_only:=false
+var clock_only:=false
+var oil_only:=false
 func _initialize()->void:run.call_deferred()
 func go(x:float,z:float,limit:=2000)->bool:
 	var target:=Vector3(x,0,z);Input.action_press("move_up")
@@ -18,6 +20,49 @@ func go(x:float,z:float,limit:=2000)->bool:
 		await physics_frame
 	for k in level.walker.get_slide_collision_count():print(level.walker.get_slide_collision(k).get_collider().get_path(),level.walker.get_slide_collision(k).get_normal())
 	Input.action_release("move_up");push_error("Blocked at %s approaching %s"%[level.walker.position,target]);failures+=1;return false
+func wait_ticks(n:int)->void:
+	for i in n:await physics_frame
+func use_at(target:Vector3,id:String)->bool:
+	level.eye.look_at(target)
+	if level.focus()!=id:
+		push_error("Expected %s, got %s at %s"%[id,level.focus(),level.walker.position]);return false
+	level.use();level.eye.rotation=Vector3.ZERO;return true
+func walk_loft(take_clock:bool,reverse:bool)->bool:
+	var entry:=39.05 if reverse else 29.9
+	var departure:=29.9 if reverse else 39.05
+	var source:int=1 if reverse else 0
+	var ports:Array=level.Relay.PORTS
+	if not await go(entry,14.1) or not await go(entry,16.45) or not await go(34.3,16.45):return false
+	level.eye.look_at(Vector3(34.14,.5,14.67))
+	if level.walker.position.y<.55 or level.focus()=="loot" or not level.in_b4(level.walker.position):
+		push_error("Deck elevation, glazing or dark zone failed");return false
+	level.eye.rotation=Vector3.ZERO
+	if take_clock:
+		if not use_at(level.Relay.HATCH,"clock_locked") or level.equipped:return false
+		if not await go(ports[source].x,16.73):return false
+		await wait_ticks(15)
+		if not use_at(ports[source],"relay"):return false
+		if not reverse:
+			# Leaving the felt during the reply must mask it and keep the locker locked.
+			if not await go(34.3,16.45):return false
+			await wait_ticks(50)
+			if level.service_signal.heard or level.service_signal.open:
+				push_error("Moving heard a clear reply");return false
+			if not await go(ports[source].x,16.73):return false
+			await wait_ticks(15)
+			if not use_at(ports[source],"relay"):return false
+		await wait_ticks(50)
+		if not level.service_signal.heard or level.service_signal.target()!=1-source:
+			push_error("Clear relay did not answer from the opposite bay");return false
+		if not await go(ports[1-source].x,16.73) or not use_at(ports[1-source],"relay"):return false
+		if not level.service_signal.open or level.equipped:return false
+		if not await go(level.Relay.HATCH.x,16.60) or not use_at(level.Relay.HATCH,"clock"):return false
+		if not level.equipped or not level.clock_taken or level.kit.clock_cache.visible:return false
+		level.equipped=false # An expended shaft lure cannot be restocked at the empty locker.
+		level.eye.look_at(level.Relay.HATCH)
+		if level.focus()=="clock":push_error("The empty locker still offers the lure");return false
+		level.equipped=true;level.eye.rotation=Vector3.ZERO
+	return await go(departure,16.45) and await go(departure,14.1)
 func audit()->bool:
 	var kit=level.kit;var space=level.get_world_3d().direct_space_state
 	for i in range(6,23):
@@ -40,7 +85,10 @@ func audit()->bool:
 					push_error("Open wall joint at the return ramp: %s"%inside);return false
 	return true
 func run()->void:
-	south_only=OS.get_cmdline_user_args().has("--south")
+	var args:=OS.get_cmdline_user_args()
+	oil_only=args.has("--oil-only")
+	south_only=args.has("--south") or oil_only
+	clock_only=args.has("--clock-only")
 	level=preload("Expedition.tscn").instantiate();root.add_child(level);await physics_frame
 	await physics_frame
 	var key:=InputEventKey.new();key.physical_keycode=KEY_1;key.pressed=true
@@ -85,17 +133,18 @@ func run()->void:
 			for f in 5:await physics_frame
 			if not level.captions.entries.has(""):push_error("Missing B3 inner thought");quit(1);return
 		if absf(point[0]-28.3)<.01:
-			if south_only:
-				for loft in [[29.9,14.1],[29.9,16.45],[34.3,16.45],[39.05,16.45],[39.05,14.1],[29.35,14.1]]:
-					if not await go(loft[0],loft[1]):quit(1);return
-					if loft==[34.3,16.45]:
-						level.eye.look_at(Vector3(34.14,.5,14.67))
-						if level.walker.position.y<.55 or level.focus()=="loot" or not level.in_b4(level.walker.position):push_error("Inspection deck elevation, glazing or dark zone failed");quit(1);return
-						level.eye.rotation=Vector3.ZERO
+			if not oil_only and not clock_only:
+				if not await walk_loft(not south_only,false):quit(1);return
+			if clock_only:
+				if not await walk_loft(true,true):quit(1);return
 			for bypass in [[29.35,14.1],[29.35,12.1],[36.2,12.1],[29.35,12.1],[29.35,14.1]]:
 				if not await go(bypass[0],bypass[1]):quit(1);return
-		if absf(point[0]-34)<.01 and not south_only:level.eye.look_at(Vector3(34.14,.5,14.67));level.use()
-	level.eye.look_at(Vector3(36.3,1.35,7.72));level.use();if not (level.learned and level.released and level.equipped!=south_only):push_error("Archive state incomplete");quit(1);return
+		if absf(point[0]-34)<.01 and (oil_only or not south_only and not clock_only):
+			var before:float=level.oil
+			if not use_at(Vector3(34.14,.5,14.67),"loot") or level.oil<=before or level.kit.oil_tin.visible:quit(1);return
+	level.eye.look_at(Vector3(36.3,1.35,7.72));level.use()
+	if not (level.learned and level.released and level.equipped!=south_only and level.taken==(oil_only or not south_only and not clock_only)):
+		push_error("Archive state incomplete");quit(1);return
 	Input.action_press("expedition_quiet")
 	for point in [[39,10.1],[48.8,10.1]]:
 		if not await go(point[0],point[1]):quit(1);return
@@ -140,7 +189,7 @@ func run()->void:
 		if completed[0]:break
 		await physics_frame
 	if not completed[0]:push_error("Exit signal missing");quit(1);return
-	print("PASS: south walkway evacuation without supplies, lure or north assignment." if south_only else "PASS: A1 → B1 → B2 → B3 → B4 → B5 → C1 → C2 → C4 → upper return → B5 → A1 exit; Hale watches through glazing.")
+	print("PASS: A1 to evacuation; B4=%s, crossing=%s."%["oil only" if oil_only else "skip both" if south_only else "metronome only" if clock_only else "both caches", "south walk" if south_only else "Hale at north window, main span and metronome lure"])
 	level.queue_free()
 	# Fixed-FPS headless runs outrun the asynchronous Vorbis mixer on Windows.
 	for i in 26:

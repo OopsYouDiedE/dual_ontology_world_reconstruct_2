@@ -1,4 +1,5 @@
 extends "Masonry.gd"
+const Relay=preload("ServiceSignal.gd")
 const CX:=61.0
 const CZ:=10.1
 const BLIND_ANGLES := [90,210,330]
@@ -22,6 +23,10 @@ var test_board:Node3D
 var panel:Node3D
 var core:Node3D
 var supplies:Node3D
+var oil_tin:Node3D
+var clock_cache:Node3D
+var clock_shutter:Node3D
+var relay_lamps:Array[MeshInstance3D]=[]
 var stair_path:=PackedVector3Array()
 func build()->void:
 	arcade();arcade_details();archive();archive_details();shaft();shaft_details();hardware();return_gallery()
@@ -129,18 +134,26 @@ func archive()->void:
 	var route:=[Vector3(36.3,1.48,7.42),Vector3(36.3,3.06,7.42),Vector3(36.18,3.06,7.42),Vector3(36.18,3.06,2.05),Vector3(36.18,4.98,2.05),Vector3(36.18,4.98,0)]
 	for i in route.size()-1:beam(route[i],route[i+1],.10,"brass")
 	for z in [2.68,4.48,6.28]:rect("PipeClamp",36.1,3.06,z,.27,.28,.09,"iron",false)
-	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);inspection_tools();section=root_group;plaque("B5  /  MASTER RELEASE",Vector3(36.31,3.43,7.34),1.90)
+	supplies=Node3D.new();section.add_child(supplies);section=supplies;rect("SupplyChest",34.14,.26,14.67,.98,.52,.55,"brass");rect("Latch",34.14,.32,14.36,.15,.21,.06,"iron",false);inspection_oil();section=root_group;plaque("B5  /  MASTER RELEASE",Vector3(36.31,3.43,7.34),1.90)
 	for x in [37.86,39.54]:rect("ShortcutReceiverStile",x,1.24,7.33,.14,2.48,.14,"door_green",false)
 	rect("ShortcutReceiverHead",38.7,2.48,7.33,1.81,.16,.14,"door_green",false)
 	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[[42.63,44.97,0,2.65]],true)
-func inspection_tools()->void:
-	rect("OilTin",33.95,.74,14.65,.34,.44,.22,"brass")
+func inspection_oil()->void:
+	var parent:=section
+	oil_tin=Node3D.new();parent.add_child(oil_tin);section=oil_tin
+	rect("OilTin",33.95,.74,14.65,.34,.44,.22,"brass",false)
 	for x in [33.86,34.04]:beam(Vector3(x,.96,14.65),Vector3(x,1.05,14.65),.016,"iron")
 	beam(Vector3(33.86,1.05,14.65),Vector3(34.04,1.05,14.65),.016,"iron")
-	rect("MetronomeFoot",34.45,.55,14.65,.29,.06,.22,"book")
+	section=parent
+func inspection_clock()->void:
+	var parent:=section
+	clock_cache=Node3D.new();parent.add_child(clock_cache);section=clock_cache
+	clock_cache.position=Relay.HATCH
+	rect("MetronomeFoot",0,-.16,0,.22,.04,.14,"book",false)
 	var case_mesh:=CylinderMesh.new();case_mesh.radial_segments=4;case_mesh.rings=0;case_mesh.bottom_radius=.172;case_mesh.top_radius=.054;case_mesh.height=.34
-	var case_body:=MeshInstance3D.new();case_body.mesh=case_mesh;case_body.material_override=mat("book");section.add_child(case_body);case_body.position=Vector3(34.45,.75,14.65);case_body.rotation.y=PI/4
-	for side in [-1.,1.]:beam(Vector3(34.42,.61,14.65+side*.125),Vector3(34.50,.91,14.65+side*.057),.015,"brass")
+	var case_body:=MeshInstance3D.new();case_body.mesh=case_mesh;case_body.material_override=mat("book");section.add_child(case_body);case_body.position=Vector3(0,0,0);case_body.rotation.y=PI/4;case_body.scale=Vector3(.71,.85,.49)
+	beam(Vector3(-.031,-.125,-.108),Vector3(.050,.124,-.04),.012,"brass")
+	section=parent
 ## A second section through B4: two thresholds, a raised inspection bench and a
 ## sealed sightline back to the oil chest. Both exits remain downstream of B3.
 func service_loft()->void:
@@ -164,10 +177,38 @@ func service_loft()->void:
 		var ramp:=rect("ServiceIncline",34.5+side*2.6,.238,16.44,sqrt(4.36),.12,2.44,"iron")
 		ramp.rotation.z=-side*atan2(.6,2.)
 	rect("InspectionDeck",34.5,.30,16.44,3.2,.60,2.44,"iron")
-	for x in [29.9,39.05]:plaque("INSPECTION",Vector3(x,2.37,15.07),1.36,PI)
-	for x in [31.,32.5,34.,35.5,37.,38.]:
+	for x in [29.9,39.05]:plaque("SIGNAL LOFT",Vector3(x,2.40,15.07),1.34,PI)
+	plaque("LAMP OIL",Vector3(34.2,2.18,15.02),1.18,PI)
+	for x in [31.,32.5,37.,38.]:
 		beam(Vector3(x,1.38,17.46),Vector3(x,1.38,17.59),.085,"iron")
-	beam(Vector3(29.05,1.38,17.43),Vector3(40.05,1.38,17.43),.052,"brass")
+	for run in [Vector2(29.05,34.16),Vector2(34.84,40.05)]:
+		beam(Vector3(run.x,1.38,17.48),Vector3(run.y,1.38,17.48),.052,"brass")
+	for i in Relay.PORTS.size():
+		var point:Vector3=Relay.PORTS[i]
+		rect("FeltBaffle",point.x,1.63,17.59,1.10,1.66,.12,"felt_dark",false)
+		# A flush tread patch marks where the felt baffle absorbs the metal footfall.
+		rect("ListeningMat",point.x,.603,17.09,1.04,.012,1.08,"felt_dark",false)
+		rect("RelayPlate",point.x,1.70,17.47,.48,.36,.13,"brass",false)
+		rect("RelayKnocker",point.x,1.69,17.372,.16,.18,.070,"iron",false)
+		plaque("W  /  LISTEN" if i==0 else "E  /  LISTEN",point+Vector3(0,.33,-.13),.93,PI)
+		relay_lamps.append(relay_lamp(point+Vector3(.15,.082,-.075)))
+	var h:Vector3=Relay.HATCH
+	rect("ClockCabinet",h.x,h.y,17.57,.74,.55,.16,"book",false)
+	for x in [h.x-.35,h.x+.35]:rect("ClockCabinetFrame",x,h.y,17.38,.07,.58,.28,"brass",false)
+	for y in [h.y-.28,h.y+.28]:rect("ClockCabinetFrame",h.x,y,17.38,.74,.07,.28,"brass",false)
+	inspection_clock()
+	var parent:=section
+	clock_shutter=Node3D.new();parent.add_child(clock_shutter);clock_shutter.position=Vector3(h.x,h.y,17.24);section=clock_shutter
+	rect("ClockShutter",0,0,0,.61,.49,.06,"iron",false)
+	for i in 4:rect("CabinetFlute",0,-.16+i*.10,-.035,.49,.018,.012,"brass",false)
+	section=parent
+	plaque("METRONOME",h+Vector3(0,.59,-.14),1.02,PI)
+	relay_lamps.append(relay_lamp(h+Vector3(0,.38,-.24)))
+func relay_lamp(at:Vector3)->MeshInstance3D:
+	var lamp:=rect("RelayLamp",at.x,at.y,at.z,.075,.075,.038,"amber",false) as MeshInstance3D
+	var finish:=lamp.material_override.duplicate() as StandardMaterial3D
+	finish.emission_enabled=true;finish.emission=Color("ffd580");finish.emission_energy_multiplier=.18
+	lamp.material_override=finish;return lamp
 func shelf(x:float,z:float)->void:
 	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()
 	bookcase.recipe_parameters.merge({"width":3.2,"height":1.0,"depth":.48,"shelves":2,"bays":2},true)

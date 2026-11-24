@@ -1,0 +1,257 @@
+﻿seed,outcome,room_sequence
+1,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+2,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+3,lost,camp > west_1 > west_2 > turntable
+4,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+5,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+6,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+7,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+8,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+9,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+10,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+11,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+12,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+13,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+14,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+15,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+16,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+17,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+18,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+19,won,camp > west_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+20,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+21,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+22,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+23,won,camp > west_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+24,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+25,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+26,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+27,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+28,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+29,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+30,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+31,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+32,lost,camp > east_1 > west_2 > turntable
+33,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+34,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+35,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+36,lost,camp > east_1 > west_2 > turntable > east_3
+37,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+38,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+39,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+40,lost,camp > west_1 > west_2 > turntable
+41,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+42,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+43,lost,camp > east_1 > west_2 > turntable > west_3
+44,won,camp > west_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+45,won,camp > west_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+46,lost,camp > west_1 > west_2 > turntable
+47,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+48,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+49,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+50,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+51,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+52,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+53,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+54,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+55,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+56,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+57,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+58,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+59,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+60,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+61,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+62,lost,camp > east_1 > east_2 > turntable
+63,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+64,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+65,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+66,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+67,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+68,lost,camp > west_1 > east_2 > turntable
+69,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+70,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+71,lost,camp > east_1 > east_2 > turntable > west_3
+72,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+73,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+74,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+75,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+76,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+77,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+78,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+79,lost,camp > west_1 > west_2 > turntable > west_3
+80,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+81,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+82,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+83,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+84,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+85,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+86,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+87,lost,camp > east_1 > west_2 > turntable
+88,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+89,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+90,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+91,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+92,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+93,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+94,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+95,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+96,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+97,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+98,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+99,lost,camp > west_1 > west_2 > turntable > west_3
+100,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+101,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+102,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+103,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+104,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+105,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+106,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+107,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+108,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+109,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+110,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+111,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+112,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+113,lost,camp > west_1 > east_2 > turntable > west_3
+114,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+115,won,camp > west_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+116,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+117,lost,camp > west_1 > east_2 > turntable
+118,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+119,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+120,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+121,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+122,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+123,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+124,lost,camp > east_1 > east_2 > turntable
+125,won,camp > west_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+126,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+127,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+128,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+129,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+130,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+131,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+132,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+133,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+134,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+135,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+136,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+137,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+138,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+139,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+140,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+141,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+142,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+143,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+144,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+145,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+146,lost,camp > east_1 > east_2 > turntable
+147,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+148,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+149,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+150,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+151,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+152,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+153,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+154,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+155,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+156,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+157,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+158,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+159,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+160,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+161,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+162,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+163,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+164,lost,camp > east_1 > east_2 > turntable
+165,lost,camp > east_1 > west_2 > turntable > east_3
+166,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+167,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+168,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+169,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+170,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+171,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+172,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+173,lost,camp > west_1 > east_2 > turntable
+174,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+175,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+176,lost,camp > west_1 > west_2 > turntable
+177,lost,camp > east_1 > west_2 > turntable > west_3
+178,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+179,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+180,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+181,lost,camp > east_1 > west_2 > turntable > west_3
+182,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+183,won,camp > west_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+184,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+185,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+186,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+187,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+188,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+189,won,camp > west_1 > east_2 > turntable > west_3 > observatory
+190,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+191,lost,camp > west_1 > east_2 > turntable
+192,lost,camp > west_1 > west_2 > turntable
+193,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+194,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+195,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+196,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+197,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+198,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+199,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+200,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+201,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+202,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+203,lost,camp > east_1 > west_2 > turntable
+204,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+205,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+206,won,camp > west_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+207,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+208,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+209,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+210,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+211,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+212,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+213,lost,camp > west_1 > west_2 > turntable > east_3
+214,lost,camp > east_1 > east_2 > turntable
+215,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+216,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+217,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+218,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+219,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+220,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+221,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+222,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+223,won,camp > west_1 > east_2 > turntable > east_3 > observatory
+224,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+225,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+226,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+227,won,camp > west_1 > west_2 > turntable > east_3 > observatory
+228,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+229,won,camp > east_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+230,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+231,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+232,lost,camp > west_1 > east_2 > turntable
+233,won,camp > east_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+234,won,camp > west_1 > east_2 > turntable > camp > turntable > west_3 > observatory
+235,lost,camp > east_1 > west_2 > turntable
+236,lost,camp > east_1 > east_2 > turntable > west_3
+237,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+238,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+239,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+240,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+241,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+242,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+243,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+244,won,camp > east_1 > west_2 > turntable > west_3 > observatory
+245,lost,camp > west_1 > west_2 > turntable > east_3
+246,won,camp > east_1 > east_2 > turntable > east_3 > observatory
+247,won,camp > west_1 > west_2 > turntable > west_3 > observatory
+248,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+249,won,camp > east_1 > west_2 > turntable > camp > turntable > east_3 > observatory
+250,won,camp > west_1 > west_2 > turntable > camp > turntable > west_3 > observatory
+251,won,camp > east_1 > east_2 > turntable > west_3 > observatory
+252,lost,camp > west_1 > west_2 > turntable > east_3
+253,lost,camp > west_1 > east_2 > turntable > east_3
+254,won,camp > east_1 > west_2 > turntable > east_3 > observatory
+255,won,camp > east_1 > east_2 > turntable > camp > turntable > east_3 > observatory
+256,won,camp > east_1 > east_2 > turntable > east_3 > observatory

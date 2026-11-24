@@ -4,6 +4,11 @@ from pathlib import Path
 from dialogue_atlas import catalog, load, zones
 
 class Atlas(unittest.TestCase):
+    def test_bilingual_catalog(self):
+        rows = catalog()
+        for key, count in [('start', 1), ('north_order', 2), ('archive_note', 1), ('reunion', 2)]:
+            self.assertEqual(len([s for s, keys in rows.items() if key in keys]), count, key)
+
     def test_locations(self):
         self.assertNotIn('collapse',zones(31,0,4.4)); self.assertIn('collapse',zones(31,0,4.401))
         self.assertNotIn('ward_paired',zones(21.43,3,8.46))

@@ -7,13 +7,19 @@ HERE = Path(__file__).resolve().parent
 SCENE = HERE.parents[3] / 'scenes/expedition_01'
 
 
+def zh_literals(source):
+    """Project bilingual literals: expose the ZH argument to the caption catalog."""
+    literal = r'"(?:\\.|[^"\\])*"'
+    return re.sub(r'R18n\.pick\(('+literal+r'),\s*'+literal+r'\)', r'\1', source)
+
+
 def catalog():
     result = {}
     def add(key, who, line):
         if line:
             result.setdefault((who or '心声') + '：' + line, set()).add(key)
     exp = (SCENE/'Expedition.gd').read_text(encoding='utf8')
-    src = exp + '\n' + (SCENE/'ArchiveWitness.gd').read_text(encoding='utf8')
+    src = zh_literals(exp + '\n' + (SCENE/'ArchiveWitness.gd').read_text(encoding='utf8'))
     for m in re.finditer(r'(line_once|show_line|thought|captions\.post)\("(\w+)",(.*)', src):
         kind, key, args = m.groups()
         who = '心声' if kind == 'thought' else 'Hale'
@@ -28,11 +34,11 @@ def catalog():
     for table,who in [('STELE_TEXT','心声'),('HALE_TALK','Hale')]:
         block = exp.split('const '+table,1)[1].split('}',1)[0]
         for k,v in re.findall(r'"(\w+)":"([^"]+)"',block): add(k,who,v)
-    for line in re.findall(r'return "([^"]+)"', exp.split('func hale_hears_well()',1)[1].split('\nfunc ',1)[0]):
+    for line in re.findall(r'return "([^"]+)"', zh_literals(exp).split('func hale_hears_well()',1)[1].split('\nfunc ',1)[0]):
         for k in ('advise','hale_read'): add(k,'Hale',line)
     for line in ('我还盯着那块板。你那边怎么样？','等一下，让我听听。'): add('advise','Hale',line)
     contracts = (SCENE/'ExpeditionContracts.gd').read_text(encoding='utf8')
-    for line in re.findall(r'return "([^"]+)"', contracts.split('func b_line',1)[1].split('\n##',1)[0]): add('call_b','Hale',line)
+    for line in re.findall(r'return "([^"]+)"', zh_literals(contracts).split('func b_line',1)[1].split('\n##',1)[0]): add('call_b','Hale',line)
     return result
 
 

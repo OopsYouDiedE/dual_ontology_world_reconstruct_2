@@ -1,0 +1,15 @@
+﻿from,to,runs,denominator,percent
+camp,east_1,129,256,50.39
+camp,turntable,74,256,28.91
+camp,west_1,127,256,49.61
+east_1,east_2,64,256,25.0
+east_1,west_2,65,256,25.39
+east_2,turntable,119,256,46.48
+east_3,observatory,120,256,46.88
+turntable,camp,74,256,28.91
+turntable,east_3,126,256,49.22
+turntable,west_3,111,256,43.36
+west_1,east_2,55,256,21.48
+west_1,west_2,72,256,28.12
+west_2,turntable,137,256,53.52
+west_3,observatory,103,256,40.23

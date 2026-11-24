@@ -14,7 +14,8 @@ const LANCET_TEX := "res://tools/research/french_gothic_nodes/lancet_register.pn
 const ROSE_NORTH_TEX := "res://tools/research/french_gothic_nodes/rose_register.png"
 const ROSE_SOUTH_TEX := "res://tools/research/french_gothic_nodes/rose_botanical.png"
 
-const SPRING_H := 4.95
+const SPRING_H := 4.80
+const PIER_INSET := 0.29
 const CROWN_RISE := 6.25
 const CROWN_H := SPRING_H + CROWN_RISE
 
@@ -110,8 +111,8 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	# 2. Perimeter clustered Gothic piers along West & East walls ONLY
 	for iz in range(bays_z + 1):
 		var pz := min_z + float(iz) * bay_len
-		_build_clustered_pier(Vector3(min_x + 0.16, 0.0, pz), 1.0)
-		_build_clustered_pier(Vector3(max_x - 0.16, 0.0, pz), -1.0)
+		_build_clustered_pier(Vector3(min_x + PIER_INSET, 0.0, pz), 1.0)
+		_build_clustered_pier(Vector3(max_x - PIER_INSET, 0.0, pz), -1.0)
 
 	# 3. Full-height East & West Gothic walls with dark walnut dado + UV-mapped stained glass paired lancets
 	var lancet_tex := _load_texture(LANCET_TEX)
@@ -201,7 +202,7 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 		var pts := PackedVector3Array()
 		for ix in range(segs_x + 1):
 			var nx := -1.0 + 2.0 * float(ix) / float(segs_x)
-			pts.append(Vector3(cx + nx * (hx - 0.16), SPRING_H + _pointed_arch_y(nx) - 0.04, wz))
+			pts.append(Vector3(cx + nx * (hx - PIER_INSET), SPRING_H + _pointed_arch_y(nx) - 0.04, wz))
 		_sweep_rib(rib_st, pts, 0.13)
 		for dz: float in [-0.12,0.12]:
 			var fillet := PackedVector3Array()
@@ -220,7 +221,7 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 				var nx := -1.0 + 2.0 * frac
 				var wz := lerpf(z0, z1, frac) if diag == 0 else lerpf(z1, z0, frac)
 				var wy := _vault_height(nx,nx) - 0.09
-				pts.append(Vector3(cx + nx * (hx - 0.16), wy, wz))
+				pts.append(Vector3(cx + nx * (hx - PIER_INSET), wy, wz))
 			_sweep_rib(rib_st, pts, 0.085)
 
 		# Close each lunette above the aisle and trace its load path back to the capitals.
@@ -426,7 +427,7 @@ func _build_end_gable_wall(min_x: float, max_x: float, wz: float, inward_z: floa
 	# Circular tracery remains concentric as the gable grows taller.
 	var rose_root := Node3D.new()
 	rose_root.name = "HallRose_" + ("North" if is_north else "South")
-	rose_root.position = Vector3(cx, 6.85, wz + inward_z * 0.10)
+	rose_root.position = Vector3(cx, 6.28 if is_north else 6.85, wz + inward_z * 0.10)
 	add_child(rose_root)
 
 	var r := 1.95
@@ -610,12 +611,14 @@ func _build_functional_props(min_z: float) -> void:
 	# Essence Calibration Lectern (using real ArchBuilder RecipeLectern)
 	var lec_root := Node3D.new()
 	lec_root.name = "EssenceCalibrationLectern"
-	lec_root.position = Vector3(pendulum_world_pos.x, 0.0, min_z + 1.35)
+	lec_root.position = Vector3(pendulum_world_pos.x, 0.0, min_z + 3.65)
 	add_child(lec_root)
 	var lectern := Factory.create("res://tools/building_construction/BuildingConstruction/Tables/RecipeReceptionDesk.gd")
 	if lectern != null:
+		lectern.recipe_parameters["width"] = 2.75
 		lectern.rotation.y = PI
 		lec_root.add_child(lectern)
+		_reserve_station(lec_root.position,Vector2(2.75,0.95),1.08)
 		_prop(lec_root, "Lighting/BankerLamp", Vector3(-0.8,1.08,0), 0, {"light_energy": 1.2})
 		var map := _prop(lec_root, "Props/Schematic", Vector3(0.14,1.13,0.16), 0, {"width":1.22,"height":0.64})
 		map.rotation.x = -1.28
@@ -669,7 +672,7 @@ func _build_open_arch(x: float, inward: float, z0: float, z1: float) -> void:
 	var pts := PackedVector3Array()
 	for i in 25:
 		var u := (i-12.0)/12.0
-		var p := Vector3(x,2.24+1.8*sqrt(1.0-absf(u)),cz+u*(z1-z0)*0.5)
+		var p := Vector3(x,2.04+1.38*_pointed_arch_y(u)/CROWN_RISE,cz+u*((z1-z0)*0.5-0.42))
 		if i > 0:
 			var last := pts[i-1]
 			var top := Vector3(x,SPRING_H+0.05,p.z)
@@ -677,6 +680,19 @@ func _build_open_arch(x: float, inward: float, z0: float, z1: float) -> void:
 			_add_quad(stone,last,p,top,prev)
 			_add_quad(stone,prev,top,p,last)
 		pts.append(p)
+	# Returned masonry jambs make the depth of the side passage visible at an oblique angle.
+	for end_sign: float in [-1,1]:
+		var edge := cz+end_sign*((z1-z0)*0.5-0.42)
+		var cheek := Vector3(x-inward*0.13,SPRING_H*0.5,edge+end_sign*0.21)
+		_box(self,cheek,Vector3(0.36,SPRING_H,0.42),_mat_wall)
+		_reserve_station(cheek*Vector3(1,0,1),Vector2(0.36,0.42),SPRING_H)
+		_box(self,Vector3(x+inward*0.06,1.02,edge),Vector3(0.24,2.04,0.18),_mat_rib)
+	var soffit := SurfaceTool.new(); soffit.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var depth := Vector3(-inward*0.34,0,0)
+	for i in range(1,pts.size()):
+		var a := pts[i-1]; var b := pts[i]
+		_add_quad(soffit,a,b,b+depth,a+depth); _add_quad(soffit,a+depth,b+depth,b,a)
+	soffit.generate_normals(); _commit_mesh(soffit,_mat_wall,"PassageReveal")
 	_sweep_rib(trim,pts,0.145)
 	for i in pts.size(): pts[i] += Vector3(inward*0.08,0.15,0)
 	_sweep_rib(trim,pts,0.07)
@@ -701,13 +717,13 @@ func _build_watch_wings() -> void:
 	_prop(self,"Tables/WorkCounter",Vector3(24.6,0,13.5))
 	_prop(self,"Props/CrockeryShelf",Vector3(25.75,0,18.2),-PI/2)
 	_camp_cot(self, watch_cot_pos + Vector3(-0.24,0,-1.65))
-	_prop(self,"Props/Screen",Vector3(11.85,0,19.75),PI/2)
+	_prop(self,"Props/Screen",Vector3(11.27,0,20.35),PI/2)
 	for z: float in [14.25,15.9,18.45,20.0]:
 		_prop(self,"Beds/Bed",Vector3(7.65,0,z),PI/2,{"medical":z<17.0})
 		_reserve_station(Vector3(7.65,0,z),Vector2(2.15,1.15),0.52)
 	_prop(self,"Cabinets/MedicineCabinet",Vector3(9.75,0,13.36))
 	_pool(Vector3(9.8,2.5,16.2),Color("b9dfff"),3.8,6.4)
-	var board := _prop(self,"Props/Chalkboard",Vector3(20.72,0.35,19.15),-1.27)
+	var board := _prop(self,"Props/Chalkboard",Vector3(20.72,0.35,19.75),-1.27)
 	for x: float in [-1.28,1.28]:
 		_box(board,Vector3(x,-0.16,0),Vector3(0.08,0.38,0.1),_mat_wood)
 	for station in [Vector3(19.54,0,19.85),Vector3(24.25,0,18.7)]:

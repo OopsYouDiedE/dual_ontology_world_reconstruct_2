@@ -18,6 +18,7 @@ var bait_answered:=false
 var bait_ticks:=0.
 var cast_time:=0.
 var cast_start:=Vector3.ZERO
+var rage_grace:=0.
 func finish(color:Color)->StandardMaterial3D:
 	var mat:=StandardMaterial3D.new();mat.albedo_color=color;mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;mat.emission_enabled=true;mat.emission=color;mat.emission_energy_multiplier=1.5;return mat
 func _ready()->void:
@@ -42,7 +43,7 @@ func throw_from(origin:Vector3,forward:=Vector3.FORWARD)->void:
 func stop_audio()->void:
 	voice.stop();clock.stop()
 func wake()->void:
-	stop_audio();bait_answered=false;show();state="patrol";angle=PI;position=CENTER+Vector3(-8,0,0);ticks=0;exposure=0;quiet=0;cast_time=0;lure.hide()
+	stop_audio();bait_answered=false;show();state="patrol";angle=PI;position=CENTER+Vector3(-8,0,0);ticks=0;exposure=0;quiet=0;cast_time=0;rage_grace=0.;lure.hide()
 func tone(player:AudioStreamPlayer3D,sound:AudioStream,db:float)->void:
 	player.stream=sound;player.volume_db=db;player.play()
 ## Rule hook: heat multiplies exposure gain; direct_exposure adds independent
@@ -89,10 +90,13 @@ func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:D
 		angle+=dt*.25;target=CENTER+Vector3(cos(angle)*8,0,sin(angle)*8);position=position.move_toward(target,2.*dt)
 		if in_well and not voice.playing:tone(voice,sounds.breath,-6)
 	elif state=="hunt":
-		ticks+=1
-		# The upper landing is separated from the well by the gallery floor.
-		var reachable:=Vector3(p.x,minf(p.y,2.85) if rage else p.y,p.z)
-		position=position.move_toward(reachable,dt*(rage_speed if rage else 12.))
-		if ticks>=40 and position.distance_to(p)<1.45:return true
+		if rage and rage_grace>0.:
+			rage_grace=maxf(0.,rage_grace-dt)
+		else:
+			ticks+=1
+			# The upper landing is separated from the well by the gallery floor.
+			var reachable:=Vector3(p.x,minf(p.y,2.85) if rage else p.y,p.z)
+			position=position.move_toward(reachable,dt*(rage_speed if rage else 12.))
+			if ticks>=40 and position.distance_to(p)<1.45:return true
 	elif state!="lure" or bait_answered:position=position.move_toward(target,4.6*dt)
 	var r:=.5+fmod(t*(2.8 if state=="hunt" else 1.),1.)*2.5;pulse.scale=Vector3(r,.28,r);return false

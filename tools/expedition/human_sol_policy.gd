@@ -38,6 +38,12 @@ var route_anchor:=Vector2.INF
 var archive_approached:=false
 var gate_released:=false
 var core_escape:=false
+var escape_sprinting:=false
+var b3_crossed:=false
+var climb_steps:=0
+var passed_signs:={}
+var escape_scan:=0
+var door_opened:=false
 var invitation_used:=false
 var follow_budget:=0
 var follow_misses:=0
@@ -112,7 +118,7 @@ func decide(o:Dictionary)->Dictionary:
 		if "升闸" in cue or "中央柜门已打开" in cue:
 			blocked_edges.clear()
 		if not core_escape and ("拿到了" in cue or "源核脱槽" in cue or "got the core" in cue or "core extracted" in cue):
-			core_escape=true;blocked_edges.clear();confirmed_dead=Vector2.INF;visits.clear();plate_phase=0;follow_budget=0;no_progress=0;recovery_step=-1
+			core_escape=true;blocked_edges.clear();confirmed_dead=Vector2.INF;visits.clear();plate_phase=0;follow_budget=0;no_progress=0;recovery_step=-1;shaft_axis=INF;bay_scan=0
 	var plate:=try_plate(o,p,heading)
 	if not plate.is_empty():return plate
 	if follow_budget>0:
@@ -137,10 +143,14 @@ func decide(o:Dictionary)->Dictionary:
 	if "[E]" in prompt and ("[Q]" not in prompt or "Shake Gate" in prompt or "晃动铁闸" in prompt) and not touched.has(token) and not (reading and examined_text.has(target)):
 		touched[token]=true
 		if reading:examined_text[target]=true
-		return {"key":KEY_E,"hold":65}
+		if "应急" in prompt:blocked_edges.clear();visits.clear();door_opened=true
+		if "气密" in prompt:blocked_edges.clear();visits.clear()
+		return {"key":KEY_E,"hold":int(profile.delay)+6 if ("源核" in prompt or "Core" in prompt) else (38 if ("应急" in prompt or "气密" in prompt) else 65)}
 	if "[Q]" in prompt and ("指派" in prompt or "Post Hale" in prompt) and not touched.has(token):
 		touched[token]=true
 		return {"key":KEY_Q}
+	if core_escape and not escape_sprinting:
+		escape_sprinting=true;spin=1.;return {"key":KEY_SHIFT,"pitch":-.20,"hold":int(profile.delay)+4,"probe":"escape_sprint"}
 	if not wall_mode and not heard_gate and ("沿主廊" in goal or "Follow the arcade" in goal):
 		if o.lanes.is_empty() and absf(float(o.get("pitch",0.)))<.1:
 			return {"turn":0.,"pitch":-.30,"probe":"inspect_arcade_floor"}
@@ -219,7 +229,9 @@ func tracked_walk(lane:Dictionary,p:Vector2,heading:float,tag:String,limit:float
 
 func wall_walk(lane:Dictionary,p:Vector2,heading:float,tag:String)->Dictionary:
 	var hold:=32 if float(lane.depth)<1. else (40 if float(lane.depth)<1.4 else 48)
-	return tracked_walk(lane,p,heading,tag,.39,-.58,hold+int(profile.get("hold_offset",0)))
+	var step:=tracked_walk(lane,p,heading,tag,.55 if core_escape else .39,-.50 if core_escape else -.58,(22 if core_escape else hold)+int(profile.get("hold_offset",0)))
+	if core_escape:step["coast"]=true
+	return step
 
 func follow_wall(o:Dictionary, heading:float, p:Vector2)->Dictionary:
 	var flank:float=o.get("walls",{}).get(int(spin),INF)
@@ -261,7 +273,7 @@ func follow_wall(o:Dictionary, heading:float, p:Vector2)->Dictionary:
 		wall_steps+=1
 		if wall_steps%9==0:survey_left=3
 		return wall_walk(found,p,heading,"wall_track" if is_finite(flank) else "seek_wall")
-	return {"turn":spin*.42,"pitch":-.58,"hold":48,"probe":"seek_wall"}
+	return {"turn":(-.72 if core_escape else spin*.42),"pitch":-.50 if core_escape else -.58,"hold":(int(profile.delay)+8) if core_escape else 48,"probe":"seek_wall"}
 
 func trail_gap(p:Vector2)->float:
 	var gap:=INF
@@ -273,13 +285,21 @@ func yaw_to(delta:Vector2)->float:
 
 func follow_goal_sign(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 	if not gate_released and not core_escape:return {}
-	var targets:Array=["EMERGENCY","ANCHOR HALL","EXIT","应急","锚定"] if core_escape else ["SHAFT","井筒"]
+	var targets:Array=["RETURN EXIT","GALLERY","EXIT RAMP","ARCADE","B5 EXIT","B5 SHORTCUT","A1 HALL","AIRLOCK","ANCHOR HALL","EMERGENCY","STAIR","EAST SPIRAL","EXIT","应急","锚定"] if core_escape else ["SHAFT","井筒"]
+	var candidates:Array=[]
 	for sign:Dictionary in o.get("signs",[]):
 		var upper:=String(sign.text).to_upper()
-		var matched:=false
 		for tok in targets:
-			if tok in upper or tok in String(sign.text):matched=true;break
-		if not matched:continue
+			if tok in upper or tok in String(sign.text):candidates.append(sign);break
+	candidates.sort_custom(func(a:Dictionary,b:Dictionary)->bool:return float(a.get("distance",99.))<float(b.get("distance",99.)))
+	for sign:Dictionary in candidates:
+		var up_s:=String(sign.text).to_upper()
+		var dist_s:=float(sign.get("distance",99.))
+		if (dist_s<2.0 and ("EAST SPIRAL" in up_s or "STAIR" in up_s)) or (door_opened and dist_s<2.4 and "EMERGENCY" in up_s) or (dist_s<1.85 and ("RETURN EXIT" in up_s or "GALLERY" in up_s or "EXIT RAMP" in up_s or "ARCADE" in up_s or "B5 EXIT" in up_s or "B5 SHORTCUT" in up_s or "A1 HALL" in up_s or "← AIRLOCK" in up_s or "A1 EXIT" in up_s)):
+			passed_signs[up_s]=true
+			if "EAST SPIRAL" in up_s or "EMERGENCY" in up_s or "B5 EXIT" in up_s or "← AIRLOCK" in up_s:escape_scan=5
+			if "B5 SHORTCUT" in up_s:escape_scan=-2
+		if passed_signs.has(up_s):continue
 		var best:Dictionary={}
 		var top:=-INF
 		for lane:Dictionary in o.lanes:
@@ -287,10 +307,30 @@ func follow_goal_sign(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 			if err>.62 or int(blocked_edges.get(edge(p,heading+float(lane.turn)),0))>=2:continue
 			var score:=minf(float(lane.depth),3.8)*.50-err*1.4-minf(3.,float(visits.get(cell(lane.end),0)))*.25
 			if score>top:top=score;best=lane
+		if core_escape and ("STAIR" in up_s or "RETURN EXIT" in up_s or "EMERGENCY" in up_s or "A1 HALL" in up_s or "AIRLOCK EXIT" in up_s or "ANCHOR" in up_s):escape_scan=0
 		if not best.is_empty():
-			return tracked_walk(best,p,heading,"follow_escape_sign" if core_escape else "follow_shaft_sign",.44,-.38,profile.hold)
+			var step:=tracked_walk(best,p,heading,"follow_escape_sign" if core_escape else "follow_shaft_sign",.48 if core_escape else .44,-.30 if core_escape else -.38,(int(profile.delay)+6) if core_escape else profile.hold)
+			if core_escape:step["coast"]=true
+			return step
 		if absf(float(sign.turn))>.32:
-			return {"turn":clampf(float(sign.turn),-.85,.85),"pitch":-.35,"hold":52,"probe":"align_goal_sign"}
+			return {"turn":clampf(float(sign.turn),-1.25 if core_escape else -.85,1.25 if core_escape else .85),"pitch":-.20 if core_escape else -.35,"hold":(int(profile.delay)+14) if core_escape else 52,"probe":"align_goal_sign"}
+	if core_escape and escape_scan!=0:
+		var dir_s:=1. if escape_scan>0 else -1.
+		escape_scan-=int(dir_s)
+		return {"turn":dir_s*1.15,"pitch":-.15,"hold":int(profile.delay)+14,"probe":"scan_escape_sign"}
+	if core_escape:
+		# During alarm escape, prefer climbing visible rising stair treads when spiral sign is passed.
+		var best_up:Dictionary={}
+		var best_rise:=.03
+		for lane:Dictionary in o.lanes:
+			var r:=float(lane.get("rise",0.))
+			if r>best_rise and int(blocked_edges.get(edge(p,heading+float(lane.turn)),0))<2:
+				best_rise=r;best_up=lane
+		if not best_up.is_empty() and climb_steps<95:
+			climb_steps+=1
+			var up_step:=tracked_walk(best_up,p,heading,"climb_escape_stair",.68,-.26,int(profile.delay)+6)
+			up_step["coast"]=true
+			return up_step
 	return {}
 
 func look_for_side_door(o:Dictionary,p:Vector2,heading:float)->Dictionary:
@@ -421,7 +461,7 @@ func try_plate(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 	var delta:=target-p
 	var turn:=angle_difference(heading,yaw_to(delta))
 	if plate_phase==3 and (p-far_mark).dot(axis)>.57:
-		plate_phase=0;plate_retry=25;return {}
+		plate_phase=0;plate_retry=25;b3_crossed=true;return {}
 	if plate_phase==2 and absf(turn)<.13:
 		plate_phase=3
 		return {"turn":turn,"pitch":-.65,"hold":165,"probe":"steady_amber"}

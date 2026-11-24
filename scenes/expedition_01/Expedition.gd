@@ -633,7 +633,7 @@ func use()->void:
 			checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();polish.kick(.5);polish.punch(-5.);sound_at("lever",kit.panel.position,-4.);sound_at("chain",Vector3(44.5,1.5,10.1),-2.,22.);sound_at("chain",Vector3(36.,2.,0.),-5.);thought("release",R18n.pick("东侧井筒闸门和铁闸都开了，直接向东进井区。井底也有动静了。","East shaft shutter and isolating gate are both open—head east into the shaft. Something in the pit just woke."))
 		"core":
 			left_north_window=holding
-			collected=true;begin_hale_return();polish.kick(.32);polish.punch(-4.);kit.core.hide();emergency.show();siren.stream=sounds.alarm;siren.play()
+			collected=true;hunter.rage_grace=3.0;begin_hale_return();polish.kick(.32);polish.punch(-4.);kit.core.hide();emergency.show();siren.stream=sounds.alarm;siren.play()
 			thought("core",R18n.pick("拿到了，别回头！上东侧螺旋梯，撞开上层绿漆应急门撤离。","Got the core—move! Up the east spiral, through the green emergency door."))
 		"return":
 			shortcut_open=true;polish.kick(.38);sound_at("escape",kit.leaf.global_position,-5.)

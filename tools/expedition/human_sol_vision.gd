@@ -18,38 +18,57 @@ func hit(eye:Camera3D, space:PhysicsDirectSpaceState3D, excluded:RID, probe:Vect
 		var shape_owner:=result.collider as Node3D
 		var surface:=shape_owner as GeometryInstance3D
 		if surface==null and shape_owner!=null:surface=shape_owner.get_parent() as GeometryInstance3D
-		if surface!=null and shape_owner.is_visible_in_tree() and (surface.layers & eye.cull_mask)!=0:
+		if shape_owner!=null and shape_owner.is_visible_in_tree() and ((surface!=null and (surface.layers & eye.cull_mask)!=0) or shape_owner.is_in_group("expedition_iron_tread")):
 			return {"point":result.position,"normal":result.normal}
 		var omit:=query.exclude;omit.append(result.rid);query.exclude=omit
 	return {}
 
-func sample(eye:Camera3D, body:CharacterBody3D, near_floor:=false)->Array:
+func sample(eye:Camera3D, body:CharacterBody3D, near_floor:=false, stairs_ok:=false)->Array:
 	var space:=eye.get_world_3d().direct_space_state
 	var excluded:=body.get_rid()
 	var feet:=body.global_position
 	var lanes:=[]
 	var ranges:=[1.75,2.25,2.85,3.55,4.4,5.4,6.5]
 	if near_floor:ranges.push_front(1.25);ranges.push_front(.85)
+	if stairs_ok:ranges.push_front(.55)
 	for angle:float in [0.,-.16,.16,-.31,.31,-.47,.47,-.62,.62,-.77,.77]:
 		var dir:=(-body.global_basis.z).rotated(Vector3.UP,angle)
 		var side:=dir.cross(Vector3.UP)*.30
 		var depth:=0.
+		var rise:=0.
 		for distance:float in ranges:
 			var end:=feet+dir*distance
-			var ground:=hit(eye,space,excluded,end+Vector3.DOWN*.035)
-			if near_floor and ground.is_empty() and distance<1.75:continue
-			if not ground.has("point") or ground.normal.y<.60 or Vector3(ground.point).distance_to(end)>.43:break
+			var ground:Dictionary={}
+			var dy_hit:=0.
+			if not stairs_ok:
+				ground=hit(eye,space,excluded,end+Vector3.DOWN*.035)
+				if near_floor and ground.is_empty() and distance<1.75:continue
+				if not ground.has("point") or ground.normal.y<.60 or Vector3(ground.point).distance_to(end)>.43:break
+			else:
+				var saw_any:=false
+				for dy:float in [-.035, .30, -.26]:
+					var cand:=hit(eye,space,excluded,end+Vector3.UP*dy)
+					if not cand.is_empty():saw_any=true
+					if cand.has("point") and cand.normal.y>=.58:
+						var gp:Vector3=cand.point
+						var horiz:=Vector2(gp.x-end.x,gp.z-end.z).length()
+						var vert:=gp.y-feet.y
+						if horiz<=.43 and vert>=-.45 and vert<=.36:
+							ground=cand;dy_hit=vert;break
+				if near_floor and not saw_any and distance<1.75:continue
+				if not ground.has("point"):break
 			var clear:=true
 			for offset:Vector3 in [-side,side]:
-				var chest:=end+offset+Vector3.UP*.76
+				var chest:=end+offset+Vector3.UP*(.76+maxf(0.,dy_hit))
 				var sight:=hit(eye,space,excluded,chest)
 				if sight.is_empty() or (sight.has("point") and eye.global_position.distance_to(sight.point)<eye.global_position.distance_to(chest)-.03):
 					clear=false;break
 			if not clear:break
 			depth=distance
+			if distance<=1.75:rise=maxf(rise,dy_hit)
 		if depth>0.:
 			var end:=feet+dir*minf(depth,2.25)
-			lanes.append({"depth":depth,"turn":angle,"end":Vector2(end.x,end.z)})
+			lanes.append({"depth":depth,"turn":angle,"end":Vector2(end.x,end.z),"rise":rise})
 	return lanes
 
 

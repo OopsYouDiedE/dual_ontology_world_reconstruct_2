@@ -83,7 +83,7 @@ func observe()->Dictionary:
 	if level.wheel.wheel.is_visible_in_tree() and level.wheel.open:
 		for option:Dictionary in level.wheel.options:orders.append(String(option.title))
 	return {"amber":vision.amber_marks(level.eye,level.walker,level),"people":vision.people(level.eye,level.walker,level),"pitch":level.eye.rotation.x,"orders":orders,"region":text_of(level.polish.card_title),"oil_warning":level.polish.oil_label.is_visible_in_tree() and level.polish.oil_label.modulate==Color("ff9a80"),"goal":text_of(level.polish.field_note),"captions":subtitles(),"place":Vector2(p.x,p.z),"heading":atan2(-forward.x,-forward.z),"prompt":text_of(level.prompt),
-		"signs":vision.read_labels(level.eye,level.walker,level),"walls":vision.flanks(level.eye,level.walker) if exploratory else {},"lanes":vision.sample(level.eye,level.walker,exploratory or close_floor)}
+		"signs":vision.read_labels(level.eye,level.walker,level),"walls":vision.flanks(level.eye,level.walker) if exploratory else {},"lanes":vision.sample(level.eye,level.walker,exploratory or close_floor,escaping)}
 
 func motor(action:String, angle:float)->void:
 	var frames:=roundi(absf(angle)*Engine.physics_ticks_per_second/1.8)

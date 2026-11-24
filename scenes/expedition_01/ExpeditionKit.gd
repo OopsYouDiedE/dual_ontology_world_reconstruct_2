@@ -431,6 +431,13 @@ func shaft()->void:
 	rect("CoreBayHeader",CX+11.65,2.45,CZ,.12,.82,2.6,"iron",false)
 	for offset in [-1.18,1.18]:rect("CoreBayUpright",CX+11.65,1.05,CZ+offset,.08,2.1,.08,"iron",false)
 	label_at("CORE BAY",Vector3(CX+11.57,2.45,CZ),-PI/2,96)
+	label_at("EAST SPIRAL ↑",Vector3(CX+12.25,1.45,CZ+1.42),-PI/2,76)
+	label_at("STAIR ↑",Vector3(CX+12.35,1.55,CZ-1.10),0.,76)
+	label_at("EMERGENCY EXIT",Vector3(CX+13.36,6.35,CZ+2.35),-PI/2,76)
+	label_at("RETURN EXIT →",Vector3(CX+14.15,6.05,CZ+2.20),-PI/2,76)
+	label_at("GALLERY →",Vector3(RETURN_ELBOW,6.20,CZ+2.35),-PI/2,76)
+	label_at("GALLERY ↓",Vector3(RETURN_ELBOW,6.20,RETURN_SOUTH),PI,76)
+	label_at("← EXIT RAMP",Vector3(RETURN_WEST,1.65,RETURN_SOUTH),PI/2,76)
 	for bx in [52.3,69.7]:
 		for bz in [8.55,11.65]:
 			rect("BridgeBollard",bx,.34,bz,.16,.68,.16,"iron",false)
@@ -503,6 +510,13 @@ func return_gallery()->void:
 	plaque("PRESSURE VAULT",Vector3(52.3,vy+2.2,22.36),1.5)
 	marker("GalleryLampV",Vector3(52.3,vy+2.0,24.2))
 	gallery_wall(lower_elbow-w*Vector3.RIGHT+w*Vector3.BACK,outlet-w*Vector3.RIGHT)
+	label_at("← B5 EXIT",Vector3(43.8,1.15,8.88),0.,76)
+	label_at("B5 SHORTCUT ←",Vector3(38.7,1.45,10.1),PI/2,76)
+	label_at("A1 HALL ↑",Vector3(38.7,1.45,5.0),0.,76)
+	label_at("← AIRLOCK",Vector3(38.7,1.35,0.6),0.,76)
+	label_at("A1 EXIT ←",Vector3(20.0,1.45,0.),PI/2,84)
+	label_at("AIRLOCK EXIT",Vector3(.45,1.15,0.),PI/2,84)
+	slab(38.65,-1.55,5.25,1.1)
 	gallery_wall(lower_elbow+w*Vector3.RIGHT-w*Vector3.BACK,outlet+w*Vector3.RIGHT)
 	# Enamel arrows, copper supply pipe and regularly spaced wall sconces break up the long slope.
 	plaque("SERVICE RETURN   ↱",inner_elbow+Vector3(w-.15,2.09,0),1.21,-PI*.5)

@@ -81,15 +81,15 @@ func run() -> void:
 	level.update_lantern(0.05)
 	check(level._lamp_sway.length() > 0.001, "lantern develops spring inertia sway on yaw turn")
 
-	# 5. Unified PBR materials & regional atmosphere grading
-	var brass: StandardMaterial3D = level.kit.mat("brass")
+	# 5. Blue Prince HallFinish shader materials & regional atmosphere grading
+	var brass: ShaderMaterial = level.kit.mat("brass")
 	var glass: StandardMaterial3D = level.kit.mat("glass")
-	var felt: StandardMaterial3D = level.kit.mat("felt_dark")
-	var door_g: StandardMaterial3D = level.kit.mat("door_green")
-	check(brass.metallic > 0.75 and brass.roughness < 0.35, "brass PBR preset applied")
+	var felt: ShaderMaterial = level.kit.mat("felt_dark")
+	var door_g: ShaderMaterial = level.kit.mat("door_green")
+	check(float(brass.get_shader_parameter("surface_roughness")) < 0.35, "brass HallFinish roughness applied")
 	check(glass.roughness < 0.15 and glass.rim_enabled, "glass PBR preset applied")
-	check(felt.roughness > 0.95, "felt_dark PBR preset applied")
-	check(door_g.clearcoat_enabled, "door_green clearcoat preset applied")
+	check(float(felt.get_shader_parameter("surface_roughness")) > 0.95, "felt_dark HallFinish roughness applied")
+	check(float(door_g.get_shader_parameter("wood")) > 0.5, "door_green HallFinish wood grain applied")
 	var a_arc := RenderProfile.atmosphere_for("arcade", 0.0)
 	var a_shaft := RenderProfile.atmosphere_for("shaft", 0.0)
 	check(a_shaft.fog_density > a_arc.fog_density and a_shaft.fog_color != a_arc.fog_color, "regional atmosphere differentiates shaft from arcade")

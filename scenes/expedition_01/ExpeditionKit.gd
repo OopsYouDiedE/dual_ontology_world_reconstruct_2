@@ -336,8 +336,9 @@ func service_loft()->void:
 	rect("RuleSteleAInlay",31.5,1.55,17.415,.86,1.34,.02,"book",false)
 func relay_lamp(at:Vector3)->MeshInstance3D:
 	var lamp:=rect("RelayLamp",at.x,at.y,at.z,.075,.075,.038,"amber",false) as MeshInstance3D
-	var finish:=lamp.material_override.duplicate() as StandardMaterial3D
-	finish.emission_enabled=true;finish.emission=Color("ffd580");finish.emission_energy_multiplier=.18
+	var finish:=lamp.material_override.duplicate() as ShaderMaterial
+	finish.set_shader_parameter("pigment",Color("ffd580"))
+	finish.set_shader_parameter("emission_gain",.18)
 	lamp.material_override=finish;return lamp
 func shelf(x:float,z:float)->void:
 	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()

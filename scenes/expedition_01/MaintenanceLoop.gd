@@ -56,8 +56,10 @@ func build()->void:
 		for dx in [-.77,-.64,.64,.77]:
 			box("MaintenanceStrapRivet",Vector3(x+dx,HEAD+.09,-2.042),Vector3(.041,.041,.021),"iron",false)
 		var parked_leaf:=box("DoorParkedOpen",Vector3(x-.97,1.11,-3.04),Vector3(.10,2.22,1.36),"iron") as MeshInstance3D
-		var ochre:=mat("iron").duplicate() as StandardMaterial3D
-		ochre.albedo_color=Color("805833");parked_leaf.material_override=ochre
+		var ochre:=mat("iron").duplicate() as Material
+		if ochre is ShaderMaterial:ochre.set_shader_parameter("pigment",Color("805833"))
+		elif ochre is StandardMaterial3D:ochre.albedo_color=Color("805833")
+		parked_leaf.material_override=ochre
 		plaque("MAINTENANCE",Vector3(x,2.65,-2.065),1.22)
 		lamp(Vector3(x,2.36,-3.65))
 	slab(21.,RUN_Z,14.23,2.25)

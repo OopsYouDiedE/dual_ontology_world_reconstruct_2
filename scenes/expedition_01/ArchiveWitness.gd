@@ -86,9 +86,9 @@ func step(lv,dt:float)->bool:
 				if p.distance_to(DOOR)<2.60:
 					if not lv.cues.has("ward_paired") and not lv.cues.has("ward_unseen") and not lv.captions.entries.has("Hale"):
 						if facts.evaluate("door_paired"):
-							lv.line_once("ward_paired","刚才我们一起看，板子就红了。你要一个人进去，我在门口等。")
+							lv.line_once("ward_paired","别迈过那道门槛！《守则》写着双人互保，可刚才我们隔着窗同看，板子差点炸裂……你若非要独身试板，我就在门外替你守着退路。")
 						else:
-							lv.line_once("ward_unseen","你要进去看看？我在门边等你。有事就喊。")
+							lv.line_once("ward_unseen","里面是琥珀测试室，师兄的抄表记录就断在这里。我不敢违背旧守则贸然进去——我在门边守着，有异动立刻退回来。")
 					if lv.cues.has("ward_paired") or lv.cues.has("ward_unseen"):beat=Beat.WAIT
 				if entered_trial:beat=Beat.PEEK
 			return true
@@ -127,7 +127,7 @@ func compare(lv,count:int,dt:float)->void:
 	overlap=overlap+dt if count==2 else 0.
 	if overlap<.44:return
 	facts.record("dual_gaze_b2","two unobstructed window rays for 0.44 s")
-	lv.line_once("window","红了！刚才我们俩都在看。谁先看见的？")
+	lv.line_once("window","糟了——板面翻红了！玻璃挡不住视线，我们俩同时盯着它了！快，谁先看到的谁立刻移开眼！")
 	if lv.contracts.a_role==lv.contracts.Seer.HALE:
 		beat=Beat.WITHDRAW;recoil_left=.65;lv.polish.kick(.14)
 
@@ -165,4 +165,4 @@ func record_crossing(lv, crossed_in_hale_view:bool)->void:
 	if crossed_in_hale_view:
 		facts.record("hale_saw_crossing_b3","Hale had a clear doorway sightline during the locked crossing")
 	if facts.evaluate("hale_comparison"):
-		lv.line_once("hale_evidence","在窗边，我们一起看，它就红了。刚才我在门口，只见你一个人走过去了。")
+		lv.line_once("hale_evidence","……我真不敢相信。在窗边我们俩同看，它几乎当场崩塌；刚才你在里面孤身盯住它，竟稳稳走了过去。旧守则……真的写反了。")

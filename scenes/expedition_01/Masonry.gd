@@ -1,5 +1,8 @@
 extends Node3D
 ## Metric primitives shared by the A/B/C construction recipes. Y is feet elevation.
+## Uses the project's Blue Prince painterly toon shader (HallFinish.gdshader)
+## for opaque architecture and props so Expedition-01 matches Hall 04 aesthetics.
+const HALL_FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 const RenderProfile = preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const COLORS = {"brick":"796a5f","abyss":"090b10","pit":"47484a","test_amber":"e99425","chalk":"c7c3b6","trim":"ded9cb","joint":"b1ad9e","floor":"cdc8bc","iron":"40474a","dark":"232735","felt_dark":"353b39","brass":"ba914e","amber":"ffc35a","green":"65d39c","door_green":"31604b","glass":"bfdedd","book":"9f998a"}
 var materials := {}
@@ -10,11 +13,27 @@ var stone_mesh := BoxMesh.new()
 var root_group: Node3D
 func group(label: String) -> void:
 	section=Node3D.new(); section.name=label; add_child(section); root_group=section
-func mat(k: String) -> StandardMaterial3D:
+func mat(k: String) -> Material:
 	if materials.has(k): return materials[k]
-	var m:=StandardMaterial3D.new(); m.albedo_color=Color(COLORS[k])
-	RenderProfile.apply_material_preset(m,k)
-	materials[k]=m; return m
+	if k in ["glass", "test_amber"]:
+		var std := StandardMaterial3D.new()
+		std.albedo_color = Color(COLORS[k])
+		RenderProfile.apply_material_preset(std, k)
+		materials[k] = std
+		return std
+	var m := ShaderMaterial.new()
+	m.shader = HALL_FINISH
+	m.set_shader_parameter("toon_on", true)
+	m.set_shader_parameter("toon_strength", 0.86)
+	m.set_shader_parameter("pigment", Color(COLORS[k]))
+	var preset: Dictionary = RenderProfile.MATERIAL_PRESETS.get(k, {})
+	m.set_shader_parameter("surface_roughness", float(preset.get("roughness", 0.84)))
+	m.set_shader_parameter("grain", 0.045 if k in ["brass", "iron"] else 0.075)
+	m.set_shader_parameter("wood", 1.0 if k in ["book", "door_green"] else 0.0)
+	m.set_shader_parameter("pale_wash", 0.14 if k in ["chalk", "trim"] else (0.08 if k == "floor" else 0.0))
+	m.set_shader_parameter("emission_gain", float(preset.get("emission_energy", 0.0)))
+	materials[k] = m
+	return m
 func box(id:String,p:Vector3,size:Vector3,k:String="chalk",solid:=true,yaw:=0.0)->Node3D:
 	var n:=MeshInstance3D.new(); n.name=id; n.mesh=stone_mesh; n.material_override=mat(k); section.add_child(n); n.position=p; n.rotation.y=yaw; n.scale=size
 	if solid:
@@ -38,7 +57,7 @@ func arch(origin:Vector3,r:float,t:float,depth:float,axis_x:bool,k:String,start:
 			pts.append(Vector3(d,v,u) if axis_x else Vector3(u,v,d))
 		for face in [[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3],[0,1,3,2],[4,6,7,5]]:
 			for j in [0,1,2,0,2,3]: st.add_vertex(pts[face[j]])
-	st.generate_normals();var n:=MeshInstance3D.new(); n.mesh=st.commit(); var m:=mat(k).duplicate() as StandardMaterial3D; m.cull_mode=BaseMaterial3D.CULL_DISABLED;n.material_override=m;section.add_child(n);n.position=origin;return n
+	st.generate_normals();var n:=MeshInstance3D.new(); n.mesh=st.commit(); var m:=mat(k).duplicate() as Material; n.material_override=m;section.add_child(n);n.position=origin;return n
 ## Wall described by two endpoints along X or Z and optional real openings [from,to,sill,head].
 func wall(x_axis:bool,f:float,a:float,b:float,h:float,holes:Array=[],remove:=false,k:="chalk")->void:
 	var pos:=a

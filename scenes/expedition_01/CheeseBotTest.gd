@@ -1,8 +1,8 @@
 extends SceneTree
-## Adversarial exploit bot ("CheeseBot") simulating a player who ignores Hale,
-## skips all oil/metronome pickups, sprints to B5, stealth-walks solo across the
-## main bridge staring down at the deck, grabs the core, and sprints out.
-## Used by tools/expedition/ai_optimize_loop.py to detect dominant cheese routes.
+## Real-physics adversarial exploit bot ("CheeseBot").
+## Uses the EXACT same player CharacterBody3D capsule, ExpeditionKit colliders,
+## and [E] interaction triggers as a real player from spawn (1, 0.03, 0) — ZERO
+## teleports and ZERO direct state overrides (released/collected).
 
 var level
 var peak_exposure := 0.0
@@ -18,28 +18,25 @@ func step_frames(n: int) -> void:
 		if level != null and is_instance_valid(level):
 			peak_exposure = maxf(peak_exposure, level.hunter.exposure)
 
-func walk_to(target: Vector3, quiet: bool, run_mode: bool, look_at_pt: Vector3, max_ticks: int = 900) -> bool:
+func go(x: float, z: float, quiet: bool, run_mode: bool, look_at_pt := Vector3.ZERO, limit := 1400) -> bool:
 	level.running = run_mode
 	if quiet:
 		Input.action_press("expedition_quiet")
 	else:
 		Input.action_release("expedition_quiet")
 	Input.action_press("move_up")
-	var reached := false
-	for i in max_ticks:
+	var ok := false
+	for i in limit:
 		if level.retry > 0.0:
 			break
 		var p: Vector3 = level.walker.position
-		var d := Vector2(target.x - p.x, target.z - p.z)
-		if d.length() < 0.42:
-			reached = true
+		var d := Vector2(x - p.x, z - p.z)
+		if d.length() < 0.22:
+			ok = true
 			break
 		level.walker.rotation.y = atan2(-d.x, -d.y)
 		if look_at_pt != Vector3.ZERO:
-			var eye_pos: Vector3 = level.eye.global_position
-			var to_pt := look_at_pt - eye_pos
-			var flat := Vector2(to_pt.x, to_pt.z).length()
-			level.eye.rotation.x = clampf(atan2(to_pt.y, maxf(0.01, flat)), -1.45, 1.45)
+			level.eye.look_at(look_at_pt)
 		else:
 			level.eye.rotation.x = 0.0
 		await physics_frame
@@ -48,35 +45,55 @@ func walk_to(target: Vector3, quiet: bool, run_mode: bool, look_at_pt: Vector3, 
 	Input.action_release("move_up")
 	Input.action_release("expedition_quiet")
 	level.running = false
-	return reached and level.retry <= 0.0
+	return ok and level.retry <= 0.0
+
+func use_at(target: Vector3) -> bool:
+	level.eye.look_at(target)
+	await step_frames(2)
+	level.use()
+	level.eye.rotation = Vector3.ZERO
+	return true
 
 func run() -> void:
 	level = preload("Expedition.tscn").instantiate()
 	root.add_child(level)
-	await step_frames(8)
+	await step_frames(6)
 
-	# Simulate player rushing straight to B5, ditching Hale outside the shaft,
-	# pulling the master release, then solo stealth-crossing the main bridge.
-	level.hale.position = Vector3(31.0, 0.0, 2.0)
-	level.hale_hold = true
-	level.walker.position = Vector3(48.5, 0.05, 10.1)
-	level.walker.rotation.y = 0.0
-	level.eye.rotation.x = 0.0
-	level.released = true
-	level.hunter.wake()
-	level.oil = 65.0
-	await step_frames(4)
-
-	# 1. Rush to bridge west mouth (no oil pickup, no metronome, no Hale)
-	var ok := await walk_to(Vector3(52.2, 0.05, 10.1), true, false, Vector3(61.0, 0.0, 10.1), 320)
-	# 2. Solo stealth-walk across the 18m main bridge staring down at the deck
+	# 1. Sprint through A1 -> B1 -> B2 -> B3 -> B5 (no gate test, no B2 wait, no oil)
+	var path_to_b5 := [
+		[31.0, 0.0], [31.0, 4.9], [26.7, 4.9], [25.7, 5.5], [25.7, 7.75],
+		[20.95, 7.75], [20.95, 9.8], [23.85, 9.8],
+	]
+	var ok := true
+	for pt in path_to_b5:
+		ok = await go(pt[0], pt[1], false, true)
+		if not ok:
+			break
+	# Cross B3 plate staring at it
 	if ok:
-		ok = await walk_to(Vector3(70.5, 0.05, 10.1), true, false, Vector3(61.0, 0.0, 10.1), 950)
-	# 3. Grab core & sprint straight to east spiral entry
-	if ok and level.retry <= 0.0:
-		level.collected = true
-		level.hunter.exposure = maxf(level.hunter.exposure, 1.5)
-		ok = await walk_to(Vector3(74.8, 0.05, 10.1), false, true, Vector3.ZERO, 350)
+		ok = await go(23.85, 14.12, false, false, Vector3(23.85, 0.11, 13.0))
+	if ok:
+		for pt in [[25.5, 14.1], [38.9, 14.1], [38.9, 10.0], [36.6, 8.5]]:
+			ok = await go(pt[0], pt[1], false, true)
+			if not ok:
+				break
+	# Pull real B5 Master Release lever via [E]
+	if ok:
+		await use_at(Vector3(36.3, 1.35, 7.72))
+		ok = level.released
+	# 2. Ditch Hale, enter C1 solo, stealth-walk main bridge staring down
+	if ok:
+		ok = await go(48.8, 10.1, true, false)
+	if ok:
+		ok = await go(52.2, 10.1, true, false, Vector3(61.0, 0.0, 10.1))
+	if ok:
+		ok = await go(70.5, 10.1, true, false, Vector3(61.0, 0.0, 10.1), 1100)
+	# 3. Real [E] pickup on Core, then sprint to east spiral
+	if ok:
+		await use_at(level.kit.core.position)
+		ok = level.collected
+	if ok:
+		ok = await go(74.6, 10.1, false, true, Vector3.ZERO, 400)
 
 	var cheesed: bool = ok and level.retry <= 0.0 and bool(level.collected)
 	var res := {
@@ -86,6 +103,7 @@ func run() -> void:
 		"peak_exposure": snappedf(peak_exposure, 0.01),
 		"ticks": ticks,
 		"hunter_state": level.hunter.state,
+		"real_physics": true,
 	}
 	print("CHEESE_RESULT " + JSON.stringify(res))
 	level.queue_free()

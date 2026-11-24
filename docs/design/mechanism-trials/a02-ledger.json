@@ -1,0 +1,16 @@
+{
+  "candidate": "A02 / The Evidence Register",
+  "revision": "dcd6e945abfb10e97dd6997ea2ca6bca0091bd31",
+  "generated_at": "2026-11-25T05:48:57.067915+08:00",
+  "red_reports": [{
+    "agent": "Popper",
+    "role": "medium",
+    "revision": "dcd6e945abfb10e97dd6997ea2ca6bca0091bd31",
+    "started_at": "2026-11-25T05:49:39.789+08:00",
+    "ended_at": "2026-11-25T05:50:52.932+08:00",
+    "independent": true,
+    "outcome": "cleared",
+    "surface": "normal-input",
+    "receipt": {"file": "a02-red-medium.json", "sha256": "0acaa21a716a8714673e940aca6bfe23c861baf520216159f25ffeed9b3778ba"}
+  }]
+}

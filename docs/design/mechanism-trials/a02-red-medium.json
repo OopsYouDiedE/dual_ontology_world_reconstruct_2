@@ -1,0 +1,11 @@
+{
+  "revision": "dcd6e945abfb10e97dd6997ea2ca6bca0091bd31",
+  "started_at": "2026-11-25T05:49:39.789+08:00",
+  "ended_at": "2026-11-25T05:50:52.932+08:00",
+  "elapsed_seconds": 73.143,
+  "method": "Frozen scene with normal keys sent through the scene's input handler, Godot 4.7.2 headless. Read-only state verification. Unlisted ticks were idle.",
+  "plate": 1,
+  "keys_by_tick": {"1":"W","2":"2","13":"E","14":"E","15":"U","16":"Z","43":"U","44":"F","45":"3","57":"F","99":"U","100":"X","101":"O","102":"Z","103":"O","104":"4","115":"B","116":"B","127":"Enter","222":"Enter","223":"Enter"},
+  "proof": {"tick": 223, "outcome": "emergency", "phase": "filed", "manual_edition": "III", "pressure_debt": 1, "proof_ticks": 0, "rule_permits_release": false},
+  "classification": "An independent legal emergency filing bypassed live proof by the designed pressure route. No clean bypass verified. Any filing counts as a clear under the frozen acceptance gate."
+}

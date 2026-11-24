@@ -40,6 +40,7 @@ var echo := GONE
 var firing := 0
 var span := SpanMode.PARKED
 var span_clock := 0
+var span_entry := GONE
 var won := false
 var message := "The anchor records footsteps. The room resets; the footsteps repeat."
 var events: Array[Dictionary] = []
@@ -71,10 +72,18 @@ func _move(dest: Vector2i) -> void:
 		message = "The screen rejects raw ore. It passes people and the cooled key."
 		mark("screen_reject")
 		return
-	if (player == SPAN or dest == SPAN) and (not span_walkable() or (dest == SPAN and span_clock == 0)):
-		message = "The turntable must be locked across the gap."
+	if dest == SPAN and span != SpanMode.OPENED:
+		message = "The turntable must be locked and accepting entry."
 		mark("span_reject")
 		return
+	if player == SPAN:
+		if span == SpanMode.CLOSING and span_clock == 0 and dest != span_entry:
+			message = "Parking interlock: step back to the bank you boarded from."
+			mark("span_retreat_only")
+			return
+		span_entry = GONE
+	elif dest == SPAN:
+		span_entry = player
 	player = dest
 	message = "At %s." % PLACES[player]
 
@@ -139,6 +148,7 @@ func _advance(count: int) -> void:
 				firing = 0
 				span = SpanMode.PARKED
 				span_clock = 0
+				span_entry = GONE
 				replay_tick = 0
 				echo = ANCHOR
 				message = "The room is restored. The teal echo can hold plates."
@@ -195,7 +205,7 @@ func _turntable() -> void:
 			if span_clock == 0:
 				span = SpanMode.CLOSING
 				span_clock = WARN
-				message = "PARKING WARNING — walk off the moving deck."
+				message = "PARKING WARNING — clear the deck. Late riders must step back."
 				mark("span_close_warn")
 		SpanMode.CLOSING:
 			span_clock = maxi(0, span_clock - 1)
@@ -223,5 +233,5 @@ func state() -> Dictionary:
 	return {"tick": tick, "player": PLACES[player], "item": Item.keys()[item], "recording": recording,
 		"tape": tape_places, "rewind_ticks": rewind, "replay_tick": replay_tick,
 		"echo": PLACES.get(echo, "—"), "fire_plate": on_plate(FIRE), "call_plate": on_plate(CALL),
-		"firing_ticks": firing, "span": SpanMode.keys()[span], "span_ticks": span_clock,
+		"firing_ticks": firing, "span": SpanMode.keys()[span], "span_ticks": span_clock, "span_entry": PLACES.get(span_entry, "—"),
 		"won": won, "message": message, "events": events.duplicate(true)}

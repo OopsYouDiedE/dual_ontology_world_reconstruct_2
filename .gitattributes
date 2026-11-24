@@ -1,2 +1,5 @@
 * text=auto
 *.png -text
+
+# Fixed byte representation for checked red-team receipts.
+docs/design/mechanism-trials/*-red-*.json text eol=lf

@@ -10,6 +10,7 @@ const TEST_SCENES := [
 	"res://scenes/physics_lab/Lab.tscn",
 	"res://scenes/physics_lab/chronograph/Chronograph.tscn",
 	"res://scenes/physics_lab/evidence_register/EvidenceRegister.tscn",
+	"res://scenes/physics_lab/palimpsest/Palimpsest.tscn",
 	"res://scenes/rule_evaluation/Evaluation.tscn",
 	"res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
 	"res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",

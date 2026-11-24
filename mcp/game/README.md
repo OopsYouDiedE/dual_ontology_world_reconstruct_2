@@ -34,3 +34,13 @@
 ## 03 — The Airborne Shade
 
 `on {"scene":"shadecloth"}` opens the Bellflower hall variant in a fixed review pose. `shade_a` through `shade_d` select the review cameras, `shade_play` plays or pauses the orbit, `shade_uncover` isolates the cloth's shadow, and `shade_live` starts first-person traversal. See the [scene guide](../../scenes/rubber_whitebox/shadecloth/README.md).
+
+## Academy mechanism trials
+
+These research scenes run on the same Forward+ toon pipeline and use isolated profiles. They are separate from the campaign and from acceptance results.
+
+- `on(scene="chronograph")`: `chrono_north/south/east/west`, `chrono_use`, `chrono_wait`, `chrono_reset`, `chrono_view`, `chrono_look`.
+- `on(scene="evidence_register")`: `register_survey/drawer/proof/threshold`, `register_take_prism/take_wax/send`, `register_sun/moon`, `register_show/release/override/brace/file`, `register_reset/plate/optics`.
+- `on(scene="palimpsest")`: `palimpsest_i/ii/iii`, `palimpsest_confirm`, `palimpsest_reset`, `palimpsest_view`. Selecting a socket previews it for 40 ticks before the application honors confirmation. Click a pad to inspect both decks without affecting the room state.
+
+See [mechanism trials](../../docs/design/mechanism-trials/README.md) for testing commands, frozen candidate gates and screenshot evidence.

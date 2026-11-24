@@ -1,0 +1,86 @@
+{
+  "schema": "palimpsest.replay.v1",
+  "cases": [
+    {
+      "id": "golden",
+      "actions": [
+        "port_0", "port_1", "port_1", "port_2", "port_1", "port_0", "port_0", "port_1", "port_2", "port_0", "port_0", "port_2",
+        "port_2", "port_0", "port_2", "port_0", "port_0", "port_0", "port_0", "port_1", "port_2", "port_0", "port_0", "port_0",
+        "port_0", "port_0", "port_2", "port_1", "port_1", "port_0", "port_0", "port_1", "port_2", "port_0", "port_1", "port_0",
+        "port_2", "port_1", "port_0", "port_2", "port_1", "port_1", "port_0", "port_1", "port_2", "port_0", "port_0", "port_1",
+        "port_0", "port_2", "port_2", "port_2", "port_1", "port_0", "port_1", "port_2", "port_0", "port_1", "port_1", "port_2",
+        "port_1", "port_1", "port_2", "port_0", "port_2", "port_2", "port_0", "port_1", "port_0", "port_1", "port_2", "port_1",
+        "rewind"
+      ],
+      "ink_route": [
+        0, 9, 1, 10, 2, 11, 3, 13, 23, 14, 6, 16,
+        8, 7, 17, 25, 26, 35, 44, 43, 33, 42, 34, 24,
+        15, 5, 4, 12, 20, 21, 22, 32, 31, 30, 38, 37,
+        29, 19, 18, 28, 27, 36, 45, 55, 65, 66, 56, 64,
+        63, 54, 46, 47, 48, 39, 40, 49, 59, 67, 57, 58,
+        68, 69, 61, 51, 41, 50, 60, 52, 53, 62, 70, 71
+      ],
+      "lift_departures": [
+        71, 70, 69, 59, 58, 48, 39, 38, 47, 56, 65, 64,
+        54, 63, 55, 46, 36, 45, 37, 29, 28, 27, 18, 9,
+        19, 20, 30, 31, 22, 23, 33, 25, 35, 26, 34, 44,
+        53, 62, 61, 52, 43, 51, 60, 68, 67, 66, 57, 49,
+        40, 50, 42, 41, 32, 24, 16, 17, 8, 7, 15, 5,
+        6, 14, 4, 3, 13, 21, 12, 2, 11, 1, 10, 0
+      ],
+      "expect": {"phase": "won", "tick": 2880, "event_code": "exit_open", "lift_bay": -2}
+    },
+    {
+      "id": "alternate_ink_early_jam",
+      "actions": [
+        "port_0", "port_1", "port_1", "port_2", "port_1", "port_0", "port_0", "port_1", "port_2", "port_0", "port_0", "port_2",
+        "port_2", "port_0", "port_2", "port_0", "port_0", "port_0", "port_0", "port_1", "port_2", "port_0", "port_0", "port_0",
+        "port_0", "port_0", "port_2", "port_1", "port_1", "port_0", "port_0", "port_1", "port_2", "port_0", "port_1", "port_0",
+        "port_2", "port_1", "port_0", "port_2", "port_1", "port_1", "port_0", "port_1", "port_2", "port_0", "port_0", "port_1",
+        "port_0", "port_2", "port_2", "port_0", "port_2", "port_2", "port_1", "port_2", "port_0", "port_1", "port_1", "port_2",
+        "port_1", "port_1", "port_2", "port_0", "port_2", "port_2", "port_0", "port_1", "port_0", "port_1", "port_2", "port_1",
+        "rewind"
+      ],
+      "ink_route": [
+        0, 9, 1, 10, 2, 11, 3, 13, 23, 14, 6, 16,
+        8, 7, 17, 25, 26, 35, 44, 43, 33, 42, 34, 24,
+        15, 5, 4, 12, 20, 21, 22, 32, 31, 30, 38, 37,
+        29, 19, 18, 28, 27, 36, 45, 55, 65, 66, 56, 64,
+        63, 54, 46, 47, 39, 48, 40, 49, 59, 67, 57, 58,
+        68, 69, 61, 51, 41, 50, 60, 52, 53, 62, 70, 71
+      ],
+      "lift_departures": [
+        71, 70, 69, 59, 58, 48, 49, 50
+      ],
+      "expect": {"phase": "failed", "tick": 1600, "event_code": "lift_revisit", "lift_bay": 59}
+    },
+    {
+      "id": "alternate_ink_late_jam",
+      "actions": [
+        "port_0", "port_1", "port_1", "port_2", "port_1", "port_0", "port_0", "port_1", "port_2", "port_0", "port_2", "port_2",
+        "port_2", "port_0", "port_2", "port_0", "port_0", "port_0", "port_0", "port_1", "port_2", "port_0", "port_0", "port_0",
+        "port_0", "port_0", "port_2", "port_1", "port_1", "port_0", "port_0", "port_1", "port_2", "port_0", "port_1", "port_0",
+        "port_2", "port_1", "port_0", "port_2", "port_1", "port_1", "port_0", "port_1", "port_2", "port_0", "port_0", "port_1",
+        "port_0", "port_2", "port_2", "port_2", "port_1", "port_0", "port_1", "port_2", "port_0", "port_1", "port_1", "port_2",
+        "port_1", "port_1", "port_2", "port_0", "port_2", "port_2", "port_0", "port_1", "port_0", "port_1", "port_2", "port_1",
+        "rewind"
+      ],
+      "ink_route": [
+        0, 9, 1, 10, 2, 11, 3, 13, 23, 14, 6, 7,
+        16, 8, 17, 25, 26, 35, 44, 43, 33, 42, 34, 24,
+        15, 5, 4, 12, 20, 21, 22, 32, 31, 30, 38, 37,
+        29, 19, 18, 28, 27, 36, 45, 55, 65, 66, 56, 64,
+        63, 54, 46, 47, 48, 39, 40, 49, 59, 67, 57, 58,
+        68, 69, 61, 51, 41, 50, 60, 52, 53, 62, 70, 71
+      ],
+      "lift_departures": [
+        71, 70, 69, 59, 58, 48, 39, 38, 47, 56, 65, 64,
+        54, 63, 55, 46, 36, 45, 37, 29, 28, 27, 18, 9,
+        19, 20, 30, 31, 22, 23, 33, 25, 35, 26, 34, 44,
+        53, 62, 61, 52, 43, 51, 60, 68, 67, 66, 57, 49,
+        40, 50, 42, 41, 32, 24, 16, 17, 8
+      ],
+      "expect": {"phase": "failed", "tick": 2580, "event_code": "lift_revisit", "lift_bay": 16}
+    }
+  ]
+}

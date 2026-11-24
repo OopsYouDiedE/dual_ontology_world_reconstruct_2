@@ -6,7 +6,7 @@ from gn_graph import num
 from math import pi, sin, cos, sqrt
 
 COLORS = {'Ashlar':(.61,.54,.42),'Moulding':(.78,.70,.55),'Lead':(.075,.077,.09),
-          'Cobalt':(.075,.21,.57),'Ruby':(.58,.075,.11),'Amber':(.85,.49,.12),'Pearl':(.40,.67,.74)}
+          'Cobalt':(.075,.21,.57),'Ruby':(.58,.075,.11),'Amber':(.85,.49,.12),'Pearl':(.40,.67,.74),'Traced':(1,1,1)}
 GLASS = ['Cobalt','Ruby','Amber','Pearl']
 
 def master(rose):
@@ -40,14 +40,27 @@ def master(rose):
                 a=2*pi*j/64;dx,dz=cos(a),sin(a); rr=min(w/max(abs(dx),1e-8),(top-cz if dz>=0 else cz-sill)/max(abs(dz),1e-8)) if outer else r
                 poly.append((rr*dx,cz+rr*dz))
             slab(poly,-.05,.14,'Ashlar')
-        for rr in [r,.92,.52,.22]: tube(circle(0,cz,rr),.045 if rr==r else .03,-.085,'Moulding')
-        for k in range(16):
-            a=2*pi*k/16;b=2*pi*(k+1)/16
-            def pt(rr,theta):return rr*cos(theta),cz+rr*sin(theta)
-            tube([pt(.22,a),pt(r,a)],.021,-.064,'Lead')
-            for j,(lo,hi) in enumerate([(0,.22),(.22,.52),(.52,.92),(.92,r)]):
-                arc=[a+(b-a)*t/4 for t in range(5)];poly=[pt(hi,t) for t in arc]+([pt(lo,t) for t in arc[::-1]] if lo else [(0,cz)])
-                face([(x,.035,z) for x,z in poly],GLASS[(k%2+2*j+(k//4)%2)%4])
+        if rose == 'traced':
+            # The hub branches into twelve main bars; the outer order is finer.
+            for rr in [r,.19*r]: tube(circle(0,cz,rr),.018,-.072,'Moulding')
+            for k in range(12):
+                a=(k+.5)*pi/6
+                def point(rr,t): return (r*rr*cos(t),cz+r*rr*sin(t))
+                tube([point(.19,a),point(.58,a),point(1,a)],.012,-.065,'Moulding')
+                tube([point(.58,a),point(.74,a+.045),point(.80,a+.105),point(.83,a+pi/12)],.008,-.061,'Moulding')
+                tube([point(.58,a),point(.74,a-.045),point(.80,a-.105),point(.83,a-pi/12)],.008,-.061,'Moulding')
+            for i in range(96):
+                q=[(0,.032,cz)]+[(r*cos(j*pi/48),.032,cz+r*sin(j*pi/48)) for j in (i,i+1)]
+                face(q,'Traced')
+        else:
+            for rr in [r,.92,.52,.22]: tube(circle(0,cz,rr),.045 if rr==r else .03,-.085,'Moulding')
+            for k in range(16):
+                a=2*pi*k/16;b=2*pi*(k+1)/16
+                def pt(rr,theta):return rr*cos(theta),cz+rr*sin(theta)
+                tube([pt(.22,a),pt(r,a)],.021,-.064,'Lead')
+                for j,(lo,hi) in enumerate([(0,.22),(.22,.52),(.52,.92),(.92,r)]):
+                    arc=[a+(b-a)*t/4 for t in range(5)];poly=[pt(hi,t) for t in arc]+([pt(lo,t) for t in arc[::-1]] if lo else [(0,cz)])
+                    face([(x,.035,z) for x,z in poly],GLASS[(k%2+2*j+(k//4)%2)%4])
     else:
         for k,cx in enumerate([-.68,.68]):
             hw=.62; spring=2.94; peak=4.23
@@ -67,6 +80,13 @@ def master(rose):
     name='Radial rose' if rose else 'Paired lancets'; mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
     for label,color in COLORS.items():
         mat=bpy.data.materials.get('Lining '+label) or bpy.data.materials.new('Lining '+label);mat.diffuse_color=(*color,1);mat.use_backface_culling=False;mat.use_nodes=True; mat.node_tree.nodes.get("Principled BSDF").inputs["Base Color"].default_value=(*color,1);mesh.materials.append(mat)
+    if rose == 'traced':
+        from pathlib import Path
+        uv=mesh.uv_layers.new(name='Window projection')
+        for loop in mesh.loops:
+            x,_,z=mesh.vertices[loop.vertex_index].co; uv.data[loop.index].uv=(.5+x/(2*r),.5+(z-cz)/(2*r))
+        mat=mesh.materials[-1]; tex=mat.node_tree.nodes.new('ShaderNodeTexImage');tex.image=bpy.data.images.load(str(Path(__file__).with_name('rose_register.png')));tex.image.pack()
+        mat.node_tree.links.new(tex.outputs['Color'],mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
     mesh.polygons.foreach_set('material_index',indices)
     return bpy.data.objects.new(name,mesh) # referenced by GN, not placed in the scene separately
 
@@ -74,13 +94,13 @@ def build(Kit):
     height=num('Lining height scale',1,.85,1.18); g=Kit('FG2 | Interior wall and glazed openings',[height]); h=g.i[height[0]]
     def src(rose):
         n=g.node('GeometryNodeObjectInfo');g.put(n,'Object',master(rose));return n.outputs['Geometry']
-    bay,rose=src(False),src(True); pieces=[]
+    bay,rose=src(False),src(True); traced=src("traced"); pieces=[]
     def wall(unit,x,y,angle,width):
         pieces.append(g.op('GeometryNodeTransform',[('Geometry',unit),('Translation',(x,y,0)),('Rotation',(0,0,angle)),('Scale',g.xyz(width/3,1,h))]))
     for side in [-1,1]:
         for lo,hi in [(-24,-16.4),(-9.6,-3.6)]:
             for i in range(3):wall(bay,side*6.85,lo+(hi-lo)*(i+.5)/3,-side*pi/2,(hi-lo)/3)
-        wall(rose,side*10.48,-13,-side*pi/2,3.0)
+        wall(traced if side>0 else rose,side*10.48,-13,-side*pi/2,3.0)
         for yy in [-15.45,-10.55]:wall(bay,side*10.48,yy,-side*pi/2,1.9)
         for y,rot in [(-16.4,pi),(-9.6,0)]:wall(bay,side*8.665,y,rot,3.63)
     for i in range(8):

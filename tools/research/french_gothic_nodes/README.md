@@ -42,3 +42,16 @@ $t = 'tools/research/french_gothic_nodes'
 ```
 
 Open `cathedral-controls.blend`, select `Cathedral | select to edit`, and use the `Cathedral controls` modifier. `Exterior` and `Interior` isolate branches. The exterior uses the upstream combined church; the nave is an original procedural study with a slab, paired columns, pointed arcades, transverse ribs and crossing diagonal ribs. Width and length scale act on both branches. Changing Bays redistributes the frames over a fixed 20-unit run. The graph does not generate masonry vault webs or a timber roof structure. Dimensions are design controls, not survey measurements. The check reopens the saved assembly, evaluates controls and visibility, and writes `assembly-checks.json`, `assembly-interior.png` and `assembly-section.png` without changing the blend file.
+
+### Whole-building structural study and fidelity test
+
+The expanded scene preserves the upstream exterior as its own layer. The nave, vault webs, galleries, transept wings, chevet fan, timber frames, projecting buttresses and tower stairs are interpretive additions sized to the example envelope. The nave has four-part bays; the trusses cover two straight roof runs. This is not a surveyed reconstruction. Shell shape controls are not a general collision solver for the additions.
+
+After building `cathedral-controls.blend` above, use the same `$b`, `$d` and `$t`:
+
+```powershell
+& $b -b --factory-startup --python-exit-code 1 -P "$t/full_structure.py" -- $d
+& $b -b --factory-startup "$d/cathedral-structure.blend" --python-exit-code 1 -P "$t/check_structure.py"
+```
+
+The check evaluates all nine layers individually, exercises a control on each layer, and compares the default exterior against a fresh append from `nodes.blend` using SHA-256 of ordered positions, face corner indices and face starts. See `structure-checks.json` beside the blend. This comparison covers default exterior geometry, not materials, conjectural interiors or historical fidelity.

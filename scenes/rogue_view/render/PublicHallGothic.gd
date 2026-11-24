@@ -14,11 +14,17 @@ const LANCET_TEX := "res://tools/research/french_gothic_nodes/lancet_register.pn
 const ROSE_NORTH_TEX := "res://tools/research/french_gothic_nodes/rose_register.png"
 const ROSE_SOUTH_TEX := "res://tools/research/french_gothic_nodes/rose_botanical.png"
 
-const SPRING_H := 4.80
+const SPRING_H := 6.00
 const ARCADE_INSET := 0.30
 const PIER_INSET := 0.29
-const CROWN_RISE := 6.25
+const CROWN_RISE := 6.60
 const CROWN_H := SPRING_H + CROWN_RISE
+
+# Clear heights in metres; the wing ceiling clears the taller arcade mouldings.
+const ARCADE_SPRING := 2.85
+const ARCADE_RISE := 1.80
+const WING_SPRING := 2.58
+const WING_ROOF := 5.20
 
 var pendulum_pivot: Node3D
 var pendulum_bob: Node3D
@@ -672,7 +678,7 @@ func _build_open_arch(x: float, inward: float, z0: float, z1: float) -> void:
 	var pts := PackedVector3Array()
 	for i in 25:
 		var u := (i-12.0)/12.0
-		var p := Vector3(x,2.04+1.38*_pointed_arch_y(u)/CROWN_RISE,cz+u*((z1-z0)*0.5-0.42))
+		var p := Vector3(x,ARCADE_SPRING+ARCADE_RISE*_pointed_arch_y(u)/CROWN_RISE,cz+u*((z1-z0)*0.5-0.42))
 		if i > 0:
 			var last := pts[i-1]
 			var top := Vector3(x,SPRING_H+0.05,p.z)
@@ -686,7 +692,7 @@ func _build_open_arch(x: float, inward: float, z0: float, z1: float) -> void:
 		var cheek := Vector3(x-inward*0.13,SPRING_H*0.5,edge+end_sign*0.21)
 		_box(self,cheek,Vector3(0.36,SPRING_H,0.42),_mat_wall)
 		_reserve_station(cheek*Vector3(1,0,1),Vector2(0.36,0.42),SPRING_H)
-		_box(self,Vector3(x+inward*0.06,1.02,edge),Vector3(0.24,2.04,0.18),_mat_rib)
+		_box(self,Vector3(x+inward*0.06,ARCADE_SPRING*0.5,edge),Vector3(0.24,ARCADE_SPRING,0.18),_mat_rib)
 	var soffit := SurfaceTool.new(); soffit.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var depth := Vector3(-inward*0.34,0,0)
 	for i in range(1,pts.size()):
@@ -706,14 +712,14 @@ func _build_watch_wings() -> void:
 		var cx := 16.0+7.5*side
 		var roof_x := cx - side * ARCADE_INSET * 0.5
 		for z: float in [13,21]:
-			_box(self,Vector3(roof_x,2.25,z),Vector3(5+ARCADE_INSET,4.5,0.12),_mat_wall)
+			_box(self,Vector3(roof_x,WING_ROOF*0.5,z),Vector3(5+ARCADE_INSET,WING_ROOF,0.12),_mat_wall)
 			_box(self,Vector3(cx,0.6,z+(0.08 if z==13 else -0.08)),Vector3(5,1.2,0.12),_mat_wood)
 		for bay in 2:
 			var z0 := 13.0 + bay * 4.0
-			_build_side_lancet_bay(cx+2.5*side,-side,z0,z0+4.0,bay+(2 if side>0 else 0),_load_texture(LANCET_TEX),4.45)
-		_box(self,Vector3(roof_x,4.45,17),Vector3(5+ARCADE_INSET,0.18,8),_mat_vault)
+			_build_side_lancet_bay(cx+2.5*side,-side,z0,z0+4.0,bay+(2 if side>0 else 0),_load_texture(LANCET_TEX),WING_ROOF)
+		_box(self,Vector3(roof_x,WING_ROOF,17),Vector3(5+ARCADE_INSET,0.18,8),_mat_vault)
 		for z: float in [13.2,17,20.8]:
-			_box(self,Vector3(cx,4.28,z),Vector3(5,0.24,0.23),_mat_rib)
+			_box(self,Vector3(cx,WING_ROOF-0.17,z),Vector3(5,0.24,0.23),_mat_rib)
 		_build_wing_partition(cx,side)
 	_prop(self,"Cabinets/LinenCabinet",Vector3(9.5,0,20.65),PI)
 	_reserve_station(Vector3(9.5,0,20.65),Vector2(1.45,0.68),1.9)
@@ -761,22 +767,22 @@ func _build_watch_wings() -> void:
 func _build_wing_partition(cx: float, side: int) -> void:
 	# Two enclosed rooms share a generous pointed passage facing the central arcade.
 	var wall_x := cx+1.5*side
-	_box(self,Vector3(wall_x,2.2,17),Vector3(2,4.4,0.17),_mat_wall)
+	_box(self,Vector3(wall_x,WING_ROOF*0.5,17),Vector3(2,WING_ROOF,0.17),_mat_wall)
 	_box(self,Vector3(wall_x,0.54,17),Vector3(2,1.08,0.24),_mat_wood)
 	var opening := cx-side
 	var curve := PackedVector3Array()
 	var web := SurfaceTool.new(); web.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in 25:
 		var u := (i-12.0)/12.0
-		var pt := Vector3(opening+1.5*u,2.05+1.2*_pointed_arch_y(u)/CROWN_RISE,17)
+		var pt := Vector3(opening+1.5*u,WING_SPRING+1.52*_pointed_arch_y(u)/CROWN_RISE,17)
 		if i>0:
-			var last := curve[i-1]; var a := Vector3(last.x,4.45,17); var b := Vector3(pt.x,4.45,17)
+			var last := curve[i-1]; var a := Vector3(last.x,WING_ROOF,17); var b := Vector3(pt.x,WING_ROOF,17)
 			_add_quad(web,last,a,b,pt); _add_quad(web,pt,b,a,last)
 		curve.append(pt)
 	web.generate_normals(); _commit_mesh(web,_mat_wall,"WingDoorHead")
 	var bead := SurfaceTool.new(); bead.begin(Mesh.PRIMITIVE_TRIANGLES); _sweep_rib(bead,curve,0.10)
 	bead.generate_normals(); _commit_mesh(bead,_mat_rib,"WingArchivolt")
-	for dx: float in [-1.5,1.5]: _box(self,Vector3(opening+dx,1.02,17),Vector3(0.19,2.04,0.23),_mat_rib)
+	for dx: float in [-1.5,1.5]: _box(self,Vector3(opening+dx,WING_SPRING*0.5,17),Vector3(0.19,WING_SPRING,0.23),_mat_rib)
 
 func _build_brazier() -> void:
 	var pan := Node3D.new(); pan.name="WatchBrazier"; pan.position=Vector3(16,0,11.6); add_child(pan)

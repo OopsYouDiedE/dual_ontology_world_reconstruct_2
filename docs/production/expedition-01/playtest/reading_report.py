@@ -60,7 +60,7 @@ def extract(d, arm, lines, situational=False):
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument('batches',nargs=4,type=Path);parser.add_argument('--out',required=True,type=Path);parser.add_argument('--sites-log',required=True,type=Path);parser.add_argument('--prior-audit',type=Path);parser.add_argument('--prior-report', type=Path, help='matching short-run HTML for the field-notes comparison');parser.add_argument('--situational-manual', action='store_true', help='manual quiet-step applies on shaft danger, not on every move');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument('batches',nargs=4,type=Path);parser.add_argument('--out',required=True,type=Path);parser.add_argument('--sites-log',required=True,type=Path);parser.add_argument('--prior-audit',type=Path);parser.add_argument('--prior-report', type=Path, help='matching short-run HTML for the field-notes comparison');parser.add_argument('--situational-manual', action='store_true', help='manual quiet-step applies on shaft danger, not on every move');parser.add_argument('--extended-audit', type=Path, help='additional matched cohort with a longer budget');parser.add_argument('--change-summary',help='tested changes to display with the comparison');args=parser.parse_args()
     cases=[]; lines=set(catalog()); seeds=None; sources={}; matched={}; pages=[]
     for directory in args.batches:
         manifest=json.loads((directory/'batch.json').read_text('utf8')); arm=manifest['reading']; assert arm in ARMS and arm not in sources
@@ -87,12 +87,22 @@ def main():
         keys=lambda a: {(r['arm'],r['seed']) for r in a['rows']}
         assert audit and keys(prior)==keys(audit) and prior['ticks']==audit['ticks'] and prior['profile']==audit['profile']
     data=dict(situational=args.situational_manual,prior=prior,audit=audit,steps=STEPS,cases=cases,lines=sorted(lines),sources=sources,pages=pages,sites=sites)
+    if args.extended_audit:
+        ext = json.loads(args.extended_audit.read_text('utf8'))
+        assert audit and ext['revision']==audit['revision'] and ext['profile']==audit['profile'] and ext['ticks']>audit['ticks']
+        keys=lambda a: sorted((r['arm'],r['seed']) for r in a['rows'])
+        assert keys(ext)==keys(audit)
+        data['extendedAudit'] = ext
     if args.prior_report:
         source = args.prior_report.read_text('utf8').split('const data=',1)[1]
         historical = json.JSONDecoder().raw_decode(source)[0]['cases']
         key = lambda c: (c['arm'], c['profile'], c['seed'])
         assert sorted(map(key,historical)) == sorted(map(key,cases))
         data['fieldNotes'] = True
+        if args.change_summary:
+            from os.path import relpath
+            data['changeSummary'] = args.change_summary
+            data['priorLink'] = Path(relpath(args.prior_report.resolve(), args.out.resolve().parent)).as_posix()
         assert all(r.get('page_reticle') for r in sites)
         data['before'] = [{k:c[k] for k in ('arm','profile','seed','delivered','steps')} for c in historical]
     template=Path(__file__).with_name('reading_template.html').read_text('utf8'); args.out.parent.mkdir(parents=True,exist_ok=True)

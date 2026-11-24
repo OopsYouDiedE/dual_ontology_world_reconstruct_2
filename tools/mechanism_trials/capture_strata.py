@@ -9,6 +9,7 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools' / 'chronograph'))
 from capture import Run, contact_sheet, digest  # noqa: E402
+from capture_receipt import assert_frozen, SHARED_GAME_PATHS  # noqa: E402
 
 CUTS = {
     'bank_on_lower_rail': {0: 'sump', 100: 'lower-rack-arrival', 220: 'recovered-charge',
@@ -20,7 +21,9 @@ CUTS = {
 }
 
 
-def capture(out):
+def capture(out, revision=None):
+    bound = (*SHARED_GAME_PATHS, 'scenes/physics_lab/strata', 'tools/strata')
+    frozen = assert_frozen(ROOT, revision, bound) if revision else None
     out.mkdir(parents=True, exist_ok=True)
     package = json.loads((ROOT / 'tools/strata/golden.json').read_text(encoding='utf-8'))
     trials = package['runs'] + [{'id': 'overload_control', 'decisions': 'CCCCC WWWWWW',
@@ -78,8 +81,10 @@ def capture(out):
                 traces[name].append(state)
             for kind, ticks in case.get('commits', {}).items():
                 assert [e['tick'] for e in state['events'] if e['id'] == kind] == ticks
+        if frozen is not None and assert_frozen(ROOT, revision, bound) != frozen:
+            raise ValueError('Source changed during capture')
         (out / 'manifest.json').write_text(json.dumps({'room': 'A07 / Strata: The Harness Tower', 'session': run.id,
-                                                       'frames': frames}, indent=2), encoding='utf-8')
+                                                       'frames': frames, 'freeze': frozen}, indent=2), encoding='utf-8')
         (out / 'live-trace.json').write_text(json.dumps(traces, indent=2), encoding='utf-8')
         contact_sheet(out, [f for f in frames if f['case'] == 'bank_on_lower_rail' and f['label'] in
                             ('sump', 'recovered-charge', 'press-warning', 'insulated-stairs', 'powered-rack',
@@ -94,4 +99,6 @@ def capture(out):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, default=ROOT / '.runtime/academy-mechanisms/strata')
-    capture(parser.parse_args().out.resolve())
+    parser.add_argument('--revision', help='Bind the evidence to the checked-out commit')
+    args = parser.parse_args()
+    capture(args.out.resolve(), args.revision)

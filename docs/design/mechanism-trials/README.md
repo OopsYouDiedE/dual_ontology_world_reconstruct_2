@@ -16,6 +16,8 @@
 
 执行 `python tools/mechanism_trials/gate.py <ledger.json>`。gate 以带时区的冻结时间、同提交报告和实际文件 SHA-256 为输入；只有到点、有真实轮次回执、证据齐全才能进入 `eligible-for-astra`。测试：`python -m unittest discover -s tools/mechanism_trials -v`。
 
+批次实机拼图由 `tools/mechanism_trials/showcase.py` 从带 SHA-256 的原始帧制作，按台账给每张图标注原型状态。运行 `& .runtime/python/Scripts/python.exe tools/mechanism_trials/showcase.py`，输出 `.runtime/academy-mechanisms/batch-a01-a07.jpg` 和同名取证索引。
+
 ## 17 项参考对照
 
 `sleepingacademy17mechanismsartbible.pdf` 是设计与视觉参考。表内“已有”表示可借用现有项目构件或独立测试；“近似”表示只覆盖部分交互。是否验收以本台账的逐题门槛为准。`Lab` 十机制位置见 [V2 十机制实验场](../physics-lab.md)；伙伴、事件证据线见 [十关评测](../rule-evaluation.md)。
@@ -93,9 +95,15 @@
 
 在铁踏板上，站立注视可以冻结巡行者，却抬升耳簧读数；蹲身经过矮墙时，耳簧卸载而巡行者恢复移动。放平的毛毡吊桥既接通道路，又让站姿行走同时降噪并保持注视。受压时，机械棘爪延后升桥；两种被捕都走服务轨返回。两条普通节奏在 tick 340 到达远岸。[房间说明](a06-brief.md) · [黄金与反例](../../../tools/duet/README.md) · [Game MCP 取证](../../../tools/mechanism_trials/capture_duet.py)。
 
-## A07 · Strata: The Harness Tower · 第七轮候选
+## A07 · Strata: The Harness Tower · 第七轮淘汰
+
+冻结 `f44ff3fc92db59254f69cb6b00883c68f19b31d2`。两名红队分别耗时约 **108.725 秒**与 **100.999 秒**，独立从合法输入通关。[Forward+ 普通按键](a07-red-medium.json) · [权威模型](a07-red-high.json)。较快的实机路线在 tick 761 打开顶门，正好用完 130 电荷；另一条先以陶瓷攒应力，换铜时保留张力并回收，tick 801 打开顶门。应力来源可跨配置兑现，压缩了分段资源规划。
 
 同一翻转芯决定轨道还是窄梯、载荷曲线、发电回路和顶门供电。手摇产生的张力有回收价值；助推减轻当下负荷但花费同一电池；时间表必须兼顾抵达、卸载与最终开门。两条实机路线分别于 tick **901** 和 **841** 打开顶门，另做一次主动超时回落；头测 **21,320** 项检查通过。[房间说明](a07-brief.md) · [规则与反例](../../../tools/strata/README.md) · [Game MCP 取证](../../../tools/mechanism_trials/capture_strata.py)。
+
+## A08 · The Tempered Span · 第八轮候选
+
+倒流恢复销、炉温、配重、阻尼和局部钟；索齿、铜片弯度及外鼓继续存在，并参与同一桥的双针载人检验。两条正常黄金在台北实机分别到达 tick **508** 与 **657**；未倒流对照有成形弯度、仍因缺销拒绝试载。[房间说明](a08-brief.md) · [机器解和诊断](../../../tools/counterfactual/README.md) · [实机回放](../../../tools/mechanism_trials/capture_tempered.py)。
 
 ## 定版包给 Astra 看的顺序
 

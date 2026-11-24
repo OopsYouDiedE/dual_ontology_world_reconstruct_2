@@ -1,0 +1,69 @@
+{
+  "routes": [
+    {
+      "id": "staged_jack_rising_weight",
+      "approach": "weight",
+      "splice_tick": 233,
+      "arm_tick": 339,
+      "mark": "home",
+      "retained_at_splice": {"preload":43,"bend":25},
+      "board_tick": 460,
+      "last_entry": 464,
+      "win_tick": 508,
+      "inputs": [
+        {"tick":1,"press":"move","target":"jack"},
+        {"tick":13,"hold":"haul","for":43},
+        {"tick":56,"press":"move","target":"yoke"},
+        {"tick":68,"press":"move","target":"kiln"},
+        {"tick":80,"press":"cut_pin"},
+        {"tick":128,"hold":"heat","for":45},
+        {"tick":173,"press":"move","target":"start"},
+        {"tick":185,"press":"rewind_home"},
+        {"tick":234,"press":"move","target":"jack"},
+        {"tick":246,"hold":"haul","for":21},
+        {"tick":267,"press":"move","target":"yoke"},
+        {"tick":279,"press":"move","target":"weight"},
+        {"tick":291,"hold":"raise","for":36},
+        {"tick":327,"press":"move","target":"yoke"},
+        {"tick":339,"press":"arm"},
+        {"tick":340,"press":"move","target":"weight"},
+        {"tick":353,"press":"queue_cross"}
+      ]
+    },
+    {
+      "id": "loaded_bench_falling_brake",
+      "approach": "brake",
+      "splice_tick": 411,
+      "arm_tick": 436,
+      "mark": "bench",
+      "retained_at_splice": {"preload":64,"bend":29},
+      "board_tick": 609,
+      "last_entry": 613,
+      "win_tick": 657,
+      "inputs": [
+        {"tick":1,"press":"move","target":"jack"},
+        {"tick":13,"hold":"haul","for":64},
+        {"tick":77,"press":"move","target":"yoke"},
+        {"tick":89,"press":"move","target":"weight"},
+        {"tick":101,"hold":"raise","for":34},
+        {"tick":135,"press":"move","target":"yoke"},
+        {"tick":147,"press":"move","target":"brake"},
+        {"tick":159,"hold":"tighten","for":4},
+        {"tick":163,"press":"move","target":"yoke"},
+        {"tick":175,"press":"move","target":"kiln"},
+        {"tick":187,"press":"move","target":"start"},
+        {"tick":240,"press":"mark"},
+        {"tick":241,"press":"move","target":"kiln"},
+        {"tick":253,"press":"cut_pin"},
+        {"tick":301,"hold":"heat","for":50},
+        {"tick":351,"press":"move","target":"start"},
+        {"tick":363,"press":"rewind_bench"},
+        {"tick":412,"press":"move","target":"kiln"},
+        {"tick":424,"press":"move","target":"yoke"},
+        {"tick":436,"press":"arm"},
+        {"tick":437,"press":"move","target":"brake"},
+        {"tick":450,"press":"queue_cross"}
+      ]
+    }
+  ]
+}

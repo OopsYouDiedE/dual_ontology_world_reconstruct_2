@@ -26,6 +26,7 @@ SCENES = {
     "afterimage": "res://scenes/physics_lab/afterimage/Afterimage.tscn",
     "duet": "res://scenes/physics_lab/duet/Duet.tscn",
     "strata": "res://scenes/physics_lab/strata/Strata.tscn",
+    "tempered": "res://scenes/physics_lab/counterfactual/Tempered.tscn",
     "shutter_loom": "res://scenes/physics_lab/shutter_loom/ShutterLoom.tscn",
     "palimpsest": "res://scenes/physics_lab/palimpsest/Palimpsest.tscn",
     "evidence_register": "res://scenes/physics_lab/evidence_register/EvidenceRegister.tscn",
@@ -59,7 +60,7 @@ def readiness(scene_key="rogue"):
 
 
 class Run:
-    def __init__(self, seed, *, scene_key="rogue", eval_review=False, eval_rehearse_warning=None):
+    def __init__(self, seed, *, scene_key="rogue", eval_review=False, eval_rehearse_warning=None, scene_args=()):
         self.scene = SCENES[scene_key]
         godot = Path(environment.resolve_godot()).resolve()
         if os.name == "nt" and godot.name.lower().endswith("_console.exe"):
@@ -96,7 +97,7 @@ class Run:
             command[1:1] = ["--resolution", "1280x720"]
             if eval_review:
                 command.append("--airlock-audit" if scene_key == "observer_airlock" else "--lab-archive-observer")
-        if scene_key in ("chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet", "strata"):
+        if scene_key in ("chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet", "strata", "tempered"):
             command[1:1] = ["--resolution", "1280x720"]
         if scene_key == "rule_evaluation":
             command[1:1] = ["--resolution", "1280x720"]
@@ -107,6 +108,7 @@ class Run:
                 command.append(f"--eval-rehearse-warning={int(eval_rehearse_warning)}")
         if scene_key == "expedition" and eval_review:
             command.append("--expedition-b4-review")
+        command.extend(scene_args)
         with (self.directory / "process.log").open("wb") as log:
             self.process = subprocess.Popen(command, cwd=ROOT, env=env, stdin=subprocess.DEVNULL,
                                             stdout=log, stderr=subprocess.STDOUT,
@@ -189,7 +191,7 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True,
-           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock", "chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet", "strata"] = "rogue",
+           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock", "chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet", "strata", "tempered"] = "rogue",
            eval_review: bool = False):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run

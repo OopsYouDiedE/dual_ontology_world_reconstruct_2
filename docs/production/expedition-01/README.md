@@ -69,3 +69,20 @@
 从主桥失足后，玩家会实际落到标高 −10 m 的井底；可沿西侧螺旋梯徒步回到桥头。井壁以外的越界坠落仍进入重试。`ShaftRecoveryTest.gd` 从自由落体开始，走完整条梯和西侧落脚台，再另测越界结局。
 
 Hale 的田野外套参考洛杉矶郡艺术博物馆藏 [Pauser & Co.，约 1900 年的诺福克外套](https://collections.lacma.org/object/1910)，用斜纹、贴袋和束腰带表现随队工作的衣着。低发冠、侧分和梳向参考美国国会图书馆的[同时代肖像](https://www.loc.gov/item/96502742/)。两处只取形制，项目内重新制作材质和轮廓。换装仅应用于第一次出征的 Hale，沿用项目写实人形、骨架和动作。用 `tools/expedition/hale_fitting.gd` 在 Forward+ 输出正面、侧面和拉闸动作的试装图。
+
+## 如何复查一条路线，以及一次失败
+
+在仓库根目录运行。策略矩阵把档案翼走法（见证／略过／直穿）、物资（四种）和源井走法（北窗／自看／南廊）独立组合；`--radii` 改的是到达路点后何时开始转向，单位米，角色胶囊保持原样。`--settle-ticks` 控制试板时的额外等候帧数。固定路线用来检查走法；类人策略只读自己的可见线索，两者的结果分别统计。
+
+```powershell
+python tools/expedition/route_matrix.py --seed 31 --radii 0.10 0.12 --settle-ticks 116 --jobs 3
+python tools/expedition/human_batch.py run --seeds 31 113 --ticks 24000 --jobs 2
+$engine = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
+& $engine --headless --path . --fixed-fps 60 --script res://tools/expedition/collision_fixture_test.gd -- --geometry=.runtime/collision_fixture_geometry.json
+# 将下面两项替换成前两条命令打印的批次中的实际文件，可继续追加更多局。
+python tools/expedition/route_view.py <定路线的route.json> <类人探索的report.json> --geometry .runtime/collision_fixture_geometry.json -o .runtime/expedition-review.html
+```
+
+打开生成的离线 HTML，勾选要比较的局（有成功局时，失败局默认收起），可按楼层查看玩家实线与 Hale 虚线。点击动作条目会定位当时的帧与位置：发指令、实际执行、台词和反馈分别记录。多数标记在当时玩家脚下，Hale 动身去北窗和就位两项标在同伴脚下。时间线保留同地发生的多个动作。底图是开局真实碰撞体的投影；动态机关的变化见事件和独立的七态碰撞校验。
+
+进一步查看：[碰撞一致性](../../../tools/expedition/collision_fixture.md)、[类人批跑参数和通关判据](../../../tools/expedition/human_batch_README.md)、[规则遍历的输入边界](../../../tools/expedition/rule_sweep.md)。

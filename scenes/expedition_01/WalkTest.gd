@@ -6,18 +6,37 @@ var gaze:=false
 var solo_span:=false
 var window_skip:=false
 var transit_only:=false
-var south_only:=false
+var no_clock:=false
 var clock_only:=false
 var oil_only:=false
+var audit_log
+var replay_path:=""
+var strategy:={}
+var approach_radius:=.12
+var wait_settle:=116
+var outcome:="interrupted"
+var failure_reason:=""
+func _finalize()->void:
+	if audit_log!=null and audit_log.active:save_replay()
+
+func save_replay()->void:
+	var report:={"profile":"定路线", "seed":strategy.seed, "tick":audit_log.now(), "physics_hz":60, "outcome":outcome, "failure_reason":failure_reason, "policy_parameters":strategy}
+	audit_log.finish(report)
+	var file:=FileAccess.open(replay_path,FileAccess.WRITE)
+	if file==null:push_error("Cannot write strategy replay: "+replay_path);return
+	file.store_string(JSON.stringify(report));file.close()
+
 func _initialize()->void:run.call_deferred()
 func go(x:float,z:float,limit:=2000)->bool:
 	var target:=Vector3(x,0,z);Input.action_press("move_up")
 	for i in limit:
 		if level.retry>0.:
+			outcome="failed";failure_reason=level.fail_reason
+			if audit_log!=null and audit_log.active:save_replay()
 			Input.action_release("move_up");push_error("Gameplay failure at %s: %s"%[level.walker.position,level.notice]);return false
 		if level.finished:Input.action_release("move_up");return true
 		var p:Vector3=level.walker.position;var d:Vector3=target-p;d.y=0
-		if d.length()<.12:Input.action_release("move_up");return true
+		if d.length()<approach_radius:Input.action_release("move_up");return true
 		level.walker.rotation.y=atan2(-d.x,-d.z)
 		if gaze:level.eye.look_at(Vector3(23.85,.11,13.0))
 		if solo_span:level.eye.look_at(Vector3(minf(p.x+3.,69.8),0.,10.1))
@@ -93,7 +112,7 @@ func run()->void:
 	transit_only=args.has("--transit-only")
 	window_skip=transit_only or args.has("--skip-window")
 	oil_only=args.has("--oil-only")
-	south_only=args.has("--south") or oil_only
+	no_clock=args.has("--south") or oil_only
 	clock_only=args.has("--clock-only")
 	level=preload("Expedition.tscn").instantiate();root.add_child(level);await physics_frame
 	await physics_frame
@@ -107,7 +126,23 @@ func run()->void:
 		for f in 10:await physics_frame
 		if not await go(ramp_x,9.96,60) or level.walker.position.y<-.04:push_error("Entry ramp failed");quit(1);return
 	level.queue_free();await wait_ticks(2)
-	level=preload("Expedition.tscn").instantiate();root.add_child(level);await wait_ticks(2)
+	var route_start:=Engine.get_physics_frames()
+	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	var crossing_arg:="south" if no_clock else "self" if window_skip else "north"
+	var route_seed:=1
+	var light:=args.has("--strategy-light")
+	for arg in args:
+		if arg.begins_with("--route-output="):replay_path=arg.trim_prefix("--route-output=")
+		if arg.begins_with("--run-seed="):route_seed=int(arg.trim_prefix("--run-seed="))
+		if arg.begins_with("--crossing="):crossing_arg=arg.trim_prefix("--crossing=")
+		if arg.begins_with("--arrival-radius="):approach_radius=float(arg.trim_prefix("--arrival-radius="))
+		if arg.begins_with("--settle-ticks="):wait_settle=int(arg.trim_prefix("--settle-ticks="))
+	if not (.04<=approach_radius and approach_radius<=.25 and wait_settle>=1 and wait_settle<=600):push_error("Invalid strategy parameters");quit(2);return
+	strategy={"seed":route_seed,"approach":"transit" if transit_only else "skip" if window_skip else "witness", "loadout":"oil" if oil_only else "neither" if no_clock else "clock" if clock_only else "both", "crossing":crossing_arg,"arrival_radius_m":approach_radius,"extra_settle_ticks":wait_settle,"fixture":"light" if light else "full"}
+	if light:preload("res://tools/expedition/collision_fixture.gd").apply_lightweight(level)
+	if replay_path!="":
+		audit_log=preload("res://tools/expedition/strategy_trace.gd").new();audit_log.start(level)
+	await wait_ticks(2)
 	if not audit():quit(1);return
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):quit(1);return
@@ -139,7 +174,7 @@ func run()->void:
 			level.eye.look_at(Vector3(23.85,.11,12.02))
 			for f in 44:await physics_frame
 			if level.demo_locked or not level.cues.has("settling") or level.overload_blend>.01:push_error("Missing single-gaze amber settling phase");quit(1);return
-			for f in 116:await physics_frame
+			for f in wait_settle:await physics_frame
 			if not level.demo_locked or level.archive.note==window_skip or level.learned or level.hale.position.z>=8.95:
 				push_error("The single-gaze proof or Hale doorstep constraint failed");quit(1);return
 			gaze=true
@@ -150,39 +185,50 @@ func run()->void:
 			if not window_skip and not level.captions.entries.has(""):push_error("Missing B3 inner thought");quit(1);return
 		if absf(point[0]-28.3)<.01:
 			if not oil_only and not clock_only:
-				if not await walk_loft(not south_only,false):quit(1);return
+				if not await walk_loft(not no_clock,false):quit(1);return
 			if clock_only:
 				if not await walk_loft(true,true):quit(1);return
 			for bypass in [[29.35,14.1],[29.35,12.1],[36.2,12.1],[29.35,12.1],[29.35,14.1]]:
 				if not await go(bypass[0],bypass[1]):quit(1);return
-		if absf(point[0]-34)<.01 and (oil_only or not south_only and not clock_only):
+		if absf(point[0]-34)<.01 and (oil_only or not no_clock and not clock_only):
 			var before:float=level.oil
 			if not use_at(Vector3(34.14,.5,14.67),"loot") or level.oil<=before or level.kit.oil_tin.visible:quit(1);return
 	level.eye.look_at(Vector3(36.3,1.35,7.72));level.use()
-	if not (level.learned!=transit_only and level.released and level.equipped!=south_only and level.taken==(oil_only or not south_only and not clock_only)):
+	if not (level.learned!=transit_only and level.released and level.equipped!=no_clock and level.taken==(oil_only or not no_clock and not clock_only)):
 		push_error("Archive state incomplete");quit(1);return
 	Input.action_press("expedition_quiet")
 	for point in [[39,10.1],[48.8,10.1]]:
 		if not await go(point[0],point[1]):quit(1);return
-	if south_only:
+	# Keep legacy single-route invocations; the matrix varies supplies and crossing independently.
+	var crossing:=crossing_arg
+	if crossing not in ["south","self","north"]:push_error("Unknown crossing: "+crossing);quit(1);return
+	var requested:=crossing
+	if crossing=="north":
+		for i in 240:
+			if transit_only or level.hale.position.distance_to(level.walker.position)<=6.:break
+			await physics_frame
+		level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order()
+		if transit_only:
+			if level.posting or level.holding or level.notice!="Hale 还没到桥头。":push_error("Missing response to unavailable Hale");quit(1);return
+			crossing="self" # The player can recover from the refused order without a restart.
+		else:
+			if not level.posting or level.north_pause<=0.:push_error("Hale agreement was skipped");quit(1);return
+			for i in 950:await physics_frame
+			if not level.holding:push_error("Hale did not reach north window");quit(1);return
+	if crossing=="south":
 		level.toggle_lamp() # Observe the one-lamp rule on the long service walk.
 		var oil_before:float=level.oil
 		for i in range(33):
 			var pt:Vector3=level.kit.polar(13.3,PI*(1.-i/32.),0.)
 			if not await go(pt.x,pt.z):quit(1);return
 		if level.oil>oil_before-15.:push_error("Unpriced southern bypass");quit(1);return
-	else:
-		if not window_skip:
-			level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order()
-			if not level.posting or level.north_pause<=0.:push_error("Hale agreement was skipped");quit(1);return
-			for i in 950:await physics_frame
-			if not level.holding:push_error("Hale did not reach north window");quit(1);return
+	elif level.equipped:
 		level.eye.rotation=Vector3.ZERO;level.walker.rotation.y=-PI/2;level.eye.look_at(level.hunter.BAIT);level.use();level.eye.rotation=Vector3.ZERO;if level.distraction<=0:push_error("Lure not thrown");quit(1);return
-	solo_span=window_skip
-	if not await go(72.9 if south_only else 70.95,10.1):quit(1);return
+	solo_span=crossing=="self"
+	if not await go(72.9 if crossing=="south" else 70.95,10.1):quit(1);return
 	solo_span=false
 	level.eye.look_at(level.kit.core.position);level.use();Input.action_release("expedition_quiet");level.running=true;if not level.collected:quit(1);return
-	if not await go(72.9 if south_only else 70.95,11.45):quit(1);return
+	if not await go(72.9 if crossing=="south" else 70.95,11.45):quit(1);return
 	if not await go(73.35,11.45):quit(1);return
 	if not await go(73.35,9.12):quit(1);return
 	for i in range(1,42):
@@ -210,10 +256,16 @@ func run()->void:
 		if completed[0]:break
 		await physics_frame
 	if not completed[0]:push_error("Exit signal missing");quit(1);return
-	var trace:=FileAccess.open(ProjectSettings.globalize_path("res://.runtime/archive-%s.json"%("transit-evac" if transit_only else "skip-window-evac" if window_skip else "normal")),FileAccess.WRITE)
+	var trace_path:=ProjectSettings.globalize_path("res://.runtime/archive-%s.json"%("transit-evac" if transit_only else "skip-window-evac" if window_skip else "normal"))
+	for arg in args:
+		if arg.begins_with("--walk-trace="):trace_path=arg.trim_prefix("--walk-trace=")
+	var trace:=FileAccess.open(trace_path,FileAccess.WRITE)
 	if trace==null:push_error("Could not export archive trace");quit(1);return
 	trace.store_string(JSON.stringify(level.archive.facts.snapshot(),"  "));trace.close()
-	print("PASS: A1 to evacuation; B4=%s, crossing=%s."%["oil only" if oil_only else "skip both" if south_only else "metronome only" if clock_only else "both caches", "south walk" if south_only else "solo gaze and metronome lure" if window_skip else "Hale at north window, main span and metronome lure"])
+	outcome="completed"
+	if audit_log!=null:save_replay()
+	print("ROUTE_TICKS ",Engine.get_physics_frames()-route_start)
+	print("PASS: A1 to evacuation; B4=%s, crossing=%s."%["oil only" if oil_only else "skip both" if no_clock else "metronome only" if clock_only else "both caches", requested+"->"+crossing])
 	level.queue_free()
 	# Fixed-FPS headless runs outrun the asynchronous Vorbis mixer on Windows.
 	for i in 26:

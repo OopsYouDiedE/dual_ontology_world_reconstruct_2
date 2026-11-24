@@ -53,6 +53,12 @@ func run()->void:
 		check(policy.decide(frame).get("key",0)==KEY_Q,"Gate prompt selects Q")
 		frame.prompt="";frame.orders=["原地待命","让 Hale 试闸"]
 		check(policy.decide(frame).get("key",0)==KEY_2,"Uses displayed menu index, even if rearranged")
+		frame.orders=["去北窗盯桥","原地待命"]
+		check(policy.decide(frame).get("key",0)==KEY_1,"Selects the live north-window title")
+		frame.orders=["原地待命","听他的建议","去北窗盯桥"]
+		check(policy.decide(frame).get("key",0)==KEY_3,"Selects the live north-window title by its reordered index")
+		frame.orders=["召回 Hale","原地待命"]
+		check(policy.decide(frame).get("key",0)==KEY_Q,"Recall is not a bridge-watch assignment")
 	check(delays==[12,16,21],"Three distinct delays in the required range")
 	var follow:=Policy.new("curious")
 	var frame:={"orders":[],"captions":[],"place":Vector2.ZERO,"heading":0.,"prompt":"","walls":{-1: .38},"lanes":[
@@ -115,5 +121,5 @@ func run()->void:
 	check(lost.get("probe","")=="companion_search" and not lost.get("move",false),"Occlusion does not turn last bearing into locomotion")
 	glimpse.people=[{"turn":0.,"range":2.8}];glimpse.lanes=[]
 	check(not who.decide(glimpse).get("move",false),"A visible figure cannot authorize movement without visible floor")
-	if failures==0:print("PASS Human Sol: depth occlusion/frustum/range, sign visibility, wall offset, recovery heights, breadcrumb rewind, prompt memory, companion occlusion and pursuit, and 3 profiles")
+	if failures==0:print("PASS Human Sol: depth occlusion/frustum/range, sign visibility, wall offset, recovery heights, breadcrumb rewind, prompt memory, visible wheel titles, companion occlusion and pursuit, and 3 profiles")
 	quit(0 if failures==0 else 1)

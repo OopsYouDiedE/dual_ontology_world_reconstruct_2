@@ -1,5 +1,6 @@
 extends VBoxContainer
 ## A live caption per speaker; different speakers and thoughts coexist.
+signal posted(speaker:String, text:String)
 var entries:={}
 var typeface:Font
 var thought_face:FontVariation
@@ -31,6 +32,7 @@ static func reading_time(text:String)->float:
 	return clampf(1.5+units/8.,2.35,9.)
 
 func post(id:String,speaker:String,text:String)->void:
+	posted.emit(speaker,text)
 	remove_speaker(speaker)
 	var line:=Label.new()
 	line.text=text if speaker.is_empty() else "%s：%s"%[speaker,text]

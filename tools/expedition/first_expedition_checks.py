@@ -23,7 +23,7 @@ def main():
     exe = os.environ.get('DV_GODOT') or ROOT / '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
     cases = [(n, SCENE + n, [], False) for n in ('ContractTest', 'ArchiveTest', 'BoardBlackoutTest', 'StoryOrderTest', 'HaleFollowTest', 'FeelTest', 'HearingTest', 'NewVerbsTest', 'NicheTest', 'MaintenanceLoopTest', 'ShaftRecoveryTest', 'WalkTest')]
     cases.extend((flag, SCENE + 'WalkTest', ['--' + flag], False) for flag in ('south', 'clock-only', 'oil-only', 'skip-window', 'transit-only'))
-    cases += [('human-policy', TOOLS + 'human_sol_test', [], False), ('rehearsal', TOOLS + 'record_first_expedition', [], False)]
+    cases += [('collision-parity', TOOLS + 'collision_fixture_test', [], False), ('rule-sweep', TOOLS + 'rule_sweep', [], False), ('human-policy', TOOLS + 'human_sol_test', [], False), ('rehearsal', TOOLS + 'record_first_expedition', [], False)]
     if not args.logic_only:
         cases += [('framing', TOOLS + 'framing_audit', [], True), ('mouse', SCENE + 'MouseLifecycleTest', [], True)]
     cases.insert(2, ('archive-replay', SCENE + 'ArchiveTest', [], False))

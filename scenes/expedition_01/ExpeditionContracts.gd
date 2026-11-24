@@ -83,6 +83,7 @@ func a_step(dt:float,count:int,first:int,self_watching:bool,hale_watching:bool)-
 	var first_w:=self_watching if a_role==Seer.PLAYER else hale_watching
 	var second_w:=hale_watching if a_role==Seer.PLAYER else self_watching
 	if first_w and second_w:
+		a_hold=0. # A renewed overlap interrupts the solo hold.
 		if a_timer>A_GRACE:return a_breach("先看见者未在窗口内移开视线")
 		return "overlap"
 	if not first_w and second_w:

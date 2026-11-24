@@ -1,5 +1,7 @@
 extends Node3D
 signal returned
+# Read-only test observer; no listeners during ordinary play.
+signal audit_action(kind:String, detail:String)
 const Kit=preload("ExpeditionKit.gd")
 const Relay=preload("ServiceSignal.gd")
 const OIL_PICKUP:=35.
@@ -318,6 +320,7 @@ func build_lantern(offset:Vector3)->Node3D:
 	var wick:=MeshInstance3D.new();wick.mesh=SphereMesh.new();wick.mesh.radius=.024;wick.mesh.height=.078;wick.material_override=flame;prop.add_child(wick)
 	return prop
 func toast(text:String)->void:
+	audit_action.emit("feedback",text)
 	caption_toast.text=text;caption_toast.show();toast_time=captions.reading_time(text)
 # Keep close-range distance gain from turning small mechanical cues into stingers.
 const CLOSE_CUE_CAPS := {"opening_tail": -17., "gate": -8., "airlock": -8., "relay_tap": -16., "relay_answer": -12.}
@@ -460,7 +463,9 @@ func detail_camera()->void:
 func show_shell()->void:
 	for n in kit.cut:n.visible=mode<0 or shell_closed
 	for n in kit.plates:n.visible=mode>=0 and not shell_closed
-func say(t:String)->void:notice=t;msg_time=4.
+func say(t:String)->void:
+	notice=t;msg_time=4.
+	audit_action.emit("feedback",t)
 func toggle_lamp()->void:
 	lamp_on=not lamp_on
 	play_ui("cue",-16.)
@@ -470,6 +475,7 @@ func toggle_lamp()->void:
 func stomp()->void:
 	if stomp_cool>0.:return
 	stomp_cool=6.
+	audit_action.emit("confirmed","跺脚")
 	foot.stream=sounds.iron;foot.pitch_scale=.88;foot.volume_db=-7.;foot.play()
 	polish.kick(.14)
 	if released and walker.position.x>46. and not in_return_gallery(walker.position):
@@ -554,6 +560,7 @@ func focus()->String:
 func use()->void:
 	if retry>0 or manual.visible:return
 	var target:=focus()
+	audit_action.emit("use",target)
 	if target!="":polish.kick(.07)
 	match target:
 		"maintenance_lift","maintenance_oil":kit.maintenance.operate(target,self)
@@ -694,6 +701,7 @@ func order_options()->Array:
 	return items
 
 func pick_order(id:String)->void:
+	audit_action.emit("order",id)
 	if id in ["try_gate","north","trail","hold"]:hale_gate_guide=0
 	if id in ["north","trail","hold"]:hale_gate_attempt=false
 	match id:
@@ -817,6 +825,7 @@ func _physics_process(dt:float)->void:
 		jump_buffer=maxf(0.,jump_buffer-dt);coyote=maxf(0.,coyote-dt)
 		if grounded:coyote=COYOTE
 		if jump_buffer>0. and (grounded or coyote>0.):
+			audit_action.emit("confirmed","起跳")
 			walker.velocity.y=JUMP_SPEED;jump_buffer=0.;coyote=0.
 			polish.kick(.10);sound_at("quiet",walker.position,-30.,8.)
 		# Rising gravity is lighter than the fall so a short hop clears a 0.19 m riser and lands fast.

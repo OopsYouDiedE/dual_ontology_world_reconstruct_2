@@ -44,8 +44,9 @@ var attempted_edge:=Vector3i.ZERO
 var last_tracked_walk:=false
 const HEIGHTS := [-.65, -.17, .37]
 
-func _init(id:String)->void:
-	profile=PROFILES[id]
+func _init(id:String, variation:Dictionary={})->void:
+	profile=PROFILES[id].duplicate()
+	profile.merge(variation,true)
 	wall_mode=profile.get("wall_follow",false)
 	spin=profile.side
 
@@ -72,7 +73,7 @@ func decide(o:Dictionary)->Dictionary:
 	last_move=false
 	if not o.orders.is_empty():
 		for i in mini(5,o.orders.size()):
-			if "试闸" in o.orders[i] or "盯北窗" in o.orders[i] or "Try gate" in o.orders[i]:
+			if "试闸" in o.orders[i] or "盯北窗" in o.orders[i] or o.orders[i]=="去北窗盯桥" or "Try gate" in o.orders[i]:
 				return {"key":KEY_1+i,"hold":145 if gate_order else 100}
 		return {"key":KEY_Q}
 	if not heard_gate and (breadcrumbs.is_empty() or breadcrumbs[-1].distance_to(p)>1.10):
@@ -144,7 +145,7 @@ func tracked_walk(lane:Dictionary,p:Vector2,heading:float,tag:String,limit:float
 
 func wall_walk(lane:Dictionary,p:Vector2,heading:float,tag:String)->Dictionary:
 	var hold:=32 if float(lane.depth)<1. else (40 if float(lane.depth)<1.4 else 48)
-	return tracked_walk(lane,p,heading,tag,.39,-.58,hold)
+	return tracked_walk(lane,p,heading,tag,.39,-.58,hold+int(profile.get("hold_offset",0)))
 
 func follow_wall(o:Dictionary, heading:float, p:Vector2)->Dictionary:
 	var flank:float=o.get("walls",{}).get(int(spin),INF)

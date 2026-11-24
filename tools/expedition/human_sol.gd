@@ -52,6 +52,9 @@ func key(code:int)->void:
 
 func record(kind:String,value:Variant)->void:
 	var entry:={"tick":tick,"event":kind,"value":value}
+	if is_instance_valid(level) and level.is_node_ready() and is_instance_valid(level.walker):
+		var feet:Vector3=level.walker.global_position
+		entry["feet"]=[feet.x,feet.y,feet.z]
 	events.append(entry)
 	print("SOL "+JSON.stringify(entry))
 
@@ -91,6 +94,15 @@ func apply(intent:Dictionary)->void:
 	if intent.get("move",false):Input.action_press("move_up")
 	if intent.get("quiet",false):Input.action_press("expedition_quiet")
 
+func sample_policy(profile:String, run_seed:int)->Dictionary:
+	# Local RNG keeps policy sampling independent of scene/audio randomness.
+	var rng:=RandomNumberGenerator.new()
+	rng.seed=run_seed
+	var delay_min:int={"cautious":12,"curious":15,"direct":19}[profile]
+	var hold_offset:=rng.randi_range(-3,3)
+	return {"hold_offset":hold_offset,"hold":int(Policy.PROFILES[profile].hold)+hold_offset,
+		"delay":rng.randi_range(delay_min,delay_min+2),"side":-1. if rng.randi_range(0,1)==0 else 1.}
+
 func run()->void:
 	var profile:="cautious"
 	var budget:=7200
@@ -98,6 +110,7 @@ func run()->void:
 	var seeded:=false
 	var output:=""
 	var capture:=""
+	var batch_user_root:=""
 	for arg:String in OS.get_cmdline_user_args():
 		if arg.begins_with("--run-seed="):
 			var value:=arg.get_slice("=",1)
@@ -107,15 +120,27 @@ func run()->void:
 		if arg.begins_with("--ticks="):budget=int(arg.get_slice("=",1))
 		if arg.begins_with("--capture="):capture=arg.trim_prefix("--capture=")
 		if arg.begins_with("--output="):output=arg.trim_prefix("--output=")
+		if arg.begins_with("--batch-user-root="):batch_user_root=arg.trim_prefix("--batch-user-root=")
 	if not Policy.PROFILES.has(profile) or budget<300:
 		push_error("Expected --profile=cautious|curious|direct and --ticks >= 300");quit(2);return
-	var policy:=Policy.new(profile)
+	var user_dir:=OS.get_user_data_dir().replace("\\", "/").simplify_path()
+	if not batch_user_root.is_empty():
+		if DisplayServer.get_name()!="headless" or Engine.physics_ticks_per_second!=60 or not user_dir.begins_with(batch_user_root.simplify_path().trim_suffix("/")+"/"):
+			push_error("Batch requires headless 60 Hz and isolated user data; resolved user directory: "+user_dir);quit(2);return
+	if not batch_user_root.is_empty() and not seeded:
+		push_error("Batch requires --run-seed");quit(2);return
+	var variation:=sample_policy(profile,run_seed) if not batch_user_root.is_empty() else {}
+	var policy:=Policy.new(profile,variation)
 	exploratory=profile=="curious"
 	var delay:int=policy.profile.delay
 	if seeded:seed(run_seed)
 	level=load(LEVEL).instantiate();root.add_child(level)
+	var light:=OS.get_cmdline_user_args().has("--strategy-light")
+	if light:preload("collision_fixture.gd").apply_lightweight(level)
+	var audit_log:=preload("strategy_trace.gd").new();audit_log.start(level)
 	if not InputMap.has_action(LOOK[0]):
 		push_error("Pass --rogue-mcp-dir= after -- to enable the game's normal look actions");quit(2);return
+	var decision_trace:=[]
 	var next:=235
 	var observed_tick:=-1
 	var perception:Dictionary={}
@@ -173,6 +198,15 @@ func run()->void:
 		if tick==next:
 			assert(tick-observed_tick==delay and not perception.is_empty())
 			last_intent=policy.decide(perception);decisions+=1
+			var motor_text:="轻步前进" if last_intent.get("move",false) and last_intent.get("quiet",false) else "向前走" if last_intent.get("move",false) else "站定"
+			var turn_deg:=rad_to_deg(float(last_intent.get("turn",0.)))
+			if absf(turn_deg)>=1.:motor_text+="，向%s转 %.0f°"%["左" if turn_deg>0 else "右",absf(turn_deg)]
+			if last_intent.has("pitch"):motor_text+="，视线俯仰 %.0f°"%rad_to_deg(float(last_intent.pitch))
+			if last_intent.has("key"):motor_text+="，按 "+OS.get_keycode_string(last_intent.key)
+			record("decision", "%s（保持 %d 帧）"%[motor_text,int(last_intent.get("hold",policy.profile.hold))])
+			if not batch_user_root.is_empty():
+				decision_trace.append({"tick":tick,"observed_tick":observed_tick,
+					"hold_ticks":int(last_intent.get("hold",policy.profile.hold)),"intent":last_intent.duplicate(true)})
 			if not perception.people.is_empty():visible_person_samples+=1
 			close_floor=policy.heard_gate
 			previous_probe=last_intent.get("probe","")
@@ -196,6 +230,12 @@ func run()->void:
 	var report:={"profile":profile,"seed":run_seed if seeded else null,"physics_hz":Engine.physics_ticks_per_second,"delay_ticks":delay,"tick":tick,"decisions":decisions,
 		"outcome":outcome,"reason":reason,"last_progress_tick":last_progress_tick,"regions":regions,"distance_m":moved,"path_samples":path_samples,
 		"feet":[newest.x,newest.y,newest.z],"longest_dwell":[longest_dwell_begin,longest_dwell_end],"probes":probes,"sampled_heights":sampled_heights,"visible_person_samples":visible_person_samples,"events":events}
+	if not batch_user_root.is_empty():
+		report["user_dir"]=user_dir
+		report["policy_parameters"]=policy.profile
+		report["decision_trace"]=decision_trace
+	report["fixture"]="light" if light else "full"
+	audit_log.finish(report)
 	print("SOL_RESULT "+JSON.stringify(report))
 	if not output.is_empty():
 		var file:=FileAccess.open(output,FileAccess.WRITE)
@@ -206,6 +246,12 @@ func run()->void:
 		var saved:=root.get_texture().get_image().save_png(capture)
 		if saved!=OK:push_warning("Cannot save capture: "+capture)
 	level.queue_free()
-	await process_frame
-	await process_frame
+	if DisplayServer.get_name()=="headless":
+		# Match WalkTest: unpaced frames can outrun the asynchronous Vorbis mixer.
+		for i in 26:
+			OS.delay_msec(8)
+			await process_frame
+	else:
+		await process_frame
+		await process_frame
 	quit(0 if outcome=="completed" else 1)

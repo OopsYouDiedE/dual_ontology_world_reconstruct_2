@@ -1,0 +1,112 @@
+﻿Root group,Nodes,Links,Inputs,Direct subgroups,Standalone file
+ArcsFromEdges,209,264,11,ProjectOnCoordinate,groups/000-ArcsFromEdges.blend
+Balkony,474,544,36,CurvedDoorFromEdges; GenerateTerrace; Switch On Roof Type; WindowWalls,groups/001-Balkony.blend
+Banner,51,70,11,Flag; Pole,groups/002-Banner.blend
+BannerTypeFour,70,89,13,Flag; Pole,groups/003-BannerTypeFour.blend
+BannerTypeThree,58,85,13,Flag; Pole,groups/004-BannerTypeThree.blend
+ChurchA-Front,478,591,29,Generate Gothic Square Tower; GenerateMedialAxisRectangleTopology; Gothic SupportColumn From EDge; Is Edge Manifold; RailsFromEdge; Reroute; ResampleEdgesAndSpawnWindowedWalld; Switch On Roof Type,groups/005-ChurchA-Front.blend
+ChurchFrontTowers,792,990,20,ArcsFromEdges; ColumeDecoFromEdges; Curve Info; Curve Root.001; Curve Tip.001; Gothic SupportColumn From EDge; RailsFromEdge; Switch On Roof Type,groups/006-ChurchFrontTowers.blend
+Color in Range,7,12,4,,groups/007-Color_in_Range.blend
+ColumeDecoFromEdges,114,139,8,,groups/008-ColumeDecoFromEdges.blend
+Corn  From Point,209,253,4,,groups/009-Corn__From_Point.blend
+CreateDiagonalBeams,26,32,5,,groups/010-CreateDiagonalBeams.blend
+CreateGate,1092,1245,19,DoorTileFromArc; GenerateMedialAxisRectangleTopology; GenerateUpperWindowWithAlcove; GetSteppeddirectionFrom position; Is Edge Manifold; Spawn Normals on faces; StonesOnSurface; Switch On Roof Type,groups/011-CreateGate.blend
+Curve Info,19,18,0,Curve Root; Curve Tip,groups/012-Curve_Info.blend
+Curve Root,10,11,0,,groups/013-Curve_Root.blend
+Curve Root.001,10,11,0,,groups/014-Curve_Root.001.blend
+Curve Tip,10,11,0,,groups/015-Curve_Tip.blend
+Curve Tip.001,10,11,0,,groups/016-Curve_Tip.001.blend
+CurvedDoorFromEdges,198,262,9,,groups/017-CurvedDoorFromEdges.blend
+DistancingType,3,6,3,,groups/018-DistancingType.blend
+Distribute Corn,18,22,7,Corn  From Point; Wind On Plants,groups/019-Distribute_Corn.blend
+Distribute Sunflower,23,27,7,Sun Flowers From Points; Wind On Plants,groups/020-Distribute_Sunflower.blend
+Distribute Wheat,19,23,8,Wheat From Point; Wind On Plants,groups/021-Distribute_Wheat.blend
+DomaTower,292,369,18,Generate Gothic Square Tower; PointWindowsFromEdges; PointyGothicCone; WindowWalls,groups/022-DomaTower.blend
+DoorTileFromArc,313,379,17,GenerateArc; GetOnlySide Edges after Edge Extrude; Select Original Geometry After Edge Extrude; ShouldAutoSmooth,groups/023-DoorTileFromArc.blend
+EdgesToGates,11,9,1,Reroute,groups/024-EdgesToGates.blend
+Fence Type A,173,260,15,Curve Info; float to Rotation,groups/025-Fence_Type_A.blend
+Flag,244,284,11,,groups/026-Flag.blend
+Float in Range,4,6,3,,groups/027-Float_in_Range.blend
+Generate Attic Windows On Points,112,119,7,Generate Windows; Switch On Roof Type,groups/028-Generate_Attic_Windows_On_Points.blend
+Generate Bridge Stone,361,427,23,DoorTileFromArc; StonesOnSurface; WrapGeometryToCurve,groups/029-Generate_Bridge_Stone.blend
+Generate Cathedral Combined,145,220,37,ChurchFrontTowers; DomaTower; GenerateChurchBuildingB,groups/030-Generate_Cathedral_Combined.blend
+Generate Cliff Type 2,261,306,41,Is Edge Manifold; Random Rotation,groups/031-Generate_Cliff_Type_2.blend
+Generate Cliff Type A,135,142,14,Random Rotation,groups/032-Generate_Cliff_Type_A.blend
+Generate Extruded DoorShape,180,205,4,Switch On Roof Type,groups/033-Generate_Extruded_DoorShape.blend
+Generate Gothic Square Tower,239,306,6,ColumeDecoFromEdges; Gothic SupportColumn From EDge; RailsFromEdge,groups/034-Generate_Gothic_Square_Tower.blend
+Generate Square Tower,805,877,14,Generate Extruded DoorShape; Generate Windows; GenerateLightShaftExrudes; GenerateUpperWindowWithAlcove; GetPositionBasedSeed; Switch On Roof Type,groups/035-Generate_Square_Tower.blend
+Generate Stones,47,53,1,,groups/036-Generate_Stones.blend
+Generate Tower,643,684,27,Generate Attic Windows On Points; Generate Extruded DoorShape; GenerateLightShaftExrudes; GenerateUpperWindowWithAlcove; GetPositionBasedSeed; Round Bottom; Switch On Roof Type,groups/037-Generate_Tower.blend
+Generate Windows,188,205,9,Curve Info; Curve Tip.001,groups/038-Generate_Windows.blend
+GenerateAlcoveWindows,14,22,10,GenerateUpperWindowWithAlcove,groups/039-GenerateAlcoveWindows.blend
+GenerateArc,153,174,11,,groups/040-GenerateArc.blend
+GenerateBricks,26,28,1,,groups/041-GenerateBricks.blend
+GenerateChurchBuildingB,904,1140,28,ChurchA-Front; DistancingType; GenerateWindowsFromEdges; Gothic SupportColumn From EDge; Is Edge Manifold; ResampleEdgesAndSpawnWindowedWalld; Switch On Roof Type; WindowWalls,groups/042-GenerateChurchBuildingB.blend
+GenerateCover,181,198,10,GetBoundaryEdgeTangentAndNomral,groups/043-GenerateCover.blend
+GenerateDoorsWithAlcove,10,14,7,Generate Extruded DoorShape,groups/044-GenerateDoorsWithAlcove.blend
+GenerateHouse,1023,1075,13,CreateDiagonalBeams; Curve Info; Generate Windows; GetPositionBasedSeed; Is Edge Manifold; Switch On Roof Type; WindowBeams,groups/045-GenerateHouse.blend
+GenerateLightShaftExrudes,112,111,5,Generate Windows,groups/046-GenerateLightShaftExrudes.blend
+GenerateMedialAxisRectangleTopology,119,140,6,,groups/047-GenerateMedialAxisRectangleTopology.blend
+GenerateRockSlow,94,112,12,PCAGetLongAndShortAxis; Random Rotation,groups/048-GenerateRockSlow.blend
+GenerateStairCase,53,65,12,GenerateTerrace; MakeSpiral; MakeStairs,groups/049-GenerateStairCase.blend
+GenerateTerrace,150,163,11,GetPositionBasedSeed; Is Edge Manifold; StonesOnSurface,groups/050-GenerateTerrace.blend
+GenerateUpperWindowWithAlcove,128,136,11,Generate Windows; Switch On Roof Type,groups/051-GenerateUpperWindowWithAlcove.blend
+GenerateWindowsFromEdges,29,40,10,ArcsFromEdges; WindowInnerPattern,groups/052-GenerateWindowsFromEdges.blend
+GeneratorBoulders,16,18,1,GenerateRockSlow,groups/053-GeneratorBoulders.blend
+GetBoundaryEdgeTangentAndNomral,45,51,1,,groups/054-GetBoundaryEdgeTangentAndNomral.blend
+GetOnlySide Edges after Edge Extrude,7,8,2,Select Original Geometry After Edge Extrude,groups/055-GetOnlySide_Edges_after_Edge_Extrude.blend
+GetPositionBasedSeed,15,16,3,,groups/056-GetPositionBasedSeed.blend
+GetSteppeddirectionFrom position,8,8,1,,groups/057-GetSteppeddirectionFrom_position.blend
+Gothic SupportColumn From EDge,107,164,11,PointyGothicCone; Select Original Geometry After Edge Extrude,groups/058-Gothic_SupportColumn_From_EDge.blend
+GothicSupportBeaconFromEdgeParent,13,17,4,Gothic SupportColumn From EDge,groups/059-GothicSupportBeaconFromEdgeParent.blend
+HangingBanners,108,141,7,,groups/060-HangingBanners.blend
+HousesOnCurves,166,228,21,Color in Range; Float in Range; GenerateHouse; Int in Range,groups/061-HousesOnCurves.blend
+Int in Range,4,6,3,,groups/062-Int_in_Range.blend
+Is Edge Manifold,4,3,0,,groups/063-Is_Edge_Manifold.blend
+Make Dirt Road,102,139,13,,groups/064-Make_Dirt_Road.blend
+Make Pumpkin From Points,217,268,2,Curve Info,groups/065-Make_Pumpkin_From_Points.blend
+Make River,147,202,6,,groups/066-Make_River.blend
+MakeBush,94,119,11,SetAutoSmooth,groups/067-MakeBush.blend
+MakeGrass,26,29,2,,groups/068-MakeGrass.blend
+MakeSpiral,20,24,4,,groups/069-MakeSpiral.blend
+MakeStairs,25,33,6,,groups/070-MakeStairs.blend
+MakeStallCover,282,320,16,,groups/071-MakeStallCover.blend
+MakeTree,271,305,11,MakeBush,groups/072-MakeTree.blend
+MatrixSubtract,23,34,2,,groups/073-MatrixSubtract.blend
+OctaveBasedSpawnStone,62,80,8,Is Edge Manifold,groups/074-OctaveBasedSpawnStone.blend
+PCAGetLongAndShortAxis,155,198,2,MatrixSubtract,groups/075-PCAGetLongAndShortAxis.blend
+PointWindowsFromEdges,81,106,16,PointyGothicCone; WindowWalls,groups/076-PointWindowsFromEdges.blend
+Points On Surface,17,25,6,,groups/077-Points_On_Surface.blend
+PointyGothicCone,58,69,7,,groups/078-PointyGothicCone.blend
+Pole,89,117,6,,groups/079-Pole.blend
+ProjectOnCoordinate,12,17,3,,groups/080-ProjectOnCoordinate.blend
+Pumpkin,15,17,7,Make Pumpkin From Points,groups/081-Pumpkin.blend
+RailsFromEdge,209,272,4,,groups/082-RailsFromEdge.blend
+Random Rotation,25,33,4,,groups/083-Random_Rotation.blend
+Reroute,571,726,14,GenerateArc; Select Original Geometry After Edge Extrude; SetAutoSmooth,groups/084-Reroute.blend
+ResampleEdgesAndSpawnWindowedWalld,57,69,11,Curve Tip.001; WindowWalls,groups/085-ResampleEdgesAndSpawnWindowedWalld.blend
+Round Bottom,56,67,5,,groups/086-Round_Bottom.blend
+Select Original Geometry After Edge Extrude,11,13,2,,groups/087-Select_Original_Geometry_After_Edge_Extrude.blend
+SetAutoSmooth,5,6,2,ShouldAutoSmooth,groups/088-SetAutoSmooth.blend
+ShouldAutoSmooth,18,21,2,,groups/089-ShouldAutoSmooth.blend
+Spawn Normals on faces,10,11,2,,groups/090-Spawn_Normals_on_faces.blend
+Stall,116,147,14,GenerateMedialAxisRectangleTopology; Is Edge Manifold,groups/091-Stall.blend
+StonesOnSurface,129,144,5,OctaveBasedSpawnStone; SetAutoSmooth,groups/092-StonesOnSurface.blend
+Sun Flowers From Points,229,279,3,,groups/093-Sun_Flowers_From_Points.blend
+Switch On Roof Type,3,4,1,,groups/094-Switch_On_Roof_Type.blend
+Tower Gothic Type 2,23,27,6,Generate Gothic Square Tower,groups/095-Tower_Gothic_Type_2.blend
+TownWall,342,389,7,DoorTileFromArc; SetAutoSmooth; StonesOnSurface; WrapGeometryToCurve,groups/096-TownWall.blend
+TownWall_Climbing,285,332,8,Select Original Geometry After Edge Extrude; SetAutoSmooth; StonesOnSurface,groups/097-TownWall_Climbing.blend
+Tree On Geo Points,282,348,14,Color in Range; Float in Range; MakeBush,groups/098-Tree_On_Geo_Points.blend
+WallTowerround,265,346,10,Select Original Geometry After Edge Extrude; SetAutoSmooth; StonesOnSurface,groups/099-WallTowerround.blend
+Waterfall,114,136,7,,groups/100-Waterfall.blend
+Wheat From Point,265,320,4,,groups/101-Wheat_From_Point.blend
+Wind On Plants,23,26,5,,groups/102-Wind_On_Plants.blend
+WindMill,611,751,39,Curve Info; CurvedDoorFromEdges; Generate Attic Windows On Points; Is Edge Manifold; Round Bottom; ShouldAutoSmooth; Switch On Roof Type; WindowFromEdges,groups/103-WindMill.blend
+WindowBeams,63,69,3,Curve Info,groups/104-WindowBeams.blend
+WindowFromEdges,165,226,12,Random Rotation,groups/105-WindowFromEdges.blend
+WindowInnerPattern,137,161,5,,groups/106-WindowInnerPattern.blend
+WindowWalls,141,178,18,ArcsFromEdges; GenerateWindowsFromEdges; Gothic SupportColumn From EDge; RailsFromEdge,groups/107-WindowWalls.blend
+Wooden Bridge,181,240,21,Fence Type A,groups/108-Wooden_Bridge.blend
+WrapGeometryToCurve,43,44,3,,groups/109-WrapGeometryToCurve.blend
+float to Rotation,13,16,4,,groups/110-float_to_Rotation.blend

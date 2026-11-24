@@ -43,6 +43,7 @@ def catalog():
 
 
 def zones(x,y,z):
+    """Fixed audit footprints for cross-version comparison, not live trigger predicates."""
     if .3<=x<7 and abs(z)<1.9: yield 'start'
     if 30<x<36 and abs(z)<2.3: yield 'sealed_well'
     if 28.2<x<33.8 and 4.4<z<7.1: yield 'collapse'
@@ -53,6 +54,7 @@ def zones(x,y,z):
 def load(matrix,human):
     lines=catalog(); cases=[]; hits=[]; audited={'start','sealed_well','collapse','ward_paired','ward_unseen','shaft_doubt'}
     for cohort,root,name in [('固定路线',matrix,'route.json'),('类人策略',human,'report.json')]:
+        if root is None: continue
         files=sorted(root.glob('*/'+name))
         if not files: raise ValueError(f'No {name}: {root}')
         for f in files:
@@ -88,7 +90,13 @@ def load(matrix,human):
 
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--matrix',type=Path,required=True); ap.add_argument('--human',type=Path,required=True); ap.add_argument('--out',type=Path,required=True); a=ap.parse_args(); a.out.mkdir(parents=True,exist_ok=True); data=load(a.matrix,a.human)
+    ap=argparse.ArgumentParser(); ap.add_argument('--matrix',type=Path,help='optional fixed-route control cohort'); ap.add_argument('--human',type=Path,required=True); ap.add_argument('--out',type=Path,required=True); a=ap.parse_args()
+    manifest=json.loads((a.human/'batch.json').read_text('utf8'))
+    rows=manifest['cases']
+    if (not rows or len(rows)!=manifest['planned'] or any(r['status']!='ok' for r in rows)
+            or {r['directory'] for r in rows}!={p.parent.name for p in a.human.glob('*/report.json')}):
+        raise ValueError('incomplete or invalid autonomous batch')
+    a.out.mkdir(parents=True,exist_ok=True); data=load(a.matrix,a.human)
     for name in ['hits','rates','order']:
         rows=data[name]
         if rows:

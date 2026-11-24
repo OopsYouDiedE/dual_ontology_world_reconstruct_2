@@ -1,0 +1,39 @@
+{
+  "candidate": "A03 / The Palimpsest Switchyard",
+  "revision": "ab381c849f4e01237db478f7d1e63d8ea76b3ce8",
+  "generated_at": "2026-11-25T05:59:49.285865+08:00",
+  "golden": {
+    "revision": "ab381c849f4e01237db478f7d1e63d8ea76b3ce8",
+    "passed_live": true
+  },
+  "red_reports": [
+    {
+      "revision": "ab381c849f4e01237db478f7d1e63d8ea76b3ce8",
+      "agent": "Socrates",
+      "started_at": "2026-11-25T06:00:31.611405+08:00",
+      "ended_at": "2026-11-25T06:02:57.307633+08:00",
+      "surface": "authoritative-model",
+      "role": "medium",
+      "independent": true,
+      "outcome": "cleared",
+      "receipt": {
+        "file": "a03-red-medium-graph.json",
+        "sha256": "3d8c66062c2447fc14c743d4712b7836a0b4636073517016e6aa798a71daf294"
+      }
+    },
+    {
+      "revision": "ab381c849f4e01237db478f7d1e63d8ea76b3ce8",
+      "agent": "Godel",
+      "started_at": "2026-11-25T06:00:53.049354+08:00",
+      "ended_at": "2026-11-25T06:03:19.986053+08:00",
+      "surface": "normal-input",
+      "role": "medium",
+      "independent": true,
+      "outcome": "cleared",
+      "receipt": {
+        "file": "a03-red-medium-logic.json",
+        "sha256": "7621b9c7d520a7dcb61ff756d28a8e3ec7a7d4c88dd11382661f67f77baa8bd1"
+      }
+    }
+  ]
+}

@@ -2,15 +2,20 @@
   "candidate": "A01 / The Chronograph Works",
   "revision": "c29e8d62e09c92fac301f583418acd1d0bd528aa",
   "generated_at": "2026-11-25T05:39:04.141864+08:00",
-  "red_reports": [{
-    "agent": "Goodall",
-    "role": "medium",
-    "revision": "c29e8d62e09c92fac301f583418acd1d0bd528aa",
-    "started_at": "2026-11-25T05:39:22.229+08:00",
-    "ended_at": "2026-11-25T05:40:03.616+08:00",
-    "independent": true,
-    "outcome": "cleared",
-    "surface": "authoritative-model",
-    "receipt": {"file": "a01-red-medium.json", "sha256": "0541467b9cba58d992c70340fe3e2c3326643149052a24d4b6c80a3834a6921c"}
-  }]
+  "red_reports": [
+    {
+      "agent": "Goodall",
+      "role": "medium",
+      "revision": "c29e8d62e09c92fac301f583418acd1d0bd528aa",
+      "started_at": "2026-11-25T05:39:22.229+08:00",
+      "ended_at": "2026-11-25T05:40:03.616+08:00",
+      "independent": true,
+      "outcome": "cleared",
+      "surface": "authoritative-model",
+      "receipt": {
+        "file": "a01-red-medium.json",
+        "sha256": "c43a5eb5ec14387ca6225e92eb0c950bd726a0e1fa427cee2a57bb2f0059bee9"
+      }
+    }
+  ]
 }

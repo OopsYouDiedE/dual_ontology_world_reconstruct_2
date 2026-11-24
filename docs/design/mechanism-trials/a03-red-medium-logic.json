@@ -1,0 +1,23 @@
+{
+  "revision": "ab381c849f4e01237db478f7d1e63d8ea76b3ce8",
+  "agent": "Godel",
+  "started_at": "2026-11-25T06:00:53.049354+08:00",
+  "ended_at": "2026-11-25T06:03:19.986053+08:00",
+  "method": "Search Ink backward and Lift forward in lockstep; each choice constrains the shared local gate pin.",
+  "search": {
+    "search_calls": 6662644,
+    "search_seconds": 1.964
+  },
+  "ports": "122321123113 313111123111 113221123121 321322123112 133321231223 223133121232",
+  "turn": "Confirm twice after the 72nd Ink stroke. Rewind advances automatically.",
+  "proof": {
+    "turn_tick": 1440,
+    "exit_tick": 2880,
+    "phase": "won",
+    "event": "exit_open",
+    "inked": 72,
+    "cured": 72,
+    "exit_code": 0
+  },
+  "surface": "normal-input"
+}

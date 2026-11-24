@@ -1,0 +1,24 @@
+{
+  "revision": "ab381c849f4e01237db478f7d1e63d8ea76b3ce8",
+  "agent": "Socrates",
+  "started_at": "2026-11-25T06:00:31.611405+08:00",
+  "ended_at": "2026-11-25T06:02:57.307633+08:00",
+  "method": "Depth-first Ink enumeration with in/out constraints and connectivity; simulate Lift for each complete tape.",
+  "search": {
+    "partial_nodes": 83002184,
+    "complete_tapes": 16078,
+    "search_seconds": 6.900549
+  },
+  "ports": "122321123113 313111123111 113221123121 321322123112 133321231223 223133121232",
+  "turn": "Confirm twice after the 72nd Ink stroke. Rewind advances automatically.",
+  "proof": {
+    "turn_tick": 1440,
+    "exit_tick": 2880,
+    "phase": "won",
+    "event": "exit_open",
+    "inked": 72,
+    "cured": 72,
+    "exit_code": 0
+  },
+  "surface": "authoritative-model"
+}

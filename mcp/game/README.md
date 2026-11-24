@@ -44,3 +44,5 @@ These research scenes run on the same Forward+ toon pipeline and use isolated pr
 - `on(scene="palimpsest")`: `palimpsest_i/ii/iii`, `palimpsest_confirm`, `palimpsest_reset`, `palimpsest_view`. Selecting a socket previews it for 40 ticks before the application honors confirmation. Click a pad to inspect both decks without affecting the room state.
 
 See [mechanism trials](../../docs/design/mechanism-trials/README.md) for testing commands, frozen candidate gates and screenshot evidence.
+
+- `on(scene="shutter_loom", seed=0)`: `shutter_throw_west/throw_east`, `shutter_approach_west/approach_east`, `shutter_cross`, `shutter_back`, `shutter_exit`, `shutter_wait` (20 ticks), `shutter_watch` (three wait beats), `shutter_view`, `shutter_reset`.

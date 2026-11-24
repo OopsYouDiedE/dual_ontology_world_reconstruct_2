@@ -109,8 +109,8 @@ func a_hint()->String:
 	return ""
 
 func a_line()->String:
-	if a_role==Seer.PLAYER:return "契约A 第二码：你先看见的，你先移开——我顶着。"
-	return "契约A 第二码：我先看见，我移开；你盯着别眨眼。"
+	if a_role==Seer.PLAYER:return "你先看到的。看我这边，板子交给我。"
+	return "我先看到的。我转开，你盯住它。"
 
 ## ---- Contract B -----------------------------------------------------------
 ## Returns "call" when a full set of three loud iron steps completes.
@@ -147,29 +147,25 @@ func b_hint()->String:
 
 func b_line(level)->String:
 	if b_remembered:
-		if b_pardons>0:return "三次了……它记住你了。快把节拍器扔下去，换成它的注意。"
-		return "三次了。这次没有能赎回的东西了——静步，别再出声。"
-	if b_calls>0:return "又一声。井底在数你的脚步，别跑。"
+		if b_pardons>0 and level.equipped:return "把节拍器扔远点，试试能不能引开它！"
+		return "听那动静。把脚步放轻。"
+	if b_calls>0:return "你听，井里又响了一声。慢点走。"
 	return ""
 
 ## ---- Manual pages ---------------------------------------------------------
-static func manual_pages(annotated:bool,locale:="en")->Array[String]:
-	if not locale.begins_with("zh"):
-		var first:="[b]Shift log[/b]   01 / 05\n\nThe amber plate reacts to a witness, even through glass. Academy orders forbid direct observation. Below the shaft, the blind hunter hears iron footsteps."
-		if annotated:first+="\n\n[color=#862f25]Field annotation: one steady gaze supports the plate. Two gazes overload it.[/color]"
-		return [first,
-			"[b]Contract A | Third clause[/b]   02 / 05\n\nOne plate, one witness. If a second watcher joins, the first must look away within one second. The newcomer must keep watching until the hand-off is complete.\n\nIf neither yields, or the newcomer looks away first, the plate goes dark for three seconds.",
-			"[b]Contract B | Handover book[/b]   03 / 05\n\nThree running beats on iron make one call. After three calls the hunter remembers you. Quiet steps wear away an unfinished call.\n\nThrow a metronome to buy silence. The shaft accepts this bargain once per expedition.",
-			"[b]Field controls[/b]   04 / 05\n\nReset the isolation gate in the archive and recover the core.\n\nShift: walk/run   Ctrl: quiet   Space: jump   RMB: aim\nE: use or talk   R: lamp   F: stomp to draw the hunter\nQ on Hale: hold/follow. Elsewhere: orders. Scroll and press E, or choose a number.",
-			"[b]Shaft inscriptions[/b]   05 / 05\n\n[color=#862f25]Shared Footfall[/color]\nThe well counts sounds, not heads. When your steps fall together it hears a meal. One walks; one listens.\n\n[color=#862f25]One Lamp[/color]\nOne flame is allowed below. Two wicks sound like two sets of boots. Put out your lamp and walk by your companion's light."]
+static func manual_pages(annotated:bool,sound_read:=false,light_read:=false)->Array[String]:
 	var pages:Array[String]=[]
-	pages.append("[b]远征员随身规则手册[/b]　01 / 05\n[color=#796346]━━━━━━━━━━━━━━━━━━━━[/color]\n\n井区交班记录　琥珀异常板遇目光即生异变，隔窗目击亦须登记。\n\n学院守则摘录　严禁直视异常板，违者按失控事故处置。\n\n值守须知　井底栖有盲目听觉异体。铁网步声直通井底，深井值守严禁奔跑。")
-	if annotated:
-		pages[0]+="\n\n[font_size=16][color=#862f25]手写批注　单道目光持续注视可锁稳板面。\n　　　　　双目同视即刻失控。[/color][/font_size]"
-	pages.append("[b]契约 A · 值班者条例 第三码[/b]　02 / 05\n[color=#796346]━━━━━━━━━━━━━━━━━━━━[/color]\n\n[color=#862f25]一　同一块板面，每次只容一人注视。[/color]\n\n[color=#862f25]二　两人同时看见时，后看见者继续注视，\n　　先看见者一秒内移开。[/color]\n\n[color=#862f25]三　两者都不移开，或后看见者先移开，\n　　板面三秒后整块熄灭，井底听见一切。[/color]\n\n[color=#68503b]→ 准星旁的契约行会告诉你此刻是「先」还是「后」。[/color]")
-	pages.append("[b]契约 B · 锚定厅交接簿 手抄页[/b]　03 / 05\n[color=#796346]━━━━━━━━━━━━━━━━━━━━[/color]\n\n[color=#862f25]一　铁网上的每一步，都会被井底听成一次呼唤。[/color]\n\n[color=#862f25]二　连续三声跑动的呼唤而不回以静步，\n　　井底会记住你。[/color]\n\n[color=#862f25]三　被记住后，只有投出会响的东西，\n　　能换回一次清静；一次远征只换一次。[/color]\n\n[color=#68503b]→ 面板上的三颗铁珠，就是它数到第几声。[/color]")
-	pages.append("[b]出勤备忘[/b]　04 / 05\n[color=#796346]━━━━━━━━━━━━━━━━━━━━[/color]\n\n前班踏响铁网后落闸封井。备用源核滞留对岸，须由档案翼总控室复位隔离闸。\n\n[color=#4c3a26]Shift　切换走／跑　　右键　精瞄　　Space　短跳\nCtrl　按住静步　　　E　互动　　　Q　指令环／对准 Hale 切换留守\nR　提灯　F　跺脚[/color]\n\n[color=#68503b]← / →　翻页　　　　1　合册[/color]")
-	pages.append("[b]井区规则抄本[/b]　05 / 05\n[color=#796346]━━━━━━━━━━━━━━━━━━━━[/color]\n\n[color=#862f25]其一 · 同声律[/color]\n井底只数声音，不数人头。两个人的脚步叠在一起，它会当成一顿饭——一个人走，另一个站着听。\n\n[color=#862f25]其二 · 独灯律[/color]\n井里只许点一盏灯。两盏灯芯一起爆响，井底会听成两个人的脚步。熄掉自己那盏，借同伴的光走。")
+	var first:="[b]井区值班日志[/b]　01 / 05\n\n夜班交接：井区已封，琥珀板的观测记录仍在档案翼。接班人到岗后请核查。\n\n昨夜有人跑过铁网。脚步声刚停，井下就传来撞击声。"
+	if annotated:first+="\n\n[color=#862f25]手写批注　隔窗也算目击。只剩一道目光时，板面的波纹慢慢平了。[/color]"
+	pages.append(first)
+	pages.append("[b]观察窗交班记录[/b]　02 / 05\n\n夜班末，窗台上的铅笔滚到了地上。我弯腰去捡，身后的同事喊了一声。我再抬头时，玻璃外只剩一片暗色。\n\n早班来时请带块干布。窗上都是手印，迎着灯看不清。")
+	pages.append("[b]铁网巡夜记录[/b]　03 / 05\n\n送油的人跑过栈桥，铁网响得盖住了我的喊声。他在栏杆边站住后，下面还响了一阵，像有什么蹭着井壁往上爬。\n\n油壶搁在入口，桥上没人应声。我先回去叫人。")
+	pages.append("[b]出勤备忘[/b]　04 / 05\n\n昨夜封井后，备用源核仍留在对岸。稳压室向井区发出调拨令：回收源核，交回锚定厅。\n\n交班时清点灯油与人员，两项都要记在册上。")
+	var inscriptions:="[b]井区刻文抄本[/b]　05 / 05"
+	if sound_read:inscriptions+="\n\n[color=#862f25]同声律[/color]\n井底只数声音。两个人的脚步叠在一起，它会当成一顿饭。一个人走，另一个站着听。"
+	if light_read:inscriptions+="\n\n[color=#862f25]独灯律[/color]\n井里只许点一盏灯。两盏灯芯一起爆响，井底会听成两个人的脚步。"
+	if not sound_read and not light_read:inscriptions+="\n\n留页待抄。"
+	pages.append(inscriptions)
 	return pages
 
 static func region_card(id:String)->Dictionary:

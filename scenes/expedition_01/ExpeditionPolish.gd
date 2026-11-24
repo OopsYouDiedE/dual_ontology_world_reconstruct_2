@@ -59,9 +59,13 @@ var bar_bottom:ColorRect
 var dim:ColorRect
 var cross:Control
 var panel:PanelContainer
+var debug_layer:=CanvasLayer.new()
+var debug_enabled:=false
+var debug_panel:PanelContainer
 var oil_bar:ProgressBar
 var oil_fill:StyleBoxFlat
 var oil_label:Label
+var objective_label:Label
 var state_label:Label
 var end_card:Label
 var rule_tick:Label
@@ -103,12 +107,14 @@ func setup(level:Node,canvas:CanvasLayer)->void:
 	var top:=CanvasLayer.new();top.layer=20;add_child(top)
 	shade=_rect(ui_root,Color.WHITE);var sh:=Shader.new();sh.code=VIGNETTE;var mat:=ShaderMaterial.new();mat.shader=sh;shade.material=mat
 	dim=_rect(canvas,Color(0,0,0,0))
+	canvas.move_child(dim,lv.manual.get_index())
 	bar_top=_rect(ui_root,Color.BLACK);bar_bottom=_rect(ui_root,Color.BLACK)
 	bar_top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE);bar_bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	bar_top.offset_bottom=0;bar_bottom.offset_top=0
 	fade=_rect(top,Color.BLACK)
 	end_card=Label.new();top.add_child(end_card);end_card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);end_card.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;end_card.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
 	end_card.add_theme_font_override("font",make_font());end_card.add_theme_font_size_override("font_size",30);end_card.add_theme_constant_override("outline_size",8);end_card.mouse_filter=Control.MOUSE_FILTER_IGNORE;end_card.modulate.a=0.
+	debug_layer.name="ExpeditionDebug";debug_layer.layer=9;add_child(debug_layer);debug_layer.hide()
 	_build_hud(canvas);oil_bar.value=lv.oil
 	fade_a=1.;fade_target=0.;fade_rate=.7;letterbox(3.2)
 
@@ -122,13 +128,18 @@ func _build_hud(canvas:CanvasLayer)->void:
 	panel.add_theme_stylebox_override("panel",back)
 	var col:=VBoxContainer.new();panel.add_child(col);col.add_theme_constant_override("separation",5);col.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	oil_label=Label.new();col.add_child(oil_label)
-	oil_bar=ProgressBar.new();col.add_child(oil_bar);oil_bar.custom_minimum_size=Vector2(250,7);oil_bar.show_percentage=false;oil_bar.max_value=100
+	oil_bar=ProgressBar.new();col.add_child(oil_bar);oil_bar.custom_minimum_size=Vector2(108,4);oil_bar.show_percentage=false;oil_bar.max_value=100
 	oil_fill=box(ACCENT,2,Vector2.ZERO);oil_bar.add_theme_stylebox_override("fill",oil_fill);oil_bar.add_theme_stylebox_override("background",box(Color(1,1,1,.12),2,Vector2.ZERO))
-	lv.hud.reparent(col,false);lv.hud.custom_minimum_size=Vector2(250,0);lv.hud.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;lv.hud.add_theme_font_size_override("font_size",16)
-	state_label=Label.new();col.add_child(state_label)
-	time_label=Label.new();col.add_child(time_label)
-	hale_label=Label.new();col.add_child(hale_label)
-	for l in [oil_label,state_label,time_label,hale_label]:
+	objective_label=Label.new();objective_label.text="取回备用源核";col.add_child(objective_label)
+	debug_panel=PanelContainer.new();debug_layer.add_child(debug_panel)
+	debug_panel.position=Vector2(22,110);debug_panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	debug_panel.add_theme_stylebox_override("panel",back)
+	var diagnostics:=VBoxContainer.new();debug_panel.add_child(diagnostics);diagnostics.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	lv.hud.reparent(diagnostics,false);lv.hud.custom_minimum_size=Vector2(250,0);lv.hud.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;lv.hud.add_theme_font_size_override("font_size",16)
+	state_label=Label.new();diagnostics.add_child(state_label)
+	time_label=Label.new();diagnostics.add_child(time_label)
+	hale_label=Label.new();diagnostics.add_child(hale_label)
+	for l in [oil_label,objective_label,state_label,time_label,hale_label]:
 		l.add_theme_font_override("font",font);l.add_theme_font_size_override("font_size",15);l.add_theme_constant_override("outline_size",4);l.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	# Centre reticle: a quiet dot that opens into a ring over anything usable.
 	cross=Control.new();canvas.add_child(cross);cross.set_anchors_and_offsets_preset(Control.PRESET_CENTER);cross.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -153,7 +164,7 @@ func _build_hud(canvas:CanvasLayer)->void:
 ## (contract A) live directly under the reticle, where the player is already
 ## looking when the rule matters.
 func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
-	plate_line=Label.new();canvas.add_child(plate_line)
+	plate_line=Label.new();debug_layer.add_child(plate_line)
 	plate_line.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	plate_line.offset_left=-260;plate_line.offset_right=260;plate_line.offset_top=84;plate_line.offset_bottom=110
 	plate_line.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
@@ -161,7 +172,7 @@ func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
 	plate_line.add_theme_constant_override("outline_size",6)
 	plate_line.add_theme_color_override("font_color",Color("e8d4b0"));plate_line.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	bead_lit=0
-	var bead_row:=HBoxContainer.new();canvas.add_child(bead_row)
+	var bead_row:=HBoxContainer.new();debug_layer.add_child(bead_row)
 	bead_row.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	bead_row.offset_left=-36;bead_row.offset_right=36;bead_row.offset_top=114;bead_row.offset_bottom=130
 	bead_row.add_theme_constant_override("separation",6);bead_row.alignment=BoxContainer.ALIGNMENT_CENTER
@@ -170,7 +181,7 @@ func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
 		var bead:=Panel.new();bead.custom_minimum_size=Vector2(10,10);bead_row.add_child(bead)
 		var s:=box(Color(1,1,1,.13),5,Vector2.ZERO);bead.add_theme_stylebox_override("panel",s);beads.append(bead)
 	# Region card, top right.
-	var holder:=PanelContainer.new();canvas.add_child(holder)
+	var holder:=PanelContainer.new();debug_layer.add_child(holder)
 	holder.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	holder.offset_left=-382;holder.offset_right=-24;holder.offset_top=22;holder.offset_bottom=132
 	var back:=box(Color(.045,.04,.035,.78),4,Vector2(16,12));back.border_color=ACCENT;back.border_width_right=3
@@ -256,6 +267,13 @@ func _process(dt:float)->void:
 	if playing:
 		_look_stick(dt);_dread(dt);_rig(dt);_hud(dt)
 
+func toggle_debug()->void:
+	debug_enabled=not debug_enabled
+	sync_debug_visibility()
+
+func sync_debug_visibility()->void:
+	debug_layer.visible=debug_enabled and lv.mode<0 and not lv.manual.visible and not lv.finished and not lv.wheel_open
+
 func _overlay(dt:float)->void:
 	if not end_fade:fade_a=move_toward(fade_a,fade_target,dt*fade_rate)
 	fade.color.a=fade_a
@@ -266,7 +284,9 @@ func _overlay(dt:float)->void:
 	var live:bool=lv.mode<0 and not book
 	var hud_live:bool=live and not lv.finished and not lv.wheel_open
 	cross.visible=hud_live;panel.visible=hud_live
-	for widget in [rule_tick,plate_line,beads[0].get_parent(),card_holder,fail_holder_ctl]:widget.visible=hud_live
+	rule_tick.visible=hud_live;fail_holder_ctl.visible=hud_live
+	fail_body.visible=debug_enabled and fail_body.text!=""
+	sync_debug_visibility()
 	var m:ShaderMaterial=shade.material
 	var low:float=clampf(1.-lv.oil/22.,0.,1.)
 	var strength:float=.34+.22*low
@@ -376,6 +396,7 @@ func _hud(dt:float)->void:
 	oil_fill.bg_color=Color("ff6b4a") if low else ACCENT
 	if low and sin(lv.phase*6.)>0.:oil_fill.bg_color=Color("ffd2a0")
 	oil_label.text="灯油　%d%%"%ceili(oil);oil_label.modulate=Color("ff9a80") if low else Color("f4ead8")
+	objective_label.text="带源核回锚定厅" if lv.collected else "取回备用源核"
 	var quiet:bool=Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")
 	var well:bool=lv.released and lv.walker.position.x>46.
 	var mode_name:="静步" if quiet else "奔跑" if lv.running else "步行"
@@ -385,14 +406,14 @@ func _hud(dt:float)->void:
 	if well and not quiet:tint=Color("ffbf75")
 	if well and bait_time>0. and not lv.collected:note="　· 井底的动静被引开了";tint=Color("ffda91")
 	if lv.pair_loud:note="　· 同声律！脚步叠上了";tint=Color("ff6a4d")
-	elif lv.both_lamp and well:note="　· 独灯律！只许一盏灯 [R]";tint=Color("ff6a4d")
-	state_label.text="▸ %s%s\nShift Run   RMB Aim   Ctrl Quiet   Space Jump\nE Use   Q Orders   R Lamp   F Stomp   1 Manual"%[mode_name,note];state_label.modulate=tint
+	elif lv.both_lamp and well:note="　· 独灯律！只许一盏灯";tint=Color("ff6a4d")
+	state_label.text="▸ %s%s"%[mode_name,note];state_label.modulate=tint
 	var secs:=int(lv.run_time)
-	time_label.text="Time %d:%02d"%[secs/60,secs%60]
+	time_label.text="经过 %d:%02d"%[secs/60,secs%60]
 	hale_label.text="Hale　▸ "+lv.hale_order_text()
 	var tick:=""
-	if lv.pair_loud:tick="规则违例 · 同声律　两人不可同声"
-	elif lv.both_lamp and well:tick="规则违例 · 独灯律　井里只许一盏灯 [R]"
+	if lv.pair_loud:tick="同声律 · 两人的脚步叠在一起"
+	elif lv.both_lamp and well:tick="独灯律 · 两盏灯同时亮着"
 	rule_tick.text=tick
 	rule_tick.modulate.a=lerpf(rule_tick.modulate.a,1. if tick!="" else 0.,1.-exp(-8.*dt))
 	_rules(dt)

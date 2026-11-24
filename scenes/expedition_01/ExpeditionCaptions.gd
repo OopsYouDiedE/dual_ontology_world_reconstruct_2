@@ -20,7 +20,7 @@ static func reading_time(text:String)->float:
 	var in_word:=false
 	for i in text.length():
 		var c:=text.unicode_at(i)
-		if c>=0x3400 and c<=0x9fff:
+		if (c>=0x3400 and c<=0x9fff) or (c>=0x20000 and c<=0x323af):
 			units+=1.;in_word=false
 		elif (c>=65 and c<=90) or (c>=97 and c<=122) or (c>=48 and c<=57):
 			if not in_word:units+=1.8
@@ -56,7 +56,7 @@ func post(id:String,speaker:String,text:String)->void:
 
 func _fit(line:Label)->void:
 	var text_width:=typeface.get_string_size(line.text,HORIZONTAL_ALIGNMENT_LEFT,-1,20).x
-	line.custom_minimum_size.x=minf(maxf(size.x,100.),ceilf(text_width)+38.)
+	line.custom_minimum_size.x=minf(maxf(size.x,1.),ceilf(text_width)+38.)
 
 func _resize_lines()->void:
 	for entry in entries.values():_fit(entry.label)

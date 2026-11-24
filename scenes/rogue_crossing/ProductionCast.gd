@@ -29,7 +29,7 @@ static func attach(parent: Node3D, variant := -1, expedition_hale := false) -> b
 	var skeleton := skeletons[0] as Skeleton3D
 	var recipe: Array = BODIES[variant] if variant >= 0 else []
 	if not recipe.is_empty(): body.scale = Vector3.ONE * (float(recipe[0]) / 1.802522)
-	if expedition_hale:_groom_hale(body)
+	if expedition_hale: preload("res://scenes/rogue_crossing/HaleFieldDress.gd").fit(body)
 	_apply_finish(body, variant, recipe)
 	# Preserve the approved R-05 neutral pose, including fingers and shoulders.
 	var native := body.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
@@ -197,33 +197,3 @@ static func _hale_finger_curl(bone:String,clip:StringName,t:float)->float:
 	if bone.ends_with("_l") and clip!=&"gate_effort":grip=.27 # relaxed carry hand
 	if bone.begins_with("thumb"):return float([.12,.38,.38][joint])*grip
 	return float([.10,.09,.06][joint])+float([.81,1.02,.68][joint])*grip
-
-# Expedition-only grooming; preserve skin weights and the shared production rig.
-static func _groom_hale(body:Node3D)->void:
-	for node in body.find_children("Hair_*","MeshInstance3D",true,false):
-		var hair:=node as MeshInstance3D
-		if hair.name not in [&"Hair_Cap",&"Hair_SolidLocks"] or hair.mesh.get_surface_count()!=1:continue
-		var cap:=hair.name==&"Hair_Cap"
-		var arrays:=hair.mesh.surface_get_arrays(0)
-		var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
-		for i in vertices.size():
-			var v:=vertices[i]
-			var back:=1.-smoothstep(-.037,.052,v.z)
-			var lateral:=smoothstep(.048,.078,absf(v.x))
-			var temple:=lateral*smoothstep(.035,.077,v.z)*(1.-smoothstep(.102,.124,v.z))
-			var azimuth:=atan2(v.x,v.z-.052)
-			if cap:
-				var edge:=1.-smoothstep(1.645,1.762,v.y)
-				var locks:=pow(.5+.5*cos(19.*azimuth+.7*sin(7.*azimuth)),2.)
-				v.y-=edge*(.096*back+.102*temple+.019*locks*maxf(back,temple))
-				v.z-=edge*(.014+.003*locks)*back
-				v.x+=signf(v.x)*edge*(.010*temple+.005*lateral*back+.003*locks*lateral)
-			else:
-				var fringe:=(1.-smoothstep(1.715,1.784,v.y))*(1.-smoothstep(.073,.118,v.z))
-				v.y-=.072*fringe
-				v.z-=.014*fringe
-				v.x+=.003*fringe*signf(v.x)
-			vertices[i]=v
-		arrays[Mesh.ARRAY_VERTEX]=vertices
-		var groom:=ArrayMesh.new();groom.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
-		groom.surface_set_material(0,hair.mesh.surface_get_material(0));hair.mesh=groom

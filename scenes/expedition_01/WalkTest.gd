@@ -3,6 +3,9 @@ extends SceneTree
 var level
 var failures:=0
 var gaze:=false
+var solo_span:=false
+var window_skip:=false
+var transit_only:=false
 var south_only:=false
 var clock_only:=false
 var oil_only:=false
@@ -17,6 +20,7 @@ func go(x:float,z:float,limit:=2000)->bool:
 		if d.length()<.12:Input.action_release("move_up");return true
 		level.walker.rotation.y=atan2(-d.x,-d.z)
 		if gaze:level.eye.look_at(Vector3(23.85,.11,13.0))
+		if solo_span:level.eye.look_at(Vector3(minf(p.x+3.,69.8),0.,10.1))
 		await physics_frame
 	for k in level.walker.get_slide_collision_count():print(level.walker.get_slide_collision(k).get_collider().get_path(),level.walker.get_slide_collision(k).get_normal())
 	Input.action_release("move_up");push_error("Blocked at %s approaching %s"%[level.walker.position,target]);failures+=1;return false
@@ -86,6 +90,8 @@ func audit()->bool:
 	return true
 func run()->void:
 	var args:=OS.get_cmdline_user_args()
+	transit_only=args.has("--transit-only")
+	window_skip=transit_only or args.has("--skip-window")
 	oil_only=args.has("--oil-only")
 	south_only=args.has("--south") or oil_only
 	clock_only=args.has("--clock-only")
@@ -100,11 +106,12 @@ func run()->void:
 		level.walker.position=Vector3(ramp_x,-.59,12.45);level.walker.rotation.y=0
 		for f in 10:await physics_frame
 		if not await go(ramp_x,9.96,60) or level.walker.position.y<-.04:push_error("Entry ramp failed");quit(1);return
-	level.reset_at_checkpoint();level.walker.rotation.y=-PI/2;level.tutorial_room=false
+	level.queue_free();await wait_ticks(2)
+	level=preload("Expedition.tscn").instantiate();root.add_child(level);await wait_ticks(2)
 	if not audit():quit(1);return
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):quit(1);return
-		if point==[24.65,7.75]:
+		if point==[24.65,7.75] and not window_skip:
 			# Let Hale take the first watch. He yields after the overlap.
 			level.eye.look_at(Vector3(24.65,1.57,4.))
 			for tick in 240:
@@ -122,22 +129,25 @@ func run()->void:
 			if level.archive.note or level.learned:push_error("B2 alone wrote the proof");quit(1);return
 			level.eye.rotation=Vector3.ZERO
 		if point==[20.95,7.75]:
-			for frame in 52:await physics_frame
-			if not level.cues.has("ward") or level.hale.position.z>=8.95:
-				push_error("Hale did not bar the B3 door from the B2 side");quit(1);return
-		if point==[23.85,9.8]:
+			for frame in 360:
+				await physics_frame
+				if level.cues.has("ward_unseen" if window_skip else "ward_paired"):break
+			if not level.cues.has("ward_unseen" if window_skip else "ward_paired") or level.hale.position.z>=8.95:
+				push_error("Hale did not give the appropriate warning from outside B3");quit(1);return
+		if point==[23.85,9.8] and transit_only:gaze=true
+		if point==[23.85,9.8] and not transit_only:
 			level.eye.look_at(Vector3(23.85,.11,12.02))
 			for f in 44:await physics_frame
-			if level.demo_locked or not level.cues.has("red"):push_error("Missing early red phase");quit(1);return
+			if level.demo_locked or not level.cues.has("settling") or level.overload_blend>.01:push_error("Missing single-gaze amber settling phase");quit(1);return
 			for f in 116:await physics_frame
-			if not level.demo_locked or not level.archive.note or level.learned or level.hale.position.z>=8.95:
+			if not level.demo_locked or level.archive.note==window_skip or level.learned or level.hale.position.z>=8.95:
 				push_error("The single-gaze proof or Hale doorstep constraint failed");quit(1);return
 			gaze=true
 		if point==[23.85,14.12]:gaze=false;level.eye.rotation=Vector3.ZERO
 		if absf(point[0]-25.5)<.01:
-			if not level.learned:push_error("Missing crossing proof");quit(1);return
+			if level.learned==transit_only:push_error("Wrong B3 crossing proof state");quit(1);return
 			for f in 5:await physics_frame
-			if not level.captions.entries.has(""):push_error("Missing B3 inner thought");quit(1);return
+			if not window_skip and not level.captions.entries.has(""):push_error("Missing B3 inner thought");quit(1);return
 		if absf(point[0]-28.3)<.01:
 			if not oil_only and not clock_only:
 				if not await walk_loft(not south_only,false):quit(1);return
@@ -149,7 +159,7 @@ func run()->void:
 			var before:float=level.oil
 			if not use_at(Vector3(34.14,.5,14.67),"loot") or level.oil<=before or level.kit.oil_tin.visible:quit(1);return
 	level.eye.look_at(Vector3(36.3,1.35,7.72));level.use()
-	if not (level.learned and level.released and level.equipped!=south_only and level.taken==(oil_only or not south_only and not clock_only)):
+	if not (level.learned!=transit_only and level.released and level.equipped!=south_only and level.taken==(oil_only or not south_only and not clock_only)):
 		push_error("Archive state incomplete");quit(1);return
 	Input.action_press("expedition_quiet")
 	for point in [[39,10.1],[48.8,10.1]]:
@@ -162,12 +172,15 @@ func run()->void:
 			if not await go(pt.x,pt.z):quit(1);return
 		if level.oil>oil_before-15.:push_error("Unpriced southern bypass");quit(1);return
 	else:
-		level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order()
-		if not level.posting or level.north_pause<=0.:push_error("Hale agreement was skipped");quit(1);return
-		for i in 950:await physics_frame
-		if not level.holding:push_error("Hale did not reach north window");quit(1);return
+		if not window_skip:
+			level.eye.look_at(level.kit.polar(12.45,1.5*PI,6.42));level.order()
+			if not level.posting or level.north_pause<=0.:push_error("Hale agreement was skipped");quit(1);return
+			for i in 950:await physics_frame
+			if not level.holding:push_error("Hale did not reach north window");quit(1);return
 		level.eye.rotation=Vector3.ZERO;level.walker.rotation.y=-PI/2;level.eye.look_at(level.hunter.BAIT);level.use();level.eye.rotation=Vector3.ZERO;if level.distraction<=0:push_error("Lure not thrown");quit(1);return
+	solo_span=window_skip
 	if not await go(72.9 if south_only else 70.95,10.1):quit(1);return
+	solo_span=false
 	level.eye.look_at(level.kit.core.position);level.use();Input.action_release("expedition_quiet");level.running=true;if not level.collected:quit(1);return
 	if not await go(72.9 if south_only else 70.95,11.45):quit(1);return
 	if not await go(73.35,11.45):quit(1);return
@@ -187,6 +200,7 @@ func run()->void:
 		push_error("Physical return gallery did not reach B5");quit(1);return
 	for point in [[38.7,10.1],[38.7,7.2],[38.7,0],[34,0],[1.5,0]]:
 		if not await go(point[0],point[1]):quit(1);return
+	if not level.reunited:push_error("Hale did not rejoin in the main hall");quit(1);return
 	var completed:=[false];level.returned.connect(func():completed[0]=level.polish.fade_a>.999 and level.polish.end_card.modulate.a>.999)
 	for i in 15:await physics_frame
 	level.eye.look_at(Vector3(.37,1.5,0));level.use()
@@ -196,7 +210,10 @@ func run()->void:
 		if completed[0]:break
 		await physics_frame
 	if not completed[0]:push_error("Exit signal missing");quit(1);return
-	print("PASS: A1 to evacuation; B4=%s, crossing=%s."%["oil only" if oil_only else "skip both" if south_only else "metronome only" if clock_only else "both caches", "south walk" if south_only else "Hale at north window, main span and metronome lure"])
+	var trace:=FileAccess.open(ProjectSettings.globalize_path("res://.runtime/archive-%s.json"%("transit-evac" if transit_only else "skip-window-evac" if window_skip else "normal")),FileAccess.WRITE)
+	if trace==null:push_error("Could not export archive trace");quit(1);return
+	trace.store_string(JSON.stringify(level.archive.facts.snapshot(),"  "));trace.close()
+	print("PASS: A1 to evacuation; B4=%s, crossing=%s."%["oil only" if oil_only else "skip both" if south_only else "metronome only" if clock_only else "both caches", "south walk" if south_only else "solo gaze and metronome lure" if window_skip else "Hale at north window, main span and metronome lure"])
 	level.queue_free()
 	# Fixed-FPS headless runs outrun the asynchronous Vorbis mixer on Windows.
 	for i in 26:

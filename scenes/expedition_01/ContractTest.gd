@@ -79,11 +79,17 @@ func run()->void:
 	check(c.b_beads()==0,"standing still lets the partial tally decay")
 
 	# --- Manual carries both contracts on their own pages.
-	var pages:Array=c.manual_pages(true)
-	check(pages.size()==5,"manual combines both systems across five pages")
-	check("Contract A" in pages[1] and "Third clause" in pages[1],"page 2 is contract A")
-	check("Contract B" in pages[2] and "Handover" in pages[2],"page 3 is contract B")
-	check("Field annotation" in pages[0],"page 1 keeps the field annotation")
+	var pages:Array=c.manual_pages(false)
+	check(pages.size()==5 and "井区值班日志" in pages[0],"the five Chinese pages open on the shift log")
+	check("观察窗交班记录" in pages[1] and "铅笔滚到了地上" in pages[1],"page 2 is a witness account from the observation window")
+	check("铁网巡夜记录" in pages[2] and "送油的人跑过栈桥" in pages[2],"page 3 is a patrol account from the iron catwalk")
+	var formula:=RegEx.new()
+	formula.compile(r"契约\s*[AB]|第[一二三]码|[零一二两三四五六七八九十0-9]+\s*(?:秒|下|声呼唤|次跑动)|(?:合成|凑成)一声呼唤|先到的人须|先看见者|后看见者|井底听满")
+	check(pages.all(func(text):return formula.search(text)==null),"initial handbook omits contract labels and exact solutions")
+	var observed:Array=c.manual_pages(true,true,false)
+	check("手写批注" not in pages[0] and "只剩一道目光" not in pages[0] and "手写批注" in observed[0] and "只剩一道目光" in observed[0],"comparison annotation appears only after evidence is witnessed")
+	check(pages.slice(1,3)==observed.slice(1,3),"comparison evidence annotates the log without rewriting the shift accounts")
+	check("留页待抄" in pages[4] and "同声律" in observed[4] and "独灯律" not in observed[4],"only a read inscription enters the transcript")
 
 	# --- The wheel only offers orders that can run right now.
 	level.walker.position=Vector3(34.6,.03,0.)
@@ -114,7 +120,7 @@ func run()->void:
 			check(level.contracts.trust_notes.has("contract_a"),"a legal hand-off awards the live contract")
 		else:
 			level.archive.gaze=Vector3.ZERO;level.contract_hooks(level.walker.position,.016)
-			check(level.retry>0. and level.contracts.a_state=="blackout","second seer leaving triggers the live failure")
+			check(level.retry==0. and level.contracts.a_state=="blackout","second seer leaving extinguishes plate without injuring the bank observer")
 	print("PASS: contracts A and B, wheel gating, manual pages (%d checks failed)"%fails)
 	level.queue_free()
 	for tick in 26:

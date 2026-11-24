@@ -8,13 +8,24 @@ const DOOR := Vector3(21.43,0.,8.46)
 const JAMB := Vector3(21.18,0.,8.54)
 var beat := Beat.FOLLOW
 var route := PackedVector3Array()
-var paired := false
-var note := false
+var facts := preload("ArchiveFacts.gd").new()
+var paired: bool:
+	get: return facts.has_fact("dual_gaze_b2")
+var note: bool:
+	get: return facts.allows("comparison")
 var gaze := Vector3.ZERO
 var pose := &""
 var overlap := 0.
 var recoil_left := 0.
 var phase_wait := 0.
+var entered_trial := false
+
+func in_trial(p:Vector3)->bool:
+	return p.x>20. and p.x<27.8 and p.z>=9.05 and p.z<15.1
+
+func reset_motion(downstream:bool)->void:
+	beat=Beat.DONE if downstream else Beat.FOLLOW
+	route.clear();overlap=0.;entered_trial=false;pose=&"";gaze=Vector3.ZERO
 
 func in_window(p:Vector3)->bool:return p.x>21.9 and p.x<27.7 and p.z>=7.29 and p.z<8.88
 
@@ -31,8 +42,12 @@ func step(lv,dt:float)->bool:
 	var p:Vector3=lv.walker.position
 	var h:Vector3=lv.hale.position
 	pose=&"";gaze=Vector3.ZERO
-	# 留守中的 Hale 离得太远就不触发（回到他身边或再按 Q 恢复跟随）。
-	if beat==Beat.FOLLOW and not lv.learned and in_window(p) and lv.hale.position.distance_to(p)<16.:
+	# A hold order freezes the voluntary demonstration as well as following.
+	if in_trial(p) and not entered_trial:
+		entered_trial=true
+		facts.decide("trial_entry",true,"B3 is open; the window trial is optional")
+	if lv.hale_hold and beat!=Beat.FOLLOW and beat!=Beat.DONE:return true
+	if beat==Beat.FOLLOW and not lv.hale_hold and h.distance_to(p)<16. and (in_window(p) or entered_trial):
 		beat=Beat.WINDOW;lv.trail.clear();lv.hale_hold=false;route.clear()
 		if h.x>27.72:
 			if h.z<2.32:
@@ -45,11 +60,18 @@ func step(lv,dt:float)->bool:
 		elif h.z<8.41 and h.x>WINDOW.x+.2:
 			route.append(Vector3(h.x,0.,8.53))
 		route.append(WINDOW)
+	if beat==Beat.WINDOW and (entered_trial or (p.x<21.9 and p.z>=7.29)):
+		# Go around the shelves via the window bank, then stop outside the door.
+		if route.is_empty():beat=Beat.DOOR
+	if beat in [Beat.DOOR, Beat.WAIT, Beat.PEEK] and in_window(p) and not paired and not lv.hale_hold:
+		beat=Beat.WINDOW;entered_trial=false;route=PackedVector3Array([WINDOW])
+	if beat in [Beat.WINDOW, Beat.DOOR, Beat.WAIT, Beat.PEEK] and p.z<7.15 and p.x<29.:
+		reset_motion(false);lv.trail.clear();return false
 	match beat:
 		Beat.WINDOW:
 			if not route.is_empty() and move(lv,route[0],dt):route.remove_at(0)
-			if route.is_empty():
-				gaze=PLATE-h-Vector3.UP*1.57;face(lv,PLATE,dt)
+			if route.is_empty() and in_window(p) and not entered_trial:
+				gaze=PLATE-lv.hale.position-Vector3.UP*1.57;face(lv,PLATE,dt)
 				pose=&"watch_plate"
 			return true
 		Beat.WITHDRAW:
@@ -61,22 +83,25 @@ func step(lv,dt:float)->bool:
 			if move(lv,DOOR,dt,5.2):
 				pose=&"ward"
 				face(lv,Vector3(20.37,0.,7.59),dt)
-				if p.z>9.05:beat=Beat.WAIT
-				elif p.distance_to(DOOR)<2.60:
-					lv.line_once("ward","别进去！板子就在门后。我们得撤回大厅！")
-					lv.thought("urgency","回去叫人来不及。总控室只剩这一条路。")
-					# One short thought per encounter, even if the player waits at the door.
-					beat=Beat.WAIT
+				if p.distance_to(DOOR)<2.60:
+					if not lv.cues.has("ward_paired") and not lv.cues.has("ward_unseen") and not lv.captions.entries.has("Hale"):
+						if facts.evaluate("door_paired"):
+							lv.line_once("ward_paired","刚才我们一起看，板子就红了。你要一个人进去，我在门口等。")
+						else:
+							lv.line_once("ward_unseen","你要进去看看？我在门边等你。有事就喊。")
+					if lv.cues.has("ward_paired") or lv.cues.has("ward_unseen"):beat=Beat.WAIT
+				if entered_trial:beat=Beat.PEEK
 			return true
 		Beat.WAIT:
 			face(lv,Vector3(20.35,0.,7.58),dt)
 			pose=&"ward" if p.z<9.05 else &""
+			if entered_trial:beat=Beat.PEEK
 			return true
 		Beat.PEEK:
 			move(lv,JAMB,dt,2.)
 			# Peek toward the near bank and listen, not down at the plate.
 			face(lv,Vector3(20.70,1.36,10.11),dt);pose=&"peek"
-			if lv.learned and (p.x>26.1 or lv.released):
+			if (p.x>26.1 and p.z>=13.65 or lv.released) and not lv.hale_hold and facts.evaluate("hale_follow"):
 				beat=Beat.CROSS;phase_wait=0.
 				route=PackedVector3Array([Vector3(20.98,0.,8.53),Vector3(20.98,0.,9.74),Vector3(23.85,0.,9.82),Vector3(23.85,0.,14.11),Vector3(27.26,0.,14.11),Vector3(28.6,0.,14.10)])
 			return true
@@ -97,22 +122,47 @@ func step(lv,dt:float)->bool:
 	return false
 
 func compare(lv,count:int,dt:float)->void:
-	if beat!=Beat.WINDOW or not in_window(lv.walker.position):return
-	# When Hale joined second he must keep watching through the hand-off.
-	if lv.contracts.a_role==lv.contracts.Seer.PLAYER and lv.contracts.a_state=="overlap":
+	if beat!=Beat.WINDOW or not in_window(lv.walker.position):
 		overlap=0.;return
-	if lv.contracts.trust_notes.has("contract_a") and count==1 and gaze!=Vector3.ZERO:
-		overlap=.44
-	else:overlap=overlap+dt if count==2 else 0.
+	overlap=overlap+dt if count==2 else 0.
 	if overlap<.44:return
-	paired=true;beat=Beat.WITHDRAW;recoil_left=.65
-	lv.line_once("window","两条视线压在同一块板上！契约A：你先看见还是我先看见？说一声，另一人再让开！")
-	lv.polish.kick(.14)
+	facts.record("dual_gaze_b2","two unobstructed window rays for 0.44 s")
+	lv.line_once("window","红了！刚才我们俩都在看。谁先看见的？")
+	if lv.contracts.a_role==lv.contracts.Seer.HALE:
+		beat=Beat.WITHDRAW;recoil_left=.65;lv.polish.kick(.14)
+
+func handoff(lv)->void:
+	if beat not in [Beat.WINDOW,Beat.WITHDRAW] or not in_window(lv.walker.position):return
+	facts.record("dual_gaze_b2","Contract A verified two unobstructed rays at the window")
+	facts.record("handoff_b2","Contract A accepted the first seer's withdrawal")
+	update_annotation(lv)
+	if beat==Beat.WINDOW:beat=Beat.WITHDRAW;recoil_left=.65
 
 func record_lock(lv)->void:
-	if note or not paired:return
-	note=true;beat=Beat.PEEK
-	lv.line_once("evidence","等等……刚才两个人看就暴走了。你一个人盯着，它反而稳了？")
+	facts.record("solo_lock_b3","player-only unobstructed gaze sustained to lock")
+	update_annotation(lv)
+
+func update_annotation(lv)->void:
+	if not facts.evaluate("comparison") or lv.cues.has("evidence"):return
+	lv.cues["evidence"]=true
 	lv.evidence_thought_delay=.68
 	lv.sound_at("ink",lv.walker.position+Vector3.UP,-11.)
-	lv.toast("随身手册已新增批注  [1]")
+	lv.toast("随身手册已新增批注")
+
+func sees_crossing(lv)->bool:
+	if beat!=Beat.PEEK or lv.hale_hold or pose!=&"peek" or gaze!=Vector3.ZERO:return false
+	var origin:Vector3=lv.hale.global_position+Vector3.UP*1.57
+	var target:Vector3=lv.walker.global_position+Vector3.UP*1.15
+	var offset:=target-origin
+	# Hale's character forward is +Z. Check his actual yaw after turn limiting,
+	# then cast from his eyes to the player, not to the plate.
+	if offset.length_squared()>36. or lv.hale.global_basis.z.normalized().dot(offset.normalized())<.64:return false
+	var query:=PhysicsRayQueryParameters3D.create(origin,target,2)
+	return lv.get_world_3d().direct_space_state.intersect_ray(query).is_empty()
+
+func record_crossing(lv, crossed_in_hale_view:bool)->void:
+	facts.record("solo_crossing_b3","player reached the far bank after a locked crossing")
+	if crossed_in_hale_view:
+		facts.record("hale_saw_crossing_b3","Hale had a clear doorway sightline during the locked crossing")
+	if facts.evaluate("hale_comparison"):
+		lv.line_once("hale_evidence","在窗边，我们一起看，它就红了。刚才我在门口，只见你一个人走过去了。")

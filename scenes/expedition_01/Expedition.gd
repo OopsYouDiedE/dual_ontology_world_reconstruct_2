@@ -69,6 +69,12 @@ var _lamp_sway:=Vector2.ZERO
 var _lamp_prev_yaw:=0.
 var _lamp_prev_pitch:=0.
 var catwalk_oil_grace:=0.
+var solo_bridge_timer:=0.
+var genome:={
+	"base_oil_drain":0.22,"dark_oil_drain":1.05,"catwalk_oil_drain":1.75,
+	"both_lamp_exposure_rate":0.55,"solo_bridge_sonar_interval":4.8,
+	"solo_bridge_sonar_exposure":0.68,"hunter_rage_speed":5.4,"catwalk_grace_sec":3.5
+}
 var trust_line_cd:=0.
 var wheel:Node=preload("CommandWheel.gd").new()
 var wheel_open:=false
@@ -199,7 +205,17 @@ var retry:=0.
 var notice:=""
 var msg_time:=0.
 var last_pos:=Vector3.ZERO
+func _load_genome()->void:
+	var path:="res://scenes/expedition_01/level_genome.json"
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--genome="):path=arg.trim_prefix("--genome=")
+	if FileAccess.file_exists(path):
+		var parsed:Variant=JSON.parse_string(FileAccess.get_file_as_string(path))
+		if parsed is Dictionary:
+			for k in parsed.keys():genome[k]=parsed[k]
+
 func _ready()->void:
+	_load_genome()
 	add_child(kit);kit.build();light_stage();review_props()
 	var c:=CollisionShape3D.new();var shape:=CapsuleShape3D.new();shape.radius=.32;shape.height=1.75;c.shape=shape;c.position.y=.875;walker.add_child(c);walker.floor_max_angle=deg_to_rad(60);walker.floor_constant_speed=true;walker.floor_snap_length=.28;add_child(walker);walker.position=Vector3(1,.03,0);walker.rotation.y=-PI/2;walker.add_child(eye);eye.position.y=1.57;eye.fov=73;eye.current=true
 	add_child(hale);Cast.attach(hale,1,true);setup_hale_animation();hale.position=Vector3(3.15,0,1.22);hale.rotation.y=PI*.5;add_child(survey);survey.far=600;survey.projection=Camera3D.PROJECTION_ORTHOGONAL
@@ -705,8 +721,8 @@ func order_options()->Array:
 	var items:Array=[]
 	if target=="gate":
 		items.append({"id":"try_gate","title":"让 Hale 试闸","hint":"请他试着拉开铁闸。"})
-	if target=="north" or holding or posting:
-		items.append({"id":"north","title":"去北窗盯桥" if not (holding or posting) else "召回 Hale","hint":"请他从北窗看着桥面。" if not (holding or posting) else "请他回来。"})
+	if target=="north" or holding or posting or (released and walker.position.x>46.5 and not collected):
+		items.append({"id":"north","title":R18n.pick("去北窗盯桥","Post at North Window") if not (holding or posting) else R18n.pick("召回 Hale","Recall Hale"),"hint":R18n.pick("请他从北窗看着桥面，你可以熄灯快步通过。","Have him hold the span from the north window so you can douse your lamp and cross.") if not (holding or posting) else R18n.pick("请他离开北窗归队。","Call him back from the north window."),"cost":R18n.pick("代价：他上梯的铁网声会引动井底","Cost: his iron-stair steps draw the shaft") if not (holding or posting) else ""})
 	if hale_hold or released and walker.position.x>46. and near(Vector3(61,0,10.1),26.):
 		items.append({"id":"trail","title":"跟紧我","hint":"让他跟在你身后。"})
 	items.append({"id":"hold","title":"原地待命","hint":"请他在这里等你。"})
@@ -1236,14 +1252,19 @@ func rules(dt:float)->void:
 	var fall_limit:float=kit.SHAFT_FLOOR_Y-.55 if radial.length_squared()<=kit.SHAFT_RECOVERY_RADIUS*kit.SHAFT_RECOVERY_RADIUS else -1.8
 	if p.y<fall_limit:fail("坠入源井");return
 	var service:=radial.y>2.65 and radial.length()>12.35 and radial.length()<14.25 and absf(p.y)<.35
-	if service or in_b4(p):oil=maxf(0,oil-dt*(1.70 if service else 1.))
+	var drain:float=float(genome.catwalk_oil_drain) if service else (float(genome.dark_oil_drain) if in_b4(p) else (float(genome.base_oil_drain) if lamp_on and p.x>2.0 else 0.))
+	if drain>0.:oil=maxf(0.,oil-dt*drain)
+	var grace_lim:float=float(genome.catwalk_grace_sec)
 	if service and oil<=0:
 		catwalk_oil_grace+=dt
 		if lamp_on:lamp_on=false;polish.kick(.18)
-		notice=R18n.t("warn.catwalk_oil",[maxf(0.,3.5-catwalk_oil_grace)]);msg_time=.25
-		if catwalk_oil_grace>=3.5:fail("检修栈桥：灯油耗尽");return
+		notice=R18n.t("warn.catwalk_oil",[maxf(0.,grace_lim-catwalk_oil_grace)]);msg_time=.25
+		if catwalk_oil_grace>=grace_lim:fail("检修栈桥：灯油耗尽");return
 	else:
 		catwalk_oil_grace=0.
+	if released and not collected and p.x>47.5 and hale.position.x<42.0 and not cues.has("solo_shaft_warn"):
+		cues["solo_shaft_warn"]=true
+		thought("solo_shaft_warn",R18n.pick("我把 Hale 甩在了后面。没有北窗照看或诱饵，单走主桥会被井底回声锁住。","I left Hale behind. Without north-window cover or a lure, solo-crossing the span will draw shaft sonar."))
 	if released and not collected and not cues.has("shaft_doubt") and p.x>47.2 and p.x<51.9 and aimed(Vector3(53.5,.08,10.1),8.,.90):
 		cues["shaft_doubt"]=true
 		thought("shaft_doubt","前面是桥面。先看看脚下。")
@@ -1255,12 +1276,14 @@ func rules(dt:float)->void:
 		var eye_h:=hale.position+Vector3.UP*1.62
 		var watching:=(holding or (posting and hale.position.y>=4.7)) and sees_span(eye_h)
 		var watchers:=int(watching)+int(looking);hazard=hazard+1 if watchers!=1 else 0
+		if not watching and distraction<=0.:solo_bridge_timer+=dt
+		else:solo_bridge_timer=0.
 		if hazard==1 or hazard==25:warning.play()
 		if hazard>0:notice="桥面泛红，开始摇晃" if watchers==2 else "桥面在下沉";msg_time=.2
 		paint_bridge(Color("bf4335") if watchers==2 else Color("765337") if watchers==0 else Color("94b7be"),.30 if watchers else .13,dt)
 		if hazard>=(40 if watchers==2 else 60):fail("桥面过载")
 	else:
-		hazard=0;paint_bridge(Color("94b7be") if holding else Color("a9824f"),.30 if holding else .19,dt)
+		hazard=0;solo_bridge_timer=0.;paint_bridge(Color("94b7be") if holding else Color("a9824f"),.30 if holding else .19,dt)
 	if released and not in_return_gallery(p):
 		var grate:=posting and hale_speed>.35 and hale.position.y>1.
 		metal_beat-=dt
@@ -1270,17 +1293,27 @@ func rules(dt:float)->void:
 		if p.x>46.:
 			var hale_noisy:=grate or (hale_speed>4.2 and hale.position.x>46. and hale.position.y<1.6)
 			pair_loud=loud and hale_noisy
-			both_lamp=lamp_on and hale_prop.visible and hale.position.x>46. and not in_return_gallery(hale.position)
+			both_lamp=lamp_on and hale_prop.visible and hale.position.x>46. and not in_return_gallery(hale.position) and absf(hale.position.y-p.y)<3.0
 		var heat:=1.
+		var direct_exp:=0.
 		if pair_loud:
 			heat*=2.
-			if hale_near and not captions.entries.has("Hale"):line_once("rule_sound","停一下。刚才咱俩的脚步叠在一块儿了。")
+			if hale_near and not captions.entries.has("Hale"):line_once("rule_sound",R18n.pick("停一下！咱俩的脚步叠在一块儿了。","Hold still! Our footsteps just overlapped."))
 		if both_lamp:
 			heat*=1.5
-			oil=maxf(0.,oil-dt*.25)
-			if hale_near and not captions.entries.has("Hale"):line_once("rule_light","两盏灯都亮着。我这盏够照了。")
+			direct_exp+=dt*float(genome.both_lamp_exposure_rate)
+			oil=maxf(0.,oil-dt*.35)
+			if hale_near and not captions.entries.has("Hale"):line_once("rule_light",R18n.pick("两盏灯芯一起在爆响——按 R 熄掉你那盏，借我的光走！","Both wicks are crackling—press R to douse yours and share my light!"))
+		var sonar_iv:float=float(genome.solo_bridge_sonar_interval)
+		if on_bridge and sonar_iv>0. and solo_bridge_timer>=sonar_iv:
+			solo_bridge_timer-=sonar_iv
+			direct_exp+=float(genome.solo_bridge_sonar_exposure)
+			polish.kick(.18);sound_at("rumble",Vector3(61.,-8.,10.1),-8.,36.)
+			if not cues.has("solo_sonar"):
+				cues["solo_sonar"]=true
+				thought("solo_sonar",R18n.pick("井底回声扫过桥面——单人慢走撑不了太久！","A pulse from the pit swept the span—slow solo crossing will not hold!"))
 		var rage:=collected or contracts.b_remembered
-		if hunter.step(dt,p,loud,grate,distraction,rage,sounds,heat):
+		if hunter.step(dt,p,loud,grate,distraction,rage,sounds,heat,direct_exp,float(genome.hunter_rage_speed)):
 			if contracts.b_remembered:fail("违反契约B：它的呼唤已经记住了你的脚步")
 			else:fail("听觉猎手扑到了你身上")
 		if hunter.bait_answered and distraction>0. and p.distance_to(hunter.voice.global_position)<hunter.voice.max_distance and not cues.has("bait_answer"):
@@ -1490,7 +1523,7 @@ func reset_at_checkpoint()->void:
 	region=""
 	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);polish.reset_beat();hazard=0;holding=false;posting=false;trail.clear();command_path.clear()
 	reset_hale_pursuit();hale_yielded=false;last_pos=walker.position;hale_speed=0.
-	lamp_on=true;stomp_cool=0.;hale_hold=false;pair_loud=false;both_lamp=false;catwalk_oil_grace=0.
+	lamp_on=true;stomp_cool=0.;hale_hold=false;pair_loud=false;both_lamp=false;catwalk_oil_grace=0.;solo_bridge_timer=0.
 	if released:show_line("checkpoint","……我在这儿。缓口气，我看看你有没有伤着。")
 func observation()->Dictionary:return {"phase":"first_expedition","section":mode,"position":str(walker.position),"checkpoint":released,"learned":learned,"paired_gaze":archive.paired,"annotated":archive.note,"plate_observers":observers,"core":collected,"hale_posted":holding}
 

@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "base_oil_drain": 0.22,
+  "dark_oil_drain": 1.05,
+  "catwalk_oil_drain": 1.75,
+  "both_lamp_exposure_rate": 0.55,
+  "solo_bridge_sonar_interval": 4.8,
+  "solo_bridge_sonar_exposure": 0.68,
+  "hunter_rage_speed": 5.4,
+  "catwalk_grace_sec": 3.5
+}

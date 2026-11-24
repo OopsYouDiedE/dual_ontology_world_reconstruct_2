@@ -1,5 +1,6 @@
 extends Node3D
 ## Metric primitives shared by the A/B/C construction recipes. Y is feet elevation.
+const RenderProfile = preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const COLORS = {"brick":"796a5f","abyss":"090b10","pit":"47484a","test_amber":"e99425","chalk":"c7c3b6","trim":"ded9cb","joint":"b1ad9e","floor":"cdc8bc","iron":"40474a","dark":"232735","felt_dark":"353b39","brass":"ba914e","amber":"ffc35a","green":"65d39c","door_green":"31604b","glass":"bfdedd","book":"9f998a"}
 var materials := {}
 var cut: Array[Node3D] = []
@@ -11,9 +12,8 @@ func group(label: String) -> void:
 	section=Node3D.new(); section.name=label; add_child(section); root_group=section
 func mat(k: String) -> StandardMaterial3D:
 	if materials.has(k): return materials[k]
-	var m:=StandardMaterial3D.new(); m.albedo_color=Color(COLORS[k]); m.roughness=.85
-	if k in ["amber","green"]: m.emission_enabled=true; m.emission=m.albedo_color; m.emission_energy_multiplier=.7
-	if k=="glass": m.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA; m.albedo_color.a=.19; m.cull_mode=BaseMaterial3D.CULL_DISABLED
+	var m:=StandardMaterial3D.new(); m.albedo_color=Color(COLORS[k])
+	RenderProfile.apply_material_preset(m,k)
 	materials[k]=m; return m
 func box(id:String,p:Vector3,size:Vector3,k:String="chalk",solid:=true,yaw:=0.0)->Node3D:
 	var n:=MeshInstance3D.new(); n.name=id; n.mesh=stone_mesh; n.material_override=mat(k); section.add_child(n); n.position=p; n.rotation.y=yaw; n.scale=size

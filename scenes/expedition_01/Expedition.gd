@@ -6,6 +6,9 @@ const Kit=preload("ExpeditionKit.gd")
 const Relay=preload("ServiceSignal.gd")
 const OIL_PICKUP:=35.
 const Cast=preload("res://scenes/rogue_crossing/ProductionCast.gd")
+const R18n=preload("res://scenes/components/shared/R18n.gd")
+const Feel=preload("res://scenes/components/shared/FeelProfile.gd")
+const RenderProfile=preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 var kit:=Kit.new()
 var walker:=CharacterBody3D.new()
 var eye:=Camera3D.new()
@@ -62,6 +65,10 @@ var aiming:=false
 var land_dip:=0.
 var last_vy:=0.
 var air_peak:=0.
+var _lamp_sway:=Vector2.ZERO
+var _lamp_prev_yaw:=0.
+var _lamp_prev_pitch:=0.
+var catwalk_oil_grace:=0.
 var trust_line_cd:=0.
 var wheel:Node=preload("CommandWheel.gd").new()
 var wheel_open:=false
@@ -221,8 +228,9 @@ func _ready()->void:
 	plate_spill.light_color=Color("ec512e");plate_spill.omni_range=4.4;plate_spill.omni_attenuation=2.1;plate_spill.light_energy=0.
 	player_lamp=Node3D.new();eye.add_child(player_lamp);player_lamp.position=Vector3(.34,-.42,-.25)
 	player_lamp.add_child(lantern);lantern.position=Vector3(0,.065,-.08)
-	lantern.light_color=Color("ffd09b");lantern.omni_attenuation=2.05
-	lantern.shadow_enabled=true;lantern.shadow_bias=.045;lantern.shadow_normal_bias=.40
+	lantern.light_color=Color("ffd09b");lantern.shadow_enabled=true
+	RenderProfile.tune_omni_light(lantern,"lantern")
+	_lamp_prev_yaw=walker.rotation.y;_lamp_prev_pitch=eye.rotation.x
 	hale_prop=build_lantern(Vector3(-.27,1.06,.27));hale_prop.hide()
 	hale_rig=hale.get_meta("skeleton");hale_hand=hale_rig.find_bone("hand_l")
 	hale_prop.add_child(hale_lantern);hale_lantern.position=Vector3(0,.08,.13)
@@ -239,7 +247,7 @@ func _ready()->void:
 	add_child(gallery_bell);gallery_bell.stream=sounds.gallery_bell
 	add_child(gallery_impact);gallery_impact.stream=sounds.gallery_impact
 	add_child(foot);add_child(chime);add_child(board_audio);foot.volume_db=-21;chime.volume_db=-14;board_audio.position=Vector3(23.85,.4,12.02);board_audio.max_distance=12;board_audio.volume_db=-9
-	for pos in [Vector3(23.6,2.1,4.),Vector3(24.65,2.7,8.1),Vector3(23.85,2.4,12),Vector3(36.3,2.4,8.2),Vector3(.8,2.55,0)]:
+	for pos in [Vector3(23.6,2.1,4.),Vector3(24.65,2.7,8.1),Vector3(20.95,2.25,9.05),Vector3(23.85,2.4,12),Vector3(36.3,2.4,8.2),Vector3(.8,2.55,0)]:
 		var lamp:=OmniLight3D.new();lamp.position=pos;lamp.omni_range=4.;lamp.light_energy=.62;lamp.light_color=Color("ffebc5");lamp.omni_attenuation=1.3;lamp.shadow_enabled=true;lamp.shadow_bias=.035;lamp.shadow_normal_bias=.42;add_child(lamp)
 	var annex:=OmniLight3D.new();add_child(annex);annex.position=Vector3(-3.4,2.22,0)
 	annex.omni_range=6.2;annex.light_energy=2.4;annex.light_color=Color("ffc475");annex.shadow_enabled=true
@@ -278,7 +286,7 @@ func _ready()->void:
 	wheel.chosen.connect(pick_order)
 	contracts.reset()
 	update_target()
-	toast("I 手册与操作　·　点击画面开始")
+	toast(R18n.t("hud.start_toast"))
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--rogue-mcp-dir="):mcp_controls=true
 	if mcp_controls:
@@ -304,7 +312,7 @@ func render_book()->void:
 	var pages:=contracts.manual_pages(archive.note,cues.has("stele_sound"),cues.has("stele_light"))
 	page.text=str(pages[clampi(book_page,0,pages.size()-1)])
 	if book_page==4 and cues.has("stele_sound") and cues.has("stele_light"):page.append_text("\n\n两处刻文均已核对。")
-	book_controls.text="← / → 翻页　　I / 1 / Esc 合册\nWASD 移动　Shift 切换走／跑　Ctrl 按住静步　Space 跳跃　右键稳视\nE 互动　Q 指令　R 提灯　F 跺脚"
+	book_controls.text=R18n.t("hud.book_controls")
 func play_ui(kind:String,db:float)->void:
 	chime.stream=sounds[kind];chime.volume_db=db;chime.play()
 func build_lantern(offset:Vector3)->Node3D:
@@ -386,6 +394,12 @@ func _input(ev:InputEvent)->void:
 	if ev is InputEventKey and ev.pressed and not ev.echo:key=ev.physical_keycode
 	if key==KEY_F3:
 		polish.toggle_debug();get_viewport().set_input_as_handled();return
+	if key==KEY_F8:
+		R18n.toggle_locale()
+		if manual.visible:render_book()
+		update_target()
+		toast(R18n.t("hud.lang_switched"))
+		get_viewport().set_input_as_handled();return
 	var watch:=key==KEY_Q or ev.is_action_pressed("expedition_watch")
 	if key==KEY_ESCAPE:
 		_release_mouse()
@@ -408,7 +422,7 @@ func _input(ev:InputEvent)->void:
 	if ev is InputEventJoypadButton and ev.button_index==JOY_BUTTON_LEFT_SHOULDER:
 		aiming=ev.pressed;return
 	if ev is InputEventMouseMotion and mode<0 and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
-		var gain:=look_sens*lerpf(1.,.45,aim)
+		var gain:=look_sens*Feel.aim_gain_scale(aim)
 		walker.rotate_y(-ev.relative.x*gain);eye.rotation.x=clampf(eye.rotation.x-ev.relative.y*gain,-1.48,1.48)
 	if wheel_open and ev is InputEventMouseButton and ev.pressed and ev.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN]:
 		wheel.move(-1 if ev.button_index==MOUSE_BUTTON_WHEEL_UP else 1)
@@ -419,7 +433,7 @@ func _input(ev:InputEvent)->void:
 		if key==KEY_F5 or ev.is_action_pressed("expedition_shell"):shell_closed=not shell_closed;show_shell()
 		return
 	if key==KEY_BRACKETLEFT or key==KEY_BRACKETRIGHT:
-		look_sens=clampf(look_sens*(1.12 if key==KEY_BRACKETRIGHT else 1./1.12),.0008,.006);say("视角灵敏度 %d%%"%roundi(look_sens/.0022*100.));return
+		look_sens=clampf(look_sens*(1.12 if key==KEY_BRACKETRIGHT else 1./1.12),.0008,.006);say(R18n.t("hud.sens",[roundi(look_sens/.0022*100.)]));return
 	if wheel_open:
 		if key in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_5]:wheel.index=clampi(key-KEY_1,0,maxi(0,wheel.options.size()-1));_close_wheel(true);return
 		if watch:_close_wheel();return
@@ -507,11 +521,11 @@ func talk_to_hale()->void:
 		say("Hale 朝你点了点头，没有说话。");return
 	line_once(id,HALE_TALK[id])
 func hale_order_text()->String:
-	if posting:return "前往北窗"
-	if holding:return "北窗就位"
-	if hale_hold:return "原地留守"
-	if hale_gate_attempt:return "试推铁闸"
-	return "跟随中"
+	if posting:return R18n.t("hale.posting")
+	if holding:return R18n.t("hale.holding")
+	if hale_hold:return R18n.t("hale.hold")
+	if hale_gate_attempt:return R18n.t("hale.gate")
+	return R18n.t("hale.follow")
 func thought(id:String,text:String)->void:
 	subtitle_id=id;captions.post(id,"",text)
 func near(p:Vector3,d:=2.1)->bool:return walker.position.distance_to(p)<d
@@ -777,14 +791,29 @@ func update_stance(dt:float)->void:
 
 ## Landings absorb into the lens and stop the stride, so a drop never plays a
 ## footstep on the same frame it touches down.
+func _surface_underfoot()->String:
+	for i in walker.get_slide_collision_count():
+		var contact:=walker.get_slide_collision(i)
+		if contact.get_normal().y<.7:continue
+		var surface:=str(contact.get_collider().get_parent().name)
+		if "SouthServiceWalk" in surface or "Span" in surface or "InspectionDeck" in surface or "ServiceIncline" in surface or contact.get_collider().is_in_group("expedition_iron_tread"):return "iron"
+		elif "Plate" in surface:return "wood"
+	return "stone"
+
 func landing_check(was_grounded:bool)->void:
 	var grounded:=walker.is_on_floor()
 	if was_grounded and not grounded:air_peak=walker.velocity.y
 	if grounded:
-		if not was_grounded and last_vy<-3.2:
-			land_dip=clampf(-last_vy*.011,.02,.16)
+		if not was_grounded and last_vy<-Feel.LAND_MIN_SPEED:
+			land_dip=Feel.landing_dip(last_vy)
 			stride=0.
-			polish.kick(clampf(-last_vy*.035,.04,.22))
+			polish.on_land(last_vy)
+			var kind:=_surface_underfoot()
+			var muffled:=service_signal.on_felt(walker.position,0) or service_signal.on_felt(walker.position,1)
+			foot.stream=sounds.quiet if speed_quiet() or muffled else sounds[kind]
+			foot.pitch_scale=randf_range(.84,.94)
+			foot.volume_db=-32. if muffled else (-25. if speed_quiet() else clampf(-20.+(-last_vy-3.)*1.2,-20.,-13.))
+			foot.play()
 		air_peak=0.
 	last_vy=walker.velocity.y
 
@@ -815,11 +844,7 @@ func _physics_process(dt:float)->void:
 		# Three gear steps with a soft start, a hard reversal and a short glide-to-stop.
 		# Air control keeps a fifth of the ground authority so jumps commit to their arc.
 		var grounded:=walker.is_on_floor()
-		var accel:=ACCEL_GROUND if dir.length_squared()>0 else ACCEL_STOP
-		if dir.length_squared()>0 and current.dot(wish)<0.:accel=ACCEL_TURN
-		if stance==ST_QUIET and dir.length_squared()>0:accel=ACCEL_QUIET
-		if not grounded:accel*=AIR_CONTROL
-		var planar:=current.move_toward(wish,dt*accel)
+		var planar:=Feel.step_planar_velocity(current,wish,dt,grounded,ACCEL_GROUND,ACCEL_TURN,ACCEL_STOP,AIR_CONTROL,stance==ST_QUIET)
 		walker.velocity.x=planar.x;walker.velocity.z=planar.y
 		# Jump: one buffered press, a 120 ms coyote window and a short apex hang.
 		jump_buffer=maxf(0.,jump_buffer-dt);coyote=maxf(0.,coyote-dt)
@@ -854,11 +879,11 @@ func _physics_process(dt:float)->void:
 		if evidence_thought_delay<=0.:thought("thought","隔着窗，两个人一看就起了红光。刚才只剩我在看，波纹倒平了。得记下来。")
 	update_target()
 	hud.modulate=Color.WHITE
-	var hints:={"gate":"Hale 正在试铁闸…" if hale_gate_attempt else "[E] 晃动铁闸　[Q] 请 Hale 试试","note":"[E] 阅读残页","loot":"[E] 取灯油","clock":"[E] 取节拍器","clock_locked":"节拍器柜 · 已锁","lever":"[E] 扳下总闸","core":"[E] 拔出源核","return":"[E] 撞开应急门","exit":"[E] 开启气密门","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器","hale":"[Q] %s　[E] 交谈"%("留守" if not hale_hold else "跟随"),"solo_exit":"[E] 应急滑门 · 独自撤离","stele1":"[E] 阅读规则刻板 · 同声律","stele2":"[E] 阅读规则刻板 · 独灯律"}
-	hints["maintenance_lift"]="[E] 拉动配重手柄"
-	hints["maintenance_oil"]="[E] 补充灯油"
-	hints["vault_oil"]="[E] 取备用灯油"
-	hints["niche_oil"]="[E] 取灯油（站稳）"
+	var hints:={"gate":R18n.t("prompt.gate_busy") if hale_gate_attempt else R18n.t("prompt.gate"),"note":R18n.t("prompt.note"),"loot":R18n.t("prompt.loot"),"clock":R18n.t("prompt.clock"),"clock_locked":R18n.t("prompt.clock_locked"),"lever":R18n.t("prompt.lever"),"core":R18n.t("prompt.core"),"return":R18n.t("prompt.return"),"exit":R18n.t("prompt.exit"),"north":R18n.t("prompt.north_recall") if holding or posting else R18n.t("prompt.north_post"),"throw":R18n.t("prompt.throw"),"hale":R18n.t("prompt.hale",[R18n.t("prompt.hale_hold") if not hale_hold else R18n.t("prompt.hale_follow")]),"solo_exit":R18n.t("prompt.solo_exit"),"stele1":R18n.t("prompt.stele1"),"stele2":R18n.t("prompt.stele2")}
+	hints["maintenance_lift"]=R18n.t("prompt.maint_lift")
+	hints["maintenance_oil"]=R18n.t("prompt.maint_oil")
+	hints["vault_oil"]=R18n.t("prompt.vault_oil")
+	hints["niche_oil"]=R18n.t("prompt.niche_oil")
 	var seen:=focus();polish.focus_id=seen
 	var hint:=relay_hint() if seen=="relay" else str(hints.get(seen,""))
 	# Two lines, never one replacing the other: the action line stays pinned to
@@ -908,54 +933,67 @@ func update_lantern(dt:float)->void:
 	var dark:=in_b4(p)
 	darkroom_mix=move_toward(darkroom_mix,1. if dark else 0.,dt*4.)
 	var env:Environment=get_world_3d().environment
-	env.ambient_light_energy=lerpf(.55,.09,darkroom_mix)
+	var atmo:=RenderProfile.atmosphere_for(region if region!="" else "arcade",darkroom_mix)
+	var grade_k:=Feel.exp_damp(3.2,dt)
+	env.ambient_light_energy=lerpf(env.ambient_light_energy,float(atmo.ambient),grade_k)
+	env.fog_light_color=env.fog_light_color.lerp(atmo.fog_color,grade_k)
+	env.fog_density=lerpf(env.fog_density,float(atmo.fog_density),grade_k)
 	env.sdfgi_energy=lerpf(.90,.48,darkroom_mix)
 	var fuel:=sqrt(oil/100.)
-	var flicker:=1.+.045*sin(phase*15.7)+.026*sin(phase*27.3)
+	var low_oil:=clampf(1.-oil/28.,0.,1.)
+	var flicker:=1.+(.045+.055*low_oil)*sin(phase*15.7)+(.026+.034*low_oil)*sin(phase*27.3)
+	lantern.light_color=Color("ffd09b").lerp(Color("ff7e3d"),low_oil*.75)
 	if not lamp_on:lantern.light_energy=0.
 	else:lantern.light_energy=(1.18+.54*darkroom_mix)*fuel*flicker
 	lantern.omni_range=lerpf(1.45,6.9,fuel)
-	player_lamp.position=Vector3(.34+.024*sin(TAU*stride),-.42+.023*cos(TAU*stride),-.25)
+	var dyaw:=wrapf(walker.rotation.y-_lamp_prev_yaw,-PI,PI)
+	var dpitch:=eye.rotation.x-_lamp_prev_pitch
+	_lamp_prev_yaw=walker.rotation.y;_lamp_prev_pitch=eye.rotation.x
+	var local_v:=walker.basis.inverse()*Vector3(walker.velocity.x,0.,walker.velocity.z)
+	var target_sway:=Vector2(clampf(-dyaw*.28-local_v.x*.008,-.055,.055),clampf(-dpitch*.22-walker.velocity.y*.006,-.045,.045))
+	_lamp_sway=_lamp_sway.lerp(target_sway,Feel.exp_damp(10.,dt))
+	var aim_tuck:=Vector3(-.055,.028,.04)*aim
+	player_lamp.position=Vector3(.34+.020*sin(TAU*stride)+_lamp_sway.x,-.42+.019*cos(TAU*stride)+_lamp_sway.y-polish.land_dip*.45,-.25)+aim_tuck
+	player_lamp.rotation=Vector3(_lamp_sway.y*1.4,0.,-_lamp_sway.x*2.0)
 	hale_prop.visible=released
 	if released and hale_hand>=0:
 		var grip:=hale.to_local(hale_rig.to_global(hale_rig.get_bone_global_pose(hale_hand).origin))
 		hale_prop.position=grip+Vector3(0,-.14,.032)
 	hale_lantern.light_energy=(1.22 if posting else .48)*flicker
 func update_target()->void:
-	var goal:="沿主廊前往隔离闸"
-	if exit_requested:goal="走进锚定厅 · 稳压区"
-	elif shortcut_used:goal="沿主廊返回锚定厅 · 稳压区"
-	elif return_started:goal="沿检修回廊返回主廊"
-	elif collected:goal="上螺旋梯 · 经绿门撤离"
-	elif holding:goal="Hale 已就位 · 看前方过桥"
-	elif posting:goal="Hale 正在考虑" if north_pause>0. else "Hale 正前往北窗"
-	elif released:goal="进源井 · 静步接近桥头"
+	var goal:=R18n.t("goal.arcade")
+	if exit_requested:goal=R18n.t("goal.enter_hall")
+	elif shortcut_used:goal=R18n.t("goal.return_hall")
+	elif return_started:goal=R18n.t("goal.return_gallery")
+	elif collected:goal=R18n.t("goal.evacuate")
+	elif holding:goal=R18n.t("goal.bridge_go")
+	elif posting:goal=R18n.t("goal.hale_think") if north_pause>0. else R18n.t("goal.hale_north")
+	elif released:goal=R18n.t("goal.enter_shaft")
 	elif archive.in_trial(walker.position) and walker.position.z<13.65:
-		goal="Hold your gaze on the plate and cross" if demo_locked else "Cross the trial plate · a steady gaze keeps it in view"
+		goal=R18n.t("goal.trial_cross") if demo_locked else R18n.t("goal.trial_lock")
 	elif learned or equipped or walker.position.x>27.8 and walker.position.z>9.:
-		goal="Reset the isolation gate in the control room"
+		goal=R18n.t("goal.control_room")
 	elif archive.in_window(walker.position) and not archive.paired:
-		goal="Optional: compare gazes with Hale · B3 door on the left"
-	elif tutorial_room or archive.paired:goal="Reach the control room through B3"
-	elif cues.has("gate"):goal="从右侧门去档案翼找总闸"
-	hud.text="当前步骤："+goal
+		goal=R18n.t("goal.window_opt")
+	elif tutorial_room or archive.paired:goal=R18n.t("goal.through_b3")
+	elif cues.has("gate"):goal=R18n.t("goal.archive_door")
+	hud.text=R18n.t("hud.step_prefix",[goal])
 var iron_footfall:=false
 func walking_feedback(dt:float)->void:
 	iron_footfall=false
 	var distance:=Vector2(walker.get_position_delta().x,walker.get_position_delta().z).length()
 	if walker.is_on_floor() and distance>.001:
-		stride+=distance/(1.75 if running else 1.55)
+		stride+=distance/Feel.stride_for_stance(stance)
 		if stride>=1.:
-			stride=fmod(stride,1.);var kind:="stone"
-			for i in walker.get_slide_collision_count():
-				var contact:=walker.get_slide_collision(i)
-				if contact.get_normal().y<.7:continue
-				var surface:=str(contact.get_collider().get_parent().name)
-				if "SouthServiceWalk" in surface or "Span" in surface or "InspectionDeck" in surface or "ServiceIncline" in surface or contact.get_collider().is_in_group("expedition_iron_tread"):kind="iron"
-				elif "Plate" in surface:kind="wood"
+			stride=fmod(stride,1.);var kind:=_surface_underfoot()
 			iron_footfall=kind=="iron"
 			var muffled:=service_signal.on_felt(walker.position,0) or service_signal.on_felt(walker.position,1)
-			foot.stream=sounds.quiet if speed_quiet() or muffled else sounds[kind];foot.pitch_scale=randf_range(.93,1.07);foot.volume_db=-34. if muffled else -27. if speed_quiet() else (-17. if running else -21.);foot.play()
+			var quiet_now:=speed_quiet()
+			foot.stream=sounds.quiet if quiet_now or muffled else sounds[kind]
+			var pitch_bias:=-.05 if quiet_now else (.04 if running else 0.)
+			foot.pitch_scale=randf_range(.94,1.06)+pitch_bias
+			var iron_boost:=1.8 if (kind=="iron" and not quiet_now and not muffled) else 0.
+			foot.volume_db=(-34. if muffled else -27. if quiet_now else (-17. if running else -21.))+iron_boost;foot.play()
 
 func speed_quiet()->bool:return Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")
 func setup_hale_animation()->void:
@@ -1199,7 +1237,13 @@ func rules(dt:float)->void:
 	if p.y<fall_limit:fail("坠入源井");return
 	var service:=radial.y>2.65 and radial.length()>12.35 and radial.length()<14.25 and absf(p.y)<.35
 	if service or in_b4(p):oil=maxf(0,oil-dt*(1.70 if service else 1.))
-	if service and oil<=0:fail("检修栈桥：灯油耗尽");return
+	if service and oil<=0:
+		catwalk_oil_grace+=dt
+		if lamp_on:lamp_on=false;polish.kick(.18)
+		notice=R18n.t("warn.catwalk_oil",[maxf(0.,3.5-catwalk_oil_grace)]);msg_time=.25
+		if catwalk_oil_grace>=3.5:fail("检修栈桥：灯油耗尽");return
+	else:
+		catwalk_oil_grace=0.
 	if released and not collected and not cues.has("shaft_doubt") and p.x>47.2 and p.x<51.9 and aimed(Vector3(53.5,.08,10.1),8.,.90):
 		cues["shaft_doubt"]=true
 		thought("shaft_doubt","前面是桥面。先看看脚下。")
@@ -1446,7 +1490,7 @@ func reset_at_checkpoint()->void:
 	region=""
 	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);polish.reset_beat();hazard=0;holding=false;posting=false;trail.clear();command_path.clear()
 	reset_hale_pursuit();hale_yielded=false;last_pos=walker.position;hale_speed=0.
-	lamp_on=true;stomp_cool=0.;hale_hold=false;pair_loud=false;both_lamp=false
+	lamp_on=true;stomp_cool=0.;hale_hold=false;pair_loud=false;both_lamp=false;catwalk_oil_grace=0.
 	if released:show_line("checkpoint","……我在这儿。缓口气，我看看你有没有伤着。")
 func observation()->Dictionary:return {"phase":"first_expedition","section":mode,"position":str(walker.position),"checkpoint":released,"learned":learned,"paired_gaze":archive.paired,"annotated":archive.note,"plate_observers":observers,"core":collected,"hale_posted":holding}
 

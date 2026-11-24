@@ -5,10 +5,14 @@ extends Node
 ## drives eye *position*, *roll*, *fov* and frustum offsets. Yaw/pitch stay owned
 ## by the player (and by WalkTest / HearingTest), so tests are unaffected.
 
+const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
+const R18n = preload("res://scenes/components/shared/R18n.gd")
+const Feel = preload("res://scenes/components/shared/FeelProfile.gd")
+
 const BASE_FOV:=73.
 const EYE_HEIGHT:=1.57
 const LETTERBOX_PX:=46.
-const ACCENT:=Color("ffbf75")
+const ACCENT:=UiStyle.ACCENT
 const CINEMATIC_LINES:=["start","release","core","evidence","double","reunion"]
 const VIGNETTE:="""shader_type canvas_item;
 uniform float strength=.36;
@@ -30,6 +34,7 @@ var trauma:=0.
 var fov_off:=0.
 var step_offset:=0.
 var land_dip:=0.
+var threshold_dip:=0.
 var bob_amp:=0.
 var roll:=0.
 var intro:=0.
@@ -37,8 +42,6 @@ var dread:=0.
 var parity:=1.
 var last_stride:=0.
 var last_y:=0.
-var last_vy:=0.
-var was_floor:=true
 var prev_hunter:=""
 var bait_time:=0.
 var was_captured:=false
@@ -66,6 +69,8 @@ var oil_bar:ProgressBar
 var oil_fill:StyleBoxFlat
 var oil_label:Label
 var objective_label:Label
+var hale_brief:Label
+var lang_badge:Label
 var state_label:Label
 var end_card:Label
 var rule_tick:Label
@@ -82,6 +87,7 @@ var fail_title:Label
 var fail_body:Label
 var fail_time:=0.
 var beads:Array[Control]=[]
+var bead_row:HBoxContainer
 var trust_row:HBoxContainer
 var plate_line:Label
 var bead_lit:=0
@@ -89,15 +95,10 @@ var card_holder:Control
 var fail_holder_ctl:Control
 
 static func make_font()->Font:
-	var font:=SystemFont.new()
-	font.font_names=PackedStringArray(["Microsoft YaHei UI","PingFang SC","Noto Sans CJK SC"])
-	if Engine.has_meta("review_font"):font.fallbacks=[Engine.get_meta("review_font")]
-	return font
+	return UiStyle.make_font()
 
 static func box(color:Color,radius:=3,margin:=Vector2(14,9))->StyleBoxFlat:
-	var s:=StyleBoxFlat.new();s.bg_color=color;s.set_corner_radius_all(radius)
-	s.content_margin_left=margin.x;s.content_margin_right=margin.x;s.content_margin_top=margin.y;s.content_margin_bottom=margin.y
-	return s
+	return UiStyle.panel_box(color,radius,margin)
 
 func setup(level:Node,canvas:CanvasLayer)->void:
 	lv=level;noise.seed=7;noise.frequency=.9
@@ -124,28 +125,39 @@ func _rect(parent:Node,color:Color)->ColorRect:
 func _build_hud(canvas:CanvasLayer)->void:
 	var font:=make_font()
 	panel=PanelContainer.new();canvas.add_child(panel);panel.position=Vector2(22,18);panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	var back:=box(Color(.045,.04,.035,.66),3,Vector2(16,11));back.border_color=ACCENT;back.border_width_left=3;back.shadow_color=Color(0,0,0,.35);back.shadow_size=8
+	var back:=UiStyle.panel_box(UiStyle.PANEL_BG,3,Vector2(16,11),3,0,ACCENT)
 	panel.add_theme_stylebox_override("panel",back)
 	var col:=VBoxContainer.new();panel.add_child(col);col.add_theme_constant_override("separation",5);col.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	oil_label=Label.new();col.add_child(oil_label)
-	oil_bar=ProgressBar.new();col.add_child(oil_bar);oil_bar.custom_minimum_size=Vector2(108,4);oil_bar.show_percentage=false;oil_bar.max_value=100
+	var top_row:=HBoxContainer.new();col.add_child(top_row);top_row.add_theme_constant_override("separation",14);top_row.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	oil_label=Label.new();top_row.add_child(oil_label)
+	lang_badge=Label.new();top_row.add_child(lang_badge)
+	oil_bar=ProgressBar.new();col.add_child(oil_bar);oil_bar.custom_minimum_size=Vector2(146,4);oil_bar.show_percentage=false;oil_bar.max_value=100
 	oil_fill=box(ACCENT,2,Vector2.ZERO);oil_bar.add_theme_stylebox_override("fill",oil_fill);oil_bar.add_theme_stylebox_override("background",box(Color(1,1,1,.12),2,Vector2.ZERO))
-	objective_label=Label.new();objective_label.text="取回备用源核";col.add_child(objective_label)
+	objective_label=Label.new();objective_label.text=R18n.t("hud.obj.fetch");col.add_child(objective_label)
+	hale_brief=Label.new();col.add_child(hale_brief)
 	debug_panel=PanelContainer.new();debug_layer.add_child(debug_panel)
-	debug_panel.position=Vector2(22,110);debug_panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	debug_panel.position=Vector2(22,146);debug_panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	debug_panel.add_theme_stylebox_override("panel",back)
 	var diagnostics:=VBoxContainer.new();debug_panel.add_child(diagnostics);diagnostics.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	lv.hud.reparent(diagnostics,false);lv.hud.custom_minimum_size=Vector2(250,0);lv.hud.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;lv.hud.add_theme_font_size_override("font_size",16)
 	state_label=Label.new();diagnostics.add_child(state_label)
 	time_label=Label.new();diagnostics.add_child(time_label)
 	hale_label=Label.new();diagnostics.add_child(hale_label)
-	for l in [oil_label,objective_label,state_label,time_label,hale_label]:
-		l.add_theme_font_override("font",font);l.add_theme_font_size_override("font_size",15);l.add_theme_constant_override("outline_size",4);l.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	# Centre reticle: a quiet dot that opens into a ring over anything usable.
+	for l in [oil_label,objective_label,hale_brief,state_label,time_label,hale_label]:
+		UiStyle.style_label(l,font,15,UiStyle.TEXT_MAIN,4)
+	UiStyle.style_label(lang_badge,font,13,UiStyle.TEXT_MUTED,3)
+	hale_brief.add_theme_font_size_override("font_size",13)
+	hale_brief.add_theme_color_override("font_color",UiStyle.ACCENT_SOFT)
+	# Centre reticle: a quiet dot that opens over usable objects and tightens during steady aim.
 	cross=Control.new();canvas.add_child(cross);cross.set_anchors_and_offsets_preset(Control.PRESET_CENTER);cross.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	cross.draw.connect(func()->void:
-		cross.draw_circle(Vector2.ZERO,2.,Color(1,1,1,.55+.35*ring))
-		if ring>.02:cross.draw_arc(Vector2.ZERO,6.+7.*ring,0,TAU,40,Color(ACCENT,ring*.9),1.8,true))
+		var aim_val:float=clampf(lv.aim,0.,1.) if lv!=null else 0.
+		var dot_r:=lerpf(2.0,1.45,aim_val)
+		cross.draw_circle(Vector2.ZERO,dot_r,Color(1,1,1,.58+.34*maxf(ring,aim_val)))
+		if aim_val>.05:
+			cross.draw_arc(Vector2.ZERO,lerpf(11.5,5.2,aim_val),0,TAU,32,Color(UiStyle.ACCENT_SOFT,aim_val*.72),1.2,true)
+		if ring>.02:
+			cross.draw_arc(Vector2.ZERO,6.+7.*ring,0,TAU,40,Color(ACCENT,ring*.9),1.8,true))
 	# Interaction prompt sits just under the reticle, subtitle gets a backing plate.
 	var p:Label=lv.prompt;p.offset_top=27;p.offset_bottom=65;p.add_theme_font_size_override("font_size",19)
 	# 中央下方的规则违例 ticker：同声律／独灯律触发时亮红字。
@@ -153,26 +165,22 @@ func _build_hud(canvas:CanvasLayer)->void:
 	rule_tick.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	rule_tick.offset_left=-340;rule_tick.offset_right=340;rule_tick.offset_top=140;rule_tick.offset_bottom=168
 	rule_tick.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	rule_tick.add_theme_font_override("font",font);rule_tick.add_theme_font_size_override("font_size",17)
-	rule_tick.add_theme_color_override("font_color",Color("ff6a4d"))
-	rule_tick.add_theme_color_override("font_outline_color",Color("2a0b06"))
-	rule_tick.add_theme_constant_override("outline_size",7)
-	rule_tick.text="";rule_tick.modulate.a=0.;rule_tick.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	UiStyle.style_label(rule_tick,font,17,UiStyle.DANGER,7)
+	rule_tick.add_theme_color_override("font_outline_color",UiStyle.DANGER_OUTLINE)
+	rule_tick.text="";rule_tick.modulate.a=0.
 	_build_rule_hud(canvas,font)
 
-## Contract readouts: three iron beads (contract B) and one live clause line
-## (contract A) live directly under the reticle, where the player is already
-## looking when the rule matters.
+## Contract readouts: three iron beads (contract B), live clause line (contract A),
+## region card, and fail clause live on the gameplay HUD canvas so players can read
+## rules without opening F3 diagnostics.
 func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
-	plate_line=Label.new();debug_layer.add_child(plate_line)
+	plate_line=Label.new();canvas.add_child(plate_line)
 	plate_line.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	plate_line.offset_left=-260;plate_line.offset_right=260;plate_line.offset_top=84;plate_line.offset_bottom=110
+	plate_line.offset_left=-280;plate_line.offset_right=280;plate_line.offset_top=84;plate_line.offset_bottom=110
 	plate_line.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	plate_line.add_theme_font_override("font",font);plate_line.add_theme_font_size_override("font_size",16)
-	plate_line.add_theme_constant_override("outline_size",6)
-	plate_line.add_theme_color_override("font_color",Color("e8d4b0"));plate_line.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	UiStyle.style_label(plate_line,font,16,UiStyle.ACCENT_SOFT,6)
 	bead_lit=0
-	var bead_row:=HBoxContainer.new();debug_layer.add_child(bead_row)
+	bead_row=HBoxContainer.new();canvas.add_child(bead_row)
 	bead_row.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	bead_row.offset_left=-36;bead_row.offset_right=36;bead_row.offset_top=114;bead_row.offset_bottom=130
 	bead_row.add_theme_constant_override("separation",6);bead_row.alignment=BoxContainer.ALIGNMENT_CENTER
@@ -181,10 +189,10 @@ func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
 		var bead:=Panel.new();bead.custom_minimum_size=Vector2(10,10);bead_row.add_child(bead)
 		var s:=box(Color(1,1,1,.13),5,Vector2.ZERO);bead.add_theme_stylebox_override("panel",s);beads.append(bead)
 	# Region card, top right.
-	var holder:=PanelContainer.new();debug_layer.add_child(holder)
+	var holder:=PanelContainer.new();canvas.add_child(holder)
 	holder.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	holder.offset_left=-382;holder.offset_right=-24;holder.offset_top=22;holder.offset_bottom=132
-	var back:=box(Color(.045,.04,.035,.78),4,Vector2(16,12));back.border_color=ACCENT;back.border_width_right=3
+	var back:=UiStyle.panel_box(UiStyle.PANEL_BG_DEEP,4,Vector2(16,12),0,3,ACCENT)
 	holder.add_theme_stylebox_override("panel",back);holder.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	var col:=VBoxContainer.new();holder.add_child(col);col.add_theme_constant_override("separation",3)
 	col.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -193,8 +201,8 @@ func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
 		col.add_child(l);l.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 		l.add_theme_font_override("font",font);l.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	card_title.add_theme_font_size_override("font_size",17);card_title.add_theme_color_override("font_color",ACCENT)
-	card_rule.add_theme_font_size_override("font_size",15);card_rule.add_theme_color_override("font_color",Color("f2e6d2"))
-	card_note.add_theme_font_size_override("font_size",14);card_note.add_theme_color_override("font_color",Color("b9a68a"))
+	card_rule.add_theme_font_size_override("font_size",15);card_rule.add_theme_color_override("font_color",UiStyle.TEXT_MAIN)
+	card_note.add_theme_font_size_override("font_size",14);card_note.add_theme_color_override("font_color",UiStyle.TEXT_MUTED)
 	holder.modulate.a=0.;card_time=0.;card_holder=holder
 	# Fail card, centred under the letterbox.
 	var fail_holder:=VBoxContainer.new();canvas.add_child(fail_holder)
@@ -209,7 +217,7 @@ func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
 		l.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	fail_title.add_theme_font_size_override("font_size",25);fail_title.add_theme_constant_override("outline_size",8)
 	fail_body.add_theme_font_size_override("font_size",17);fail_body.add_theme_constant_override("outline_size",7)
-	fail_body.add_theme_color_override("font_color",Color("ffc9a8"))
+	fail_body.add_theme_color_override("font_color",UiStyle.WARN)
 	fail_holder.modulate.a=0.;fail_time=0.;fail_holder_ctl=fail_holder
 	_keep(holder);_keep(fail_holder);fail_holder.name="FailCard";holder.name="RuleCard"
 
@@ -244,8 +252,13 @@ func punch(deg:float)->void:fov_off+=deg
 func letterbox(seconds:float)->void:bars_timer=maxf(bars_timer,seconds)
 func fade_to(alpha:float,seconds:float)->void:fade_target=alpha;fade_rate=1./maxf(.05,seconds)
 func fail_beat()->void:kick(.9);punch(9.);fade_to(1.,1.9)
+func on_land(impact_vy:float)->void:
+	var dip:=Feel.landing_dip(impact_vy)
+	if dip<=0.:return
+	land_dip=maxf(land_dip,dip)
+	kick(Feel.landing_trauma(impact_vy))
 func reset_beat()->void:
-	intro=.55;step_offset=0.;land_dip=0.;trauma=0.;fov_off=0.;last_y=lv.walker.position.y;fade_a=1.;fade_to(0.,.9)
+	intro=.55;step_offset=0.;land_dip=0.;threshold_dip=0.;trauma=0.;fov_off=0.;last_y=lv.walker.position.y;fade_a=1.;fade_to(0.,.9)
 func on_book(open:bool)->void:
 	if open:was_captured=Input.mouse_mode==Input.MOUSE_MODE_CAPTURED;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	elif was_captured:Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
@@ -280,12 +293,14 @@ func _overlay(dt:float)->void:
 	bars_timer=maxf(0.,bars_timer-dt);bars=move_toward(bars,1. if bars_timer>0. else 0.,dt*1.6)
 	var bar_h:=LETTERBOX_PX*smoothstep(0.,1.,bars)
 	bar_top.offset_bottom=bar_h;bar_bottom.offset_top=-bar_h
-	var book:bool=lv.manual.visible;dim.color.a=lerpf(dim.color.a,.5 if book else 0.,1.-exp(-10.*dt))
+	var book:bool=lv.manual.visible;dim.color.a=lerpf(dim.color.a,.5 if book else 0.,Feel.exp_damp(10.,dt))
 	var live:bool=lv.mode<0 and not book
 	var hud_live:bool=live and not lv.finished and not lv.wheel_open
 	cross.visible=hud_live;panel.visible=hud_live
 	rule_tick.visible=hud_live;fail_holder_ctl.visible=hud_live
-	fail_body.visible=debug_enabled and fail_body.text!=""
+	plate_line.visible=hud_live and plate_line.text!=""
+	if card_holder:card_holder.visible=hud_live and card_time>0.
+	fail_body.visible=fail_body.text!=""
 	sync_debug_visibility()
 	var m:ShaderMaterial=shade.material
 	var low:float=clampf(1.-lv.oil/22.,0.,1.)
@@ -296,12 +311,12 @@ func _overlay(dt:float)->void:
 	var pressure:float=clampf(lv.hunter.exposure/1.45,0.,1.) if in_shaft and not lv.collected else 0.
 	m.set_shader_parameter("pulse",pressure*(.24+.18*sin(lv.phase*7.)));shade.visible=lv.mode<0
 	var want:float=1. if (focus_id!="" and live) else 0.
-	ring=lerpf(ring,want,1.-exp(-14.*dt));cross.queue_redraw()
+	ring=lerpf(ring,want,Feel.exp_damp(14.,dt));cross.queue_redraw()
 
 func _look_stick(dt:float)->void:
 	var s:=Vector2(Input.get_joy_axis(0,JOY_AXIS_RIGHT_X),Input.get_joy_axis(0,JOY_AXIS_RIGHT_Y))
 	if s.length()<.2:return
-	s=s.normalized()*pow((s.length()-.2)/.8,1.7)
+	s=s.normalized()*pow((s.length()-.2)/.8,1.7)*Feel.aim_gain_scale(lv.aim)
 	lv.walker.rotate_y(-s.x*3.1*dt);lv.eye.rotation.x=clampf(lv.eye.rotation.x-s.y*2.4*dt,-1.48,1.48)
 
 func _dread(dt:float)->void:
@@ -313,7 +328,7 @@ func _dread(dt:float)->void:
 		target=clampf(1.-d/20.,0.,1.)*mood
 	if lv.both_lamp and lv.released and p.x>46. and not lv.in_return_gallery(p):target=maxf(target,.34)
 	if lv.collected and p.x>46. and not lv.in_return_gallery(p):target=minf(.36,maxf(target,.12+.09*sin(lv.phase*5.)))
-	dread=lerpf(dread,target,1.-exp(-3.*dt))
+	dread=lerpf(dread,target,Feel.exp_damp(3.,dt))
 	if h.state!=prev_hunter:
 		if h.state=="hunt":kick(.55);punch(7.)
 		prev_hunter=h.state
@@ -322,39 +337,38 @@ func _dread(dt:float)->void:
 func _rig(dt:float)->void:
 	var w:CharacterBody3D=lv.walker;var eye:Camera3D=lv.eye
 	var vel:=Vector3(w.velocity.x,0,w.velocity.z);var sp:=vel.length();var grounded:=w.is_on_floor()
-	# A tread riser or floor snap moves the body in one physics tick; absorb it so the lens glides.
+	# Absorb grounded tread risers and 0.12 m thresholds so the lens glides smoothly.
 	var dy:=w.position.y-last_y;last_y=w.position.y
-	if absf(dy)>.12 and absf(dy)<.6:step_offset-=dy
-	step_offset=lerpf(step_offset,0.,1.-exp(-13.*dt))
+	if grounded and absf(dy)>Feel.STEP_ABSORB_MIN and absf(dy)<Feel.STEP_ABSORB_MAX:step_offset-=dy
+	step_offset=lerpf(step_offset,0.,Feel.exp_damp(13.,dt))
 	var moving:bool=grounded and sp>.4 and lv.retry<=0.
-	bob_amp=lerpf(bob_amp,clampf(sp/3.8,0.,1.6) if moving else 0.,1.-exp(-9.*dt))
+	bob_amp=lerpf(bob_amp,clampf(sp/3.8,0.,1.45) if moving else 0.,Feel.exp_damp(9.,dt))
 	if lv.stride<last_stride-.5:parity=-parity
 	last_stride=lv.stride
-	var bob:=-cos(TAU*lv.stride)*.016*bob_amp
-	var sway:=sin(PI*(lv.stride+(0. if parity>0. else 1.)))*.011*bob_amp
-	if grounded and not was_floor and last_vy<-3.:land_dip=minf(.11,-last_vy*.012);kick(.06)
-	was_floor=grounded;last_vy=w.velocity.y
-	land_dip=lerpf(land_dip,0.,1.-exp(-9.*dt))
+	var bob:=-cos(TAU*lv.stride)*.014*bob_amp
+	var sway:=sin(PI*(lv.stride+(0. if parity>0. else 1.)))*.010*bob_amp
+	land_dip=lerpf(land_dip,0.,Feel.exp_damp(11.,dt))
+	threshold_dip=lerpf(threshold_dip,0.,Feel.exp_damp(10.,dt))
 	var lean:=(w.basis.inverse()*vel).x/5.8*.02
-	roll=lerpf(roll,-lean-sway*.2,1.-exp(-8.*dt))
+	roll=lerpf(roll,-lean-sway*.2,Feel.exp_damp(8.,dt))
 	trauma=maxf(0.,trauma-dt*1.4);var shake:=trauma*trauma
 	var n:=Vector3(noise.get_noise_2d(t*55.,0.),noise.get_noise_2d(t*55.,100.),noise.get_noise_2d(t*55.,200.))
-	var breath:=.0035*sin(t*1.6)*(1.-clampf(bob_amp,0.,1.))
+	var breath:=.0035*sin(t*1.6)*(1.-clampf(bob_amp,0.,1.))*lerpf(1.,Feel.AIM_BREATH_SCALE,lv.aim)
 	# 静步压身：视高 1.57 → 1.34 平滑下蹲，潜行有重量感。
 	var quiet_posture:=Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")
-	quiet_eye=lerpf(quiet_eye,1. if quiet_posture else 0.,1.-exp(-8.*dt))
+	quiet_eye=lerpf(quiet_eye,1. if quiet_posture else 0.,Feel.exp_damp(8.,dt))
 	intro=minf(1.,intro+dt/3.4);var k:=1.-smoothstep(0.,1.,intro)
 	eye.position=Vector3(sway+n.x*shake*.03,lerpf(EYE_HEIGHT,1.34,quiet_eye)+bob+breath-land_dip+step_offset-.38*k*k+n.y*shake*.03,0)
 	eye.rotation.z=roll+n.z*shake*.05+.05*k
-	eye.h_offset=n.x*shake*.05;eye.v_offset=n.y*shake*.05
+	eye.h_offset=n.x*shake*.05;eye.v_offset=n.y*shake*.05-threshold_dip
 	var f:=BASE_FOV
 	if moving:f+=clampf((sp-3.8)/2.,-1.,1.)*(4. if sp>3.8 else 1.5)
 	else:f-=1.2
 	if focus_id!="":f-=2.5
 	f-=6.*lv.aim
 	f+=dread*5.+9.*k
-	fov_off=lerpf(fov_off,0.,1.-exp(-4.5*dt))
-	eye.fov=lerpf(eye.fov,f+fov_off,1.-exp(-6.*dt))
+	fov_off=lerpf(fov_off,0.,Feel.exp_damp(4.5,dt))
+	eye.fov=lerpf(eye.fov,f+fov_off,Feel.exp_damp(6.,dt))
 	# 运镜节拍：凝视锁定瞬间 zoom punch；首次进源井 letterbox + 收束。
 	if lv.demo_locked and not was_demo:punch(-2.2);kick(.12)
 	was_demo=lv.demo_locked
@@ -374,7 +388,10 @@ func gate_lift(gate:Node)->void:
 	tw.tween_interval(.14)
 	tw.tween_callback(func()->void:
 		shake_once(.22,3.)
-		punch(-2.))
+		punch(-2.)
+		if lv!=null and lv.has_method("sound_at"):
+			lv.sound_at("iron",Vector3(36.,1.5,-1.35),-14.,18.)
+			lv.sound_at("iron",Vector3(36.,1.5,1.35),-14.,18.))
 	tw.tween_property(gate,"position:y",base+.02,.15).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(gate,"position:y",base+4.0,.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tw.tween_callback(func()->void:
@@ -383,7 +400,7 @@ func gate_lift(gate:Node)->void:
 
 ## A short door/hush beat used when the player crosses a threshold.
 func threshold()->void:
-	punch(-2.);kick(.10)
+	punch(-2.);kick(.10);threshold_dip=.018
 
 func shake_once(amount:float,deg:float)->void:
 	kick(amount);punch(deg)
@@ -391,43 +408,50 @@ func shake_once(amount:float,deg:float)->void:
 func _hud(dt:float)->void:
 	bait_time=maxf(0.,bait_time-dt)
 	var oil:float=lv.oil
-	oil_bar.value=lerpf(oil_bar.value,oil,1.-exp(-8.*dt))
+	oil_bar.value=lerpf(oil_bar.value,oil,Feel.exp_damp(8.,dt))
 	var low:=oil<22.
-	oil_fill.bg_color=Color("ff6b4a") if low else ACCENT
+	oil_fill.bg_color=UiStyle.DANGER if low else ACCENT
 	if low and sin(lv.phase*6.)>0.:oil_fill.bg_color=Color("ffd2a0")
-	oil_label.text="灯油　%d%%"%ceili(oil);oil_label.modulate=Color("ff9a80") if low else Color("f4ead8")
-	objective_label.text="带源核回锚定厅" if lv.collected else "取回备用源核"
+	oil_label.text=R18n.t("hud.oil",[ceili(oil)]);oil_label.modulate=Color("ff9a80") if low else UiStyle.TEXT_MAIN
+	lang_badge.text=R18n.t("hud.lang_badge")
+	objective_label.text=R18n.t("hud.obj.return") if lv.collected else R18n.t("hud.obj.fetch")
+	var hale_text:=R18n.t("hud.hale_prefix",[lv.hale_order_text()])
+	hale_brief.text=hale_text
 	var quiet:bool=Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")
 	var well:bool=lv.released and lv.walker.position.x>46.
-	var mode_name:="静步" if quiet else "奔跑" if lv.running else "步行"
-	var tint:=Color("9fd6e8") if quiet else Color("ff9a80") if lv.running else Color("f4ead8")
+	var mode_name:=R18n.t("hud.mode.quiet") if quiet else R18n.t("hud.mode.run") if lv.running else R18n.t("hud.mode.walk")
+	var tint:=UiStyle.QUIET if quiet else Color("ff9a80") if lv.running else UiStyle.TEXT_MAIN
 	var note:=""
-	if well:note="　· 静步压住了脚音" if quiet else ("　· 井底已闻声" if lv.hunter.state=="hunt" else "　· 留意铁网上的脚音")
-	if well and not quiet:tint=Color("ffbf75")
-	if well and bait_time>0. and not lv.collected:note="　· 井底的动静被引开了";tint=Color("ffda91")
-	if lv.pair_loud:note="　· 同声律！脚步叠上了";tint=Color("ff6a4d")
-	elif lv.both_lamp and well:note="　· 独灯律！只许一盏灯";tint=Color("ff6a4d")
+	if well:note=R18n.t("hud.note.quiet_well") if quiet else (R18n.t("hud.note.hunt") if lv.hunter.state=="hunt" else R18n.t("hud.note.iron_watch"))
+	if well and not quiet:tint=ACCENT
+	if well and bait_time>0. and not lv.collected:note=R18n.t("hud.note.bait");tint=Color("ffda91")
+	if lv.pair_loud:note=R18n.t("hud.note.pair_loud");tint=UiStyle.DANGER
+	elif lv.both_lamp and well:note=R18n.t("hud.note.both_lamp");tint=UiStyle.DANGER
 	state_label.text="▸ %s%s"%[mode_name,note];state_label.modulate=tint
 	var secs:=int(lv.run_time)
-	time_label.text="经过 %d:%02d"%[secs/60,secs%60]
-	hale_label.text="Hale　▸ "+lv.hale_order_text()
+	time_label.text=R18n.t("hud.time",[secs/60,secs%60])
+	hale_label.text=hale_text
 	var tick:=""
-	if lv.pair_loud:tick="同声律 · 两人的脚步叠在一起"
-	elif lv.both_lamp and well:tick="独灯律 · 两盏灯同时亮着"
+	if lv.pair_loud:tick=R18n.t("hud.tick.pair_loud")
+	elif lv.both_lamp and well:tick=R18n.t("hud.tick.both_lamp")
 	rule_tick.text=tick
-	rule_tick.modulate.a=lerpf(rule_tick.modulate.a,1. if tick!="" else 0.,1.-exp(-8.*dt))
+	rule_tick.modulate.a=lerpf(rule_tick.modulate.a,1. if tick!="" else 0.,Feel.exp_damp(8.,dt))
 	_rules(dt)
 
 ## Live contract readout. Contract A speaks only while two lines overlap;
-## contract B keeps a permanent three-bead tally while iron is underfoot.
+## contract B keeps a three-bead tally while iron is underfoot or remembered.
 func _rules(dt:float)->void:
 	var c=lv.contracts
 	var clause:String=c.a_hint()
 	if clause=="":
 		clause=c.b_hint()
 	plate_line.text=clause
-	plate_line.modulate=Color("ff9a80") if lv.fail_reason!="" and c.a_state=="blackout" else Color("e8d4b0")
+	plate_line.modulate=Color("ff9a80") if lv.fail_reason!="" and c.a_state=="blackout" else UiStyle.ACCENT_SOFT
 	var filled:int=c.b_beads()
+	var in_shaft:bool=lv.released and lv.walker.position.x>46. and not lv.in_return_gallery(lv.walker.position)
+	var hud_live:bool=lv.mode<0 and not lv.manual.visible and not lv.finished and not lv.wheel_open
+	if bead_row:
+		bead_row.visible=hud_live and (in_shaft or filled>0 or c.b_remembered)
 	for i in beads.size():
 		var on:bool=i<filled
 		var style:StyleBoxFlat=beads[i].get_theme_stylebox("panel")

@@ -28,3 +28,17 @@ Upstream repository: https://github.com/IRCSS/Blender-Geometry-Node-French-House
 ## Observed results — 2026-11-25
 
 Blender 5.0.1: main 111 groups (17,630 nodes / 21,148 links); demo 168 groups (23,599 nodes / 28,395 links). 181 distinct group names across both archives; numbered variants were deliberately kept. All 279 standalone root directories passed the dependency-name check. Source main triggered a newer-file warning in 5.0.1; an independent Blender 5.3.0 extraction produced an identical main inventory. In the older demo, `Color in Range` and `HangingBanners` have different graph counts between Blender versions; the distributed demo is the 5.0.1 output. The 11 functional cases (10 root groups and one parameter override) are recorded in `tested-probes.json`. The GLBs show geometry only; no collision, walkability, production LOD or measured building dimensions were tested.
+
+### Editable interior / exterior assembly (Blender 5.0.1)
+
+After extracting the main library, run from the repository root in PowerShell:
+
+```powershell
+$b = '.runtime/french-gn/blender-5.0.1-windows-x64/blender.exe'
+$d = '.runtime/french-gn/main'
+$t = 'tools/research/french_gothic_nodes'
+& $b -b --factory-startup --python-exit-code 1 -P "$t/assembly.py" -- $d
+& $b -b --factory-startup "$d/cathedral-controls.blend" --python-exit-code 1 -P "$t/check_assembly.py"
+```
+
+Open `cathedral-controls.blend`, select `Cathedral | select to edit`, and use the `Cathedral controls` modifier. `Exterior` and `Interior` isolate branches. The exterior uses the upstream combined church; the nave is an original procedural study with a slab, paired columns, pointed arcades, transverse ribs and crossing diagonal ribs. Width and length scale act on both branches. Changing Bays redistributes the frames over a fixed 20-unit run. The graph does not generate masonry vault webs or a timber roof structure. Dimensions are design controls, not survey measurements. The check reopens the saved assembly, evaluates controls and visibility, and writes `assembly-checks.json`, `assembly-interior.png` and `assembly-section.png` without changing the blend file.

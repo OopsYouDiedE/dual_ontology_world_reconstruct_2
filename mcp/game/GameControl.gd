@@ -8,6 +8,7 @@ const TEST_SCENES := [
 	"res://scenes/expedition_01/Expedition.tscn",
 	"res://scenes/physics_lab/airlock/Airlock.tscn",
 	"res://scenes/physics_lab/Lab.tscn",
+	"res://scenes/physics_lab/chronograph/Chronograph.tscn",
 	"res://scenes/rule_evaluation/Evaluation.tscn",
 	"res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
 	"res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",

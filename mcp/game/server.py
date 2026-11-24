@@ -23,6 +23,7 @@ SCENES = {
     "gothic_bay": "res://tools/research/french_gothic_nodes/BayReview.tscn",
     "rogue": SCENE,
     "expedition": "res://scenes/expedition_01/Expedition.tscn",
+    "chronograph": "res://scenes/physics_lab/chronograph/Chronograph.tscn",
     "physics_lab": "res://scenes/physics_lab/Lab.tscn",
     "observer_airlock": "res://scenes/physics_lab/airlock/Airlock.tscn",
     "rule_evaluation": "res://scenes/rule_evaluation/Evaluation.tscn",
@@ -89,6 +90,8 @@ class Run:
             command[1:1] = ["--resolution", "1280x720"]
             if eval_review:
                 command.append("--airlock-audit" if scene_key == "observer_airlock" else "--lab-archive-observer")
+        if scene_key == "chronograph":
+            command[1:1] = ["--resolution", "1280x720"]
         if scene_key == "rule_evaluation":
             command[1:1] = ["--resolution", "1280x720"]
             command.append(f"--python={sys.executable}")
@@ -175,7 +178,7 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True,
-           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock"] = "rogue",
+           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock", "chronograph"] = "rogue",
            eval_review: bool = False):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run

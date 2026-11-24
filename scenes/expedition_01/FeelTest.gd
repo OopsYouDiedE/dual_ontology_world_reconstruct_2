@@ -23,7 +23,7 @@ func settle()->void:
 	for i in 45:await physics_frame
 
 func run()->void:
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	await frames(6)
 	level.walker.position=Vector3(4.,.05,0.);level.walker.rotation.y=-PI/2
 

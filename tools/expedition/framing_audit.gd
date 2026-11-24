@@ -99,7 +99,7 @@ func run() -> void:
 		push_error("Framing needs real pixels; use Forward+."); quit(2); return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	root.size = Vector2i(1280,720)
-	lv = preload("res://scenes/expedition_01/Expedition.tscn").instantiate()
+	lv = preload("res://scenes/expedition_01/Sortie.tscn").instantiate()
 	root.add_child(lv)
 	# Let the player's opening fade finish, then freeze the live scene while
 	# sampling each controlled arrival pose, so ID frames share one silhouette.

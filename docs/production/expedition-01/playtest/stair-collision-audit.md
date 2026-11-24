@@ -4,7 +4,7 @@
 
 ## Evidence
 
-Instantiated the unmodified working-tree `Expedition.tscn` in Godot 4.7.2 .NET, headless at fixed 60 FPS, with the full production fixture. Rays used layer 1 and excluded the player. Capsule probes used the production `CharacterBody3D.test_move` and its 60° floor limit. The walk checks used the production physics process and quiet/forward inputs, with waypoints at 1.02 m radius; they placed the player once at each approach and let the controller do the climb. This is a targeted physics replay, not a full story run or a visual rendering check.
+Instantiated the unmodified working-tree `Sortie.tscn` in Godot 4.7.2 .NET, headless at fixed 60 FPS, with the full production fixture. Rays used layer 1 and excluded the player. Capsule probes used the production `CharacterBody3D.test_move` and its 60° floor limit. The walk checks used the production physics process and quiet/forward inputs, with waypoints at 1.02 m radius; they placed the player once at each approach and let the controller do the climb. This is a targeted physics replay, not a full story run or a visual rendering check.
 
 | Measurement | West (x = 49.15 m) | East (x = 73.35 m) |
 |---|---:|---:|

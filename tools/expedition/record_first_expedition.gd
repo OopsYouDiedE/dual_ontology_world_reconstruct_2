@@ -81,7 +81,7 @@ func interact(target:Vector3,id:String,frames:=35)->bool:
 	return true
 
 func run()->void:
-	level=preload("res://scenes/expedition_01/Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("res://scenes/expedition_01/Sortie.tscn").instantiate();root.add_child(level)
 	look_yaw=level.walker.rotation.y
 	await wait_frames(642)
 	press(KEY_1);await wait_frames(335);press(KEY_RIGHT);await wait_frames(175)

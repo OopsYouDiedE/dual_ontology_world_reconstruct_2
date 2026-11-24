@@ -25,7 +25,7 @@ func shot(name:String)->void:
 func run()->void:
 	out=OS.get_environment("SHOT_DIR")
 	if out=="":out="/home/user/shots"
-	level=preload("res://scenes/expedition_01/Expedition.tscn").instantiate()
+	level=preload("res://scenes/expedition_01/Sortie.tscn").instantiate()
 	root.add_child(level)
 	await frames(70)
 	level.polish.fade_a=0.

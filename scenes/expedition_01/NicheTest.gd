@@ -22,7 +22,7 @@ func go(x:float,z:float,limit:=1600)->bool:
 	push_error("Blocked at %s approaching %s"%[level.walker.position,target]);failures+=1;return false
 
 func run()->void:
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	for i in 4:await physics_frame
 	# 1. The west door exists: walk from the arcade centre into the niche.
 	level.walker.position=Vector3(9.0,.05,0.);level.walker.rotation.y=0.

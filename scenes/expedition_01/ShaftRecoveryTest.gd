@@ -38,7 +38,7 @@ func walk_to(target: Vector3, radius: float, limit: int) -> bool:
 	return false
 
 func run() -> void:
-	level = preload("Expedition.tscn").instantiate()
+	level = preload("Sortie.tscn").instantiate()
 	root.add_child(level)
 	if level.captions.typeface == null:
 		push_error("Expedition fixture failed to initialize")

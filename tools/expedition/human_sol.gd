@@ -2,7 +2,7 @@ extends SceneTree
 ## Standalone Expedition playtest, normal first-person controls only.
 const Policy=preload("human_sol_policy.gd")
 const Vision=preload("human_sol_vision.gd")
-const LEVEL="res://scenes/expedition_01/Expedition.tscn"
+const LEVEL="res://scenes/expedition_01/Sortie.tscn"
 var level
 var vision:=Vision.new()
 var tick:=0

@@ -22,7 +22,7 @@ func put(pos:Vector3,yaw:float,pitch:=0.)->void:
 	level.walker.position=pos;level.walker.velocity=Vector3.ZERO;level.walker.rotation.y=yaw;level.eye.rotation.x=pitch
 func run()->void:
 	root.size=Vector2i(1280,720)
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	for i in 6:await physics_frame
 	if OS.get_environment("SHOT_LITE")!="":
 		root.msaa_3d=Viewport.MSAA_DISABLED;root.use_debanding=false

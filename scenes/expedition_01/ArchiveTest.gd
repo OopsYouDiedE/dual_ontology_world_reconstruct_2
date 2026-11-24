@@ -84,7 +84,7 @@ func trip_blackout()->void:
 	contract_gaze(true,false);await contract_tick()
 
 func test_contract_dialogue()->bool:
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	level.set_physics_process(false)
 	await wait_ticks(2)
 	level.walker.position=Vector3(26.89,.03,8.53)
@@ -121,7 +121,7 @@ func test_contract_dialogue()->bool:
 
 func run()->void:
 	if not await test_contract_dialogue():return
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	await wait_ticks(2)
 	if not await walk(APPROACH):return
 	if not await walk([[23.85,14.12]],FAR_PLATE):return
@@ -136,7 +136,7 @@ func run()->void:
 
 	if not export_trace("direct"):return
 	level.queue_free();await wait_ticks(3)
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	await wait_ticks(2)
 	if not await walk(APPROACH):return
 	level.eye.look_at(PLATE);await wait_ticks(105)

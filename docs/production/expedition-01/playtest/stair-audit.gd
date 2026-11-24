@@ -1,5 +1,5 @@
 extends SceneTree
-const Scene = preload("res://scenes/expedition_01/Expedition.tscn")
+const Scene = preload("res://scenes/expedition_01/Sortie.tscn")
 var lv
 var walker: CharacterBody3D
 var failed := false

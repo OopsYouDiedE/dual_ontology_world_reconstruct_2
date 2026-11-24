@@ -1,7 +1,7 @@
 extends SceneTree
 ## Geometric screening, not a player controller: sweep the real player capsule down
 ## onto the east escape spiral along each polygonal route. No hunter or elapsed ticks.
-const Expedition = preload("res://scenes/expedition_01/Expedition.tscn")
+const Expedition = preload("res://scenes/expedition_01/Sortie.tscn")
 const Fixture = preload("res://tools/expedition/collision_fixture.gd")
 const BASE = "res://.runtime/stair-support/"
 const ORIGIN := Vector3(73.35, 0, 8.1)

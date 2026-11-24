@@ -19,7 +19,7 @@ func caption(speaker: String) -> String:
 	return level.captions.entries.get(speaker, {}).get("id", "")
 
 func run() -> void:
-	level = preload("Expedition.tscn").instantiate()
+	level = preload("Sortie.tscn").instantiate()
 	root.add_child(level)
 	if not level.is_node_ready() or level.captions.typeface == null:
 		push_error("Expedition fixture failed to initialize")

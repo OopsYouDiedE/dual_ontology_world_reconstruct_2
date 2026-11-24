@@ -22,7 +22,7 @@ func set_gap(gap:float)->void:
 	level.trail=PackedVector3Array([level.walker.position])
 
 func run()->void:
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	level.set_physics_process(false)
 	await physics_frame
 	await physics_frame
@@ -85,7 +85,7 @@ func guide_walk(target:Vector2)->bool:
 	Input.action_release("move_up");return false
 
 func check_archive_guide(choice:String)->void:
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	level.walker.position=Vector3(34.25,0.,0.)
 	level.hale.position=level.kit.gate_spots[0].global_position
 	await physics_frame

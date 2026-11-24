@@ -10,7 +10,7 @@ const Crew := preload("res://scenes/rogue_rules/ExpeditionCrew.gd")
 const Camp := preload("res://scenes/rogue_camp/CampResidents.gd")
 const MARGINS := "user://night_watch_margins.txt"
 
-const FirstExpedition := preload("res://scenes/expedition_01/Expedition.tscn")
+const FirstExpedition := preload("res://scenes/expedition_01/Sortie.tscn")
 const HallOpening := preload("HallOpeningSequence.gd")
 const FIRST_SEAL := "user://expedition_01_returned"
 var first_sortie
@@ -183,9 +183,6 @@ func _close() -> void:
 	modal = ""
 	_acting = -1
 	_overlay.hide()
-	_opening = HallOpening.new()
-	add_child(_opening)
-	_opening.finished.connect(_on_opening_finished)
 	room_view.set_modal(phase in ["lost", "won"])
 
 func new_run(value: int) -> void:
@@ -569,7 +566,7 @@ func _process(dt: float) -> void:
 		_update_hall(Camp.TICK_SECONDS)
 
 func mcp_observe() -> Dictionary:
-	if is_instance_valid(first_sortie) or (is_instance_valid(_opening) and _opening.active): return first_sortie.observation()
+	if is_instance_valid(first_sortie): return first_sortie.observation()
 	var buttons := []
 	var ui: Container = _flow if modal.is_empty() else _sheet
 	for node in ui.get_children():

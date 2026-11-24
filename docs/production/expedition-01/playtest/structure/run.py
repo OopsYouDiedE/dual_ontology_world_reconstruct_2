@@ -87,7 +87,7 @@ def main():
     directory.mkdir()
     script = stage(directory)
     files = [*TOOLS.glob('*.gd'), *(ROOT / 'scenes/expedition_01').glob('*.gd'),
-             ROOT / 'project.godot', ROOT / 'scenes/expedition_01/Expedition.tscn', HERE / 'portal.gd', Path(__file__)]
+             ROOT / 'project.godot', ROOT / 'scenes/expedition_01/Sortie.tscn', HERE / 'portal.gd', Path(__file__)]
     def hashes():
         return {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(files)}
     summary = dict(ticks=args.ticks, profiles=BATCH['PROFILES'], seeds=args.seeds, inputs_sha256=hashes(), pairs=[])

@@ -6,7 +6,7 @@
 
 ## 开始游戏
 
-唯一玩家入口：[scenes/rogue/Run.tscn](scenes/rogue/Run.tscn)。准备好 Godot 4.7.2 .NET 与 .NET 8 后，在仓库根运行：
+直接运行 `Expedition.tscn` 与启动主游戏共用同一个公共大厅开场。主场景：[scenes/rogue/Run.tscn](scenes/rogue/Run.tscn)。准备好 Godot 4.7.2 .NET 与 .NET 8 后，在仓库根运行：
 
 ```powershell
 dotnet build DualOntologyWorldReconstruct2.csproj

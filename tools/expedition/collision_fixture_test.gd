@@ -1,6 +1,6 @@
 extends SceneTree
 const Fixture = preload("res://tools/expedition/collision_fixture.gd")
-const Expedition = preload("res://scenes/expedition_01/Expedition.tscn")
+const Expedition = preload("res://scenes/expedition_01/Sortie.tscn")
 const DT := 1.0 / 60.0
 var failures := 0
 

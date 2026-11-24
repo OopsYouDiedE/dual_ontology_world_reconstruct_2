@@ -5,7 +5,7 @@ func demand(ok:bool,msg:String)->bool:
 	if not ok:push_error(msg);quit(1)
 	return ok
 func run()->void:
-	var level=preload("Expedition.tscn").instantiate();root.add_child(level);await physics_frame
+	var level=preload("Sortie.tscn").instantiate();root.add_child(level);await physics_frame
 	var h=level.hunter;h.wake();var pos:=Vector3(49,0,10.1);var died:=false;var hunt_frames:=0
 	for i in 180:
 		died=h.step(1./60,pos,true,false,0,false,level.sounds);if h.state=="hunt":hunt_frames+=1

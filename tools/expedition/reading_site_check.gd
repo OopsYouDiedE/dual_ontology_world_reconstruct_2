@@ -1,7 +1,7 @@
 extends SceneTree
 ## Conditional UI checks, separate from unguided route rates. Each arm gets a fresh scene.
 const Policy=preload("human_sol_policy.gd")
-const Scene=preload("res://scenes/expedition_01/Expedition.tscn")
+const Scene=preload("res://scenes/expedition_01/Sortie.tscn")
 var results:=[]
 
 func _initialize()->void:run.call_deferred()

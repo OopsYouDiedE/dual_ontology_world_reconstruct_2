@@ -30,7 +30,7 @@ func film() -> void:
 	path = report.path_samples
 	hale_path = report.hale_path_samples
 	seed(31)
-	level = load("res://scenes/expedition_01/Expedition.tscn").instantiate()
+	level = load("res://scenes/expedition_01/Sortie.tscn").instantiate()
 	root.add_child(level)
 	Portal.install(level, report.layout)
 	level.set_physics_process(false)

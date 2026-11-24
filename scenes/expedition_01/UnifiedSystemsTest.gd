@@ -26,7 +26,7 @@ func _key(code: Key) -> InputEventKey:
 
 func run() -> void:
 	R18n.set_locale("zh")
-	var level = preload("Expedition.tscn").instantiate()
+	var level = preload("Sortie.tscn").instantiate()
 	root.add_child(level)
 	for i in 4:
 		await physics_frame

@@ -53,7 +53,7 @@ func shot(label:String)->void:
 
 func run()->void:
 	for reverse in [false,true]:
-		level=preload("Expedition.tscn").instantiate();root.add_child(level)
+		level=preload("Sortie.tscn").instantiate();root.add_child(level)
 		await physics_frame
 		await physics_frame
 		if not reverse:check_clerestory()

@@ -1,6 +1,6 @@
 # Human-like Sol playtest
 
-Standalone first-person exploration of `Expedition.tscn`. Run from the repository root in PowerShell:
+Standalone first-person exploration of `Sortie.tscn`. Run from the repository root in PowerShell:
 
 ```powershell
 $godot = '.runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'

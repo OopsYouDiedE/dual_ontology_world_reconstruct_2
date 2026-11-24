@@ -2,7 +2,7 @@
 
 **Question:** How does an offset portal in the A1 Immersion Arcade affect approach and traversal under the existing Human Sol policies?
 
-- **A — stock arcade.** The harness instantiates the current `Expedition.tscn` and leaves the scene geometry alone.
+- **A — stock arcade.** The harness instantiates the current `Sortie.tscn` and leaves the scene geometry alone.
 - **B — offset portal.** The same scene receives three opaque, colliding mesh boxes at world `x = 4.50 m`. Jambs span `z = −2.22…0.65 m` and `1.85…2.22 m`; the lintel leaves a `1.20 m` wide and `2.20 m` tall opening centered at `z = +1.25 m`. The stock spawn at `x = 1, z = 0`, looking toward `+x`, now faces a jamb. The shared floor, exits, mechanics, labels and Human Sol controller stay in place. This treatment changes both visibility and walkable clearance; it estimates their combined effect.
 
 At tick 8 both arms test the same two horizontal rays at `y = 1.57 m`. The center ray must be clear in A and blocked in B; the offset ray must be clear in both. The existing camera-based depth proxy must detect the portal face only in B. These checks are recorded outside policy input. The B mesh owns a static collider in the form already recognized by the depth proxy.

@@ -122,7 +122,7 @@ func run()->void:
 	oil_only=args.has("--oil-only")
 	no_clock=args.has("--south") or oil_only
 	clock_only=args.has("--clock-only")
-	level=preload("Expedition.tscn").instantiate();root.add_child(level);await physics_frame
+	level=preload("Sortie.tscn").instantiate();root.add_child(level);await physics_frame
 	await physics_frame
 	var key:=InputEventKey.new();key.physical_keycode=KEY_1;key.pressed=true
 	level._input(key);if not level.manual.visible:quit(1);return
@@ -135,7 +135,7 @@ func run()->void:
 		if not await go(ramp_x,9.96,60) or level.walker.position.y<-.04:push_error("Entry ramp failed");quit(1);return
 	level.queue_free();await wait_ticks(2)
 	route_start=Engine.get_physics_frames()
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	var crossing_arg:="south" if no_clock else "self" if window_skip else "north"
 	var route_seed:=1
 	var light:=args.has("--strategy-light")

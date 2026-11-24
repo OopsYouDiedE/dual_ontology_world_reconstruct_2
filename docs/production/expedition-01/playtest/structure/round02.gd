@@ -10,7 +10,7 @@ func review() -> void:
 		quit(2)
 		return
 	seed(31)
-	var level = load("res://scenes/expedition_01/Expedition.tscn").instantiate()
+	var level = load("res://scenes/expedition_01/Sortie.tscn").instantiate()
 	root.add_child(level)
 	level.set_physics_process(false)
 	level.set_process_input(false)

@@ -5,7 +5,7 @@ Opt in per production scene instance, including each fresh scene in WalkTest or 
 ```gdscript
 const Fixture = preload("res://tools/expedition/collision_fixture.gd")
 # ...
-level = preload("res://scenes/expedition_01/Expedition.tscn").instantiate()
+level = preload("res://scenes/expedition_01/Sortie.tscn").instantiate()
 root.add_child(level)
 if lightweight:
     Fixture.apply_lightweight(level)

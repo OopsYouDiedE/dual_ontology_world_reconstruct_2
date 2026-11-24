@@ -28,7 +28,7 @@ func check_dialogue_source()->bool:
 	return true
 
 func run()->void:
-	level=preload("Expedition.tscn").instantiate();root.add_child(level)
+	level=preload("Sortie.tscn").instantiate();root.add_child(level)
 	await physics_frame;await physics_frame
 	if not check_dialogue_source():return
 	# F3 改变独立图层，保留玩家灯油与准星。

@@ -55,7 +55,7 @@ func use_at(target: Vector3) -> bool:
 	return true
 
 func run() -> void:
-	level = preload("Expedition.tscn").instantiate()
+	level = preload("Sortie.tscn").instantiate()
 	root.add_child(level)
 	await step_frames(6)
 

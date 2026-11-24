@@ -1,6 +1,7 @@
 extends SceneTree
 
 const RunScene = preload("res://scenes/rogue/Run.tscn")
+const ExpeditionEntry = preload("res://scenes/expedition_01/Expedition.tscn")
 var failed := 0
 
 func _initialize() -> void:
@@ -12,6 +13,12 @@ func check(ok: bool, msg: String) -> void:
 		failed += 1
 
 func run() -> void:
+	var entry := ExpeditionEntry.instantiate()
+	root.add_child(entry)
+	await process_frame
+	check(entry.mcp_observe().stage == "hall" and entry.first_sortie == null, "Direct Expedition launch starts in the hall before the sortie")
+	entry.queue_free()
+	await process_frame
 	var game := RunScene.instantiate()
 	root.add_child(game)
 	await process_frame

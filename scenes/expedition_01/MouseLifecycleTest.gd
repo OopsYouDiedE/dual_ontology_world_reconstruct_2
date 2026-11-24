@@ -44,7 +44,7 @@ func visible_mouse() -> bool:
 	return Input.mouse_mode == Input.MOUSE_MODE_VISIBLE
 
 func run() -> void:
-	level = preload("Expedition.tscn").instantiate()
+	level = preload("Sortie.tscn").instantiate()
 	root.add_child(level)
 	level.set_physics_process(false)
 	var canvas := CanvasLayer.new()

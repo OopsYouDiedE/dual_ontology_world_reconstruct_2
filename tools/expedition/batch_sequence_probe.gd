@@ -1,6 +1,6 @@
 extends SceneTree
 ## Real-physics batch permutation prober for Expedition-01.
-## Runs unmodified Expedition.tscn with exact player capsule, colliders, and triggers,
+## Runs unmodified Sortie.tscn with exact player capsule, colliders, and triggers,
 ## recording every dialogue line, region transition, and interaction in exact tick order.
 ##
 ## Usage:
@@ -135,7 +135,7 @@ func run_spiral_and_exit(take_east: bool) -> bool:
 	return true
 
 func run() -> void:
-	level = preload("res://scenes/expedition_01/Expedition.tscn").instantiate()
+	level = preload("res://scenes/expedition_01/Sortie.tscn").instantiate()
 	root.add_child(level)
 	level.captions.posted.connect(_on_caption)
 	level.audit_action.connect(_on_audit)

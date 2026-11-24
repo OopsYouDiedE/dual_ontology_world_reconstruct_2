@@ -49,7 +49,7 @@ func recover() -> void:
 	await tick()
 
 func run() -> void:
-	level = preload("Expedition.tscn").instantiate()
+	level = preload("Sortie.tscn").instantiate()
 	root.add_child(level)
 	level.set_physics_process(false)
 	if level.captions.typeface == null:

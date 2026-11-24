@@ -2,6 +2,7 @@ extends Node
 ## Opt-in testing bridge. Normal game launches leave it dormant.
 
 const TEST_SCENES := [
+	"res://tools/research/french_gothic_nodes/InteriorFlight.tscn",
 	"res://tools/research/french_gothic_nodes/WholeReview.tscn",
 	"res://tools/research/french_gothic_nodes/BayReview.tscn",
 	"res://scenes/expedition_01/Expedition.tscn",

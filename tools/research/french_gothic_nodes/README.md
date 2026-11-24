@@ -70,3 +70,5 @@ With the default `cathedral-structure.blend` generated above, run:
 ```
 
 The export verifies the nine branches sum to the default evaluated face count. The game MCP captures six real Forward+ views and checks named layers, shell visibility, native scale, SSAO and SDFGI. Inspect `godot-whole-*.png` and `godot-whole.json` beside the blend. Chalk and wood-toned review overrides are used instead of source textures. The interior pair shares a camera. This is visual QA, not collision or performance certification.
+
+For an interactive shell-on interior review, launch `InteriorFlight.tscn` with the same Godot project. Hold RMB to look, WASD to fly, E/Q to ascend/descend, Shift to boost, Enter to cycle five interior bookmarks. Run `godot_whole.py --flight` with the MCP Python environment to capture all five bookmarks and verify shell visibility throughout.

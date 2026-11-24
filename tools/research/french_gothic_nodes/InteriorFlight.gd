@@ -8,6 +8,7 @@ const STOPS := [
 	[Vector3(6.3,2.25,13),Vector3(10.48,2.9,13)],
 	[Vector3(4.45,1.95,6.7),Vector3(6.85,2.65,6.7)],
 	[Vector3(0,9,4.5),Vector3(1,10,9)],
+	[Vector3(-6.3,2.25,13),Vector3(-10.48,2.9,13)],
 ]
 func _set_view() -> void:
 	parts["Exterior"].visible = true

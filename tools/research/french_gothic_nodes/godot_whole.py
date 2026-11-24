@@ -6,7 +6,7 @@ sys.path.insert(0,str(root/'mcp/game'))
 from server import Run
 out=root/'.runtime/french-gn/main'
 flight='--flight' in sys.argv
-names=['nave','aisle','crossing','chevet','rose','lancets','roof'] if flight else ['front','rear','open','nave','nave-open','chevet']
+names=['nave','aisle','crossing','chevet','rose','lancets','roof','botanical-rose'] if flight else ['front','rear','open','nave','nave-open','chevet']
 prefix='godot-flight' if flight else 'godot-whole'
 h=Run(1,scene_key='church_flight' if flight else 'whole_church')
 try:

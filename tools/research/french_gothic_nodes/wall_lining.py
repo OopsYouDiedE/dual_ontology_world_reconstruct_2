@@ -9,7 +9,7 @@ COLORS = {'Ashlar':(.61,.54,.42),'Moulding':(.78,.70,.55),'Lead':(.075,.077,.09)
           'Cobalt':(.075,.21,.57),'Ruby':(.58,.075,.11),'Amber':(.85,.49,.12),'Pearl':(.40,.67,.74),'Lancet':(1,1,1),'Traced':(1,1,1)}
 GLASS = ['Cobalt','Ruby','Amber','Pearl']
 
-def master(rose):
+def master(rose, variant):
     verts, faces, indices = [], [], []
     def face(points, mat):
         start=len(verts); verts.extend(points); faces.append(tuple(range(start,len(verts)))); indices.append(list(COLORS).index(mat))
@@ -71,34 +71,37 @@ def master(rose):
         for x,ww in [(-w,.20),(-.06,.12),(1.3,.20)]:rect(x,sill,ww,top-sill,-.04,.14,'Ashlar')
     name='Radial rose' if rose else 'Paired lancets'; mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
     for label,color in COLORS.items():
-        mat=bpy.data.materials.get('Lining '+label) or bpy.data.materials.new('Lining '+label);mat.diffuse_color=(*color,1);mat.use_backface_culling=False;mat.use_nodes=True; mat.node_tree.nodes.get("Principled BSDF").inputs["Base Color"].default_value=(*color,1);mesh.materials.append(mat)
+        key='Lining '+label+(' botanical' if label=='Traced' and rose and variant else '');mat=bpy.data.materials.get(key) or bpy.data.materials.new(key);mat.diffuse_color=(*color,1);mat.use_backface_culling=False;mat.use_nodes=True; mat.node_tree.nodes.get("Principled BSDF").inputs["Base Color"].default_value=(*color,1);mesh.materials.append(mat)
     from pathlib import Path
     uv=mesh.uv_layers.new(name='Window projection')
     for loop in mesh.loops:
         x,_,z=mesh.vertices[loop.vertex_index].co
         if rose: coords=(.5+x/(2*r),.5+(z-cz)/(2*r))
         else:
-            k=int(x>0); cx=(-.68,.68)[k]; coords=((k+(x-cx+hw)/(2*hw))/2,(z-sill)/(peak-sill))
+            k=int(x>0); cx=(-.68,.68)[k]; coords=((variant+(k+(x-cx+hw)/(2*hw))/2)/4,(z-sill)/(peak-sill))
         uv.data[loop.index].uv=coords
-    mat=mesh.materials[list(COLORS).index('Traced' if rose else 'Lancet')]; tex=mat.node_tree.nodes.new('ShaderNodeTexImage')
-    tex.image=bpy.data.images.load(str(Path(__file__).with_name('rose_register.png' if rose else 'lancet_register.png')));tex.image.pack()
-    mat.node_tree.links.new(tex.outputs['Color'],mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+    mat=mesh.materials[list(COLORS).index('Traced' if rose else 'Lancet')]
+    if not mat.node_tree.nodes.get('Glazing atlas'):
+        tex=mat.node_tree.nodes.new('ShaderNodeTexImage');tex.name='Glazing atlas'
+        tex.image=bpy.data.images.load(str(Path(__file__).with_name(('rose_botanical.png' if variant else 'rose_register.png') if rose else 'lancet_register.png')));tex.image.pack()
+        mat.node_tree.links.new(tex.outputs['Color'],mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
     mesh.polygons.foreach_set('material_index',indices)
     return bpy.data.objects.new(name,mesh) # referenced by GN, not placed in the scene separately
 
 def build(Kit):
     height=num('Lining height scale',1,.85,1.18); g=Kit('FG2 | Interior wall and glazed openings',[height]); h=g.i[height[0]]
-    def src(rose):
-        n=g.node('GeometryNodeObjectInfo');g.put(n,'Object',master(rose));return n.outputs['Geometry']
-    bay,rose=src(False),src(True); pieces=[]
+    def src(rose,variant):
+        n=g.node('GeometryNodeObjectInfo');g.put(n,'Object',master(rose,variant));return n.outputs['Geometry']
+    bays=[src(False,i) for i in range(4)]; roses=[src(True,i) for i in range(2)]; pieces=[]
     def wall(unit,x,y,angle,width):
         pieces.append(g.op('GeometryNodeTransform',[('Geometry',unit),('Translation',(x,y,0)),('Rotation',(0,0,angle)),('Scale',g.xyz(width/3,1,h))]))
     for side in [-1,1]:
-        for lo,hi in [(-24,-16.4),(-9.6,-3.6)]:
-            for i in range(3):wall(bay,side*6.85,lo+(hi-lo)*(i+.5)/3,-side*pi/2,(hi-lo)/3)
-        wall(rose,side*10.48,-13,-side*pi/2,3.0)
-        for yy in [-15.45,-10.55]:wall(bay,side*10.48,yy,-side*pi/2,1.9)
-        for y,rot in [(-16.4,pi),(-9.6,0)]:wall(bay,side*8.665,y,rot,3.63)
+        shift=int(side>0)
+        for zone,(lo,hi) in enumerate([(-24,-16.4),(-9.6,-3.6)]):
+            for i in range(3):wall(bays[(i+zone+shift)%4],side*6.85,lo+(hi-lo)*(i+.5)/3,-side*pi/2,(hi-lo)/3)
+        wall(roses[1-shift],side*10.48,-13,-side*pi/2,3.0)
+        for yy in [-15.45,-10.55]:wall(bays[(int(yy>-13)+2+shift)%4],side*10.48,yy,-side*pi/2,1.9)
+        for y,rot in [(-16.4,pi),(-9.6,0)]:wall(bays[(int(y>-13)+shift)%4],side*8.665,y,rot,3.63)
     for i in range(8):
-        a=-(i+.5)*pi/8;r=5.78;wall(bay,r*cos(a)*cos(pi/16),-24+r*sin(a)*cos(pi/16),a-pi/2,2*r*sin(pi/16))
+        a=-(i+.5)*pi/8;r=5.78;wall(bays[(0,3,1,2,3,0,2,1)[i]],r*cos(a)*cos(pi/16),-24+r*sin(a)*cos(pi/16),a-pi/2,2*r*sin(pi/16))
     return g.end(g.join(*pieces)),height

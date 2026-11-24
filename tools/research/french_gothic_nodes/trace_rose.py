@@ -65,3 +65,51 @@ for k in range(2):
         panel(cx,y+89,103,0,k+y//100)
     for y in (388,704,923):draw.line((left+36,y,left+348,y),fill='#3b3143',width=5)
 im.save(Path(__file__).with_name('lancet_register.png'))
+
+# Four pairs share one atlas. Keep each pair in its own column for GN placement.
+atlas=Image.new('RGB',(4*768,960));atlas.paste(im,(0,0))
+lead='#373743'
+def leaf(x,y,dx,dy,color):
+    q=[]
+    for i in range(33):
+        t=i*pi/16; along=(1-cos(t))/2; across=.21*sin(t)
+        q.append((x+dx*along-dy*across,y+dy*along+dx*across))
+    draw.polygon(q,fill=color);draw.line(q,fill=lead,width=4);draw.line((x,y,x+dx,y+dy),fill=lead,width=2)
+for family in range(1,4):
+    for k in range(2):
+        tile=Image.new('RGB',(384,960));draw=ImageDraw.Draw(tile)
+        colors=[['#98a8a3','#adb5ac','#899ca0'],['#393f72','#48467c','#405480'],['#713444','#873d4b','#633750']][family-1]
+        for j in range(-1,14):
+            for i in range(-1,6):
+                x=i*96+(j%2)*48;y=j*75
+                draw.polygon([(x,y-75),(x+48,y),(x,y+75),(x-48,y)],fill=rng.choice(colors),outline=lead,width=3)
+        accent=['#d0b884','#c99a65','#d9b27c'][family-1]
+        for x in (27,357):draw.line((x,0,x,960),fill=accent,width=11)
+        for j in range(7):
+            y=93+150*j; sign=(-1)**(j+k)
+            if family==1: # pale glass, a single climbing stem with alternating leaves
+                draw.line((192,y-150,192,y),fill=lead,width=6)
+                leaf(192,y,sign*91,-69,'#819689');leaf(192,y-48,-sign*64,-47,'#b2a87d')
+            elif family==2: # cobalt field around an eight-petal rosette
+                for a in range(8):
+                    t=a*pi/4+k*pi/8;leaf(192,y,68*cos(t),68*sin(t),'#a55a6f' if a%2 else '#8295be')
+                draw.ellipse((179,y-13,205,y+13),fill=accent,outline=lead,width=3)
+            else: # interlaced amber bands around a ruby quatrefoil
+                for sign in (-1,1):draw.line([(192,y-89),(192+sign*100,y),(192,y+89)],fill=accent,width=9)
+                for a in range(4):
+                    t=(a+k*.5)*pi/2;leaf(192,y,53*cos(t),53*sin(t),'#baa3ac')
+        atlas.paste(tile,(family*768+k*384,0))
+atlas.save(Path(__file__).with_name('lancet_register.png'))
+# A second rose: twelve lilies and an outer ring of alternating leaves.
+im=Image.new('RGB',(1024,1024),'#30465d');draw=ImageDraw.Draw(im)
+for j in range(48):
+    a=j*pi/24;b=(j+1)*pi/24
+    for lo,hi in [(0,104),(104,306),(306,414),(414,510)]:
+        pts=[(512+r*cos(t),512+r*sin(t)) for r,t in [(lo,a),(hi,a),(hi,b),(lo,b)]]
+        draw.polygon(pts,fill=rng.choice(['#374a6d','#486381','#575277','#634c72']),outline=lead,width=3)
+for n,r,length in [(12,110,178),(24,305,99),(48,415,81)]:
+    for j in range(n):
+        a=2*pi*j/n;x=512+r*cos(a);y=512+r*sin(a)
+        for off in ([-.27,.27,0] if n==12 else [0]):
+            l=length*(.74 if off else 1);leaf(x,y,l*cos(a+off),l*sin(a+off),('#c4af82' if n==12 else ['#789995','#ad6775'][j%2]))
+panel(512,512,81,0,2,True);im.save(Path(__file__).with_name('rose_botanical.png'))

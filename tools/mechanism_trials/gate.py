@@ -13,7 +13,7 @@ ADMISSIBLE_CLEAR = {"normal-input", "authoritative-model"}
 
 
 def instant(text):
-    date = datetime.fromisoformat(text)
+    date = datetime.fromisoformat(re.sub(r"(\.\d{6})\d+(?=[+-])", r"\1", text))
     if date.tzinfo is None or date.utcoffset() is None:
         raise ValueError(f"Timezone required: {text}")
     return date

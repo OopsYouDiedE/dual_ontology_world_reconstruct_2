@@ -27,6 +27,9 @@ class GateTest(unittest.TestCase):
                 "revision": self.rev, "outcome": outcome, "independent": True,
                 "receipt": self.receipt, "surface": "authoritative-model", **kw}
 
+    def test_dotnet_seventh_fractional_digit(self):
+        self.assertEqual(instant("2026-11-25T06:24:42.0704538+08:00").microsecond, 70453)
+
     def test_passage_of_time_is_not_a_receipt(self):
         self.assertEqual(self.at("2026-11-25T13:27:09+08:00")["status"], "awaiting-window")
         self.assertEqual(self.at()["status"], "evidence-incomplete")

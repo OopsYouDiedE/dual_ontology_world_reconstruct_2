@@ -24,6 +24,7 @@ SCENES = {
     "rogue": SCENE,
     "expedition": "res://scenes/expedition_01/Expedition.tscn",
     "afterimage": "res://scenes/physics_lab/afterimage/Afterimage.tscn",
+    "duet": "res://scenes/physics_lab/duet/Duet.tscn",
     "shutter_loom": "res://scenes/physics_lab/shutter_loom/ShutterLoom.tscn",
     "palimpsest": "res://scenes/physics_lab/palimpsest/Palimpsest.tscn",
     "evidence_register": "res://scenes/physics_lab/evidence_register/EvidenceRegister.tscn",
@@ -94,7 +95,7 @@ class Run:
             command[1:1] = ["--resolution", "1280x720"]
             if eval_review:
                 command.append("--airlock-audit" if scene_key == "observer_airlock" else "--lab-archive-observer")
-        if scene_key in ("chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage"):
+        if scene_key in ("chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet"):
             command[1:1] = ["--resolution", "1280x720"]
         if scene_key == "rule_evaluation":
             command[1:1] = ["--resolution", "1280x720"]
@@ -182,7 +183,7 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True,
-           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock", "chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage"] = "rogue",
+           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock", "chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet"] = "rogue",
            eval_review: bool = False):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run

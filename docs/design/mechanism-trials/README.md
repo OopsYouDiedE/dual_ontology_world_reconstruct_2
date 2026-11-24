@@ -77,13 +77,19 @@
 - [规则与角色合同](../../../tools/shutter_loom/README.md)：同一石板同时切断近侧光束、开放另一条走道；返回 720 ticks，留 60 ticks 蒸汽预告，跨越时有机械卡位；两个镜像种子、后撤取消、伪影陷阱、预告及到达时间均有反例。移动几何和假影按权威状态变化。
 - [Game MCP 取证](../../../tools/mechanism_trials/capture_shutter.py)：与黄金事件清单逐条对比，tick 1,020 实机过关。在 `.runtime/academy-mechanisms/shutter-loom/` 保留 11 帧、拼接、渲染回执和逐动作轨迹。
 
-## A05 · The Afterimage Carriage · 第五轮候选
+## A05 · The Afterimage Carriage · 第五轮淘汰
+
+冻结 `191bc3860d7f07971f6d0c42a85faf9fdbc25774`。独立红队在 **101.700 秒**内以普通键盘输入通关，tick **440** 从东岸离开。[逐拍红队回执](a05-red-medium.json)。两次光声配对与倒卷均可从短录带直接推导，淘汰本版；保留局部倒流及外部弹簧钟作组件。
 
 五块踏位，共用一副可往返的运载车。倒卷只恢复记录起点的站位和棱镜状态；车沿外部弹簧时钟运行。以回声和现在的玩家在同拍发出不同通道的脉冲：West 上车、在车上切到银态、利用过去的灯和当前车铃在 East 同拍再次驱动。棱镜形态决定拾取器和可受力的桥面；弹簧和回声不能代玩家搬运。
 
 - 60 Hz 裁判，20-tick 一拍，倒卷、切换、回弹与摆渡均有至少 40 ticks 的提示。实际桥面、虚线候位、透明倒影、拾取器、录带标记和音响由同一模型状态驱动。
 - [玩法与机械解释](../../../tools/afterimage/README.md)；[机器金解](../../../tools/afterimage/golden.json) 有两条相位等价、首拍用不同录制器的合法路线。**422** 个头测通过；两条均通过 Forward+ 实机，在 **tick 400** 建成东侧通路并离开。画面见 `.runtime/academy-mechanisms/afterimage-r2/`，包括两条回放拼图、23 张带状态原帧、一条虚桥不能登车的对照，及逐拍轨迹。分机位不会推进裁判时间。
 - [Game MCP 取证](../../../tools/mechanism_trials/capture_afterimage.py) 校验光束来源、光声配对和终局，同时核对主线材质与渲染参数。模型/场景都位于独立实验入口。
+
+## A06 · The Felt Drawleaf · 第六轮
+
+在铁踏板上，站立注视可以冻结巡行者，却抬升耳簧读数；蹲身经过矮墙时，耳簧卸载而巡行者恢复移动。放平的毛毡吊桥既接通道路，又让站姿行走同时降噪并保持注视。受压时，机械棘爪延后升桥；两种被捕都走服务轨返回。两条普通节奏在 tick 340 到达远岸。[房间说明](a06-brief.md) · [黄金与反例](../../../tools/duet/README.md) · [Game MCP 取证](../../../tools/mechanism_trials/capture_duet.py)。
 
 ## 定版包给 Astra 看的顺序
 

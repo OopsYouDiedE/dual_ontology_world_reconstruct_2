@@ -1,0 +1,25 @@
+{
+  "candidate": "A05 / The Afterimage Carriage",
+  "revision": "191bc3860d7f07971f6d0c42a85faf9fdbc25774",
+  "generated_at": "2026-11-25T06:24:07.322838+08:00",
+  "golden": {
+    "revision": "191bc3860d7f07971f6d0c42a85faf9fdbc25774",
+    "passed_live": true
+  },
+  "red_reports": [
+    {
+      "revision": "191bc3860d7f07971f6d0c42a85faf9fdbc25774",
+      "agent": "Herschel",
+      "started_at": "2026-11-25T06:24:42.0704538+08:00",
+      "ended_at": "2026-11-25T06:26:23.770+08:00",
+      "surface": "normal-input",
+      "role": "medium",
+      "independent": true,
+      "outcome": "cleared",
+      "receipt": {
+        "file": "a05-red-medium.json",
+        "sha256": "21d6091e16f849e9c742ded5ffc3c43770789e00bee590f33c52eb16988239e1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "revision": "191bc3860d7f07971f6d0c42a85faf9fdbc25774",
+  "agent": "Herschel",
+  "started_at": "2026-11-25T06:24:42.0704538+08:00",
+  "ended_at": "2026-11-25T06:26:23.770+08:00",
+  "elapsed_seconds": 101.6995462,
+  "surface": "normal-input",
+  "seed": 0,
+  "method": "Independent frozen source review and headless replay through ordinary InputMap keyboard input.",
+  "actions_by_start_tick": {
+    "0": "2",
+    "20": "Space",
+    "40": "Space",
+    "60": "E",
+    "80": "Space",
+    "100": "Space",
+    "120": "Space",
+    "140": "Space",
+    "160": "E",
+    "180": "T",
+    "200": "Space",
+    "220": "Space",
+    "240": "1",
+    "260": "3",
+    "280": "E",
+    "300": "1",
+    "320": "4",
+    "340": "P",
+    "360": "Space",
+    "380": "E",
+    "400": "Space",
+    "420": "5"
+  },
+  "proof": {
+    "won": true,
+    "player": "exit",
+    "form": "silver",
+    "alignment": "east",
+    "tick": 440
+  }
+}

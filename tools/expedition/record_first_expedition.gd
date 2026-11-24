@@ -54,6 +54,17 @@ func press(code:Key)->void:
 	var up:=InputEventKey.new();up.physical_keycode=code
 	Input.parse_input_event(up)
 
+func open_order(id:String,frames:=72)->int:
+	press(KEY_Q)
+	await wait_frames(2)
+	if not check(level.wheel_open,"Expected Hale order wheel for %s; focused %s at %s"%[id,level.focus(),level.walker.position]):return -1
+	for i in level.wheel.options.size():
+		if level.wheel.options[i].id==id:
+			await wait_frames(frames)
+			return KEY_1+i
+	check(false,"Missing Hale order: "+id)
+	return -1
+
 func look_at_point(target:Vector3,frames:=22)->void:
 	for i in frames:
 		var d:Vector3=target-level.eye.global_position
@@ -76,19 +87,30 @@ func run()->void:
 	press(KEY_1);await wait_frames(335);press(KEY_RIGHT);await wait_frames(175);press(KEY_1)
 	await wait_frames(45)
 	if not await go(35.55,0,650):return
-	await wait_frames(50);press(KEY_E);await wait_frames(210);press(KEY_Q)
+	if not await interact(Vector3(36.,1.57,0),"gate",50):return
+	await wait_frames(210)
+	var gate_order:=await open_order("try_gate")
+	if gate_order<0:return
+	press(gate_order)
 	await wait_frames(14);await look_at_point(level.hale_gate_target+Vector3.UP*1.34,120);await wait_frames(130)
 	if not check(level.cues.has("gate") and level.subtitle_id=="hale_gate","Missing Hale's gate response"):return
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):return
 		if point==[24.65,7.75]:
-			await look_at_point(Vector3(23.85,.10,12.02),23)
+			# Let Hale see the plate first. We keep looking when he yields.
+			await look_at_point(level.archive.WINDOW+Vector3.UP*1.48,26)
+			for f in 235:
+				if level.prior_seer==level.contracts.Seer.HALE:break
+				await physics_frame
+			if not check(level.prior_seer==level.contracts.Seer.HALE,"Hale did not open the B2 hand-off"):return
+			await look_at_point(level.archive.PLATE,23)
 			var dual:=false
 			for f in 285:
 				if level.observers==2 and level.overload_blend>.8:dual=true
-				if level.archive.paired and level.observers==1 and level.overload_blend<.19:break
+				if not check(level.retry<=0.,"B2 gaze failed: "+level.notice):return
+				if level.archive.paired and level.observers==1 and level.contracts.trust_notes.has("contract_a"):break
 				await physics_frame
-			if not check(dual and level.archive.paired and level.observers==1,"Missing witnessed B2 overload and recoil"):return
+			if not check(dual and level.archive.paired and level.observers==1 and level.contracts.trust_notes.has("contract_a"),"Missing witnessed B2 overlap and legal hand-off"):return
 			print("B2 CONTROL %.2fs"%level.phase)
 			await look_at_point(level.hale.position+Vector3.UP*1.43,47)
 		if point==[20.95,7.75]:
@@ -110,7 +132,7 @@ func run()->void:
 			if not check(level.captions.entries.has("") and level.captions.entries.has("Hale"),"Expected stacked thought and Hale subtitle"):return
 			await look_at_point(Vector3(29.,1.55,14.1),55)
 			press(KEY_1);await wait_frames(280)
-			if not check(level.manual.visible and level.page.get_parsed_text().contains("双目同视即刻失控") and not level.caption_toast.visible,"Missing handwritten annotation"):return
+			if not check(level.manual.visible and level.page.get_parsed_text().contains("Field annotation:") and not level.caption_toast.visible,"Missing handwritten annotation"):return
 			if not check(level.captions.entries.is_empty(),"Old drama captions survived opening the book"):return
 			press(KEY_1);await wait_frames(40)
 		if point==[28.3,14.1]:
@@ -145,7 +167,9 @@ func run()->void:
 	for f in 225:
 		if level.hale.position.distance_to(level.walker.position)<6. and level.archive.beat==level.archive.Beat.DONE:break
 		await physics_frame
-	var ordered:float=level.phase;press(KEY_Q);await wait_frames(2)
+	var north_order:=await open_order("north")
+	if north_order<0:return
+	var ordered:float=level.phase;press(north_order);await wait_frames(2)
 	if not check(level.posting and level.north_pause>0. and level.captions.entries.has("我"),"North-window order or stacked speakers missing"):return
 	for i in 240:
 		if not check(level.retry<=0.,"Gameplay failure while Hale was traveling"):return

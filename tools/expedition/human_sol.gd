@@ -77,7 +77,7 @@ func observe()->Dictionary:
 	var orders:=[]
 	if level.wheel.wheel.is_visible_in_tree() and level.wheel.open:
 		for option:Dictionary in level.wheel.options:orders.append(String(option.title))
-	return {"people":vision.people(level.eye,level.walker,level),"pitch":level.eye.rotation.x,"orders":orders,"captions":subtitles(),"place":Vector2(p.x,p.z),"heading":atan2(-forward.x,-forward.z),"prompt":text_of(level.prompt),
+	return {"amber":vision.amber_marks(level.eye,level.walker,level),"people":vision.people(level.eye,level.walker,level),"pitch":level.eye.rotation.x,"orders":orders,"captions":subtitles(),"place":Vector2(p.x,p.z),"heading":atan2(-forward.x,-forward.z),"prompt":text_of(level.prompt),
 		"signs":vision.read_labels(level.eye,level.walker,level),"walls":vision.flanks(level.eye,level.walker) if exploratory else {},"lanes":vision.sample(level.eye,level.walker,exploratory or close_floor)}
 
 func motor(action:String, angle:float)->void:

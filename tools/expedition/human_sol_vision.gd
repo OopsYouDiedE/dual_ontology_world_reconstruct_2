@@ -155,3 +155,23 @@ func silhouette(eye:Camera3D, body:CharacterBody3D, rig:Skeleton3D)->Dictionary:
 	if visible_bands<2 or upper-lower<24.:return {}
 	var delta:=body.global_basis.inverse()*(total/visible_bands-eye.global_position)
 	return {"turn":atan2(-delta.x,-delta.z),"range":Vector2(delta.x,delta.z).length()}
+# Appearance proxy: expose only amber-surface samples inside the frustum with
+# clear sight. Cache render candidates, never read puzzle state or shader uniforms.
+var amber_surfaces:Array[MeshInstance3D]=[]
+var indexed:=false
+func amber_marks(eye:Camera3D,body:CharacterBody3D,world:Node)->Array:
+	if not indexed:
+		indexed=true
+		for mesh:MeshInstance3D in world.find_children("*","MeshInstance3D",true,false):
+			var mat:=mesh.material_override as ShaderMaterial
+			if mat!=null and mat.shader==preload("res://scenes/expedition_01/GazePlate.gdshader"):amber_surfaces.append(mesh)
+	var marks:=[]
+	for mesh in amber_surfaces:
+		if not mesh.is_visible_in_tree() or (eye.cull_mask & mesh.layers)==0:continue
+		var box:=mesh.get_aabb()
+		for k:float in [.08,.92]:
+			var pt:=mesh.to_global(Vector3(box.get_center().x,box.end.y,box.position.z+box.size.z*k))
+			var ray:=hit(eye,eye.get_world_3d().direct_space_state,body.get_rid(),pt)
+			if ray.is_empty() or (ray.has('point') and eye.global_position.distance_to(ray.point)<eye.global_position.distance_to(pt)-.04):continue
+			marks.append(Vector2(pt.x,pt.z))
+	return marks

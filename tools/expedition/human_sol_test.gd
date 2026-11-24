@@ -60,6 +60,15 @@ func run()->void:
 		frame.orders=["召回 Hale","原地待命"]
 		check(policy.decide(frame).get("key",0)==KEY_Q,"Recall is not a bridge-watch assignment")
 	check(delays==[12,16,21],"Three distinct delays in the required range")
+	var learner:=Policy.new("curious")
+	var trial:={"captions":[],"amber":[Vector2(0,-1),Vector2(0,-4)]}
+	check(learner.try_plate(trial,Vector2(0,-.30),0).is_empty(),"Uninstructed agent cannot read a suppressed subtitle")
+	trial.captions=["Hold steady two more seconds."];trial.amber=[]
+	check(learner.try_plate(trial,Vector2.ZERO,0).is_empty(),"A subtitle alone supplies no location")
+	trial.captions=[];trial.amber=[Vector2(0,-1),Vector2(0,-4)]
+	var steady:=learner.try_plate(trial,Vector2(0,-.30),0)
+	check(steady.get("probe","")=="steady_amber" and steady.hold>=150 and not steady.get("move",false),"Hold gaze before stepping onto plate")
+	check(learner.try_plate(trial,Vector2(0,-.30),0).get("move",false),"Resume forward travel after gaze hold")
 	var follow:=Policy.new("curious")
 	var frame:={"orders":[],"captions":[],"place":Vector2.ZERO,"heading":0.,"prompt":"","walls":{-1: .38},"lanes":[
 		{"turn":0.,"depth":2.,"end":Vector2(0.,-2.)},

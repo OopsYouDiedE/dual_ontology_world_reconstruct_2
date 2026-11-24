@@ -85,10 +85,12 @@ func decide(o:Dictionary)->Dictionary:
 			invitation_used=true;follow_budget=13
 		if "侧门" in cue or "档案翼" in cue or "旁边有没有路" in cue or "side door" in cue or "archive wing" in cue:
 			side_hint=true
-		if not heard_gate and ("纹丝不动" in cue or "闸门推不开" in cue or "won't budge" in cue):
+		if not heard_gate and ("纹丝不动" in cue or "闸门推不开" in cue or "won't budge" in cue or "拉杆彻底卡死" in cue or "dead-bolted from the inside" in cue):
 			heard_gate=true;confirmed_dead=p
 			rewind_index=breadcrumbs.size()-1
 			route_anchor=p
+	var plate:=try_plate(o,p,heading)
+	if not plate.is_empty():return plate
 	if follow_budget>0:
 		var escort:=follow_companion(o,p,heading)
 		if not escort.is_empty():return escort
@@ -295,3 +297,39 @@ func follow_companion(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 	if absf(aim)>.18:
 		return {"probe":"companion_align","turn":aim,"pitch":-.32,"hold":maxi(48,roundi(absf(aim)/.03)+int(profile.delay)+4)}
 	return {"probe":"companion_observe","turn":0.,"pitch":-.50,"hold":43}
+
+# Commit to a crossing using two personally seen surface points and a visible settling subtitle.
+var approach:=Vector2.INF
+var far_mark:=Vector2.INF
+var amber_lesson:=false
+var plate_phase:=0
+var plate_attempts:=0
+var plate_retry:=0
+func try_plate(o:Dictionary,p:Vector2,heading:float)->Dictionary:
+	if plate_retry>0:
+		plate_retry-=1;return {}
+	for caption:String in o.captions:
+		if "稳住视线两秒" in caption or "hold steady two more seconds" in caption.to_lower():amber_lesson=true
+	if plate_phase==0:
+		if not amber_lesson:return {}
+		var marks:Array=o.get("amber",[])
+		if marks.size()!=2:return {}
+		var near_mark:Vector2=marks[0] if p.distance_to(marks[0])<p.distance_to(marks[1]) else marks[1]
+		far_mark=marks[1] if near_mark==marks[0] else marks[0]
+		approach=near_mark+(near_mark-far_mark).normalized()*.70
+		plate_phase=1;plate_attempts=0
+	plate_attempts+=1
+	if plate_attempts>28:
+		plate_phase=0;plate_retry=12;return {}
+	if plate_phase==1 and p.distance_to(approach)<.45:plate_phase=2
+	var axis:=approach.direction_to(far_mark)
+	var target:=approach if plate_phase==1 else far_mark+axis*.85
+	var delta:=target-p
+	var turn:=angle_difference(heading,yaw_to(delta))
+	if plate_phase==3 and (p-far_mark).dot(axis)>.57:
+		plate_phase=0;plate_retry=25;return {}
+	if plate_phase==2 and absf(turn)<.13:
+		plate_phase=3
+		return {"turn":turn,"pitch":-.65,"hold":165,"probe":"steady_amber"}
+	var walking:=absf(turn)<.20
+	return {"turn":turn,"pitch":-.86 if plate_phase==3 else -.53,"move":walking,"quiet":walking,"hold":int(profile.delay)+maxi(14,ceili(absf(turn)/.03)+3),"probe":"amber_approach" if plate_phase==1 else "amber_cross"}

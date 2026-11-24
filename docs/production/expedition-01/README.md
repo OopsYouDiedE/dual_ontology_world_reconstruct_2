@@ -97,3 +97,7 @@ python tools/expedition/stair_support_report.py
 ```
 
 打开 `.runtime/stair-support/index.html` 查看起终半径矩阵；`cases.csv` 保留每个参数组合和最后探测位置。本项测量脚下支撑，角色的加速度、实际落脚、侧面阻挡和猎手时序由整局测试另行验证。不要把局部筛查行数计入整关场次。
+
+### 台词、布局与楼梯验收
+
+见 [对话落点与布局验收入口](playtest/README.md)：固定走法和类人走法分别计数，提供离线落点图、布局成对实测、真实角色楼梯斜面探测，以及真人偏好评估方法。

@@ -1,0 +1,15 @@
+{
+  "from_lamp": {
+    "record": ["move lamp", "pulse", "wait", "wait", "wait", "wait", "pulse", "wait"],
+    "play": ["move bell", "pulse", "move hub", "move carriage", "prism", "wait", "pulse", "wait", "move exit"],
+    "west_pair": ["lamp", "bell"],
+    "east_pair": ["lamp", "carriage"]
+  },
+  "from_bell": {
+    "record": ["move bell", "pulse", "move hub", "move lamp", "wait", "wait", "pulse", "wait"],
+    "play": ["move lamp", "pulse", "move hub", "move carriage", "prism", "wait", "pulse", "wait", "move exit"],
+    "west_pair": ["bell", "lamp"],
+    "east_pair": ["lamp", "carriage"]
+  },
+  "clock": {"rewind": 180, "splice": 220, "west_pair": 260, "west_dock": 300, "prism_throw": 320, "east_pair": 360, "exit": 400}
+}

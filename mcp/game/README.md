@@ -46,3 +46,4 @@ These research scenes run on the same Forward+ toon pipeline and use isolated pr
 See [mechanism trials](../../docs/design/mechanism-trials/README.md) for testing commands, frozen candidate gates and screenshot evidence.
 
 - `on(scene="shutter_loom", seed=0)`: `shutter_throw_west/throw_east`, `shutter_approach_west/approach_east`, `shutter_cross`, `shutter_back`, `shutter_exit`, `shutter_wait` (20 ticks), `shutter_watch` (three wait beats), `shutter_view`, `shutter_reset`.
+- `on(scene="afterimage")`: `afterimage_hub/lamp/bell/carriage/exit` move to a pad; `afterimage_pulse`, `afterimage_prism`, `afterimage_rewind`, `afterimage_escape`, `afterimage_wait`, `afterimage_view`, `afterimage_reset`.

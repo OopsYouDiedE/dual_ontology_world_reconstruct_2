@@ -1,0 +1,28 @@
+{
+  "revision": "859151ff87485104104cfdb1b32d8e686257012d",
+  "agent": "Gauss",
+  "started_at": "2026-11-25T06:14:08.662901+08:00",
+  "ended_at": "2026-11-25T06:15:44.115342+08:00",
+  "elapsed_seconds": 95.4524405,
+  "surface": "normal-input",
+  "seed": 0,
+  "method": "Independent frozen scene source review; normal keyboard input through its own input handler in Godot 4.7.2 headless.",
+  "actions_by_start_tick": {
+    "0": "E",
+    "20": "A",
+    "40": "X",
+    "100": "X",
+    "160": "W",
+    "180": "X",
+    "240": "Space",
+    "260": "F",
+    "280": "Space"
+  },
+  "proof": {
+    "outcome": "won",
+    "zone": "outside",
+    "tick": 300,
+    "walk_arrive": 260,
+    "exit_code": 0
+  }
+}

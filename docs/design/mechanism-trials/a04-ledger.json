@@ -1,0 +1,25 @@
+{
+  "candidate": "A04 / The Shutter Loom",
+  "revision": "859151ff87485104104cfdb1b32d8e686257012d",
+  "generated_at": "2026-11-25T06:13:05.209097+08:00",
+  "golden": {
+    "revision": "859151ff87485104104cfdb1b32d8e686257012d",
+    "passed_live": true
+  },
+  "red_reports": [
+    {
+      "revision": "859151ff87485104104cfdb1b32d8e686257012d",
+      "agent": "Gauss",
+      "started_at": "2026-11-25T06:14:08.662901+08:00",
+      "ended_at": "2026-11-25T06:15:44.115342+08:00",
+      "surface": "normal-input",
+      "role": "medium",
+      "independent": true,
+      "outcome": "cleared",
+      "receipt": {
+        "file": "a04-red-medium.json",
+        "sha256": "c13b3dc6bf23d9abc47303e70b790b65dc65da0ab091282a141116a8a3813420"
+      }
+    }
+  ]
+}

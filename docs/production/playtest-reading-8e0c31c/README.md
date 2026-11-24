@@ -24,3 +24,9 @@ foreach ($arm in 'book-hints','closed-hints','book-skip','closed-skip') {
 # 用上面四个 Batch: 路径替换下列占位符，批次次序不影响分组。
 python -B docs/production/expedition-01/playtest/reading_report.py <batch1> <batch2> <batch3> <batch4> --sites-log .runtime/reading-sites.log --out .runtime/reading-report.html
 ```
+
+## 通关验收与延时复测
+
+原四组各 0/54 通关，全体到达 130 秒时限。以 main `5c6eca89` 做独立复测：好奇策略、种子 8 和 12、每组 2 局、每局 36,000 tick。8 局全部到时；6 局出现 B3 试验区区域牌，0 局确认独自走过试板。完成标志取自可见撤离结算卡。逐局结果、停止原因、原始批次 ID 见 `ending-audit.json`。
+
+复现：为每个阅读条件运行 `python tools/expedition/human_batch.py run --profiles curious --seeds 8 12 --ticks 36000 --reading <arm>`。用 `ending_audit.py <四个批次目录> --revision <被测提交> --out <报告目录>/ending-audit.json` 汇总，再按原命令生成 HTML。

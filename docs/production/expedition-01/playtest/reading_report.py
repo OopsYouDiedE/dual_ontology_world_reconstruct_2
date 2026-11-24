@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 from dialogue_atlas import catalog
+from ending_audit import STEPS
 
 ARMS = ('closed-skip', 'closed-hints', 'book-skip', 'book-hints')
 
@@ -23,7 +24,7 @@ def extract(d, arm, lines):
                 key=any(i['key'] in ('E','Q') for i in tried), sign=bool(values('read_sign')), prompt=bool(prompts), caption=bool(captions),
                 read_offer=any('阅读' in t for t in prompts), read_press=any(i['key']=='E' and '阅读' in i['prompt'] for i in tried),
                 moves=sum(bool(t['intent'].get('move')) for t in trace), quiet=sum(bool(t['intent'].get('move') and t['intent'].get('quiet')) for t in trace),
-                regions=d['regions'], delivered=delivered, meters=round(d['distance_m'],2), outcome=d['outcome'],
+                steps=[s for s in STEPS if s in values('confirmed')], regions=d['regions'], delivered=delivered, meters=round(d['distance_m'],2), outcome=d['outcome'],
                 path=[[round(x,2),round(z,2)] for _,x,_,z in sampled[::5]],
                 pparams=d['policy_parameters'], pages_text=pages)
 
@@ -49,7 +50,9 @@ def main():
     log=args.sites_log.read_text('utf8'); sites=json.loads(next(s[14:] for s in log.splitlines() if s.startswith('READING_SITES ')))
     assert 'ERROR:' not in log and len(sites)==6 and all(r['ok'] for r in sites)
     assert {(r['site'],r['enabled']) for r in sites}=={(s,read) for s in ('note','stele1','stele2') for read in (True,False)}
-    data=dict(cases=cases,lines=sorted(lines),sources=sources,pages=pages,sites=sites)
+    audit_path=args.out.with_name('ending-audit.json')
+    audit=json.loads(audit_path.read_text('utf8')) if audit_path.exists() else None
+    data=dict(audit=audit,steps=STEPS,cases=cases,lines=sorted(lines),sources=sources,pages=pages,sites=sites)
     template=Path(__file__).with_name('reading_template.html').read_text('utf8'); args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(template.replace('/*PAYLOAD*/',json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')),encoding='utf8')
     print(len(cases),'validated runs;',len(lines),'dialogues;',sources)

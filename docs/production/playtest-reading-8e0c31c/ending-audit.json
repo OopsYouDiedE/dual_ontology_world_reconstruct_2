@@ -1,0 +1,122 @@
+{
+  "revision": "5c6eca89e9b1a4913499d789b0eebc65308bc5de",
+  "ticks": 36000,
+  "profile": "curious",
+  "rows": [
+    {
+      "arm": "closed-skip",
+      "seed": 8,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊",
+        "B1 / B2 档案翼",
+        "B3 试验区"
+      ],
+      "steps": [],
+      "batch": "20261124T143116Z-66e02a18"
+    },
+    {
+      "arm": "closed-skip",
+      "seed": 12,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊",
+        "B1 / B2 档案翼",
+        "B3 试验区"
+      ],
+      "steps": [],
+      "batch": "20261124T143116Z-66e02a18"
+    },
+    {
+      "arm": "closed-hints",
+      "seed": 8,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt; no net displacement above 0.65 m in the last 993 ticks",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊",
+        "B1 / B2 档案翼",
+        "B3 试验区",
+        "A2 侧龛"
+      ],
+      "steps": [],
+      "batch": "20261124T143117Z-8b0e3ec2"
+    },
+    {
+      "arm": "closed-hints",
+      "seed": 12,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt; no net displacement above 0.65 m in the last 1142 ticks",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊",
+        "B1 / B2 档案翼",
+        "B3 试验区"
+      ],
+      "steps": [
+        "检修升闸升起"
+      ],
+      "batch": "20261124T143117Z-8b0e3ec2"
+    },
+    {
+      "arm": "book-hints",
+      "seed": 8,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊"
+      ],
+      "steps": [
+        "确认铁闸推不开"
+      ],
+      "batch": "20261124T143117Z-c31ae865"
+    },
+    {
+      "arm": "book-hints",
+      "seed": 12,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊",
+        "B1 / B2 档案翼",
+        "B3 试验区"
+      ],
+      "steps": [
+        "检修升闸升起"
+      ],
+      "batch": "20261124T143117Z-c31ae865"
+    },
+    {
+      "arm": "book-skip",
+      "seed": 8,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊"
+      ],
+      "steps": [],
+      "batch": "20261124T143117Z-cc465cb0"
+    },
+    {
+      "arm": "book-skip",
+      "seed": 12,
+      "outcome": "tick_budget",
+      "reason": "Budget exhausted after seeing the locked-gate interaction prompt; no net displacement above 0.65 m in the last 637 ticks",
+      "tick": 36000,
+      "regions": [
+        "A1 沉浸长廊",
+        "B1 / B2 档案翼",
+        "B3 试验区"
+      ],
+      "steps": [],
+      "batch": "20261124T143117Z-cc465cb0"
+    }
+  ]
+}

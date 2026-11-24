@@ -32,6 +32,9 @@ class Kit(Graph):
         grid=self.op('GeometryNodeMeshGrid',[('Size X',2),('Size Y',2),('Vertices X',n),('Vertices Y',m)])
         pos=self.node('GeometryNodeInputPosition'); sep=self.node('ShaderNodeSeparateXYZ'); self.put(sep,0,pos.outputs[0]); return grid,*sep.outputs[:2]
     def deform(self,grid,x,y,z): return self.op('GeometryNodeSetPosition',[('Geometry',grid),('Position',self.xyz(x,y,z))])
+    def soffit(self,patch):
+        underside=self.op("GeometryNodeFlipFaces",[("Mesh",patch)])
+        return self.join(patch,self.at(underside,z=-.08))
     def paint(self,geo,name,color):
         mat=bpy.data.materials.get(name) or bpy.data.materials.new(name); mat.diffuse_color=(*color,1)
         return self.op('GeometryNodeSetMaterial',[('Geometry',geo),('Material',mat)])
@@ -42,7 +45,7 @@ g=Kit('FG2 | Vault web patch',[num('Half X',3,.2,12),num('Half Y',2,.2,12),rise,
 res=g.i['Web resolution']; grid,x,y=g.grid(res,res)
 u=g.math('MINIMUM',g.math('ABSOLUTE',x,0),g.math('ABSOLUTE',y,0)); t=g.math('SQRT',g.math('SUBTRACT',1,u),0)
 z=g.mul(g.i['Crown rise'],g.mul(t,g.add(1.28,g.mul(-.28,t))))
-web=g.end(g.deform(grid,g.mul(x,g.i['Half X']),g.mul(y,g.i['Half Y']),z))
+web=g.end(g.soffit(g.deform(grid,g.mul(x,g.i['Half X']),g.mul(y,g.i['Half Y']),z)))
 
 def setup(g):
     n=g.i['Bays']; w=g.mul(g.i['Nave width'],.5); step=g.math('DIVIDE',20,n); hs=g.mul(step,.5); return n,w,step,hs
@@ -68,7 +71,7 @@ def fanpatch(lo,hi,z0,zh):
     grid,u,v=g.grid(g.add(g.mul(sectors,4),1),12); ang=g.mul(g.add(1,u),-math.pi/2); f=g.mul(g.add(1,v),.5); rad=g.add(lo,g.mul(hi-lo,f)); x,y=polar(rad,ang); z=g.add(z0,g.mul(zh,g.math('SQRT',g.math('SUBTRACT',1,f),0))); return g.deform(grid,x,y,z)
 arc=fanpatch(.05,4,h,r); floor=fanpatch(.05,6.0,-.02,0); outer=fanpatch(4,6,g.mul(h,.82),.75)
 # Rotate one radial rib and pier at each sector boundary, about the shared east-end center.
-angle=g.mul(g.node('GeometryNodeInputIndex').outputs[0],g.math('DIVIDE',-math.pi,sectors)); pts=g.op('GeometryNodeMeshLine',[('Count',g.add(sectors,1)),('Offset',(0,0,0))]); c=g.op('GeometryNodeCurveQuadraticBezier',[('Start',g.xyz(4,0,h)),('Middle',g.xyz(4,0,g.add(h,g.mul(r,.5)))),('End',g.xyz(.05,0,g.add(h,r)))]); radial=g.join(g.tube(c,.105),g.at(g.box(.36,.36,h),4,0,g.mul(h,.5))); spokes=g.op('GeometryNodeInstanceOnPoints',[('Points',pts),('Instance',radial),('Rotation',g.xyz(0,0,angle))]); apse=g.end(g.paint(g.at(g.join(arc,floor,outer,spokes),y=-24),'Apse | pale stone',(.77,.66,.5)))
+angle=g.mul(g.node('GeometryNodeInputIndex').outputs[0],g.math('DIVIDE',-math.pi,sectors)); pts=g.op('GeometryNodeMeshLine',[('Count',g.add(sectors,1)),('Offset',(0,0,0))]); c=g.op('GeometryNodeCurveQuadraticBezier',[('Start',g.xyz(4,0,h)),('Middle',g.xyz(4,0,g.add(h,g.mul(r,.5)))),('End',g.xyz(.05,0,g.add(h,r)))]); radial=g.join(g.tube(c,.105),g.at(g.box(.36,.36,h),4,0,g.mul(h,.5))); spokes=g.op('GeometryNodeInstanceOnPoints',[('Points',pts),('Instance',radial),('Rotation',g.xyz(0,0,angle))]); apse=g.end(g.paint(g.at(g.join(g.soffit(arc),floor,g.soffit(outer),spokes),y=-24),'Apse | pale stone',(.77,.66,.5)))
 
 trusses=num('Trusses per wing',7,3,14,I); timber=num('Timber radius',.13,.07,.22); g=Kit('FG2 | Timber roof framing',[trusses,timber]); n=g.i[trusses[0]]; r=g.i[timber[0]]; beams=[((-6.8,0,0),(6.8,0,0)),((-6.8,0,0),(0,0,4.3)),((6.8,0,0),(0,0,4.3)),((0,0,0),(0,0,4.3)),((0,0,0),(-3.4,0,2.15)),((0,0,0),(3.4,0,2.15))]; frame=g.join(*(g.beam(a,b,r) for a,b in beams)); span=g.math('DIVIDE',6,g.math('SUBTRACT',n,1)); rows=[]
 for start in (-24,-9):

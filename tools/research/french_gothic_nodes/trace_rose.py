@@ -47,3 +47,21 @@ for k in range(12):
  a=k*pi/6;x=C+.153*R*cos(a);y=C+.153*R*sin(a);rad=.024*R;draw.ellipse((x-rad,y-rad,x+rad,y+rad),fill=palette[k%7],outline='#bf9973',width=3)
 panel(C,C,R*.128,0,0,True)
 im.resize((1024,1024),Image.Resampling.LANCZOS).save(Path(__file__).with_name('rose_register.png'))
+# Two upright lights: a lozenge quarry, jewelled borders, a gabled canopy
+# and stacked figurative registers, using the photo-guided silhouette above.
+im=Image.new('RGB',(768,960),'#292e48');draw=ImageDraw.Draw(im)
+for k in range(2):
+    left=k*384; cx=left+192
+    for row in range(-1,23):
+        for col in range(9):
+            x=left+col*48+(row%2)*24;y=row*48
+            draw.polygon([(x,y-48),(x+24,y),(x,y+48),(x-24,y)],fill=rng.choice(['#345981','#405785','#685278','#455e76']),outline='#30344b',width=3)
+    for side in (-1,1):
+        x=cx+side*154
+        draw.rectangle((x-12,0,x+12,960),fill='#b99969',outline='#533f48',width=4)
+        for y in range(0,960,38):draw.polygon([(x,y-14),(x+8,y),(x,y+14),(x-8,y)],fill='#8e3448')
+    for y in (145,460,775):
+        draw.line([(cx-123,y+82),(cx-123,y),(cx,y-121),(cx+123,y),(cx+123,y+82)],fill='#d0b48b',width=9)
+        panel(cx,y+89,103,0,k+y//100)
+    for y in (388,704,923):draw.line((left+36,y,left+348,y),fill='#3b3143',width=5)
+im.save(Path(__file__).with_name('lancet_register.png'))

@@ -1,0 +1,30 @@
+{
+  "revision": "19a94785186c2b6de9f8b6a4177230e395c8dbd7",
+  "agent": "Ptolemy",
+  "started_at": "2026-11-25T06:38:54+08:00",
+  "ended_at": "2026-11-25T06:40:03.171+08:00",
+  "elapsed_seconds": 69.171,
+  "surface": "normal-input",
+  "method": "Forward+ real scene, ordinary keyboard events",
+  "actions_by_start_tick": {
+    "0": "E",
+    "20": "C",
+    "40": "C",
+    "60": "W",
+    "80": "W",
+    "100": "W",
+    "120": "W",
+    "140": "W",
+    "160": "W",
+    "180": "C",
+    "200": "C",
+    "220": "C",
+    "240": "C"
+  },
+  "proof": {
+    "tick": 260,
+    "station": 12,
+    "outcome": "won",
+    "attempt": 1
+  }
+}

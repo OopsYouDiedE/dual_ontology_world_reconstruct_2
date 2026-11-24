@@ -1,0 +1,39 @@
+{
+  "inputs": {"C": "climb", "B": "boost", "U": "unload", "T": "transform", "W": "wait", "H": "open_hatch"},
+  "runs": [
+    {
+      "id": "bank_on_lower_rail",
+      "decisions": "CCCCC UUUUUU TWWW CCCCCCCC UUU TWWW BBCCC UUUUUUU HWWW",
+      "tape_sha256": "b5df9f54e01b20f24ce9a548734b88ced1688d576bc284f39fe1306dd8166900",
+      "checkpoints": {
+        "100": {"landing": 1, "strain": 420, "charge": 253, "form": "copper"},
+        "220": {"strain": 0, "charge": 280, "circuit": "regenerative"},
+        "300": {"form": "ceramic", "circuit": "open", "charge": 256},
+        "460": {"landing": 2, "strain": 435, "charge": 256},
+        "600": {"form": "copper", "strain": 0, "charge": 232},
+        "640": {"route": "rail", "height_cm": 1400, "strain": 120, "charge": 32},
+        "700": {"landing": 3, "strain": 516, "charge": 32},
+        "840": {"strain": 0, "charge": 161},
+        "920": {"mode": "won", "charge": 31}
+      },
+      "commits": {"form_changed": [281, 581], "hatch_opened": [901]}
+    },
+    {
+      "id": "start_insulated",
+      "decisions": "TWWW CCCCCC UU CCCCCCCC UUU TWWW BCBCC UUUUUUU HWWW",
+      "tape_sha256": "522025698c4913b1c4fdf1e55b91ecd547bd76e817c210bd3f03ec54f63099c1",
+      "checkpoints": {
+        "80": {"form": "ceramic", "circuit": "open", "charge": 229},
+        "200": {"landing": 1, "strain": 315, "charge": 229},
+        "240": {"strain": 0, "charge": 229},
+        "400": {"landing": 2, "strain": 435, "charge": 229},
+        "540": {"form": "copper", "strain": 0, "charge": 205},
+        "600": {"route": "rail", "height_cm": 1500, "strain": 300, "charge": 5},
+        "640": {"landing": 3, "strain": 516, "charge": 5},
+        "780": {"strain": 0, "charge": 134},
+        "860": {"mode": "won", "charge": 4}
+      },
+      "commits": {"form_changed": [61, 521], "hatch_opened": [841]}
+    }
+  ]
+}

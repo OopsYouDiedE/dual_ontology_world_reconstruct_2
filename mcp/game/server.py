@@ -25,6 +25,7 @@ SCENES = {
     "expedition": "res://scenes/expedition_01/Expedition.tscn",
     "afterimage": "res://scenes/physics_lab/afterimage/Afterimage.tscn",
     "duet": "res://scenes/physics_lab/duet/Duet.tscn",
+    "strata": "res://scenes/physics_lab/strata/Strata.tscn",
     "shutter_loom": "res://scenes/physics_lab/shutter_loom/ShutterLoom.tscn",
     "palimpsest": "res://scenes/physics_lab/palimpsest/Palimpsest.tscn",
     "evidence_register": "res://scenes/physics_lab/evidence_register/EvidenceRegister.tscn",
@@ -95,7 +96,7 @@ class Run:
             command[1:1] = ["--resolution", "1280x720"]
             if eval_review:
                 command.append("--airlock-audit" if scene_key == "observer_airlock" else "--lab-archive-observer")
-        if scene_key in ("chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet"):
+        if scene_key in ("chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet", "strata"):
             command[1:1] = ["--resolution", "1280x720"]
         if scene_key == "rule_evaluation":
             command[1:1] = ["--resolution", "1280x720"]
@@ -120,12 +121,17 @@ class Run:
         temp.replace(request)
         reply = self.directory / f"{name}.json"
         deadline = time.monotonic() + timeout
-        while not reply.is_file():
+        while True:
+            try:
+                # Windows can observe the atomic rename before its file handle is released.
+                result = json.loads(reply.read_text(encoding="utf-8"))
+                break
+            except (FileNotFoundError, PermissionError):
+                pass
             code = self.process.poll()
             if code is not None or time.monotonic() >= deadline:
                 raise RuntimeError(f"Godot {'exited (' + str(code) + ')' if code is not None else 'timed out'}; log: {self.log}")
             time.sleep(.025)
-        result = json.loads(reply.read_text(encoding="utf-8"))
         if (result.get("pid") != self.process.pid or result.get("project_sha256") != self.project_sha
                 or Path(result.get("project_root", "")).resolve() != ROOT.resolve()
                 or result.get("scene") != self.scene or result.get("renderer") != "forward_plus"
@@ -183,7 +189,7 @@ def game_server():
 
     @server.tool(structured_output=False)
     def on(seed: int = 1, screenshot: bool = True,
-           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock", "chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet"] = "rogue",
+           scene: Literal["church_flight", "whole_church", "gothic_bay", "rogue", "expedition", "whitebox", "room_review", "rule_arena", "kinetic_pilot", "bellflower", "shadecloth", "gyro06", "rule_evaluation", "physics_lab", "observer_airlock", "chronograph", "evidence_register", "palimpsest", "shutter_loom", "afterimage", "duet", "strata"] = "rogue",
            eval_review: bool = False):
         """Open the selected test scene in real Forward+ with an isolated user profile."""
         nonlocal run

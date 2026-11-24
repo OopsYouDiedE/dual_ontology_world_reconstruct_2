@@ -14,6 +14,7 @@ const TEST_SCENES := [
 	"res://scenes/physics_lab/shutter_loom/ShutterLoom.tscn",
 	"res://scenes/physics_lab/afterimage/Afterimage.tscn",
 	"res://scenes/physics_lab/duet/Duet.tscn",
+	"res://scenes/physics_lab/strata/Strata.tscn",
 	"res://scenes/rule_evaluation/Evaluation.tscn",
 	"res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
 	"res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",

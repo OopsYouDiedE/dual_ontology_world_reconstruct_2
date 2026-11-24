@@ -524,6 +524,7 @@ func _refresh() -> void:
 	room_view.release_routes(cleared.has(current))
 	var title: String = "Return Junction" if current == "turntable" else Rooms.TITLES[_stage()]
 	var path := "res://content/academy_lots/%s.xml" % house.template_id(current)
+	if phase == "camp": path = "res://content/academy_lots/public_nave.xml"
 	var err: Error = room_view.set_blueprint_room(title, labels, path)
 	assert(err == OK, "Missing native room blueprint " + path)
 	if phase != "camp": room_view.set_crossing(_stage(), "", _variant(), nerve, cleared.has(current))

@@ -31,6 +31,10 @@ func run() -> void:
 	var gothic := game.find_child("PublicHallGothic", true, false)
 	check(gothic != null, "PublicHallGothic architectural shell is mounted in Public Hall")
 	if gothic != null:
+		var well := game.find_child("TourbillonTray", true, false) as Node3D
+		var desk := gothic.find_child("EssenceCalibrationLectern", true, false) as Node3D
+		check(well != null and well.global_position.distance_to(gothic.pendulum_world_pos) < 0.01, "Flush tourbillon and suspension share one axis")
+		check(desk != null and is_equal_approx(desk.position.x, gothic.pendulum_world_pos.x), "North desk is centered beyond pendulum")
 		check(gothic.find_child("FoucaultPendulum", true, false) != null, "Central brass FoucaultPendulum is mounted")
 		check(gothic.find_child("WatchCotAlcove", true, false) != null, "WatchCotAlcove awakening zone is mounted")
 		check(gothic.find_child("EssenceCalibrationLectern", true, false) != null, "EssenceCalibrationLectern zone is mounted")

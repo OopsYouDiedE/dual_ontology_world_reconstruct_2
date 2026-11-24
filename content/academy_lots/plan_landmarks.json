@@ -18,6 +18,21 @@
     {"role": "landmark", "label": "Prep counter", "x": 16, "y": 13, "level": 0},
     {"role": "landmark", "label": "Prep counter", "x": 17, "y": 13, "level": 0}
   ],
+  "public_nave": [
+    {"role": "window", "label": "Lancet", "x": 11, "y": 7, "level": 0, "edge": "TopLeft", "guid": "0x28FED160", "dir": 6},
+    {"role": "window", "label": "Lancet", "x": 11, "y": 11, "level": 0, "edge": "TopLeft", "guid": "0x28FED160", "dir": 6},
+    {"role": "window", "label": "Lancet", "x": 11, "y": 15, "level": 0, "edge": "TopLeft", "guid": "0x28FED160", "dir": 6},
+    {"role": "window", "label": "Lancet", "x": 11, "y": 19, "level": 0, "edge": "TopLeft", "guid": "0x28FED160", "dir": 6},
+    {"role": "window", "label": "Lancet", "x": 11, "y": 23, "level": 0, "edge": "TopLeft", "guid": "0x28FED160", "dir": 6},
+    {"role": "window", "label": "Lancet", "x": 20, "y": 7, "level": 0, "edge": "BottomRight", "guid": "0x28FED160", "dir": 2},
+    {"role": "window", "label": "Lancet", "x": 20, "y": 11, "level": 0, "edge": "BottomRight", "guid": "0x28FED160", "dir": 2},
+    {"role": "window", "label": "Lancet", "x": 20, "y": 15, "level": 0, "edge": "BottomRight", "guid": "0x28FED160", "dir": 2},
+    {"role": "window", "label": "Lancet", "x": 20, "y": 19, "level": 0, "edge": "BottomRight", "guid": "0x28FED160", "dir": 2},
+    {"role": "window", "label": "Lancet", "x": 20, "y": 23, "level": 0, "edge": "BottomRight", "guid": "0x28FED160", "dir": 2},
+    {"role": "entry", "label": "Threshold", "x": 16, "y": 24, "level": 0, "edge": "BottomLeft"},
+    {"role": "exit", "label": "Threshold", "x": 19, "y": 5, "level": 0, "edge": "TopRight"},
+    {"role": "exit", "label": "Threshold", "x": 12, "y": 5, "level": 0, "edge": "TopRight"}
+  ],
   "living_hall": [
     {"role": "entry", "label": "Entry threshold", "x": 12, "y": 12, "level": 0, "edge": "TopRight"},
     {"role": "exit", "label": "Exit threshold", "x": 19, "y": 12, "level": 0, "edge": "TopRight"},

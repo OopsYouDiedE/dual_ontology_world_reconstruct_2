@@ -272,20 +272,20 @@ func _apply_camera_shot(shot: String, t: float) -> void:
 			_cutscene_cam.fov = lerpf(75.0, 68.0, t)
 		"pendulum_push":
 			# Pan and push toward the drifting brass Foucault Pendulum under the Gothic vault
-			var push_pos := stood_eye.lerp(_pendulum_pos + Vector3(-1.3, 1.65, 2.45), t)
+			var push_pos := stood_eye.lerp(_pendulum_pos + Vector3(0.0, 1.65, 6.7), t)
 			_cutscene_cam.global_position = push_pos
 			_cutscene_cam.look_at(hale_head.lerp(pend_mid, t), Vector3.UP)
 			_cutscene_cam.fov = lerpf(68.0, 58.0, t)
 		"pendulum_hold":
 			# Slight upward tilt along the cable to the vaulted keystone, then down to the red drift ring
-			var hold_pos := _pendulum_pos + Vector3(-1.3 + 0.25 * t, 1.65, 2.45 - 0.15 * t)
-			var look_pt := pend_mid.lerp(_pendulum_pos + Vector3(0.0, 0.65, 0.0), t)
+			var hold_pos := _pendulum_pos + Vector3(0.0, 1.65, 6.7 - 0.25 * t)
+			var look_pt := pend_mid.lerp(_pendulum_pos + Vector3(0.0, 1.45, 0.0), t)
 			_cutscene_cam.global_position = hold_pos
 			_cutscene_cam.look_at(look_pt, Vector3.UP)
 			_cutscene_cam.fov = lerpf(58.0, 62.0, t)
 		"gate_handoff":
 			# Pan from pendulum to North Departure Gate & smoothly settle into player's first-person eye
-			var start_pos := _pendulum_pos + Vector3(-1.05, 1.65, 2.30)
+			var start_pos := _pendulum_pos + Vector3(0.0, 1.65, 6.45)
 			_cutscene_cam.global_position = start_pos.lerp(_player_eye_pos, t)
 			var look_end := _player_eye_pos - _player_eye_basis.z * 3.0
 			_cutscene_cam.look_at(gate_look.lerp(look_end, t), Vector3.UP)

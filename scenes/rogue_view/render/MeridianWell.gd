@@ -32,7 +32,7 @@ static func plan(lot: Dictionary) -> Rect2i:
 		if pick.has_area(): break
 	return pick
 
-static func install(parent: Node3D, area: Rect2i) -> void:
+static func install(parent: Node3D, area: Rect2i, flush_display := false) -> void:
 	var root := Node3D.new()
 	root.name="FloorMeridian"
 	parent.add_child(root)
@@ -42,7 +42,15 @@ static func install(parent: Node3D, area: Rect2i) -> void:
 	var s := width*.30
 	watch.scale=Vector3.ONE*s
 	watch.position.y=-.89*s
-	root.add_child(watch)
+	if flush_display:
+		var tray := Node3D.new()
+		tray.name = "TourbillonTray"
+		tray.scale.y = 0.26
+		root.add_child(tray)
+		tray.add_child(watch)
+		watch.rotation_degrees.x = -90.0
+	else:
+		root.add_child(watch)
 	var bronze:=StandardMaterial3D.new()
 	bronze.albedo_color=Color("807159")
 	var well:=StandardMaterial3D.new()
@@ -58,6 +66,30 @@ static func install(parent: Node3D, area: Rect2i) -> void:
 			dims.y=1.84*s
 			_box(root,rail+Vector3.DOWN*dims.y*.5,dims,well)
 	_box(root,Vector3(0,-.01,0),Vector3(width,.008,width),glass)
+	if flush_display:
+		# Four stone spandrels trim the square tile opening to a brass-edged octagon.
+		var stone := StandardMaterial3D.new()
+		stone.albedo_color = Color("576572")
+		for corner in 4:
+			var quadrant := Node3D.new()
+			quadrant.rotation.y = corner * PI / 2
+			root.add_child(quadrant)
+			var r := width * 0.5
+			var cut := width * 0.27
+			var st := SurfaceTool.new()
+			st.begin(Mesh.PRIMITIVE_TRIANGLES)
+			for pt in [Vector3(r,0.018,r), Vector3(r-cut,0.018,r), Vector3(r,0.018,r-cut)]:
+				st.set_normal(Vector3.UP)
+				st.add_vertex(pt)
+			var face := MeshInstance3D.new()
+			face.mesh = st.commit()
+			face.material_override = stone
+			quadrant.add_child(face)
+			var edging := Node3D.new()
+			edging.position = Vector3(r-cut/2,0.024,r-cut/2)
+			edging.rotation.y = PI/4
+			quadrant.add_child(edging)
+			_box(edging,Vector3.ZERO,Vector3(cut*sqrt(2.0),0.03,0.065),bronze)
 	var lamp:=OmniLight3D.new()
 	lamp.position=Vector3(0,-.12*s,s*.55)
 	lamp.light_color=Color("fff1cd")

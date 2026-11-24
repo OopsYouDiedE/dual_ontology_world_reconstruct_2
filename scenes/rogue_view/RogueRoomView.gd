@@ -98,7 +98,13 @@ var _hour := 12.0
 
 func set_hour(hour: float) -> void:
 	_hour = hour
-	if is_instance_valid(_lights): _lights.apply(_hour, "ember" if _template == "kitchen" else "ordinary")
+	if is_instance_valid(_lights):
+		_lights.apply(_hour, "ember" if _template == "kitchen" else "ordinary")
+		if expedition_view and _room_label == "Public Hall":
+			for lamp in _lights.lamps:
+				lamp.position.y = 4.95
+				lamp.light_color = Color("c8d4e3")
+				lamp.light_energy = 1.15
 
 func _tile_surface(tint: Color, wall_surface: bool) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
@@ -335,8 +341,8 @@ func _rebuild_architecture() -> void:
 	var floor_bounds := Rect2i()
 	var well := Rect2i()
 	if expedition_view and _room_label in ["Public Hall", "Observatory"]:
-		well = preload("render/MeridianWell.gd").plan(_lot)
-		if well.has_area(): preload("render/MeridianWell.gd").install(_geometry,well)
+		well = Rect2i(14, 15, 4, 4) if _template == "public_nave" else preload("render/MeridianWell.gd").plan(_lot)
+		if well.has_area(): preload("render/MeridianWell.gd").install(_geometry, well, _template == "public_nave")
 	for cell: Vector2i in _lot.floors:
 		var pattern: int = _lot.patterns.get(cell, 0)
 		var pos := Vector3(cell.x + 0.5, -0.075, cell.y + 0.5)
@@ -352,11 +358,13 @@ func _rebuild_architecture() -> void:
 			_walkable_cells[cell] = true
 			_add_shape(static_body, pos, tile.size)
 	for pattern: int in batches:
-		_commit_static_mesh(batches[pattern], _tile_surface(Plan.floor_color(pattern).darkened(0.22), false))
+		var floor_tint: Color = Color("525e6a") if (expedition_view and _room_label == "Public Hall") else Plan.floor_color(pattern).darkened(0.22)
+		_commit_static_mesh(batches[pattern], _tile_surface(floor_tint, false))
 	var wall := BoxMesh.new()
 	wall.size = Vector3(1, 2.45, 0.13)
 	var walls := SurfaceTool.new()
 	walls.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var gothic_shell := expedition_view and _room_label == "Public Hall"
 	for edge: Vector4i in _lot.segments:
 		var a := Vector2(edge.x, edge.y)
 		var b := Vector2(edge.z, edge.w)
@@ -364,12 +372,14 @@ func _rebuild_architecture() -> void:
 		var middle := (a + b) * 0.5
 		var position := Vector3(middle.x, wall.size.y * 0.5, middle.y)
 		var basis := Basis(Vector3.UP, -d.angle())
-		if _lot.get("windows", {}).has(edge):
-			_build_window(position, basis, d.length())
-		else:
-			walls.append_from(wall, 0, Transform3D(basis * Basis.from_scale(Vector3(d.length(), 1, 1)), position))
+		if not gothic_shell:
+			if _lot.get("windows", {}).has(edge):
+				_build_window(position, basis, d.length())
+			else:
+				walls.append_from(wall, 0, Transform3D(basis * Basis.from_scale(Vector3(d.length(), 1, 1)), position))
 		_add_shape(static_body, position, Vector3(d.length(), wall.size.y, wall.size.z), basis)
-	_commit_static_mesh(walls, _tile_surface(Color("aa997e"), true))
+	if not gothic_shell:
+		_commit_static_mesh(walls, _tile_surface(Color("aa997e"), true))
 	if expedition_view and _room_label == "Public Hall":
 		_gothic_hall = PublicHallGothic.install(_geometry, _lot, floor_bounds, well, _pendulum_drifting)
 	elif expedition_view:
@@ -430,6 +440,7 @@ func _rebuild_objects() -> void:
 		child.queue_free()
 	for item: Dictionary in _lot.objects:
 		if item.role == "window" or item.get("layout_only", false): continue
+		if _template == "public_nave" and item.get("annotation_only", false): continue
 		var anchor := Node3D.new()
 		_object_root.add_child(anchor)
 		anchor.position = _world(item.position)
@@ -489,6 +500,7 @@ func _drop_player() -> void:
 
 
 func _spawn_point() -> Vector3:
+	if _template == "public_nave": return Vector3(16, 0, 23.7)
 	if is_instance_valid(_kitchen): return Kitchen.SPAWN
 	for object: Dictionary in _lot.objects:
 		if object.role == "entry":
@@ -916,6 +928,7 @@ func _hall_floor_positions(graph: Dictionary, reserved: Dictionary, count: int) 
 			visited[next] = true
 			queue.append(next)
 		if reserved.has(cell) or not graph.has(cell): continue
+		if _template == "public_nave" and absf(cell.x + 0.5 - _gothic_hall.pendulum_world_pos.x) < 3.0: continue
 		if is_instance_valid(_crossing):
 			var local := _crossing.to_local(_world(Vector2(cell) + Vector2(.5,.5)))
 			if absf(local.x) < 1.7 and local.z > -.62 and local.z < 2.0: continue

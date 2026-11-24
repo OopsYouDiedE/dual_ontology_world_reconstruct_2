@@ -30,7 +30,7 @@ def contact_sheet(out, frames, basename, heading):
     canvas = Image.new("RGB", (margin * 2 + pad + width * 2, title + n * (height + caption + pad)), "#17242d")
     draw = ImageDraw.Draw(canvas)
     font = ImageFont.load_default(size=19)
-    draw.text((margin, 21), heading, fill="#ffe6c3", font=ImageFont.load_default(size=26))
+    draw.text((margin, 21), heading.replace("—", " / "), fill="#ffe6c3", font=ImageFont.load_default(size=26))
     for i, frame in enumerate(frames):
         x = margin + i % 2 * (width + pad)
         y = title + i // 2 * (height + caption + pad)
@@ -56,6 +56,8 @@ def run_review(out, case):
         dest = out / (label + ".png")
         shutil.copyfile(payload["screenshot"], dest)
         state = payload["state"]
+        verify(state["render"], {"native_scale": 1.0, "msaa": 1, "sdfgi": True})
+        assert abs(state["render"]["ink_opacity"] - 0.40) < 1e-5
         frames.append({"label": label, "kind": kind, "file": dest.name, "sha256": digest(dest),
                        "renderer": payload["renderer"], "viewport": payload["viewport_size"], **state})
         print(label, state["state"]["tick"], flush=True)

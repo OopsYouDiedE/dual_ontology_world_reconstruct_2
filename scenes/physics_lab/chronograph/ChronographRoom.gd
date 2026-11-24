@@ -2,7 +2,8 @@ extends Node3D
 
 const Rules = preload("ChronographRules.gd")
 const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
-const Factory := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
+const BuilderGeometry := preload("res://tools/building_construction/BuildingConstruction/Shared/RecipeGeometry.gd")
+const GothicRibs := preload("res://tools/building_construction/production/rule/GothicRecipes.gd")
 const TILE := 2.25
 const BLUE := Color("73f0db")
 const HEAT := Color("ffc077")
@@ -91,8 +92,9 @@ func assemble() -> void:
 		box(Vector3(x, 0.20, -4.91), Vector3(2.75, 0.14, 0.09), METAL.darkened(0.26))
 		for j in 4:
 			box(Vector3(x, 0.44 + j * 0.45, -4.928), Vector3(2.77, 0.019, 0.024), deep)
-		var part := Factory.create(Factory.COMPONENT_ROOT + "Walls/RecipeGothicPointedRib.gd")
-		part.recipe_parameters.merge({"dx": 1.32, "rise": 0.91, "radius": 0.095, "segments": 9}, true)
+		var rib_material := mat(edge.lightened(0.20))
+		var blend := {"cream": rib_material, "stone": rib_material}
+		var part := BuilderGeometry.finish(GothicRibs.gen_gothic_pointed_rib("GothicRib", blend, 1.32, 0, 0.91, 0.095, 9))
 		part.position = Vector3(x, 1.32, -4.80)
 		shell.add_child(part)
 		for dx in [-1.28, 1.28]:

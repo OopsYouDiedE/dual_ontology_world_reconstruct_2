@@ -1,0 +1,16 @@
+{
+  "revision": "c29e8d62e09c92fac301f583418acd1d0bd528aa",
+  "started_at": "2026-11-25T05:39:22.229+08:00",
+  "ended_at": "2026-11-25T05:40:03.616+08:00",
+  "elapsed_seconds": 41.387,
+  "method": "Independently derived from frozen room and authoritative rules source; no golden materials. Normal actions submitted to ChronographRules.command in Godot 4.7.2 headless.",
+  "action_groups": [
+    ["use", "west", "west", "wait", "wait", "wait", "wait", "east", "east", "north", "north", "wait", "wait", "use"],
+    ["wait", "wait", "wait"],
+    ["south", "use", "east", "use", "wait"],
+    ["north", "east", "wait", "wait", "wait", "wait"],
+    ["east", "east", "north", "use"]
+  ],
+  "events": {"rewind_commit": 288, "forge_heat": 360, "forge_key": 400, "span_warn": 469, "span_open": 517, "echo_end": 529, "exit": 580},
+  "result": {"tick": 580, "won": true, "player": "Exit socket", "item": "SPENT", "span": "OPENED", "span_ticks": 37, "exit_code": 0}
+}

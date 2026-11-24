@@ -1,0 +1,112 @@
+{
+  "schema": "evidence_register.replay.v1",
+  "clock": "Each row advances ticks fixed 60 Hz model ticks. Dispatch the InputMap action on the first tick; omitted action means wait, omitted ticks means 1. In interactive MCP, use observable readiness/tick fields rather than assuming process frames equal model ticks.",
+  "cases": [
+    {
+      "id": "golden_clean_sun",
+      "plate": 1,
+      "initial": {"runner_source_rays": 27, "clerk_source_rays": 0, "manual.edition": "III"},
+      "steps": [
+        {"action": "register_take_prism", "expect": {"held": "prism"}},
+        {"action": "register_drawer", "ticks": 13},
+        {"action": "register_send", "ticks": 30, "expect": {"drawer_ticks_left": 1, "received": "", "sample_socket": "sleeve"}},
+        {"expect": {"drawer_ticks_left": 0, "receipt_mark": "sun", "clerk_sample_rays": 0}},
+        {"action": "register_sun"},
+        {"action": "register_release", "expect": {"last_event": "release_denied", "latch_open": false}},
+        {"action": "register_proof", "ticks": 13},
+        {"action": "register_show", "ticks": 39, "expect": {"clerk_sample_rays": 27, "proof_ticks": 39, "manual.edition": "III"}},
+        {"expect": {"proof_ticks": 40, "manual.edition": "IV", "pressure_debt": 0, "rule_permits_release": true}},
+        {"action": "register_release", "expect": {"last_event": "release_allowed", "latch_open": true, "stamp_ready": false}},
+        {"action": "register_threshold", "ticks": 24, "expect": {"manual.edition": "IV", "stamp_ready": true, "slide_raised": false}},
+        {"action": "register_file", "expect": {"outcome": "clean", "pressure_debt": 0}}
+      ]
+    },
+    {
+      "id": "blind_versus_shared_light",
+      "plate": 1,
+      "steps": [
+        {"action": "register_take_prism"},
+        {"action": "register_drawer", "ticks": 13},
+        {"action": "register_send", "ticks": 31},
+        {"action": "register_show", "ticks": 60, "expect": {"last_event": "proof_occluded", "clerk_sample_rays": 0, "proof_ticks": 0, "manual.edition": "III"}},
+        {"action": "register_sun"},
+        {"action": "register_proof", "ticks": 13},
+        {"action": "register_show", "ticks": 27, "expect": {"proof_ticks": 27}},
+        {"action": "register_drawer", "ticks": 13, "expect": {"last_event": "proof_interrupted", "proof_ticks": 0}},
+        {"action": "register_proof", "ticks": 13},
+        {"action": "register_show", "ticks": 13, "expect": {"proof_ticks": 13, "manual.edition": "III"}},
+        {"ticks": 27, "expect": {"proof_ticks": 40, "manual.edition": "IV"}}
+      ]
+    },
+    {
+      "id": "wax_and_wrong_dial",
+      "plate": 2,
+      "steps": [
+        {"action": "register_take_wax"},
+        {"action": "register_drawer", "ticks": 13},
+        {"action": "register_send", "ticks": 31, "expect": {"receipt_mark": "moon"}},
+        {"action": "register_sun"},
+        {"action": "register_override", "expect": {"last_event": "receipt_mismatch", "pressure_debt": 0, "latch_open": false}},
+        {"action": "register_moon"},
+        {"action": "register_proof", "ticks": 13},
+        {"action": "register_show", "ticks": 60, "expect": {"last_event": "proof_inert", "clerk_sample_rays": 27, "proof_ticks": 0, "manual.edition": "III"}},
+        {"action": "register_release", "expect": {"last_event": "release_denied", "latch_open": false}}
+      ]
+    },
+    {
+      "id": "unbraced_override_then_recovery",
+      "plate": 1,
+      "steps": [
+        {"action": "register_take_prism"},
+        {"action": "register_drawer", "ticks": 13},
+        {"action": "register_send", "ticks": 31},
+        {"action": "register_sun"},
+        {"action": "register_override", "expect": {"warning_ticks_left": 120, "latch_open": true, "manual.edition": "III", "pressure_debt": 1}},
+        {"ticks": 119, "expect": {"warning_ticks_left": 1, "latch_open": true, "stamp_ready": false}},
+        {"expect": {"last_event": "panic_closed", "panic_fired": true, "latch_open": false}},
+        {"action": "register_override", "expect": {"last_event": "override_spent", "latch_open": false}},
+        {"action": "register_proof", "ticks": 13},
+        {"action": "register_show", "ticks": 40, "expect": {"manual.edition": "IV", "pressure_debt": 1}},
+        {"action": "register_release"},
+        {"action": "register_threshold", "ticks": 24},
+        {"action": "register_file", "expect": {"outcome": "recovered", "pressure_debt": 1}}
+      ]
+    },
+    {
+      "id": "braced_emergency_moon",
+      "plate": 2,
+      "steps": [
+        {"action": "register_take_wax"},
+        {"action": "register_drawer", "ticks": 13},
+        {"action": "register_send", "ticks": 31},
+        {"action": "register_moon"},
+        {"action": "register_override"},
+        {"action": "register_threshold", "ticks": 13},
+        {"action": "register_brace", "expect": {"brace_fitted": true, "stamp_ready": false}},
+        {"action": "register_file", "expect": {"last_event": "file_refused", "outcome": ""}},
+        {"ticks": 105, "expect": {"last_event": "panic_braced", "stamp_ready": true, "manual.edition": "III"}},
+        {"action": "register_file", "expect": {"outcome": "emergency", "pressure_debt": 1}}
+      ]
+    },
+    {
+      "id": "revised_manual_rejects_wax_substitution",
+      "plate": 2,
+      "steps": [
+        {"action": "register_take_prism"},
+        {"action": "register_drawer", "ticks": 13},
+        {"action": "register_send", "ticks": 31},
+        {"action": "register_sun"},
+        {"action": "register_proof", "ticks": 13},
+        {"action": "register_show", "ticks": 40, "expect": {"manual.edition": "IV", "rule_permits_release": false}},
+        {"action": "register_moon", "expect": {"rule_permits_release": true}},
+        {"action": "register_release", "expect": {"latch_open": true}},
+        {"action": "register_survey", "ticks": 13},
+        {"action": "register_take_wax"},
+        {"action": "register_drawer", "ticks": 13},
+        {"action": "register_send", "ticks": 31, "expect": {"latch_open": false, "dial": "", "received": "wax", "manual.edition": "IV"}},
+        {"action": "register_moon", "expect": {"rule_permits_release": false}},
+        {"action": "register_release", "expect": {"last_event": "release_denied", "latch_open": false}}
+      ]
+    }
+  ]
+}

@@ -14,6 +14,7 @@ var action_help: Label
 var facts: Label
 var instrument: Label
 var controls: Label
+var ink: MeshInstance3D
 
 
 func _ready() -> void:
@@ -35,8 +36,12 @@ func _ready() -> void:
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.current = true
 	add_child(camera)
-	add_child(Ink.create())
-	get_viewport().msaa_3d = Viewport.MSAA_4X
+	if RenderingServer.get_current_rendering_method() == &"forward_plus":
+		ink = Ink.create()
+		ink.material_override.set_shader_parameter("opacity", 0.40)
+		add_child(ink)
+	get_viewport().msaa_3d = Viewport.MSAA_2X
+	get_viewport().scaling_3d_scale = 1.0
 	make_hud()
 	apply_look()
 	apply_camera()
@@ -150,4 +155,7 @@ func refresh() -> void:
 
 
 func mcp_observe() -> Dictionary:
-	return {"state": model.state(), "section": view_index + 1, "look": LOOKS[look][0], "faded_piers": front_faded}
+	return {"state": model.state(), "section": view_index + 1, "look": LOOKS[look][0], "faded_piers": front_faded,
+		"render": {"native_scale": get_viewport().scaling_3d_scale, "msaa": get_viewport().msaa_3d,
+		"ink_opacity": ink.material_override.get_shader_parameter("opacity") if ink != null else 0.0,
+		"sdfgi": world.environment.sdfgi_enabled}}

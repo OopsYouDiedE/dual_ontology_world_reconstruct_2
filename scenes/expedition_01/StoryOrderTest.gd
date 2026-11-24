@@ -33,6 +33,15 @@ func run() -> void:
 	level.phase = 0.
 	move_to(Vector3(1, .03, 0), Vector3(2, 0, 0))
 	check(caption("Hale") == "start", "arrival with Hale triggers local opening at phase zero")
+	var remaining:float=level.captions.entries["Hale"].remaining
+	level.toggle_book()
+	check(not level.captions.visible,"manual hides world dialogue")
+	level.toggle_book()
+	check(caption("Hale")=="start" and level.captions.entries["Hale"].remaining==remaining,"closing manual restores the interrupted line and reading time")
+	level.oil=10.;level.lamp_on=false;level.rules(1.)
+	check(is_equal_approx(level.oil,10.),"an extinguished wick consumes no fuel in the arcade")
+	level.oil=0.;level.toggle_lamp();check(not level.lamp_on,"empty lamp cannot relight")
+	level.oil=65.;level.toggle_lamp()
 	move_to(Vector3(13, .03, 0), Vector3(12, 0, 0))
 	check(caption("Hale") != "start", "leaving the entrance clears the opening even with Hale nearby")
 	move_to(Vector3(34, .03, 0), Vector3(33, 0, 0))

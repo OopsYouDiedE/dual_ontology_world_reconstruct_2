@@ -73,13 +73,16 @@ func subtitles()->Array:
 			if not line.is_empty():lines.append(line)
 	return lines
 
+func use_ring_visible()->bool:
+	return level.polish.cross.is_visible_in_tree() and level.polish.ring>.8 and not level.polish.page_reticle
+
 func observe()->Dictionary:
 	var p:Vector3=level.walker.global_position
 	var forward:Vector3=-level.walker.global_basis.z
 	var orders:=[]
 	if level.wheel.wheel.is_visible_in_tree() and level.wheel.open:
 		for option:Dictionary in level.wheel.options:orders.append(String(option.title))
-	return {"amber":vision.amber_marks(level.eye,level.walker,level),"people":vision.people(level.eye,level.walker,level),"pitch":level.eye.rotation.x,"orders":orders,"captions":subtitles(),"place":Vector2(p.x,p.z),"heading":atan2(-forward.x,-forward.z),"prompt":text_of(level.prompt),
+	return {"amber":vision.amber_marks(level.eye,level.walker,level),"people":vision.people(level.eye,level.walker,level),"pitch":level.eye.rotation.x,"orders":orders,"region":text_of(level.polish.card_title),"oil_warning":level.polish.oil_label.is_visible_in_tree() and level.polish.oil_label.modulate==Color("ff9a80"),"goal":text_of(level.polish.field_note),"captions":subtitles(),"place":Vector2(p.x,p.z),"heading":atan2(-forward.x,-forward.z),"prompt":text_of(level.prompt),
 		"signs":vision.read_labels(level.eye,level.walker,level),"walls":vision.flanks(level.eye,level.walker) if exploratory else {},"lanes":vision.sample(level.eye,level.walker,exploratory or close_floor)}
 
 func motor(action:String, angle:float)->void:
@@ -184,7 +187,7 @@ func run()->void:
 		var region:=text_of(level.polish.card_title)
 		if not region.is_empty() and region not in regions:
 			regions.append(region);record("region_card",region)
-			if "源井" in region or "井区" in region or "Caisson" in region:shaft_threat=true
+			if not reading.ends_with("-skip") and ("源井" in region or "井区" in region or "Caisson" in region):shaft_threat=true
 		var prompt:=text_of(level.prompt)
 		if not prompt.is_empty() and prompt!=last_prompt:record("prompt",prompt)
 		last_prompt=prompt
@@ -195,6 +198,7 @@ func run()->void:
 		var lines:=subtitles()
 		for line:String in lines:
 			if line not in last_subtitles:record("caption",line)
+			if reading.ends_with("-skip"):continue
 			var low:=line.to_lower()
 			if "纹丝不动" in line or "拉杆卡死" in line or "拉杆彻底卡死" in line or "推不开" in line or "锁死了" in line or "dead-bolted" in low or "won't budge" in low:heard_side_door=true
 			if "动静" in line or "听声" in line or "苏醒" in line or "回声" in line or "脚步声" in line or "just woke" in low or "pacing" in low:shaft_threat=true
@@ -211,10 +215,12 @@ func run()->void:
 		if tick==next-delay:
 			perception=observe();observed_tick=tick
 			if not reading.is_empty():
-				var textual:bool=perception.prompt!="" or not perception.signs.is_empty() or not perception.captions.is_empty()
+				var textual:bool=perception.goal!="" or perception.prompt!="" or not perception.signs.is_empty() or not perception.captions.is_empty()
 				if textual:hint_samples+=1
 				if reading.ends_with("-skip"):
-					perception.prompt="";perception.signs=[];perception.captions=[]
+					perception["use_ring"]=use_ring_visible()
+					perception.region="";perception.oil_warning=false
+					perception.goal="";perception.prompt="";perception.signs=[];perception.captions=[]
 				elif textual:hint_reads+=1
 			if previous_probe.ends_with("_low") or previous_probe.ends_with("_middle") or previous_probe.ends_with("_high"):
 				var height:=previous_probe.get_slice("_",1)
@@ -226,6 +232,7 @@ func run()->void:
 		if tick==next:
 			assert(tick-observed_tick==delay and not perception.is_empty())
 			last_intent=policy.decide(perception);decisions+=1
+			if last_intent.get("probe","")=="try_visible_ring" and not use_ring_visible():last_intent={"probe":"lost_use_ring"}
 			if careful_from_manual and shaft_threat and not escaping and last_intent.get("move",false):last_intent["quiet"]=true
 			if escaping and last_intent.get("move",false):last_intent["quiet"]=false
 			var motor_text:="轻步前进" if last_intent.get("move",false) and last_intent.get("quiet",false) else "向前走" if last_intent.get("move",false) else "站定"
@@ -249,7 +256,7 @@ func run()->void:
 				if sign.text not in seen_signs:
 					seen_signs.append(sign.text);record("read_sign",{"text":sign.text,"observed_tick":observed_tick})
 			if last_intent.has("key"):
-				record("input",{"key":OS.get_keycode_string(last_intent.key),"observed_tick":observed_tick,"prompt":perception.prompt,"orders":perception.orders})
+				record("input",{"key":OS.get_keycode_string(last_intent.key),"observed_tick":observed_tick,"prompt":perception.prompt,"orders":perception.orders,"use_ring":perception.get("use_ring",false)})
 			apply(last_intent)
 			next+=int(last_intent.get("hold",policy.profile.hold))
 	apply({})

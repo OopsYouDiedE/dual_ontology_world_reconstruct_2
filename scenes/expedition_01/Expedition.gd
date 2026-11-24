@@ -319,7 +319,7 @@ func toggle_book()->void:
 	manual.visible=not manual.visible;read_book=true
 	if manual.visible:
 		book_page=0;render_book();toast_time=0.;caption_toast.hide()
-		captions.clear();evidence_thought_delay=-1.
+		# The manual pauses world time; resume the same conversation on close.
 		play_ui("page",-19.)
 	else:play_ui("book_close",-19.)
 	prompt.visible=not manual.visible;prompt_notice.visible=not manual.visible and prompt_notice.text!=""
@@ -500,6 +500,8 @@ func say(t:String)->void:
 	notice=t;msg_time=4.
 	audit_action.emit("feedback",t)
 func toggle_lamp()->void:
+	if not lamp_on and oil<=0.:
+		say(R18n.pick("灯油已尽。","The lamp is empty."));return
 	lamp_on=not lamp_on
 	play_ui("cue",-16.)
 	say("提灯已熄。" if not lamp_on else "提灯亮了。")
@@ -572,6 +574,7 @@ func focus()->String:
 	if released and not collected and aimed(kit.core.position,2.8):return "core"
 	if collected and not shortcut_open and aimed(kit.leaf.global_position,3.5,.94):return "return"
 	if collected and not exit_open and walker.position.x>=0. and aimed(Vector3(.37,1.5,0),3.):return "exit"
+	if released and not collected and aimed(kit.watch_station.global_position,2.7,.92):return "north"
 	if released and walker.position.x>47.45 and near(Vector3(49,0,10),4.5) and aimed(kit.polar(12.45,1.5*PI,6.42),24,.976):return "north"
 	if equipped and walker.position.x>46:
 		var landing:Variant=Plane(Vector3.UP,hunter.CENTER.y).intersects_ray(eye.global_position,-eye.global_basis.z)
@@ -1264,7 +1267,7 @@ func rules(dt:float)->void:
 			line_once("collapse",R18n.pick("前面塌死了，穿档案翼绕去总控室。断梁是新的，像是昨夜落闸震塌的。","Blocked—cut through the Archive Wing to Control. Fresh splinters; probably came down when they slammed the gate."))
 	if not released and not tutorial_room and p.x>30. and p.x<36. and absf(p.z)<2.3:
 		halo.light_energy=2.3
-	oil=maxf(0.,oil-dt*.11)
+	if lamp_on:oil=maxf(0.,oil-dt*.11)
 
 
 
@@ -1275,6 +1278,7 @@ func rules(dt:float)->void:
 	var service:=radial.y>2.65 and radial.length()>12.35 and radial.length()<14.25 and absf(p.y)<.35
 	var drain:float=float(genome.catwalk_oil_drain) if service else (float(genome.dark_oil_drain) if in_b4(p) else (float(genome.base_oil_drain) if lamp_on and p.x>2.0 else 0.))
 	if drain>0.:oil=maxf(0.,oil-dt*drain)
+	if lamp_on and oil<=0.:lamp_on=false
 	var grace_lim:float=float(genome.catwalk_grace_sec)
 	if service and oil<=0:
 		catwalk_oil_grace+=dt

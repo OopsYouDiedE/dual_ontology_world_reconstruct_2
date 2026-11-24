@@ -51,6 +51,9 @@ func run()->void:
 		check(not policy.decide(frame).get("move",false),"Empty visual field causes sweep rather than blind walk")
 		frame.prompt="[E] 晃动铁闸　[Q] 请 Hale 试试"
 		check(policy.decide(frame).get("key",0)==KEY_Q,"Gate prompt selects Q")
+		frame.prompt="[Q] Hold   [E] Talk"
+		check(policy.decide(frame).get("key",0)==KEY_E,"conversation and hold are separate actions")
+		check(not policy.decide(frame).has("key"),"do not repeat the same conversation")
 		frame.prompt="";frame.orders=["原地待命","让 Hale 试闸"]
 		check(policy.decide(frame).get("key",0)==KEY_2,"Uses displayed menu index, even if rearranged")
 		frame.orders=["去北窗盯桥","原地待命"]

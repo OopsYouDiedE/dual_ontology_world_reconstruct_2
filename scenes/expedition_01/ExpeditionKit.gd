@@ -20,6 +20,7 @@ const RETURN_PATH := [Vector2(RETURN_ELBOW,12.45),Vector2(RETURN_ELBOW,RETURN_SO
 var return_exit_gate:Node3D
 var gate_spots:Array[Marker3D]=[]
 var north_spot:Marker3D
+var watch_station:Node3D
 var bridge:Node3D
 var airlock:Node3D
 var test_board:Node3D
@@ -421,7 +422,15 @@ func shaft()->void:
 	for z in [.44,1.36]:rect("PressedDoorPanel",-.084,0,z,.035,2.24,.81,"door_green",false)
 	rect("BrassPanicBar",-.16,-.15,.90,.09,.09,1.38,"brass",false)
 	section=door_section
+	# Bridge-head signal station: the local alternative to pointing at the distant north window.
+	watch_station=rect("WatchSignalBox",50.1,1.18,CZ-1.25,.30,.55,.32,"door_green",false)
+	rect("WatchSignalPedestal",50.1,.48,CZ-1.25,.12,.96,.14,"iron",false)
+	label_at("NORTH WATCH",Vector3(49.94,1.64,CZ-1.25),-PI/2)
 	core=rect("SourceCore",CX+10.8,1,CZ,.42,.68,.42,"amber");rect("CorePlinth",CX+10.8,.31,CZ,.85,.62,.85,"joint")
+	# A readable destination across the span, mounted above the core instead of on its pickup.
+	rect("CoreBayHeader",CX+11.65,2.45,CZ,.12,.82,2.6,"iron",false)
+	for offset in [-1.18,1.18]:rect("CoreBayUpright",CX+11.65,1.05,CZ+offset,.08,2.1,.08,"iron",false)
+	label_at("CORE BAY",Vector3(CX+11.57,2.45,CZ),-PI/2,96)
 	for bx in [52.3,69.7]:
 		for bz in [8.55,11.65]:
 			rect("BridgeBollard",bx,.34,bz,.16,.68,.16,"iron",false)

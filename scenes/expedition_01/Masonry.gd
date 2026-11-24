@@ -75,5 +75,5 @@ func plaque(text:String,p:Vector3,width:float,yaw:=0.)->void:
 	box("LetteredEnamelPlaque",p,Vector3(width,.27,.055),"iron",false,yaw)
 	var n:=Label3D.new();n.text=text;n.font_size=38;n.pixel_size=.00285;n.modulate=Color("eddfa9");n.outline_size=0
 	n.rotation.y=yaw;n.double_sided=false;section.add_child(n);n.position=p+facing*.031
-func label_at(text:String,p:Vector3,yaw:=0.0)->void:
-	var n:=Label3D.new();n.text=text;n.font_size=40;n.pixel_size=.004;n.modulate=Color("eddfa9");n.outline_size=5;n.double_sided=true;n.rotation.y=yaw;section.add_child(n);n.position=p
+func label_at(text:String,p:Vector3,yaw:=0.0,glyph_size:=40)->void:
+	var n:=Label3D.new();n.text=text;n.font_size=glyph_size;n.pixel_size=.004;n.modulate=Color("eddfa9");n.outline_size=5;n.double_sided=true;n.rotation.y=yaw;section.add_child(n);n.position=p

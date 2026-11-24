@@ -12,6 +12,12 @@ var scanning:=0
 var spin:=1.
 var last_cell:=Vector2i(99999,99999)
 var previous:=Vector2.INF
+var doused:=false
+var spoke_at:={}
+var handled_rings:={}
+var shaft_axis:=INF
+var shaft_survey:=0
+var surveyed_shaft:=false
 var gate_order:=false
 var last_move:=false
 var drought:=0
@@ -75,14 +81,21 @@ func decide(o:Dictionary)->Dictionary:
 	last_move=false
 	if not o.orders.is_empty():
 		for i in mini(5,o.orders.size()):
-			if "试闸" in o.orders[i] or "盯北窗" in o.orders[i] or o.orders[i]=="去北窗盯桥" or "Try gate" in o.orders[i]:
+			if "试闸" in o.orders[i] or "盯北窗" in o.orders[i] or o.orders[i]=="去北窗盯桥" or "Post at North Window" in o.orders[i] or "Try gate" in o.orders[i]:
 				return {"key":KEY_1+i,"hold":145 if gate_order else 100}
 		return {"key":KEY_Q}
 	if not heard_gate and (breadcrumbs.is_empty() or breadcrumbs[-1].distance_to(p)>1.10):
 		breadcrumbs.append(p)
 		if breadcrumbs.size()>80:breadcrumbs.pop_front()
+	if not doused and o.get("oil_warning",false):
+		doused=true;return {"key":KEY_R,"probe":"reserve_lamp_oil"}
+	var area:=String(o.get("region","" )).to_lower()
+	if gate_released and not surveyed_shaft and ("源井" in area or "caisson" in area):
+		surveyed_shaft=true;shaft_survey=9
 	for caption:String in o.captions:
 		var cue:=caption.to_lower()
+		if not doused and ("按 r 熄灯" in cue or "press r to douse" in cue):
+			doused=true;return {"key":KEY_R,"probe":"share_companion_light"}
 		if not invitation_used and invites_companion(cue):
 			invitation_used=true;follow_budget=13
 		if "侧门" in cue or "档案翼" in cue or "绿漆门" in cue or "绿门" in cue or "旁边有没有路" in cue or "side door" in cue or "archive wing" in cue or "green door" in cue:
@@ -105,20 +118,51 @@ func decide(o:Dictionary)->Dictionary:
 	var prompt:String=o.prompt
 	var target:=prompt.split("　")[0]
 	var token:=[target,current]
-	if "铁闸" in prompt and "[Q]" in prompt and not gate_order:
+	# A player who skips lettering can still recognise the physical-use reticle.
+	# Remember the view, not the underlying object or its interaction id.
+	if o.get("use_ring",false):
+		var view:=edge(p,heading)
+		if not handled_rings.has(view):
+			handled_rings[view]=true;return {"key":KEY_E,"probe":"try_visible_ring"}
+	var goal:=String(o.get("goal",""))
+	if ("交谈" in prompt or "[e] talk" in prompt.to_lower()) and not spoke_at.has(goal):
+		spoke_at[goal]=true;return {"key":KEY_E,"probe":"talk_to_companion"}
+	if ("铁闸" in prompt or "Shake Gate" in prompt) and "[Q]" in prompt and not gate_order:
 		gate_order=true
 		return {"key":KEY_Q}
 	var reading:=("阅读" in prompt or " read " in prompt.to_lower())
-	if "[E]" in prompt and "[Q]" not in prompt and not touched.has(token) and not (reading and examined_text.has(target)):
+	if "[E]" in prompt and ("[Q]" not in prompt or "Shake Gate" in prompt or "晃动铁闸" in prompt) and not touched.has(token) and not (reading and examined_text.has(target)):
 		touched[token]=true
 		if reading:examined_text[target]=true
 		return {"key":KEY_E,"hold":65}
-	if "[Q]" in prompt and "指派" in prompt and not touched.has(token):
+	if "[Q]" in prompt and ("指派" in prompt or "Post Hale" in prompt) and not touched.has(token):
 		touched[token]=true
 		return {"key":KEY_Q}
+	if not wall_mode and not heard_gate and ("沿主廊" in goal or "Follow the arcade" in goal):
+		if o.lanes.is_empty() and absf(float(o.get("pitch",0.)))<.1:
+			return {"turn":0.,"pitch":-.30,"probe":"inspect_arcade_floor"}
+		# A straight, supported sightline along the arcade; check again before a junction or wall.
+		for lane:Dictionary in o.lanes:
+			if absf(lane.turn)<.01 and lane.depth>=1.75 and not stuck:
+				return tracked_walk(lane,p,heading,"walk_arcade",.2,-.18,86 if lane.depth>=3.55 else 47)
 	if heard_gate and side_hint and not archive_approached:
 		var detour:=look_for_side_door(o,p,heading)
 		if not detour.is_empty():return detour
+	if gate_released and not core_escape:
+		# A destination on the far bank is a bearing, never evidence of safe footing.
+		for sign:Dictionary in o.get("signs",[]):
+			if sign.text=="CORE BAY":shaft_axis=heading+float(sign.turn)
+		if not is_finite(shaft_axis) and shaft_survey>0:
+			shaft_survey-=1
+			return {"turn":.75,"pitch":0.,"hold":int(profile.delay)+32,"probe":"survey_far_bank"}
+		if is_finite(shaft_axis):
+			var bearing:=angle_difference(heading,shaft_axis)
+			if absf(bearing)>.24:
+				return {"turn":bearing,"pitch":-.27,"hold":int(profile.delay)+ceili(absf(bearing)/.03)+8,"probe":"align_core_bay"}
+			for lane:Dictionary in o.lanes:
+				if absf(lane.turn)<.01 and lane.depth>=1.25 and not stuck:
+					return tracked_walk(lane,p,heading,"watch_span_ahead",.3,-.42,62)
+			shaft_axis=INF
 	var guided:=follow_goal_sign(o,p,heading)
 	if not guided.is_empty():return guided
 	if wall_mode:return follow_wall(o,heading,p)
@@ -340,8 +384,13 @@ var plate_retry:=0
 func try_plate(o:Dictionary,p:Vector2,heading:float)->Dictionary:
 	if plate_retry>0:
 		plate_retry-=1;return {}
+	if not doused and o.get("oil_warning",false):
+		doused=true;return {"key":KEY_R,"probe":"reserve_lamp_oil"}
+	var area:=String(o.get("region","" )).to_lower()
+	if gate_released and not surveyed_shaft and ("源井" in area or "caisson" in area):
+		surveyed_shaft=true;shaft_survey=9
 	for caption:String in o.captions:
-		if "稳住视线两秒" in caption or "hold steady two more seconds" in caption.to_lower():amber_lesson=true
+		if "稳住视线两秒" in caption or "独自试板" in caption or "我一人注视" in caption or "hold steady two more seconds" in caption.to_lower() or "lone gaze" in caption.to_lower():amber_lesson=true
 	if plate_phase==0:
 		if not amber_lesson:return {}
 		var marks:Array=o.get("amber",[])

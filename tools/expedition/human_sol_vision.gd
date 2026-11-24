@@ -2,15 +2,15 @@ extends RefCounted
 ## First-person depth proxy. No scene traversal, named anchors, navmesh or game-rule queries.
 const RANGE:=9.
 
-func hit(eye:Camera3D, space:PhysicsDirectSpaceState3D, excluded:RID, probe:Vector3)->Dictionary:
+func hit(eye:Camera3D, space:PhysicsDirectSpaceState3D, excluded:RID, probe:Vector3, reach:=RANGE)->Dictionary:
 	if eye.is_position_behind(probe):return {}
 	var pixel:=eye.unproject_position(probe)
 	var area:=eye.get_viewport().get_visible_rect().grow(-8.)
 	if not area.has_point(pixel):return {}
 	var origin:=eye.project_ray_origin(pixel)
 	var ray:=eye.project_ray_normal(pixel)
-	if origin.distance_to(probe)>RANGE:return {}
-	var query:=PhysicsRayQueryParameters3D.create(origin,origin+ray*RANGE,7,[excluded])
+	if origin.distance_to(probe)>reach:return {}
+	var query:=PhysicsRayQueryParameters3D.create(origin,origin+ray*reach,7,[excluded])
 	# Hidden colliders are deliberately transparent to perception (still solid to Sol).
 	for i in 8:
 		var result:=space.intersect_ray(query)
@@ -66,7 +66,7 @@ func read_labels(eye:Camera3D, body:CharacterBody3D, world:Node)->Array:
 			var p:=label.global_position
 			var delta:=p-eye.global_position
 			var distance:=delta.length()
-			if distance<.1 or distance>RANGE or eye.is_position_behind(p):continue
+			if distance<.1 or distance>26. or eye.is_position_behind(p):continue
 			if not label.double_sided and label.billboard==BaseMaterial3D.BILLBOARD_DISABLED and label.global_basis.z.dot(-delta)<=0.:continue
 			var pixel:=eye.unproject_position(p)
 			if not eye.get_viewport().get_visible_rect().grow(-32.).has_point(pixel):continue
@@ -76,10 +76,10 @@ func read_labels(eye:Camera3D, body:CharacterBody3D, world:Node)->Array:
 			var y_axis:=eye.global_basis.y if label.billboard!=BaseMaterial3D.BILLBOARD_DISABLED else label.global_basis.y.normalized()
 			if eye.unproject_position(p+y_axis*glyph*scale_y).distance_to(pixel)<8.:continue
 			if label.billboard==BaseMaterial3D.BILLBOARD_DISABLED and absf(label.global_basis.z.normalized().dot(delta/distance))<.17:continue
-			var sight:=hit(eye,space,body.get_rid(),p)
+			var sight:=hit(eye,space,body.get_rid(),p,26.)
 			if sight.is_empty() or (sight.has("point") and eye.global_position.distance_to(sight.point)<distance-.01):continue
 			var local:=body.global_basis.inverse()*delta
-			labels.append({"text":label.text,"turn":atan2(-local.x,-local.z)})
+			labels.append({"text":label.text,"distance":distance,"turn":atan2(-local.x,-local.z)})
 		else:
 			pending.append_array(node.get_children())
 	return labels

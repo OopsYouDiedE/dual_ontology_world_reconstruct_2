@@ -52,6 +52,7 @@ var fade_rate:=.7
 var bars:=0.
 var bars_timer:=0.
 var ring:=0.
+var page_reticle:=false
 var noise:=FastNoiseLite.new()
 var saved:={}
 var ui_root:CanvasLayer
@@ -68,6 +69,7 @@ var debug_panel:PanelContainer
 var oil_bar:ProgressBar
 var oil_fill:StyleBoxFlat
 var oil_label:Label
+var field_note:Label
 var objective_label:Label
 var hale_brief:Label
 var lang_badge:Label
@@ -134,6 +136,7 @@ func _build_hud(canvas:CanvasLayer)->void:
 	oil_bar=ProgressBar.new();col.add_child(oil_bar);oil_bar.custom_minimum_size=Vector2(146,4);oil_bar.show_percentage=false;oil_bar.max_value=100
 	oil_fill=box(ACCENT,2,Vector2.ZERO);oil_bar.add_theme_stylebox_override("fill",oil_fill);oil_bar.add_theme_stylebox_override("background",box(Color(1,1,1,.12),2,Vector2.ZERO))
 	objective_label=Label.new();objective_label.text=R18n.t("hud.obj.fetch");col.add_child(objective_label)
+	field_note=Label.new();col.add_child(field_note);field_note.hide()
 	hale_brief=Label.new();col.add_child(hale_brief)
 	debug_panel=PanelContainer.new();debug_layer.add_child(debug_panel)
 	debug_panel.position=Vector2(22,146);debug_panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -143,7 +146,7 @@ func _build_hud(canvas:CanvasLayer)->void:
 	state_label=Label.new();diagnostics.add_child(state_label)
 	time_label=Label.new();diagnostics.add_child(time_label)
 	hale_label=Label.new();diagnostics.add_child(hale_label)
-	for l in [oil_label,objective_label,hale_brief,state_label,time_label,hale_label]:
+	for l in [oil_label,objective_label,field_note,hale_brief,state_label,time_label,hale_label]:
 		UiStyle.style_label(l,font,15,UiStyle.TEXT_MAIN,4)
 	UiStyle.style_label(lang_badge,font,13,UiStyle.TEXT_MUTED,3)
 	hale_brief.add_theme_font_size_override("font_size",13)
@@ -156,7 +159,10 @@ func _build_hud(canvas:CanvasLayer)->void:
 		cross.draw_circle(Vector2.ZERO,dot_r,Color(1,1,1,.58+.34*maxf(ring,aim_val)))
 		if aim_val>.05:
 			cross.draw_arc(Vector2.ZERO,lerpf(11.5,5.2,aim_val),0,TAU,32,Color(UiStyle.ACCENT_SOFT,aim_val*.72),1.2,true)
-		if ring>.02:
+		if page_reticle and ring>.02:
+			# A page outline distinguishes optional reading from handling a physical object.
+			cross.draw_rect(Rect2(-8,-10,16,20),Color(ACCENT,ring*.9),false,1.8)
+		elif ring>.02:
 			cross.draw_arc(Vector2.ZERO,6.+7.*ring,0,TAU,40,Color(ACCENT,ring*.9),1.8,true))
 	# Interaction prompt sits just under the reticle, subtitle gets a backing plate.
 	var p:Label=lv.prompt;p.offset_top=27;p.offset_bottom=65;p.add_theme_font_size_override("font_size",19)
@@ -311,6 +317,7 @@ func _overlay(dt:float)->void:
 	var pressure:float=clampf(lv.hunter.exposure/1.45,0.,1.) if in_shaft and not lv.collected else 0.
 	m.set_shader_parameter("pulse",pressure*(.24+.18*sin(lv.phase*7.)));shade.visible=lv.mode<0
 	var want:float=1. if (focus_id!="" and live) else 0.
+	page_reticle=focus_id in ["note","stele1","stele2"]
 	ring=lerpf(ring,want,Feel.exp_damp(14.,dt));cross.queue_redraw()
 
 func _look_stick(dt:float)->void:
@@ -415,6 +422,12 @@ func _hud(dt:float)->void:
 	oil_label.text=R18n.t("hud.oil",[ceili(oil)]);oil_label.modulate=Color("ff9a80") if low else UiStyle.TEXT_MAIN
 	lang_badge.text=R18n.t("hud.lang_badge")
 	objective_label.text=R18n.t("hud.obj.return") if lv.collected else R18n.t("hud.obj.fetch")
+	# Keep a short reminder of directions actually heard from the companion.
+	var reminder:=""
+	if not lv.released and not lv.tutorial_room:
+		if lv.cues.has("sealed_well"):reminder=R18n.t("goal.archive_door")
+		elif lv.cues.has("start") and not lv.cues.has("gate"):reminder=R18n.t("goal.arcade")
+	field_note.text=reminder;field_note.visible=reminder!=""
 	var hale_text:=R18n.t("hud.hale_prefix",[lv.hale_order_text()])
 	hale_brief.text=hale_text
 	var quiet:bool=Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")

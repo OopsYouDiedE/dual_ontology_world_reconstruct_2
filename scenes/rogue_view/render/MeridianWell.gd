@@ -45,18 +45,46 @@ static func install(parent: Node3D, area: Rect2i, flush_display := false) -> voi
 	if flush_display:
 		var tray := Node3D.new()
 		tray.name = "TourbillonTray"
-		tray.scale.y = 0.26
+		tray.scale.y = 0.48
 		root.add_child(tray)
 		tray.add_child(watch)
-		watch.rotation_degrees.x = -90.0
+		watch.scale *= 1.10
+		watch.position.y = -0.65
+		watch.rotation_degrees.x = -82.0
+		watch.hour.hide(); watch.minute.hide()
+		for child in watch.get_children():
+			if child is MeshInstance3D and child.mesh is SphereMesh: child.hide()
+		var brass := StandardMaterial3D.new()
+		brass.albedo_color = Color("ddae5b"); brass.metallic = 0.64; brass.roughness = 0.27
+		for assembly in [watch.yaw,watch.pitch,watch.roll]:
+			for piece in assembly.get_children():
+				if piece.name in [&"BlueSwing", &"SilverCarrier", &"CageDrive"]:
+					for mesh in piece.find_children("*","MeshInstance3D",true,false): mesh.material_override = brass
+		# Open carriage bands turn with the actual geared axes inside the recessed case.
+		for pair in [[watch.yaw,0.89],[watch.pitch,0.71],[watch.roll,0.54]]:
+			var hoop := TorusMesh.new()
+			hoop.inner_radius = pair[1]-0.034; hoop.outer_radius = pair[1]+0.034
+			var band := MeshInstance3D.new(); band.mesh=hoop; band.material_override=brass
+			band.rotation.x = PI/2 if pair[0] != watch.pitch else 0.92
+			band.position.z=0.18; pair[0].add_child(band)
+		var ivory := StandardMaterial3D.new(); ivory.albedo_color=Color("efdbb1")
+		var dial := TorusMesh.new(); dial.inner_radius=width*0.397; dial.outer_radius=width*0.447
+		var chapter := MeshInstance3D.new(); chapter.mesh=dial; chapter.material_override=ivory
+		chapter.position.y=-0.11; chapter.scale.y=0.28; root.add_child(chapter)
+		for i in 60:
+			var a := TAU*i/60.0
+			var mark := Node3D.new(); mark.rotation.y=a; root.add_child(mark)
+			_box(mark,Vector3(0,-0.078,width*0.422),Vector3(0.022,0.008,0.15 if i%5==0 else 0.065),brass)
+		for side: float in [-1,1]:
+			_box(root,Vector3(side*width*0.45,-0.14,0),Vector3(0.065,0.09,width*0.52),brass)
 	else:
 		root.add_child(watch)
 	var bronze:=StandardMaterial3D.new()
 	bronze.albedo_color=Color("807159")
 	var well:=StandardMaterial3D.new()
 	well.albedo_color=Color("283037")
-	var glass:=ShaderMaterial.new()
-	glass.shader=preload("res://scenes/blue_prince_lab/reference/Sapphire.gdshader")
+	var glass: Material = ShaderMaterial.new()
+	(glass as ShaderMaterial).shader=preload("res://scenes/blue_prince_lab/reference/Sapphire.gdshader")
 	_box(root,Vector3(0,-1.83*s,0),Vector3(width,.10,width),well)
 	for side: float in [-1.,1.]:
 		for lateral in [false,true]:
@@ -65,6 +93,11 @@ static func install(parent: Node3D, area: Rect2i, flush_display := false) -> voi
 			_box(root,rail,dims,bronze)
 			dims.y=1.84*s
 			_box(root,rail+Vector3.DOWN*dims.y*.5,dims,well)
+	if flush_display:
+		var pane := StandardMaterial3D.new()
+		pane.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		pane.albedo_color=Color(0.44,0.65,0.73,0.045); pane.roughness=0.16
+		glass=pane
 	_box(root,Vector3(0,-.01,0),Vector3(width,.008,width),glass)
 	if flush_display:
 		# Four stone spandrels trim the square tile opening to a brass-edged octagon.

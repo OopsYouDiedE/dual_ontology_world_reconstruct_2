@@ -26,6 +26,8 @@ var watch_cot_pos := Vector3.ZERO
 var pendulum_world_pos := Vector3.ZERO
 var north_gate_pos := Vector3.ZERO
 
+var station_bounds: Array[Rect2] = []
+
 var drifting := true
 var _time := 0.0
 var _drift_angle := 0.24 # ~14 deg abnormal precession drift
@@ -70,7 +72,7 @@ func _init_materials() -> void:
 	_mat_runner = _make_finish("ca9857", 0.92, 0.05, false, true, 0.0)
 	_mat_lead = _make_finish("1f242b", 0.70, 0.03, false, false, 0.0)
 
-	_mat_runner.set_shader_parameter("emission_gain", 0.34)
+	_mat_runner.set_shader_parameter("emission_gain", 0.18)
 	_mat_wall.set_shader_parameter("pale_wash", 0.09)
 	_mat_rib.set_shader_parameter("pale_wash", 0.13)
 	_mat_vault.set_shader_parameter("pale_wash", 0.10)
@@ -95,9 +97,10 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 		pendulum_world_pos = Vector3(well.position.x + well.size.x * 0.5, 0.0, well.position.y + well.size.y * 0.5)
 	else:
 		pendulum_world_pos = Vector3(cx, 0.0, cz)
-	watch_cot_pos = Vector3(cx - 2.35, 0.0, max_z - 1.25)
+	watch_cot_pos = Vector3(cx - 3.45, 0.0, max_z - 4.7)
 	north_gate_pos = Vector3(cx, 0.0, min_z + 0.45)
 
+	var has_wings: bool = lot.floors.has(Vector2i(6, 13))
 	var bays_z := maxi(3, roundi(span_z / 4.0))
 	var bay_len := span_z / float(bays_z)
 
@@ -119,6 +122,9 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 		for bi in bays_z:
 			var bz0 := min_z + float(bi) * bay_len
 			var bz1 := bz0 + bay_len
+			if has_wings and bi in [2, 3]:
+				_build_open_arch(wx, inward_x, bz0, bz1)
+				continue
 			_build_side_lancet_bay(wx, inward_x, bz0, bz1, (bi + side_i) % 4, lancet_tex)
 
 	# 4. Full-height North & South pointed gable end walls with recessed doors & UV-mapped Rose Windows
@@ -138,6 +144,8 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 
 	# 8. Real ArchBuilder furniture for Watch Cot Alcove & Calibration Lectern
 	_build_functional_props(min_z)
+	if has_wings:
+		_build_watch_wings()
 
 func _pointed_arch_y(x_norm: float) -> float:
 	# Smooth Notre-Dame pointed arch profile from x_norm in [-1, 1] -> [0, CROWN_RISE]
@@ -229,6 +237,7 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 
 func _build_clustered_pier(pos: Vector3, inward_x: float) -> void:
 	var pier := Node3D.new()
+	pier.scale = Vector3(1.48, 1, 1.34)
 	pier.position = pos
 	add_child(pier)
 	# Plinth tiers
@@ -263,6 +272,14 @@ func _build_side_lancet_bay(wx: float, inward_x: float, z0: float, z1: float, va
 	_box(self, Vector3(wx + inward_x * 0.06, 0.14, cz), Vector3(0.14, 0.28, bay_w), _mat_plinth)
 	_box(self, Vector3(wx + inward_x * 0.08, dado_h, cz), Vector3(0.24, 0.12, bay_w), _mat_rib)
 
+	# Raised walnut lancet panels below the glass.
+	var panel_ribs := SurfaceTool.new(); panel_ribs.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in 5:
+		var pz := z0+(i+0.5)*bay_w/5.0
+		var px := wx+inward_x*0.125
+		var profile := PackedVector3Array([Vector3(px,0.24,pz-0.31),Vector3(px,0.94,pz-0.31),Vector3(px,1.09,pz-0.21),Vector3(px,1.25,pz),Vector3(px,1.09,pz+0.21),Vector3(px,0.94,pz+0.31),Vector3(px,0.24,pz+0.31)])
+		_sweep_rib(panel_ribs,profile,0.037)
+	panel_ribs.generate_normals(); _commit_mesh(panel_ribs,_mat_wood,"WalnutArcade")
 	# Upper stone wall backing behind the lancets
 	_box(self, Vector3(wx - inward_x * 0.06, (dado_h + win_top) * 0.5, cz), Vector3(0.12, win_top - dado_h, bay_w), _mat_wall)
 	# Top cornice molding
@@ -442,13 +459,13 @@ func _build_floor_runner(cx: float, min_z: float, max_z: float, span: float) -> 
 func _build_nave_lanterns(min_x: float, max_x: float, min_z: float, bay_len: float, bays_z: int) -> void:
 	for bi in bays_z:
 		var lz := min_z + (float(bi) + 0.5) * bay_len
-		for lx in [min_x + 1.55, max_x - 1.55]:
+		for lx in [min_x + 0.64, max_x - 0.64]:
 			var lamp := OilLamp.instantiate()
-			lamp.hang_length = 1.25
+			lamp.hang_length = 0.68
 			lamp.light_energy = 1.55
 			lamp.shadow_enabled = false
 			lamp.scale = Vector3.ONE * 1.32
-			lamp.position = Vector3(lx, SPRING_H + 0.90, lz)
+			lamp.position = Vector3(lx, SPRING_H - 0.5, lz)
 			add_child(lamp)
 
 func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
@@ -490,7 +507,7 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	pendulum_bob = Node3D.new()
 	pendulum_bob.name = "PendulumBob"
 	pendulum_bob.position = Vector3(0.0, -cable_len, 0.0)
-	pendulum_bob.scale = Vector3.ONE * 1.65
+	pendulum_bob.scale = Vector3.ONE * 2.1
 	pendulum_pivot.add_child(pendulum_bob)
 
 	var sphere := MeshInstance3D.new()
@@ -558,11 +575,7 @@ func _build_functional_props(min_z: float) -> void:
 	cot_root.name = "WatchCotAlcove"
 	cot_root.position = watch_cot_pos
 	add_child(cot_root)
-	var bed := Factory.create("res://tools/building_construction/BuildingConstruction/Beds/RecipeBed.gd")
-	if bed != null:
-		bed.scale = Vector3(0.82, 0.82, 0.82)
-		bed.rotation.y = PI * 0.5
-		cot_root.add_child(bed)
+	_camp_cot(cot_root, Vector3.ZERO)
 
 	# Essence Calibration Lectern (using real ArchBuilder RecipeLectern)
 	var lec_root := Node3D.new()
@@ -573,17 +586,126 @@ func _build_functional_props(min_z: float) -> void:
 	if lectern != null:
 		lectern.rotation.y = PI
 		lec_root.add_child(lectern)
-		var globe := Factory.create("res://tools/building_construction/BuildingConstruction/Props/RecipeArmillary.gd")
-		globe.position = Vector3(0.42, 1.08, 0.0)
-		globe.scale = Vector3.ONE * 0.52
-		lec_root.add_child(globe)
+		_prop(lec_root, "Lighting/BankerLamp", Vector3(-0.8,1.08,0), 0, {"light_energy": 1.2})
+		var map := _prop(lec_root, "Props/Schematic", Vector3(0.14,1.13,0.16), 0, {"width":1.22,"height":0.64})
+		map.rotation.x = -1.28
+		for dx: float in [-0.49,0.77]:
+			var scroll := CylinderMesh.new(); scroll.height=0.68; scroll.top_radius=0.055; scroll.bottom_radius=0.055
+			var spindle := MeshInstance3D.new(); spindle.mesh=scroll; spindle.material_override=_mat_runner
+			spindle.position=Vector3(dx,1.16,0.15); spindle.rotation.x=PI/2; lec_root.add_child(spindle)
+
+func _reserve_station(pos: Vector3, footprint: Vector2, height: float) -> void:
+	station_bounds.append(Rect2(Vector2(pos.x,pos.z)-footprint*0.5,footprint))
+	var body := StaticBody3D.new()
+	body.position=pos+Vector3.UP*height*0.5
+	var shape := BoxShape3D.new(); shape.size=Vector3(footprint.x,height,footprint.y)
+	var col := CollisionShape3D.new(); col.shape=shape; body.add_child(col); add_child(body)
+
+func _camp_cot(parent: Node3D, pos: Vector3) -> void:
+	var cot := Node3D.new(); cot.position=pos; parent.add_child(cot)
+	var canvas := _make_finish("74765b",0.95,0.09)
+	_box(cot,Vector3(0,0.49,0),Vector3(1.87,0.065,0.72),canvas)
+	_box(cot,Vector3(-0.63,0.55,0),Vector3(0.35,0.07,0.54),canvas)
+	for dz: float in [-0.38,0.38]:
+		_box(cot,Vector3(0,0.49,dz),Vector3(1.99,0.056,0.056),_mat_wood)
+	for dx: float in [-0.69,0.69]:
+		for sign_z: float in [-1,1]:
+			var axle := Node3D.new(); axle.position=Vector3(dx,0.25,0); axle.rotation.x=sign_z*0.98; cot.add_child(axle)
+			_box(axle,Vector3.ZERO,Vector3(0.055,0.91,0.055),_mat_wood)
+	_reserve_station(to_local(cot.global_position),Vector2(1.94,0.8),0.48)
+
+func _prop(parent: Node3D, recipe: String, pos: Vector3, yaw := 0.0, params := {}) -> Node3D:
+	var part := Factory.create(Factory.COMPONENT_ROOT + recipe.get_base_dir() + "/Recipe" + recipe.get_file() + ".gd")
+	part.recipe_parameters.merge(params,true)
+	part.position = pos
+	part.rotation.y = yaw
+	parent.add_child(part)
+	return part
+
+func _pool(pos: Vector3, tint: Color, energy: float, reach: float) -> void:
+	var lamp := OmniLight3D.new()
+	lamp.position = pos
+	lamp.light_color = tint
+	lamp.light_energy = energy
+	lamp.omni_range = reach
+	add_child(lamp)
+
+func _build_open_arch(x: float, inward: float, z0: float, z1: float) -> void:
+	var cz := (z0+z1)*0.5
+	var trim := SurfaceTool.new()
+	trim.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var stone := SurfaceTool.new()
+	stone.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var pts := PackedVector3Array()
+	for i in 25:
+		var u := (i-12.0)/12.0
+		var p := Vector3(x,2.24+1.8*sqrt(1.0-absf(u)),cz+u*(z1-z0)*0.5)
+		if i > 0:
+			var last := pts[i-1]
+			var top := Vector3(x,SPRING_H+0.05,p.z)
+			var prev := Vector3(x,top.y,last.z)
+			_add_quad(stone,last,p,top,prev)
+			_add_quad(stone,prev,top,p,last)
+		pts.append(p)
+	_sweep_rib(trim,pts,0.145)
+	for i in pts.size(): pts[i] += Vector3(inward*0.08,0.15,0)
+	_sweep_rib(trim,pts,0.07)
+	trim.generate_normals(); stone.generate_normals()
+	_commit_mesh(stone,_mat_wall,"ArcadeSpandrel")
+	_commit_mesh(trim,_mat_rib,"OpenArchivolt")
+
+func _build_watch_wings() -> void:
+	# Continuous floors and collision boundaries are authored in public_nave.xml.
+	for side: int in [-1,1]:
+		var cx := 16.0+7.5*side
+		for z: float in [13,21]:
+			_box(self,Vector3(cx,2.25,z),Vector3(5,4.5,0.12),_mat_wall)
+			_box(self,Vector3(cx,0.6,z+(0.08 if z==13 else -0.08)),Vector3(5,1.2,0.12),_mat_wood)
+		_box(self,Vector3(cx+2.5*side,2.25,17),Vector3(0.12,4.5,8),_mat_wall)
+		_box(self,Vector3(cx,4.45,17),Vector3(5,0.18,8),_mat_vault)
+		for z: float in [13.2,17,20.8]:
+			_box(self,Vector3(cx,4.28,z),Vector3(5,0.24,0.23),_mat_rib)
+	_camp_cot(self, watch_cot_pos + Vector3(-0.24,0,-1.65))
+	_prop(self,"Props/Screen",Vector3(11.85,0,19.75),PI/2)
+	for z: float in [14.4,17.2,19.6]:
+		_prop(self,"Beds/Bed",Vector3(7.65,0,z),PI/2,{"medical":z<18.0})
+		_reserve_station(Vector3(7.65,0,z),Vector2(2.15,1.15),0.52)
+	_prop(self,"Cabinets/MedicineCabinet",Vector3(9.75,0,13.36))
+	_pool(Vector3(9.8,2.5,16.2),Color("b9dfff"),3.8,6.4)
+	var board := _prop(self,"Props/Chalkboard",Vector3(20.72,0.35,19.15),-1.27)
+	for x: float in [-1.28,1.28]:
+		_box(board,Vector3(x,-0.16,0),Vector3(0.08,0.38,0.1),_mat_wood)
+	for station in [Vector3(19.54,0,19.85),Vector3(24.25,0,18.7)]:
+		_prop(self,"Tables/Table",station,PI/2,{"width":3.4})
+		_reserve_station(station,Vector2(2.15,3.4),0.75)
+		for dx: float in [-0.78,0.78]:
+			_prop(self,"Chairs/Bench",station+Vector3(dx,0,0),PI/2,{"width":3.1})
+	var stove := Vector3(22.45,0,13.9)
+	_prop(self,"Props/Stove",stove,0,{"width":2.0})
+	_prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45)
+	var embers := StandardMaterial3D.new()
+	embers.albedo_color = Color("ff862d"); embers.emission_enabled = true
+	embers.emission = Color("ff7022"); embers.emission_energy_multiplier = 3.4
+	_box(self,stove+Vector3(0,0.5,0.38),Vector3(1.44,0.36,0.06),embers)
+	for i in 9: _box(self,stove+Vector3((i-4)*0.16,0.5,0.43),Vector3(0.034,0.41,0.05),_mat_lead)
+	_pool(stove+Vector3(0,1.02,0.82),Color("ff9e50"),5.4,7.5)
+	_pool(Vector3(21.1,1.45,16.65),Color("ffc182"),1.7,4.4)
+	_prop(self,"Cabinets/Bookshelf",Vector3(16,0,5.38),0,{"width":2.75,"bays":4,"shelves":5})
+	for sx: float in [13.85,18.15]:
+		_prop(self,"Props/Crates",Vector3(sx,0,6.18))
+		for i in 2:
+			var roll := MeshInstance3D.new()
+			var felt := CylinderMesh.new(); felt.top_radius=0.15; felt.bottom_radius=0.15; felt.height=0.85
+			roll.mesh=felt; roll.material_override=_mat_plinth; roll.rotation.x=PI/2
+			roll.position=Vector3(sx+0.32*i,0.15,7.25); add_child(roll)
+	_pool(Vector3(16,2.6,7.5),Color("ffdb9d"),2.1,5.6)
 
 func _make_stained_glass_mat(tex: Texture2D, fallback: Color, _emit_gain: float) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	if tex != null:
 		m.albedo_texture = tex
-		m.albedo_color = Color(0.84, 0.87, 0.94, 1.0)
+		m.albedo_color = Color(0.58, 0.54, 0.62, 1.0)
 	else:
 		m.albedo_color = fallback
 	return m

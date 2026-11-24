@@ -32,6 +32,11 @@ func run() -> void:
 	check(gothic != null, "PublicHallGothic architectural shell is mounted in Public Hall")
 	if gothic != null:
 		var well := game.find_child("TourbillonTray", true, false) as Node3D
+		for arch_z: int in [15, 17]:
+			for door_x: int in [11, 21]:
+				var a := Vector2i(door_x-1, arch_z)
+				var b := a+Vector2i.RIGHT
+				check(game.room_view._is_clear_cell(a) and game.room_view._is_clear_cell(b) and not game.room_view._has_wall_between(a,b), "Open side arcade at %s" % str(b))
 		var desk := gothic.find_child("EssenceCalibrationLectern", true, false) as Node3D
 		check(well != null and well.global_position.distance_to(gothic.pendulum_world_pos) < 0.01, "Flush tourbillon and suspension share one axis")
 		check(desk != null and is_equal_approx(desk.position.x, gothic.pendulum_world_pos.x), "North desk is centered beyond pendulum")

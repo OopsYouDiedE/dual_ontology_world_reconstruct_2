@@ -381,7 +381,7 @@ func _rebuild_architecture() -> void:
 	if not gothic_shell:
 		_commit_static_mesh(walls, _tile_surface(Color("aa997e"), true))
 	if expedition_view and _room_label == "Public Hall":
-		_gothic_hall = PublicHallGothic.install(_geometry, _lot, floor_bounds, well, _pendulum_drifting)
+		_gothic_hall = PublicHallGothic.install(_geometry, _lot, Rect2i(11, 5, 10, 20) if _template == "public_nave" else floor_bounds, well, _pendulum_drifting)
 	elif expedition_view:
 		# The old orbit view needed a cutaway roof. First person needs an interior ceiling.
 		var ceiling := SurfaceTool.new()
@@ -440,7 +440,8 @@ func _rebuild_objects() -> void:
 		child.queue_free()
 	for item: Dictionary in _lot.objects:
 		if item.role == "window" or item.get("layout_only", false): continue
-		if _template == "public_nave" and item.get("annotation_only", false): continue
+		# The nave supplies its own detailed station meshes; native objects remain activity anchors.
+		if _template == "public_nave" and expedition_view: continue
 		var anchor := Node3D.new()
 		_object_root.add_child(anchor)
 		anchor.position = _world(item.position)
@@ -548,6 +549,9 @@ func _nearest_walkable(point: Vector2) -> Vector3:
 func _is_clear_cell(cell: Vector2i) -> bool:
 	if not _walkable_cells.has(cell): return false
 	var center := Vector2(cell) + Vector2(0.5, 0.5)
+	if _template == "public_nave" and is_instance_valid(_gothic_hall):
+		for bounds: Rect2 in _gothic_hall.station_bounds:
+			if bounds.has_point(center): return false
 	if campaign_view and is_instance_valid(_crossing):
 		var local := _crossing.to_local(_world(center))
 		if absf(local.x) < 1.52 and absf(local.z) < .63: return false

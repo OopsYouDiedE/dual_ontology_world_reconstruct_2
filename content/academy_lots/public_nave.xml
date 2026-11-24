@@ -203,6 +203,86 @@
       <floor level="0" x="18" y="24" value="11" />
       <floor level="0" x="19" y="24" value="11" />
       <floor level="0" x="20" y="24" value="11" />
+      <floor level="0" x="6" y="13" value="11" />
+      <floor level="0" x="6" y="14" value="11" />
+      <floor level="0" x="6" y="15" value="11" />
+      <floor level="0" x="6" y="16" value="11" />
+      <floor level="0" x="6" y="17" value="11" />
+      <floor level="0" x="6" y="18" value="11" />
+      <floor level="0" x="6" y="19" value="11" />
+      <floor level="0" x="6" y="20" value="11" />
+      <floor level="0" x="7" y="13" value="11" />
+      <floor level="0" x="7" y="14" value="11" />
+      <floor level="0" x="7" y="15" value="11" />
+      <floor level="0" x="7" y="16" value="11" />
+      <floor level="0" x="7" y="17" value="11" />
+      <floor level="0" x="7" y="18" value="11" />
+      <floor level="0" x="7" y="19" value="11" />
+      <floor level="0" x="7" y="20" value="11" />
+      <floor level="0" x="8" y="13" value="11" />
+      <floor level="0" x="8" y="14" value="11" />
+      <floor level="0" x="8" y="15" value="11" />
+      <floor level="0" x="8" y="16" value="11" />
+      <floor level="0" x="8" y="17" value="11" />
+      <floor level="0" x="8" y="18" value="11" />
+      <floor level="0" x="8" y="19" value="11" />
+      <floor level="0" x="8" y="20" value="11" />
+      <floor level="0" x="9" y="13" value="11" />
+      <floor level="0" x="9" y="14" value="11" />
+      <floor level="0" x="9" y="15" value="11" />
+      <floor level="0" x="9" y="16" value="11" />
+      <floor level="0" x="9" y="17" value="11" />
+      <floor level="0" x="9" y="18" value="11" />
+      <floor level="0" x="9" y="19" value="11" />
+      <floor level="0" x="9" y="20" value="11" />
+      <floor level="0" x="10" y="13" value="11" />
+      <floor level="0" x="10" y="14" value="11" />
+      <floor level="0" x="10" y="15" value="11" />
+      <floor level="0" x="10" y="16" value="11" />
+      <floor level="0" x="10" y="17" value="11" />
+      <floor level="0" x="10" y="18" value="11" />
+      <floor level="0" x="10" y="19" value="11" />
+      <floor level="0" x="10" y="20" value="11" />
+      <floor level="0" x="21" y="13" value="11" />
+      <floor level="0" x="21" y="14" value="11" />
+      <floor level="0" x="21" y="15" value="11" />
+      <floor level="0" x="21" y="16" value="11" />
+      <floor level="0" x="21" y="17" value="11" />
+      <floor level="0" x="21" y="18" value="11" />
+      <floor level="0" x="21" y="19" value="11" />
+      <floor level="0" x="21" y="20" value="11" />
+      <floor level="0" x="22" y="13" value="11" />
+      <floor level="0" x="22" y="14" value="11" />
+      <floor level="0" x="22" y="15" value="11" />
+      <floor level="0" x="22" y="16" value="11" />
+      <floor level="0" x="22" y="17" value="11" />
+      <floor level="0" x="22" y="18" value="11" />
+      <floor level="0" x="22" y="19" value="11" />
+      <floor level="0" x="22" y="20" value="11" />
+      <floor level="0" x="23" y="13" value="11" />
+      <floor level="0" x="23" y="14" value="11" />
+      <floor level="0" x="23" y="15" value="11" />
+      <floor level="0" x="23" y="16" value="11" />
+      <floor level="0" x="23" y="17" value="11" />
+      <floor level="0" x="23" y="18" value="11" />
+      <floor level="0" x="23" y="19" value="11" />
+      <floor level="0" x="23" y="20" value="11" />
+      <floor level="0" x="24" y="13" value="11" />
+      <floor level="0" x="24" y="14" value="11" />
+      <floor level="0" x="24" y="15" value="11" />
+      <floor level="0" x="24" y="16" value="11" />
+      <floor level="0" x="24" y="17" value="11" />
+      <floor level="0" x="24" y="18" value="11" />
+      <floor level="0" x="24" y="19" value="11" />
+      <floor level="0" x="24" y="20" value="11" />
+      <floor level="0" x="25" y="13" value="11" />
+      <floor level="0" x="25" y="14" value="11" />
+      <floor level="0" x="25" y="15" value="11" />
+      <floor level="0" x="25" y="16" value="11" />
+      <floor level="0" x="25" y="17" value="11" />
+      <floor level="0" x="25" y="18" value="11" />
+      <floor level="0" x="25" y="19" value="11" />
+      <floor level="0" x="25" y="20" value="11" />
     </floors>
     <walls>
       <wall level="0" x="11" y="5" segments="3" />
@@ -227,22 +307,6 @@
       <wall level="0" x="20" y="11" segments="4" />
       <wall level="0" x="11" y="12" segments="1" />
       <wall level="0" x="20" y="12" segments="4" />
-      <wall level="0" x="11" y="13" segments="1" />
-      <wall level="0" x="20" y="13" segments="4" />
-      <wall level="0" x="11" y="14" segments="1" />
-      <wall level="0" x="20" y="14" segments="4" />
-      <wall level="0" x="11" y="15" segments="1" />
-      <wall level="0" x="20" y="15" segments="4" />
-      <wall level="0" x="11" y="16" segments="1" />
-      <wall level="0" x="20" y="16" segments="4" />
-      <wall level="0" x="11" y="17" segments="1" />
-      <wall level="0" x="20" y="17" segments="4" />
-      <wall level="0" x="11" y="18" segments="1" />
-      <wall level="0" x="20" y="18" segments="4" />
-      <wall level="0" x="11" y="19" segments="1" />
-      <wall level="0" x="20" y="19" segments="4" />
-      <wall level="0" x="11" y="20" segments="1" />
-      <wall level="0" x="20" y="20" segments="4" />
       <wall level="0" x="11" y="21" segments="1" />
       <wall level="0" x="20" y="21" segments="4" />
       <wall level="0" x="11" y="22" segments="1" />
@@ -258,23 +322,51 @@
       <wall level="0" x="18" y="24" segments="8" />
       <wall level="0" x="19" y="24" segments="8" />
       <wall level="0" x="20" y="24" segments="12" />
+      <wall level="0" x="6" y="13" segments="3" />
+      <wall level="0" x="6" y="14" segments="1" />
+      <wall level="0" x="6" y="15" segments="1" />
+      <wall level="0" x="6" y="16" segments="1" />
+      <wall level="0" x="6" y="17" segments="1" />
+      <wall level="0" x="6" y="18" segments="1" />
+      <wall level="0" x="6" y="19" segments="1" />
+      <wall level="0" x="6" y="20" segments="9" />
+      <wall level="0" x="7" y="13" segments="2" />
+      <wall level="0" x="7" y="20" segments="8" />
+      <wall level="0" x="8" y="13" segments="2" />
+      <wall level="0" x="8" y="20" segments="8" />
+      <wall level="0" x="9" y="13" segments="2" />
+      <wall level="0" x="9" y="20" segments="8" />
+      <wall level="0" x="10" y="13" segments="2" />
+      <wall level="0" x="10" y="20" segments="8" />
+      <wall level="0" x="21" y="13" segments="2" />
+      <wall level="0" x="21" y="20" segments="8" />
+      <wall level="0" x="22" y="13" segments="2" />
+      <wall level="0" x="22" y="20" segments="8" />
+      <wall level="0" x="23" y="13" segments="2" />
+      <wall level="0" x="23" y="20" segments="8" />
+      <wall level="0" x="24" y="13" segments="2" />
+      <wall level="0" x="24" y="20" segments="8" />
+      <wall level="0" x="25" y="13" segments="6" />
+      <wall level="0" x="25" y="14" segments="4" />
+      <wall level="0" x="25" y="15" segments="4" />
+      <wall level="0" x="25" y="16" segments="4" />
+      <wall level="0" x="25" y="17" segments="4" />
+      <wall level="0" x="25" y="18" segments="4" />
+      <wall level="0" x="25" y="19" segments="4" />
+      <wall level="0" x="25" y="20" segments="12" />
     </walls>
     <pools />
   </world>
   <objects>
-    <object level="1" x="11" y="10" guid="0x06EA4309" dir="0" />
-    <object level="1" x="20" y="10" guid="0x5DEA43F0" dir="0" />
-    <object level="1" x="11" y="18" guid="0x68EA432A" dir="0" />
-    <object level="1" x="20" y="18" guid="0x68EA432A" dir="0" />
+    <object level="1" x="23" y="14" guid="0x06EA4309" dir="0" />
+    <object level="1" x="24" y="17" guid="0x5DEA43F0" dir="0" />
+    <object level="1" x="7" y="14" guid="0x68EA432A" dir="0" />
+    <object level="1" x="7" y="18" guid="0x68EA432A" dir="0" />
     <object level="1" x="11" y="7" guid="0x28FED160" dir="6" />
     <object level="1" x="11" y="11" guid="0x28FED160" dir="6" />
-    <object level="1" x="11" y="15" guid="0x28FED160" dir="6" />
-    <object level="1" x="11" y="19" guid="0x28FED160" dir="6" />
     <object level="1" x="11" y="23" guid="0x28FED160" dir="6" />
     <object level="1" x="20" y="7" guid="0x28FED160" dir="2" />
     <object level="1" x="20" y="11" guid="0x28FED160" dir="2" />
-    <object level="1" x="20" y="15" guid="0x28FED160" dir="2" />
-    <object level="1" x="20" y="19" guid="0x28FED160" dir="2" />
     <object level="1" x="20" y="23" guid="0x28FED160" dir="2" />
   </objects>
   <sounds />

@@ -31,8 +31,9 @@ func step(lv,dt:float)->bool:
 	var p:Vector3=lv.walker.position
 	var h:Vector3=lv.hale.position
 	pose=&"";gaze=Vector3.ZERO
-	if beat==Beat.FOLLOW and not lv.learned and in_window(p):
-		beat=Beat.WINDOW;lv.trail.clear();route.clear()
+	# 留守中的 Hale 离得太远就不触发（回到他身边或再按 Q 恢复跟随）。
+	if beat==Beat.FOLLOW and not lv.learned and in_window(p) and lv.hale.position.distance_to(p)<16.:
+		beat=Beat.WINDOW;lv.trail.clear();lv.hale_hold=false;route.clear()
 		if h.x>27.72:
 			if h.z<2.32:
 				route.append(Vector3(31.,0.,0.))
@@ -97,10 +98,15 @@ func step(lv,dt:float)->bool:
 
 func compare(lv,count:int,dt:float)->void:
 	if beat!=Beat.WINDOW or not in_window(lv.walker.position):return
-	overlap=overlap+dt if count==2 else 0.
+	# When Hale joined second he must keep watching through the hand-off.
+	if lv.contracts.a_role==lv.contracts.Seer.PLAYER and lv.contracts.a_state=="overlap":
+		overlap=0.;return
+	if lv.contracts.trust_notes.has("contract_a") and count==1 and gaze!=Vector3.ZERO:
+		overlap=.44
+	else:overlap=overlap+dt if count==2 else 0.
 	if overlap<.44:return
 	paired=true;beat=Beat.WITHDRAW;recoil_left=.65
-	lv.line_once("window","站住！凝视异常板！快移开视线，守则说直视会出事！")
+	lv.line_once("window","两条视线压在同一块板上！契约A：你先看见还是我先看见？说一声，另一人再让开！")
 	lv.polish.kick(.14)
 
 func record_lock(lv)->void:

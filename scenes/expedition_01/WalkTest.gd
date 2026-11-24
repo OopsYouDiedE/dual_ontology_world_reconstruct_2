@@ -11,7 +11,7 @@ func go(x:float,z:float,limit:=2000)->bool:
 	var target:=Vector3(x,0,z);Input.action_press("move_up")
 	for i in limit:
 		if level.retry>0.:
-			Input.action_release("move_up");push_error("Gameplay failure: "+level.notice);return false
+			Input.action_release("move_up");push_error("Gameplay failure at %s: %s"%[level.walker.position,level.notice]);return false
 		if level.finished:Input.action_release("move_up");return true
 		var p:Vector3=level.walker.position;var d:Vector3=target-p;d.y=0
 		if d.length()<.12:Input.action_release("move_up");return true
@@ -105,6 +105,11 @@ func run()->void:
 	for point in [[31,0],[31,4.9],[26.7,4.9],[25.7,5.5],[25.7,7.75],[24.65,7.75],[20.95,7.75],[20.95,9.8],[23.85,9.8],[23.85,12],[23.85,14.12],[25.5,14.1],[28.3,14.1],[34,14.1],[38.9,14.1],[38.9,10],[36.6,8.5]]:
 		if not await go(point[0],point[1]):quit(1);return
 		if point==[24.65,7.75]:
+			# Let Hale take the first watch. He yields after the overlap.
+			level.eye.look_at(Vector3(24.65,1.57,4.))
+			for tick in 240:
+				await physics_frame
+				if level.archive.gaze!=Vector3.ZERO and level.observers==1:break
 			level.eye.look_at(Vector3(23.85,.10,12.02))
 			var two:=false;var withdrew:=false
 			for frame in 240:
@@ -112,6 +117,7 @@ func run()->void:
 				if level.observers==2 and level.overload_blend>.80:two=true
 				if two and level.observers==1 and level.overload_blend<.22 and level.archive.paired:
 					withdrew=true;break
+			if withdrew:await wait_ticks(42) # Finish the second watcher’s custody interval.
 			if not withdrew:push_error("Hale did not trigger and withdraw from the two-observer overload");quit(1);return
 			if level.archive.note or level.learned:push_error("B2 alone wrote the proof");quit(1);return
 			level.eye.rotation=Vector3.ZERO
@@ -149,6 +155,7 @@ func run()->void:
 	for point in [[39,10.1],[48.8,10.1]]:
 		if not await go(point[0],point[1]):quit(1);return
 	if south_only:
+		level.toggle_lamp() # Observe the one-lamp rule on the long service walk.
 		var oil_before:float=level.oil
 		for i in range(33):
 			var pt:Vector3=level.kit.polar(13.3,PI*(1.-i/32.),0.)

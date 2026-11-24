@@ -45,7 +45,11 @@ func wake()->void:
 	stop_audio();bait_answered=false;show();state="patrol";angle=PI;position=CENTER+Vector3(-8,0,0);ticks=0;exposure=0;quiet=0;cast_time=0;lure.hide()
 func tone(player:AudioStreamPlayer3D,sound:AudioStream,db:float)->void:
 	player.stream=sound;player.volume_db=db;player.play()
-func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:Dictionary)->bool:
+## Rule hook: heat multiplies exposure gain (同声律 / 独灯律 double or1.5x it).
+func probe(pos:Vector3)->void:
+	if state=="hunt":return
+	target=Vector3(pos.x,CENTER.y,pos.z);state="investigate";quiet=0;exposure=maxf(exposure,.55);ticks=0
+func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:Dictionary,heat:=1.)->bool:
 	t+=dt
 	var in_well:=p.x>46
 	var floor_pos:=Vector3(p.x,CENTER.y,p.z)
@@ -65,7 +69,7 @@ func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:D
 		lure.hide()
 		if state=="lure":state="investigate"
 		if in_well and (noisy or rage):
-			quiet=0;exposure+=dt;target=floor_pos
+			quiet=0;exposure+=dt*heat;target=floor_pos
 			if state!="hunt":state="investigate"
 			if state!="hunt" and (exposure>=1.45 or (noisy and position.distance_to(target)<3.5)):
 				state="hunt";ticks=0;tone(voice,sounds.scream,1)
@@ -81,7 +85,7 @@ func step(dt:float,p:Vector3,noisy:bool,metal:bool,bait:float,rage:bool,sounds:D
 		ticks+=1
 		# The upper landing is separated from the well by the gallery floor.
 		var reachable:=Vector3(p.x,minf(p.y,2.85) if rage else p.y,p.z)
-		position=position.move_toward(reachable,dt*(5. if rage else 12.))
+		position=position.move_toward(reachable,dt*(3.8 if rage else 12.))
 		if ticks>=40 and position.distance_to(p)<1.45:return true
 	elif state!="lure" or bait_answered:position=position.move_toward(target,4.6*dt)
 	var r:=.5+fmod(t*(2.8 if state=="hunt" else 1.),1.)*2.5;pulse.scale=Vector3(r,.28,r);return false

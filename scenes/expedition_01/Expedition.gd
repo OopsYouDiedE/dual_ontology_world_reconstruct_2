@@ -34,6 +34,41 @@ var demo_single_time:=0.
 var demo_locked:=false
 var archive:=preload("ArchiveWitness.gd").new()
 const GAZE_LOCK_TIME:=2.35
+# --- movement feel ---------------------------------------------------------
+enum { ST_QUIET, ST_WALK, ST_RUN }
+const SPEEDS := [1.55, 3.8, 6.4]
+const ACCEL_GROUND:=26.
+const ACCEL_TURN:=52.
+const ACCEL_STOP:=34.
+const ACCEL_QUIET:=44.
+const AIR_CONTROL:=.20
+const STEP_HEIGHT:=.19
+const JUMP_SPEED:=4.35
+const COYOTE:=.12
+const GRAVITY_RISE:=15.5
+const GRAVITY_FALL:=19.5
+var stance:=ST_WALK
+var stance_blend:=1.
+var jump_buffer:=0.
+var coyote:=0.
+var aim:=0.
+var aiming:=false
+var land_dip:=0.
+var last_vy:=0.
+var air_peak:=0.
+var trust_line_cd:=0.
+var wheel:Node=preload("CommandWheel.gd").new()
+var wheel_open:=false
+const Contracts=preload("ExpeditionContracts.gd")
+var contracts:=Contracts.new()
+var region:=""
+var niche_taken:=false
+var region_card_time:=0.
+var fail_reason:=""
+var prior_seer:=Contracts.Seer.NONE
+var hale_stuck:=0.
+var hale_last:=Vector3.ZERO
+var rule_breach_flash:=0.
 const HALE_WAIT:=Vector3(1.12,0.,1.19)
 const HALE_ENTER:=Vector3(-2.87,0.,.87)
 var plate_finish:=ShaderMaterial.new()
@@ -42,6 +77,7 @@ var overload_blend:=0.
 var plate_presence:=1.
 var plate_spill:=OmniLight3D.new()
 var prompt:=Label.new()
+var prompt_notice:=Label.new()
 var read_book:=false
 var running:=false
 var subtitle_id:=""
@@ -113,6 +149,25 @@ var command_path:=PackedVector3Array()
 var oil:=65.0
 var distraction:=0.
 var hazard:=0
+var lamp_on:=true
+var run_time:=0.
+var pair_loud:=false
+var both_lamp:=false
+var stomp_cool:=0.
+var hale_hold:=false
+var solo_escape:=false
+const SOLO_HATCH:=Vector3(-2.6,1.4,1.34)
+const STELE_A:=Vector3(31.5,1.5,17.40)
+const STELE_B:=Vector3(52.3,2.04,22.47)
+const STELE_TEXT:={
+	"sound":"其一 · 同声律　井底只数声音，不数人头。两个人的脚步叠在一起，它会当成一顿饭——一个人走，另一个站着听。",
+	"light":"其二 · 独灯律　井里只许点一盏灯。两盏灯芯一起爆响，井底会听成两个人的脚步。熄掉自己那盏，借同伴的光走。"}
+const HALE_TALK:={
+	"talk_rules":"手册别离手。这地方的规矩，比墙还厚。",
+	"talk_b4":"架子上全是前班留下的记录……别去翻被撕掉的那页。",
+	"talk_well":"我盯着呢。你只管走你的，别回头找我。",
+	"talk_exit":"快走！我断后——气密门只等你一个人。",
+	"talk_idle":"……你还好吗？我们得赶在天亮前出去。"}
 var retry:=0.
 var notice:=""
 var msg_time:=0.
@@ -122,7 +177,7 @@ func _ready()->void:
 	var c:=CollisionShape3D.new();var shape:=CapsuleShape3D.new();shape.radius=.32;shape.height=1.75;c.shape=shape;c.position.y=.875;walker.add_child(c);walker.floor_max_angle=deg_to_rad(60);walker.floor_constant_speed=true;walker.floor_snap_length=.28;add_child(walker);walker.position=Vector3(1,.03,0);walker.rotation.y=-PI/2;walker.add_child(eye);eye.position.y=1.57;eye.fov=73;eye.current=true
 	add_child(hale);Cast.attach(hale,1,true);setup_hale_animation();hale.position=Vector3(3.15,0,1.22);hale.rotation.y=PI*.5;add_child(survey);survey.far=600;survey.projection=Camera3D.PROJECTION_ORTHOGONAL
 	var canvas:=CanvasLayer.new();canvas.layer=8;add_child(canvas);canvas.add_child(hud);hud.position=Vector2(22,17);hud.add_theme_font_size_override("font_size",17);hud.add_theme_constant_override("outline_size",6)
-	for a in ["expedition_quiet","expedition_use","expedition_section","expedition_watch","expedition_shell","expedition_detail"]:
+	for a in ["expedition_quiet","expedition_use","expedition_section","expedition_watch","expedition_shell","expedition_detail","expedition_hop","expedition_lamp","expedition_stomp"]:
 		if not InputMap.has_action(a):InputMap.add_action(a)
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	var font:=Polish.make_font()
@@ -168,6 +223,13 @@ func _ready()->void:
 	add_child(halo);halo.position=Vector3(31,2.1,2.9);halo.light_color=Color("ffbd70");halo.omni_range=6;halo.light_energy=1.4;halo.shadow_enabled=true
 	add_child(emergency);emergency.position=Vector3(73.15,5.25,9.25);emergency.light_color=Color("ff5234");emergency.omni_range=5.6;emergency.omni_attenuation=1.7;emergency.hide()
 	canvas.add_child(prompt);prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER);prompt.offset_left=-320;prompt.offset_right=320;prompt.offset_top=23;prompt.offset_bottom=68;prompt.vertical_alignment=VERTICAL_ALIGNMENT_TOP;prompt.add_theme_font_size_override("font_size",19);prompt.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;prompt.add_theme_font_override("font",font);prompt.add_theme_constant_override("outline_size",6);prompt.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	canvas.add_child(prompt_notice);prompt_notice.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	prompt_notice.offset_left=-340;prompt_notice.offset_right=340;prompt_notice.offset_top=52;prompt_notice.offset_bottom=80
+	prompt_notice.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	prompt_notice.add_theme_font_override("font",font);prompt_notice.add_theme_font_size_override("font_size",16)
+	prompt_notice.add_theme_constant_override("outline_size",6)
+	prompt_notice.add_theme_color_override("font_color",Color("ffcf9a"))
+	prompt_notice.mouse_filter=Control.MOUSE_FILTER_IGNORE;prompt_notice.hide()
 	canvas.add_child(manual);manual.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	manual.offset_left=-305;manual.offset_right=305;manual.offset_top=-194;manual.offset_bottom=194
 	var paper:=StyleBoxFlat.new();paper.bg_color=Color("e3cda2");paper.border_color=Color("63472b");paper.set_border_width_all(3)
@@ -178,6 +240,9 @@ func _ready()->void:
 	page.add_theme_color_override("default_color",Color("31241a"));page.add_theme_font_size_override("normal_font_size",18)
 	page.add_theme_font_size_override("bold_font_size",22);manual.hide()
 	add_child(polish);polish.setup(self,canvas)
+	add_child(wheel);wheel.setup(canvas,font)
+	wheel.chosen.connect(pick_order)
+	contracts.reset()
 	update_target()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--rogue-mcp-dir="):mcp_controls=true
@@ -195,14 +260,13 @@ func toggle_book()->void:
 		captions.clear();evidence_thought_delay=-1.
 		play_ui("page",-19.)
 	else:play_ui("book_close",-19.)
-	prompt.visible=not manual.visible;captions.visible=not manual.visible;polish.on_book(manual.visible)
+	prompt.visible=not manual.visible;prompt_notice.visible=not manual.visible and prompt_notice.text!=""
+	captions.visible=not manual.visible;polish.on_book(manual.visible)
 func render_book()->void:
-	if book_page==0:
-		page.text="[b]远征员随身规则手册[/b]　01 / 02\n[color=#796346]━━━━━━━━━━━━━━━━━━━━[/color]\n\n井区交班记录　琥珀异常板遇目光即生异变，隔窗目击亦须登记。\n\n学院守则摘录　严禁直视异常板，违者按失控事故处置。\n\n值守须知　井底栖有盲目听觉异体。铁网步声直通井底，深井值守严禁奔跑。"
-		if archive.note:page.append_text("\n\n[font_size=16][color=#862f25]手写批注　单道目光持续注视可锁稳板面。\n　　　　　双目同视即刻失控。[/color][/font_size]")
-	else:
-		page.text="[b]远征员随身规则手册[/b]　02 / 02\n[color=#796346]━━━━━━━━━━━━━━━━━━━━[/color]\n\n出勤备忘\n\n前班踏响铁网后落闸封井。备用源核滞留对岸，须由档案翼总控室复位隔离闸。\n\nShift　切换走／跑　　 Ctrl　按住静步\nE　互动　　Q　指派 Hale\n方括号键　调整视角灵敏度"
-	page.append_text("\n\n[color=#68503b]← / →　翻页　　　　1　合册[/color]")
+	var pages:=contracts.manual_pages(archive.note)
+	page.text=str(pages[clampi(book_page,0,pages.size()-1)])
+	if book_page==4 and cues.has("stele_sound") and cues.has("stele_light"):page.append_text("\n\nBoth inscriptions verified.")
+	page.append_text("\n\n[color=#68503b]← / →   Turn page        1   Close[/color]")
 func play_ui(kind:String,db:float)->void:
 	chime.stream=sounds[kind];chime.volume_db=db;chime.play()
 func build_lantern(offset:Vector3)->Node3D:
@@ -253,15 +317,23 @@ func light_stage()->void:
 func _input(ev:InputEvent)->void:
 	if finished:return
 	if ev is InputEventKey and ev.pressed and not ev.echo and mode<0:
-		if ev.physical_keycode in [KEY_1,KEY_KP_1]:toggle_book();return
+		if not wheel_open and ev.physical_keycode in [KEY_1,KEY_KP_1]:toggle_book();return
 		if ev.physical_keycode==KEY_SHIFT and not manual.visible:running=not running;return
 	if manual.visible:
 		if ev is InputEventKey and ev.pressed and not ev.echo and ev.physical_keycode in [KEY_LEFT,KEY_RIGHT]:
-			book_page=1-book_page;render_book();play_ui("page",-19.)
+			book_page=posmod(book_page+(1 if ev.physical_keycode==KEY_RIGHT else -1),5);render_book();play_ui("page",-19.)
 		return
 	if ev is InputEventMouseButton and ev.button_index==MOUSE_BUTTON_LEFT and ev.pressed and mode<0:Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
+	# Right mouse / LT is the steady-hand stance: half sensitivity, tighter FOV.
+	if ev is InputEventMouseButton and ev.button_index==MOUSE_BUTTON_RIGHT:
+		aiming=ev.pressed;return
+	if ev is InputEventJoypadButton and ev.button_index==JOY_BUTTON_LEFT_SHOULDER:
+		aiming=ev.pressed;return
 	if ev is InputEventMouseMotion and mode<0 and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
-		walker.rotate_y(-ev.relative.x*look_sens);eye.rotation.x=clampf(eye.rotation.x-ev.relative.y*look_sens,-1.48,1.48)
+		var gain:=look_sens*lerpf(1.,.45,aim)
+		walker.rotate_y(-ev.relative.x*gain);eye.rotation.x=clampf(eye.rotation.x-ev.relative.y*gain,-1.48,1.48)
+	if ev is InputEventMouseButton and ev.button_index==MOUSE_BUTTON_WHEEL_UP and wheel_open:wheel.move(-1);return
+	if ev is InputEventMouseButton and ev.button_index==MOUSE_BUTTON_WHEEL_DOWN and wheel_open:wheel.move(1);return
 	var key:=0
 	if ev is InputEventKey and ev.pressed and not ev.echo:key=ev.physical_keycode
 	if key==KEY_F4 or ev.is_action_pressed("expedition_section"):section_view();return
@@ -272,8 +344,25 @@ func _input(ev:InputEvent)->void:
 	if key==KEY_BRACKETLEFT or key==KEY_BRACKETRIGHT:
 		look_sens=clampf(look_sens*(1.12 if key==KEY_BRACKETRIGHT else 1./1.12),.0008,.006);say("视角灵敏度 %d%%"%roundi(look_sens/.0022*100.));return
 	if key==KEY_ESCAPE:Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
+	if wheel_open:
+		if key in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_5]:wheel.index=clampi(key-KEY_1,0,maxi(0,wheel.options.size()-1));wheel.confirm();wheel_open=false;return
+		if key==KEY_Q or ev.is_action_pressed("expedition_watch"):wheel_open=false;wheel.dismiss();return
+		if key==KEY_E or key==KEY_ENTER:wheel.confirm();wheel_open=false
+		return
+	if retry<=0 and (key==KEY_SPACE or ev.is_action_pressed("expedition_hop")):jump_buffer=.16;return
+	if retry<=0 and (key==KEY_R or ev.is_action_pressed("expedition_lamp")):toggle_lamp();return
+	if retry<=0 and (key==KEY_F or ev.is_action_pressed("expedition_stomp")):stomp();return
 	if key==KEY_E or ev.is_action_pressed("expedition_use"):use()
-	if key==KEY_Q or ev.is_action_pressed("expedition_watch"):order()
+	if key==KEY_Q or ev.is_action_pressed("expedition_watch"):
+		if focus()=="hale":order();return
+		var items:=order_options()
+		if items.size()>1:
+			wheel.bind(items);wheel.reveal();wheel_open=true
+		elif items.size()==1:pick_order(items[0].id)
+		return
+	if key==KEY_ALT:
+		if not manual.visible:toggle_book()
+		book_page=3;render_book();return
 func section_view()->void:
 	detail_view=-1;survey.projection=Camera3D.PROJECTION_ORTHOGONAL
 	mode=(mode+2)%4-1
@@ -297,6 +386,51 @@ func show_shell()->void:
 	for n in kit.cut:n.visible=mode<0 or shell_closed
 	for n in kit.plates:n.visible=mode>=0 and not shell_closed
 func say(t:String)->void:notice=t;msg_time=4.
+func toggle_lamp()->void:
+	lamp_on=not lamp_on
+	play_ui("cue",-16.)
+	say("提灯熄了。光靠 Hale 那盏。" if not lamp_on else "提灯亮了。")
+	if not lamp_on and released and walker.position.x>46. and not in_return_gallery(walker.position):
+		line_once("lamp_off","熄灯了？……好，我这盏够我们俩走。")
+func stomp()->void:
+	if stomp_cool>0.:return
+	stomp_cool=6.
+	foot.stream=sounds.iron;foot.pitch_scale=.88;foot.volume_db=-7.;foot.play()
+	polish.kick(.14)
+	if released and walker.position.x>46. and not in_return_gallery(walker.position):
+		hunter.probe(walker.position)
+		if hunter.state=="hunt":say("它已经在扑了——跺脚没用！")
+		else:
+			say("跺脚声把井底的东西引过来了。")
+			line_once("stomp_warn","你跺什么脚？把它招过来，我们俩都得交代在这！")
+	else:say("跺脚声在拱廊里回荡。")
+func read_stele(kind:String)->void:
+	var id:="stele_"+kind
+	if cues.has(id):say("刻板上的字你已经记下了。");return
+	cues[id]=true
+	play_ui("ink",-14.)
+	var rule_text:String=STELE_TEXT["sound"] if kind=="sound" else STELE_TEXT["light"]
+	captions.post(id,"",rule_text)
+	polish.letterbox(captions.reading_time(rule_text)+.3)
+	if cues.has("stele_sound") and cues.has("stele_light"):
+		toast("两处刻板已核对 · 规则抄本誊入手册 [1]")
+func talk_to_hale()->void:
+	if hale.position.distance_to(walker.position)>5.5:return
+	var id:="talk_idle"
+	if collected:id="talk_exit"
+	elif released and walker.position.x>46.:id="talk_well"
+	elif in_b4(walker.position):id="talk_b4"
+	elif not learned:id="talk_rules"
+	if cues.has(id):id="talk_idle"
+	if cues.has("talk_idle") and id=="talk_idle":
+		say("Hale 朝你点了点头，没有说话。");return
+	line_once(id,HALE_TALK[id])
+func hale_order_text()->String:
+	if posting:return "前往北窗"
+	if holding:return "北窗就位"
+	if hale_hold:return "原地留守"
+	if hale_gate_attempt:return "试推铁闸"
+	return "跟随中"
 func thought(id:String,text:String)->void:
 	subtitle_id=id;captions.post(id,"",text)
 func near(p:Vector3,d:=2.1)->bool:return walker.position.distance_to(p)<d
@@ -318,6 +452,7 @@ func focus()->String:
 	if not released and walker.position.x<35.9 and aimed(Vector3(36.,1.57,0),2.,.91):return "gate"
 	if not taken and walker.position.z<15.2 and aimed(Vector3(34.14,.5,14.67),2.8):return "loot"
 	if aimed(Vector3(23.6,1.03,4),2.8):return "note"
+	if not niche_taken and aimed(Vector3(13.9,.62,5.9),2.6,.93):return "niche_oil"
 	if learned and not released and aimed(Vector3(36.3,1.35,7.72),3.):return "lever"
 	if released and not collected and aimed(kit.core.position,2.8):return "core"
 	if collected and not shortcut_open and aimed(kit.leaf.global_position,3.5,.94):return "return"
@@ -326,6 +461,17 @@ func focus()->String:
 	if equipped and walker.position.x>46:
 		var landing:Variant=Plane(Vector3.UP,hunter.CENTER.y).intersects_ray(eye.global_position,-eye.global_basis.z)
 		if landing!=null and landing.distance_to(hunter.CENTER)<13.:return "throw"
+	if not solo_escape and exit_open and walker.position.x<0. and aimed(SOLO_HATCH,2.6,.93):return "solo_exit"
+	if aimed(STELE_A,2.4,.93):return "stele1"
+	if kit.vault_can.visible and aimed(kit.vault_can.global_position,2.4,.94):return "vault_oil"
+	if aimed(STELE_B,2.6,.93):return "stele2"
+	if hale.visible and mode<0:
+		var hd:=hale.position+Vector3.UP*1.25-eye.global_position
+		var hd_len:=hd.length()
+		if hd_len<5.5 and (-eye.global_basis.z).dot(hd.normalized())>.965:
+			var hale_hit:=get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(eye.global_position,hale.position+Vector3.UP*1.25,2))
+			# 命中点若在 Hale 身前（有墙隔开）则不给指令；穿过或打在他身上都算看得见。
+			if hale_hit.is_empty() or Vector3(hale_hit["position"]).distance_to(eye.global_position)>=hd_len-.35:return "hale"
 	return ""
 func use()->void:
 	if retry>0 or manual.visible:return
@@ -338,6 +484,14 @@ func use()->void:
 			thought("gate_test","隔离闸落死了。得去总控室手动复位。")
 			confirm_gate_locked()
 		"note":say("残页：隔着玻璃也有反应。昨夜值班记录的最后一行被撕掉了。")
+		"niche_oil":
+			if Vector2(walker.velocity.x,walker.velocity.z).length()>.85:
+				say("手在抖。站定再提——侧龛的灯油只认静止的手。")
+				return
+			niche_taken=true;oil=minf(100.,oil+24.);kit.niche_oil.hide()
+			play_ui("cue",-16.);toast("灯油 +24 · 静步成契")
+			contracts.award("niche_quiet")
+			show_line("niche","不跑不动，就把灯油给你。这屋子记仇也记静。")
 		"loot":
 			taken=true;oil=minf(100.,oil+OIL_PICKUP);kit.oil_tin.hide()
 			if released:checkpoint_oil=minf(100.,checkpoint_oil+OIL_PICKUP)
@@ -350,7 +504,7 @@ func use()->void:
 		"lever":
 			if not learned:return
 			hale_gate_attempt=false
-			released=true;kit.gate.position.y=4.;checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();polish.kick(.5);polish.punch(-5.);sound_at("lever",kit.panel.position,-4.);sound_at("chain",Vector3(36.,2.,0.),-3.);line_once("release","主闸通了！放轻脚步，铁网会把声音传到井底。")
+			released=true;polish.gate_lift(kit.gate);checkpoint_oil=oil;checkpoint_item=equipped;hunter.wake();polish.kick(.5);polish.punch(-5.);sound_at("lever",kit.panel.position,-4.);sound_at("chain",Vector3(36.,2.,0.),-3.);line_once("release","主闸通了。契约B：铁网上的每一声都会被听成一次呼唤——按住 Ctrl 走。")
 		"core":
 			var watched:=holding or posting
 			left_north_window=watched
@@ -362,7 +516,24 @@ func use()->void:
 		"exit":
 			exit_open=true;create_tween().tween_property(kit.airlock,"position:y",5.4,.45)
 			sound_at("airlock",Vector3(.1,1.45,0),-6.)
-		"throw":equipped=false;polish.kick(.14);polish.punch(-2.);distraction=12.;hunter.throw_from(eye.global_position,-eye.global_basis.z)
+		"solo_exit":
+			solo_escape=true;polish.kick(.3);polish.punch(-4.)
+			sound_at("airlock",SOLO_HATCH,-6.)
+			if kit.solo_hatch:create_tween().tween_property(kit.solo_hatch,"position:y",kit.solo_hatch.position.y+2.05,.40)
+			var solo_tw:=create_tween()
+			solo_tw.tween_interval(.5)
+			solo_tw.tween_callback(func()->void:finish_expedition(true))
+		"vault_oil":
+			oil=minf(100.,oil+20.);kit.vault_can.hide();say("Reserve oil collected")
+		"stele1":read_stele("sound")
+		"stele2":read_stele("light")
+		"hale":talk_to_hale()
+		"throw":
+			equipped=false;polish.kick(.14);polish.punch(-2.);distraction=12.
+			hunter.throw_from(eye.global_position,-eye.global_basis.z)
+			if contracts.b_pardon():
+				toast("节拍器换回一次清静 · 契约B 第三码")
+				show_line("pardon","它去追那个响声了。契约说只赎一次——剩下的路用走的。")
 	update_target()
 func use_relay(port:int)->void:
 	if service_signal.pending():return
@@ -400,12 +571,17 @@ func relay_hint()->String:
 	if service_signal.heard and relay_focus==service_signal.target():return "[E] Release metronome locker"
 	if service_signal.on_felt(walker.position,relay_focus):return "[E] Knock · hold still on the felt"
 	return "Step onto the felt to listen"
-func finish_expedition()->void:
+func finish_expedition(solo:=false)->void:
 	finished=true;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
-	hud.text="撤离成功　·　备用源核已送回稳压室"
-	var ending:Tween=polish.finish("撤 离 成 功","备用源核已送回稳压室 · 远征记录已归档")
-	# The host removes this scene on return. Give the fade and title time to play first.
-	ending.finished.connect(func():returned.emit())
+	if solo:
+		hud.text="独自撤离　·　Hale 仍守在井区"
+		var solo_ending:Tween=polish.finish("撤 离 成 功","独自撤出 · 提灯留在了气密前室 · Hale 仍守在井区")
+		solo_ending.finished.connect(func():returned.emit())
+	else:
+		hud.text="撤离成功　·　备用源核已送回稳压室"
+		var ending:Tween=polish.finish("撤 离 成 功","备用源核已送回稳压室 · 远征记录已归档")
+		# The host removes this scene on return. Give the fade and title time to play first.
+		ending.finished.connect(func():returned.emit())
 	captions.hide();caption_toast.hide();prompt.hide();siren.stop();hunter.stop_audio()
 func begin_hale_return()->void:
 	if not (holding or posting):
@@ -418,24 +594,103 @@ func begin_hale_return()->void:
 	for i in range(traversed-1,-1,-1):hale_return_path.append(watch_route[i])
 	for point in [Vector3(48.3,0.,10.1),Vector3(38.7,0.,10.1),Vector3(38.7,0.,0.),Vector3(34.,0.,0.),Vector3(2.4,0.,0.),HALE_WAIT]:hale_return_path.append(point)
 	holding=false;posting=false;command_path.clear();trail.clear()
-func order()->void:
-	if manual.visible or retry>0:return
+## The wheel shows only orders that can actually be executed right now. Each
+## option carries its cost in the same vocabulary the contracts use, so the
+## player is choosing a clause, not a button.
+func order_options()->Array:
 	var target:=focus()
+	var items:Array=[]
 	if target=="gate":
-		if hale_gate_attempt:return
-		hale_gate_attempt=true;hale_gate_effort=HALE_GATE_DURATION
-		hale_gate_target=kit.gate_spots[0 if walker.position.z>=0. else 1].global_position
-		trail.clear()
-		return
-	if target!="north":return
-	if posting or holding:posting=false;holding=false;north_pause=0.;command_path.clear();trail.clear();return
-	if archive.beat!=archive.Beat.DONE or hale.position.distance_to(walker.position)>6.:
-		say("等 Hale 赶到桥头，再指派北窗。");return
-	posting=true;north_pause=.55;command_path=kit.stair_path.duplicate();command_path.insert(0,kit.west_stair_entry())
-	for i in 19:command_path.append(kit.polar(12.45,PI+(PI*.5)*i/19.,4.8))
-	command_path.append(kit.north_spot.global_position)
-	watch_route=command_path.duplicate()
-	captions.post("north_order","我","刚才你亲眼看到了。去北窗盯稳桥面，我只看前方，不低头。")
+		items.append({"id":"try_gate","title":"让 Hale 试闸","hint":"他会连拉两下，确认落死","cost":"代价：约 1.1 秒，信任 +1"})
+	if target=="north" or holding or posting:
+		items.append({"id":"north","title":"盯北窗" if not (holding or posting) else "召回 Hale","hint":"他盯桥面，你只看前方","cost":"契约A：双人同视会过载"})
+	if hale_hold or released and walker.position.x>46. and near(Vector3(61,0,10.1),26.):
+		items.append({"id":"trail","title":"跟紧我","hint":"贴在我侧后方，随时接手视线","cost":"速度略降，声音更近" if not contracts.b_remembered else "契约B：他的脚步也会被数进去"})
+	items.append({"id":"hold","title":"原地待命","hint":"停在当前房间，别跟进来","cost":"召回需要你走回来"})
+	if contracts.trust>=2:
+		items.append({"id":"advise","title":"听他的建议","hint":"Hale 会说出他此刻看到的风险","cost":"仅信息，不消耗时间"})
+	return items
+
+func pick_order(id:String)->void:
+	match id:
+		"try_gate":
+			if hale_gate_attempt:return
+			hale_gate_attempt=true;hale_gate_effort=HALE_GATE_DURATION
+			hale_gate_target=kit.gate_spots[0 if walker.position.z>=0. else 1].global_position
+			trail.clear()
+		"north":
+			if posting or holding:
+				posting=false;holding=false;north_pause=0.;command_path.clear();trail.clear()
+				say("Hale 退回你身侧。")
+				return
+			if archive.beat!=archive.Beat.DONE or hale.position.distance_to(walker.position)>6.:
+				say("等 Hale 赶到桥头，再指派北窗。");return
+			hale_hold=false;posting=true;north_pause=maxf(.25,.55-.12*contracts.trust);command_path=kit.stair_path.duplicate()
+			command_path.insert(0,kit.west_stair_entry())
+			for i in 19:command_path.append(kit.polar(12.45,PI+(PI*.5)*i/19.,4.8))
+			command_path.append(kit.north_spot.global_position)
+			watch_route=command_path.duplicate()
+			captions.post("north_order","我","刚才你亲眼看到了。去北窗盯稳桥面，我只看前方，不低头。")
+		"trail":
+			holding=false;posting=false;command_path.clear()
+			hale_hold=false;say("Hale 跟上来了。")
+		"hold":
+			hale_hold=true;holding=false;posting=false;trail.clear();command_path.clear();say("Hale 原地待命。")
+		"advise":
+			var risks:Array[String]=[]
+			if contracts.a_state=="overlap":risks.append(contracts.a_line())
+			if contracts.b_steps>0:risks.append(contracts.b_line(self))
+			if not risks.size():risks.append("这一带暂时没有能触发契约的东西。省着点灯油。")
+			show_line("advise",risks[0])
+## Keyboard/legacy path: Q acts immediately on the most specific order; the
+## wheel is only raised when there is a genuine choice to make.
+func order()->void:
+	if focus()=="hale":
+		pick_order("trail" if hale_hold else "hold");return
+	var items:=order_options()
+	if items.is_empty():return
+	for want in ["north","try_gate","trail","hold"]:
+		for it in items:
+			if it.id==want:pick_order(want);return
+	pick_order(items[0].id)
+
+## Hale reports his own read of the room instead of the HUD printing numbers.
+func hale_report()->void:
+	if trust_line_cd>0. or manual.visible or finished:return
+	var line:=""
+	if contracts.a_state=="overlap":line=contracts.a_line()
+	elif released and hunter.state=="hunt":line="它开始跑了！停下、别出声，让它听错方向。"
+	elif released and hunter.state=="investigate":line="它在往声音那边走……灯举稳，别跑。"
+	elif contracts.b_remembered:line=contracts.b_line(self)
+	elif contracts.b_steps>0:line="慢一点，它已经在数了。"
+	if line=="":return
+	trust_line_cd=5.2
+	show_line("hale_read",line)
+
+func stance_speed()->float:
+	return SPEEDS[stance]
+
+## Quiet beats everything: holding Ctrl at a sprint drops to 1.55 m/s in one
+## tick, which is what makes the contract-B tally a real decision.
+func update_stance(dt:float)->void:
+	var quiet:=Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet")
+	stance=ST_QUIET if quiet else ST_RUN if running else ST_WALK
+	stance_blend=lerpf(stance_blend,float(stance),1.-exp(-9.*dt))
+	aim=lerpf(aim,1. if aiming else 0.,1.-exp(-11.*dt))
+
+## Landings absorb into the lens and stop the stride, so a drop never plays a
+## footstep on the same frame it touches down.
+func landing_check(was_grounded:bool)->void:
+	var grounded:=walker.is_on_floor()
+	if was_grounded and not grounded:air_peak=walker.velocity.y
+	if grounded:
+		if not was_grounded and last_vy<-3.2:
+			land_dip=clampf(-last_vy*.011,.02,.16)
+			stride=0.
+			polish.kick(clampf(-last_vy*.035,.04,.22))
+		air_peak=0.
+	last_vy=walker.velocity.y
+
 func _physics_process(dt:float)->void:
 	if finished:
 		for track in [ambient_bed,shaft_bed,score]:
@@ -443,33 +698,50 @@ func _physics_process(dt:float)->void:
 			if track.volume_db<=-72. and track.playing:track.stop()
 		return
 	if manual.visible:return
-	prompt.visible=mode<0;captions.visible=mode<0
+	prompt.visible=mode<0 and not wheel_open;captions.visible=mode<0
+	if wheel_open:prompt_notice.visible=false
 	if mode>=0 and detail_view>=0:hud.text="EYE HEIGHT   /   %s     F6  next sightline    F4  leave"%["B2 · OBSERVATION WINDOW","B5 · MASTER RELEASE","C1 · GAZE SPAN"][detail_view];return
 	if mode>=0:hud.text="SECTION PLATE  %s    /    F4  next view   /   F5  shell or cutaway   /   F6  eye height"%["A · IMMERSION ARCADE","B · ARCHIVE WING","C · SOURCE CAISSON"][mode];return
 	if mcp_controls:
 		var turn:=Input.get_vector("expedition_look_left","expedition_look_right","expedition_look_up","expedition_look_down")
 		walker.rotate_y(-turn.x*dt*1.8);eye.rotation.x=clampf(eye.rotation.x-turn.y*dt*1.8,-1.48,1.48)
-	var axis:=Input.get_vector("move_left","move_right","move_up","move_down");var dir:=walker.basis*Vector3(axis.x,0,axis.y);var speed:=5.8 if running else 3.8
-	if Input.is_physical_key_pressed(KEY_CTRL) or Input.is_action_pressed("expedition_quiet"):speed=2.2
+	run_time+=dt
+	stomp_cool=maxf(0.,stomp_cool-dt)
+	var axis:=Input.get_vector("move_left","move_right","move_up","move_down");var dir:=walker.basis*Vector3(axis.x,0,axis.y)
+	update_stance(dt)
+	var speed:=stance_speed()
 	if retry>0:
 		retry-=dt;if retry<=0:reset_at_checkpoint()
 	else:
 		var current:=Vector2(walker.velocity.x,walker.velocity.z);var wish:=Vector2(dir.x,dir.z)*speed
-		# Snappier reversals, a soft start, and a short glide-to-stop; weak steering in the air.
-		var accel:=24. if dir.length_squared()>0 else 30.
-		if dir.length_squared()>0 and current.dot(wish)<0.:accel=46.
-		if not walker.is_on_floor():accel*=.25
+		# Three gear steps with a soft start, a hard reversal and a short glide-to-stop.
+		# Air control keeps a fifth of the ground authority so jumps commit to their arc.
+		var grounded:=walker.is_on_floor()
+		var accel:=ACCEL_GROUND if dir.length_squared()>0 else ACCEL_STOP
+		if dir.length_squared()>0 and current.dot(wish)<0.:accel=ACCEL_TURN
+		if stance==ST_QUIET and dir.length_squared()>0:accel=ACCEL_QUIET
+		if not grounded:accel*=AIR_CONTROL
 		var planar:=current.move_toward(wish,dt*accel)
-		walker.velocity.x=planar.x;walker.velocity.z=planar.y;walker.velocity.y-=18*dt
+		walker.velocity.x=planar.x;walker.velocity.z=planar.y
+		# Jump: one buffered press, a 120 ms coyote window and a short apex hang.
+		jump_buffer=maxf(0.,jump_buffer-dt);coyote=maxf(0.,coyote-dt)
+		if grounded:coyote=COYOTE
+		if jump_buffer>0. and (grounded or coyote>0.):
+			walker.velocity.y=JUMP_SPEED;jump_buffer=0.;coyote=0.
+			polish.kick(.10);sound_at("quiet",walker.position,-30.,8.)
+		# Rising gravity is lighter than the fall so a short hop clears a 0.19 m riser and lands fast.
+		walker.velocity.y-=GRAVITY_RISE*dt if walker.velocity.y>0. else GRAVITY_FALL*dt
 		# Low tread risers: lift only on a grounded horizontal obstruction and verify clearance.
 		var step:=dir*speed*dt
-		if walker.is_on_floor() and step.length_squared()>.00001 and walker.test_move(walker.transform,step) and not walker.test_move(walker.transform,Vector3.UP*.19):
-			var up:=walker.transform;up.origin.y+=.19
-			if not walker.test_move(up,step):walker.position.y+=.19
-		walker.move_and_slide();walking_feedback(dt);update_service_signal(dt)
+		if grounded and step.length_squared()>.00001 and walker.test_move(walker.transform,step) and not walker.test_move(walker.transform,Vector3.UP*STEP_HEIGHT):
+			var up:=walker.transform;up.origin.y+=STEP_HEIGHT
+			if not walker.test_move(up,step):walker.position.y+=STEP_HEIGHT
+		walker.move_and_slide()
+		landing_check(grounded)
+		walking_feedback(dt);update_service_signal(dt)
 		update_return_route(walker.position)
 		if exit_open and walker.position.x<kit.AIRLOCK_DEPTH:exit_requested=true
-		if exit_requested and walker.position.x<kit.AIRLOCK_DEPTH and hale.position.x< -1.85 and hale_return_path.is_empty() and not captions.entries.has("Hale"):
+		if not solo_escape and exit_requested and walker.position.x<kit.AIRLOCK_DEPTH and hale.position.x< -1.85 and hale_return_path.is_empty() and not captions.entries.has("Hale"):
 			finish_expedition();return
 		var prior:=hale.position;advance_hale(dt);animate_hale(prior,dt);rules(dt)
 	msg_time-=dt;distraction=maxf(0,distraction-dt)
@@ -483,9 +755,17 @@ func _physics_process(dt:float)->void:
 		if evidence_thought_delay<=0.:thought("thought","一人盯着就能锁稳，两人同看立刻失控。记下这两条。")
 	update_target()
 	hud.modulate=Color.WHITE
-	var hints:={"gate":"Hale 正在试铁闸…" if hale_gate_attempt else "[E] 晃动铁闸　[Q] 请 Hale 试试","note":"[E] 阅读残页","loot":"[E] Take lamp oil","clock":"[E] Take metronome","clock_locked":"Metronome locker · follow the relay knocks","lever":"[E] 扳下总闸","core":"[E] 拔出源核","return":"[E] 撞开应急门","exit":"[E] 开启气密门","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器（诱饵）"}
+	var hints:={"gate":"Hale 正在试铁闸…" if hale_gate_attempt else "[E] 晃动铁闸　[Q] 请 Hale 试试","note":"[E] 阅读残页","loot":"[E] Take lamp oil","clock":"[E] Take metronome","clock_locked":"Metronome locker · follow the relay knocks","lever":"[E] 扳下总闸","core":"[E] 拔出源核","return":"[E] 撞开应急门","exit":"[E] 开启气密门","north":"[Q] 召回 Hale" if holding or posting else "[Q] 指派 Hale 盯桥","throw":"[E] 投出节拍器（诱饵）","hale":"[Q] %s　[E] 交谈"%("留守" if not hale_hold else "跟随"),"solo_exit":"[E] 应急滑门 · 独自撤离","stele1":"[E] 阅读规则刻板 · 同声律","stele2":"[E] 阅读规则刻板 · 独灯律"}
+	hints["vault_oil"]="[E] Take reserve oil"
+	hints["niche_oil"]="[E] Collect oil (stand still)"
 	var seen:=focus();polish.focus_id=seen
-	var hint:=relay_hint() if seen=="relay" else str(hints.get(seen,""));prompt.text=hint if hint!="" else notice if msg_time>0 else "[1] 打开规则手册" if not read_book else ""
+	var hint:=relay_hint() if seen=="relay" else str(hints.get(seen,""))
+	# Two lines, never one replacing the other: the action line stays pinned to
+	# the reticle while the notice line reports state changes underneath it.
+	prompt.text=hint
+	prompt_notice.visible=mode<0 and not manual.visible and not wheel_open
+	prompt_notice.text=notice if msg_time>0. else ""
+	prompt.offset_top=23 if hint!="" or msg_time>0. else 10
 func in_return_gallery(p:Vector3)->bool:
 	return return_started and (p.x>75.55 or p.z>25.15 or (absf(p.x-kit.RETURN_WEST)<1.45 and p.z>=kit.RETURN_GATE_Z-.2))
 
@@ -531,7 +811,8 @@ func update_lantern(dt:float)->void:
 	env.sdfgi_energy=lerpf(.90,.48,darkroom_mix)
 	var fuel:=sqrt(oil/100.)
 	var flicker:=1.+.045*sin(phase*15.7)+.026*sin(phase*27.3)
-	lantern.light_energy=(1.18+.54*darkroom_mix)*fuel*flicker
+	if not lamp_on:lantern.light_energy=0.
+	else:lantern.light_energy=(1.18+.54*darkroom_mix)*fuel*flicker
 	lantern.omni_range=lerpf(1.45,6.9,fuel)
 	player_lamp.position=Vector3(.34+.024*sin(TAU*stride),-.42+.023*cos(TAU*stride),-.25)
 	hale_prop.visible=released
@@ -556,7 +837,9 @@ func update_target()->void:
 	elif tutorial_room and cues.has("red"):goal="观察异常板，等待波纹收束"
 	elif cues.has("gate"):goal="从右侧门去档案翼找总闸"
 	hud.text="目标："+goal
+var iron_footfall:=false
 func walking_feedback(dt:float)->void:
+	iron_footfall=false
 	var distance:=Vector2(walker.get_position_delta().x,walker.get_position_delta().z).length()
 	if walker.is_on_floor() and distance>.001:
 		stride+=distance/(1.75 if running else 1.55)
@@ -568,6 +851,7 @@ func walking_feedback(dt:float)->void:
 				var surface:=str(contact.get_collider().get_parent().name)
 				if "SouthServiceWalk" in surface or "Span" in surface or "InspectionDeck" in surface or "ServiceIncline" in surface or contact.get_collider().is_in_group("expedition_iron_tread"):kind="iron"
 				elif "Plate" in surface:kind="wood"
+			iron_footfall=kind=="iron"
 			var muffled:=service_signal.on_felt(walker.position,0) or service_signal.on_felt(walker.position,1)
 			foot.stream=sounds.quiet if speed_quiet() or muffled else sounds[kind];foot.pitch_scale=randf_range(.93,1.07);foot.volume_db=-34. if muffled else -27. if speed_quiet() else (-17. if running else -21.);foot.play()
 
@@ -634,17 +918,17 @@ func advance_hale(dt:float)->void:
 
 				if hale_gate_effort<=0.:
 					hale_gate_attempt=false;confirm_gate_locked()
-					show_line("hale_gate","纹丝不动。绕右边的档案侧门，去找总闸。")
+					show_line("hale_gate","纹丝不动。绕右边的档案侧门去总控室——总闸只能在 B5 复位。")
 			return
 	if archive.step(self,dt):return
 	if posting:
 		if north_pause>0.:
 			north_pause=maxf(0.,north_pause-dt)
-			if north_pause==0.:show_line("post","……行，这次信你。我去北窗。千万别低头和我看同一块板！")
+			if north_pause==0.:show_line("post","……行，这次信你。我去北窗；你过桥时抬着头，别让第二条视线落到桥面上。")
 			return
 		if command_path.is_empty():
 			posting=false;holding=true;hale.rotation.y=0.
-			show_line("north_ready","我到北窗了，桥面已经锁稳。快过桥！")
+			show_line("north_ready","北窗就位，桥面锁稳了。过桥时抬着头——契约A：两条视线同时落到桥面就会过载。")
 			return
 		var budget:=9.6*dt
 		while budget>0. and not command_path.is_empty():
@@ -652,7 +936,23 @@ func advance_hale(dt:float)->void:
 			hale.position=hale.position.move_toward(command_path[0],budget);budget-=distance
 			if budget>=0.:command_path.remove_at(0)
 	elif not holding:
+		# Q 的留守令：Hale 原地驻守并面向玩家；离得太远会自己归队。
+		if hale_hold:
+			if hale.position.distance_to(walker.position)>26.:
+				hale_hold=false;show_line("hale_catchup","等等我！——你走得太远了！")
+			else:
+				var hold_face:=walker.position-hale.position
+				if Vector2(hold_face.x,hold_face.z).length()>.45:
+					hale.rotation.y=lerp_angle(hale.rotation.y,atan2(hold_face.x,hold_face.z),1.-exp(-6.*dt))
+			return
 		if released and walker.position.x>50.:return
+		# Self-heal: a follower wedged on a doorway rejoins at the last trail node.
+		if hale.position.distance_to(walker.position)>13.:
+			hale_stuck+=dt
+			if hale_stuck>6. and not trail.is_empty():
+				hale.position=trail[0]+Vector3(0,0,.9);hale_stuck=0.
+				show_line("stuck","……这儿有点窄，我绕了一下。")
+		else:hale_stuck=0.
 		if last_pos.distance_to(walker.position)>.23:trail.append(walker.position);last_pos=walker.position
 		if trail.size()>9:
 			var next:=hale.position.move_toward(trail[0],4.7*dt)
@@ -670,7 +970,9 @@ func in_archive_without_proof(p:Vector3)->bool:
 	return not learned and p.distance_to(Vector3(27.4,0,14.1))<1.1
 func rules(dt:float)->void:
 	var p:=walker.position
+	pair_loud=false;both_lamp=false
 	update_demo(p,dt)
+	contract_hooks(p,dt)
 	if phase>=2 and not cues.has("start"):
 		kit.airlock.position.y=2.4;line_once("start","锚定厅底下的稳压室撑不到天亮。前班踩响铁网，惊动了井底那东西。")
 	if phase>=6.9 and not cues.has("gate") and not tutorial_room and not captions.entries.has("Hale"):
@@ -687,7 +989,7 @@ func rules(dt:float)->void:
 	if p.y < -1.8:fail("坠入源井");return
 	var radial:=Vector2(p.x-kit.CX,p.z-kit.CZ)
 	var service:=radial.y>2.65 and radial.length()>12.35 and radial.length()<14.25 and absf(p.y)<.35
-	if service or in_b4(p):oil=maxf(0,oil-dt*(2.5 if service else 1.))
+	if service or in_b4(p):oil=maxf(0,oil-dt*(1.70 if service else 1.))
 	if service and oil<=0:fail("检修栈桥：灯油耗尽");return
 	if released and p.x>47.2 and p.x<51.9 and not collected and not cues.has("shaft_doubt"):
 		sound_at("rumble",Vector3(54.4,-9.4,9.4),-7.,36.)
@@ -711,13 +1013,94 @@ func rules(dt:float)->void:
 		metal_beat-=dt
 		if grate and metal_beat<=0:metal_foot.play();metal_beat=.55
 		var loud:=walker.is_on_floor() and Vector2(walker.velocity.x,walker.velocity.z).length()>2.35
-		if hunter.step(dt,p,loud,grate,distraction,collected,sounds):fail("听觉猎手扑到了你身上")
+		# 规则怪谈判定：同声律（两人同声 exposure×2）／独灯律（双灯 exposure×1.5 + 额外耗油）。
+		if p.x>46.:
+			var hale_noisy:=grate or (hale_speed>4.2 and hale.position.x>46. and hale.position.y<1.6)
+			pair_loud=loud and hale_noisy
+			both_lamp=lamp_on and hale_prop.visible and hale.position.x>46. and not in_return_gallery(hale.position)
+		var heat:=1.
+		if pair_loud:
+			heat*=2.
+			if not cues.has("rule_sound"):line_once("rule_sound","井底规则：两个人的脚步不能叠在一起——它会把叠声当成一顿饭。")
+		if both_lamp:
+			heat*=1.5
+			oil=maxf(0.,oil-dt*.25)
+			if not cues.has("rule_light"):line_once("rule_light","井底规则：井里只许点一盏灯。两盏灯芯一起爆响，它会听成两个人的脚步。")
+		var rage:=collected or contracts.b_remembered
+		if hunter.step(dt,p,loud,grate,distraction,rage,sounds,heat):
+			if contracts.b_remembered:fail("违反契约B：它的呼唤已经记住了你的脚步")
+			else:fail("听觉猎手扑到了你身上")
 		if hunter.bait_answered and distraction>0. and not cues.has("bait_answer"):
 			cues["bait_answer"]=true;polish.signal_bait()
 		if collected:
 			emergency.light_energy=.38+.34*(.5+.5*sin(phase*5.))
 			if p.x>46. and not siren.playing:siren.play()
 # Glass transmits gaze; the plate never occludes its own samples.
+func current_region(p:Vector3)->String:
+	if in_return_gallery(p) or p.x>75.:return "return"
+	if p.x>46.2:return "underdeck" if (absf(p.z-10.1)>1.9 and p.y<-.3) else "shaft"
+	if p.x>27.8 and p.z>13.05 and p.z<17.68:return "release"
+	if p.x<-.4:return "arcade"
+	if p.x<19.9 and p.z>2.2 and p.z<7.4:return "niche"
+	if p.x<9.2:return "arcade"
+	if p.x<41.8 and p.z>9.:return "trial"
+	if p.x<41.8:return "archive"
+	return "arcade"
+
+func announce_region(id:String)->void:
+	if id==region:return
+	region=id
+	var card:=Contracts.region_card(id)
+	if card.is_empty():return
+	if contracts.trust<3:contracts.award("visit_"+id)
+	polish.card(card.title,card.rule,card.note)
+	polish.threshold()
+
+## Contract A steps while two lines share the plate; contract B counts loud iron
+## steps. Both write to the HUD and to Hale's own lines.
+## Contract A reads the live gaze pair; contract B counts loud iron steps.
+## Both write the HUD line and Hale's own lines, and both can kill you.
+func contract_hooks(p:Vector3,dt:float)->void:
+	announce_region(current_region(p))
+	# The B2/B3 plate only: elsewhere nobody is looking at the same board.
+	var board_zone:=p.x>19.6 and p.x<28.2 and p.z>7.0 and p.z<15.4
+	var self_sees:=board_zone and board_seen(eye.global_position,-eye.global_basis.z)
+	var hale_sees:=board_zone and archive.gaze!=Vector3.ZERO and board_seen(hale.position+Vector3.UP*1.57,archive.gaze.normalized())
+	var count:=int(self_sees)+int(hale_sees)
+	if not board_zone:contracts.a_abandon()
+	var first:int=prior_seer if prior_seer!=0 else contracts.Seer.PLAYER
+	if count<2:prior_seer=contracts.Seer.PLAYER if self_sees else contracts.Seer.HALE if hale_sees else contracts.Seer.NONE
+	if board_zone or contracts.a_state=="blackout":
+		var ev:=contracts.a_step(dt,count,first,self_sees,hale_sees)
+		if ev=="breach":
+			rule_breach_flash=1.
+			board_audio.stop();kit.test_board.hide();kit.test_board.get_child(0).collision_layer=0
+			sound_at("glass_breakout",board_audio.position,-8.,18.)
+			polish.kick(.55);polish.punch(6.)
+			show_line("breach_a","你俩都不肯让。板面熄了——井底全听见了。" if contracts.a_reason!="后看见者先移开视线" else "你怎么先眨眼了？契约说后看见的人要盯着！")
+			fail("违反契约A："+contracts.a_reason)
+			return
+		elif ev=="release":
+			contracts.award("contract_a")
+			show_line("pass_a","对……就是这个顺序。板面自己稳下来了。")
+	trust_line_cd=maxf(0.,trust_line_cd-dt)
+	if count==0:hale_report()
+	# Contract B: only iron tread makes a call, and only while the hunter can hear.
+	if released and p.x>46. and not in_return_gallery(p) and walker.is_on_floor():
+		var loud:=Vector2(walker.velocity.x,walker.velocity.z).length()>4.6
+		if loud and iron_footfall:
+			var ev:=contracts.b_loud_step()
+			if ev=="remembered":
+				hunter.wake();polish.kick(.5);rule_breach_flash=1.
+				show_line("remember_b","三次了。它记住你了——现在每一步都会被追。")
+				sound_at("rumble",Vector3(54.4,-9.4,9.4),-4.,40.)
+			elif ev=="call":
+				polish.kick(.2);sound_at("iron",p,-14.,18.)
+				show_line("call_b",contracts.b_line(self))
+		elif not loud:
+			contracts.b_quiet(dt)
+	rule_breach_flash=maxf(0.,rule_breach_flash-dt*1.4)
+
 func paint_bridge(tint:Color,glow:float,dt:float)->void:
 	var m:=kit.bridge.material_override as StandardMaterial3D
 	m.albedo_color=m.albedo_color.lerp(tint,1.-exp(-8.*dt));m.emission=m.albedo_color
@@ -791,7 +1174,22 @@ func sees_span(origin:Vector3)->bool:
 				var ray:=PhysicsRayQueryParameters3D.create(origin,Vector3(kit.CX+x,h,kit.CZ+z),2)
 				if space.intersect_ray(ray).is_empty():return true
 	return false
-func fail(reason:String)->void:retry=3.;polish.fail_beat();say(reason+"　·　正在返回折返点…")
+func fail(reason:String)->void:
+	retry=3.;polish.fail_beat();fail_reason=reason
+	var clause:=rule_clause_for(reason)
+	say(reason+"　·　正在返回折返点…")
+	polish.fail_card(reason,clause)
+
+## Every death is answered with the exact clause that was broken, so a retry
+## teaches the rule instead of only restoring position.
+func rule_clause_for(reason:String)->String:
+	if "契约A" in reason:return "契约A 第二码：先看见者一秒内移开，后看见者继续注视。"
+	if "契约B" in reason:return "契约B 第二码：连续三声呼唤，井底记住你。"
+	if "过载" in reason:return "契约A 第一码：同一块板面，每次只容一人注视。"
+	if "扑到" in reason:return "契约B 第一码：铁网上的每一步都被听成一次呼唤。"
+	if "灯油" in reason:return "装备条款：南栈桥只给够走一次路的灯油。"
+	if "源井" in reason:return "栏杆条款：井口没有第二道扶手。"
+	return "无违规条款 · 意外。"
 func reset_at_checkpoint()->void:
 	shortcut_open=false;shortcut_used=false;return_started=false;return_gate_open=false;north_pause=0.;gallery_bell.stop();gallery_impact.stop();kit.return_exit_gate.position.y=0.;siren.volume_db=-17.;exit_requested=false;exit_open=false;reunited=false;evidence_thought_delay=-1.;cues.erase("bait_answer")
 	kit.leave_pivot.rotation.y=0.;kit.airlock.position.y=2.4;hale_return_path.clear()
@@ -800,9 +1198,16 @@ func reset_at_checkpoint()->void:
 	if released:hunter.wake();oil=checkpoint_oil;equipped=checkpoint_item
 	else:
 		taken=false;clock_taken=false;equipped=false;oil=65.;kit.oil_tin.show();kit.clock_cache.show()
+		niche_taken=false;kit.niche_oil.show()
 		service_signal=Relay.new();kit.clock_shutter.position.y=Relay.HATCH.y
 		for i in 3:set_relay_lamp(i,false)
+	kit.test_board.show();kit.vault_can.show();contracts.soft_reset();prior_seer=0
+	if not released and not archive.note:
+		archive=preload("ArchiveWitness.gd").new()
+	region=""
 	walker.position=Vector3(38.6,.15,10) if released else Vector3(1,.1,0);walker.velocity=Vector3.ZERO;hale.position=walker.position+Vector3(.1,0,.7);polish.reset_beat();hazard=0;holding=false;posting=false;trail.clear();command_path.clear()
+	lamp_on=true;stomp_cool=0.;hale_hold=false;pair_loud=false;both_lamp=false
+	if released:show_line("checkpoint","……我在这儿。缓口气，从折返点重来。")
 func observation()->Dictionary:return {"phase":"first_expedition","section":mode,"position":str(walker.position),"checkpoint":released,"learned":learned,"paired_gaze":archive.paired,"annotated":archive.note,"plate_observers":observers,"core":collected,"hale_posted":holding}
 
 func mcp_observe()->Dictionary:
@@ -813,7 +1218,9 @@ func mcp_observe()->Dictionary:
 		"relay_source":service_signal.source,"relay_target":service_signal.target(),
 		"relay_heard":service_signal.heard,"locker_open":service_signal.open,
 		"focus":focus(),"relay_focus":relay_focus,"prompt":prompt.text,
-		"service_caption":caption_toast.text if caption_toast.visible else ""},true)
+		"service_caption":caption_toast.text if caption_toast.visible else "",
+		"lamp_on":lamp_on,"run_time":snappedf(run_time,.01),"hale_hold":hale_hold,
+		"pair_loud":pair_loud,"both_lamp":both_lamp,"hale_order":hale_order_text()},true)
 	return state
 
 func review_props()->void:

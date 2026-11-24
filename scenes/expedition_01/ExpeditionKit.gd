@@ -28,15 +28,25 @@ var clock_cache:Node3D
 var clock_shutter:Node3D
 var relay_lamps:Array[MeshInstance3D]=[]
 var stair_path:=PackedVector3Array()
+var solo_hatch:Node3D
+var vault_can:Node3D
+var niche_oil:Node3D
+var pilgrim_run:Marker3D
+var run_lamp:OmniLight3D
+const NICHE_DOOR_X:=9.2
+const NICHE_Z:=5.1
+
 func build()->void:
-	arcade();arcade_details();archive();archive_details();shaft();shaft_details();hardware();return_gallery()
+	arcade();arcade_details();archive();archive_details();side_niche();side_niche_details();shaft();shaft_details();hardware();return_gallery()
 func marker(id:String,where:Vector3)->Marker3D:
 	var spot:=Marker3D.new();spot.name=id;section.add_child(spot);spot.position=where;return spot
 func arcade()->void:
 	group("A1_ImmersionArcade");slab(17.15,0,37.7,4.4);lid(18,0,36,4.4,5.2)
 	var lights:=[]
 	for i in 6:lights.append([i*6+1,i*6+5,3.6,4.85])
-	wall(true,-2.2,0,36,5.2,lights);wall(true,2.2,0,36,5.2,[[30.1,31.9,0,2.6]],true)
+	# Three openings share this wall: the archive side door at 30–32, the A2 niche
+	# door at 8.5–9.5 and the A2 pilgrim-run mouth at 17.1–18.3.
+	wall(true,-2.2,0,36,5.2,lights);wall(true,2.2,0,36,5.2,[[8.5,9.5,0,2.35],[30.1,31.9,0,2.6]],true)
 	for i in 6:
 		var x:=3.+6*i;arch(Vector3(x,1.72,-1.97),1.67,.19,.27,false,"trim")
 		for dx in [-1.77,1.77]:rect("NicheJamb",x+dx,.86,-1.98,.2,1.72,.26,"trim")
@@ -57,6 +67,11 @@ func arcade()->void:
 	for z in [-1.5,1.5]:rect("ExitJamb",-.04,1.43,z,.44,2.86,.35,"iron")
 	rect("ExitLintel",-.04,2.88,0,.44,.28,3.35,"iron")
 	rect("ExitLantern",.24,2.55,0,.12,.17,.47,"brass",false)
+	# 应急滑门：气密前室的第二撤离口（独自撤离 / 等队友双出口）。
+	solo_hatch=rect("SoloEscapeHatch",-2.6,1.40,1.345,1.02,1.92,.07,"door_green")
+	rect("SoloHatchFrame",-2.6,1.42,1.385,1.26,2.16,.04,"iron",false)
+	rect("SoloHatchBar",-2.6,1.34,1.315,.86,.09,.05,"brass",false)
+	plaque("EMERGENCY SLIDE",Vector3(-2.6,2.66,1.33),1.16)
 	slab(-1.99,0,4.30,3.50)
 	for z in [-1.55,1.55]:
 		rect("AirlockReturnWall",-1.98,1.41,z,4.30,3.03,.30,"brick")
@@ -87,11 +102,17 @@ func arcade()->void:
 	gate_spots.append(marker("HaleGateFar",Vector3(35.43,0.,.86)))
 	for x in range(1,36,2):rect("PavingJoint",x,.002,0,.034,.008,4.16,"joint",false)
 	for z in [-.15,.15]:rect("GuideInlay",18,.006,z,36,.012,.032,"joint",false)
+	# 壁龛长椅与练习矮箱：给走跑/跳跃一处有碰撞的练习场。
+	for x in [9.,21.]:
+		rect("NicheBenchSeat",x,.42,-1.72,1.26,.09,.44,"trim")
+		rect("NicheBenchBack",x,.78,-1.92,1.26,.62,.08,"trim")
+		for dx in [-.55,.55]:rect("NicheBenchLeg",x+dx,.19,-1.72,.1,.38,.38,"iron")
+	rect("PracticeCrate",15.,.24,1.55,.62,.48,.62,"joint")
 func invisible_block(p:Vector3,s:Vector3)->void:
 	var n:=rect("Barrier",p.x,p.y,p.z,s.x,s.y,s.z,"iron");n.hide()
 func archive()->void:
 	group("B1_B5_Archive");slab(31,4.85,6,5.3);slab(23.85,5.55,8.3,6.7);rect("RecessFloor",23.9,-.72,12,7.7,.24,6.2,"trim");slab(34.75,14.1,14,2);slab(38.5,10.1,6.5,5.8)
-	wall(false,27.9,2.3,8.9,3.8,[[4.1,5.7,0,2.4]]);wall(false,34.1,2.3,7.5,3.8);wall(true,7.5,28,34,3.8,[],true);wall(false,19.7,2.3,8.9,3.8,[[3.2,4.4,1,3.2],[6,7.2,1,3.2]]);wall(true,2.2,19.7,28,3.8,[],true)
+	wall(false,27.9,2.3,8.9,3.8,[[4.1,5.7,0,2.4]]);wall(false,34.1,2.3,7.5,3.8);wall(true,7.5,28,34,3.8,[],true);wall(false,19.7,2.3,8.9,3.8,[[3.2,4.4,1,3.2],[6,7.2,0,2.35]]);wall(true,2.2,19.7,28,3.8,[],true)
 	wall(true,8.95,19.8,27.9,4,[[20.15,21.75,0,2.4],[22.25,27.05,.38,2.75]])
 	rect("ObservationGlass",24.65,1.565,8.95,4.8,2.37,.055,"glass");for x in [22.25,23.85,25.45,27.05]:rect("Mullion",x,1.565,8.95,.045,2.37,.09,"iron",false)
 	wall(false,20,9.05,15.05,4);wall(true,15.15,20,27.75,4,[],true);wall(false,27.8,9.05,15.05,4,[[13.3,14.9,0,2.4]])
@@ -138,6 +159,58 @@ func archive()->void:
 	for x in [37.86,39.54]:rect("ShortcutReceiverStile",x,1.24,7.33,.14,2.48,.14,"door_green",false)
 	rect("ShortcutReceiverHead",38.7,2.48,7.33,1.81,.16,.14,"door_green",false)
 	slab(38.7,3.1,4.9,8.3);wall(false,41.25,-2,7.2,3.6);wall(true,-2.05,36,41.25,3.6,[],true);rect("GateSightGlass",37.2,1.59,7.2,1.04,1.52,.06,"glass");slab(44,10.1,4.6,2.6);wall(true,8.7,41.85,46.1,3.2);wall(true,11.5,41.85,46.1,3.2,[[42.63,44.97,0,2.65]],true)
+## A2 sits on the arcade's north side and is the level's quiet shortcut. Its
+## east door feeds a low earth-cut run that opens into B2 through the old
+## window bay, so a player who keeps still can skip the B1 vestibule entirely.
+## Payoff for stillness: the niche lamp oil only lifts from a stopped stance.
+func side_niche()->void:
+	group("A2_QuietNiche")
+	slab(12.075,4.775,7.35,5.15)
+	lid(12.075,4.775,7.55,5.35,3.0)
+	wall(false,8.4,2.2,7.35,2.9)                     # west
+	wall(true,7.35,8.4,15.75,2.9)                    # north
+	wall(false,15.75,2.2,7.35,2.9,[[6.,7.2,0,2.35]]) # east, door to the run
+	for x in [8.42,9.58]:rect("NicheDoorJamb",x,1.18,2.2,.14,2.36,.30,"trim")
+	rect("NicheDoorHead",9.05,2.46,2.2,1.68,.18,.34,"trim")
+	rect("RunDoorHead",15.75,2.46,6.6,.3,.18,1.4,"trim")
+	# The earth-cut run: 4 m of low corridor between the niche and B2.
+	slab(17.75,6.6,4.0,1.2)
+	wall(true,5.98,15.75,19.9,2.55)
+	wall(true,7.22,15.75,19.9,2.55)
+	lid(17.75,6.6,4.2,1.5,2.55)
+	for x in [16.6,18.2]:beam(Vector3(x,.05,6.02),Vector3(x,2.5,6.02),.085,"joint")
+	for x in [16.6,18.2]:beam(Vector3(x,.05,7.18),Vector3(x,2.5,7.18),.085,"joint")
+	# One crate of lamp oil in the niche, plus the room's own tally board.
+	# Reading the room from the door: crates on the east wall, oil on the near one.
+	for i in 3:
+		rect("NicheCrateLower",16.0,.24+i*.46,3.85+i*.03,.92,.44,.64,"book")
+	rect("NicheSack",15.55,.19,5.35,.52,.36,.46,"joint")
+	var bench_lamp:=OmniLight3D.new();add_child(bench_lamp)
+	bench_lamp.position=Vector3(15.2,2.5,3.2);bench_lamp.light_color=Color("ffcf9a")
+	bench_lamp.omni_range=4.2;bench_lamp.light_energy=.55
+	niche_oil=Node3D.new();section.add_child(niche_oil);section=niche_oil
+	rect("NicheCrate",13.9,.22,5.9,.72,.44,.52,"book")
+	rect("NicheOilCan",13.9,.62,5.9,.30,.36,.22,"brass",false)
+	section=root_group
+	pilgrim_run=marker("PilgrimRunMouth",Vector3(18.6,.05,6.6))
+	plaque("A2  /  QUIET  NICHE",Vector3(11.0,2.4,2.36),1.42)
+	label_at("02   /   QUIET NICHE",Vector3(18.2,2.2,6.02),PI)
+
+func side_niche_details()->void:
+	for x in [10.6,11.4]:rect("NicheBenchLeg",x,.21,4.5,.12,.42,.5,"iron",false)
+	rect("NicheBench",11.0,.44,4.5,1.5,.09,.56,"book",false)
+	run_lamp=OmniLight3D.new();add_child(run_lamp)
+	run_lamp.position=Vector3(12.4,2.55,5.4);run_lamp.light_color=Color("ffd7a0")
+	run_lamp.omni_range=6.2;run_lamp.light_energy=.72;run_lamp.shadow_enabled=true
+	run_lamp.shadow_bias=.05
+	var run_glow:=OmniLight3D.new();add_child(run_glow)
+	run_glow.position=Vector3(17.7,1.9,6.6);run_glow.light_color=Color("c8d8e2")
+	run_glow.omni_range=3.4;run_glow.light_energy=.42
+	for x in [10.4,13.2]:rect("NicheLampBracket",x,2.62,5.4,.16,.16,.04,"brass",false)
+	for i in 9:rect("NicheTally",9.0+i*.16,1.32,7.1,.032,.28,.014,"joint",false)
+	# Tread plates in the run so its footsteps are audibly wood, not stone.
+	for x in [16.2,17.0,17.8,18.6]:rect("RunTreadPlate",x,.005,6.6,.72,.012,1.1,"book",false)
+
 func inspection_oil()->void:
 	var parent:=section
 	oil_tin=Node3D.new();parent.add_child(oil_tin);section=oil_tin
@@ -204,6 +277,9 @@ func service_loft()->void:
 	section=parent
 	plaque("METRONOME",h+Vector3(0,.59,-.14),1.02,PI)
 	relay_lamps.append(relay_lamp(h+Vector3(0,.38,-.24)))
+	# 规则刻板①《同声律》：立在阁楼北墙，可读（世界内的规则怪谈文本）。
+	rect("RuleSteleA",31.5,1.48,17.5,1.1,1.7,.14,"joint")
+	rect("RuleSteleAInlay",31.5,1.55,17.415,.86,1.34,.02,"book",false)
 func relay_lamp(at:Vector3)->MeshInstance3D:
 	var lamp:=rect("RelayLamp",at.x,at.y,at.z,.075,.075,.038,"amber",false) as MeshInstance3D
 	var finish:=lamp.material_override.duplicate() as StandardMaterial3D
@@ -225,6 +301,7 @@ func band(id:String,r0:float,r1:float,y0:float,y1:float,a:float,b:float,k:String
 	st.generate_normals();var n:=MeshInstance3D.new();n.name=id;n.mesh=st.commit();n.material_override=mat(k);section.add_child(n)
 	if solid:
 		var body:=StaticBody3D.new();body.collision_layer=5 if k=="glass" else 3;var col:=CollisionShape3D.new();var shape:=ConvexPolygonShape3D.new();shape.points=v;col.shape=shape;body.add_child(col);n.add_child(body)
+		if id=="SouthServiceWalk":body.add_to_group("expedition_iron_tread")
 	return n
 func west_stair_entry()->Vector3:return Vector3(WEST_STAIR_X,0.,9.27)
 func shaft()->void:
@@ -323,7 +400,29 @@ func return_gallery()->void:
 		box("GradeJointSeal",ramp_tip+Vector3.UP*2.614,Vector3(.26,.22,2.67),"brick",false)
 		for edge in [-w,w]:
 			box("GradeJointPier",ramp_tip+Vector3(0,1.41,edge),Vector3(.36,3.15,.32),"brick")
-	gallery_wall(ramp_start-w*Vector3.BACK,ramp_end-w*Vector3.BACK)
+	# 北墙开岔：阀室分支（规则刻板② + 备用油罐）。直走仍是主路径，绕行耗时换油。
+	var vy:=1.09
+	var vy0:=lerpf(0.,4.8,(51.6-44.97)/(77.35-44.97))
+	var vy1:=lerpf(0.,4.8,(53.0-44.97)/(77.35-44.97))
+	gallery_wall(ramp_start-w*Vector3.BACK,Vector3(51.6,vy0,25.48))
+	gallery_wall(Vector3(53.0,vy1,25.48),ramp_end-w*Vector3.BACK)
+	beam(Vector3(51.6,vy0+2.5,25.48),Vector3(53.0,vy1+2.5,25.48),.10,"iron")
+	box("ValveJamb",Vector3(51.6,vy0+1.2,25.48),Vector3(.2,2.4,.34),"trim")
+	box("ValveJamb",Vector3(53.0,vy1+1.2,25.48),Vector3(.2,2.4,.34),"trim")
+	rect("ValveFloor",52.3,vy-.12,23.76,3.7,.24,3.3,"floor")
+	rect("ValveWallW",50.5,vy+1.3,23.9,.2,2.6,3.5,"brick")
+	rect("ValveWallE",54.1,vy+1.3,23.9,.2,2.6,3.5,"brick")
+	rect("ValveWallS",52.3,vy+1.3,22.25,3.8,2.6,.2,"brick")
+	rect("ValveWallN1",51.05,vy+1.16,25.48,1.1,2.6,.2,"brick")
+	rect("ValveWallN2",53.55,vy+1.46,25.48,1.1,2.6,.2,"brick")
+	rect("ValveLid",52.3,vy+2.7,23.9,3.9,.2,3.6,"chalk")
+	# 规则刻板②《独灯律》与备用油罐：绕行的报酬。
+	rect("RuleSteleB",52.3,vy+.95,22.38,1.15,1.7,.12,"joint")
+	rect("RuleSteleBInlay",52.3,vy+1.0,22.455,.9,1.36,.02,"book",false)
+	vault_can=rect("ValveOilCan",53.6,vy+.27,24.7,.32,.5,.26,"brass",false)
+	rect("ValveOilCap",53.6,vy+.55,24.7,.14,.08,.14,"iron",false).reparent(vault_can)
+	plaque("PRESSURE VAULT",Vector3(52.3,vy+2.2,22.36),1.5)
+	marker("GalleryLampV",Vector3(52.3,vy+2.0,24.2))
 	gallery_wall(lower_elbow-w*Vector3.RIGHT+w*Vector3.BACK,outlet-w*Vector3.RIGHT)
 	gallery_wall(lower_elbow+w*Vector3.RIGHT-w*Vector3.BACK,outlet+w*Vector3.RIGHT)
 	# Enamel arrows, copper supply pipe and regularly spaced wall sconces break up the long slope.
@@ -409,7 +508,7 @@ func archive_details()->void:
 		beam(Vector3(x,1.92,7.39),Vector3(x,1.92,7.51),.19,"brass");beam(Vector3(x,1.92,7.515),Vector3(x,1.92,7.53),.15,"trim");beam(Vector3(x,1.92,7.55),Vector3(x+.08,2.01,7.55),.012,"iron")
 	for x in [37.,36.35]:beam(Vector3(x,.12,14.94),Vector3(x,2.2,14.94),.09,"iron")
 	for z in [3.2,4.4,6.,7.2]:rect("WindowCasing",19.74,2.1,z,.31,2.32,.095,"trim",false)
-	for z in [3.8,6.6]:
+	for z in [3.8]:
 		for y in [1.,2.,3.2]:rect("ArchiveSash",19.74,y,z,.22,.07,1.26,"trim",false)
 	rect("FieldNote",23.6,1.018,4.,.29,.015,.2,"trim",false)
 func shaft_details()->void:

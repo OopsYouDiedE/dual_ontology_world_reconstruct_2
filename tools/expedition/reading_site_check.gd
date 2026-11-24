@@ -21,8 +21,11 @@ func run()->void:
 				await physics_frame
 				if lv.focus()==kind and "阅读" in lv.prompt.text and lv.prompt.is_visible_in_tree():ready=true;break
 			lv.set_physics_process(false)
+			for i in 12:await physics_frame
+			var page_shape:bool=lv.polish.cross.is_visible_in_tree() and lv.polish.ring>.8 and lv.polish.page_reticle
+			var use_ring:bool=lv.polish.cross.is_visible_in_tree() and lv.polish.ring>.8 and not lv.polish.page_reticle
 			var prompt:String=lv.prompt.text
-			var intent:Dictionary=Policy.new("direct").decide({"place":Vector2.ZERO,"heading":0.,"orders":[],"captions":[],"prompt":prompt if read else "","lanes":[]})
+			var intent:Dictionary=Policy.new("direct").decide({"place":Vector2.ZERO,"heading":0.,"orders":[],"captions":[],"prompt":prompt if read else "","use_ring":use_ring and not read,"lanes":[]})
 			var pressed:bool=intent.get("key",0)==KEY_E
 			if pressed:
 				for down:bool in [true,false]:
@@ -32,8 +35,8 @@ func run()->void:
 			var delivered:=false
 			for entry:Dictionary in lv.captions.entries.values():
 				if entry.get("id","")==id:delivered=true
-			var ok:=ready and pressed==read and delivered==read
+			var ok:=ready and page_shape and pressed==read and delivered==read
 			if not ok:failures+=1
-			results.append({"site":kind,"enabled":read,"prompt":prompt,"pressed":pressed,"delivered":delivered,"ok":ok})
+			results.append({"page_reticle":page_shape,"site":kind,"enabled":read,"prompt":prompt,"pressed":pressed,"delivered":delivered,"ok":ok})
 			lv.queue_free();await process_frame
 	print("READING_SITES ",JSON.stringify(results));quit(1 if failures else 0)

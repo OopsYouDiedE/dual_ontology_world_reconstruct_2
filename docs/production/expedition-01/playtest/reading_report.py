@@ -9,7 +9,7 @@ ARMS = ('closed-skip', 'closed-hints', 'book-skip', 'book-hints')
 
 
 def check_situational_gait(events, trace, book):
-    """Replay visible threat/escape cues, independent of the hint-reading policy mask."""
+    """Replay threat/escape cues for explorers who take in the field text."""
     threat = escaped = False
     moves = {d['tick']: d['intent'] for d in trace if d['intent'].get('move')}
     for e in events:
@@ -39,11 +39,15 @@ def extract(d, arm, lines, situational=False):
     assert ('翻开手册' in values('confirmed')) == book and ('收起手册' in values('confirmed')) == book
     assert values('manual_read') == pages and reading['read_samples'] == (reading['text_samples'] if hints else 0)
     assert trace[0]['tick'] == 835 and len(trace) == d['decisions']
-    if situational:
+    if situational and hints:
         check_situational_gait(events, trace, book)
-    elif book:
+    elif book and not situational:
         assert all(t['intent'].get('quiet') for t in trace if t['intent'].get('move'))
-    assert hints or (not values('read_sign') and not values('input'))
+    if not hints:
+        assert not values('read_sign')
+        assert not any(t.startswith(('残页：','【井壁刻文')) for t in values('dialogue'))
+        for e in values('input'):
+            assert e['key']=='E' and e.get('use_ring') and not e['prompt'] and not e['orders']
     delivered = sorted(set(values('dialogue'))); lines.update(delivered)
     tried = values('input'); prompts = values('prompt'); captions = values('caption'); sampled = d['path_samples']
     return dict(arm=arm, profile=d['profile'], seed=d['seed'], pages=len(pages), exposed=reading['text_samples'], read=reading['read_samples'],
@@ -56,7 +60,7 @@ def extract(d, arm, lines, situational=False):
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument('batches',nargs=4,type=Path);parser.add_argument('--out',required=True,type=Path);parser.add_argument('--sites-log',required=True,type=Path);parser.add_argument('--prior-audit',type=Path);parser.add_argument('--situational-manual', action='store_true', help='manual quiet-step applies on shaft danger, not on every move');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument('batches',nargs=4,type=Path);parser.add_argument('--out',required=True,type=Path);parser.add_argument('--sites-log',required=True,type=Path);parser.add_argument('--prior-audit',type=Path);parser.add_argument('--prior-report', type=Path, help='matching short-run HTML for the field-notes comparison');parser.add_argument('--situational-manual', action='store_true', help='manual quiet-step applies on shaft danger, not on every move');args=parser.parse_args()
     cases=[]; lines=set(catalog()); seeds=None; sources={}; matched={}; pages=[]
     for directory in args.batches:
         manifest=json.loads((directory/'batch.json').read_text('utf8')); arm=manifest['reading']; assert arm in ARMS and arm not in sources
@@ -83,6 +87,14 @@ def main():
         keys=lambda a: {(r['arm'],r['seed']) for r in a['rows']}
         assert audit and keys(prior)==keys(audit) and prior['ticks']==audit['ticks'] and prior['profile']==audit['profile']
     data=dict(situational=args.situational_manual,prior=prior,audit=audit,steps=STEPS,cases=cases,lines=sorted(lines),sources=sources,pages=pages,sites=sites)
+    if args.prior_report:
+        source = args.prior_report.read_text('utf8').split('const data=',1)[1]
+        historical = json.JSONDecoder().raw_decode(source)[0]['cases']
+        key = lambda c: (c['arm'], c['profile'], c['seed'])
+        assert sorted(map(key,historical)) == sorted(map(key,cases))
+        data['fieldNotes'] = True
+        assert all(r.get('page_reticle') for r in sites)
+        data['before'] = [{k:c[k] for k in ('arm','profile','seed','delivered','steps')} for c in historical]
     template=Path(__file__).with_name('reading_template.html').read_text('utf8'); args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(template.replace('/*PAYLOAD*/',json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')),encoding='utf8')
     print(len(cases),'validated runs;',len(lines),'dialogues;',sources)

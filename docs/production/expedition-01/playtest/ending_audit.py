@@ -18,6 +18,7 @@ def build(dirs, revision):
             assert d['profile'] == 'curious' and d['reading']['arm'] == batch['reading']
             confirmed = {e['value'] for e in d['events'] if e['event'] == 'confirmed'}
             rows.append(dict(arm=batch['reading'], seed=d['seed'], outcome=d['outcome'], reason=d['reason'], tick=d['tick'], regions=d['regions'], path=[[round(x,2),round(z,2)] for _,x,_,z in d['path_samples'][::2]],
+                             delivered=sorted({e['value'] for e in d['events'] if e['event']=='dialogue'}),
                              checkpoints={s:min(e['tick'] for e in d['events'] if e['event']=='confirmed' and e['value']==s) for s in STEPS if s in confirmed}, steps=[s for s in STEPS if s in confirmed], batch=folder.name))
     assert len(rows) == 8 and {(r['arm'],r['seed']) for r in rows} == {(a,s) for a in ARMS for s in (8,12)}
     return dict(revision=revision, ticks=36000, profile='curious', rows=rows)

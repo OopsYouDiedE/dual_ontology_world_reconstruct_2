@@ -14,7 +14,7 @@ REVIEW = RUNTIME / 'design-review/clutter'
 GODOT = RUNTIME / 'godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe'
 
 
-def evaluate_rooms(requests, *, physics=True, controls=False, furnished_control=False, godot=GODOT):
+def evaluate_rooms(requests, *, physics=True, controls=False, furnished_control=False, godot=GODOT, workspace=None):
     """Return clutter-report/v1; each request supplies room_id (str), seed (int)."""
     rooms = []
     for req in requests:
@@ -27,10 +27,16 @@ def evaluate_rooms(requests, *, physics=True, controls=False, furnished_control=
         mode = req.get('mode', 'stress')
         if mode not in ('stress', 'furnished'):
             raise ValueError('mode must be stress or furnished')
+        arrangement = req.get('arrangement', 'opposed')
+        if arrangement not in ('opposed', 'shared_apron') or (mode == 'stress' and 'arrangement' in req):
+            raise ValueError('arrangement must be opposed or shared_apron, in furnished mode')
         rooms.append({'room_id': room_id, 'seed': str(seed), 'density': density, 'max_layers': max_layers, 'mode': mode})
+        if 'arrangement' in req:
+            rooms[-1]['arrangement'] = arrangement
     if furnished_control and not physics:
         raise ValueError('furnished_control requires physics')
-    workspace = REVIEW if furnished_control or any(r['mode'] == 'furnished' for r in rooms) else RUNTIME
+    if workspace is None:
+        workspace = REVIEW if furnished_control or any(r['mode'] == 'furnished' for r in rooms) else RUNTIME
     report = _invoke({'rooms': rooms, 'physics': physics, 'controls': controls,
                       'furnished_control': furnished_control}, godot, workspace=workspace)
     if len(report['rooms']) != len(rooms):
@@ -65,10 +71,12 @@ def _packing(density, max_layers):
     return density, max_layers
 
 
-def generate_layout(room_id, seed, *, density=1.0, max_layers=3, mode='stress', godot=GODOT):
+def generate_layout(room_id, seed, *, density=1.0, max_layers=3, mode='stress', arrangement=None, godot=GODOT):
     """Return clutter-layout/v1 for a room, validated without walking the capsule."""
-    row = evaluate_rooms([{'room_id': room_id, 'seed': seed, 'density': density,
-                           'max_layers': max_layers, 'mode': mode}], physics=False, godot=godot)['rooms'][0]
+    request = dict(room_id=room_id, seed=seed, density=density, max_layers=max_layers, mode=mode)
+    if arrangement is not None:
+        request['arrangement'] = arrangement
+    row = evaluate_rooms([request], physics=False, godot=godot)['rooms'][0]
     if row['status'] != 'layout_only':
         raise ValueError(f'Layout validation failed: {row["layout_errors"]}')
     return row['layout']

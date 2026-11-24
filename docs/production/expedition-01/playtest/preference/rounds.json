@@ -1,0 +1,77 @@
+[
+  {
+    "id": "01-arcade",
+    "scope": "architecture",
+    "family": "high-arcade",
+    "contrast": "axial-opening",
+    "media": "paired-poster.jpg",
+    "dx": [
+      1,
+      0
+    ],
+    "question": "原拱廊或偏置门？"
+  },
+  {
+    "id": "01-room",
+    "scope": "furnishing",
+    "family": "workshop",
+    "contrast": "stations-versus-stacks",
+    "media": "clutter/before-after.png",
+    "dx": [
+      -1,
+      0
+    ],
+    "question": "压力堆箱或按用途陈设？"
+  },
+  {
+    "id": "02-arcade",
+    "scope": "architecture",
+    "family": "high-arcade",
+    "contrast": "light-location",
+    "media": "round-02/arcade.png",
+    "dx": [
+      0,
+      1
+    ],
+    "question": "两边都保留完整拱券。你更愿意采用哪种视觉引导？左：沿途侧灯；右：强调远端门框。"
+  },
+  {
+    "id": "02-room-31",
+    "scope": "furnishing",
+    "family": "workshop",
+    "contrast": "station-adjacency",
+    "media": "round-02/room.png",
+    "dx": [
+      0,
+      -1
+    ],
+    "question": "同一批家具、同一条主通道。你更愿意采用哪种工位安排？左：两工位隔道相对；右：同侧交接。",
+    "gate": "round-02/acceptance.json"
+  },
+  {
+    "id": "02-room-113",
+    "scope": "furnishing",
+    "family": "workshop",
+    "contrast": "station-adjacency",
+    "media": "round-02/room-113.png",
+    "dx": [
+      0,
+      -1
+    ],
+    "question": "同一批家具、同一条主通道。你更愿意采用哪种工位安排？左：两工位隔道相对；右：同侧交接。",
+    "gate": "round-02/acceptance-113.json"
+  },
+  {
+    "id": "02-room-211",
+    "scope": "furnishing",
+    "family": "workshop",
+    "contrast": "station-adjacency",
+    "media": "round-02/room-211.png",
+    "dx": [
+      0,
+      -1
+    ],
+    "question": "同一批家具、同一条主通道。你更愿意采用哪种工位安排？左：两工位隔道相对；右：同侧交接。",
+    "gate": "round-02/acceptance-211.json"
+  }
+]

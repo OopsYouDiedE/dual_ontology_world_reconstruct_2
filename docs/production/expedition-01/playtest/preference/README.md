@@ -30,3 +30,19 @@ python -B "$p/evaluate.py" --layouts .runtime/structure-preference/layouts.json 
 - Roberts et al. (2017), *Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure*, **Ecography** 40, 913–929，DOI `10.1111/ecog.02881`。按依赖单位切块：一套逐受试者留出，一套逐结构家族留出。前者测试同类结构上的新受试者，后者允许受试者跨折、测试新结构；两套结果各自解读。推荐让多位受试者交叉评价多个家族，减少受试者与家族重合造成的混淆。
 
 每折报告测试集三分类 log loss（越低越好），以及同折训练的平局率基线（A/B 等概率，平局参数可学习）；按留出组等权汇总。全量拟合权重单独列出，用于后续预测。最少两组只是运行下限；正式比较应收集更多独立家族和真人评价。模型学习的是题目所问的配对选择倾向。
+
+## 持续筛选台（个人设计判断）
+
+这条队列按题目分别拟合既有三结果模型。建筑题的两维依次为「保留中轴、引导光集中在沿途」，陈设题为「功能编组、工位同侧」；`dx` 为预先声明的左右特征差，复合对照的结果保留在本题语境里。左右位置目前固定，发现的倾向须在换位的新对照中复验。个人审美与多受试者模型分别报告。
+
+- 本机 `.runtime/design-review/review-votes.sqlite3` 保存展示内容、素材 SHA-256、投票前的三项概率、只学平局率的基线预测、选择、理由和时间。历史聊天用 `import-prior` 导入，不补写事前预测；跳过不作标签。选新对时先覆盖不同设计变化，再优先展示预测分歧大的对照。工房有验收报告的必须先过对应 `ok` 门槛。
+- 拱廊和工房的第二轮用 `structure/round02.py`、`clutter/round_02.py --seed 31 --seed 113 --seed 211` 生成。本机 `inbox/*.json` 可继续投放与 `rounds.json` 同结构的清单；新变体使用新 ID、独立素材文件，保持已展示材料不变。
+- 每个维度分别验收：模型已见过本维度样本后，第一次遇到独立新家族时冻结预测。暂定至少 6 个此类真人判断、至少 80% 的新家族给真实选择的概率高于基线、平均 log loss 也优于基线，才进入影子试用（人工仍裁决）。这是项目试用门槛，后续应检查失败案例、位置偏差与更多家族。相同原型换种子或变照明均归原家族。
+
+```powershell
+$p='docs/production/expedition-01/playtest/preference'
+python -B "$p/serve_queue.py"  # 本机 127.0.0.1:18764
+# CLI 也可接收用户在聊天里的明确选择；先 next，再 vote。
+python -B "$p/queue_review.py" next
+python -B "$p/queue_review.py" status
+```

@@ -25,7 +25,7 @@ def tint(color, factor):
     return tuple(min(255, round(int(color[i:i+2], 16)*factor)) for i in (1, 3, 5))
 
 
-def render(before, after, destination):
+def render(before, after, destination, *, round_two=False):
     image = Image.new('RGB', (1600*S, 960*S), '#111c23')
     draw = ImageDraw.Draw(image)
     font_dir = Path('C:/Windows/Fonts')
@@ -53,8 +53,14 @@ def render(before, after, destination):
     def panel(row, left, furnished):
         layout = row['layout']
         stations = layout.get('stations', [])
-        label(left+28, 164, '02  /  FURNISHED' if furnished else '01  /  STRESS', 26, INK, True)
-        label(left+28, 205, 'Wall stations + direct through aisle' if furnished else 'Jittered stacks + reserved dogleg', 19, MUTED)
+        if round_two:
+            title = 'B  /  SHARED APRON' if furnished else 'A  /  OPPOSING BAYS'
+            subtitle = 'Same wall, one entry into a shared work apron' if furnished else 'Opposite walls, two independent approaches'
+        else:
+            title = '02  /  FURNISHED' if furnished else '01  /  STRESS'
+            subtitle = 'Wall stations + direct through aisle' if furnished else 'Jittered stacks + reserved dogleg'
+        label(left+28, 164, title, 26, INK, True)
+        label(left+28, 205, subtitle, 19, MUTED)
         rectangle(left+1, 247, 746, 1, '#394d56')
 
         def iso(x, y, z):
@@ -128,10 +134,16 @@ def render(before, after, destination):
         label(left+28, 829, 'W  /  ENTRY', 14, MUTED)
         label(left+370, 829, 'E  /  EXIT', 14, MUTED)
         label(left+491, 650, 'CAPSULE CHECK', 15, MUTED, True)
-        count = len(row['traversals']) + len(row.get('station_traversals', []))
+        count = len(row['traversals']) + len(row.get('station_traversals', [])) + len(row.get('handoff_traversals', []))
         label(left+491, 678, f'{count}/{count} traversals passed', 20, AQUA, True)
-        label(left+491, 710, f"{len(layout['items'])} collider parts", 17, INK)
-        if furnished:
+        if round_two:
+            from math import dist
+            path = row['handoff_route']
+            distance = sum(dist(a, b) for a, b in zip(path, path[1:]))
+            label(left+491, 710, f'{distance:.2f} m station-to-station', 17, INK)
+        else:
+            label(left+491, 710, f"{len(layout['items'])} collider parts", 17, INK)
+        if stations:
             for i, station in enumerate(stations, 1):
                 px, py = plan(*station['route'][-1])
                 draw.ellipse(points([(px-10,py-10),(px+10,py+10)]), fill=GOLD)
@@ -142,8 +154,10 @@ def render(before, after, destination):
             label(left+491, 766, 'Loose stacks fill', 17, MUTED)
             label(left+491, 792, 'eligible floor sites.', 17, MUTED)
 
-    label(58, 37, 'WORKSHOP / DISPATCH', 44, INK, True)
-    label(60, 99, f'Same 10 x 8 m prototype  /  Same opposing doors  /  Seed {SEED}', 22, MUTED)
+    label(58, 37, 'WORKSHOP / DISPATCH' + ('  /  ROUND 02' if round_two else ''), 44, INK, True)
+    seed = before['layout']['seed']
+    subtitle = f'Same 10 x 8 m room  /  1.16 m reserved main aisle  /  1.40 m doors  /  Seed {seed}' if round_two else f'Same 10 x 8 m prototype  /  Same opposing doors  /  Seed {seed}'
+    label(60, 99, subtitle, 22, MUTED)
     line([(52,138),(1548,138)], '#415961', 1)
     line([(800,161),(800,853)], '#415961', 1)
     panel(before, 51, False)

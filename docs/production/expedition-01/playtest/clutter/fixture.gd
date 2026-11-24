@@ -102,11 +102,11 @@ func _run() -> void:
 		var density := float(request.density)
 		var max_layers := int(request.max_layers)
 		var furnished: bool = request.get('mode', 'stress') == 'furnished'
-		var generator = Furnishing if furnished else Layout
-		var layout: Dictionary = generator.generate(seed, request.room_id, density, max_layers)
+		var arrangement: String = request.get('arrangement', 'opposed')
+		var layout: Dictionary = Furnishing.generate(seed, request.room_id, density, max_layers, arrangement) if furnished else Layout.generate(seed, request.room_id, density, max_layers)
 		var errors := Layout.validate(layout)
 		var passes := []
-		var repeat: Dictionary = generator.generate(seed, request.room_id, density, max_layers)
+		var repeat: Dictionary = Furnishing.generate(seed, request.room_id, density, max_layers, arrangement) if furnished else Layout.generate(seed, request.room_id, density, max_layers)
 		var stable_seed: bool = layout == repeat
 		if not furnished:
 			var neighbor := Layout.generate(seed ^ 1, request.room_id, density, max_layers)
@@ -130,12 +130,24 @@ func _run() -> void:
 					station_traversals.append(result)
 					if result.status != 'pass':
 						status = 'fail'
+		var handoff_traversals := []
+		if furnished and request.has('arrangement') and input.physics and errors.is_empty():
+			var handoff := Furnishing.handoff(layout)
+			for reverse in [false, true]:
+				var result := await walk(layout, reverse, {'route': handoff})
+				result.direction = 'dispatch_to_workshop' if reverse else 'workshop_to_dispatch'
+				handoff_traversals.append(result)
+				if result.status != 'pass':
+					status = 'fail'
 		ok = ok and status == 'pass'
 		report.rooms.append({'room_id': request.room_id, 'seed': seed,
 			'layout': layout, 'layout_errors': errors, 'seed_check': stable_seed, 'max_layer': deepest,
 			'status': status if input.physics or status == 'fail' else 'layout_only', 'traversals': passes})
 		if furnished:
 			report.rooms[-1]['station_traversals'] = station_traversals
+			if request.has('arrangement'):
+				report.rooms[-1]['handoff_route'] = Furnishing.handoff(layout)
+				report.rooms[-1]['handoff_traversals'] = handoff_traversals
 	if input.get('furnished_control', false):
 		var blocked := Furnishing.generate(31, 'prototype/workshop-dispatch', 1.0, 3)
 		var station: Dictionary = blocked.stations[0]

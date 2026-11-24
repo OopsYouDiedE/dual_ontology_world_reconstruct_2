@@ -56,3 +56,16 @@ python -B "$clutter/design_review.py"
 ```
 
 `design_review.py` uses Pillow to draw the same tested collider exports as a labeled axonometric cutaway and top plan. It writes `.runtime/design-review/clutter/before-after.png` (1600 x 960) and `acceptance.json`. The comparison is the first two rows in the report; additional furnished runs cover 16 seeds at three dressing settings. Drawer/door markings in the illustration are graphical details; the export contains the underlying box colliders.
+
+## Round 02: compare work-group arrangements
+
+```powershell
+python -B "$clutter/round_02.py" --seed 31 --seed 113 --seed 211
+```
+
+`--seed` is repeatable; default 31 writes `.runtime/design-review/round-02/room.png`. Other seeds use `room-<seed>.png`; the matching acceptance JSON includes the measured route lengths and collider results. Each seed compares the same two arrangements (not extra candidate families), with identical room, furniture kit, doors, straight main route, and 1.16 m reserved aisle width.
+
+- Left **Opposing Bays** (`arrangement: "opposed"`): independent approaches from the main aisle to work bays on opposite walls.
+- Right **Shared Apron** (`arrangement: "shared_apron"`): the bays share a long wall and a single T-shaped entry from the main aisle. The tested internal handoff uses the apron between the work surfaces.
+
+For `mode: "furnished"`, an explicit `arrangement` requests additional `handoff_route` and `handoff_traversals` fields in each report row. The two extra Godot walks go from one operating position to the other and back. The stress generator and sweep keep their previous geometry and request contract.

@@ -14,8 +14,8 @@ const LANCET_TEX := "res://tools/research/french_gothic_nodes/lancet_register.pn
 const ROSE_NORTH_TEX := "res://tools/research/french_gothic_nodes/rose_register.png"
 const ROSE_SOUTH_TEX := "res://tools/research/french_gothic_nodes/rose_botanical.png"
 
-const SPRING_H := 4.45
-const CROWN_RISE := 2.85
+const SPRING_H := 4.95
+const CROWN_RISE := 6.25
 const CROWN_H := SPRING_H + CROWN_RISE
 
 var pendulum_pivot: Node3D
@@ -146,11 +146,17 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	_build_functional_props(min_z)
 	if has_wings:
 		_build_watch_wings()
+		_build_brazier()
 
 func _pointed_arch_y(x_norm: float) -> float:
-	# Smooth Notre-Dame pointed arch profile from x_norm in [-1, 1] -> [0, CROWN_RISE]
-	var t := 1.0 - absf(clampf(x_norm, -1.0, 1.0))
-	return CROWN_RISE * (1.28 * sqrt(maxf(0.0, t)) - 0.28 * t)
+	# Two circular segments meet at the pointed crown; vertical tangents at the imposts.
+	var u := clampf(absf(x_norm),0,1)
+	return CROWN_RISE * sqrt(maxf(0,4.0-pow(u+1.0,2))/3.0)
+
+func _vault_height(nx: float, nz: float) -> float:
+	var transverse := _pointed_arch_y(nx)
+	# The lateral web rises over the arcade. Both webs meet along |x| = |z|.
+	return SPRING_H + transverse + 0.42*maxf(0,_pointed_arch_y(nz)-transverse)
 
 func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z: float, bays_z: int, bay_len: float) -> void:
 	var cx := (min_x + max_x) * 0.5
@@ -160,20 +166,17 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var segs_x := 20
-	var segs_z := bays_z * 6
+	var segs_z := bays_z * segs_x
 	var grid: Array = []
 	for iz in range(segs_z + 1):
 		var row: Array = []
 		var wz := lerpf(min_z, max_z, float(iz) / float(segs_z))
 		var bay_local_z := fmod(wz - min_z, bay_len) / bay_len
-		var z_groin := 1.0 - absf(bay_local_z * 2.0 - 1.0) # 0 at transverse rib, 1 at bay center
+		var nz := bay_local_z*2.0-1.0
 		for ix in range(segs_x + 1):
 			var nx := -1.0 + 2.0 * float(ix) / float(segs_x)
 			var wx := cx + nx * hx
-			var arch_h := _pointed_arch_y(nx)
-			# Subtle quadripartite domical lift toward bay center
-			var domical := 0.14 * z_groin * (1.0 - absf(nx))
-			var wy := SPRING_H + arch_h + domical
+			var wy := _vault_height(nx,nz)
 			row.append(Vector3(wx, wy, wz))
 		grid.append(row)
 
@@ -198,8 +201,12 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 		var pts := PackedVector3Array()
 		for ix in range(segs_x + 1):
 			var nx := -1.0 + 2.0 * float(ix) / float(segs_x)
-			pts.append(Vector3(cx + nx * (hx - 0.08), SPRING_H + _pointed_arch_y(nx) - 0.04, wz))
-		_sweep_rib(rib_st, pts, 0.11)
+			pts.append(Vector3(cx + nx * (hx - 0.16), SPRING_H + _pointed_arch_y(nx) - 0.04, wz))
+		_sweep_rib(rib_st, pts, 0.13)
+		for dz: float in [-0.12,0.12]:
+			var fillet := PackedVector3Array()
+			for p in pts: fillet.append(p+Vector3(0,0.03,dz))
+			_sweep_rib(rib_st,fillet,0.052)
 
 	# Diagonal crossing ribs + gilded keystone boss per bay
 	for bi in bays_z:
@@ -212,10 +219,27 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 				var frac := float(i) / float(segs_x)
 				var nx := -1.0 + 2.0 * frac
 				var wz := lerpf(z0, z1, frac) if diag == 0 else lerpf(z1, z0, frac)
-				var z_groin := 1.0 - absf(((wz - z0) / bay_len) * 2.0 - 1.0)
-				var wy := SPRING_H + _pointed_arch_y(nx) + 0.14 * z_groin * (1.0 - absf(nx)) - 0.04
-				pts.append(Vector3(cx + nx * (hx - 0.10), wy, wz))
+				var wy := _vault_height(nx,nx) - 0.09
+				pts.append(Vector3(cx + nx * (hx - 0.16), wy, wz))
 			_sweep_rib(rib_st, pts, 0.085)
+
+		# Close each lunette above the aisle and trace its load path back to the capitals.
+		for x: float in [min_x,max_x]:
+			var arch := PackedVector3Array()
+			var web := SurfaceTool.new(); web.begin(Mesh.PRIMITIVE_TRIANGLES)
+			for i in range(segs_x+1):
+				var u := float(i)/segs_x
+				var p := Vector3(x,_vault_height(1,2*u-1),lerpf(z0,z1,u))
+				if i>0:
+					var q := arch[i-1]
+					var lo := Vector3(x,SPRING_H-0.06,q.z)
+					var hi := Vector3(x,lo.y,p.z)
+					if x==max_x: _add_quad(web,q,p,hi,lo)
+					else: _add_quad(web,lo,hi,p,q)
+				arch.append(p)
+			web.generate_normals(); _commit_mesh(web,_mat_wall,"ClerestoryWeb")
+			for i in arch.size(): arch[i].x += 0.10 if x==min_x else -0.10
+			_sweep_rib(rib_st,arch,0.092)
 
 		# Keystone boss at bay crown
 		var boss := MeshInstance3D.new()
@@ -224,7 +248,7 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 		bm.bottom_radius = 0.18
 		bm.height = 0.18
 		boss.mesh = bm
-		boss.position = Vector3(cx, CROWN_H + 0.08, zc)
+		boss.position = Vector3(cx, CROWN_H - 0.11, zc)
 		boss.material_override = _mat_brass
 		add_child(boss)
 
@@ -389,17 +413,23 @@ func _build_end_gable_wall(min_x: float, max_x: float, wz: float, inward_z: floa
 			_sweep_rib(arch, profile, 0.085)
 			arch.generate_normals()
 			_commit_mesh(arch, _mat_rib, "PortalArchivolt")
-			# Recessed oak gate panel so doorway never looks like a black void
-			_box(self, Vector3(gate_x, 1.22, wz + inward_z * 0.04), Vector3(1.12, 2.42, 0.08), _mat_wood)
-			_box(self, Vector3(gate_x, 1.22, wz + inward_z * 0.09), Vector3(0.06, 2.38, 0.04), _mat_brass)
+			# Fit the oak leaves inside the archivolt, forward of the stringcourses.
+			for i in 16:
+				var height := minf(profile[i].y,profile[i+1].y)
+				var px := (profile[i].x+profile[i+1].x)*0.5
+				_box(self,Vector3(px,height*0.5,wz+inward_z*0.205),Vector3(0.079,height,0.055),_mat_wood)
+			for dx: float in [-0.31,0.31]:
+				for h: float in [0.46,1.88]:
+					_box(self,Vector3(gate_x+dx,h,wz+inward_z*0.25),Vector3(0.54,0.072,0.055),_mat_brass)
+			_box(self,Vector3(gate_x,1.42,wz+inward_z*0.25),Vector3(0.045,2.84,0.055),_mat_brass)
 
-	# High Notre-Dame 12-spoke Radial Rose Window cleanly seated in the upper gable (y = 4.25m, r = 1.22m)
+	# Circular tracery remains concentric as the gable grows taller.
 	var rose_root := Node3D.new()
 	rose_root.name = "HallRose_" + ("North" if is_north else "South")
-	rose_root.position = Vector3(cx, 4.95, wz + inward_z * 0.10)
+	rose_root.position = Vector3(cx, 6.85, wz + inward_z * 0.10)
 	add_child(rose_root)
 
-	var r := 1.42
+	var r := 1.95
 	var disc_segs := 36
 	var glass_mat := _make_stained_glass_mat(rose_tex, Color("6c92c9"), 0.72)
 
@@ -665,10 +695,15 @@ func _build_watch_wings() -> void:
 		_box(self,Vector3(cx,4.45,17),Vector3(5,0.18,8),_mat_vault)
 		for z: float in [13.2,17,20.8]:
 			_box(self,Vector3(cx,4.28,z),Vector3(5,0.24,0.23),_mat_rib)
+		_build_wing_partition(cx,side)
+	_prop(self,"Cabinets/LinenCabinet",Vector3(9.5,0,20.7),PI)
+	_prop(self,"Props/Washstand",Vector3(6.53,0,15.15),PI/2)
+	_prop(self,"Tables/WorkCounter",Vector3(24.6,0,13.5))
+	_prop(self,"Props/CrockeryShelf",Vector3(25.75,0,18.2),-PI/2)
 	_camp_cot(self, watch_cot_pos + Vector3(-0.24,0,-1.65))
 	_prop(self,"Props/Screen",Vector3(11.85,0,19.75),PI/2)
-	for z: float in [14.4,17.2,19.6]:
-		_prop(self,"Beds/Bed",Vector3(7.65,0,z),PI/2,{"medical":z<18.0})
+	for z: float in [14.25,15.9,18.45,20.0]:
+		_prop(self,"Beds/Bed",Vector3(7.65,0,z),PI/2,{"medical":z<17.0})
 		_reserve_station(Vector3(7.65,0,z),Vector2(2.15,1.15),0.52)
 	_prop(self,"Cabinets/MedicineCabinet",Vector3(9.75,0,13.36))
 	_pool(Vector3(9.8,2.5,16.2),Color("b9dfff"),3.8,6.4)
@@ -699,6 +734,40 @@ func _build_watch_wings() -> void:
 			roll.mesh=felt; roll.material_override=_mat_plinth; roll.rotation.x=PI/2
 			roll.position=Vector3(sx+0.32*i,0.15,7.25); add_child(roll)
 	_pool(Vector3(16,2.6,7.5),Color("ffdb9d"),2.1,5.6)
+
+func _build_wing_partition(cx: float, side: int) -> void:
+	# Two enclosed rooms share a generous pointed passage facing the central arcade.
+	var wall_x := cx+1.5*side
+	_box(self,Vector3(wall_x,2.2,17),Vector3(2,4.4,0.17),_mat_wall)
+	_box(self,Vector3(wall_x,0.54,17),Vector3(2,1.08,0.24),_mat_wood)
+	var opening := cx-side
+	var curve := PackedVector3Array()
+	var web := SurfaceTool.new(); web.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in 25:
+		var u := (i-12.0)/12.0
+		var pt := Vector3(opening+1.5*u,2.05+1.2*_pointed_arch_y(u)/CROWN_RISE,17)
+		if i>0:
+			var last := curve[i-1]; var a := Vector3(last.x,4.45,17); var b := Vector3(pt.x,4.45,17)
+			_add_quad(web,last,a,b,pt); _add_quad(web,pt,b,a,last)
+		curve.append(pt)
+	web.generate_normals(); _commit_mesh(web,_mat_wall,"WingDoorHead")
+	var bead := SurfaceTool.new(); bead.begin(Mesh.PRIMITIVE_TRIANGLES); _sweep_rib(bead,curve,0.10)
+	bead.generate_normals(); _commit_mesh(bead,_mat_rib,"WingArchivolt")
+	for dx: float in [-1.5,1.5]: _box(self,Vector3(opening+dx,1.02,17),Vector3(0.19,2.04,0.23),_mat_rib)
+
+func _build_brazier() -> void:
+	var pan := Node3D.new(); pan.name="WatchBrazier"; pan.position=Vector3(16,0,11.6); add_child(pan)
+	for layer in [[0.31,0.39,0.10,0.05],[0.15,0.25,0.31,0.255],[0.42,0.18,0.24,0.53]]:
+		var lathe := CylinderMesh.new(); lathe.top_radius=layer[0]; lathe.bottom_radius=layer[1]; lathe.height=layer[2]
+		var piece := MeshInstance3D.new(); piece.mesh=lathe; piece.material_override=_mat_brass; piece.position.y=layer[3]; pan.add_child(piece)
+	for i in 7:
+		var flame := CylinderMesh.new(); flame.top_radius=0; flame.bottom_radius=0.115; flame.height=0.33+0.07*cos(i*4.0); flame.radial_segments=9
+		var skin := ShaderMaterial.new(); skin.shader=preload("res://scenes/blue_prince_lab/reference/Flame.gdshader")
+		skin.set_shader_parameter("phase",i*2.4); skin.set_shader_parameter("ember",Color("ffbc58")); skin.set_shader_parameter("tip",Color("f56b28"))
+		var tongue := MeshInstance3D.new(); tongue.mesh=flame; tongue.material_override=skin
+		tongue.position=Vector3(0.20*cos(i*TAU/7),0.78,0.20*sin(i*TAU/7)); pan.add_child(tongue)
+	_pool(pan.position+Vector3.UP,Color("ffb169"),2.6,4.4)
+	_reserve_station(pan.position,Vector2(1.05,1.05),0.7)
 
 func _make_stained_glass_mat(tex: Texture2D, fallback: Color, _emit_gain: float) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()

@@ -326,7 +326,7 @@
       <wall level="0" x="6" y="14" segments="1" />
       <wall level="0" x="6" y="15" segments="1" />
       <wall level="0" x="6" y="16" segments="1" />
-      <wall level="0" x="6" y="17" segments="1" />
+      <wall level="0" x="6" y="17" segments="3" />
       <wall level="0" x="6" y="18" segments="1" />
       <wall level="0" x="6" y="19" segments="1" />
       <wall level="0" x="6" y="20" segments="9" />
@@ -350,10 +350,12 @@
       <wall level="0" x="25" y="14" segments="4" />
       <wall level="0" x="25" y="15" segments="4" />
       <wall level="0" x="25" y="16" segments="4" />
-      <wall level="0" x="25" y="17" segments="4" />
+      <wall level="0" x="25" y="17" segments="6" />
       <wall level="0" x="25" y="18" segments="4" />
       <wall level="0" x="25" y="19" segments="4" />
       <wall level="0" x="25" y="20" segments="12" />
+      <wall level="0" x="7" y="17" segments="2" />
+      <wall level="0" x="24" y="17" segments="2" />
     </walls>
     <pools />
   </world>

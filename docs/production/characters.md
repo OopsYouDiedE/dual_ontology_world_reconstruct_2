@@ -11,4 +11,6 @@
 
 正式人物使用 [MPFB2 R-05 Formal](../../assets/characters/mpfb/r05_formal.glb)，即 Hall 04 对照中的 B。保留原版西装贴图、发型和站姿；16 名居民共享骨架，通过身高、服装色调和名牌区分。6.5 头身是制作验收目标，R-05 的赤足比例待复测。
 
+主线角色（侦探、Hale、雀儿、卢西安、恶魔）改用独立成衣模型，见 [tools/cast](../../tools/cast/README.md)，通过 `ProductionCast.attach_hero` 加载。目前已接入大厅开场和大厅里的 Hale；出征中的 Hale 和第三人称侦探仍使用 R-05。
+
 ![R-05 实机全身](media/r05-formal.jpg)

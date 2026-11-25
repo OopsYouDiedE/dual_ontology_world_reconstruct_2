@@ -39,7 +39,9 @@ func run() -> void:
 
 	var obs: Dictionary = game.mcp_observe()
 	check(obs.phase == "camp" and obs.stage == "hall", "Run.tscn starts in Public Hall camp phase")
-	check(int(obs.witness_count) == 16, "All 16 Hall witnesses remain seated cleanly (%d)" % int(obs.witness_count))
+	check(int(obs.witness_count) == 0, "Before the first sortie the Hall seats no residents (%d)" % int(obs.witness_count))
+	var hale := game.find_child("HallHale", true, false) as Node3D
+	check(hale != null and hale.get_meta("hero", "") == "hale", "Hale waits in the Hall on the hero model")
 
 	var gothic := game.find_child("PublicHallGothic", true, false)
 	check(gothic != null, "PublicHallGothic architectural shell is mounted in Public Hall")

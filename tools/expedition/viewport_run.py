@@ -37,7 +37,7 @@ def play(seed, out, lane):
                                  state={k:row['state'][k] for k in keys}))
             (out / "frames.json").write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf8")
 
-        assert p.state["room"] == "camp" and p.state["witness_count"] == 16
+        assert p.state["room"] == "camp" and p.state["witness_count"] == 0  # residents arrive after the first sortie
         frame("01-camp")
         p.button("Route chart")
         p.ask("wait", frames=5)

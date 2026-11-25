@@ -69,6 +69,7 @@ var _prompt: Label
 var _navigation: HFlowContainer
 var _displayed_exits: Array = []
 var _plan_button: Button
+var _cinematic := false
 var _level_button: Button
 var _plan_level := 1
 var _upper_plan: Dictionary = {}
@@ -622,7 +623,7 @@ func _refresh_ui() -> void:
 	_level_button.visible = plan_mode and _mode == "blueprint" and not _upper_plan.is_empty()
 	_level_button.text = "Floor %d · switch" % _plan_level
 	_plan.set_lot(_upper_plan if _level_button.visible and _plan_level == 2 else _lot)
-	_plan_button.visible = has_lot and is_instance_valid(_player)
+	_plan_button.visible = has_lot and is_instance_valid(_player) and not _cinematic
 	_plan_button.text = "Walk view" if _plan_open else "Overhead plan"
 	var heading := "Topology navigation · no native lot available"
 	if has_lot:
@@ -941,6 +942,15 @@ func _hall_floor_positions(graph: Dictionary, reserved: Dictionary, count: int) 
 func _release_mouse() -> void:
 	if expedition_view and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+## Cutscenes: hide the room heading, plan toggle, crosshair and prompt over the 3D view.
+func set_cinematic(active: bool) -> void:
+	_cinematic = active
+	set_modal(active or _modal)
+	for item: CanvasItem in [_heading, _plan_button, _prompt, _crosshair]:
+		if is_instance_valid(item): item.visible = not active
+	if not active: _plan_button.visible = is_instance_valid(_player)
 
 
 func set_modal(active: bool) -> void:

@@ -6,7 +6,7 @@ extends CanvasLayer
 ##   2. The wing is already warping: lamp edges split into red and blue fringes.
 ##   3. Through the wing arcade the camera finds the drifting Foucault Pendulum.
 ##   4. Hale explains the stalled Essence return and the spare core left in the shaft.
-##   5. Two-person rule: they go together; control returns standing beside the bed.
+##   5. Two-person rule: only the two of them are up; Hale goes ahead to the north gate.
 
 signal finished
 
@@ -14,7 +14,7 @@ const Cast = preload("res://scenes/rogue_crossing/ProductionCast.gd")
 
 # Offsets from the wake bed centre. The bed runs along X with its head against the west wall.
 const WAKE_EYE := Vector3(-0.72, 0.86, 0.0)
-const HALE_SPOT := Vector3(1.45, 0.0, -0.62)
+const HALE_SPOT := Vector3(1.85, 0.0, -0.5)
 const STAND_EYE := Vector3(0.62, 1.55, -0.95)
 # World point in the open west arcade bay from which the pendulum is framed.
 const ARCADE_EYE := Vector3(11.6, 1.6, 19.2)
@@ -24,7 +24,7 @@ const BEATS := [
 	{
 		"id": "wake_shake",
 		"speaker": "Hale",
-		"text": "……醒醒，先别出声。对不住，我知道你刚换班躺下不到两小时。",
+		"text": "……醒醒。先别急着起身，看着我——能看清吗？",
 		"folio": "04:00  /  常数锚定厅 · 西翼宿舍",
 		"duration": 3.4,
 		"shot": "wake",
@@ -42,7 +42,7 @@ const BEATS := [
 	{
 		"id": "pendulum_drift",
 		"speaker": "Hale",
-		"text": "你也看见了。朝你过来的东西发蓝，退开的发红——源质在漂。中央铜摆过南象限拖了半拍，刻痕已经越过红线三格。",
+		"text": "你也看见了：朝你来的发蓝，离你去的发红——源质在漂。中央铜摆过南象限慢了半拍，刻痕已经越过红线三格。",
 		"folio": "04:01  /  西翼拱廊 · 望向常数锚定井",
 		"duration": 5.0,
 		"shot": "pendulum_push",
@@ -51,7 +51,7 @@ const BEATS := [
 	{
 		"id": "essence_reason",
 		"speaker": "Hale",
-		"text": "稳压室的源质回流断了。前班撤出井区时把隔离闸反锁了，备用源核还留在井里。不换上它，这一厅人都会跟着漂。",
+		"text": "稳压井的源质回流断了。前班撤出时把隔离闸反锁在里面，备用源核还在井下。不换上它，整座学院只会漂得更厉害。",
 		"folio": "04:01  /  常数锚定井 · 源质失衡",
 		"duration": 4.8,
 		"shot": "pendulum_hold",
@@ -60,7 +60,7 @@ const BEATS := [
 	{
 		"id": "north_gate_handoff",
 		"speaker": "Hale",
-		"text": "守则要求外翼气密闸双人编队，我一个人进不去。灯和手册在你床边——起来就走，咱俩去把备用核心取回来，别吵醒其他人。",
+		"text": "井区守则只放双人编队过闸，整座大厅醒着的只剩你和我。灯和手册在你床头——拿上，北门见。",
 		"folio": "04:02  /  西翼宿舍 · 出发",
 		"duration": 5.2,
 		"shot": "gate_handoff",
@@ -129,6 +129,8 @@ func _build_overlay() -> void:
 	margin.add_theme_constant_override("margin_bottom", 46)
 	add_child(margin)
 	margin.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	# Grow upward from the bottom edge so the speaker and the line stay on screen.
+	margin.grow_vertical = Control.GROW_DIRECTION_BEGIN
 
 	var plate := PanelContainer.new()
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -186,7 +188,7 @@ func start(viewport: SubViewport, player_cam: Camera3D, cot_pos: Vector3, pendul
 	_hale_actor.name = "OpeningHale"
 	_viewport.add_child(_hale_actor)
 	_hale_actor.position = _cot_pos + HALE_SPOT
-	Cast.attach(_hale_actor, 0)
+	Cast.attach_hero(_hale_actor, "hale")
 	var pillow := _cot_pos + WAKE_EYE
 	_hale_actor.look_at(Vector3(pillow.x, 0.0, pillow.z), Vector3.UP, true)
 
@@ -213,6 +215,9 @@ func _advance_beat() -> void:
 	_folio_label.text = beat.folio
 	_speaker_label.text = beat.speaker if not str(beat.speaker).is_empty() else "（意识渐清）"
 	_caption_label.text = beat.text
+	# Hale talks with his hands on his lines and listens on the captain's.
+	if is_instance_valid(_hale_actor) and _hale_actor.has_meta("animation_player"):
+		(_hale_actor.get_meta("animation_player") as AnimationPlayer).play(&"signal" if beat.speaker == "Hale" else &"listen", 0.4)
 
 func skip() -> void:
 	if active:
@@ -268,7 +273,7 @@ func _process(delta: float) -> void:
 		_advance_beat()
 
 func _apply_camera_shot(shot: String, t: float) -> void:
-	var hale_head := (_hale_actor.position if is_instance_valid(_hale_actor) else _cot_pos + HALE_SPOT) + Vector3(0.0, 1.48, 0.0)
+	var hale_head := (_hale_actor.position if is_instance_valid(_hale_actor) else _cot_pos + HALE_SPOT) + Vector3(0.0, 1.62, 0.0)
 	var pend_mid := _pendulum_pos + Vector3(0.0, 1.95, 0.0)
 	var cot_eye := _cot_pos + WAKE_EYE
 	var stood_eye := _cot_pos + STAND_EYE
@@ -287,8 +292,9 @@ func _apply_camera_shot(shot: String, t: float) -> void:
 			_cutscene_cam.look_at(hale_head, Vector3.UP)
 			_cutscene_cam.fov = lerpf(75.0, 68.0, t)
 		"pendulum_push":
-			# Walk the eye out to the wing arcade and find the drifting pendulum beyond it
-			_cutscene_cam.global_position = stood_eye.lerp(ARCADE_EYE, t)
+			# Walk the eye out to the wing arcade, arcing round Hale, and find the drifting pendulum
+			var bend := stood_eye + Vector3(0.6, 0.15, 1.4)
+			_cutscene_cam.global_position = stood_eye.lerp(bend, t).lerp(bend.lerp(ARCADE_EYE, t), t)
 			_cutscene_cam.look_at(hale_head.lerp(pend_mid, t), Vector3.UP)
 			_cutscene_cam.fov = lerpf(68.0, 58.0, t)
 		"pendulum_hold":

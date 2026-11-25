@@ -71,6 +71,8 @@ func _activate(game: Node, predicate: Callable) -> bool:
 	return expect(false, "matching target in " + game.current)
 
 func _route(game: Node, seed: int, explore: bool) -> void:
+	# The campaign proper starts after Hale's first sortie; before it the Hall holds only the two of them.
+	game.first_returned = true
 	game.new_run(seed)
 	expect(game.phase == "camp" and game.current == "camp" and game.moves == 0 and game.modal.is_empty() and game.handbook, "new run starts in Public Hall with its handbook and no mandatory intake")
 	expect(game.camp_actors.actors.size() == 16, "camp residents available for recruitment")

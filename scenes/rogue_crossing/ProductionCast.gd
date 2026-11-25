@@ -19,6 +19,26 @@ static var _library: AnimationLibrary
 static var _hale_library: AnimationLibrary
 static var _materials := {}
 
+## Story heroes built by tools/cast (detective, hale, quer, lucian, demon): own GLB, baked clips.
+const HERO_DIR := "res://assets/characters/heroes/%s.glb"
+const HERO_ONE_SHOT := [&"interact", &"gate_effort", &"repair"]
+
+static func attach_hero(parent: Node3D, id: String) -> bool:
+	var scene := load(HERO_DIR % id) as PackedScene
+	if scene == null: return false
+	var body := scene.instantiate() as Node3D
+	_apply_finish(body, -2, [], id)
+	var animation := body.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
+	for clip in animation.get_animation_list():
+		animation.get_animation(clip).loop_mode = Animation.LOOP_NONE if StringName(clip) in HERO_ONE_SHOT else Animation.LOOP_LINEAR
+	parent.add_child(body)
+	parent.set_meta("model_source", HERO_DIR % id)
+	parent.set_meta("hero", id)
+	parent.set_meta("skeleton", body.find_children("*", "Skeleton3D", true, false)[0])
+	parent.set_meta("animation_player", animation)
+	animation.play(&"idle")
+	return true
+
 static func attach(parent: Node3D, variant := -1, expedition_hale := false) -> bool:
 	if variant < -1 or variant >= BODIES.size(): return false
 	var body := MODEL.instantiate() as Node3D
@@ -58,9 +78,10 @@ static func attach(parent: Node3D, variant := -1, expedition_hale := false) -> b
 	animation.play(&"idle")
 	return true
 
-static func _apply_finish(body: Node3D, variant: int, recipe: Array) -> void:
-	if not _materials.has(variant): _materials[variant] = {}
-	var finishes: Dictionary = _materials[variant]
+static func _apply_finish(body: Node3D, variant: int, recipe: Array, key: Variant = null) -> void:
+	if key == null: key = variant
+	if not _materials.has(key): _materials[key] = {}
+	var finishes: Dictionary = _materials[key]
 	for mesh: MeshInstance3D in body.find_children("*", "MeshInstance3D", true, false):
 		if mesh.mesh == null: continue
 		for i in mesh.mesh.get_surface_count():

@@ -6,12 +6,14 @@ const Crossing := preload("Crossing.gd")
 const Rooms := preload("Rooms.gd")
 const Cast := preload("Roster.gd")
 const Witnesses := preload("HallWitnesses.gd")
+const HeroCast := preload("ProductionCast.gd")
 const Crew := preload("res://scenes/rogue_rules/ExpeditionCrew.gd")
 const Camp := preload("res://scenes/rogue_camp/CampResidents.gd")
 const MARGINS := "user://night_watch_margins.txt"
 
 const FirstExpedition := preload("res://scenes/expedition_01/Sortie.tscn")
 const HallOpening := preload("HallOpeningSequence.gd")
+const FIRST_BRIEF := "The Essence is drifting. Hale is waiting at the north gate: go down the well together and bring back the spare core."
 const FIRST_SEAL := "user://expedition_01_returned"
 var first_sortie
 var first_returned := false
@@ -43,6 +45,9 @@ var moves := 0
 var crew := Crew.new()
 var camp := Camp.new()
 var camp_actors: Node3D
+## Before the first sortie the Hall holds only the captain and Hale, who waits at the north gate.
+var hall_hale: Node3D
+var _hud_hidden: Array[Control] = []
 var camp_time := 0.0
 var margins := ""
 var inherited := false
@@ -395,6 +400,10 @@ func _leave_hall() -> void:
 	camp_time = 0.0
 
 func _enter_hall() -> void:
+	if not first_returned:
+		_post_hall_hale()
+		return
+	if is_instance_valid(hall_hale): hall_hale.queue_free()
 	if is_instance_valid(camp_actors): return
 	var layout: Dictionary = room_view.camp_layout(Cast.NAMES)
 	assert(layout.people.size() == Cast.NAMES.size(), "The Hall must seat all original actors")
@@ -402,6 +411,20 @@ func _enter_hall() -> void:
 	camp_actors = Witnesses.new()
 	room_view.get_node("RoomViewport").add_child(camp_actors)
 	_update_hall(0.0)
+
+func _post_hall_hale() -> void:
+	if is_instance_valid(hall_hale): return
+	var anchors: Dictionary = room_view.hall_opening_anchors()
+	if anchors.is_empty(): return
+	var none: Array[Dictionary] = []
+	room_view.set_witness_targets(none)
+	hall_hale = Node3D.new()
+	hall_hale.name = "HallHale"
+	room_view.get_node("RoomViewport").add_child(hall_hale)
+	# Beside the north gate, turned toward the nave and the captain coming up it.
+	hall_hale.position = anchors.gate + Vector3(1.15, 0.0, 1.3)
+	hall_hale.rotation.y = 0.35
+	HeroCast.attach_hero(hall_hale, "hale")
 
 func _update_hall(dt: float) -> void:
 	var rows: Array[Dictionary] = camp_actors.sync(camp.snapshot().residents, dt)
@@ -415,6 +438,8 @@ func _depart_first() -> void:
 		if child is Control:
 			child.hide()
 			child.process_mode = Node.PROCESS_MODE_DISABLED
+	if is_instance_valid(hall_hale): hall_hale.queue_free()
+	hall_hale = null
 	first_sortie = FirstExpedition.instantiate()
 	first_sortie.returned.connect(_return_first, CONNECT_DEFERRED)
 	add_child(first_sortie)
@@ -547,11 +572,11 @@ func _refresh() -> void:
 		if current == "turntable" and message.is_empty(): _instruction.text = "The return tram is behind this shutter. Release the drawbar to board or push on."
 		if cleared.has(current): _instruction.text += "\nPassage open · Follow a named doorway and press E."
 		if phase == "camp" and message.is_empty(): _instruction.text = "Choose a supply route. Speak to a resident to recruit before leaving."
-		if phase == "camp" and not first_returned: _instruction.text = "First departure: meet Hale at the immersion arcade."
+		if phase == "camp" and not first_returned: _instruction.text = FIRST_BRIEF
 		for i in destinations.size(): _button(_flow, _route_name(destinations[i]), travel.bind(i))
 		_button(_flow,"Route chart",_chart).disabled = _performing
 		if handbook: _button(_flow, "Field manual · Tab", _read_guide).disabled = _performing
-		if phase == "camp": _button(_flow, "Crew & facilities", _team)
+		if phase == "camp" and first_returned: _button(_flow, "Crew & facilities", _team)
 	if not alive:
 		_button(_flow, "Replay this watch", new_run.bind(run_seed))
 		_button(_flow, "Start a new watch", func(): new_run(int(randi())))
@@ -593,6 +618,13 @@ func play_hall_opening(force := false) -> bool:
 		return false
 	_opening_played = true
 	room_view.set_modal(true)
+	_hud_hidden.clear()
+	for item: Control in [_status, _instruction, _flow]:
+		if item.visible:
+			item.hide()
+			_hud_hidden.append(item)
+	room_view.set_cinematic(true)
+	if is_instance_valid(hall_hale): hall_hale.hide()
 	# The captain is handed control standing beside the wing bed, facing the arcade.
 	room_view.place_player(anchors.cot + HallOpening.STAND_EYE * Vector3(1, 0, 1), Vector3(1, 0, 0.35))
 	_opening.start(anchors.viewport, anchors.camera, anchors.cot, anchors.pendulum, anchors.gate, room_view.set_essence_instability)
@@ -605,7 +637,12 @@ func skip_hall_opening() -> void:
 
 
 func _on_opening_finished() -> void:
+	for child in _hud_hidden:
+		if is_instance_valid(child): child.show()
+	_hud_hidden.clear()
+	room_view.set_cinematic(false)
+	if is_instance_valid(hall_hale): hall_hale.show()
 	room_view.set_essence_instability(room_view.essence_baseline())
 	room_view.set_modal(not modal.is_empty() or phase in ["lost", "won"])
 	if phase == "camp" and not first_returned:
-		_instruction.text = "源质在漂 · 和 Hale 一起从北门出发，去井区取回备用源核。"
+		_instruction.text = FIRST_BRIEF

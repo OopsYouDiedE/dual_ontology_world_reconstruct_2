@@ -1,0 +1,73 @@
+{
+  "scenarios": [
+    {
+      "name": "North first / refill before recast",
+      "win_tick": 426,
+      "steps": [
+        [{"action":"cast","target":"south"}, {"pending":{"target":"south","due_tick":48}}, ["cast_warning"]],
+        [{"action":"wait","ticks":47}, {"tick":47,"form":"liquid","flow":{"head":{"north":0,"south":0}}}, []],
+        [{"action":"wait","ticks":1}, {"tick":48,"form":"south","flow":{"wet_lane":"north"},"bubble":{"shuttle":{"phase":0,"rate":2},"vane":{"phase":48,"rate":4}},"optics":{"mark":"south_mark","receiver":"south_receiver"}}, ["cast_committed"]],
+        [{"action":"wait","ticks":48}, {"tick":96,"flow":{"head":{"north":48,"south":0}}}],
+        [{"action":"cast","target":"north"}, {"pending":{"due_tick":144,"retiring_span":"south_span"}}],
+        [{"action":"wait","ticks":48}, {"tick":144,"form":"north","flow":{"head":{"north":96,"south":0},"wet_lane":"south"}}, ["cast_committed"]],
+        [{"action":"move","target":"north_sill"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"north_span"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"north_pier"}],
+        [{"action":"wait","ticks":12}, {"tick":180,"player":{"room":"north_pier","travel":{}},"optics":{"receiver":"north_receiver"},"stamp_checks":{"north":{"shuttle_docked":false}}}],
+        [{"action":"wait","ticks":48}, {"tick":228,"flow":{"head":{"north":68,"south":84}},"stamp_checks":{"north":{"available":true}}}],
+        [{"action":"stamp"}, {"seals":{"north":true,"south":false},"flow":{"head":{"north":20,"south":12}},"gate_open":false}, ["seal_set"]],
+        [{"action":"wait","ticks":36}, {"tick":264,"flow":{"head":{"south":48}}}],
+        [{"action":"cast","target":"south"}, {"pending":{"due_tick":312}}],
+        [{"action":"move","target":"gallery"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"south_pier"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"wait","ticks":24}, {"tick":312,"form":"south","flow":{"head":{"north":0,"south":96}}}, ["cast_committed"]],
+        [{"action":"wait","ticks":90}, {"tick":402,"optics":{"receiver":"south_receiver"},"flow":{"head":{"north":90,"south":66}},"stamp_checks":{"south":{"available":true}}}],
+        [{"action":"stamp"}, {"seals":{"north":true,"south":true},"gate_open":true}, ["seal_set","gate_opened"]],
+        [{"action":"move","target":"gallery"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"exit"}],
+        [{"action":"wait","ticks":12}, {"tick":426,"outcome":"won","player":{"room":"exit"}}, ["walk_arrived","won"]]
+      ]
+    },
+    {
+      "name": "South first / cancelled trial and screened witness",
+      "win_tick": 453,
+      "steps": [
+        [{"action":"cast","target":"south"}, {"pending":{"due_tick":48}}, ["cast_warning"]],
+        [{"action":"wait","ticks":37}],
+        [{"action":"cancel"}, {"tick":37,"form":"liquid","pending":{}}, ["cast_cancelled"]],
+        [{"action":"cast","target":"north"}],
+        [{"action":"wait","ticks":96}, {"tick":133,"form":"north","flow":{"head":{"north":0,"south":48}}}, ["cast_committed"]],
+        [{"action":"cast","target":"south"}],
+        [{"action":"wait","ticks":48}, {"tick":181,"form":"south","flow":{"head":{"north":0,"south":96}}}, ["cast_committed"]],
+        [{"action":"move","target":"south_sill"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"south_span"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"south_pier"}],
+        [{"action":"wait","ticks":12}, {"tick":217,"optics":{"mark":"south_mark","receiver":""}}],
+        [{"action":"screen"}, {"tick":217,"optics":{"mark":"","receiver":"","screen_closed":true}}, ["shutter_changed"]],
+        [{"action":"wait","ticks":40}, {"tick":257,"optics":{"mark":"","receiver":"south_receiver"},"flow":{"head":{"north":76,"south":71}},"stamp_checks":{"south":{"available":true}}}],
+        [{"action":"stamp"}, {"seals":{"north":false,"south":true},"flow":{"head":{"north":4,"south":23}}}, ["seal_set"]],
+        [{"action":"wait","ticks":48}],
+        [{"action":"cast","target":"north"}, {"pending":{"due_tick":353}}],
+        [{"action":"move","target":"gallery"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"north_pier"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"wait","ticks":24}, {"tick":353,"form":"north","flow":{"head":{"north":96,"south":0}}}, ["cast_committed"]],
+        [{"action":"wait","ticks":76}, {"tick":429,"optics":{"mark":"","receiver":"north_receiver"},"flow":{"head":{"north":70,"south":76}},"stamp_checks":{"north":{"available":true}}}],
+        [{"action":"stamp"}, {"gate_open":true,"seals":{"north":true,"south":true}}, ["seal_set","gate_opened"]],
+        [{"action":"move","target":"gallery"}],
+        [{"action":"wait","ticks":12}],
+        [{"action":"move","target":"exit"}],
+        [{"action":"wait","ticks":12}, {"tick":453,"outcome":"won","player":{"room":"exit"}}, ["walk_arrived","won"]]
+      ]
+    }
+  ]
+}
+

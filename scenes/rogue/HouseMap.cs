@@ -5,27 +5,11 @@ public partial class HouseMap : RefCounted
 {
     private const string Start = "foyer", Camp = "camp", Goal = "observatory";
     private static readonly string[] RoomDesigns = ["kitchen", "lecture", "clinic", "dining", "valve_gallery", "service_stair"];
-    private static readonly (string Stage, string Lot, string BranchLot)[] Approach =
-    [
-        ("returns", "clinic", "dining"), ("exchange", "lecture", "valve_gallery"),
-        ("wash", "valve_gallery", "clinic"), ("lift", "service_stair", "valve_gallery"),
-        ("airlock", "clinic", "dining"), ("shutter", "dining", "service_stair"),
-    ];
-    private static readonly (string Stage, string Lot, string BranchLot)[] OuterWing =
-    [
-        ("darkroom", "lecture", "clinic"), ("relay", "valve_gallery", "dining"),
-    ];
     private Layout? _layout;
 
     public bool generate(long seed)
     {
         _layout = CreateLayout(unchecked((ulong)seed));
-        return _layout is not null;
-    }
-
-    public bool generate_watch(long seed)
-    {
-        _layout = CreateWatchLayout(unchecked((ulong)seed));
         return _layout is not null;
     }
 
@@ -172,87 +156,6 @@ public partial class HouseMap : RefCounted
                 }
                 last = deck[cursor++];
                 templates.Add(room, RoomDesigns[last]);
-            }
-        }
-    }
-
-    private static Layout? CreateWatchLayout(ulong seed)
-    {
-        var rng = new SeededChoices(seed);
-        var templates = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            [Start] = "foyer", [Camp] = "living_hall",
-        };
-
-        // Recruit gates occupy unbranched layers. All seed routes meet the first survivor
-        // before a doctrine conflict; an optional second survivor brings a third edition.
-        int recruitCount = 1 + rng.Next(2);
-        var eligible = recruitCount == 1 ? new[] { 2, 3, 4, 5, 6 } : [2, 4, 5, 6];
-        rng.Shuffle(eligible);
-        var expanded = eligible.Take(2 + rng.Next(2)).ToHashSet();
-        var approach = MakeLayers(Start, Camp, "approach", Approach.Length, expanded);
-        string[] recruits = recruitCount == 1 ? [approach[1][0]] : [approach[1][0], approach[3][0]];
-        var expedition = MakeLayers(Camp, Goal, "expedition", OuterWing.Length, [1 + rng.Next(2)]);
-        var stages = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            [Start] = "intake", [Camp] = "hall", [Goal] = "meridian",
-        };
-        AssignDesigns(approach, Approach);
-        AssignDesigns(expedition, OuterWing);
-        templates.Add(Goal, rng.Next(2) == 0 ? "lecture" : "valve_gallery");
-
-        // The seed selects layer membership and gate locations, never a door state.
-        // Camp is the sole room shared by the sections; only consecutive layers can touch.
-        var layers = approach.Concat(expedition.Skip(1)).ToArray();
-        var links = new List<RoomLink>();
-        var slots = new List<RoomSlot>();
-        for (int depth = 0; depth < layers.Length; ++depth)
-        {
-            string[] previous = depth == 0 ? [] : layers[depth - 1];
-            string[] next = depth == layers.Length - 1 ? [] : layers[depth + 1];
-            foreach (string room in layers[depth])
-            {
-                slots.Add(MakeSlot(room, previous, next));
-                foreach (string neighbor in next)
-                    links.Add(new RoomLink(room, neighbor, neighbor, room, Required: false));
-            }
-        }
-        var problem = new TopologyProblem(Start, Goal, slots, links) { RequireAllRoomsReachable = true };
-        var graph = TopologySolver.Solve(problem, seed);
-        return graph is null ? null : new Layout(graph, templates, recruits, stages);
-
-        string[][] MakeLayers(string first, string last, string prefix, int depthCount,
-            HashSet<int> expanded)
-        {
-            var roomIds = Enumerable.Range(1, depthCount + expanded.Count).ToArray();
-            rng.Shuffle(roomIds);
-            var layers = new string[depthCount + 2][];
-            layers[0] = [first];
-            layers[^1] = [last];
-            int cursor = 0;
-            for (int depth = 1; depth <= depthCount; ++depth)
-            {
-                layers[depth] = new string[expanded.Contains(depth) ? 2 : 1];
-                for (int i = 0; i < layers[depth].Length; ++i)
-                {
-                    string room = FormattableString.Invariant($"{prefix}_{roomIds[cursor++]:00}");
-                    layers[depth][i] = room;
-                }
-            }
-            return layers;
-        }
-
-        void AssignDesigns(string[][] section, (string Stage, string Lot, string BranchLot)[] design)
-        {
-            for (int layer = 1; layer <= design.Length; ++layer)
-            {
-                var (stage, lot, branchLot) = design[layer - 1];
-                for (int i = 0; i < section[layer].Length; ++i)
-                {
-                    string room = section[layer][i];
-                    stages.Add(room, stage);
-                    templates.Add(room, i == 0 ? lot : branchLot);
-                }
             }
         }
     }

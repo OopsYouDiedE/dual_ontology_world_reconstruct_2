@@ -16,23 +16,15 @@ var routes_released := false
 var _route_hardware := []
 
 
-signal lane_selected(index: int)
 
 const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdshader")
 const Followers := preload("res://scenes/rogue_view/FieldFollowers.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 var expedition_view := false
 var _modal := false
-var _night_stage := ""
-var _night_variant := false
-var _night_open := false
-var _night_root: Node3D
-var _night_anchor := Vector3.ZERO
-var _lanes: Array[Vector3] = []
 var _veil_material: ShaderMaterial
 var _crosshair: Label
 var _stability := 100
-var _echo_glass: Label3D
 var _followers: Node3D
 var _gate_root: Node3D
 var _gate_positions := {}
@@ -217,8 +209,6 @@ func set_instance_id(room_id: String) -> void:
 	_template = ""
 	_lot = {}
 	_mode = ""
-	_night_stage = ""
-	_night_open = false
 	_clicks.clear()
 	_keyboard_interact = false
 	if is_instance_valid(_crossing):
@@ -227,11 +217,6 @@ func set_instance_id(room_id: String) -> void:
 	_crossing = null
 	_witness_targets.clear()
 	_drop_player()
-
-
-func set_room(label: String, exits: Array) -> void:
-	_apply(label, exits, {}, "", 1)
-
 
 func set_blueprint_room(title: String, exits: Array, xml_path: String) -> Error:
 	if xml_path == "res://content/academy_lots/kitchen.xml":
@@ -305,14 +290,11 @@ func _rebuild() -> void:
 	_kitchen = null
 	_lights = null
 	_gothic_hall = null
-	_night_root = null
 	_crossing = null
-	_echo_glass = null
 	_gate_root = null
 	_gate_positions.clear()
 	_gate_labels.clear()
 	_route_hardware.clear()
-	_lanes.clear()
 	_walkable_cells.clear()
 	_avatar_root = null
 	_object_root = null
@@ -594,13 +576,8 @@ func _refresh_targets() -> void:
 	if is_instance_valid(_crossing): _targets.append_array(_crossing.targets)
 	_targets.append_array(_witness_targets)
 	if _inspection_active and _exits.is_empty():
-		if is_instance_valid(_night_root):
-			_targets.append({"kind": "inspect", "position": _night_anchor, "label": "the threshold"})
-		elif not focus.is_empty():
+		if not focus.is_empty():
 			_targets.append({"kind": "inspect", "position": _world(focus.position), "label": _item_name(focus, "Landmark")})
-	if _night_open and _night_stage == "rain":
-		for i in _lanes.size():
-			_targets.append({"kind": "lane", "index": i, "position": _lanes[i], "label": "brass strip" if i == 0 else "red strip"})
 	if portals.size() < _exits.size():
 		portals.append_array(entrances)
 	if expedition_view and (not campaign_view or routes_released or is_instance_valid(_crossing)):
@@ -784,8 +761,6 @@ func _activate(target: Dictionary) -> bool:
 	elif target.kind == "inspect":
 		set_inspection_target(false)
 		landmark_inspected.emit()
-	elif target.kind == "lane":
-		lane_selected.emit(target.index)
 	else:
 		exit_selected.emit(target.index)
 	return true
@@ -972,97 +947,12 @@ func set_modal(active: bool) -> void:
 func is_walking_view() -> bool:
 	return not _plan_open and not _modal and is_instance_valid(_player)
 
-
-func lane_at_feet() -> int:
-	if not is_walking_view(): return -1
-	for i in _lanes.size():
-		if _flat_distance(_lanes[i]) <= 0.64: return i
-	return -1
-
-
-func set_night(stage: String, variant: bool, route_open: bool, stability: int, safe_room: bool) -> void:
-	if not expedition_view or _veil_material == null: return
-	var changed := _night_stage != stage or _night_variant != variant
-	_night_stage = stage
-	_night_variant = variant
-	_night_open = route_open
-	if changed and is_instance_valid(_night_root):
-		_geometry.remove_child(_night_root)
-		_night_root.queue_free()
-		_night_root = null
-		_lanes.clear()
-	if not stage.is_empty() and not is_instance_valid(_night_root) and is_instance_valid(_player):
-		_build_threshold(stage)
-	var climate := "shelter" if safe_room else stage
-	if is_instance_valid(_lights): _lights.apply(_hour, "ember" if _template == "kitchen" and stage.is_empty() else climate)
-	set_stability(stability)
-	_veil_material.set_shader_parameter("rainfall", 0.95 if stage == "rain" else 0.0)
-	_veil_material.set_shader_parameter("unrest", float(stage in ["echo", "rewrite", "rain"]))
-	_refresh_targets()
-
-
 func set_stability(value: int) -> void:
 	_stability = value
 	if _veil_material == null: return
 	_veil_material.set_shader_parameter("fracture", clampf((76.0 - value) / 76.0, 0.0, 1.0))
-	if is_instance_valid(_echo_glass): _echo_glass.visible = value < 65
 
-
-func _build_threshold(stage: String) -> void:
-	_night_root = Node3D.new()
-	_geometry.add_child(_night_root)
-	_night_anchor = _spawn_point()
-	var spawn := Vector2i(floori(_night_anchor.x), floori(_night_anchor.z))
-	var directions := [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
-	var camera: Camera3D = _player.camera()
-	var look := -camera.global_basis.z
-	var direction := Vector2i(roundi(look.x), 0) if absf(look.x) > absf(look.z) else Vector2i(0, roundi(look.z))
-	if direction != Vector2i.ZERO:
-		directions.erase(direction)
-		directions.push_front(direction)
-	var paths: Array[Vector3] = []
-	for dir: Vector2i in directions:
-		var first := spawn + dir
-		if not _is_clear_cell(first) or _has_wall_between(spawn, first): continue
-		var second := first + dir
-		var end := second if _is_clear_cell(second) and not _has_wall_between(first, second) else first
-		paths.append(_world(Vector2(end) + Vector2(0.5, 0.5)))
-	var marker := _night_anchor + (paths[0] - _night_anchor).normalized() * 0.78 if not paths.is_empty() else _night_anchor + Vector3.FORWARD * 0.78
-	var lamp := OilLamp.instantiate()
-	lamp.hang_length = 0.53
-	lamp.light_energy = 1.5
-	lamp.shadow_enabled = false
-	lamp.position = marker + Vector3.UP * 2.37
-	_night_root.add_child(lamp)
-	lamp.set_wind(Vector3(6, 0, -2) if stage == "rain" else Vector3.ZERO)
-	match stage:
-		"echo":
-			_set_clock(marker)
-			_echo_glass = _plaque("REFLECTION\n" + ("04:10" if _night_variant else "04:11"), marker + Vector3.UP * 2.03, Color("8ba9cc"))
-		"rewrite":
-			_plaque("THE CURATOR\nCROSS BEFORE THE BELL", marker + Vector3.UP * 1.62, Color("ff8278"))
-			_plaque("II · DOUBLE SEAL" if _night_variant else "I · BROKEN SEAL", marker + Vector3.UP * 0.16, Color("fbd3a2"))
-		"rain":
-			if paths.size() < 2:
-				# Keep both choices usable even in a narrow lot. Both terminate on walkable floor.
-				if paths.is_empty(): paths.append(_night_anchor)
-				paths.append(_night_anchor)
-			for i in 2:
-				_lanes.append(paths[i])
-				var tint := Color("ffcf82") if i == 0 else Color("ea6864")
-				var strip := BoxMesh.new()
-				var length := maxf(0.22, _night_anchor.distance_to(paths[i]))
-				strip.size = Vector3(0.25, 0.018, length)
-				var mesh := MeshInstance3D.new()
-				mesh.mesh = strip
-				mesh.material_override = _material(tint, tint.darkened(0.42))
-				_night_root.add_child(mesh)
-				mesh.position = _night_anchor.lerp(paths[i], 0.5) + Vector3.UP * 0.025
-				if length > 0.23: mesh.look_at(paths[i] + Vector3.UP * 0.025)
-				_plaque("BRASS" if i == 0 else "RED", paths[i] + Vector3.UP * 0.52, tint)
-
-
-func _plaque(text: String, point: Vector3, tint: Color, parent: Node3D = null) -> Label3D:
+func _plaque(text: String, point: Vector3, tint: Color, parent: Node3D) -> Label3D:
 	var sign := Label3D.new()
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sign.text = text
@@ -1071,19 +961,8 @@ func _plaque(text: String, point: Vector3, tint: Color, parent: Node3D = null) -
 	sign.modulate = tint
 	sign.outline_size = 13
 	sign.position = point
-	(_night_root if parent == null else parent).add_child(sign)
+	parent.add_child(sign)
 	return sign
-
-
-func repeat_threshold() -> void:
-	if is_instance_valid(_player):
-		var point := _spawn_point()
-		_player.spawn_at(point, _spawn_yaw(point))
-	for sign in _night_root.get_children() if is_instance_valid(_night_root) else []:
-		if sign.name == "ThresholdClock":
-			sign.get_node("Minute").rotation.z = -TAU * 10.0 / 60.0
-			sign.get_node("FaceTime").text = "04:10"
-
 
 func _sync_gates(portals: Array[Dictionary]) -> void:
 	if is_instance_valid(_gate_root) and _gate_labels == _exits: return
@@ -1174,57 +1053,6 @@ func set_field_party(names: Array) -> void:
 		points.append(_world(Vector2(cursor) + Vector2(0.5, 0.5)))
 	_followers.setup(_player, points, field_model)
 	_followers.sync(names)
-
-
-func _clock_piece(parent: Node3D, mesh: Mesh, tint: Color, at: Vector3) -> MeshInstance3D:
-	var piece := MeshInstance3D.new()
-	piece.mesh = mesh
-	piece.material_override = _material(tint)
-	parent.add_child(piece)
-	piece.position = at
-	return piece
-
-
-func _set_clock(at: Vector3) -> void:
-	var clock := Node3D.new()
-	clock.name = "ThresholdClock"
-	_night_root.add_child(clock)
-	clock.position = at
-	var towards := _night_anchor - at
-	clock.rotation.y = atan2(towards.x, towards.z)
-	var post := BoxMesh.new()
-	post.size = Vector3(0.12, 1.44, 0.12)
-	_clock_piece(clock, post, Color("392922"), Vector3(0, 0.72, -0.065))
-	var brass := CylinderMesh.new()
-	brass.top_radius = 0.24
-	brass.bottom_radius = 0.24
-	brass.height = 0.11
-	_clock_piece(clock, brass, Color("a48350"), Vector3(0, 1.48, 0)).rotation.x = PI / 2.0
-	var dial := CylinderMesh.new()
-	dial.top_radius = 0.193
-	dial.bottom_radius = 0.193
-	dial.height = 0.011
-	_clock_piece(clock, dial, Color("ded4af"), Vector3(0, 1.48, 0.064)).rotation.x = PI / 2.0
-	for i in 12:
-		var radians := TAU * i / 12.0
-		var tick := BoxMesh.new()
-		tick.size = Vector3(0.006, 0.019, 0.004)
-		var offset := Vector3(sin(radians) * 0.167, cos(radians) * 0.167, 0.073)
-		_clock_piece(clock, tick, Color("372b21"), offset + Vector3.UP * 1.48).rotation.z = -radians
-	for i in 2:
-		var hand := Node3D.new()
-		hand.name = "Hour" if i == 0 else "Minute"
-		clock.add_child(hand)
-		hand.position = Vector3(0, 1.48, 0.082 + i * 0.008)
-		hand.rotation.z = -TAU * (4.18 / 12.0 if i == 0 else (11.0 if _night_variant else 10.0) / 60.0)
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(0.012 if i == 0 else 0.007, 0.101 if i == 0 else 0.144, 0.005)
-		_clock_piece(hand, mesh, Color("46352a"), Vector3.UP * (mesh.size.y * 0.43))
-	var label := _plaque("04:11" if _night_variant else "04:10", Vector3(0, 1.196, 0.074), Color("f5d79c"), clock)
-	label.name = "FaceTime"
-	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.pixel_size = 0.00096
-
 
 ## Mount on a real run of floor, with three separate approaches and a clear aisle.
 func set_crossing(stage: String, survivor: String, variant: bool, stability: int, resolved: bool) -> void:

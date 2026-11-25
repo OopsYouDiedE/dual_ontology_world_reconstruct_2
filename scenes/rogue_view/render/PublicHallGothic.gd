@@ -132,6 +132,8 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 			var bz1 := bz0 + bay_len
 			if has_wings and bi in [2, 3]:
 				_build_open_arch(wx, inward_x, bz0, bz1)
+				# Triforium band fills the spandrel between the arcade crown and the vault springing.
+				_build_blind_arcade(Vector3(wx, 0.0, (bz0 + bz1) * 0.5), Vector3.BACK, Vector3(inward_x, 0, 0), bay_len - 0.9, 4.95, 5.86, 4)
 				continue
 			_build_side_lancet_bay(wx, inward_x, bz0, bz1, (bi + side_i) % 4, lancet_tex)
 
@@ -141,7 +143,21 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	_build_end_gable_wall(min_x, max_x, min_z + 0.04, 1.0, true, rose_north_tex, lot)
 	_build_end_gable_wall(min_x, max_x, max_z - 0.04, -1.0, false, rose_south_tex, lot)
 
-	# 5. Warm ochre ceremonial floor runner framing the central axis (Hall 04 signature)
+	# Blind arcades break up the gable walls between the stringcourse and the rose.
+	var gable_len := span_x - 1.6
+	_build_blind_arcade(Vector3(cx, 0.0, min_z + 0.04), Vector3.RIGHT, Vector3.BACK, gable_len, 3.30, 4.15, 10)
+	_build_blind_arcade(Vector3(cx, 0.0, max_z - 0.04), Vector3.RIGHT, Vector3.FORWARD, gable_len, 2.85, 4.55, 8)
+
+	# Clerestory oculi light each side lunette above the lancets and arcades.
+	var rose_glass := _make_stained_glass_mat(rose_south_tex, Color("6c92c9"), 0.6)
+	rose_glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	for bi in bays_z:
+		var oz := min_z + (float(bi) + 0.5) * bay_len
+		_build_lunette_oculus(Vector3(min_x + ARCADE_INSET + 0.06, SPRING_H + 1.15, oz), 1.0, rose_glass)
+		_build_lunette_oculus(Vector3(max_x - ARCADE_INSET - 0.06, SPRING_H + 1.15, oz), -1.0, rose_glass)
+
+	# 5. Bay-divided paving and the warm ochre runner framing the central axis (Hall 04 signature)
+	_build_floor_paving(min_x + ARCADE_INSET + PIER_INSET, max_x - ARCADE_INSET - PIER_INSET, min_z, bays_z, bay_len, well)
 	_build_floor_runner(cx, min_z, max_z, span_x)
 
 	# 6. Project-authentic hanging oil lanterns along the nave colonnade
@@ -260,6 +276,19 @@ func _build_nave_vault_and_ribs(min_x: float, max_x: float, min_z: float, max_z:
 		boss.material_override = _mat_brass
 		add_child(boss)
 
+	# Carved stone bosses lock each transverse rib into the ridge.
+	for iz in range(1, bays_z):
+		var knot := MeshInstance3D.new()
+		var km := SphereMesh.new()
+		km.radius = 0.19
+		km.height = 0.24
+		km.radial_segments = 8
+		km.rings = 4
+		knot.mesh = km
+		knot.position = Vector3(cx, CROWN_H - 0.08, min_z + float(iz) * bay_len)
+		knot.material_override = _mat_rib
+		add_child(knot)
+
 	# Central ridge rib along Z
 	var ridge := PackedVector3Array([Vector3(cx, CROWN_H + 0.02, min_z + 0.06), Vector3(cx, CROWN_H + 0.02, max_z - 0.06)])
 	_sweep_rib(rib_st, ridge, 0.075)
@@ -288,6 +317,18 @@ func _build_clustered_pier(pos: Vector3, inward_x: float) -> void:
 		cyl.position = Vector3(inward_x * 0.16, SPRING_H * 0.5, dz)
 		cyl.material_override = _mat_rib
 		pier.add_child(cyl)
+		# Moulded base and necking ring make each colonnette read as a column, not a tube.
+		for ring: Array in [[0.098, 0.12, 0.47], [0.082, 0.05, SPRING_H - 0.36]]:
+			var band := MeshInstance3D.new()
+			var bm := CylinderMesh.new()
+			bm.top_radius = ring[0]
+			bm.bottom_radius = ring[0] * 1.08
+			bm.height = ring[1]
+			bm.radial_segments = 10
+			band.mesh = bm
+			band.position = Vector3(inward_x * 0.16, ring[2], dz)
+			band.material_override = _mat_rib
+			pier.add_child(band)
 	# 3-tier stepped Gothic capital
 	_box(pier, Vector3(inward_x * 0.04, SPRING_H - 0.26, 0.0), Vector3(0.40, 0.10, 0.42), _mat_rib)
 	_box(pier, Vector3(inward_x * 0.06, SPRING_H - 0.15, 0.0), Vector3(0.48, 0.11, 0.50), _mat_rib)
@@ -492,6 +533,81 @@ func _build_floor_runner(cx: float, min_z: float, max_z: float, span: float) -> 
 		_box(self, Vector3(x, 0.012, z), Vector3(1.18, 0.016, max_z - min_z), _mat_runner)
 		for hem: float in [-0.56, 0.56]:
 			_box(self, Vector3(x + hem, 0.022, z), Vector3(0.022, 0.004, max_z - min_z), _mat_wood)
+
+## Axis-aligned box whose length runs along `along` and depth projects along `inward`.
+func _strip(center: Vector3, along: Vector3, inward: Vector3, length: float, height: float, depth: float, mat: Material) -> void:
+	_box(self, center, along.abs() * length + inward.abs() * depth + Vector3(0, height, 0), mat)
+
+## Row of shallow pointed arches on slender shafts between two stringcourses.
+func _build_blind_arcade(center: Vector3, along: Vector3, inward: Vector3, length: float, y0: float, y1: float, count: int) -> void:
+	_strip(Vector3(center.x, y0, center.z) + inward * 0.08, along, inward, length, 0.10, 0.16, _mat_rib)
+	_strip(Vector3(center.x, y1 + 0.05, center.z) + inward * 0.08, along, inward, length, 0.10, 0.17, _mat_rib)
+	var bay := length / float(count)
+	var spring := y0 + (y1 - y0) * 0.55
+	var rise := y1 - 0.06 - spring
+	var arches := SurfaceTool.new(); arches.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var recess := SurfaceTool.new(); recess.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in count + 1:
+		var shaft := center + along * (-length * 0.5 + bay * float(i))
+		_strip(Vector3(shaft.x, (y0 + spring) * 0.5, shaft.z) + inward * 0.07, along, inward, 0.07, spring - y0, 0.10, _mat_rib)
+	for i in count:
+		var mid := center + along * (-length * 0.5 + bay * (float(i) + 0.5))
+		var hw := bay * 0.5 - 0.05
+		var curve := PackedVector3Array()
+		for k in 13:
+			var u := (k - 6.0) / 6.0
+			curve.append(mid + along * (u * hw) + inward * 0.09 + Vector3(0, spring + rise * _pointed_arch_y(u) / CROWN_RISE, 0))
+		_sweep_rib(arches, curve, 0.034)
+		# Darker recessed field under each arch gives the band depth under flat toon light.
+		for k in range(1, curve.size()):
+			var a := curve[k - 1] - inward * 0.065
+			var b := curve[k] - inward * 0.065
+			var a0 := Vector3(a.x, y0 + 0.05, a.z)
+			var b0 := Vector3(b.x, y0 + 0.05, b.z)
+			_add_quad(recess, a0, a, b, b0); _add_quad(recess, b0, b, a, a0)
+	arches.generate_normals(); _commit_mesh(arches, _mat_rib, "BlindArcade")
+	recess.generate_normals(); _commit_mesh(recess, _mat_vault, "BlindArcadeField")
+
+## Round clerestory window with quatrefoil tracery inside a side lunette.
+func _build_lunette_oculus(pos: Vector3, inward_x: float, glass: Material) -> void:
+	var root := Node3D.new()
+	root.name = "LunetteOculus"
+	root.position = pos
+	root.rotation.y = PI * 0.5 * inward_x
+	add_child(root)
+	var r := 0.62
+	var disc := SurfaceTool.new(); disc.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in 24:
+		var a0 := TAU * i / 24.0
+		var a1 := TAU * (i + 1) / 24.0
+		_add_uv_tri(disc, Vector3.ZERO, Vector3(cos(a0), sin(a0), 0) * r, Vector3(cos(a1), sin(a1), 0) * r,
+			Vector2(0.5, 0.5), Vector2(0.5 + 0.5 * cos(a0), 0.5 - 0.5 * sin(a0)), Vector2(0.5 + 0.5 * cos(a1), 0.5 - 0.5 * sin(a1)), Vector3.BACK)
+	_commit_mesh(disc, glass, "OculusGlass", root)
+	var tracery := SurfaceTool.new(); tracery.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rings: Array = [[Vector2.ZERO, r, 0.07]]
+	for k in 4:
+		rings.append([Vector2(cos(k * TAU / 4.0), sin(k * TAU / 4.0)) * r * 0.46, r * 0.46, 0.026])
+	for ring: Array in rings:
+		var loop := PackedVector3Array()
+		for i in 25:
+			var a := TAU * i / 24.0
+			var c: Vector2 = ring[0] + Vector2(cos(a), sin(a)) * float(ring[1])
+			loop.append(Vector3(c.x, c.y, 0.04))
+		_sweep_rib(tracery, loop, ring[2])
+	tracery.generate_normals(); _commit_mesh(tracery, _mat_rib, "OculusTracery", root)
+
+## Pale stone bands divide the nave floor at every pier, framed by two edge borders.
+func _build_floor_paving(x0: float, x1: float, min_z: float, bays_z: int, bay_len: float, well: Rect2i) -> void:
+	var max_z := min_z + bays_z * bay_len
+	for edge: float in [x0 + 0.36, x1 - 0.36]:
+		_box(self, Vector3(edge, 0.004, (min_z + max_z) * 0.5), Vector3(0.18, 0.008, max_z - min_z), _mat_rib)
+	for iz in range(bays_z + 1):
+		var z := clampf(min_z + iz * bay_len, min_z + 0.12, max_z - 0.12)
+		var spans := [Vector2(x0, x1)]
+		if well.has_area() and z > well.position.y - 0.3 and z < well.end.y + 0.3:
+			spans = [Vector2(x0, well.position.x - 0.3), Vector2(well.end.x + 0.3, x1)]
+		for s: Vector2 in spans:
+			_box(self, Vector3((s.x + s.y) * 0.5, 0.004, z), Vector3(s.y - s.x, 0.008, 0.2), _mat_rib)
 
 func _build_nave_lanterns(min_x: float, max_x: float, min_z: float, bay_len: float, bays_z: int) -> void:
 	for bi in bays_z:

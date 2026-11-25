@@ -40,3 +40,5 @@
 | 路线预读、正式界面 | [RouteChart.gd](../../scenes/rogue_crossing/RouteChart.gd)、[Run.tscn](../../scenes/rogue/Run.tscn) |
 
 六道前置封锁后入营、首位伙伴必须野外救出、滑动房间作为大地图，这三条旧流程已撤销。新增房牌必须可徒手解，必需线索放在可达位置；房间顺序可以变化，解题不依赖恰好抽到另一张牌。
+
+规则怪谈方向的问题清单与修复顺序见[规则怪谈关卡复核](../design/rule-horror-review.md)。

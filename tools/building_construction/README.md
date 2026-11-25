@@ -1,6 +1,6 @@
 # ArchBuilder
 
-Restored from `eee8091`. Open **Open ArchBuilder** in Run from a Godot project checkout, or run `res://tools/building_construction/BuildingSimulator.tscn` directly. `BuildTools.open_archbuilder() -> int` returns the editor process ID (or `-1` on failure). The editor starts its own draft and does not consume a Run room ID or write a Run save.
+Restored from `eee8091`. Run `res://tools/building_construction/BuildingSimulator.tscn` directly from a Godot project checkout. The editor starts its own draft and does not consume a Run room ID or write a Run save.
 
 ## Building files and consumers
 

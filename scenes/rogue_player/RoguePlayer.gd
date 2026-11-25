@@ -3,13 +3,15 @@ extends CharacterBody3D
 
 const Visual := preload("res://scenes/rogue_crossing/Roster.gd")
 const Feel := preload("res://scenes/components/shared/FeelProfile.gd")
+const Stage := preload("res://scenes/components/rendering/AcademyStage.gd")
 const DEFAULT_YAW := 0.65
 const DEFAULT_PITCH := 1.25
 const DEFAULT_DISTANCE := 9.5
 const CAMERA_HEIGHT := 1.05
 const WALK_SPEED := 3.0
 const SPRINT_SPEED := 5.0
-const FP_BASE_FOV := 73.0
+## First person shares the expedition eye: same FOV, eye height, sensitivity and pitch range.
+const FP_BASE_FOV := Stage.BASE_FOV
 
 @export_flags_3d_physics var camera_collision_mask := 1
 @onready var _visual: Node3D = $Visual
@@ -83,9 +85,9 @@ func set_first_person_framing(vertical_fov: float, pitch: float) -> void:
 func orbit_by(relative: Vector2) -> void:
 	if not _controls:
 		return
-	_yaw = wrapf(_yaw - relative.x * (0.0032 if first_person else 0.008), -PI, PI)
+	_yaw = wrapf(_yaw - relative.x * (Stage.LOOK_SENSITIVITY if first_person else 0.008), -PI, PI)
 	if first_person:
-		_pitch = clampf(_pitch - relative.y * 0.0032, -1.40, 1.40)
+		_pitch = clampf(_pitch - relative.y * Stage.LOOK_SENSITIVITY, -Stage.PITCH_LIMIT, Stage.PITCH_LIMIT)
 	else:
 		_pitch = clampf(_pitch + relative.y * 0.006, 0.18, 1.45)
 
@@ -119,7 +121,9 @@ func _physics_process(delta: float) -> void:
 	var direction := Vector3.ZERO
 	var sprint := false
 	if _controls:
-		_yaw = wrapf(_yaw + Input.get_axis("rogue_orbit_left", "rogue_orbit_right") * delta * 1.8, -PI, PI)
+		# Q/R orbit the third-person camera only; first person turns with the mouse, as in the expedition.
+		if not first_person:
+			_yaw = wrapf(_yaw + Input.get_axis("rogue_orbit_left", "rogue_orbit_right") * delta * 1.8, -PI, PI)
 		if _action == &"":
 			var axes := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 			direction = Vector3(axes.x, 0.0, axes.y).rotated(Vector3.UP, _yaw)
@@ -172,7 +176,7 @@ func _update_camera(delta: float) -> void:
 		var bob := -cos(TAU * _stride) * 0.014 * _bob_amp
 		var local_v := Vector3(velocity.x, 0.0, velocity.z).rotated(Vector3.UP, -_yaw)
 		_roll = lerpf(_roll, -clampf(local_v.x / SPRINT_SPEED, -1.0, 1.0) * 0.018, Feel.exp_damp(8.0, delta))
-		_camera.global_position = global_position + Vector3.UP * (1.48 + bob)
+		_camera.global_position = global_position + Vector3.UP * (Stage.EYE_HEIGHT + bob)
 		_camera.rotation = Vector3(_pitch, _yaw, _roll)
 		var target_fov := first_person_fov + (4.5 if _sprinting else 0.0)
 		_camera.fov = lerpf(_camera.fov, target_fov, Feel.exp_damp(7.0, delta)) if delta > 0.0 else target_fov

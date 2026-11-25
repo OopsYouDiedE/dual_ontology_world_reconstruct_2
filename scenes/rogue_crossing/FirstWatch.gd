@@ -9,6 +9,8 @@ const Witnesses := preload("HallWitnesses.gd")
 const HeroCast := preload("ProductionCast.gd")
 const Crew := preload("res://scenes/rogue_rules/ExpeditionCrew.gd")
 const Camp := preload("res://scenes/rogue_camp/CampResidents.gd")
+const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
+const Polish := preload("res://scenes/expedition_01/ExpeditionPolish.gd")
 const MARGINS := "user://night_watch_margins.txt"
 
 const FirstExpedition := preload("res://scenes/expedition_01/Sortie.tscn")
@@ -58,6 +60,11 @@ var _performing := false
 var _watch_number := 0
 var _flow: HFlowContainer
 var _status: Label
+var _place: Label
+var _kit: Label
+var _card: PanelContainer
+var _footer: VBoxContainer
+var _font: Font
 var _instruction: Label
 var _overlay: ColorRect
 var _sheet: VBoxContainer
@@ -74,64 +81,111 @@ func _ready() -> void:
 		if arg.begins_with("--run-seed=") and arg.get_slice("=", 1).is_valid_int(): chosen_seed = int(arg.get_slice("=", 1))
 	new_run(chosen_seed)
 
-func _style(fill: Color, border: Color, padding := 7) -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = fill
-	s.border_color = border
-	s.set_border_width_all(1)
-	s.set_corner_radius_all(4)
-	for side in [SIDE_LEFT, SIDE_RIGHT, SIDE_TOP, SIDE_BOTTOM]: s.set_content_margin(side, padding)
-	return s
-
 func _make_hud() -> void:
+	# The Hall wears the expedition HUD: full-window picture, a corner card, a caption plate and paper documents.
+	_font = UiStyle.make_font()
 	var skin := Theme.new()
+	skin.default_font = _font
 	skin.default_font_size = 16
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
-		var tint := Color("192827") if state == "normal" else (Color("423a2b") if state != "disabled" else Color("192020"))
-		skin.set_stylebox(state, "Button", _style(tint, Color("706759")))
-	skin.set_color("font_color", "Label", Color("e9d9bd"))
+	skin.set_color("font_color", "Label", UiStyle.TEXT_MAIN)
 	theme = skin
 	var backdrop := ColorRect.new()
 	backdrop.color = Color("111816")
 	backdrop.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var hud := VBoxContainer.new()
-	add_child(hud)
-	hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	hud.offset_left = 18
-	hud.offset_right = -18
-	hud.offset_top = 10
-	hud.offset_bottom = -10
-	hud.add_theme_constant_override("separation", 7)
-	_status = Label.new()
-	_status.add_theme_font_size_override("font_size", 17)
-	hud.add_child(_status)
 	room_view = Room.instantiate()
 	room_view.expedition_view = true
 	room_view.campaign_view = true
 	room_view.field_model = Cast.attach
-	room_view.size_flags_vertical = SIZE_EXPAND_FILL
-	hud.add_child(room_view)
+	add_child(room_view)
+	room_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	room_view.exit_selected.connect(travel)
 	room_view.crossing_selected.connect(_inspect)
 	room_view.witness_selected.connect(_take_deposition)
+	# The expedition's corner vignette sits over the picture and under the HUD.
+	var vignette := ColorRect.new()
+	vignette.mouse_filter = MOUSE_FILTER_IGNORE
+	var shade := Shader.new()
+	shade.code = Polish.VIGNETTE
+	vignette.material = ShaderMaterial.new()
+	vignette.material.shader = shade
+	add_child(vignette)
+	vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_card = PanelContainer.new()
+	_card.mouse_filter = MOUSE_FILTER_IGNORE
+	_card.add_theme_stylebox_override("panel", UiStyle.panel_box(UiStyle.PANEL_BG, 3, Vector2(16, 11), 3, 0, UiStyle.ACCENT))
+	add_child(_card)
+	_card.position = Vector2(22, 18)
+	var column := VBoxContainer.new()
+	column.mouse_filter = MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 4)
+	_card.add_child(column)
+	_place = Label.new()
+	UiStyle.style_label(_place, _font, 17, UiStyle.ACCENT_SOFT, 0)
+	column.add_child(_place)
+	var rule := ColorRect.new()
+	rule.color = Color(UiStyle.ACCENT, 0.55)
+	rule.custom_minimum_size = Vector2(0, 2)
+	rule.mouse_filter = MOUSE_FILTER_IGNORE
+	column.add_child(rule)
+	_status = Label.new()
+	UiStyle.style_label(_status, _font, 15, UiStyle.TEXT_MAIN, 0)
+	column.add_child(_status)
+	_kit = Label.new()
+	UiStyle.style_label(_kit, _font, 14, UiStyle.TEXT_MUTED, 0)
+	column.add_child(_kit)
+	_footer = VBoxContainer.new()
+	_footer.mouse_filter = MOUSE_FILTER_IGNORE
+	_footer.alignment = BoxContainer.ALIGNMENT_END
+	_footer.add_theme_constant_override("separation", 10)
+	add_child(_footer)
+	_footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_footer.offset_left = 56
+	_footer.offset_right = -56
+	_footer.offset_bottom = -22
+	_footer.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_instruction = Label.new()
 	_instruction.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_instruction.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hud.add_child(_instruction)
+	_instruction.size_flags_horizontal = SIZE_SHRINK_CENTER
+	UiStyle.style_label(_instruction, _font, 18, Color("fff3df"), 0)
+	var plate := StyleBoxFlat.new()
+	plate.bg_color = Color(.035, .029, .023, .89)
+	plate.set_corner_radius_all(4)
+	plate.content_margin_left = 18
+	plate.content_margin_right = 18
+	plate.content_margin_top = 7
+	plate.content_margin_bottom = 7
+	_instruction.add_theme_stylebox_override("normal", plate)
+	_footer.add_child(_instruction)
 	_flow = HFlowContainer.new()
+	_flow.mouse_filter = MOUSE_FILTER_IGNORE
 	_flow.alignment = FlowContainer.ALIGNMENT_CENTER
-	hud.add_child(_flow)
+	_flow.add_theme_constant_override("h_separation", 8)
+	_flow.add_theme_constant_override("v_separation", 6)
+	_footer.add_child(_flow)
 	_overlay = ColorRect.new()
-	_overlay.color = Color(.025, .034, .030, .72)
+	_overlay.color = Color(0, 0, 0, .58)
 	add_child(_overlay)
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
 	_overlay.add_child(center)
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Documents are paper, like the expedition's field manual.
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", _style(Color("202721"), Color("a88953"), 21))
+	var paper := StyleBoxFlat.new()
+	paper.bg_color = UiStyle.PARCHMENT
+	paper.border_color = UiStyle.PARCHMENT_BORDER
+	paper.set_border_width_all(3)
+	paper.set_corner_radius_all(4)
+	paper.shadow_color = Color(0, 0, 0, .7)
+	paper.shadow_size = 20
+	paper.content_margin_left = 34
+	paper.content_margin_right = 34
+	paper.content_margin_top = 28
+	paper.content_margin_bottom = 22
+	panel.add_theme_stylebox_override("panel", paper)
 	center.add_child(panel)
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -146,6 +200,14 @@ func _make_hud() -> void:
 	add_child(_opening)
 	_opening.finished.connect(_on_opening_finished)
 
+## Width-fit the caption plate: short lines hug their text, long ones wrap inside the footer.
+func _fit_instruction() -> void:
+	var widest := 0.0
+	for line in _instruction.text.split("\n"):
+		widest = maxf(widest, _font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x)
+	_instruction.custom_minimum_size.x = minf(widest + 40.0, maxf(get_viewport_rect().size.x - 112.0, 200.0))
+	_instruction.visible = not _instruction.text.is_empty()
+
 func _clear(row: Node) -> void:
 	for c in row.get_children():
 		row.remove_child(c)
@@ -155,7 +217,9 @@ func _button(parent: Container, label: String, callback: Callable) -> Button:
 	var b := Button.new()
 	b.focus_mode = FOCUS_NONE
 	b.text = label
-	b.custom_minimum_size.y = 32
+	b.custom_minimum_size.y = 34
+	if parent == _sheet: UiStyle.style_paper_button(b, _font)
+	else: UiStyle.style_button(b, _font)
 	parent.add_child(b)
 	b.pressed.connect(callback)
 	return b
@@ -164,8 +228,7 @@ func _label(text: String, size := 16, gold := false) -> void:
 	var node := Label.new()
 	node.text = text
 	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	node.add_theme_font_size_override("font_size", size)
-	if gold: node.add_theme_color_override("font_color", Color("f2ca82"))
+	UiStyle.style_label(node, _font, size, Color("7a4a1c") if gold else UiStyle.PARCHMENT_INK, 0)
 	_sheet.add_child(node)
 
 func _open(kind: String, title: String, folio: String) -> void:
@@ -181,6 +244,10 @@ func _open(kind: String, title: String, folio: String) -> void:
 	_fit_sheet.call_deferred()
 
 func _fit_sheet() -> void:
+	if modal.is_empty(): return
+	_scroll.custom_minimum_size.y = minf(_sheet.get_combined_minimum_size().y, get_viewport_rect().size.y * .80)
+	# Wrapped lines only know their height once the page has its width: measure again after layout.
+	await get_tree().process_frame
 	if modal.is_empty(): return
 	_scroll.custom_minimum_size.y = minf(_sheet.get_combined_minimum_size().y, get_viewport_rect().size.y * .80)
 
@@ -330,6 +397,7 @@ func _act(room_id: String, group: int, id: String) -> void:
 					operations.append("%s · %s" % [who, occupant.operation])
 					if i > 0: actors[who] = occupant.slot
 				_instruction.text = "Turn %d   /   %s" % [beat + 1, "     ·     ".join(operations)]
+				_fit_instruction()
 				room_view.show_crossing_turn(actors, beat)
 				await get_tree().create_timer(.62).timeout
 				if watch != _watch_number: return
@@ -560,8 +628,9 @@ func _refresh() -> void:
 		_enter_hall()
 		if not first_returned and not _opening_played and not _should_skip_opening():
 			play_hall_opening.call_deferred()
-	_status.text = "THE SLEEPING ACADEMY     /     %s     ·     HP %d/9     Nerve %d     Party %d     Crates %d     ·     %02d:%02d" % ["NIGHT WATCH" if phase != "camp" else "PUBLIC HALL", hp, nerve, party.size() + 1, crew.supplies, floori(clock) % 24, floori(fposmod(clock, 1.0) * 60)]
-	_status.text += "     Felt %d  /  Ratchets %d" % [pack.felt,pack.ratchet]
+	_place.text = "%s    %02d:%02d" % ["Public Hall" if phase == "camp" else title, floori(clock) % 24, floori(fposmod(clock, 1.0) * 60)]
+	_status.text = "HP %d/9   ·   Nerve %d   ·   Party %d   ·   Crates %d" % [hp, nerve, party.size() + 1, crew.supplies]
+	_kit.text = "Felt %d   ·   Ratchets %d" % [pack.felt, pack.ratchet]
 	if phase == "won":
 		_instruction.text = message + "\nMorning. The Hall has a name for everyone who returned."
 	elif phase == "lost":
@@ -580,6 +649,7 @@ func _refresh() -> void:
 	if not alive:
 		_button(_flow, "Replay this watch", new_run.bind(run_seed))
 		_button(_flow, "Start a new watch", func(): new_run(int(randi())))
+	_fit_instruction()
 
 func _process(dt: float) -> void:
 	if phase != "camp" or not is_instance_valid(camp_actors): return
@@ -592,7 +662,7 @@ func _process(dt: float) -> void:
 		_update_hall(Camp.TICK_SECONDS)
 
 func mcp_observe() -> Dictionary:
-	if is_instance_valid(first_sortie): return first_sortie.observation()
+	if is_instance_valid(first_sortie): return first_sortie.mcp_observe()
 	var buttons := []
 	var ui: Container = _flow if modal.is_empty() else _sheet
 	for node in ui.get_children():
@@ -619,7 +689,7 @@ func play_hall_opening(force := false) -> bool:
 	_opening_played = true
 	room_view.set_modal(true)
 	_hud_hidden.clear()
-	for item: Control in [_status, _instruction, _flow]:
+	for item: Control in [_card, _footer]:
 		if item.visible:
 			item.hide()
 			_hud_hidden.append(item)
@@ -646,3 +716,4 @@ func _on_opening_finished() -> void:
 	room_view.set_modal(not modal.is_empty() or phase in ["lost", "won"])
 	if phase == "camp" and not first_returned:
 		_instruction.text = FIRST_BRIEF
+		_fit_instruction()

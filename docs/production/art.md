@@ -8,7 +8,7 @@
 
 看门廊的三处关系：柱子朝光的一面与背光的一面有柔和分界；柱脚叠在浅墙上时由细线分开；最远的门仍能从暗拱里看清。房间可换布局与主色，复核时保留这三条。01 的连续明暗、02 的单独分色、03 的分色加线保留为历史比较，正式入口直接使用 04。
 
-[Hall04 环境资源](../../scenes/components/rendering/post/Hall04.tres)控制间接光、房间饱和度（0.76）和 Glow（关闭）；原分辨率房间视口用 `InkPass → HallInk` 以 0.40 强度补轮廓。建筑主表面、热厨木作与人物共用 `SoftToonLight`，水面、玻璃和发光像素按各自物理用途处理。折返闸等机关沿用模型上的材质槽：柜体与面板改为低饱和蓝灰，钟面和纸张保持浅色，黄铜集中在把手、指针与窄边；机关转轴、碰撞与交互点随原构件保留。HUD 在房间视口之外合成。
+公共大厅、夜班房间与 `Expedition-01` 共用同一舞台 [AcademyStage](../../scenes/components/rendering/AcademyStage.gd)：环境（Filmic、饱和度 0.80、SSAO、SDFGI、柔光 Glow、空气雾）、视口参数（MSAA 4×、去色带、阴影图集）、`InkPass → HallInk` 默认强度墨线，以及第一人称视点（FOV 73°、眼高 1.57 m、0.0022 rad/px、俯仰 ±1.48）。[Hall04 环境资源](../../scenes/components/rendering/post/Hall04.tres)只留给独立实验场景。建筑主表面、热厨木作与人物共用 `SoftToonLight`，水面、玻璃和发光像素按各自物理用途处理。折返闸等机关沿用模型上的材质槽：柜体与面板改为低饱和蓝灰，钟面和纸张保持浅色，黄铜集中在把手、指针与窄边；机关转轴、碰撞与交互点随原构件保留。HUD 在房间视口之外合成：大厅画面铺满窗口，与出征同用左上状态卡、准星下方的交互提示、底部字幕条、角落暗角和羊皮纸文件（`UiTheme`）。
 
 ## 按玩家视距做画面
 
@@ -43,4 +43,4 @@
 
 - **建筑与道具着色器**：全部不透明建筑体块与常规道具统一使用 `res://scenes/blue_prince_lab/HallFinish.gdshader`（手绘水彩笔触噪点 + 木纹/石面/金属粗糙度分化 + `toon_on = true, toon_strength = 0.86`）；透明玻璃与特殊发光板（如 `GazePlate.gdshader`）按各自物理/规则用途保留专用着色器。
 - **原分辨率细墨线**：视口挂载 `res://scenes/components/rendering/post/InkPass.gd`（`HallInk` 细线轮廓），配合角色中亮/中灰 1900 年代服装与中深栗棕发色（禁止纯黑吞没描边）。
-- **色调与环境分级**：Filmic 色调映射、`adjustment_contrast = 1.08`、`adjustment_saturation = 0.80`（大厅基准 `Hall04.tres` 为 `0.76`）；区域冷暖光雾与柔和灯源衰减统一由 `AcademyRenderProfile.gd` 驱动，室内氛围光与外窗时间光严格分离。
+- **色调与环境分级**：Filmic 色调映射、`adjustment_contrast = 1.08`、`adjustment_saturation = 0.80`（由 `AcademyStage.gd` 统一提供，大厅与关卡相同）；区域冷暖光雾与柔和灯源衰减统一由 `AcademyRenderProfile.gd` 驱动，室内氛围光与外窗时间光严格分离。

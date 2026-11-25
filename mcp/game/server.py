@@ -217,13 +217,16 @@ def game_server():
             return owned(session_id).request("observe", screenshot=screenshot)
 
     @server.tool(structured_output=False)
-    def step(session_id: str, operation: Literal["action", "click", "wait"], action: str = "",
-             x: float = 0, y: float = 0, frames: int = 1, screenshot: bool = True):
-        """Press an InputMap action, click at viewport coordinates, or wait 1–120 process frames."""
+    def step(session_id: str, operation: Literal["action", "click", "wait", "look", "key"], action: str = "",
+             x: float = 0, y: float = 0, frames: int = 1, screenshot: bool = True,
+             dx: float = 0, dy: float = 0, keycode: int = 0):
+        """Press an InputMap action, click at viewport coordinates, move the mouse by dx/dy over the frames
+        (look), tap a physical Godot keycode (key), or wait 1–120 process frames."""
         if not 1 <= frames <= 120:
             raise ValueError("frames must be 1–120")
         with lock:
-            return owned(session_id).request(operation, screenshot=screenshot, action=action, x=x, y=y, frames=frames)
+            return owned(session_id).request(operation, screenshot=screenshot, action=action, x=x, y=y, frames=frames,
+                                             dx=dx, dy=dy, keycode=keycode)
 
     @server.tool()
     def close(session_id: str) -> dict:

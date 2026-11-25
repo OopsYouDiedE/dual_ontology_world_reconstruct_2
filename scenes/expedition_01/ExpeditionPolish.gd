@@ -243,8 +243,7 @@ func _tune_camera()->void:
 func _tune_viewport()->void:
 	var vp:Viewport=lv.get_viewport()
 	saved={"msaa":vp.msaa_3d,"deband":vp.use_debanding}
-	vp.msaa_3d=Viewport.MSAA_4X;vp.use_debanding=true;vp.screen_space_aa=Viewport.SCREEN_SPACE_AA_DISABLED
-	vp.positional_shadow_atlas_size=4096;vp.positional_shadow_atlas_quad_0=Viewport.SHADOW_ATLAS_QUADRANT_SUBDIV_16;vp.positional_shadow_atlas_quad_1=Viewport.SHADOW_ATLAS_QUADRANT_SUBDIV_16
+	preload("res://scenes/components/rendering/AcademyStage.gd").tune_viewport(vp)
 
 func _exit_tree()->void:
 	if saved.is_empty() or not is_instance_valid(lv):return

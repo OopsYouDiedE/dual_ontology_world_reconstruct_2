@@ -88,6 +88,29 @@ func _handle(request: Dictionary) -> void:
 			_send_click(position, true)
 			await get_tree().process_frame
 			_send_click(position, false)
+	elif operation == "look":
+		# Relative mouse motion split over the requested frames, as a captured mouse delivers it.
+		var delta := Vector2(float(request.get("dx", 0)), float(request.get("dy", 0))) / frames
+		for frame in range(frames):
+			var motion := InputEventMouseMotion.new()
+			motion.position = get_viewport().get_visible_rect().size * 0.5
+			motion.global_position = motion.position
+			motion.relative = delta
+			motion.screen_relative = delta
+			Input.parse_input_event(motion)
+			await get_tree().process_frame
+	elif operation == "key":
+		# Physical key tap: InputMap actions bound to it fire through the normal event path.
+		var key := InputEventKey.new()
+		key.physical_keycode = int(request.get("keycode", 0)) as Key
+		key.keycode = key.physical_keycode
+		key.pressed = true
+		Input.parse_input_event(key)
+		for frame in range(frames):
+			await get_tree().process_frame
+		var up := key.duplicate() as InputEventKey
+		up.pressed = false
+		Input.parse_input_event(up)
 	elif operation == "wait":
 		for frame in range(frames):
 			await get_tree().process_frame

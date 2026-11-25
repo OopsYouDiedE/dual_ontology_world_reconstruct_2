@@ -9,6 +9,7 @@ const Cast=preload("res://scenes/rogue_crossing/ProductionCast.gd")
 const R18n=preload("res://scenes/components/shared/R18n.gd")
 const Feel=preload("res://scenes/components/shared/FeelProfile.gd")
 const RenderProfile=preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
+const Stage=preload("res://scenes/components/rendering/AcademyStage.gd")
 var kit:=Kit.new()
 var walker:=CharacterBody3D.new()
 var eye:=Camera3D.new()
@@ -357,20 +358,10 @@ func sound_at(kind:String,pos:Vector3,db:float,distance:=90.)->void:
 	if CLOSE_CUE_CAPS.has(kind):audio.max_db=CLOSE_CUE_CAPS[kind]
 	audio.finished.connect(audio.queue_free);audio.play()
 func light_stage()->void:
-	var w:=WorldEnvironment.new();var e:=Environment.new()
-	e.background_mode=Environment.BG_COLOR;e.background_color=Color("e3e2d9")
-	e.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;e.ambient_light_color=Color("c9d0d8");e.ambient_light_energy=.55
-	# Tone: ACES kept for contrast, exposure lifted from .68 so the vaults read without washing the walls out.
-	e.tonemap_mode=Environment.TONE_MAPPER_FILMIC;e.tonemap_exposure=.78;e.tonemap_white=3.5
-	e.adjustment_enabled=true;e.adjustment_contrast=1.08;e.adjustment_saturation=.80
-	var ink:=preload("res://scenes/components/rendering/post/InkPass.gd").create()
+	# The Public Hall and every night-watch room render on this same stage.
+	var w:=WorldEnvironment.new();var e:=Stage.environment()
+	var ink:=Stage.ink()
 	if ink!=null:add_child(ink)
-	# Contact shading + one-bounce GI. SDFGI is trimmed to 3 cascades (the level is ~75 m long).
-	e.ssao_enabled=true;e.ssao_radius=1.3;e.ssao_intensity=2.2;e.ssao_power=1.6;e.ssao_detail=.6;e.ssao_light_affect=.25
-	e.sdfgi_enabled=true;e.sdfgi_cascades=3;e.sdfgi_min_cell_size=.3;e.sdfgi_use_occlusion=true;e.sdfgi_bounce_feedback=.45;e.sdfgi_energy=.9;e.sdfgi_y_scale=Environment.SDFGI_Y_SCALE_75_PERCENT
-	# Soft bloom for lamps, emissive boards and the alarm; thin aerial fog for depth down the long arcade.
-	e.glow_enabled=true;e.glow_intensity=.3;e.glow_strength=.85;e.glow_bloom=.02;e.glow_hdr_threshold=1.3;e.glow_blend_mode=Environment.GLOW_BLEND_MODE_SOFTLIGHT
-	e.fog_enabled=true;e.fog_light_color=Color("e7e0d0");e.fog_density=.0028;e.fog_aerial_perspective=.2;e.fog_sky_affect=0.
 	w.environment=e;add_child(w)
 	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-33,0);sun.light_energy=.31;sun.light_color=Color("fff1dc");sun.shadow_enabled=true
 	sun.directional_shadow_max_distance=64;sun.directional_shadow_mode=DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS;sun.directional_shadow_blend_splits=true
@@ -1628,7 +1619,9 @@ func mcp_observe()->Dictionary:
 		"focus":focus(),"relay_focus":relay_focus,"prompt":prompt.text,
 		"service_caption":caption_toast.text if caption_toast.visible else "",
 		"lamp_on":lamp_on,"run_time":snappedf(run_time,.01),"hale_hold":hale_hold,
-		"pair_loud":pair_loud,"both_lamp":both_lamp,"hale_order":hale_order_text()},true)
+		"pair_loud":pair_loud,"both_lamp":both_lamp,"hale_order":hale_order_text(),
+		"mouse_captured":Input.mouse_mode==Input.MOUSE_MODE_CAPTURED,"window_focused":mouse_lifecycle.focused,
+		"hovered":str(get_viewport().gui_get_hovered_control().get_path()) if get_viewport().gui_get_hovered_control() else ""},true)
 	return state
 
 func review_props()->void:

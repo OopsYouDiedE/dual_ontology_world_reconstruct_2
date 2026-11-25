@@ -11,6 +11,7 @@ extends CanvasLayer
 signal finished
 
 const Cast = preload("res://scenes/rogue_crossing/ProductionCast.gd")
+const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
 
 # Offsets from the wake bed centre. The bed runs along X with its head against the west wall.
 const WAKE_EYE := Vector3(-0.72, 0.86, 0.0)
@@ -135,9 +136,10 @@ func _build_overlay() -> void:
 	var plate := PanelContainer.new()
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.04, 0.048, 0.045, 0.88)
-	style.border_color = Color("a88953")
-	style.set_border_width_all(1)
+	# Same caption plate and typeface as the expedition subtitles.
+	style.bg_color = Color(.035, .029, .023, .89)
+	style.border_color = UiStyle.ACCENT
+	style.border_width_left = 3
 	style.set_corner_radius_all(4)
 	style.set_content_margin_all(16)
 	plate.add_theme_stylebox_override("panel", style)
@@ -169,6 +171,9 @@ func _build_overlay() -> void:
 	_hint_label.add_theme_font_size_override("font_size", 12)
 	_hint_label.add_theme_color_override("font_color", Color("a89c88"))
 	vbox.add_child(_hint_label)
+	var font := UiStyle.make_font()
+	for label: Label in [_folio_label, _speaker_label, _caption_label, _hint_label]:
+		label.add_theme_font_override("font", font)
 
 ## `shift` receives the essence instability (0–1) each frame while the sequence runs.
 func start(viewport: SubViewport, player_cam: Camera3D, cot_pos: Vector3, pendulum_pos: Vector3, _gate_pos: Vector3, shift := Callable()) -> void:

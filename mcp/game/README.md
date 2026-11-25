@@ -12,7 +12,7 @@
 
 1. `status {}` 检查入口文件和 autoload。
 2. `on {"seed":1}` 启动真实 Forward+，验证 Godot PID、项目路径与配置哈希、入口和实际渲染方式，返回 `session_id`、视口大小和 PNG。
-3. `step {"session_id":"…","operation":"click","x":640,"y":360}`；`operation:"action"` 传 `action` 和 `frames`（1–120）；`operation:"wait"` 只推进观测间隔。`observe {"session_id":"…"}` 获取当前画面。`screenshot:false` 只取状态。
+3. `step {"session_id":"…","operation":"click","x":640,"y":360}`；`operation:"action"` 传 `action` 和 `frames`（1–120）；`operation:"look"` 传 `dx`/`dy` 在 `frames` 帧内送入相对鼠标位移（需先点击画面取得视角）；`operation:"key"` 传 Godot 物理键码 `keycode` 按下 `frames` 帧；`operation:"wait"` 只推进观测间隔。`observe {"session_id":"…"}` 获取当前画面。`screenshot:false` 只取状态。
 4. `close {"session_id":"…"}` 回收本连接启动的进程。日志、PNG、回复和隔离 profile 保留在 `.runtime/rogue-mcp/<session_id>/`。
 
 项目根目录可运行 `& .runtime/python/Scripts/python.exe tools/testing/rogue_smoke.py --seed 1`。若需验证一个项目已登记的动作，追加 `--action <InputMap名称> --frames 8`；点击起始画面可用 `--click 450 680`（1280×720，seed 1）。运行前需完成场景资源导入；若场景调用 C#，需先构建当前项目程序集。

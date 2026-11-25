@@ -47,3 +47,41 @@ static func style_label(label: Label, font: Font, size: int = 15, color: Color =
 	if outline > 0:
 		label.add_theme_constant_override("outline_size", outline)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+## Dark translucent chip with an accent edge on hover, matching the HUD card.
+static func style_button(button: Button, font: Font, size: int = 15) -> void:
+	button.add_theme_font_override("font", font)
+	button.add_theme_font_size_override("font_size", size)
+	button.add_theme_color_override("font_color", TEXT_MAIN)
+	button.add_theme_color_override("font_hover_color", ACCENT)
+	button.add_theme_color_override("font_pressed_color", ACCENT)
+	button.add_theme_color_override("font_disabled_color", Color(TEXT_MUTED, 0.55))
+	button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	button.add_theme_constant_override("outline_size", 3)
+	var margin := Vector2(14, 7)
+	button.add_theme_stylebox_override("normal", panel_box(PANEL_BG, 3, margin, 3, 0, Color(ACCENT, 0.45)))
+	button.add_theme_stylebox_override("hover", panel_box(PANEL_BG_DEEP, 3, margin, 3, 0, ACCENT))
+	button.add_theme_stylebox_override("pressed", panel_box(Color(0.10, 0.075, 0.05, 0.9), 3, margin, 3, 0, ACCENT))
+	button.add_theme_stylebox_override("disabled", panel_box(Color(PANEL_BG, 0.45), 3, margin, 3, 0, Color(TEXT_MUTED, 0.3)))
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+## Button on a parchment page: ink text, a thin brown rule, accent wash on hover.
+static func style_paper_button(button: Button, font: Font, size: int = 16) -> void:
+	button.add_theme_font_override("font", font)
+	button.add_theme_font_size_override("font_size", size)
+	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
+		button.add_theme_color_override(state, PARCHMENT_INK)
+	button.add_theme_color_override("font_disabled_color", Color(PARCHMENT_INK, 0.4))
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var s := StyleBoxFlat.new()
+		s.bg_color = {"normal": Color(PARCHMENT_BORDER, 0.08), "hover": Color(ACCENT, 0.42), "pressed": Color(ACCENT, 0.6), "disabled": Color(PARCHMENT_BORDER, 0.03)}[state]
+		s.border_color = Color(PARCHMENT_BORDER, 0.55 if state != "disabled" else 0.2)
+		s.border_width_left = 3
+		s.set_corner_radius_all(2)
+		s.content_margin_left = 14
+		s.content_margin_right = 14
+		s.content_margin_top = 6
+		s.content_margin_bottom = 6
+		button.add_theme_stylebox_override(state, s)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())

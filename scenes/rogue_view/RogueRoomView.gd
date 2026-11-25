@@ -21,12 +21,14 @@ const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdsh
 ## Residual warp left in the hall while the pendulum still drifts after the opening.
 const HALL_DRIFT_SHIFT := 0.22
 const Followers := preload("res://scenes/rogue_view/FieldFollowers.gd")
+const Stage := preload("res://scenes/components/rendering/AcademyStage.gd")
+const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 var expedition_view := false
 var _modal := false
 var _veil_material: ShaderMaterial
 var _shift_pass: MeshInstance3D
-var _crosshair: Label
+var _crosshair: Control
 var _stability := 100
 var _followers: Node3D
 var _gate_root: Node3D
@@ -40,6 +42,7 @@ const Plan = preload("res://scenes/rogue_view/NativeLotPlan.gd")
 const PLAYER_SCENE := "res://scenes/rogue_player/RoguePlayer.tscn"
 const INTERACT := &"interact"
 const REACH := 1.85
+const APPROACH_HINT := 3.5
 
 @onready var _viewport: SubViewport = $RoomViewport
 @onready var _geometry: Node3D = $RoomViewport/Geometry
@@ -97,10 +100,11 @@ func set_hour(hour: float) -> void:
 	if is_instance_valid(_lights):
 		_lights.apply(_hour, "ember" if _template == "kitchen" else "ordinary")
 		if expedition_view and _room_label == "Public Hall":
+			# Same warm lamp ring as the expedition arcades; the nave keeps no cold key of its own.
 			for lamp in _lights.lamps:
 				lamp.position.y = 4.95
-				lamp.light_color = Color("c8d4e3")
-				lamp.light_energy = 1.15
+				lamp.light_color = Color("ffe9cb")
+				lamp.light_energy = 1.35
 
 func _tile_surface(tint: Color, wall_surface: bool) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
@@ -113,13 +117,23 @@ func _resize_render_target() -> void:
 	var display := _pixels.get_global_transform_with_canvas().get_scale().abs() * _pixels.size
 	_viewport.size = Vector2i(display.round()).max(Vector2i.ONE)
 
+## First-person rooms have no frame: the native-resolution picture covers the whole window.
+func _fill_window() -> void:
+	$Frame.ratio = maxf(size.x, 1.0) / maxf(size.y, 1.0)
+
 func _ready() -> void:
 	_pixels.resized.connect(_resize_render_target)
 	_resize_render_target.call_deferred()
+	if expedition_view:
+		# The walkable rooms render on the expedition's stage and fill the window like it does.
+		$RoomViewport/WorldEnvironment.environment = Stage.environment()
+		Stage.tune_viewport(_viewport)
+		resized.connect(_fill_window)
+		_fill_window()
+		get_window().focus_exited.connect(_release_mouse)
 	if expedition_view and RenderingServer.get_current_rendering_method() == &"forward_plus":
-		var ink := preload("res://scenes/components/rendering/post/InkPass.gd").create()
+		var ink := Stage.ink()
 		ink.name = "ExpeditionInk"
-		ink.material_override.set_shader_parameter("opacity", 0.40)
 		_viewport.add_child(ink)
 		_shift_pass = preload("res://scenes/components/rendering/post/EssenceShiftPass.gd").create()
 		_shift_pass.name = "EssenceShift"
@@ -141,14 +155,16 @@ func _ready() -> void:
 		_veil_material = ShaderMaterial.new()
 		_veil_material.shader = Veil
 		veil.material = _veil_material
-		_crosshair = Label.new()
-		_crosshair.text = "·"
+		# The expedition reticle: a soft dot that gains an accent ring when something is in reach.
+		_crosshair = Control.new()
 		_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_pixels.add_child(_crosshair)
-		_crosshair.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_crosshair.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		_crosshair.add_theme_font_size_override("font_size", 23)
+		_crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		_crosshair.draw.connect(func() -> void:
+			_crosshair.draw_circle(Vector2.ZERO, 2.2, Color(1, 1, 1, 0.92 if _can_interact else 0.58))
+			if _can_interact:
+				_crosshair.draw_arc(Vector2.ZERO, 9.0, 0, TAU, 40, Color(UiStyle.ACCENT, 0.9), 1.8, true)
+		)
 	_pixels.gui_input.connect(_on_pixels_input)
 	_plan = Plan.new()
 	_plan.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -163,14 +179,15 @@ func _ready() -> void:
 	_panel.offset_bottom = -8
 	var bar := HBoxContainer.new()
 	_panel.add_child(bar)
+	var font := UiStyle.make_font()
 	_heading = Label.new()
 	_heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_heading.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_heading.add_theme_font_size_override("font_size", 19)
-	_heading.add_theme_constant_override("outline_size", 7)
+	UiStyle.style_label(_heading, font, 19, UiStyle.TEXT_MAIN, 7)
 	bar.add_child(_heading)
 	_plan_button = Button.new()
 	_plan_button.focus_mode = Control.FOCUS_NONE
+	if expedition_view: UiStyle.style_button(_plan_button, font)
 	_plan_button.pressed.connect(func():
 		_plan_open = not _plan_open
 		_release_mouse()
@@ -181,6 +198,7 @@ func _ready() -> void:
 	bar.add_child(_plan_button)
 	_level_button = Button.new()
 	_level_button.focus_mode = Control.FOCUS_NONE
+	if expedition_view: UiStyle.style_button(_level_button, font)
 	_level_button.pressed.connect(func():
 		_plan_level = 2 if _plan_level == 1 else 1
 		_refresh_ui()
@@ -194,6 +212,19 @@ func _ready() -> void:
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_prompt.add_theme_constant_override("outline_size", 6)
 	_panel.add_child(_prompt)
+	if expedition_view:
+		# Interaction prompt sits under the reticle, exactly where the expedition shows its own.
+		_panel.remove_child(_prompt)
+		add_child(_prompt)
+		_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		_prompt.offset_left = -320
+		_prompt.offset_right = 320
+		_prompt.offset_top = 23
+		_prompt.offset_bottom = 68
+		_prompt.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		UiStyle.style_label(_prompt, font, 19, UiStyle.TEXT_MAIN, 6)
 	_navigation = HFlowContainer.new()
 	_navigation.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_navigation.alignment = FlowContainer.ALIGNMENT_CENTER
@@ -373,6 +404,17 @@ func _rebuild_architecture() -> void:
 	if expedition_view and _room_label == "Public Hall":
 		_gothic_hall = PublicHallGothic.install(_geometry, _lot, Rect2i(11, 5, 10, 20) if _template == "public_nave" else floor_bounds, well, _pendulum_drifting)
 		set_essence_instability(essence_baseline())
+		# Same unshadowed warm fill ring the expedition hangs down its arcades.
+		var nave := Rect2(Vector2(11, 5), Vector2(10, 20)) if _template == "public_nave" else Rect2(floor_bounds)
+		for i in 3:
+			var fill := OmniLight3D.new()
+			fill.name = "NaveFill%d" % i
+			_geometry.add_child(fill)
+			fill.position = Vector3(nave.get_center().x, 4.1, lerpf(nave.position.y + 2.5, nave.end.y - 2.5, i / 2.0))
+			fill.omni_range = 12.0
+			fill.light_energy = 0.52
+			fill.light_color = Color("ffe9cb")
+			fill.omni_attenuation = 1.25
 	elif expedition_view:
 		# The old orbit view needed a cutaway roof. First person needs an interior ceiling.
 		var ceiling := SurfaceTool.new()
@@ -476,7 +518,7 @@ func _spawn_if_needed() -> void:
 		_player.zoom_by(2.4)
 		if is_instance_valid(_kitchen): _player.set_room_camera(0.20,3.0)
 	elif _template == "public_nave":
-		_player.set_first_person_framing(55.0, deg_to_rad(7.1))
+		_player.set_first_person_framing(Stage.BASE_FOV, deg_to_rad(7.1))
 	else:
 		_player.orbit_by(Vector2(0.0, 380.0))
 	_player.spawn_at(point, _spawn_yaw(point))
@@ -632,6 +674,8 @@ func _refresh_ui() -> void:
 			var source := "Live FreeSO VM" if _lot.source_kind == "live-vm" else "Saved FreeSO VM"
 			heading += " · %s, floor %d" % [source, _lot_level]
 	_heading.text = _room_label if campaign_view and not plan_mode else "%s  |  %s" % [heading, _room_label]
+	# In the campaign the HUD card names the room; the heading only labels the plan.
+	if campaign_view and expedition_view and not plan_mode: _heading.text = ""
 	_navigation.visible = not campaign_view
 	if is_instance_valid(_player): _player.set_controls_enabled(not plan_mode and not _modal)
 	if _displayed_exits != _exits:
@@ -672,20 +716,26 @@ func _update_prompt() -> void:
 	elif _plan_open or not is_instance_valid(_player):
 		_prompt.text = "Travel links" if not _exits.is_empty() else ""
 	elif target.is_empty():
-		_prompt.text = "WASD · Move   |   Click to look / Esc to release" if expedition_view else "WASD · Move     Q / R or right-drag · Orbit"
+		_prompt.text = "" if expedition_view else "WASD · Move     Q / R or right-drag · Orbit"
 	else:
 		if campaign_view and target.kind == "exit" and not routes_released:
 			_prompt.text = "Sealed passage · " + target.label
-			return
-		var verb := "Inspect" if target.kind == "inspect" else ("Examine" if target.kind in ["crossing", "fixture"] else ("Speak to" if target.kind == "witness" else "Travel"))
-		_prompt.text = ("E · %s %s" if campaign_view else "E / A / Click · %s %s") % [verb, target.label] if _can_interact else "Approach · " + target.label
+		else:
+			var verb := "Inspect" if target.kind == "inspect" else ("Examine" if target.kind in ["crossing", "fixture"] else ("Speak to" if target.kind == "witness" else "Travel"))
+			_prompt.text = ("E · %s %s" if campaign_view else "E / A / Click · %s %s") % [verb, target.label] if _can_interact else "Approach · " + target.label
+			# First person names a target only once it is near, as the expedition does.
+			if expedition_view and not _can_interact and _flat_distance(target.position) > APPROACH_HINT: _prompt.text = ""
+	# Until the world holds the cursor, the first line says how to take the view.
+	if expedition_view and not _modal and not _plan_open and is_instance_valid(_player) and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		_prompt.text = "Click to look  ·  WASD to move" + ("\n" + _prompt.text if not _prompt.text.is_empty() else "")
+	if is_instance_valid(_crosshair): _crosshair.queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
 	if not expedition_view or _modal or _plan_open or not is_instance_valid(_player): return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED: return
 	if event is InputEventMouseMotion:
-		_player.orbit_by(event.screen_relative)
+		_player.orbit_by(event.relative)
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.physical_keycode == KEY_ESCAPE and event.pressed:
 		_release_mouse()
@@ -804,6 +854,11 @@ func player_observation() -> Dictionary:
 		player["fixtures_moving"] = _kitchen.moving.keys()
 	player["available_interact"] = not _plan_open and _can_interact
 	player["view"] = "plan" if is_instance_valid(_plan) and _plan.visible else _mode
+	player["mouse_captured"] = Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if is_instance_valid(_player) and _player.camera() != null:
+		var eye: Camera3D = _player.camera()
+		player["camera_forward"] = [-eye.global_basis.z.x, -eye.global_basis.z.y, -eye.global_basis.z.z]
+		player["fov"] = eye.fov
 	return player
 
 

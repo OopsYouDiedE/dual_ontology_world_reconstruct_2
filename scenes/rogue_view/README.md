@@ -1,6 +1,6 @@
 # Rogue room view
 
-`RogueRoomView.tscn` displays a walkable perspective projection of authored FreeSO lot data with the original detective rig/controller. Its 3D viewport uses Forward+ SDFGI at the displayed 3D frame size. The **Overhead plan** button opens a high-contrast, full-resolution native tile plan; on a two-floor blueprint, the floor selector includes the upper gallery. Movement pauses while the plan is open.
+`RogueRoomView.tscn` displays a walkable perspective projection of authored FreeSO lot data with the original detective rig/controller. Its 3D viewport uses Forward+ SDFGI at the displayed 3D frame size. With `expedition_view` (the campaign) the picture fills the window and the viewport takes the expedition stage from `AcademyStage.gd`: environment, MSAA, ink strength, FOV, eye height, look sensitivity and pitch limit. Click anywhere in the picture to take the view; Esc or losing window focus releases it. Q/R orbit only the third-person view. The **Overhead plan** button opens a high-contrast, full-resolution native tile plan; on a two-floor blueprint, the floor selector includes the upper gallery. Movement pauses while the plan is open.
 
 ## Run integration
 

@@ -18,11 +18,14 @@ var _route_hardware := []
 
 
 const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdshader")
+## Residual warp left in the hall while the pendulum still drifts after the opening.
+const HALL_DRIFT_SHIFT := 0.22
 const Followers := preload("res://scenes/rogue_view/FieldFollowers.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 var expedition_view := false
 var _modal := false
 var _veil_material: ShaderMaterial
+var _shift_pass: MeshInstance3D
 var _crosshair: Label
 var _stability := 100
 var _followers: Node3D
@@ -117,6 +120,9 @@ func _ready() -> void:
 		ink.name = "ExpeditionInk"
 		ink.material_override.set_shader_parameter("opacity", 0.40)
 		_viewport.add_child(ink)
+		_shift_pass = preload("res://scenes/components/rendering/post/EssenceShiftPass.gd").create()
+		_shift_pass.name = "EssenceShift"
+		_viewport.add_child(_shift_pass)
 	if not InputMap.has_action(INTERACT):
 		InputMap.add_action(INTERACT)
 		var key := InputEventKey.new()
@@ -290,6 +296,7 @@ func _rebuild() -> void:
 	_kitchen = null
 	_lights = null
 	_gothic_hall = null
+	set_essence_instability(0.0)
 	_crossing = null
 	_gate_root = null
 	_gate_positions.clear()
@@ -364,6 +371,7 @@ func _rebuild_architecture() -> void:
 		_commit_static_mesh(walls, _tile_surface(Color("aa997e"), true))
 	if expedition_view and _room_label == "Public Hall":
 		_gothic_hall = PublicHallGothic.install(_geometry, _lot, Rect2i(11, 5, 10, 20) if _template == "public_nave" else floor_bounds, well, _pendulum_drifting)
+		set_essence_instability(essence_baseline())
 	elif expedition_view:
 		# The old orbit view needed a cutaway roof. First person needs an interior ceiling.
 		var ceiling := SurfaceTool.new()
@@ -1157,8 +1165,25 @@ func viewport_routes() -> Array:
 	return grid
 func set_pendulum_drifting(drifting: bool) -> void:
 	_pendulum_drifting = drifting
+	set_essence_instability(essence_baseline())
 	if is_instance_valid(_gothic_hall) and _gothic_hall.has_method("set_drift_state"):
 		_gothic_hall.set_drift_state(drifting)
+
+
+func place_player(point: Vector3, facing: Vector3) -> void:
+	if is_instance_valid(_player):
+		_player.spawn_at(point, atan2(-facing.x, -facing.z))
+
+
+## Screen-space essence warp and red/blue shift; 0 hides the pass entirely.
+func set_essence_instability(value: float) -> void:
+	if not is_instance_valid(_shift_pass): return
+	_shift_pass.visible = value > 0.001
+	_shift_pass.material_override.set_shader_parameter("instability", clampf(value, 0.0, 1.0))
+
+
+func essence_baseline() -> float:
+	return HALL_DRIFT_SHIFT if is_instance_valid(_gothic_hall) and _pendulum_drifting else 0.0
 
 
 func hall_opening_anchors() -> Dictionary:

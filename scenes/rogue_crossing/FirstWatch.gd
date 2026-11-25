@@ -593,7 +593,9 @@ func play_hall_opening(force := false) -> bool:
 		return false
 	_opening_played = true
 	room_view.set_modal(true)
-	_opening.start(anchors.viewport, anchors.camera, anchors.cot, anchors.pendulum, anchors.gate)
+	# The captain is handed control standing beside the wing bed, facing the arcade.
+	room_view.place_player(anchors.cot + HallOpening.STAND_EYE * Vector3(1, 0, 1), Vector3(1, 0, 0.35))
+	_opening.start(anchors.viewport, anchors.camera, anchors.cot, anchors.pendulum, anchors.gate, room_view.set_essence_instability)
 	return true
 
 
@@ -603,6 +605,7 @@ func skip_hall_opening() -> void:
 
 
 func _on_opening_finished() -> void:
+	room_view.set_essence_instability(room_view.essence_baseline())
 	room_view.set_modal(not modal.is_empty() or phase in ["lost", "won"])
 	if phase == "camp" and not first_returned:
-		_instruction.text = "傅科摆进动偏航 · 在中央摆井确认异常后，前往北门与 Hale 汇合取回源质校正。"
+		_instruction.text = "源质在漂 · 和 Hale 一起从北门出发，去井区取回备用源核。"

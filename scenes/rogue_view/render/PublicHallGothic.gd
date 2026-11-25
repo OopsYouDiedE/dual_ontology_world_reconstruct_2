@@ -25,12 +25,15 @@ const ARCADE_SPRING := 2.85
 const ARCADE_RISE := 1.80
 const WING_SPRING := 2.58
 const WING_ROOF := 5.20
+# The captain wakes in the west-wing dormitory, on the bed nearest the wing passage.
+const WAKE_BED := Vector3(7.65, 0.0, 18.45)
 
 var pendulum_pivot: Node3D
 var pendulum_bob: Node3D
 var drift_bezel: MeshInstance3D
 var essence_light: OmniLight3D
 var watch_cot_pos := Vector3.ZERO
+var _nave_cot_pos := Vector3.ZERO
 var pendulum_world_pos := Vector3.ZERO
 var north_gate_pos := Vector3.ZERO
 
@@ -105,10 +108,11 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 		pendulum_world_pos = Vector3(well.position.x + well.size.x * 0.5, 0.0, well.position.y + well.size.y * 0.5)
 	else:
 		pendulum_world_pos = Vector3(cx, 0.0, cz)
-	watch_cot_pos = Vector3(cx - 3.45, 0.0, max_z - 4.7)
+	_nave_cot_pos = Vector3(cx - 3.45, 0.0, max_z - 4.7)
 	north_gate_pos = Vector3(cx, 0.0, min_z + 0.45)
 
 	var has_wings: bool = lot.floors.has(Vector2i(6, 13))
+	watch_cot_pos = WAKE_BED if has_wings else _nave_cot_pos
 	var bays_z := maxi(3, roundi(span_z / 4.0))
 	var bay_len := span_z / float(bays_z)
 
@@ -723,12 +727,18 @@ func set_drift_state(is_drifting: bool) -> void:
 		essence_light.light_energy = 1.25 if drifting else 0.90
 
 func _build_functional_props(min_z: float) -> void:
-	# Watch Cot Alcove (using real ArchBuilder RecipeBed + RecipeBankerLamp)
+	# Awakening spot. In the full hall it is a dormitory bed in the west wing, with the
+	# lantern Hale left on the floor beside it; residents keep their cots in the nave.
 	var cot_root := Node3D.new()
 	cot_root.name = "WatchCotAlcove"
 	cot_root.position = watch_cot_pos
 	add_child(cot_root)
-	_camp_cot(cot_root, Vector3.ZERO)
+	if watch_cot_pos == _nave_cot_pos:
+		_camp_cot(cot_root, Vector3.ZERO)
+	else:
+		_camp_cot(self, _nave_cot_pos)
+		_prop(cot_root, "Lighting/CagedLamp", Vector3(0.55, 0.0, -0.78))
+		_pool(watch_cot_pos + Vector3(0.6, 0.55, -0.85), Color("ffc27a"), 1.3, 3.2)
 
 	# Essence Calibration Lectern (using real ArchBuilder RecipeLectern)
 	var lec_root := Node3D.new()
@@ -843,7 +853,7 @@ func _build_watch_wings() -> void:
 	_prop(self,"Tables/WorkCounter",Vector3(24.6,0,13.5))
 	_reserve_station(Vector3(24.6,0,13.5),Vector2(2.05,0.75),0.94)
 	_prop(self,"Props/CrockeryShelf",Vector3(25.75,0,18.2),-PI/2)
-	_camp_cot(self, watch_cot_pos + Vector3(-0.24,0,-1.65))
+	_camp_cot(self, _nave_cot_pos + Vector3(-0.24,0,-1.65))
 	_prop(self,"Props/Screen",Vector3(11.27,0,20.35),PI/2)
 	for z: float in [14.25,15.9,18.45,20.0]:
 		var bed := Vector3(9.6 if z==14.25 else 7.65,0,z)

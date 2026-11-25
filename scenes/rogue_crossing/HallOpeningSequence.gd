@@ -1,60 +1,70 @@
 extends CanvasLayer
 ## Opening awakening cutscene and camera choreography for the Public Hall.
 ##
-## Story beat (2nd-pass human-realism revision):
-##   1. Protagonist wakes from a short watch nap (eyelid fade + gentle shoulder-shake).
-##   2. Hale—apologetic, keeping his voice low so sleeping residents don't panic—explains
-##      he triple-checked the meridian scale before waking the captain.
-##   3. Camera pans and pushes toward the suspended brass Foucault Pendulum drifting off
-##      the southern quadrant red mark; Hale notes the Essence return line stalled.
-##   4. Camera turns toward the North Departure Gate beneath the rose window; Hale reminds
-##      the captain that airlock regulations require two-person sign-off and leaves the
-##      lantern & manual at hand, handing control smoothly back to first-person play.
+## Story beat:
+##   1. The captain wakes on a west-wing dormitory bed; Hale shakes them awake.
+##   2. The wing is already warping: lamp edges split into red and blue fringes.
+##   3. Through the wing arcade the camera finds the drifting Foucault Pendulum.
+##   4. Hale explains the stalled Essence return and the spare core left in the shaft.
+##   5. Two-person rule: they go together; control returns standing beside the bed.
 
 signal finished
 
 const Cast = preload("res://scenes/rogue_crossing/ProductionCast.gd")
 
+# Offsets from the wake bed centre. The bed runs along X with its head against the west wall.
+const WAKE_EYE := Vector3(-0.72, 0.86, 0.0)
+const HALE_SPOT := Vector3(1.45, 0.0, -0.62)
+const STAND_EYE := Vector3(0.62, 1.55, -0.95)
+# World point in the open west arcade bay from which the pendulum is framed.
+const ARCADE_EYE := Vector3(11.6, 1.6, 19.2)
+
+# Essence instability per beat: sharpest on waking, easing into the hall's residual drift.
 const BEATS := [
 	{
 		"id": "wake_shake",
 		"speaker": "Hale",
 		"text": "……醒醒，先别出声。对不住，我知道你刚换班躺下不到两小时。",
-		"folio": "04:00  /  常数锚定厅 · 值守卧榻",
+		"folio": "04:00  /  常数锚定厅 · 西翼宿舍",
 		"duration": 3.4,
-		"shot": "wake"
+		"shot": "wake",
+		"shift": 0.95
 	},
 	{
 		"id": "wake_focus",
 		"speaker": "",
-		"text": "提灯的光晃得眼眶发酸。大厅里太安静了——连中央铜摆那点惯常的底噪都变了调。",
-		"folio": "04:00  /  常数锚定厅 · 值守卧榻",
-		"duration": 3.5,
-		"shot": "hale_closeup"
+		"text": "提灯在墙上拖出一红一蓝两道边。床架的线条在晃，像隔着一层热浪看东西——不是没睡醒。",
+		"folio": "04:00  /  常数锚定厅 · 西翼宿舍",
+		"duration": 3.8,
+		"shot": "hale_closeup",
+		"shift": 0.8
 	},
 	{
 		"id": "pendulum_drift",
 		"speaker": "Hale",
-		"text": "我拿着尺子复核了三遍，不是我眼花。你看中央的傅科摆——过南象限时明显拖慢了半拍，进动刻痕已经越过红线三格了。",
-		"folio": "04:01  /  常数锚定井 · 傅科摆偏航",
-		"duration": 4.8,
-		"shot": "pendulum_push"
+		"text": "你也看见了。朝你过来的东西发蓝，退开的发红——源质在漂。中央铜摆过南象限拖了半拍，刻痕已经越过红线三格。",
+		"folio": "04:01  /  西翼拱廊 · 望向常数锚定井",
+		"duration": 5.0,
+		"shot": "pendulum_push",
+		"shift": 0.6
 	},
 	{
 		"id": "essence_reason",
 		"speaker": "Hale",
-		"text": "稳压室那头的源质回流断了。我没敢拉全厅警报，大伙折腾一整夜刚睡安稳，闹起来只会更乱。",
+		"text": "稳压室的源质回流断了。前班撤出井区时把隔离闸反锁了，备用源核还留在井里。不换上它，这一厅人都会跟着漂。",
 		"folio": "04:01  /  常数锚定井 · 源质失衡",
-		"duration": 4.4,
-		"shot": "pendulum_hold"
+		"duration": 4.8,
+		"shot": "pendulum_hold",
+		"shift": 0.5
 	},
 	{
 		"id": "north_gate_handoff",
 		"speaker": "Hale",
-		"text": "按守则，开外翼气密闸必须队长签字、双人编队，我一个人进不去。手册和灯我都替你放手边了——缓过神就来北门汇合，我们去取源质回来校正。",
-		"folio": "04:02  /  北端气密出征闸门",
+		"text": "守则要求外翼气密闸双人编队，我一个人进不去。灯和手册在你床边——起来就走，咱俩去把备用核心取回来，别吵醒其他人。",
+		"folio": "04:02  /  西翼宿舍 · 出发",
 		"duration": 5.2,
-		"shot": "gate_handoff"
+		"shot": "gate_handoff",
+		"shift": 0.3
 	}
 ]
 
@@ -69,9 +79,10 @@ var _cutscene_cam: Camera3D
 var _hale_actor: Node3D
 var _cot_pos := Vector3.ZERO
 var _pendulum_pos := Vector3.ZERO
-var _gate_pos := Vector3.ZERO
 var _player_eye_pos := Vector3.ZERO
 var _player_eye_basis := Basis.IDENTITY
+var _shift := Callable()
+var _shift_from := 0.0
 
 var _top_lid: ColorRect
 var _bot_lid: ColorRect
@@ -157,25 +168,27 @@ func _build_overlay() -> void:
 	_hint_label.add_theme_color_override("font_color", Color("a89c88"))
 	vbox.add_child(_hint_label)
 
-func start(viewport: SubViewport, player_cam: Camera3D, cot_pos: Vector3, pendulum_pos: Vector3, gate_pos: Vector3) -> void:
+## `shift` receives the essence instability (0–1) each frame while the sequence runs.
+func start(viewport: SubViewport, player_cam: Camera3D, cot_pos: Vector3, pendulum_pos: Vector3, _gate_pos: Vector3, shift := Callable()) -> void:
 	if active or viewport == null or player_cam == null:
 		return
 	_viewport = viewport
 	_player_cam = player_cam
 	_cot_pos = cot_pos
 	_pendulum_pos = pendulum_pos
-	_gate_pos = gate_pos
+	_shift = shift
+	_shift_from = float(BEATS[0].shift)
 	_player_eye_pos = player_cam.global_position
 	_player_eye_basis = player_cam.global_transform.basis
 
-	# Spawn Hale beside the watch cot using the unified 6.5-head production cast
+	# Hale stands past the foot of the bed, turned toward the pillow.
 	_hale_actor = Node3D.new()
 	_hale_actor.name = "OpeningHale"
 	_viewport.add_child(_hale_actor)
-	var hale_pos := _cot_pos + Vector3(0.95, 0.0, -0.55)
-	_hale_actor.position = hale_pos
+	_hale_actor.position = _cot_pos + HALE_SPOT
 	Cast.attach(_hale_actor, 0)
-	_hale_actor.look_at(Vector3(_cot_pos.x, 0.0, _cot_pos.z), Vector3.UP, true)
+	var pillow := _cot_pos + WAKE_EYE
+	_hale_actor.look_at(Vector3(pillow.x, 0.0, pillow.z), Vector3.UP, true)
 
 	_cutscene_cam = Camera3D.new()
 	_cutscene_cam.name = "HallOpeningCamera"
@@ -196,6 +209,7 @@ func _advance_beat() -> void:
 		finish()
 		return
 	var beat: Dictionary = BEATS[beat_index]
+	if beat_index > 0: _shift_from = float(BEATS[beat_index - 1].shift)
 	_folio_label.text = beat.folio
 	_speaker_label.text = beat.speaker if not str(beat.speaker).is_empty() else "（意识渐清）"
 	_caption_label.text = beat.text
@@ -246,16 +260,18 @@ func _process(delta: float) -> void:
 	var t := clampf(_beat_elapsed / float(beat.duration), 0.0, 1.0)
 	var smooth := t * t * (3.0 - 2.0 * t)
 	_apply_camera_shot(str(beat.shot), smooth)
+	if _shift.is_valid():
+		# A slow surge rides on top of the per-beat level so the warp never sits still.
+		_shift.call(lerpf(_shift_from, float(beat.shift), smooth) * (0.9 + 0.1 * sin(_total_elapsed * 2.3)))
 
 	if _beat_elapsed >= float(beat.duration):
 		_advance_beat()
 
 func _apply_camera_shot(shot: String, t: float) -> void:
-	var hale_head := (_hale_actor.position if is_instance_valid(_hale_actor) else _cot_pos + Vector3(0.95, 0.0, -0.55)) + Vector3(0.0, 1.48, 0.0)
+	var hale_head := (_hale_actor.position if is_instance_valid(_hale_actor) else _cot_pos + HALE_SPOT) + Vector3(0.0, 1.48, 0.0)
 	var pend_mid := _pendulum_pos + Vector3(0.0, 1.95, 0.0)
-	var gate_look := _gate_pos + Vector3(0.0, 2.25, 0.0)
-	var cot_eye := _cot_pos + Vector3(0.0, 0.86, 0.0)
-	var stood_eye := _cot_pos + Vector3(0.35, 1.52, -0.35)
+	var cot_eye := _cot_pos + WAKE_EYE
+	var stood_eye := _cot_pos + STAND_EYE
 
 	match shot:
 		"wake":
@@ -271,24 +287,20 @@ func _apply_camera_shot(shot: String, t: float) -> void:
 			_cutscene_cam.look_at(hale_head, Vector3.UP)
 			_cutscene_cam.fov = lerpf(75.0, 68.0, t)
 		"pendulum_push":
-			# Pan and push toward the drifting brass Foucault Pendulum under the Gothic vault
-			var push_pos := stood_eye.lerp(_pendulum_pos + Vector3(0.0, 1.65, 6.7), t)
-			_cutscene_cam.global_position = push_pos
+			# Walk the eye out to the wing arcade and find the drifting pendulum beyond it
+			_cutscene_cam.global_position = stood_eye.lerp(ARCADE_EYE, t)
 			_cutscene_cam.look_at(hale_head.lerp(pend_mid, t), Vector3.UP)
 			_cutscene_cam.fov = lerpf(68.0, 58.0, t)
 		"pendulum_hold":
-			# Slight upward tilt along the cable to the vaulted keystone, then down to the red drift ring
-			var hold_pos := _pendulum_pos + Vector3(0.0, 1.65, 6.7 - 0.25 * t)
-			var look_pt := pend_mid.lerp(_pendulum_pos + Vector3(0.0, 1.45, 0.0), t)
-			_cutscene_cam.global_position = hold_pos
-			_cutscene_cam.look_at(look_pt, Vector3.UP)
+			# Ease forward in the arcade mouth; the look slides down the cable to the drift ring
+			_cutscene_cam.global_position = ARCADE_EYE + Vector3(0.6 * t, 0.0, -0.2 * t)
+			_cutscene_cam.look_at(pend_mid.lerp(_pendulum_pos + Vector3(0.0, 1.45, 0.0), t), Vector3.UP)
 			_cutscene_cam.fov = lerpf(58.0, 62.0, t)
 		"gate_handoff":
-			# Pan from pendulum to North Departure Gate & smoothly settle into player's first-person eye
-			var start_pos := _pendulum_pos + Vector3(0.0, 1.65, 6.45)
-			_cutscene_cam.global_position = start_pos.lerp(_player_eye_pos, t)
+			# Back on your feet by the bed: turn from Hale toward the arcade, no fly-through
+			_cutscene_cam.global_position = _player_eye_pos
 			var look_end := _player_eye_pos - _player_eye_basis.z * 3.0
-			_cutscene_cam.look_at(gate_look.lerp(look_end, t), Vector3.UP)
+			_cutscene_cam.look_at(hale_head.lerp(look_end, t), Vector3.UP)
 			_cutscene_cam.fov = lerpf(62.0, _player_cam.fov, t)
 
 func snapshot() -> Dictionary:

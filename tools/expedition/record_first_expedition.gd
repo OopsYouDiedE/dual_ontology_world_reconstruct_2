@@ -54,9 +54,16 @@ func press(code:Key)->void:
 	var up:=InputEventKey.new();up.physical_keycode=code
 	Input.parse_input_event(up)
 
+## Key to press for the order, 0 when Q aimed at its target already issued it, -1 on failure.
 func open_order(id:String,frames:=72)->int:
+	var heard:Array=[]
+	var probe:=func(kind,value):
+		if kind=="order":heard.append(value)
+	level.audit_action.connect(probe)
 	press(KEY_Q)
 	await wait_frames(2)
+	level.audit_action.disconnect(probe)
+	if id in heard:return 0
 	if not check(level.wheel_open,"Expected Hale order wheel for %s; focused %s at %s"%[id,level.focus(),level.walker.position]):return -1
 	for i in level.wheel.options.size():
 		if level.wheel.options[i].id==id:
@@ -93,7 +100,7 @@ func run()->void:
 	await wait_frames(210)
 	var gate_order:=await open_order("try_gate")
 	if gate_order<0:return
-	press(gate_order)
+	if gate_order>0:press(gate_order)
 	await wait_frames(14)
 	for f in 240:
 		if level.hale_gate_guide>0:break
@@ -185,7 +192,9 @@ func run()->void:
 		await physics_frame
 	var north_order:=await open_order("north")
 	if north_order<0:return
-	var ordered:float=level.phase;press(north_order);await wait_frames(2)
+	var ordered:float=level.phase
+	if north_order>0:press(north_order)
+	await wait_frames(2)
 	if not check(level.posting and level.north_pause>0. and level.captions.entries.has("我") and not level.north_beacon.visible,"North-window order or stacked speakers missing"):return
 	# Keep the window off camera at arrival to prove the remote message is sight-gated.
 	await look_at_point(level.eye.global_position+Vector3.LEFT*10.,28)

@@ -93,6 +93,7 @@ func run()->void:
 
 	# --- The wheel only offers orders that can run right now.
 	level.walker.position=Vector3(34.6,.03,0.)
+	level.hale.position=Vector3(33.4,0.,.8)
 	level.eye.look_at(Vector3(36.,1.57,0.))
 	var items:Array=level.order_options()
 	check(items.size()>=2,"the wheel offers more than one order at the gate")

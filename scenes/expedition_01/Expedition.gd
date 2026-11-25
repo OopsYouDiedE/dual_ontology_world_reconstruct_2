@@ -189,6 +189,7 @@ var pair_loud:=false
 var both_lamp:=false
 var stomp_cool:=0.
 var hale_hold:=false
+var hale_rejoin_wait:=0.
 var solo_escape:=false
 const SOLO_HATCH:=Vector3(-2.6,1.4,1.34)
 const STELE_A:=Vector3(31.5,1.5,17.40)
@@ -454,7 +455,9 @@ func _input(ev:InputEvent)->void:
 	if key==KEY_BRACKETLEFT or key==KEY_BRACKETRIGHT:
 		look_sens=clampf(look_sens*(1.12 if key==KEY_BRACKETRIGHT else 1./1.12),.0008,.006);say(R18n.t("hud.sens",[roundi(look_sens/.0022*100.)]));return
 	if wheel_open:
-		if key in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_5]:wheel.index=clampi(key-KEY_1,0,maxi(0,wheel.options.size()-1));_close_wheel(true);return
+		if key in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_5]:
+			if key-KEY_1<wheel.options.size():wheel.index=key-KEY_1;_close_wheel(true)
+			return
 		if watch:_close_wheel();return
 		if key==KEY_E or key==KEY_ENTER:_close_wheel(true)
 		return
@@ -463,11 +466,14 @@ func _input(ev:InputEvent)->void:
 	if retry<=0 and (key==KEY_F or ev.is_action_pressed("expedition_stomp")):stomp();return
 	if key==KEY_E or ev.is_action_pressed("expedition_use"):use()
 	if watch:
-		if focus()=="hale":order();return
+		if retry>0:return
+		# Aiming at Hale, the gate or the north window: Q carries out that order, as the prompt says.
+		if quick_order():return
 		var items:=order_options()
-		if items.size()>1:
+		if items.is_empty():
+			say(R18n.pick("Hale 腾不出手：%s","Hale can't take an order: %s")%hale_order_text())
+		else:
 			wheel.bind(items);wheel.reveal();wheel_open=true
-		elif items.size()==1:pick_order(items[0].id)
 		return
 	if key==KEY_ALT:
 		if not manual.visible:toggle_book()
@@ -542,10 +548,13 @@ func talk_to_hale()->void:
 		say("Hale 朝你点了点头，没有说话。");return
 	line_once(id,HALE_TALK[id])
 func hale_order_text()->String:
+	if not hale_return_path.is_empty():return R18n.t("hale.returning")
 	if posting:return R18n.t("hale.posting")
 	if holding:return R18n.t("hale.holding")
 	if hale_hold:return R18n.t("hale.hold")
 	if hale_gate_attempt:return R18n.t("hale.gate")
+	if archive_busy():return R18n.t("hale.archive")
+	if released and walker.position.x>50.:return R18n.t("hale.bridgehead")
 	return R18n.t("hale.follow")
 func thought(id:String,text:String)->void:
 	subtitle_id=id;captions.post(id,"",text)
@@ -733,22 +742,49 @@ func begin_hale_return()->void:
 	for i in range(traversed-1,-1,-1):hale_return_path.append(watch_route[i])
 	for point in [Vector3(48.3,0.,10.1),Vector3(38.7,0.,10.1),Vector3(38.7,0.,0.),Vector3(34.,0.,0.),Vector3(2.4,0.,0.),HALE_WAIT]:hale_return_path.append(point)
 	holding=false;posting=false;command_path.clear();trail.clear()
-## The wheel shows only orders that can actually be executed right now. Each
-## option carries its cost in the same vocabulary the contracts use, so the
-## player is choosing a clause, not a button.
+## Hale's own beats are driving him: the archive demonstration, a gate try, a return or the shortcut.
+func archive_busy()->bool:
+	return archive.beat!=archive.Beat.FOLLOW and archive.beat!=archive.Beat.DONE
+func hale_busy()->bool:
+	return not hale_return_path.is_empty() or shortcut_used or hale_gate_attempt or archive_busy()
+## He follows only on the walkways; past the bridgehead he waits for you.
+func follow_reach()->bool:
+	return not (released and walker.position.x>50.)
+func hale_ready_for_north()->bool:
+	return released and not collected and not (posting or holding) and not hale_busy() \
+		and archive.beat==archive.Beat.DONE and hale.position.distance_to(walker.position)<=6.
+
+## The wheel shows only orders that can actually be carried out right now, so every
+## choice changes what Hale does.
 func order_options()->Array:
-	var target:=focus()
 	var items:Array=[]
-	if target=="gate":
-		items.append({"id":"try_gate","title":"让 Hale 试闸","hint":"请他试着拉开铁闸。"})
-	if target=="north" or holding or posting or (released and walker.position.x>46.5 and not collected):
-		items.append({"id":"north","title":R18n.pick("去北窗盯桥","Post at North Window") if not (holding or posting) else R18n.pick("召回 Hale","Recall Hale"),"hint":R18n.pick("请他从北窗看着桥面，你可以熄灯快步通过。","Have him hold the span from the north window so you can douse your lamp and cross.") if not (holding or posting) else R18n.pick("请他离开北窗归队。","Call him back from the north window."),"cost":R18n.pick("代价：他上梯的铁网声会引动井底","Cost: his iron-stair steps draw the shaft") if not (holding or posting) else ""})
-	if hale_hold or released and walker.position.x>46. and near(Vector3(61,0,10.1),26.):
-		items.append({"id":"trail","title":"跟紧我","hint":"让他跟在你身后。"})
-	items.append({"id":"hold","title":"原地待命","hint":"请他在这里等你。"})
+	if focus()=="gate" and not released and not hale_busy() and not (posting or holding) and hale.position.distance_to(walker.position)<10.:
+		items.append({"id":"try_gate","title":R18n.pick("让 Hale 试闸","Ask Hale to Try the Gate"),"hint":R18n.pick("请他用全身力气试拉铁闸。","Have him put his weight on the gate.")})
+	if posting or holding:
+		items.append({"id":"north","title":R18n.pick("召回 Hale","Recall Hale"),"hint":R18n.pick("他会沿原路下梯，回到你身后。","He comes back down the stair the way he went up.")})
+	elif hale_ready_for_north():
+		items.append({"id":"north","title":R18n.pick("去北窗盯桥","Post at North Window"),"hint":R18n.pick("他从北窗盯住桥面，你可以熄灯快步通过；他上梯的铁网声会引动井底。","He holds the span from the north window so you can douse your lamp and cross; his iron-stair steps draw the shaft.")})
+	if follow_reach() and not hale_busy() and not (posting or holding):
+		if hale_hold:
+			items.append({"id":"trail","title":R18n.pick("跟紧我","Stay Close"),"hint":R18n.pick("他沿你走过的路跟上来。","He catches up along the way you walked.")})
+		else:
+			items.append({"id":"hold","title":R18n.pick("原地待命","Hold Here"),"hint":R18n.pick("请他在这里等你。","Have him wait here for you.")})
 	if contracts.trust>=2:
-		items.append({"id":"advise","title":"听他的建议","hint":"问他有没有听见或看见什么。"})
+		items.append({"id":"advise","title":R18n.pick("听他的建议","Ask His Advice"),"hint":R18n.pick("问他有没有听见或看见什么。","Ask what he has heard or seen.")})
 	return items
+
+## Q on Hale, the gate or the north window carries out that one order if it is available.
+func quick_order()->bool:
+	var want:=""
+	match focus():
+		"hale":want="trail" if hale_hold else "hold"
+		"gate":want="try_gate"
+		"north":want="north"
+	if want.is_empty():return false
+	for it in order_options():
+		if it.id==want:
+			pick_order(want);return true
+	return false
 
 func pick_order(id:String)->void:
 	audit_action.emit("order",id)
@@ -757,40 +793,43 @@ func pick_order(id:String)->void:
 	match id:
 		"try_gate":
 			if hale_gate_attempt:return
-			hale_gate_attempt=true;hale_gate_effort=HALE_GATE_DURATION
+			hale_hold=false;hale_gate_attempt=true;hale_gate_effort=HALE_GATE_DURATION
 			hale_gate_target=kit.gate_spots[0 if walker.position.z>=0. else 1].global_position
-			trail.clear()
 		"north":
 			if posting or holding:
-				posting=false;holding=false;north_pause=0.;command_path.clear();trail.clear()
-				say("已发出召回指令。")
+				# Back down the way he climbed, then onto your trail: never through the shaft wall.
+				var traversed:=watch_route.size() if holding else watch_route.size()-command_path.size()
+				hale_return_path.clear()
+				for i in range(traversed-1,-1,-1):hale_return_path.append(watch_route[i])
+				posting=false;holding=false;north_pause=0.;command_path.clear()
+				say(R18n.pick("已召回 Hale，他沿原路下梯。","Hale recalled. He's coming back down the stair."))
 				return
-			var hale_available:=archive.beat==archive.Beat.DONE and hale.position.distance_to(walker.position)<=6.
+			var hale_available:=hale_ready_for_north()
 			if not archive.facts.decide("north_order",hale_available,"Hale reached the shaft" if hale_available else "Hale has not reached the shaft"):
-				say("Hale 还没到桥头。");return
+				say(R18n.pick("Hale 还没跟到桥头。","Hale hasn't reached the bridgehead yet."));return
 			hale_hold=false;posting=true;north_pause=maxf(.25,.55-.12*contracts.trust);command_path=kit.stair_path.duplicate()
 			command_path.insert(0,kit.west_stair_entry())
 			for i in 19:command_path.append(kit.polar(12.45,PI+(PI*.5)*i/19.,4.8))
 			command_path.append(kit.north_spot.global_position)
 			watch_route=command_path.duplicate()
-			captions.post("north_order",R18n.pick("我","Me"),R18n.pick("上二层北窗盯死桥面，我熄灯冲过去。B3 你亲眼见过，单道视线就能锁稳琥珀。","Take the north window and lock the span—I'll douse my lamp and run. You saw in B3: one gaze holds it solid.")
+			captions.post("north_order",R18n.pick("我","Me"),R18n.pick("上二层北窗盯死桥面，我熄灯冲过去。档案翼里你亲眼见过，单道视线就能锁稳琥珀。","Take the north window and lock the span—I'll douse my lamp and run. You saw it in the archive: one gaze holds it solid.")
 				if archive.facts.evaluate("hale_comparison") else R18n.pick("上二层北窗盯住桥面，别移眼。我过桥时不低头看。","Take the north window and keep eyes on the span. I won't look down while crossing."))
 		"trail":
 			holding=false;posting=false;command_path.clear()
-			hale_hold=false;say("已下达跟随指令。")
+			hale_hold=false;say(R18n.pick("Hale 跟上来了。","Hale falls in behind you."))
 		"hold":
-			hale_hold=true;holding=false;posting=false;trail.clear();command_path.clear();say("已下达留守指令。")
+			# The trail keeps recording, so he can follow your exact route when called.
+			hale_hold=true;holding=false;posting=false;command_path.clear()
+			say(R18n.pick("Hale 留在原地等你。","Hale holds here for you."))
 		"advise":
 			if not hale_in_earshot():
-				say("离 Hale 太远，听不清。");return
+				say(R18n.pick("离 Hale 太远，听不清。","Too far from Hale to hear him."));return
 			var reply:=hale_hears_well()
 			if contracts.a_state=="overlap" and archive.gaze!=Vector3.ZERO:reply="我还盯着那块板。你那边怎么样？"
-			show_line("advise",reply if not reply.is_empty() else "等一下，让我听听。")
-## Keyboard/legacy path: Q acts immediately on the most specific order; the
-## wheel is only raised when there is a genuine choice to make.
+			show_line("advise",reply if not reply.is_empty() else R18n.pick("等一下，让我听听。","Hold on, let me listen."))
+## Scripted path (tests, recorders): the aimed order if any, else the most specific available.
 func order()->void:
-	if focus()=="hale":
-		pick_order("trail" if hale_hold else "hold");return
+	if quick_order():return
 	var items:=order_options()
 	if items.is_empty():return
 	for want in ["north","try_gate","trail","hold"]:
@@ -915,7 +954,7 @@ func _physics_process(dt:float)->void:
 		if evidence_thought_delay<=0.:thought("thought",R18n.pick("确认了：单人凝视锁稳，双人同视会崩。写进手册，Hale 才会信。","Confirmed: lone gaze locks it, dual gaze breaks it. Logging this in the manual so Hale sees it."))
 	update_target()
 	hud.modulate=Color.WHITE
-	var hints:={"gate":R18n.t("prompt.gate_busy") if hale_gate_attempt else R18n.t("prompt.gate"),"note":R18n.t("prompt.note"),"loot":R18n.t("prompt.loot"),"clock":R18n.t("prompt.clock"),"clock_locked":R18n.t("prompt.clock_locked"),"lever":R18n.t("prompt.lever"),"core":R18n.t("prompt.core"),"return":R18n.t("prompt.return"),"exit":R18n.t("prompt.exit"),"north":R18n.t("prompt.north_recall") if holding or posting else R18n.t("prompt.north_post"),"throw":R18n.t("prompt.throw"),"hale":R18n.t("prompt.hale",[R18n.t("prompt.hale_hold") if not hale_hold else R18n.t("prompt.hale_follow")]),"solo_exit":R18n.t("prompt.solo_exit"),"stele1":R18n.t("prompt.stele1"),"stele2":R18n.t("prompt.stele2")}
+	var hints:={"gate":R18n.t("prompt.gate_busy") if hale_gate_attempt else R18n.t("prompt.gate"),"note":R18n.t("prompt.note"),"loot":R18n.t("prompt.loot"),"clock":R18n.t("prompt.clock"),"clock_locked":R18n.t("prompt.clock_locked"),"lever":R18n.t("prompt.lever"),"core":R18n.t("prompt.core"),"return":R18n.t("prompt.return"),"exit":R18n.t("prompt.exit"),"north":R18n.t("prompt.north_recall") if holding or posting else (R18n.t("prompt.north_post") if hale_ready_for_north() else R18n.t("prompt.north_wait")),"throw":R18n.t("prompt.throw"),"hale":R18n.t("prompt.hale",[R18n.t("prompt.hale_hold") if not hale_hold else R18n.t("prompt.hale_follow")]),"solo_exit":R18n.t("prompt.solo_exit"),"stele1":R18n.t("prompt.stele1"),"stele2":R18n.t("prompt.stele2")}
 	hints["maintenance_lift"]=R18n.t("prompt.maint_lift")
 	hints["maintenance_oil"]=R18n.t("prompt.maint_oil")
 	hints["vault_oil"]=R18n.t("prompt.vault_oil")
@@ -1097,6 +1136,10 @@ func confirm_gate_locked()->void:
 func advance_hale(dt:float)->void:
 	hale_yaw_before_step=hale.rotation.y
 	hale_face_motion=true
+	# Your footsteps are recorded whatever Hale is doing, so any order can hand him a walkable route.
+	if last_pos.distance_to(walker.position)>.23:
+		trail.append(walker.position);last_pos=walker.position
+		if trail.size()>720:trail.remove_at(0)
 	var separation:=hale.position-walker.position
 	separation.y=0.
 	var gap:=separation.length()
@@ -1166,7 +1209,7 @@ func advance_hale(dt:float)->void:
 		# Q 的留守令：Hale 原地驻守并面向玩家；离得太远会自己归队。
 		if hale_hold:
 			if hale.position.distance_to(walker.position)>26.:
-				hale_hold=false;show_line("hale_catchup","等等我！——你走得太远了！")
+				hale_hold=false;show_line("hale_catchup",R18n.pick("等等我！——你走得太远了！","Wait for me! You've gone too far!"))
 			else:
 				var hold_face:=walker.position-hale.position
 				if Vector2(hold_face.x,hold_face.z).length()>.45:
@@ -1194,14 +1237,32 @@ func advance_hale(dt:float)->void:
 		if hale.position.distance_to(walker.position)>13.:
 			hale_stuck+=dt
 			if hale_stuck>6. and not trail.is_empty():
-				hale.position=trail[0]+Vector3(0,0,.9);hale_stuck=0.
+				hale.position=trail[0];hale_stuck=0.
 				hale_face_motion=false
-				show_line("stuck","……这儿有点窄，我绕了一下。")
+				show_line("stuck",R18n.pick("……这儿有点窄，我绕了一下。","...Tight squeeze. I went round."))
 				return
 		else:hale_stuck=0.
+		rejoin_trail(dt)
 		if not trail.is_empty():
 			hale.position=hale.position.move_toward(trail[0],4.7*dt)
 			if hale.position.distance_to(trail[0])<.055:trail.remove_at(0)
+## Skip trail points Hale no longer needs: jump ahead to the nearest one in clear sight, so
+## after a hold, a recall or a scripted walk he takes the shortest walkable way back to you.
+func rejoin_trail(dt:float)->void:
+	hale_rejoin_wait-=dt
+	if trail.size()<2 or hale_rejoin_wait>0.:return
+	hale_rejoin_wait=.25
+	var best:=0
+	var best_d:=hale.position.distance_to(trail[0])
+	for i in range(1,mini(trail.size(),240)):
+		var d:=hale.position.distance_to(trail[i])
+		if d<best_d-.5 and hale_sees(trail[i]):best=i;best_d=d
+	if best>0:trail=trail.slice(best)
+func hale_sees(point:Vector3)->bool:
+	var space:=get_world_3d().direct_space_state
+	var from:=hale.position+Vector3.UP*.72
+	var ray:=PhysicsRayQueryParameters3D.create(from,point+Vector3.UP*.72,5,[walker.get_rid()])
+	return space.intersect_ray(ray).is_empty()
 func step_hale_gate_guide(dt:float)->bool:
 	var p:=walker.position
 	# Entering the archive, continuing down the hall, and explicit orders all

@@ -68,7 +68,8 @@ func step(lv,dt:float)->bool:
 	if beat in [Beat.DOOR, Beat.WAIT, Beat.PEEK] and in_window(p) and not paired and not lv.hale_hold:
 		beat=Beat.WINDOW;entered_trial=false;route=PackedVector3Array([WINDOW])
 	if beat in [Beat.WINDOW, Beat.DOOR, Beat.WAIT, Beat.PEEK] and p.z<7.15 and p.x<29.:
-		reset_motion(false);lv.trail.clear();return false
+		# Keep the captain's trail: Hale rejoins it at the nearest point he can see, not through a wall.
+		reset_motion(false);return false
 	match beat:
 		Beat.WINDOW:
 			if not route.is_empty() and move(lv,route[0],dt):route.remove_at(0)

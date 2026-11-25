@@ -89,14 +89,20 @@ func run()->void:
 	for i in 20:await process_frame
 
 	# --- wheel reach at each decision point
-	level.walker.position=Vector3(34.6,.05,0.);level.eye.look_at(Vector3(36.,1.57,0.))
+	level.walker.position=Vector3(34.6,.05,0.);level.hale.position=Vector3(33.4,0.,.8);level.eye.look_at(Vector3(36.,1.57,0.))
 	check(level.order_options().size()>=2,"gate offers a real choice (2+ orders)")
 	var ids:Array=level.order_options().map(func(o):return o.id)
-	check("hold" in ids,"hold is always available")
+	check("hold" in ids,"hold is available while Hale follows")
 	level.walker.position=Vector3(48.0,.05,10.1)
 	level.released=true
+	level.hale_hold=true
 	ids=level.order_options().map(func(o):return o.id)
-	check("trail" in ids,"the shaft offers a follow order")
+	check("trail" in ids and not "hold" in ids,"a held Hale is offered follow, not a second hold")
+	level.hale_hold=false
+	level.walker.position=Vector3(52.0,.05,10.1)
+	ids=level.order_options().map(func(o):return o.id)
+	check(not "trail" in ids and not "hold" in ids,"past the bridgehead no follow/hold order is offered that he cannot carry out")
+	level.walker.position=Vector3(48.0,.05,10.1)
 	check("north" in ids or level.hale.position.distance_to(level.walker.position)>6.,"north order is offered or explicitly gated by distance")
 
 	# --- prompts: the action line and the notice line no longer fight

@@ -55,6 +55,9 @@ const STRINGS := {
 	"hale.hold": {"zh": "原地留守", "en": "Holding Position"},
 	"hale.gate": {"zh": "试推铁闸", "en": "Testing Gate"},
 	"hale.follow": {"zh": "跟随中", "en": "Following"},
+	"hale.returning": {"zh": "归队中", "en": "Rejoining"},
+	"hale.archive": {"zh": "守着档案翼", "en": "Covering the Archive"},
+	"hale.bridgehead": {"zh": "在桥头等你", "en": "Waiting at the Bridgehead"},
 	# Command wheel
 	"wheel.controls": {"zh": "鼠标点选 / 滚轮　E 确认　数字键直选　Q 取消", "en": "Click / Scroll   E Confirm   1-5 Quick Pick   Q Cancel"},
 	# Prompts
@@ -70,6 +73,7 @@ const STRINGS := {
 	"prompt.exit": {"zh": "[E] 开启气密门", "en": "[E] Open Airlock"},
 	"prompt.north_recall": {"zh": "[Q] 召回 Hale", "en": "[Q] Recall Hale"},
 	"prompt.north_post": {"zh": "[Q] 指派 Hale 盯桥", "en": "[Q] Post Hale at North Window"},
+	"prompt.north_wait": {"zh": "北窗 · 先等 Hale 跟到桥头", "en": "North Window · Bring Hale to the bridgehead first"},
 	"prompt.throw": {"zh": "[E] 投出节拍器", "en": "[E] Throw Metronome"},
 	"prompt.hale": {"zh": "[Q] %s　[E] 交谈", "en": "[Q] %s   [E] Talk"},
 	"prompt.hale_hold": {"zh": "留守", "en": "Hold"},

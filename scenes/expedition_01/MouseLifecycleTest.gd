@@ -112,12 +112,12 @@ func run() -> void:
 	level.contracts.trust = 0
 	click(WORLD)
 	key(KEY_Q)
-	check(visible_mouse() and not level.wheel_open and level.hale_hold, "Q releases even when executing a single order directly")
-	level.hale_hold = false
-	level.contracts.trust = 2
-	key(KEY_Q)
+	check(visible_mouse() and level.wheel_open and level.wheel.options.size() == 1 and not level.hale_hold, "Q opens the wheel even for a single order instead of acting silently")
+	key(KEY_5)
+	check(level.wheel_open and not level.hale_hold, "an out-of-range number key is ignored")
 	key(KEY_1)
 	check(visible_mouse() and not level.wheel_open and level.hale_hold, "number confirms order without capture")
+	level.hale_hold = false
 	click(WORLD)
 	key(KEY_F4)
 	check(visible_mouse() and level.mode >= 0, "section view releases mouse")

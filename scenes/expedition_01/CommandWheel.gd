@@ -1,7 +1,7 @@
 extends Node
-## Command wheel for Hale. Hold or tap Q to open; hover/click a sector, 1-5,
-## scroll wheel, or E confirm an intent. Options are filtered by what is in front
-## of the player, so the wheel never offers an order that cannot be executed.
+## Command wheel for Hale. Q opens it (Q on Hale, the gate or the north window acts
+## directly instead); hover/click a sector, 1-5, scroll wheel, or E confirms. The
+## caller filters options, so the wheel never offers an order that cannot be executed.
 
 signal chosen(id:String)
 
@@ -32,7 +32,7 @@ func setup(parent:Node,typeface:Font)->void:
 
 func bind(items:Array)->void:
 	options=items
-	index=clampi(index,0,maxi(0,items.size()-1))
+	index=0  # a fresh wheel never pre-selects an order from the last time it opened
 
 func reveal()->void:
 	if options.is_empty():return

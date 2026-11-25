@@ -8,6 +8,16 @@ A01–A10 在 41–147 秒内被白盒红队合法通关，原因见[规则怪�
 | [B02 双底片](b02-double-negative.md) | 暗房 Fixing Room | 辨认冒充者＋拒绝＋护送 | 12 m 暗箱转鼓，扫过全房的显影带 | 曝光剂量：倒易律失效，短曝光反而更伤 | 看进光圈、离开石面、把一个人形封进罐里 | 真 Hale 守 Ochre 版，冒充者守**你的** Ivory 版；你一犯禁，守你规则的那位就弃你而去 |
 | [B03 逆潮回廊](b03-counter-tide.md) | 泵房 Pump Archive | 把证物交到对的人手里＋存活到高水位 | 26 m 浮闸驳船，随水位升降、随水流摆扫 | 间歇虹吸三联振荡，再加旱档案室这只「毕达哥拉斯杯」 | 淹掉旱档案室、交出湿图纸、在船移动时登船 | Ochre 队友守着晾纸盘寸步不离，他的体重是配平压舱；你的 Ivory 晾纸法会把真图送进将被淹的抽屉 |
 
+## 白盒实机图
+
+审图场景 `scenes/physics_lab/b_series/BSeriesReview.tscn` 用主线 HallFinish 着色器、Hall04 大气、0.40 墨线和 SDFGI 在 Forward+ 下搭出三间房的关键时刻，人物使用 Hale 与侦探的英雄模型。每间房拍布局规范要求的入口、操作位、出口回望三个机位，另加一张剖面。这一版只用于构图和尺度审查，房内规则尚未运行；可读性标签与半透明的场效属于审图用的特殊材质。
+
+| B01 第十三齿 | B02 双底片 | B03 逆潮回廊 |
+|---|---|---|
+| ![B01](media/b01-0-entrance.jpg) | ![B02](media/b02-1-aperture.jpg) | ![B03](media/b03-3-section.jpg) |
+
+重拍：`& .runtime/python/Scripts/python.exe tools/b_series/capture_review.py --publish`。脚本通过 Game MCP 启动实机窗口，逐房逐机位截图，并校验 1280×720、Forward+、MSAA 2×、SDFGI 和墨线不透明度；原图、帧哈希清单写入 `.runtime/b-series/review/`，加 `--publish` 时把缩小后的 JPG 和接触印样写入 `media/`。Tab 切换机位，N 切换房间。
+
 ## 一、出题方法
 
 | 步骤 | 做法 | B 系列的落点 |

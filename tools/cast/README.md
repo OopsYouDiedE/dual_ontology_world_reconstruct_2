@@ -6,10 +6,10 @@
 |---|---|---|
 | 人体 | MPFB2 2.0.18 | 统一写实 6.5 头身，同时求解身高滑杆与 `head-scale-vert-incr`，误差 < 3 mm |
 | 骨架 | MPFB 内置 `mixamo` | 骨骼名为 `mixamorig:*`，以后可直接换用 Mixamo 动作 |
-| 发型、眉、眼 | MakeHuman CC0 系统包 | `system_cc0.zip`，sha256 已在脚本中校验 |
+| 发型、眉、眼 | MakeHuman CC0 系统包（眼球用包内虹膜贴图，按原画选色：侦探、Hale 灰，雀儿棕，卢西安蓝绿） | `system_cc0.zip`，sha256 已在脚本中校验 |
 | 底层衣物 | MakeHuman CC0 成衣（插件 `add_mhclo_asset`） | 按 UV 岛把贴图聚成 1–3 个区域，每个区域换成调色板中的纯色；袜子删除 |
 | 外层衣物与道具 | `wardrobe.py` 程序建模 | 外套、马甲、斗篷、帽子、挎包带、鲁特琴等 |
-| 动作 | Quaternius Universal Animation Library（CC0） | 重定向到 Mixamo 骨架，片段名按游戏协议命名：idle、walk、run、interact 等 |
+| 动作 | Quaternius Universal Animation Library（CC0） | 重定向到 Mixamo 骨架，片段名按游戏协议命名：idle、walk、run、interact 等；站姿片段把颈和头拉回 85% 直立，避免 UAL 待机的低头 |
 
 ## 防穿模
 
@@ -45,7 +45,7 @@ W() { cygpath -w "$1"; }
 | 标定 | `fit_heroes.py calibrate` | 渲染一个中性人体，记录人脸点落在哪些网格面上、人体点相对 MPFB 关节的偏差，写入 `fit/face_map.json` |
 | 身材 | `fit_heroes.py fit` 第一阶段 | 用有界最小二乘拟合头身、颈、躯干、肩宽、胯宽、腿长、臂长等形变目标，使肩、胯、膝、踝、眼和下巴位置与原画一致 |
 | 脸型 | `fit_heroes.py fit` 第二阶段 | 闭环：每轮渲染脸部，再用 MediaPipe 检测，按有限差分求雅可比后更新约 18 组成对的脸型参数；另有偏航、俯仰两个相机参数吸收原画的头部转向。只用合理范围内的参数，不用 `head-fat`、`cheek-volume` 一类会让脸变胖的目标 |
-| 成品验收 | `fit/review_built.py` + `fit/sheet.py --built` | 加载生成的 GLB，取 idle 首帧做正面全身渲染，再按原画头部朝向做脸部特写，重新检测关键点并与原画叠图 |
+| 成品验收 | `fit/review_built.py` + `fit/sheet.py --built`；游戏描色渲染用 `fit/godot_faces.gd` + `fit/sheet.py --godot` | 加载生成的 GLB，取 idle 首帧做正面全身渲染，再按原画头部朝向做脸部特写，重新检测关键点并与原画叠图 |
 
 拟合结果写在 `fit/<hero>.json`（人种与年龄宏、目标权重、拟合前后误差），`build_heroes.py` 会自动读取。有拟合结果的角色不再强制 6.5 头身，只整体缩放到设定身高，头身比以原画为准，并记录在 `receipt.json`。
 

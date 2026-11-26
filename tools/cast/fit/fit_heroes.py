@@ -115,8 +115,15 @@ FACE_PARAMS = [
     pair("nose-trans-up", "nose-trans-down"),
     pair("mouth-scale-horiz-incr", "mouth-scale-horiz-decr"), pair("mouth-trans-up", "mouth-trans-down"),
     pair("mouth-upperlip-height-incr", "mouth-upperlip-height-decr"),
+    # Outline freedom: jaw angle and drop, chin projection, temples, slimming of the cheeks only.
+    pair("chin-jaw-drop-incr", "chin-jaw-drop-decr"), pair("chin-prominent-incr", "chin-prominent-decr"),
+    pair("chin-bones-incr", "chin-bones-decr"), pair("forehead-temple-incr", "forehead-temple-decr"),
+    pair("head-triangular", "head-diamond"), pair("cheek-inner-incr", "cheek-inner-decr", True),
+    pair("eye-corner1-up", "eye-corner1-down", True), pair("eye-corner2-up", "eye-corner2-down", True),
+    pair("mouth-scale-vert-incr", "mouth-scale-vert-decr"), pair("mouth-lowerlip-height-incr", "mouth-lowerlip-height-decr"),
+    (sym("cheek-volume-decr"), []),
 ]
-FACE_LIMIT = 0.8
+FACE_LIMIT = 1.0
 # Body targets that read as deformity well before they reach 1.
 BODY_CAP = {"neck-scale-vert-incr": 0.35, "neck-scale-vert-decr": 0.5, "head-scale-vert-decr": 0.5,
             "head-scale-horiz-decr": 0.5, "torso-vshape-decr": 0.5}
@@ -530,7 +537,7 @@ def face_residual(face, ref, weights, T=None):
 POSE_DEG = 20.0   # one unit of a head-pose parameter, in degrees of camera orbit
 
 
-def face_loop(hero, body, ref, iters=6, h=0.25, ridge=0.08):
+def face_loop(hero, body, ref, iters=10, h=0.2, ridge=0.05):
     """Gauss-Newton on FACE_PARAMS with a finite-difference Jacobian measured by MediaPipe itself.
 
     Two extra parameters orbit the camera (yaw, pitch) so the painting's head turn is matched by pose,
@@ -538,8 +545,9 @@ def face_loop(hero, body, ref, iters=6, h=0.25, ridge=0.08):
     F = len(FACE_PARAMS)
     K = F + 2
     v = np.zeros(K)
-    lo = np.r_[-FACE_LIMIT * np.ones(F), -1.25, -1.25]
-    hi = -lo
+    # One-sided parameters (no negative targets) only move in the positive direction.
+    lo = np.r_[[0.0 if not neg else -FACE_LIMIT for _, neg in FACE_PARAMS], -1.25, -1.25]
+    hi = np.r_[FACE_LIMIT * np.ones(F), 1.25, 1.25]
     reg = np.r_[np.ones(F), 0.0, 0.0] * ridge
     weights = np.array([FACE_W.get(i, 1.0) for i in FACE])
     history, tried = [], []

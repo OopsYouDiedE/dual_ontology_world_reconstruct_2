@@ -37,13 +37,13 @@ def age(years):
     return 0.1875 + (years - 11) / 14 * 0.3125 if years <= 25 else 0.5 + (years - 25) / 65 * 0.5
 
 HEROES = {
-    "detective": dict(height=1.76, macro=dict(gender=1.0, age=age(20), muscle=0.45, weight=0.40, proportions=0.6),
+    "detective": dict(eyes="grey", height=1.76, macro=dict(gender=1.0, age=age(20), muscle=0.45, weight=0.40, proportions=0.6),
                       hair="short02", hair_color=(0.30, 0.17, 0.10), brows="eyebrow010", skin=(0.84, 0.64, 0.52)),
-    "hale": dict(height=1.80, macro=dict(gender=1.0, age=age(38), muscle=0.72, weight=0.62, proportions=0.45),
+    "hale": dict(eyes="grey", height=1.80, macro=dict(gender=1.0, age=age(38), muscle=0.72, weight=0.62, proportions=0.45),
                  hair="short02", hair_color=(0.30, 0.22, 0.15), brows="eyebrow001", skin=(0.86, 0.63, 0.50)),
-    "quer": dict(height=1.56, macro=dict(gender=0.0, age=age(17), muscle=0.40, weight=0.32, proportions=0.55),
+    "quer": dict(eyes="brown", height=1.56, macro=dict(gender=0.0, age=age(17), muscle=0.40, weight=0.32, proportions=0.55),
                  hair="ponytail01", hair_color=(0.10, 0.08, 0.07), brows="eyebrow006", skin=(0.90, 0.69, 0.57)),
-    "lucian": dict(height=1.86, macro=dict(gender=1.0, age=age(28), muscle=0.40, weight=0.36, proportions=0.75),
+    "lucian": dict(eyes="bluegreen", height=1.86, macro=dict(gender=1.0, age=age(28), muscle=0.40, weight=0.36, proportions=0.75),
                    hair="long01", hair_color=(0.66, 0.36, 0.14), brows="eyebrow003", skin=(0.92, 0.73, 0.60)),
     "demon": dict(height=1.98, macro=dict(gender=0.85, age=age(45), muscle=0.30, weight=0.08, proportions=1.0),
                   hair="short01", hair_color=(0.03, 0.03, 0.035), brows="eyebrow012", skin=(0.62, 0.63, 0.64)),
@@ -73,6 +73,9 @@ OVERRIDES = {
 CALM = {"idle", "listen", "signal", "ward", "watch_plate"}
 CALM_LEGS = 0.65
 LEG_BONES = ("UpLeg", "Leg", "Foot", "ToeBase")
+# UAL idles hang the head ~15 degrees forward; standing clips keep it near level, as the paintings do.
+CALM_HEAD = 0.85
+HEAD_BONES = ("Neck", "Head")
 
 MAP = {"Hips": "DEF-hips", "Spine": "DEF-spine.001", "Spine1": "DEF-spine.002", "Spine2": "DEF-spine.003",
        "Neck": "DEF-neck", "Head": "DEF-head"}
@@ -167,6 +170,19 @@ def flat_material(name, color, roughness=0.8):
     return mat
 
 
+def eye_material(png):
+    """MakeHuman CC0 eye texture: white sclera, coloured iris, pupil (the eyes read as open in toon)."""
+    mat = bpy.data.materials.new("Eyes")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    tex = nodes.new("ShaderNodeTexImage")
+    tex.image = bpy.data.images.load(str(png))
+    shader = nodes["Principled BSDF"]
+    mat.node_tree.links.new(tex.outputs["Color"], shader.inputs["Base Color"])
+    shader.inputs["Roughness"].default_value = 0.3
+    return mat
+
+
 def paint(obj, mat):
     obj.data.materials.clear()
     obj.data.materials.append(mat)
@@ -258,8 +274,12 @@ def retarget(src, rig, clips, fps):
                 src_name = MAP.get(b.name.split(":")[-1])
                 if b.name in offset:
                     want[b.name] = world_rot(src, src.pose.bones[src_name].matrix) @ offset[b.name]
-                    if calm and b.name.split(":")[-1].endswith(LEG_BONES):
+                    short = b.name.split(":")[-1]
+                    if calm and short.endswith(LEG_BONES):
                         q = want[b.name].to_quaternion().slerp(rest_t[b.name].to_quaternion(), calm)
+                        want[b.name] = q.to_matrix()
+                    elif calm and short in HEAD_BONES:
+                        q = want[b.name].to_quaternion().slerp(rest_t[b.name].to_quaternion(), CALM_HEAD)
                         want[b.name] = q.to_matrix()
                 else:
                     parent = b.parent
@@ -353,7 +373,10 @@ def build(hero_id, spec, args, asset_root):
     body.data.materials.append(skin)
     for p in body.data.polygons:
         p.material_index = 0
-    eye_mat = flat_material("Eyes", (0.92, 0.90, 0.86) if hero_id == "demon" else (0.30, 0.20, 0.12), 0.3)
+    if "eyes" in spec:
+        eye_mat = eye_material(asset_root / f"eyes/materials/{spec['eyes']}_eye.png")
+    else:
+        eye_mat = flat_material("Eyes", (0.92, 0.90, 0.86) if hero_id == "demon" else (0.30, 0.20, 0.12), 0.3)
     paint(parts["eyes"], eye_mat)
     garments = wardrobe.dress(hero_id, body, rig, plugin)
     # The plugin's delete groups hide the skin under its clothes; apply them now that shells are cut.

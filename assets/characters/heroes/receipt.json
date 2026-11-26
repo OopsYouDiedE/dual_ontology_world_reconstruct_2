@@ -1,19 +1,86 @@
 {
  "detective": {
   "id": "detective",
-  "fit": {
-   "height_m": 1.76,
-   "head_ratio": 6.4586,
-   "height_slider": null,
-   "head_key": null,
-   "uniform_scale": 1.0211
+  "source": "tools/cast/reference/tripo-parts/detective.glb",
+  "builder": "tools/cast/fit/build_tripo_parts.py",
+  "parts": 124,
+  "cleanup_removed_vertices": 31377,
+  "registration": {
+   "scale": 1.0295,
+   "offset": [
+    -0.0177,
+    -0.0389,
+    -0.0
+   ],
+   "skeleton_stature": 1.7895,
+   "crown_m": 1.7623
   },
-  "landmark_fit": {
-   "face_nme_iod": 0.0441,
-   "face_p90_iod": 0.0982,
-   "body_nme_height": 0.018,
-   "body_max_height": 0.041,
-   "head_ratio": 6.63
+  "face_symmetry": {
+   "head_part": "p1",
+   "plane_x": -0.0093,
+   "plane_yaw_deg": 2.0,
+   "mirror_error_mm": 2.38,
+   "max_snap_mm": 5.02,
+   "feature_moves_mm": [
+    [
+     "p23",
+     2.8
+    ],
+    [
+     "p24+p25",
+     2.4
+    ],
+    [
+     "p26+p27",
+     3.1
+    ],
+    [
+     "p28",
+     2.6
+    ]
+   ]
+  },
+  "weights": {
+   "ray_hit_vertices": 11379,
+   "vertices": 21938,
+   "classes": {
+    "leg": 11,
+    "rigid": 98,
+    "torso": 10,
+    "head": 1,
+    "coat": 1,
+    "arm": 1,
+    "hand": 2
+   },
+   "tucked_vertices": 219,
+   "rigid_parts": {
+    "p9": "Hips",
+    "p31": "Hips",
+    "p46": "Hips",
+    "p57": "Hips",
+    "p60": "Hips",
+    "p61": "Hips",
+    "p62": "Hips",
+    "p68": "Hips",
+    "p69": "Hips",
+    "p70": "Hips",
+    "p75": "Hips"
+   }
+  },
+  "paint": {
+   "atlas": [
+    2048,
+    2048
+   ],
+   "parts": 124,
+   "clusters": 257,
+   "clusters_from_sheet": 122,
+   "clusters_borrowed": 135,
+   "seen_vertices": 5530,
+   "vertices": 21938,
+   "pose_points": 17,
+   "face_warp": true,
+   "face_pairs": 378
   },
   "clips": {
    "idle": {
@@ -45,151 +112,86 @@
     "frames": 61
    }
   },
-  "clipping": {
-   "idle": {
-    "worst_frame": 162,
-    "pairs": {
-     "detective_body>detective_male_casualsuit01": 9,
-     "detective_body>Overcoat": 22,
-     "detective_body>Strap": 4,
-     "detective_male_casualsuit01>Waistcoat": 18,
-     "detective_male_casualsuit01>Overcoat": 76,
-     "detective_male_casualsuit01>Collar": 8,
-     "detective_male_casualsuit01>Strap": 12,
-     "Waistcoat>Overcoat": 7,
-     "Overcoat>Strap": 7,
-     "Collar>Strap": 9,
-     "detective_body>Collar": 1
-    }
-   },
-   "walk": {
-    "worst_frame": 208,
-    "pairs": {
-     "detective_body>detective_male_casualsuit01": 11,
-     "detective_body>Overcoat": 23,
-     "detective_body>Strap": 4,
-     "detective_male_casualsuit01>Waistcoat": 24,
-     "detective_male_casualsuit01>Overcoat": 110,
-     "detective_male_casualsuit01>Collar": 10,
-     "detective_male_casualsuit01>Strap": 12,
-     "Waistcoat>Overcoat": 6,
-     "Overcoat>Strap": 9,
-     "Collar>Strap": 10,
-     "detective_body>Collar": 2,
-     "Waistcoat>CoatSkirt": 1,
-     "CoatSkirt>Strap": 2,
-     "detective_male_casualsuit01>CoatSkirt": 10
-    }
-   },
-   "run": {
-    "worst_frame": 296,
-    "pairs": {
-     "detective_body>detective_male_casualsuit01": 13,
-     "detective_body>Waistcoat": 4,
-     "detective_body>Overcoat": 49,
-     "detective_body>Collar": 2,
-     "detective_body>Strap": 4,
-     "detective_male_casualsuit01>Waistcoat": 67,
-     "detective_male_casualsuit01>Overcoat": 134,
-     "detective_male_casualsuit01>Collar": 9,
-     "detective_male_casualsuit01>Strap": 12,
-     "Waistcoat>Overcoat": 13,
-     "Waistcoat>Strap": 4,
-     "Overcoat>Strap": 9,
-     "Collar>Strap": 9,
-     "detective_male_casualsuit01>CoatSkirt": 17,
-     "CoatSkirt>Strap": 2
-    }
-   },
-   "interact": {
-    "worst_frame": 271,
-    "pairs": {
-     "detective_body>detective_male_casualsuit01": 12,
-     "detective_body>Overcoat": 35,
-     "detective_body>Collar": 1,
-     "detective_body>Strap": 4,
-     "detective_male_casualsuit01>Waistcoat": 43,
-     "detective_male_casualsuit01>Overcoat": 161,
-     "detective_male_casualsuit01>Collar": 8,
-     "detective_male_casualsuit01>Strap": 12,
-     "Waistcoat>Overcoat": 8,
-     "Overcoat>Strap": 8,
-     "Collar>Strap": 9,
-     "detective_body>Waistcoat": 2
-    }
-   },
-   "signal": {
-    "worst_frame": 313,
-    "pairs": {
-     "detective_body>detective_male_casualsuit01": 9,
-     "detective_body>Waistcoat": 2,
-     "detective_body>Overcoat": 61,
-     "detective_body>Strap": 4,
-     "detective_male_casualsuit01>Waistcoat": 41,
-     "detective_male_casualsuit01>Overcoat": 177,
-     "detective_male_casualsuit01>Collar": 9,
-     "detective_male_casualsuit01>Strap": 12,
-     "Waistcoat>Overcoat": 7,
-     "Overcoat>Strap": 8,
-     "Collar>Strap": 9,
-     "detective_body>Collar": 1
-    }
-   },
-   "examine": {
-    "worst_frame": 308,
-    "pairs": {
-     "detective_body>detective_male_casualsuit01": 13,
-     "detective_body>Waistcoat": 4,
-     "detective_body>Overcoat": 38,
-     "detective_body>Strap": 3,
-     "detective_male_casualsuit01>Waistcoat": 56,
-     "detective_male_casualsuit01>Overcoat": 135,
-     "detective_male_casualsuit01>Collar": 7,
-     "detective_male_casualsuit01>CoatSkirt": 18,
-     "detective_male_casualsuit01>Strap": 11,
-     "Waistcoat>Overcoat": 12,
-     "Waistcoat>Strap": 4,
-     "Overcoat>Strap": 8,
-     "Collar>Strap": 6,
-     "CoatSkirt>Strap": 2
-    }
-   },
-   "listen": {
-    "worst_frame": 162,
-    "pairs": {
-     "detective_body>detective_male_casualsuit01": 9,
-     "detective_body>Overcoat": 22,
-     "detective_body>Strap": 4,
-     "detective_male_casualsuit01>Waistcoat": 18,
-     "detective_male_casualsuit01>Overcoat": 76,
-     "detective_male_casualsuit01>Collar": 8,
-     "detective_male_casualsuit01>Strap": 12,
-     "Waistcoat>Overcoat": 7,
-     "Overcoat>Strap": 7,
-     "Collar>Strap": 9,
-     "detective_body>Collar": 1
-    }
-   }
-  },
-  "painted_normals": 2092,
-  "glb_bytes": 4767312,
-  "triangles": 44180
+  "height_m": 1.8119,
+  "triangles": 41890,
+  "glb_bytes": 6746016
  },
  "hale": {
   "id": "hale",
-  "fit": {
-   "height_m": 1.8,
-   "head_ratio": 7.1,
-   "height_slider": null,
-   "head_key": null,
-   "uniform_scale": 0.9911
+  "source": "tools/cast/reference/tripo-parts/hale.glb",
+  "builder": "tools/cast/fit/build_tripo_parts.py",
+  "parts": 52,
+  "cleanup_removed_vertices": 6074,
+  "registration": {
+   "scale": 1.0346,
+   "offset": [
+    -0.0106,
+    -0.0577,
+    -0.0
+   ],
+   "skeleton_stature": 1.7087,
+   "crown_m": 1.7994
   },
-  "landmark_fit": {
-   "face_nme_iod": 0.0153,
-   "face_p90_iod": 0.0378,
-   "body_nme_height": 0.0185,
-   "body_max_height": 0.03,
-   "head_ratio": 7.54
+  "face_symmetry": {
+   "head_part": "p7",
+   "plane_x": -0.0049,
+   "plane_yaw_deg": 0.0,
+   "mirror_error_mm": 2.52,
+   "max_snap_mm": 0.79,
+   "feature_moves_mm": [
+    [
+     "p25+p26",
+     2.3
+    ],
+    [
+     "p45+p47",
+     0.7
+    ],
+    [
+     "p46+p48",
+     0.7
+    ],
+    [
+     "p49+p50",
+     1.4
+    ]
+   ]
+  },
+  "weights": {
+   "ray_hit_vertices": 11017,
+   "vertices": 22687,
+   "classes": {
+    "rigid": 35,
+    "leg": 7,
+    "coat": 1,
+    "torso": 6,
+    "head": 1,
+    "arm": 2
+   },
+   "tucked_vertices": 288,
+   "rigid_parts": {
+    "p5": "Hips",
+    "p11": "Hips",
+    "p32": "Hips",
+    "p35": "Hips",
+    "p38": "Hips",
+    "p40": "Hips"
+   }
+  },
+  "paint": {
+   "atlas": [
+    2048,
+    2048
+   ],
+   "parts": 52,
+   "clusters": 133,
+   "clusters_from_sheet": 80,
+   "clusters_borrowed": 53,
+   "seen_vertices": 4685,
+   "vertices": 22687,
+   "pose_points": 17,
+   "face_warp": true,
+   "face_pairs": 378
   },
   "clips": {
    "idle": {
@@ -241,159 +243,92 @@
     "frames": 126
    }
   },
-  "clipping": {
-   "idle": {
-    "worst_frame": 111,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 4,
-     "hale_body>Jacket": 53,
-     "hale_body>Collar": 4,
-     "hale_male_worksuit01>Jacket": 41,
-     "hale_male_worksuit01>Collar": 4,
-     "Jacket>Collar": 9
-    }
-   },
-   "walk": {
-    "worst_frame": 107,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 11,
-     "hale_body>Jacket": 46,
-     "hale_male_worksuit01>Jacket": 43,
-     "hale_male_worksuit01>Collar": 4,
-     "Jacket>Collar": 10,
-     "hale_body>Collar": 2
-    }
-   },
-   "run": {
-    "worst_frame": 143,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 11,
-     "hale_body>Jacket": 83,
-     "hale_body>Collar": 3,
-     "hale_male_worksuit01>Jacket": 41,
-     "hale_male_worksuit01>Collar": 5,
-     "Jacket>Collar": 10
-    }
-   },
-   "interact": {
-    "worst_frame": 121,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 11,
-     "hale_body>Jacket": 49,
-     "hale_body>Collar": 2,
-     "hale_male_worksuit01>Jacket": 67,
-     "hale_male_worksuit01>Collar": 4,
-     "Jacket>Collar": 8
-    }
-   },
-   "signal": {
-    "worst_frame": 123,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 4,
-     "hale_body>Jacket": 74,
-     "hale_body>Collar": 3,
-     "hale_male_worksuit01>Jacket": 33,
-     "hale_male_worksuit01>Collar": 3,
-     "Jacket>Collar": 10
-    }
-   },
-   "examine": {
-    "worst_frame": 93,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 10,
-     "hale_body>Jacket": 48,
-     "hale_body>Collar": 2,
-     "hale_male_worksuit01>Jacket": 25,
-     "hale_male_worksuit01>Collar": 5,
-     "Jacket>Collar": 10
-    }
-   },
-   "listen": {
-    "worst_frame": 111,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 4,
-     "hale_body>Jacket": 53,
-     "hale_body>Collar": 4,
-     "hale_male_worksuit01>Jacket": 41,
-     "hale_male_worksuit01>Collar": 4,
-     "Jacket>Collar": 9
-    }
-   },
-   "ward": {
-    "worst_frame": 97,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 5,
-     "hale_body>Jacket": 36,
-     "hale_body>Collar": 4,
-     "hale_male_worksuit01>Jacket": 48,
-     "hale_male_worksuit01>Collar": 6,
-     "Jacket>Collar": 10
-    }
-   },
-   "gate_effort": {
-    "worst_frame": 110,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 11,
-     "hale_body>Jacket": 37,
-     "hale_body>Collar": 2,
-     "hale_male_worksuit01>Jacket": 53,
-     "hale_male_worksuit01>Collar": 3,
-     "Jacket>Collar": 8
-    }
-   },
-   "watch_plate": {
-    "worst_frame": 111,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 4,
-     "hale_body>Jacket": 53,
-     "hale_body>Collar": 4,
-     "hale_male_worksuit01>Jacket": 41,
-     "hale_male_worksuit01>Collar": 4,
-     "Jacket>Collar": 9
-    }
-   },
-   "peek": {
-    "worst_frame": 93,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 10,
-     "hale_body>Jacket": 48,
-     "hale_body>Collar": 2,
-     "hale_male_worksuit01>Jacket": 25,
-     "hale_male_worksuit01>Collar": 5,
-     "Jacket>Collar": 10
-    }
-   },
-   "repair": {
-    "worst_frame": 138,
-    "pairs": {
-     "hale_body>hale_male_worksuit01": 8,
-     "hale_body>Jacket": 61,
-     "hale_body>Collar": 4,
-     "hale_male_worksuit01>Jacket": 102,
-     "hale_male_worksuit01>Collar": 4,
-     "Jacket>Collar": 9
-    }
-   }
-  },
-  "painted_normals": 2104,
-  "glb_bytes": 4907632,
-  "triangles": 36088
+  "height_m": 1.8623,
+  "triangles": 45242,
+  "glb_bytes": 5222696
  },
  "quer": {
   "id": "quer",
-  "fit": {
-   "height_m": 1.56,
-   "head_ratio": 5.9078,
-   "height_slider": null,
-   "head_key": null,
-   "uniform_scale": 1.0508
+  "source": "tools/cast/reference/tripo-parts/quer.glb",
+  "builder": "tools/cast/fit/build_tripo_parts.py",
+  "parts": 67,
+  "cleanup_removed_vertices": 28276,
+  "registration": {
+   "scale": 1.04,
+   "offset": [
+    0.0033,
+    -0.0199,
+    0.0
+   ],
+   "skeleton_stature": 1.56,
+   "crown_m": 1.5392
   },
-  "landmark_fit": {
-   "face_nme_iod": 0.0263,
-   "face_p90_iod": 0.0537,
-   "body_nme_height": 0.0266,
-   "body_max_height": 0.0497,
-   "head_ratio": 6.43
+  "face_symmetry": {
+   "head_part": "p1",
+   "plane_x": 0.0029,
+   "plane_yaw_deg": 0.0,
+   "mirror_error_mm": 0.95,
+   "max_snap_mm": 9.56,
+   "feature_moves_mm": [
+    [
+     "p20",
+     0.6
+    ],
+    [
+     "p23+p24",
+     0.5
+    ],
+    [
+     "p27",
+     0.1
+    ],
+    [
+     "p30",
+     1.0
+    ],
+    [
+     "p60",
+     1.0
+    ],
+    [
+     "p63",
+     2.4
+    ],
+    [
+     "p64",
+     0.8
+    ]
+   ]
+  },
+  "weights": {
+   "ray_hit_vertices": 13848,
+   "vertices": 21077,
+   "classes": {
+    "rigid": 33,
+    "arm": 6,
+    "torso": 18,
+    "leg": 6,
+    "head": 1,
+    "coat": 1,
+    "hand": 2
+   },
+   "tucked_vertices": 0,
+   "rigid_parts": {}
+  },
+  "paint": {
+   "atlas": [
+    2048,
+    2048
+   ],
+   "parts": 67,
+   "clusters": 164,
+   "clusters_from_sheet": 96,
+   "clusters_borrowed": 68,
+   "seen_vertices": 5694,
+   "vertices": 21077,
+   "pose_points": 17,
+   "face_warp": true,
+   "face_pairs": 378
   },
   "clips": {
    "idle": {
@@ -429,134 +364,113 @@
     "frames": 49
    }
   },
-  "clipping": {
-   "idle": {
-    "worst_frame": 239,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 40,
-     "quer_body>Coat": 38,
-     "quer_body>Scarf": 66,
-     "Stockings>Coat": 2,
-     "quer_female_elegantsuit01>Coat": 15,
-     "quer_female_elegantsuit01>Scarf": 45,
-     "Coat>Scarf": 51
-    }
-   },
-   "walk": {
-    "worst_frame": 263,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 48,
-     "quer_body>Coat": 42,
-     "quer_body>Scarf": 74,
-     "Stockings>quer_female_elegantsuit01": 3,
-     "quer_female_elegantsuit01>Coat": 14,
-     "quer_female_elegantsuit01>Scarf": 70,
-     "Coat>Scarf": 50,
-     "Stockings>Coat": 3
-    }
-   },
-   "run": {
-    "worst_frame": 313,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 40,
-     "quer_body>Coat": 42,
-     "quer_body>Scarf": 89,
-     "Stockings>Coat": 5,
-     "quer_female_elegantsuit01>Coat": 30,
-     "quer_female_elegantsuit01>Scarf": 77,
-     "Coat>Scarf": 60,
-     "Stockings>quer_female_elegantsuit01": 25
-    }
-   },
-   "interact": {
-    "worst_frame": 249,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 42,
-     "quer_body>Coat": 46,
-     "quer_body>Scarf": 64,
-     "Stockings>Coat": 3,
-     "quer_female_elegantsuit01>Coat": 15,
-     "quer_female_elegantsuit01>Scarf": 65,
-     "Coat>Scarf": 45
-    }
-   },
-   "signal": {
-    "worst_frame": 261,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 41,
-     "quer_body>Coat": 53,
-     "quer_body>Scarf": 58,
-     "Stockings>Coat": 2,
-     "quer_female_elegantsuit01>Coat": 15,
-     "quer_female_elegantsuit01>Scarf": 66,
-     "Coat>Scarf": 48
-    }
-   },
-   "examine": {
-    "worst_frame": 342,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 34,
-     "quer_body>Coat": 29,
-     "quer_body>Scarf": 89,
-     "Stockings>quer_female_elegantsuit01": 33,
-     "Stockings>Coat": 4,
-     "quer_female_elegantsuit01>Coat": 17,
-     "quer_female_elegantsuit01>CoatSkirt": 9,
-     "quer_female_elegantsuit01>Scarf": 82,
-     "Coat>Scarf": 57
-    }
-   },
-   "listen": {
-    "worst_frame": 239,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 40,
-     "quer_body>Coat": 38,
-     "quer_body>Scarf": 66,
-     "Stockings>Coat": 2,
-     "quer_female_elegantsuit01>Coat": 15,
-     "quer_female_elegantsuit01>Scarf": 45,
-     "Coat>Scarf": 51
-    }
-   },
-   "crouch_walk": {
-    "worst_frame": 298,
-    "pairs": {
-     "quer_body>quer_female_elegantsuit01": 38,
-     "quer_body>Coat": 25,
-     "quer_body>Scarf": 88,
-     "Stockings>quer_female_elegantsuit01": 36,
-     "Stockings>Coat": 5,
-     "quer_female_elegantsuit01>Coat": 12,
-     "quer_female_elegantsuit01>CoatSkirt": 10,
-     "quer_female_elegantsuit01>Scarf": 70,
-     "Coat>Scarf": 41
-    }
-   }
-  },
-  "painted_normals": 1831,
-  "glb_bytes": 4843104,
-  "triangles": 48568
+  "height_m": 1.6224,
+  "triangles": 40707,
+  "glb_bytes": 6567328
  },
  "lucian": {
   "id": "lucian",
-  "fit": {
-   "height_m": 1.86,
-   "head_ratio": 7.2262,
-   "height_slider": null,
-   "head_key": null,
-   "uniform_scale": 0.9998
+  "source": "tools/cast/reference/tripo-parts/lucian.glb",
+  "builder": "tools/cast/fit/build_tripo_parts.py",
+  "parts": 97,
+  "cleanup_removed_vertices": 52941,
+  "registration": {
+   "scale": 1.0529,
+   "offset": [
+    -0.0258,
+    -0.0104,
+    -0.0
+   ],
+   "skeleton_stature": 1.6101,
+   "crown_m": 1.8599
   },
-  "landmark_fit": {
-   "face_nme_iod": 0.0161,
-   "face_p90_iod": 0.0335,
-   "body_nme_height": 0.0161,
-   "body_max_height": 0.0373,
-   "head_ratio": 7.34
+  "face_symmetry": {
+   "head_part": "p11",
+   "plane_x": -0.002,
+   "plane_yaw_deg": 0.0,
+   "mirror_error_mm": 2.58,
+   "max_snap_mm": 2.94,
+   "feature_moves_mm": [
+    [
+     "p25+p27",
+     4.8
+    ]
+   ]
+  },
+  "weights": {
+   "ray_hit_vertices": 17562,
+   "vertices": 45534,
+   "classes": {
+    "rigid": 76,
+    "head": 1,
+    "leg": 4,
+    "arm": 3,
+    "headwear": 3,
+    "coat": 1,
+    "torso": 7,
+    "hand": 1,
+    "cape": 1
+   },
+   "tucked_vertices": 849,
+   "rigid_parts": {
+    "p19": "Spine2",
+    "p40": "Spine2",
+    "p44": "Spine2",
+    "p45": "Spine2",
+    "p46": "Spine2",
+    "p47": "Spine2",
+    "p50": "Spine2",
+    "p58": "Spine2",
+    "p59": "Spine2",
+    "p5": "Spine2",
+    "p60": "Spine2",
+    "p61": "Spine2",
+    "p62": "Spine2",
+    "p63": "Spine2",
+    "p65": "Spine2",
+    "p66": "Spine2",
+    "p67": "Spine2",
+    "p68": "Spine2",
+    "p69": "Spine2",
+    "p70": "Spine2",
+    "p71": "Spine2",
+    "p72": "Spine2",
+    "p73": "Spine2",
+    "p77": "Spine2",
+    "p78": "Spine2",
+    "p79": "Spine2",
+    "p83": "Spine2",
+    "p84": "Spine2",
+    "p85": "Spine2",
+    "p87": "Spine2",
+    "p88": "Spine2",
+    "p89": "Spine2",
+    "p90": "Spine2",
+    "p91": "Spine2",
+    "p93": "Spine2",
+    "p95": "Spine2",
+    "p96": "Spine2"
+   }
+  },
+  "paint": {
+   "atlas": [
+    2048,
+    2048
+   ],
+   "parts": 97,
+   "clusters": 236,
+   "clusters_from_sheet": 98,
+   "clusters_borrowed": 137,
+   "seen_vertices": 8264,
+   "vertices": 45534,
+   "pose_points": 17,
+   "face_warp": true,
+   "face_pairs": 378
   },
   "clips": {
    "idle": {
-    "source": "Idle_Talking_Loop",
-    "frames": 72
+    "source": "Idle_Loop",
+    "frames": 61
    },
    "walk": {
     "source": "Walk_Formal_Loop",
@@ -587,161 +501,9 @@
     "frames": 25
    }
   },
-  "clipping": {
-   "idle": {
-    "worst_frame": 275,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 10,
-     "lucian_body>Coat": 32,
-     "lucian_body>Cape": 10,
-     "lucian_male_casualsuit03>Doublet": 12,
-     "lucian_male_casualsuit03>Boots": 4,
-     "lucian_male_casualsuit03>Coat": 102,
-     "lucian_male_casualsuit03>Cape": 23,
-     "Gloves>Coat": 37,
-     "Doublet>Coat": 7,
-     "Doublet>CoatTails": 1,
-     "Doublet>Sash": 5,
-     "Coat>Cape": 52
-    }
-   },
-   "walk": {
-    "worst_frame": 290,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 22,
-     "lucian_body>Coat": 41,
-     "lucian_body>Cape": 10,
-     "lucian_male_casualsuit03>Doublet": 19,
-     "lucian_male_casualsuit03>Boots": 4,
-     "lucian_male_casualsuit03>Coat": 75,
-     "lucian_male_casualsuit03>Cape": 22,
-     "Gloves>Coat": 6,
-     "Doublet>Coat": 13,
-     "Doublet>CoatTails": 1,
-     "Doublet>Sash": 4,
-     "Coat>Cape": 49,
-     "Boots>Coat": 4,
-     "Boots>CoatTails": 37,
-     "Coat>Sash": 1
-    }
-   },
-   "run": {
-    "worst_frame": 316,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 20,
-     "lucian_body>Coat": 63,
-     "lucian_body>Cape": 16,
-     "lucian_male_casualsuit03>Doublet": 31,
-     "lucian_male_casualsuit03>Boots": 4,
-     "lucian_male_casualsuit03>Coat": 80,
-     "lucian_male_casualsuit03>Cape": 43,
-     "Gloves>Coat": 5,
-     "Doublet>Coat": 14,
-     "Doublet>CoatTails": 2,
-     "Doublet>Sash": 6,
-     "Doublet>Cape": 9,
-     "Boots>CoatTails": 49,
-     "Coat>Sash": 2,
-     "Coat>Cape": 50,
-     "Boots>Coat": 5
-    }
-   },
-   "interact": {
-    "worst_frame": 210,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 16,
-     "lucian_body>Coat": 34,
-     "lucian_body>Cape": 9,
-     "lucian_male_casualsuit03>Doublet": 12,
-     "lucian_male_casualsuit03>Boots": 4,
-     "lucian_male_casualsuit03>Coat": 60,
-     "lucian_male_casualsuit03>Cape": 18,
-     "Gloves>Coat": 9,
-     "Doublet>Coat": 7,
-     "Doublet>CoatTails": 1,
-     "Doublet>Sash": 5,
-     "Coat>Cape": 47,
-     "Boots>CoatTails": 2
-    }
-   },
-   "signal": {
-    "worst_frame": 275,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 10,
-     "lucian_body>Coat": 32,
-     "lucian_body>Cape": 10,
-     "lucian_male_casualsuit03>Doublet": 12,
-     "lucian_male_casualsuit03>Boots": 4,
-     "lucian_male_casualsuit03>Coat": 102,
-     "lucian_male_casualsuit03>Cape": 23,
-     "Gloves>Coat": 37,
-     "Doublet>Coat": 7,
-     "Doublet>CoatTails": 1,
-     "Doublet>Sash": 5,
-     "Coat>Cape": 52
-    }
-   },
-   "examine": {
-    "worst_frame": 339,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 21,
-     "lucian_body>Coat": 39,
-     "lucian_body>Cape": 20,
-     "lucian_male_casualsuit03>Doublet": 66,
-     "lucian_male_casualsuit03>Boots": 3,
-     "lucian_male_casualsuit03>Coat": 46,
-     "lucian_male_casualsuit03>Cape": 35,
-     "Gloves>Coat": 5,
-     "Doublet>Coat": 12,
-     "Doublet>Sash": 8,
-     "Doublet>Cape": 3,
-     "Boots>Coat": 4,
-     "Boots>CoatTails": 31,
-     "Coat>Sash": 3,
-     "Coat>Cape": 54
-    }
-   },
-   "listen": {
-    "worst_frame": 157,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 11,
-     "lucian_body>Coat": 18,
-     "lucian_body>Cape": 11,
-     "lucian_male_casualsuit03>Doublet": 10,
-     "lucian_male_casualsuit03>Boots": 4,
-     "lucian_male_casualsuit03>Coat": 44,
-     "lucian_male_casualsuit03>Cape": 17,
-     "Gloves>Coat": 6,
-     "Doublet>Coat": 5,
-     "Doublet>CoatTails": 1,
-     "Doublet>Sash": 5,
-     "Coat>Cape": 42
-    }
-   },
-   "perform": {
-    "worst_frame": 298,
-    "pairs": {
-     "lucian_body>lucian_male_casualsuit03": 27,
-     "lucian_body>Coat": 47,
-     "lucian_body>Cape": 10,
-     "lucian_male_casualsuit03>Doublet": 11,
-     "lucian_male_casualsuit03>Boots": 4,
-     "lucian_male_casualsuit03>Coat": 76,
-     "lucian_male_casualsuit03>Cape": 25,
-     "Gloves>Coat": 6,
-     "Doublet>Coat": 17,
-     "Doublet>CoatTails": 1,
-     "Doublet>Sash": 5,
-     "Boots>CoatTails": 50,
-     "Coat>Sash": 1,
-     "Coat>Cape": 57,
-     "Boots>Coat": 4
-    }
-   }
-  },
-  "painted_normals": 2105,
-  "glb_bytes": 4950164,
-  "triangles": 43928
+  "height_m": 1.9584,
+  "triangles": 90470,
+  "glb_bytes": 10127204
  },
  "demon": {
   "id": "demon",

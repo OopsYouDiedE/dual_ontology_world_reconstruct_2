@@ -35,7 +35,12 @@ static func witness(id: String) -> String:
 static func job(id: String) -> String:
 	return JOBS[NAMES.find(id)]
 
+const HERO_IDS := ["detective", "hale", "quer", "lucian"]
+
 static func attach(parent: Node3D, id: String) -> bool:
+	var low := id.to_lower()
+	if low in HERO_IDS and Cast.attach_hero(parent, low):
+		return true
 	if id == "detective": return Cast.attach(parent)
 	var variant := NAMES.find(id)
 	return variant >= 0 and Cast.attach(parent, variant)

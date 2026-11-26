@@ -80,6 +80,26 @@ python -m venv --system-site-packages .runtime/facefit-venv   # 再装 mediapipe
 
 成品放在 `assets/characters/heroes-tripo/`（`.gdignore`，尚未替换 `heroes/`），游戏内对比图 `docs/design/hero-fit/tripo-rigged.jpg`，用 `fit/godot_faces.gd --gltf-dir=res://assets/characters/heroes-tripo` 在运行时加载渲染。已知问题：侧面和背面是扩散出来的颜色；lucian 披风继承手臂权重成团、脸部特写未检出、遮罩带入背景拱门；quer 遮罩在眼部有洞；同一进程第二次创建 MPFB 身体会崩溃（detective 为早一轮结果）。
 
+## Tripo 分件成品（现役 `heroes/` 四人）
+
+侦探、Hale、雀儿、卢西安的游戏模型由 `fit/build_tripo_parts.py` 从 Tripo 的**分件导出** `reference/tripo-parts/<hero>.glb`（每件衣物/道具一个网格，无骨骼）生成，配色和脸以 `reference/sheets/<hero>.jpg` 正面设定图为准。不再体素重拓扑，所以外套、袖子、手、包、琴、披风始终是分开的面，不会粘连。
+
+| 步骤 | 做法 |
+|---|---|
+| 分件修复 | 每件单独合并重复点、删游离点/退化面/碎岛、统一外法线，再合并为一个网格但不跨件焊接；顶点记下所属零件 |
+| 配准 | 只用肩、胯、膝、踝的**高度**求缩放（披风、琴会撑宽 MediaPipe 的肩宽），鞋底贴 MPFB 鞋底；按耳朵位置拉长颈骨，让头骨骼落在模型颅底。头顶偏离设计身高 1.5% 以上时，`build_tripo_parts.sh` 用回推的骨架身高再建一次 |
+| 脸对称 | 求头部零件的对称面（平移 + 偏航），头皮顶点向自身镜像吸附；成对的眼、眉零件移到镜像位置 |
+| 权重 | 每个顶点沿法线反向打射线到 MPFB 身体取命中三角形的权重（袖子内侧拿到手臂，旁边衣身拿到躯干）。按零件分类限制骨骼：头上的零件（帽、发、辫、护目镜）、小于 4 cm 的零件、`RIGID` 名单里的道具整体挂一根骨；手只用 Hand/ForeArm；裤装用胯和腿；长外套下摆按高度向 Hips 混合；披风只用脊柱和胯。平滑只在零件内部做。被外套/披风盖住的裤子顶点内收 1.2 cm 留出余量 |
+| 上色 | `fit/parts_paint.py` 在 Tripo 贴图上就地重涂：每件按 Tripo 色块聚 1–3 类，每类取正面可见顶点在设定图上的中位色，背面才看得到的类向位置和原色最近的已知顶点借色；保留 1/8 原明暗作折痕。头皮和眼眉另展 UV、单独一张脸部贴图（Tripo 把脸切成几十块碎岛），设定图的脸经 468 点分片仿射画上；两边关键点先用 `fit/face_pairs.json`（`fit/face_pairs.py` 在七张脸上投票得到的左右配对）镜像平均，所以五官不会歪斜。帽檐不算遮挡，眼睑背面不算遮挡 |
+| 动作 | UAL 片段：髋和四肢按骨骼方向，脊柱、锁骨、颈、头按相对静止姿态的增量（避免锁骨耸肩和驼背）；卢西安待机改用 `Idle_Loop` |
+
+```bash
+sh tools/cast/fit/build_tripo_parts.sh quer "<UAL Godot Standard.glb>"            # 写入 assets/characters/heroes/
+.runtime/facefit-venv/Scripts/python.exe tools/cast/fit/face_pairs.py <脸部关键点 json ...> --out tools/cast/fit/face_pairs.json
+```
+
+Forward+ 实机阵容：[正面](../../docs/design/hero-fit/tripo-parts-lineup.jpg)、[背面](../../docs/design/hero-fit/tripo-parts-back.jpg)。回执（零件数、清理掉的顶点、对称面误差、各类零件数、内收顶点数、骨架身高、上色来源）写进 `assets/characters/heroes/receipt.json`。游戏内复看：`tools/expedition/production_cast_test.gd`（Forward+）输出 `.runtime/toon-cast/heroes-lineup.jpg`、`heroes-back.jpg`。
+
 ## 已知待办
 
 - 雀儿的报童帽已缩小，需在游戏内复看是否仍浮在头上。

@@ -234,8 +234,12 @@ def world_rot(rig, m):
     return (rig.matrix_world.to_3x3().normalized() @ m.to_3x3()).normalized()
 
 
-def retarget(src, rig, clips, fps):
-    """Bake each UAL action onto the Mixamo rig, keyed as local quaternions plus hips travel."""
+def retarget(src, rig, clips, fps, delta=()):
+    """Bake each UAL action onto the Mixamo rig, keyed as local quaternions plus hips travel.
+
+    Limbs copy the source bone's world direction. Bones named in `delta` (short names) instead copy the
+    source's world rotation away from its own rest, applied to the target rest: a skinned mesh whose
+    clavicles and spine rest in its own posture keeps that posture instead of taking UAL's."""
     bones = [b for b in rig.data.bones]  # parents precede children
     names = {b.name.split(":")[-1]: b.name for b in bones}
     rest_t = {b.name: world_rot(rig, b.matrix_local) for b in bones}
@@ -274,9 +278,15 @@ def retarget(src, rig, clips, fps):
             want = {}
             for b in bones:
                 src_name = MAP.get(b.name.split(":")[-1])
-                if b.name in offset:
+                short = b.name.split(":")[-1]
+                if b.name in offset and short in delta:
+                    moved = world_rot(src, src.pose.bones[src_name].matrix) @ rest_s[src_name].transposed()
+                    want[b.name] = moved @ rest_t[b.name]
+                    if calm and short in HEAD_BONES:
+                        q = want[b.name].to_quaternion().slerp(rest_t[b.name].to_quaternion(), CALM_HEAD)
+                        want[b.name] = q.to_matrix()
+                elif b.name in offset:
                     want[b.name] = world_rot(src, src.pose.bones[src_name].matrix) @ offset[b.name]
-                    short = b.name.split(":")[-1]
                     if calm and short.endswith(LEG_BONES):
                         q = want[b.name].to_quaternion().slerp(rest_t[b.name].to_quaternion(), calm)
                         want[b.name] = q.to_matrix()

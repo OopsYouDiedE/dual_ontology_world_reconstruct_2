@@ -82,15 +82,17 @@ python -m venv --system-site-packages .runtime/facefit-venv   # 再装 mediapipe
 
 ## Tripo 分件成品（现役 `heroes/` 四人）
 
-侦探、Hale、雀儿、卢西安的游戏模型由 `fit/build_tripo_parts.py` 从 Tripo 的**分件导出** `reference/tripo-parts/<hero>.glb`（每件衣物/道具一个网格，无骨骼）生成，配色和脸以 `reference/sheets/<hero>.jpg` 正面设定图为准。不再体素重拓扑，所以外套、袖子、手、包、琴、披风始终是分开的面，不会粘连。
+侦探、Hale、雀儿、卢西安的游戏模型由 `fit/build_tripo_parts.py` 从 Tripo 的**分件导出** `reference/tripo-parts/<hero>.glb`（每件衣物/道具一个网格，无骨骼）生成，配色和脸以 `reference/sheets/<hero>.jpg` 正面设定图为准。重拓扑逐件做、不跨件，所以外套、袖子、手、包、琴、披风始终是分开的面，不会粘连。
 
 | 步骤 | 做法 |
 |---|---|
 | 分件修复 | 每件单独合并重复点、删游离点/退化面/碎岛、统一外法线，再合并为一个网格但不跨件焊接；顶点记下所属零件 |
+| 重拓扑 | `fit/retopo_parts.py`（`fit/retopo_parts.sh` 在 QuadriFlow 崩溃后自动重跑）逐件体素化后用 QuadriFlow 转成均匀四边面（边长约身高 0.58%），投影回 Tripo 表面再松弛。开口薄片（外套、披风）先加厚 0.35% 身高，再投影到加厚后的面上，成品是闭合薄壳：两层不会抢同一表面，也没有破边被描线。少于 300 面或小于 3% 身高的零件、QuadriFlow 拒绝的零件保留 Tripo 三角面；头部和肩以上的零件（头发、帽子、护目镜）在配准后换回 Tripo 原网格，脸和发丝不被粗化。缓存在 `.runtime/facefit/parts-retopo/<hero>/`，改参数后清空重跑 |
+| UV | 按可读性而不是密度排：每件按法线切成正、背、左、右、顶、底视图岛，各自从该方向正交投影（直立、不旋转、真实比例）；全身同一纹素密度，脸部 ×3；按 脸 → 头发帽子 → 身体 → 手臂 → 腿脚 → 道具 分区成行排列。每人输出 `.runtime/facefit/parts/<hero>-uv-layout.png`，四人合图见 [uv-layout-readable.jpg](../../docs/design/hero-fit/uv-layout-readable.jpg) |
 | 配准 | 只用肩、胯、膝、踝的**高度**求缩放（披风、琴会撑宽 MediaPipe 的肩宽），鞋底贴 MPFB 鞋底；按耳朵位置拉长颈骨，让头骨骼落在模型颅底。头顶偏离设计身高 1.5% 以上时，`build_tripo_parts.sh` 用回推的骨架身高再建一次 |
 | 脸对称 | 求头部零件的对称面（平移 + 偏航），头皮顶点向自身镜像吸附；成对的眼、眉零件移到镜像位置 |
 | 权重 | 每个顶点沿法线反向打射线到 MPFB 身体取命中三角形的权重（袖子内侧拿到手臂，旁边衣身拿到躯干）。按零件分类限制骨骼：头上的零件（帽、发、辫、护目镜）、小于 4 cm 的零件、`RIGID` 名单里的道具整体挂一根骨；手只用 Hand/ForeArm；裤装用胯和腿；长外套下摆按高度向 Hips 混合；披风只用脊柱和胯。平滑只在零件内部做。被外套/披风盖住的裤子顶点内收 1.2 cm 留出余量 |
-| 上色 | `fit/parts_paint.py` 在 Tripo 贴图上就地重涂：每件按 Tripo 色块聚 1–3 类（小于 8% 的并入），每类取正面可见顶点在设定图上的主色（采样点分两组时取多数组）；正面看不到的类向位置和原色最近的已知顶点借色，头发、帽子只向头上的零件借。只差明暗的色块、证据不足的色块用主色；头发和帽子不许是肤色，头皮取最近发丝的颜色；挂在头上、垂到下巴下的肤色内衬和领口露出的衣边涂成肤色。色块标签做 5×5 众数滤波，明暗只保留模糊后的 8%，岛间空白全部用最近颜色填满（否则远处 mip 发脏）。配准用人体和脸部关键点做薄板样条。头皮和眼眉另展 UV、单独一张脸部贴图，设定图的脸经 468 点分片仿射画上，关键点先用 `fit/face_pairs.json` 镜像平均；嘴唇张开的头在两嘴角后补一片封口面画上闭合的嘴，口腔零件涂肤色 |
+| 上色 | `fit/parts_paint.py` 画一张 2048 图集：每件按 Tripo 顶点色聚 1–3 类，每类取正面可见顶点在设定图上的主色（配准用人体和脸部关键点做薄板样条）；纹素标签按三角形内插的 Tripo 色就近归类。正面看不到的类优先用本件已见类的颜色（只差明暗时按两类明暗差的五分之一调亮或调暗），整件不可见才向位置和原色最近的已知顶点借色，头发、帽子只向头上的零件借。只差明暗或证据不足的色块用主色；头上的零件不许是肤色，也不许是阴影里的肤色（同色相、偏暗）。头皮：额头以上、以及后脑朝后且高于下巴或高于发梢最低点（长发盖住后颈）的部分，连同贴在后脑的肤色零件，统一涂后脑最常见的发色。挂在头上、垂到下巴下的肤色内衬，以及领口露出、Tripo 也画成肤色的衣边，涂成肤色。脸部用设定图的脸，经 468 点分片仿射画上，关键点先用 `fit/face_pairs.json` 镜像平均；五官以外的纹素再取镜像采样里更接近肤色的一侧，消除单侧阴影线。嘴唇张开的头在两嘴角后补一片封口面，画上闭合的嘴 |
 | 动作 | UAL 片段：髋和四肢按骨骼方向，脊柱、锁骨、颈、头按相对静止姿态的增量（避免锁骨耸肩和驼背）；卢西安待机改用 `Idle_Loop` |
 
 ```bash
@@ -98,7 +100,13 @@ sh tools/cast/fit/build_tripo_parts.sh quer "<UAL Godot Standard.glb>"          
 .runtime/facefit-venv/Scripts/python.exe tools/cast/fit/face_pairs.py <脸部关键点 json ...> --out tools/cast/fit/face_pairs.json
 ```
 
-Forward+ 实机阵容：[正面](../../docs/design/hero-fit/tripo-parts-lineup.jpg)、[背面](../../docs/design/hero-fit/tripo-parts-back.jpg)。回执（零件数、清理掉的顶点、对称面误差、各类零件数、内收顶点数、骨架身高、上色来源）写进 `assets/characters/heroes/receipt.json`。游戏内复看：`tools/expedition/production_cast_test.gd`（Forward+）输出 `.runtime/toon-cast/heroes-lineup.jpg`、`heroes-back.jpg`。
+Blender 描线审核：`fit/review_render.py` 把成品渲成 EEVEE 三段色阶、Freestyle 描线（剪影、边界、折痕），太阳光固定在镜头左上方（正面、背面都一样），共有正、背、左、右、脸、左右 35° 脸、后脑八个视角。四人审核图：[全身](../../docs/design/hero-fit/review-ink-lineup.jpg)、[头部正背](../../docs/design/hero-fit/review-ink-heads.jpg)。
+
+```bash
+"<Blender 4.2>/blender.exe" -b --factory-startup --python tools/cast/fit/review_render.py -- <glb 绝对路径> <输出前缀绝对路径>
+```
+
+Forward+ 实机阵容：[正面](../../docs/design/hero-fit/tripo-parts-lineup.jpg)、[背面](../../docs/design/hero-fit/tripo-parts-back.jpg)。回执（零件数、重拓扑的零件、UV 分区、清理掉的顶点、对称面误差、各类零件数、内收顶点数、骨架身高、上色来源）写进 `assets/characters/heroes/receipt.json`。游戏内复看：`tools/expedition/production_cast_test.gd`（Forward+）输出 `.runtime/toon-cast/heroes-lineup.jpg`、`heroes-back.jpg`。
 
 ## 已知待办
 

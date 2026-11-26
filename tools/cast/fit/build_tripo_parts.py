@@ -50,6 +50,7 @@ from fit_heroes import VENV, WORK  # noqa: E402
 ROOT = FIT.parents[2]
 REF = FIT.parent / "reference"
 PARTS = REF / "tripo-parts"
+RETOPO = ROOT / ".runtime" / "facefit" / "parts-retopo"
 OUT = ROOT / "assets" / "characters" / "heroes"
 STAGE = WORK / "parts"
 
@@ -95,7 +96,8 @@ def load_parts(hero, height):
         if o.type != "MESH":
             bpy.data.objects.remove(o, do_unlink=True)
     meshes.sort(key=lambda o: o.name)
-    names, removed = [], 0
+    names, removed, refs, retopo_parts = [], 0, [], 0
+    image = base_image(meshes[0])
     for o in meshes:
         activate(o)
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
@@ -129,15 +131,43 @@ def load_parts(hero, height):
         removed += n0 - len(bm.verts)
         bm.to_mesh(o.data)
         bm.free()
-        attr = o.data.attributes.new("part", "INT", "POINT")
-        attr.data.foreach_set("value", [len(names)] * len(o.data.vertices))
-        names.append(short(o.name))
-    activate(meshes[0])
-    for o in meshes:
-        o.select_set(True)
-    bpy.ops.object.join()
-    obj = bpy.context.active_object
-    obj.name = obj.data.name = f"{hero}_body"
+        name = short(o.name)
+        # The cleaned Tripo part stays as the reference (its texture feeds MediaPipe and the colour lookup);
+        # the game mesh takes the part's quad retopology when retopo_parts.py made one.
+        r = o.copy()
+        r.data = o.data.copy()
+        bpy.context.scene.collection.objects.link(r)
+        refs.append(r)
+        cache = RETOPO / hero / f"{name}.npz"
+        if cache.exists():
+            z = np.load(cache)
+            faces, k = [], 0
+            for n in z["sizes"]:
+                faces.append(z["idx"][k:k + n].tolist())
+                k += n
+            mesh = bpy.data.meshes.new(name)
+            mesh.from_pydata(z["co"].tolist(), [], faces)
+            mesh.update()
+            for mat in o.data.materials:
+                mesh.materials.append(mat)
+            o.data = mesh
+            outward(o)
+            retopo_parts += 1
+        tripo_colours(o, r, image)
+        for obj_ in (o, r):
+            attr = obj_.data.attributes.new("part", "INT", "POINT")
+            attr.data.foreach_set("value", [len(names)] * len(obj_.data.vertices))
+        names.append(name)
+    joined = []
+    for group, tag in ((meshes, "body"), (refs, "tripo")):
+        activate(group[0])
+        for o in group:
+            o.select_set(True)
+        bpy.ops.object.join()
+        j = bpy.context.active_object
+        j.name = j.data.name = f"{hero}_{tag}"
+        joined.append(j)
+    obj, ref = joined
     # Tripo: +Y up in glTF = +Z here, character faces +X. Turn to face -Y, feet on z=0, centred, to height.
     co = np.empty(len(obj.data.vertices) * 3)
     obj.data.vertices.foreach_get("co", co)
@@ -146,11 +176,99 @@ def load_parts(hero, height):
     s = height / (hi[2] - lo[2])
     m = Matrix.Scale(s, 4) @ Matrix.Rotation(-math.pi / 2, 4, "Z") @ \
         Matrix.Translation((-(lo[0] + hi[0]) / 2, -(lo[1] + hi[1]) / 2, -lo[2]))
-    obj.data.transform(m)
-    obj.data.update()
+    for o in (obj, ref):
+        o.data.transform(m)
+        o.data.update()
     for p in obj.data.polygons:
         p.use_smooth = True
-    return obj, names, removed
+    ref.hide_render = True
+    return obj, ref, names, removed, retopo_parts
+
+
+def restore_tripo_part(obj, ref, part):
+    """Put the Tripo triangles of one part back in place of its quad remesh (the head: a 1 cm quad grid
+    cannot hold the drawn eyes, lids and lips; Tripo's own head mesh can)."""
+    pi = part_index(obj)
+    if not (pi == part).any():
+        return False
+    dup = ref.copy()
+    dup.data = ref.data.copy()
+    bpy.context.scene.collection.objects.link(dup)
+    for o, keep in ((obj, False), (dup, True)):
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        layer = bm.verts.layers.int.get("part")
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if (v[layer] == part) != keep], context="VERTS")
+        bm.to_mesh(o.data)
+        bm.free()
+    tripo_colours(dup, dup, base_image(ref))
+    activate(obj)
+    dup.select_set(True)
+    bpy.ops.object.join()
+    for p in obj.data.polygons:
+        p.use_smooth = True
+    return True
+
+
+def outward(o):
+    """Normals of a remeshed part point away from the part's centre, one connected piece at a time (the
+    remesh of an open sheet keeps whichever wall the Tripo sheet faced, and head shells may face in)."""
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    centre = sum((v.co for v in bm.verts), Vector()) / max(len(bm.verts), 1)
+    seen = set()
+    for f in bm.faces:
+        if f.index in seen:
+            continue
+        comp, stack = [], [f]
+        seen.add(f.index)
+        while stack:
+            g = stack.pop()
+            comp.append(g)
+            for e in g.edges:
+                for h in e.link_faces:
+                    if h.index not in seen:
+                        seen.add(h.index)
+                        stack.append(h)
+        score = sum(g.normal.dot(g.calc_center_median() - centre) * g.calc_area() for g in comp)
+        if score < 0:
+            bmesh.ops.reverse_faces(bm, faces=comp)
+    bm.to_mesh(o.data)
+    bm.free()
+
+
+def tripo_colours(o, r, image):
+    """Per-vertex Tripo colour (attribute `tcol`) of a game part from the nearest point of its Tripo part."""
+    w, h = image.size
+    px = np.empty(w * h * 4, np.float32)
+    image.pixels.foreach_get(px)
+    px = px.reshape(h, w, 4)
+    bm = bmesh.new()
+    bm.from_mesh(r.data)
+    bmesh.ops.triangulate(bm, faces=bm.faces)
+    uv_layer = bm.loops.layers.uv.active
+    tris = [[(l.vert.co.copy(), l[uv_layer].uv.copy()) for l in f.loops] for f in bm.faces]
+    tree = BVHTree.FromBMesh(bm)
+    bm.free()
+    out = np.zeros((len(o.data.vertices), 4), np.float32)
+    for v in o.data.vertices:
+        loc, _, fi, _ = tree.find_nearest(v.co)
+        if fi is None:
+            continue
+        (a, ua), (b, ub), (c, uc) = tris[fi]
+        v0, v1, v2 = b - a, c - a, loc - a
+        d00, d01, d11, d20, d21 = v0.dot(v0), v0.dot(v1), v1.dot(v1), v2.dot(v0), v2.dot(v1)
+        den = d00 * d11 - d01 * d01
+        if abs(den) < 1e-18:
+            y = z = 0.0
+        else:
+            y = (d11 * d20 - d01 * d21) / den
+            z = (d00 * d21 - d01 * d20) / den
+        uv = ua * (1 - y - z) + ub * y + uc * z
+        out[v.index] = px[int(np.clip(uv.y * h, 0, h - 1)), int(np.clip(uv.x * w, 0, w - 1))]
+    attr = o.data.attributes.new("tcol", "FLOAT_COLOR", "POINT")
+    attr.data.foreach_set("color", out.ravel())
 
 
 def part_index(obj):
@@ -189,25 +307,26 @@ def base_image(obj):
 
 
 # ------------------------------------------------------------------ 2. registration
-def register(obj, body, hero):
+def register(obj, ref, body, hero):
     """Scale the joined parts onto the body from the heights of shoulders, hips, knees and ankles only
     (capes, lutes and sleeves make MediaPipe's widths unreliable), put the soles on the body's soles,
     centre x on the landmarks and depth from the side view. Returns joints as rig_retopo.register."""
     lb = R.view_landmarks(body, f"{hero}-body")
-    lr = R.view_landmarks(obj, f"{hero}-parts")
+    lr = R.view_landmarks(ref, f"{hero}-parts")
     ids = [i for i in R.REG if i in lb["front"] and i in lr["front"]]
     zr = np.array([lr["front"][i][1] for i in ids])
     zb = np.array([lb["front"][i][1] for i in ids])
     s = float(((zr - zr.mean()) * (zb - zb.mean())).sum() / ((zr - zr.mean()) ** 2).sum())
     blo, _ = R.bounds(body)
-    olo, _ = R.bounds(obj)
+    olo, _ = R.bounds(ref)
     tz = float(blo[2] - s * olo[2])
     tx = float(np.mean([lb["front"][i][0] - s * lr["front"][i][0] for i in ids]))
     side = [i for i in (11, 12, 23, 24) if i in lb["side"] and i in lr["side"]]
     ty = float(np.mean([lb["side"][i][0] - s * lr["side"][i][0] for i in side])) if side else 0.0
-    obj.matrix_world = Matrix.Translation((tx, ty, tz)) @ Matrix.Scale(s, 4) @ obj.matrix_world
-    activate(obj)
-    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    for o in (obj, ref):
+        o.matrix_world = Matrix.Translation((tx, ty, tz)) @ Matrix.Scale(s, 4) @ o.matrix_world
+        activate(o)
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     joints = {}
     for i in range(11, 29):
         if i not in lr["front"]:
@@ -303,11 +422,19 @@ def symmetrize_face(obj, parts, head, names):
     index = {int(v): k for k, v in enumerate(hv)}
     polys = [[index[i] for i in p.vertices] for p in mesh.polygons if int(parts[p.vertices[0]]) == head]
     moved = 0.0
+    hn = normals(obj)[hv]
+    mn = hn.copy()
+    mn -= 2 * np.outer(mn @ nrm, nrm)  # mirrored normals
     for _ in range(2):
         tree = BVHTree.FromPolygons(tri, polys)
         mir = mirror(hco)
-        q = np.array([tuple(tree.find_nearest(Vector(p))[0]) for p in mir])
-        new = 0.5 * (hco + mirror(q))
+        hits = [tree.find_nearest(Vector(p)) for p in mir]
+        q = np.array([tuple(h[0]) for h in hits])
+        # Snap only onto the matching surface: close, and facing the same way as the mirrored point.
+        # Tripo heads keep ear canals and socket walls behind the skin; snapping onto those dents cheeks.
+        ok = np.array([h[3] < 0.004 and Vector(h[1]).dot(Vector(m)) > 0.5 for h, m in zip(hits, mn)])
+        new = hco.copy()
+        new[ok] = 0.5 * (hco[ok] + mirror(q[ok]))
         moved = max(moved, float(np.linalg.norm(new - hco, axis=1).max()))
         hco = new
         tri = [tuple(p) for p in hco]
@@ -602,6 +729,15 @@ def assign_weights(obj, body, rig, parts, names, head, hero):
         rounds = {"head": 3, "headwear": 4, "hand": 2, "arm": 5, "leg": 5, "coat": 10, "torso": 8, "cape": 16}[cls]
         sel = np.isin(edges_all[:, 0], rows)
         W = smooth_part(W, edges_all[sel], rows, rounds)
+        if cls == "head":
+            # The face is one rigid piece on the Head bone down past the chin; only the neck below blends
+            # into Neck. A face shared between Head and Neck shears from eye to jaw whenever the clip turns
+            # the head against the neck.
+            hz = z_of["Head"]
+            t = np.clip((co[rows, 2] - (hz - 0.15)) / 0.06, 0, 1)[:, None]
+            rigid_head = np.zeros((len(rows), len(bones)))
+            rigid_head[:, idx["Head"]] = 1.0
+            W[rows] = W[rows] * (1 - t) + rigid_head * t
     tucked = tuck_inner(obj, parts, names, classes)
     # 4 bones max, normalised.
     cut = np.sort(W, axis=1)[:, -4][:, None]
@@ -642,6 +778,112 @@ def clear_view(tree, p, n):
             return False
         o = loc + Vector((0, -0.0005, 0))
     return False
+
+
+GROUPS = ("Face", "Hair & hat", "Body", "Arms & hands", "Legs & feet", "Props")
+# Face texels at three times the density of everything else: the drawn eyes, brows and mouth need the room.
+DENSITY = {"Face": 3.0}
+# Orthographic views: (normal axis, sign) -> how the view's u and v read world x, y, z. Each reads as the
+# part seen from that side, upright (v = world up; top and bottom views keep the front at the bottom).
+VIEW_AXES = {"front": ((1, 0, 0), (0, 0, 1)), "back": ((-1, 0, 0), (0, 0, 1)),
+             "left": ((0, 1, 0), (0, 0, 1)), "right": ((0, -1, 0), (0, 0, 1)),
+             "top": ((1, 0, 0), (0, 1, 0)), "bottom": ((1, 0, 0), (0, -1, 0))}
+
+
+def face_view(n, bias=1.15):
+    """Which side a face is seen from: the dominant axis of its normal (front/back win near ties)."""
+    ax, ay, az = abs(n.x), abs(n.y) * bias, abs(n.z)
+    if ay >= ax and ay >= az:
+        return "front" if n.y < 0 else "back"
+    if ax >= az:
+        return "left" if n.x > 0 else "right"
+    return "top" if n.z > 0 else "bottom"
+
+
+def readable_uvs(obj, parts, group_of, margin=5 / 2048):
+    """Replace the UVs with a layout made for reading, not for density optimisation:
+
+    - every part is cut into the orthographic views its faces look out of (front, back, sides, top,
+      bottom; lone faces join their neighbours' view), each island projected flat from that side, so it
+      looks like the part in a model sheet: upright, unrotated, true proportions;
+    - one texel density for the whole figure (face at twice that);
+    - islands packed in rows by body region, top to bottom: face, hair and hat, body garments, arms and
+      hands, legs and feet, props; each region starts a new row, largest islands first."""
+    mesh = obj.data
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bm.faces.ensure_lookup_table()
+    for layer in list(bm.loops.layers.uv):
+        bm.loops.layers.uv.remove(layer)
+    uvl = bm.loops.layers.uv.new("readable")
+    part_of = [int(parts[f.verts[0].index]) for f in bm.faces]
+    # the face reads best as one front island, cheeks included
+    view = [face_view(f.normal, 2.2 if group_of.get(part_of[f.index]) == "Face" else 1.15) for f in bm.faces]
+    for _ in range(2):
+        for f in bm.faces:
+            nb = [view[g.index] for e in f.edges for g in e.link_faces
+                  if g is not f and part_of[g.index] == part_of[f.index]]
+            if nb and nb.count(view[f.index]) <= 1:
+                best = max(set(nb), key=nb.count)
+                if nb.count(best) >= 2:
+                    view[f.index] = best
+    seen = [False] * len(bm.faces)
+    islands = []
+    for f in bm.faces:
+        if seen[f.index]:
+            continue
+        stack, isl = [f], []
+        seen[f.index] = True
+        while stack:
+            g = stack.pop()
+            isl.append(g)
+            for e in g.edges:
+                for h in e.link_faces:
+                    if not seen[h.index] and view[h.index] == view[f.index] and part_of[h.index] == part_of[f.index]:
+                        seen[h.index] = True
+                        stack.append(h)
+        u_ax, v_ax = (Vector(a) for a in VIEW_AXES[view[f.index]])
+        pts = [(l, Vector((l.vert.co.dot(u_ax), l.vert.co.dot(v_ax)))) for g in isl for l in g.loops]
+        lo = Vector((min(p.x for _, p in pts), min(p.y for _, p in pts)))
+        hi = Vector((max(p.x for _, p in pts), max(p.y for _, p in pts)))
+        group = group_of.get(part_of[f.index], "Body")
+        k = DENSITY.get(group, 1.0)
+        islands.append({"loops": [(l, p - lo) for l, p in pts], "w": (hi.x - lo.x) * k, "h": (hi.y - lo.y) * k,
+                        "k": k, "group": group})
+
+    def pack(scale, place=False):
+        x = y = row_h = 0.0
+        bands = []
+        for g in GROUPS:
+            isl = sorted((i for i in islands if i["group"] == g), key=lambda i: -i["h"])
+            if not isl:
+                continue
+            if x > 0:
+                y += row_h + margin
+            x, row_h, top = 0.0, 0.0, y
+            for i in isl:
+                w, h = i["w"] * scale, i["h"] * scale
+                if x + w > 1.0 and x > 0:
+                    y += row_h + margin
+                    x, row_h = 0.0, 0.0
+                if place:
+                    for l, p in i["loops"]:
+                        l[uvl].uv = (x + p.x * i["k"] * scale, 1.0 - (y + h) + p.y * i["k"] * scale)
+                x += w + margin
+                row_h = max(row_h, h)
+            bands.append({"name": g, "top": round(1.0 - top, 4), "bottom": round(1.0 - (y + row_h), 4),
+                          "islands": len(isl)})
+        return y + row_h, bands
+
+    lo, hi = 0.001, 20.0
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if pack(mid)[0] <= 1.0 else (lo, mid)
+    _, bands = pack(lo, place=True)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.uv_layers.active = mesh.uv_layers["readable"]
+    return {"islands": len(islands), "texels_per_metre": round(lo * 2048, 1), "groups": bands}
 
 
 def mouth_plug(obj, rig, face, fv, head):
@@ -690,15 +932,15 @@ def mouth_plug(obj, rig, face, fv, head):
     return 25
 
 
-def paint(obj, hero, parts, head, sym, rig):
+def paint(obj, ref, hero, parts, head, sym, rig, names):
     """Visibility and sheet coordinates per vertex here; the image work runs in parts_paint.py."""
     mesh = obj.data
     co, nrm = coords(obj), normals(obj)
-    view = R.view_landmarks(obj, f"{hero}-parts-final")
+    view = R.view_landmarks(ref, f"{hero}-parts-final")
     det, fv = view["front_det"], view["front_view"]
     if det["pose"]:
         # the full-body face is a few dozen pixels wide: always re-detect on a close-up
-        det["face"] = R.closeup_face(obj, hero, det, fv) or det["face"]
+        det["face"] = R.closeup_face(ref, hero, det, fv) or det["face"]
     plug = mouth_plug(obj, rig, det["face"], fv, head) if det["face"] else 0
     parts = part_index(obj)
     co, nrm = coords(obj), normals(obj)
@@ -746,64 +988,57 @@ def paint(obj, hero, parts, head, sym, rig):
     ftree = BVHTree.FromPolygons([tuple(c) for c in co], fpolys)
     for i in np.nonzero(near_head & (nrm[:, 1] < -0.3))[0]:
         visible[i] = clear_view(ftree, co[i], nrm[i])
-    uv = np.zeros((len(co), 2))
+    face_set = (parts == head) | socket
+    classes = json.loads((STAGE / f"{hero}-classes.json").read_text())
+    group_of = {}
+    for i, nm in enumerate(names):
+        c = classes.get(nm, "torso")
+        group_of[i] = ("Face" if i == head or np.isin(np.nonzero(parts == i)[0], np.nonzero(socket)[0]).any()
+                       else "Hair & hat" if c in ("rigid:Head", "headwear")
+                       else "Arms & hands" if c in ("arm", "hand")
+                       else "Legs & feet" if c == "leg"
+                       else "Props" if c.startswith("rigid:")
+                       else "Body")
+    layout = readable_uvs(obj, parts, group_of)
     loops = mesh.uv_layers.active.data
-    for poly in mesh.polygons:
-        for li, vi in zip(poly.loop_indices, poly.vertices):
-            uv[vi] = loops[li].uv
     mesh.calc_loop_triangles()
     tri_v = np.array([lt.vertices[:] for lt in mesh.loop_triangles], np.int32)
     tri_uv = np.array([[loops[k].uv[:] for k in lt.loops] for lt in mesh.loop_triangles], np.float32)
-    # Tripo scatters the face over dozens of atlas fragments; the drawn face needs one piece. The head
-    # part and its eyes/brows get their own unwrap and texture (material slot 1).
-    face_set = (parts == head) | socket
-    face_poly = np.array([face_set[p.vertices[0]] for p in mesh.polygons])
-    activate(obj)
-    bpy.ops.object.mode_set(mode="EDIT")
-    bpy.ops.mesh.select_all(action="DESELECT")
-    bpy.ops.object.mode_set(mode="OBJECT")
-    mesh.polygons.foreach_set("select", face_poly)
-    bpy.ops.object.mode_set(mode="EDIT")
-    bpy.ops.uv.smart_project(angle_limit=math.radians(70), island_margin=0.004)
-    bpy.ops.object.mode_set(mode="OBJECT")
-    loops = mesh.uv_layers.active.data
-    mesh.calc_loop_triangles()
-    tri_uv2 = np.array([[loops[k].uv[:] for k in lt.loops] for lt in mesh.loop_triangles], np.float32)
-    tri_face = np.array([face_poly[lt.polygon_index] for lt in mesh.loop_triangles])
-    img = base_image(obj)
-    tex = STAGE / f"{hero}-tripo.png"
-    img.filepath_raw, img.file_format = str(tex), "PNG"
-    img.save()
+    poly_sizes = np.array([p.loop_total for p in mesh.polygons], np.int32)
+    poly_uv = np.array([loops[k].uv[:] for p in mesh.polygons for k in p.loop_indices], np.float32)
+    tcol = np.empty(len(co) * 4, np.float32)
+    mesh.attributes["tcol"].data.foreach_get("color", tcol)
+    vtex = np.clip(tcol.reshape(-1, 4)[:, :3] * 255, 0, 255).astype(np.uint8)
     out = STAGE / f"{hero}-albedo.png"
     npz = STAGE / f"{hero}-paint.npz"
-    np.savez(npz, co=co, nrm=nrm, part=parts, head=np.array([head]), visible=visible, uv=uv,
-             tri_v=tri_v, tri_uv=tri_uv, tri_uv2=tri_uv2, tri_face=tri_face, render_px=rpx, near_head=near_head, paired=socket, mouth=mouth, on_head=on_head, plane_px=np.array([plane_px]),
+    np.savez(npz, co=co, nrm=nrm, part=parts, head=np.array([head]), visible=visible, vtex=vtex,
+             tri_v=tri_v, tri_uv=tri_uv, render_px=rpx, near_head=near_head, paired=socket, mouth=mouth,
+             on_head=on_head, face_set=face_set, plane_px=np.array([plane_px]),
+             groups=np.array([json.dumps(layout["groups"])]), poly_sizes=poly_sizes, poly_uv=poly_uv,
              render_pose=np.array(det["pose"] or [], float), render_face=np.array(det["face"] or [], float))
     env = {k: v for k, v in os.environ.items() if k not in ("PYTHONHOME", "PYTHONPATH")}
-    face_out = STAGE / f"{hero}-face.png"
     r = subprocess.run([str(VENV), str(FIT / "parts_paint.py"), "--hero", hero, "--npz", str(npz),
-                        "--tex", str(tex), "--out", str(out), "--face-out", str(face_out)],
-                       capture_output=True, text=True, env=env)
+                        "--out", str(out)], capture_output=True, text=True, env=env)
     print(r.stdout[-3000:])
     if r.returncode:
         raise RuntimeError(r.stderr[-3000:])
     info = json.loads((STAGE / f"{hero}-paint.json").read_text())
     info["mouth_plug_vertices"] = plug
+    info["uv_layout"] = layout
     mesh.materials.clear()
-    for tag, png in (("toon", out), ("face", face_out)):
-        painted = bpy.data.images.load(str(png))
-        painted.name = f"{hero}_{tag}"
-        painted.pack()
-        mat = bpy.data.materials.new(f"{hero}_{tag}")
-        mat.use_nodes = True
-        texn = mat.node_tree.nodes.new("ShaderNodeTexImage")
-        texn.image = painted
-        bsdf = mat.node_tree.nodes["Principled BSDF"]
-        mat.node_tree.links.new(texn.outputs["Color"], bsdf.inputs["Base Color"])
-        bsdf.inputs["Roughness"].default_value = 0.85
-        bsdf.inputs["Metallic"].default_value = 0.0
-        mesh.materials.append(mat)
-    mesh.polygons.foreach_set("material_index", face_poly.astype(np.int32))
+    painted = bpy.data.images.load(str(out))
+    painted.name = f"{hero}_albedo"
+    painted.pack()
+    mat = bpy.data.materials.new(f"{hero}_toon")
+    mat.use_nodes = True
+    texn = mat.node_tree.nodes.new("ShaderNodeTexImage")
+    texn.image = painted
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    mat.node_tree.links.new(texn.outputs["Color"], bsdf.inputs["Base Color"])
+    bsdf.inputs["Roughness"].default_value = 0.85
+    bsdf.inputs["Metallic"].default_value = 0.0
+    mesh.materials.append(mat)
+    mesh.polygons.foreach_set("material_index", np.zeros(len(mesh.polygons), np.int32))
     # Face normals lean toward the viewer so the toon light lays one broad lit plane over the face.
     face = np.zeros(len(co), bool)
     face[np.asarray(info["face_vertices"], int)] = True
@@ -832,8 +1067,8 @@ def main():
     target = B.HEROES[hero]["height"]
     stature = a.stature or target
     body, rig = R.make_body(hero, stature)
-    obj, names, removed = load_parts(hero, target)
-    reg = register(obj, body, hero)
+    obj, ref, names, removed, retopo_parts = load_parts(hero, target)
+    reg = register(obj, ref, body, hero)
     nose = reg["landmarks"]["front"].get(0)
     sc, off = reg["scale"], reg["offset"]
     head = head_part(obj, part_index(obj), (sc * nose[0] + off[0], sc * nose[1] + off[2])) if nose else None
@@ -848,6 +1083,15 @@ def main():
         (STAGE / f"{hero}-stature.json").write_text(json.dumps({"crown": crown, "stature": fixed}))
         print("RESTATURE", hero, fixed, "crown", round(crown, 4))
         return
+    # Above the shoulders the figure is organic detail (face, hair, hats, goggles): Tripo's own triangles
+    # stay there; the quad retopology serves the garments, sleeves, legs and props below.
+    shoulder_z = max(j.z for k, j in reg["joints"].items() if k in (11, 12))
+    pi, co = part_index(obj), coords(obj)
+    restored = 0
+    for p in np.unique(pi):
+        if (p == head or co[pi == p, 2].mean() > shoulder_z + 0.04) and (RETOPO / hero / f"{names[p]}.npz").exists():
+            restored += restore_tripo_part(obj, ref, int(p))
+            pi, co = part_index(obj), coords(obj)
     sym = symmetrize_face(obj, part_index(obj), head, names)
     # Eye parts: small parts at MediaPipe's eye points (a Tripo eye may be its own part on one side and
     # part of the head on the other, so mirror pairing alone misses some).
@@ -867,8 +1111,10 @@ def main():
     pose_to(rig, body, reg["joints"], reg["skull_base"])
     weights = assign_weights(obj, body, rig, part_index(obj), names, head, hero)
     bpy.data.objects.remove(body, do_unlink=True)
-    info = paint(obj, hero, part_index(obj), head, sym, rig)
-    obj.data.attributes.remove(obj.data.attributes["part"])
+    info = paint(obj, ref, hero, part_index(obj), head, sym, rig, names)
+    bpy.data.objects.remove(ref, do_unlink=True)
+    for nm in ("part", "tcol"):
+        obj.data.attributes.remove(obj.data.attributes[nm])
     for o in bpy.data.objects:
         o.hide_render = False
     clips = dict(B.CLIPS)
@@ -887,7 +1133,8 @@ def main():
     co = coords(obj)
     receipt[hero] = {"id": hero, "source": f"tools/cast/reference/tripo-parts/{hero}.glb",
                      "builder": "tools/cast/fit/build_tripo_parts.py",
-                     "parts": len(names), "cleanup_removed_vertices": removed,
+                     "parts": len(names), "retopologised_parts": retopo_parts - restored,
+                     "cleanup_removed_vertices": removed,
                      "registration": {"scale": reg["scale"], "offset": reg["offset"],
                                       "skeleton_stature": stature, "crown_m": round(crown, 4)},
                      "face_symmetry": {k: v for k, v in sym.items() if k not in ("paired_parts", "mouth")}, "weights": weights,

@@ -38,19 +38,22 @@ def load_tripo(hero):
     for o in [o for o in bpy.data.objects if o is not obj]:
         bpy.data.objects.remove(o, do_unlink=True)
     obj.name = f"{hero}_tripo"
-    # Tripo faces +X; MPFB faces -Y.
-    obj.rotation_euler = (0.0, 0.0, -math.pi / 2)
-    bpy.ops.object.transform_apply(rotation=True)
+    # Tripo faces +X; MPFB faces -Y. Transform the mesh data directly (no operator context involved).
+    from mathutils import Matrix
+    obj.data.transform(obj.matrix_world)
+    obj.matrix_world = Matrix.Identity(4)
+    obj.data.transform(Matrix.Rotation(-math.pi / 2, 4, "Z"))
     co = np.array([tuple(v.co) for v in obj.data.vertices])
     lo, hi = co.min(0), co.max(0)
+    assert hi[0] - lo[0] > hi[1] - lo[1], ("Tripo model is not facing -Y after the turn", hi - lo)
     s = HEIGHT[hero] / (hi[2] - lo[2])
-    obj.scale = (s, s, s)
-    obj.location = (-(lo[0] + hi[0]) / 2 * s, -(lo[1] + hi[1]) / 2 * s, -lo[2] * s)
-    bpy.ops.object.transform_apply(location=True, scale=True)
+    obj.data.transform(Matrix.Translation((-(lo[0] + hi[0]) / 2 * s, -(lo[1] + hi[1]) / 2 * s, -lo[2] * s))
+                       @ Matrix.Scale(s, 4))
+    obj.data.update()
     # Tripo cloth (coats, scarves, capes) is a single-sided sheet; thinner than a voxel it breaks into lace.
     # Give every sheet a centred thickness first so the voxel pass sees solid cloth.
     sol = obj.modifiers.new("Thick", "SOLIDIFY")
-    sol.thickness, sol.offset, sol.use_even_offset = 0.012, 0.0, True
+    sol.thickness, sol.offset, sol.use_even_offset = 0.012, 0.0, False
     bpy.ops.object.modifier_apply(modifier=sol.name)
     return obj
 

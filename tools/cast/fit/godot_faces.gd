@@ -9,11 +9,13 @@ const FINISH := preload("res://scenes/components/rendering/actors/CastDielectric
 
 var heroes := ["detective", "hale", "quer", "lucian"]
 var out := "res://.runtime/facefit/godot"
+var gltf_dir := ""   # load <hero>.glb from here at runtime (no import) instead of assets/characters/heroes
 
 func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--heroes="): heroes = a.substr(9).split(",")
 		if a.begins_with("--out="): out = a.substr(6)
+		if a.begins_with("--gltf-dir="): gltf_dir = a.substr(11)
 	run.call_deferred()
 
 ## Same finish as ProductionCast._apply_finish (no recipe tint).
@@ -55,7 +57,13 @@ func run() -> void:
 	var cam := Camera3D.new(); cam.projection = Camera3D.PROJECTION_ORTHOGONAL; vp.add_child(cam); cam.current = true
 	vp.add_child(Stage.ink())
 	for id in heroes:
-		var body: Node3D = load("res://assets/characters/heroes/%s.glb" % id).instantiate()
+		var body: Node3D
+		if gltf_dir != "":
+			var doc := GLTFDocument.new(); var state := GLTFState.new()
+			doc.append_from_file(ProjectSettings.globalize_path("%s/%s.glb" % [gltf_dir, id]), state)
+			body = doc.generate_scene(state)
+		else:
+			body = load("res://assets/characters/heroes/%s.glb" % id).instantiate()
 		vp.add_child(body)
 		finish(body)
 		var anim: AnimationPlayer = body.find_children("*", "AnimationPlayer", true, false)[0]

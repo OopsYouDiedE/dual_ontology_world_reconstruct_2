@@ -1,0 +1,241 @@
+{
+ "hale": {
+  "id": "hale",
+  "source": "tools/cast/reference/tripo/hale.glb (retopo)",
+  "registration": {
+   "scale": 1.0005,
+   "offset": [
+    -0.0064,
+    -0.0399,
+    -0.017
+   ],
+   "skeleton_stature": 1.687
+  },
+  "weight_groups": 52,
+  "paint": {
+   "visible_vertices": 7469,
+   "vertices": 24651,
+   "face_warp": true,
+   "figure_mask": true
+  },
+  "clips": {
+   "idle": {
+    "source": "Idle_Loop",
+    "frames": 61
+   },
+   "walk": {
+    "source": "Walk_Loop",
+    "frames": 33
+   },
+   "run": {
+    "source": "Jog_Fwd_Loop",
+    "frames": 24
+   },
+   "interact": {
+    "source": "Interact",
+    "frames": 49
+   },
+   "signal": {
+    "source": "Idle_Talking_Loop",
+    "frames": 72
+   },
+   "examine": {
+    "source": "Crouch_Idle_Loop",
+    "frames": 72
+   },
+   "listen": {
+    "source": "Idle_Loop",
+    "frames": 61
+   },
+   "ward": {
+    "source": "Idle_Torch_Loop",
+    "frames": 32
+   },
+   "gate_effort": {
+    "source": "Push_Loop",
+    "frames": 65
+   },
+   "watch_plate": {
+    "source": "Idle_Loop",
+    "frames": 61
+   },
+   "peek": {
+    "source": "Crouch_Idle_Loop",
+    "frames": 72
+   },
+   "repair": {
+    "source": "Fixing_Kneeling",
+    "frames": 126
+   }
+  },
+  "height_m": 1.8231,
+  "triangles": 49294,
+  "glb_bytes": 4848116
+ },
+ "detective": {
+  "id": "detective",
+  "source": "tools/cast/reference/tripo/detective.glb (retopo)",
+  "registration": {
+   "scale": 1.0014,
+   "offset": [
+    -0.0092,
+    -0.0285,
+    -0.0262
+   ],
+   "skeleton_stature": 1.7066
+  },
+  "weight_groups": 52,
+  "paint": {
+   "visible_vertices": 5108,
+   "vertices": 24948,
+   "face_warp": false
+  },
+  "clips": {
+   "idle": {
+    "source": "Idle_Loop",
+    "frames": 61
+   },
+   "walk": {
+    "source": "Walk_Loop",
+    "frames": 33
+   },
+   "run": {
+    "source": "Jog_Fwd_Loop",
+    "frames": 24
+   },
+   "interact": {
+    "source": "Interact",
+    "frames": 49
+   },
+   "signal": {
+    "source": "Idle_Talking_Loop",
+    "frames": 72
+   },
+   "examine": {
+    "source": "Crouch_Idle_Loop",
+    "frames": 72
+   },
+   "listen": {
+    "source": "Idle_Loop",
+    "frames": 61
+   }
+  },
+  "height_m": 1.7835,
+  "triangles": 49934,
+  "glb_bytes": 4154488
+ },
+ "quer": {
+  "id": "quer",
+  "source": "tools/cast/reference/tripo/quer.glb (retopo)",
+  "registration": {
+   "scale": 1.0003,
+   "offset": [
+    0.0019,
+    -0.0254,
+    -0.0271
+   ],
+   "skeleton_stature": 1.476
+  },
+  "weight_groups": 52,
+  "paint": {
+   "visible_vertices": 4315,
+   "vertices": 26969,
+   "face_warp": true,
+   "figure_mask": true
+  },
+  "clips": {
+   "idle": {
+    "source": "Idle_Loop",
+    "frames": 61
+   },
+   "walk": {
+    "source": "Walk_Loop",
+    "frames": 33
+   },
+   "run": {
+    "source": "Sprint_Loop",
+    "frames": 17
+   },
+   "interact": {
+    "source": "Interact",
+    "frames": 49
+   },
+   "signal": {
+    "source": "Idle_Talking_Loop",
+    "frames": 72
+   },
+   "examine": {
+    "source": "Crouch_Idle_Loop",
+    "frames": 72
+   },
+   "listen": {
+    "source": "Idle_Loop",
+    "frames": 61
+   },
+   "crouch_walk": {
+    "source": "Crouch_Fwd_Loop",
+    "frames": 49
+   }
+  },
+  "height_m": 1.5683,
+  "triangles": 53944,
+  "glb_bytes": 4051720
+ },
+ "lucian": {
+  "id": "lucian",
+  "source": "tools/cast/reference/tripo/lucian.glb (retopo)",
+  "registration": {
+   "scale": 0.9998,
+   "offset": [
+    -0.0257,
+    -0.0004,
+    -0.0036
+   ],
+   "skeleton_stature": 1.7385
+  },
+  "weight_groups": 52,
+  "paint": {
+   "visible_vertices": 4640,
+   "vertices": 24503,
+   "face_warp": false,
+   "figure_mask": true
+  },
+  "clips": {
+   "idle": {
+    "source": "Idle_Talking_Loop",
+    "frames": 72
+   },
+   "walk": {
+    "source": "Walk_Formal_Loop",
+    "frames": 33
+   },
+   "run": {
+    "source": "Jog_Fwd_Loop",
+    "frames": 24
+   },
+   "interact": {
+    "source": "Interact",
+    "frames": 49
+   },
+   "signal": {
+    "source": "Idle_Talking_Loop",
+    "frames": 72
+   },
+   "examine": {
+    "source": "Crouch_Idle_Loop",
+    "frames": 72
+   },
+   "listen": {
+    "source": "Idle_Loop",
+    "frames": 61
+   },
+   "perform": {
+    "source": "Dance_Loop",
+    "frames": 25
+   }
+  },
+  "height_m": 1.8773,
+  "triangles": 49026,
+  "glb_bytes": 4235520
+ }
+}

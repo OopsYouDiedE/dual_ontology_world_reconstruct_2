@@ -68,7 +68,17 @@ python -m venv --system-site-packages .runtime/facefit-venv   # 再装 mediapipe
 "/c/Program Files/Blender Foundation/Blender 4.2/blender.exe" -b --factory-startup --python tools/cast/fit/retopo.py -- --heroes quer
 ```
 
-输出 `.runtime/facefit/retopo/<hero>.blend` 和线框图。绑定与贴图尚未接入生成流程。
+输出 `.runtime/facefit/retopo/<hero>.blend` 和线框图。`fit/retopo_all.sh` 逐个角色跑并按体素尺寸重试。
+
+## Tripo 成品（绑定 + 原画投影）
+
+`fit/rig_retopo.py` 把重拓扑网格接上 MPFB 骨架：用 MediaPipe 姿态点把网格配准到 MPFB 身体，把骨架摆到网格关节处，就近复制权重并平滑（每顶点最多 4 骨），复制完删除 MPFB 身体。贴图是原画正面投影（脸部按人脸关键点分片扭曲，人物遮罩由 `fit/figure_mask.py` 以网格轮廓做 GrabCut），看不到的顶点沿网格扩散填色。动作走 `build_heroes.retarget`。
+
+```bash
+.runtime/cast-pass/blender.sh --python tools/cast/fit/rig_retopo.py -- --system-pack <system_cc0.zip> --motion <UAL Godot Standard.glb> --hero quer --out .runtime/facefit/rigout
+```
+
+成品放在 `assets/characters/heroes-tripo/`（`.gdignore`，尚未替换 `heroes/`），游戏内对比图 `docs/design/hero-fit/tripo-rigged.jpg`，用 `fit/godot_faces.gd --gltf-dir=res://assets/characters/heroes-tripo` 在运行时加载渲染。已知问题：侧面和背面是扩散出来的颜色；lucian 披风继承手臂权重成团、脸部特写未检出、遮罩带入背景拱门；quer 遮罩在眼部有洞；同一进程第二次创建 MPFB 身体会崩溃（detective 为早一轮结果）。
 
 ## 已知待办
 

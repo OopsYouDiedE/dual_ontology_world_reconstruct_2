@@ -1,0 +1,7 @@
+{
+ "note": "Target paintings for the hero cast. box = [x0, y0, x1, y1] of the full figure in the source image (pixels).",
+ "detective": {"image": "trio.jpg", "box": [180, 60, 470, 750], "race": {"caucasian": 1.0}},
+ "hale": {"image": "trio.jpg", "box": [540, 40, 850, 750], "race": {"caucasian": 1.0}},
+ "quer": {"image": "trio.jpg", "box": [940, 160, 1200, 750], "race": {"asian": 0.7, "caucasian": 0.3}},
+ "lucian": {"image": "lucian.jpg", "box": [150, 0, 750, 1200], "race": {"caucasian": 1.0}}
+}

@@ -35,8 +35,31 @@ W() { cygpath -w "$1"; }
 
 骨架已经是 Mixamo 命名。在 Mixamo 选「Without Skin」导出 FBX，导入后把动作重命名为游戏片段名（例如 `walk`），在 `export()` 前挂到 `rig` 上即可覆盖对应片段；不需要重定向。
 
+## 按原画拟合人种、身材比例与脸型
+
+侦探、Hale、雀儿和卢西安各有一张目标原画（`reference/`，裁切框和人种配比写在 `reference/manifest.json`）。`fit/` 下的脚本用 MediaPipe 的人体 33 点和人脸 478 点，让 MPFB 身体对齐原画：
+
+| 步骤 | 脚本 | 说明 |
+|---|---|---|
+| 检测 | `fit/detect.py` | 在原画或渲染图上检测关键点；小脸先由人体点定位头部，再放大检测 |
+| 标定 | `fit_heroes.py calibrate` | 渲染一个中性人体，记录人脸点落在哪些网格面上、人体点相对 MPFB 关节的偏差，写入 `fit/face_map.json` |
+| 身材 | `fit_heroes.py fit` 第一阶段 | 用有界最小二乘拟合头身、颈、躯干、肩宽、胯宽、腿长、臂长等形变目标，使肩、胯、膝、踝、眼和下巴位置与原画一致 |
+| 脸型 | `fit_heroes.py fit` 第二阶段 | 闭环：每轮渲染脸部，再用 MediaPipe 检测，按有限差分求雅可比后更新约 18 组成对的脸型参数；另有偏航、俯仰两个相机参数吸收原画的头部转向。只用合理范围内的参数，不用 `head-fat`、`cheek-volume` 一类会让脸变胖的目标 |
+| 成品验收 | `fit/review_built.py` + `fit/sheet.py --built` | 加载生成的 GLB，取 idle 首帧做正面全身渲染，再按原画头部朝向做脸部特写，重新检测关键点并与原画叠图 |
+
+拟合结果写在 `fit/<hero>.json`（人种与年龄宏、目标权重、拟合前后误差），`build_heroes.py` 会自动读取。有拟合结果的角色不再强制 6.5 头身，只整体缩放到设定身高，头身比以原画为准，并记录在 `receipt.json`。
+
+```bash
+python -m venv --system-site-packages .runtime/facefit-venv   # 再装 mediapipe 1.2.3（无依赖安装）
+.runtime/facefit-venv/Scripts/python.exe tools/cast/fit/detect.py --manifest tools/cast/reference/manifest.json --out-dir .runtime/facefit/ref
+.runtime/cast-pass/blender.sh --python tools/cast/fit/fit_heroes.py -- --system-pack "$(W .runtime/academy-cast/system_cc0.zip)" calibrate
+.runtime/cast-pass/blender.sh --python tools/cast/fit/fit_heroes.py -- --system-pack "$(W .runtime/academy-cast/system_cc0.zip)" fit --only quer
+```
+
+模型文件 `face_landmarker.task` 和 `pose_landmarker_heavy.task` 放在 `.runtime/facefit/models/`，从 MediaPipe 官方存储下载。
+
 ## 已知待办
 
-- 雀儿的报童帽偏大，看起来浮在头上。
+- 雀儿的报童帽已缩小，需在游戏内复看是否仍浮在头上。
 - 侦探大衣在 signal 动作中穿模计数偏高（约 200 个顶点），主要在袖口和领口。
 - 尚未接入游戏：玩家、开场和出征中的 Hale 仍在使用旧的 R-05 模型。

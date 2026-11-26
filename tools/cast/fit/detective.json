@@ -1,0 +1,80 @@
+{
+ "macro": {
+  "gender": 1.0,
+  "age": 0.38839285714285715,
+  "muscle": 0.45,
+  "weight": 0.4,
+  "proportions": 0.6,
+  "race": {
+   "caucasian": 1.0,
+   "asian": 0.0,
+   "african": 0.0
+  }
+ },
+ "skin_reference": "young_caucasian_male",
+ "targets": {
+  "head-scale-vert-incr": 0.2927,
+  "head-scale-horiz-incr": 0.2455,
+  "neck-scale-vert-incr": 0.3112,
+  "torso-scale-vert-incr": 0.7403,
+  "torso-scale-horiz-incr": 0.1848,
+  "measure-shoulder-dist-incr": 0.1343,
+  "torso-vshape-incr": 0.1441,
+  "hip-scale-horiz-incr": 0.231,
+  "measure-upperarm-length-incr": 0.6226,
+  "measure-lowerarm-length-incr": 0.0409,
+  "head-scale-horiz-decr": 0.3218,
+  "head-invertedtriangular": 0.7515,
+  "head-oval": 0.1152,
+  "forehead-scale-vert-incr": 0.2431,
+  "chin-width-incr": 0.7358,
+  "chin-height-decr": 0.0975,
+  "l-cheek-bones-decr": 0.4764,
+  "r-cheek-bones-decr": 0.4764,
+  "l-eye-scale-incr": 0.5317,
+  "r-eye-scale-incr": 0.5317,
+  "l-eye-trans-up": 0.0921,
+  "r-eye-trans-up": 0.0921,
+  "l-eye-trans-out": 0.5828,
+  "r-eye-trans-out": 0.5828,
+  "l-eye-height2-incr": 0.1285,
+  "r-eye-height2-incr": 0.1285,
+  "eyebrows-trans-up": 0.5829,
+  "nose-scale-horiz-incr": 0.2391,
+  "nose-scale-vert-decr": 0.1164,
+  "nose-trans-up": 0.2098,
+  "mouth-scale-horiz-incr": 0.7401,
+  "mouth-trans-up": 0.1139,
+  "mouth-upperlip-height-decr": 0.5358
+ },
+ "solve": {
+  "body_mean_err_of_height": 0.0179,
+  "face_loop_nme": [
+   0.0551,
+   0.0535,
+   0.0497,
+   0.0496,
+   0.0488,
+   0.0472,
+   0.0463
+  ]
+ },
+ "painting_head_pose": {
+  "yaw_deg": 1.26,
+  "pitch_deg": -0.16
+ },
+ "verify": {
+  "face_nme_iod": 0.045,
+  "face_p90_iod": 0.1029,
+  "body_nme_height": 0.0173,
+  "body_max_height": 0.0368,
+  "head_ratio": 7.11
+ },
+ "baseline": {
+  "face_nme_iod": 0.0526,
+  "face_p90_iod": 0.115,
+  "body_nme_height": 0.0268,
+  "body_max_height": 0.0515,
+  "head_ratio": 7.46
+ }
+}

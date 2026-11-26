@@ -25,6 +25,16 @@ C = {
     "cream": (0.93, 0.89, 0.80), "crimson": (0.55, 0.08, 0.10), "black": (0.05, 0.05, 0.06),
     "white": (0.95, 0.95, 0.93), "wine": (0.28, 0.05, 0.08), "feather": (0.86, 0.20, 0.16),
     "wood": (0.45, 0.27, 0.13),
+    # Sampled from the target paintings (tools/cast/reference), then corrected off shadows and ink.
+    "det_coat": (0.38, 0.45, 0.54), "det_vest": (0.38, 0.28, 0.18), "det_trousers": (0.12, 0.12, 0.13),
+    "det_boot": (0.36, 0.22, 0.13), "det_bag": (0.35, 0.25, 0.17),
+    "hale_denim": (0.26, 0.35, 0.45), "hale_shirt": (0.80, 0.73, 0.58), "hale_jacket": (0.14, 0.15, 0.16),
+    "hale_boot": (0.36, 0.28, 0.20), "hale_belt": (0.36, 0.24, 0.16), "hale_brass": (0.62, 0.48, 0.28),
+    "quer_olive": (0.36, 0.40, 0.24), "quer_scarf": (0.55, 0.20, 0.12), "quer_cap": (0.34, 0.38, 0.42),
+    "quer_tights": (0.20, 0.18, 0.17), "quer_shoe": (0.30, 0.20, 0.14), "quer_hair": (0.10, 0.08, 0.07),
+    "luc_plum": (0.40, 0.21, 0.36), "luc_vest": (0.72, 0.55, 0.26), "luc_cape": (0.55, 0.13, 0.17),
+    "luc_teal": (0.13, 0.29, 0.29), "luc_boot": (0.45, 0.30, 0.18), "luc_glove": (0.90, 0.87, 0.70),
+    "luc_lute": (0.62, 0.40, 0.20), "luc_feather": (0.62, 0.16, 0.22),
 }
 
 # Fitted pieces: (name, region, layer, colour). Layer sets the offset: 0 = skin-tight.
@@ -35,39 +45,43 @@ C = {
 # dark-to-light ("lum"), and each region gets a flat palette colour. Modelled layers sit outside them.
 OUTFITS = {
     # 20-year-old private detective: shirt and wool trousers, tweed waistcoat, open slate overcoat, fedora.
+    # The satchel strap runs from his left shoulder to the bag on his right hip, as painted.
     "detective": [
-        dict(suit="male_casualsuit01", colors=("shirt", "charcoal"), order="z"),
-        dict(suit="shoes03", colors=("boot",)), dict(suit="fedora01", colors=("charcoal",)),
-        ("Waistcoat", "waistcoat", 2, "tweed"),
-        ("Overcoat", "coat_open", 4, "slate"), ("Collar", "collar", 4, "slate"),
-        dict(kind="skirt", name="CoatSkirt", top="waist", hem=0.47, flare=0.10, gap=0.30, layer=4, color="slate"),
-        dict(prop="satchel", color="leather"), dict(ribbon="Strap", color="leather"),
+        dict(suit="male_casualsuit01", colors=("shirt", "det_trousers"), order="z"),
+        dict(suit="shoes03", colors=("det_boot",)), dict(suit="fedora01", colors=("charcoal",)),
+        ("Waistcoat", "waistcoat", 2, "det_vest"),
+        ("Overcoat", "coat_open", 4, "det_coat"), ("Collar", "collar", 4, "det_coat"),
+        dict(kind="skirt", name="CoatSkirt", top="waist", hem=0.47, flare=0.10, gap=0.30, layer=4, color="det_coat"),
+        dict(prop="satchel", color="det_bag", side="right"), dict(ribbon="Strap", color="det_bag", shoulder="left"),
     ],
     # Engineer promoted from the shop floor: work overalls kept under a foreman's jacket with rolled sleeves.
     "hale": [
-        dict(suit="male_worksuit01", colors=("denim", "oat"), order="lum"),
-        dict(suit="shoes03", colors=("boot",)),
-        ("Jacket", "coat_rolled", 3, "charcoal"),
-        dict(prop="tool_belt", color="leather"), dict(prop="goggles", color="brass"),
+        dict(suit="male_worksuit01", colors=("hale_denim", "hale_shirt"), order="lum"),
+        dict(suit="shoes03", colors=("hale_boot",)),
+        ("Jacket", "coat_rolled", 3, "hale_jacket"), ("Collar", "collar", 4, "hale_jacket"),
+        dict(prop="tool_belt", color="hale_belt"), dict(prop="goggles", color="hale_brass"),
     ],
-    # 20th-century vagrant girl: blouse and skirt under a man's oversized coat, scarf, newsboy cap.
+    # 20th-century vagrant girl: a man's olive coat buttoned shut over blouse and skirt, long rust scarf,
+    # two braids worn forward over the shoulders, newsboy cap.
     "quer": [
         dict(suit="female_elegantsuit01", colors=("oat", "patch"), order="z"),
-        dict(suit="shoes02", colors=("leather",)),
-        ("Stockings", "stockings", 0.3, "charcoal"),
-        ("Coat", "coat_big", 3, "moss"), ("Scarf", "scarf", 5, "rust"),
-        dict(kind="skirt", name="CoatSkirt", top="waist", hem=0.50, flare=0.13, gap=0.26, layer=3, color="moss", ragged=True),
-        dict(prop="newsboy_cap", color="slate"),
+        dict(suit="shoes02", colors=("quer_shoe",)),
+        ("Stockings", "stockings", 0.3, "quer_tights"),
+        ("Coat", "coat_closed", 3, "quer_olive"), ("Scarf", "scarf", 5, "quer_scarf"),
+        dict(kind="skirt", name="CoatSkirt", top="waist", hem=0.50, flare=0.11, gap=0.05, layer=3, color="quer_olive"),
+        dict(kind="scarf_tails", name="ScarfTails", layer=6, color="quer_scarf"),
+        dict(prop="braids", color="quer_hair"),
+        dict(prop="newsboy_cap", color="quer_cap"),
     ],
-    # Flamboyant bard: everything the others are not.
+    # Flamboyant bard: everything the others are not. Capelet over his right shoulder, lute on his back.
     "lucian": [
-        dict(suit="male_casualsuit03", colors=("cream", "teal"), order="z"),
-        ("Doublet", "doublet", 2, "gold"), ("Boots", "tall_boots", 2, "leather"),
-        ("Gloves", "gloves", 1, "cream"), ("Coat", "coat_open", 4, "plum"),
-        ("Sash", "sash", 5, "crimson"),
-        dict(kind="skirt", name="CoatTails", top="waist", hem=0.30, flare=0.16, gap=0.34, layer=4, color="plum"),
-        dict(kind="cape", name="Cape", layer=6, color="crimson"),
-        dict(prop="plumed_hat", color="plum"), dict(prop="lute", color="wood"),
+        dict(suit="male_casualsuit03", colors=("cream", "luc_teal"), order="z"),
+        ("Doublet", "doublet", 2, "luc_vest"), ("Boots", "tall_boots", 2, "luc_boot"),
+        ("Gloves", "gloves", 1, "luc_glove"), ("Coat", "coat_open", 4, "luc_plum"),
+        ("Sash", "sash", 5, "luc_cape"),
+        dict(kind="skirt", name="CoatTails", top="waist", hem=0.30, flare=0.16, gap=0.34, layer=4, color="luc_plum"),
+        ("Cape", "capelet", 6, "luc_cape"),
+        dict(prop="plumed_hat", color="luc_plum"), dict(prop="lute", color="luc_lute"),
     ],
     # Near-human anomaly: a correct evening suit, decades out of date, with tails and a high collar.
     "demon": [
@@ -178,6 +192,13 @@ def region(B, kind):
         "coat_big": lambda i: (torso(i, waist - 0.14, neck + 0.04) or arm(i, 1.0)
                                or leg(i, "Hand", 0, 0.35))
         and not (B.co[i].y < -0.03 and abs(B.co[i].x) < 0.06 and B.co[i].z < neck - 0.03),
+        # Buttoned to the throat: only a small V under the chin stays open for the scarf.
+        "coat_closed": lambda i: (torso(i, waist - 0.14, neck + 0.04) or arm(i, 1.0) or leg(i, "Hand", 0, 0.35))
+        and not (B.co[i].y < -0.03 and abs(B.co[i].x) < 0.035 and B.co[i].z > neck - 0.07),
+        # Short cape over the right shoulder and upper arm, front and back, down to the lower chest.
+        "capelet": lambda i: (torso(i, chest - 0.14, neck + 0.04) and B.co[i].x < 0.02
+                              and not B.bone[i].endswith("Neck"))
+        or B.bone[i] == "RightShoulder" or (B.bone[i] == "RightArm" and B.t[i] < 0.62),
         "collar": lambda i: B.bone[i].endswith("Neck") and B.t[i] < 0.55 or torso(i, neck - 0.01, neck + 0.05),
         "high_collar": lambda i: B.bone[i].endswith("Neck") and B.t[i] < 0.85,
         "scarf": lambda i: B.bone[i].endswith("Neck") and B.t[i] < 0.7 or torso(i, neck - 0.04, neck + 0.05),
@@ -281,9 +302,12 @@ def ribbon(B, spec, outer):
         verts += [obj.matrix_world @ v.co for v in obj.data.vertices]
         faces += [tuple(base + k for k in p.vertices) for p in obj.data.polygons]
     tree = BVHTree.FromPolygons(verts, faces)
-    shoulder = Vector((-0.115, 0.0, B.z["Neck"] - 0.005))
+    # Default: right shoulder (-X) to left hip; shoulder="left" mirrors it.
+    sign = 1.0 if spec.get("shoulder") == "left" else -1.0
+    shoulder = Vector((0.115 * sign, 0.0, B.z["Neck"] - 0.005))
     hip_z = B.z["Hips"] - 0.02
-    hip_x = max(p.x for p, bone in B.points() if abs(p.z - hip_z) < 0.03 and bone.endswith(("Hips", "UpLeg"))) - 0.015
+    hip_pts = [p.x for p, bone in B.points() if abs(p.z - hip_z) < 0.03 and bone.endswith(("Hips", "UpLeg"))]
+    hip_x = (min(hip_pts) + 0.015) if sign > 0 else (max(hip_pts) - 0.015)
     hip = Vector((hip_x, 0.0, hip_z))
 
     def cast(origin, direction):
@@ -349,6 +373,17 @@ def fit_hat(B, hat):
         v.co.x = cx + (v.co.x - cx) * s
         v.co.y = cy + (v.co.y - cy) * s
         v.co.z = low + (v.co.z - low) * (1 + (s - 1) * 0.6)
+    # The painted fedora has a wide, flat brim: stretch the brim ring outward, fading toward the crown,
+    # and lower the crown a little so it does not read as a bowler.
+    rim = max(((v.co.x - cx) ** 2 + (v.co.y - cy) ** 2) ** 0.5 for v in mesh.vertices)
+    for v in mesh.vertices:
+        d = ((v.co.x - cx) ** 2 + (v.co.y - cy) ** 2) ** 0.5
+        if d > r_hat * s * 0.98:
+            k = 1.0 + 0.32 * min(1.0, (d - r_hat * s * 0.98) / max(1e-6, rim - r_hat * s * 0.98))
+            v.co.x = cx + (v.co.x - cx) * k
+            v.co.y = cy + (v.co.y - cy) * k
+        elif v.co.z > low + 0.03:
+            v.co.z = low + 0.03 + (v.co.z - low - 0.03) * 0.85
     mesh.update()
     return round(s, 3)
 
@@ -508,6 +543,73 @@ def apron(B, spec):
     return obj
 
 
+def front_y(B, x, z, reach=0.05):
+    """Front-most (lowest y) body or plugin-cloth point near (x, z)."""
+    ys = [p.y for p, bone in B.points() if abs(p.z - z) < 0.02 and abs(p.x - x) < reach]
+    return min(ys) if ys else -0.12
+
+
+def scarf_tails(B, spec):
+    """Two scarf ends hanging from the knot under the chin to the waist, over the buttoned coat."""
+    top, bottom = B.z["Neck"] - 0.03, B.z["Spine"] - 0.02
+    rows = 10
+    verts, weights, faces = [], [], []
+    for n, (cx, w, drop) in enumerate(((0.012, 0.072, 0.0), (0.05, 0.064, 0.07))):
+        base = len(verts)
+        for r in range(rows + 1):
+            f = r / rows
+            z = top + (bottom + drop - top) * f
+            y = front_y(B, cx, z) - OFFSET * spec["layer"] - 0.012 - 0.004 * n
+            for c in range(3):
+                x = cx - w / 2 + w * c / 2
+                verts.append(Vector((x, y - 0.006 * (1 - abs(c - 1)), z)))
+                weights.append({"Spine2": 1 - f * 0.6, "Spine1": f * 0.6} if z > B.z["Spine1"]
+                               else {"Spine1": 0.7, "Spine": 0.3})
+        for r in range(rows):
+            for c in range(2):
+                a = base + r * 3 + c
+                faces.append((a, a + 1, a + 4, a + 3))
+    obj = weighted_mesh(spec["name"], verts, faces, weights, spec["color"], B.rig)
+    orient(obj, lambda c: Vector((0, -1, 0)))
+    thicken(obj, 0.006)
+    return obj
+
+
+def braids(B, color, rig):
+    """Two plaits from behind the ears, forward over the shoulders, ending on the upper chest."""
+    head, neck, chest = B.z["Head"], B.z["Neck"], B.z["Spine2"]
+    verts, faces, weights = [], [], []
+    for side in (1, -1):
+        x_ear = side * 0.072
+        back = max(p.y for p, bone in B.points() if bone.endswith("Head") and abs(p.z - head) < 0.02) - 0.02
+        ctrl = [Vector((x_ear, back - 0.01, head + 0.01)),
+                Vector((side * 0.088, back - 0.035, neck + 0.02)),
+                Vector((side * 0.105, front_y(B, side * 0.10, neck - 0.03) - 0.035, neck - 0.04)),
+                Vector((side * 0.11, front_y(B, side * 0.11, chest - 0.02) - 0.03, chest - 0.06))]
+        n = 11
+        for k in range(n):
+            t = k / (n - 1)
+            # Catmull-Rom through the control points.
+            seg = min(int(t * 3), 2)
+            u = t * 3 - seg
+            p0, p1, p2, p3 = (ctrl[max(seg - 1, 0)], ctrl[seg], ctrl[seg + 1], ctrl[min(seg + 2, 3)])
+            pos = 0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u
+                         + (-p0 + 3 * p1 - 3 * p2 + p3) * u ** 3)
+            pos.x += 0.006 * (1 if k % 2 else -1)
+            radius = 0.026 * (1 - 0.35 * t)
+            bm = prim("sphere", r=1.0)
+            mat = Matrix.Translation(pos) @ Matrix.Diagonal((radius, radius * 0.85, radius * 1.25, 1))
+            bmesh.ops.transform(bm, matrix=mat, verts=bm.verts)
+            base = len(verts)
+            verts += [v.co.copy() for v in bm.verts]
+            faces += [[base + v.index for v in f.verts] for f in bm.faces]
+            wgt = {"Head": 1.0} if t < 0.2 else ({"Neck": 0.6, "Head": 0.4} if t < 0.45 else {"Spine2": 1.0})
+            weights += [wgt] * len(bm.verts)
+            bm.free()
+    obj = weighted_mesh("Braids", verts, faces, weights, color, rig)
+    return obj
+
+
 def cape(B, spec):
     """Half cape thrown over the left shoulder and down the back."""
     neck = B.z["Neck"]
@@ -592,22 +694,25 @@ def props(B, spec):
                                   (prim("cyl", r1=0.07, r2=0.07, h=0.01, seg=20), T(crown + Vector((0, -r - 0.025, -0.06))) @ Matrix.Rotation(-0.18, 4, "X") @ Matrix.Diagonal((1.2, 0.75, 1, 1)))],
                           color, rig, "Head")]
     if kind == "newsboy_cap":
-        return [prop_mesh("Cap", [(prim("sphere", r=1.0), T(crown + Vector((0, 0.0, -0.045))) @ Matrix.Diagonal((r + 0.028, r + 0.032, 0.075, 1))),
-                                  (prim("cyl", r1=r + 0.008, r2=r + 0.008, h=0.02, seg=32), T(crown + Vector((0, 0.0, -0.06)))),
+        return [prop_mesh("Cap", [(prim("sphere", r=1.0), T(crown + Vector((0, 0.008, -0.05))) @ Matrix.Diagonal((r + 0.014, r + 0.020, 0.062, 1))),
+                                  (prim("cyl", r1=r + 0.004, r2=r + 0.004, h=0.02, seg=32), T(crown + Vector((0, 0.0, -0.064)))),
                                   (prim("cyl", r1=0.065, r2=0.065, h=0.01, seg=20), T(crown + Vector((0, -r - 0.022, -0.066))) @ Matrix.Rotation(-0.25, 4, "X") @ Matrix.Diagonal((1.15, 0.7, 1, 1)))],
                           color, rig, "Head")]
     if kind == "plumed_hat":
         hat = prop_mesh("Hat", [(prim("cyl", r1=r + 0.15, r2=r + 0.15, h=0.012, seg=40), T(crown + Vector((0, 0.0, -0.05))) @ Matrix.Rotation(0.10, 4, "X")),
                                 (prim("cyl", r1=r + 0.008, r2=r - 0.012, h=0.12, seg=32), T(crown + Vector((0, 0.0, 0.01))))],
                         color, rig, "Head")
+        band = prop_mesh("HatBand", [(prim("cyl", r1=r + 0.012, r2=r + 0.006, h=0.032, seg=32),
+                                      T(crown + Vector((0, 0.0, -0.028))))], "luc_cape", rig, "Head")
         plume = prop_mesh("Plume", [(prim("sphere", r=0.05), T(crown + Vector((r * 0.8, 0.07, 0.07))) @ Matrix.Rotation(-0.7, 4, "Y") @ Matrix.Diagonal((0.55, 0.7, 3.6, 1)))],
-                          "feather", rig, "Head")
-        return [hat, plume]
+                          "luc_feather", rig, "Head")
+        return [hat, band, plume]
     if kind == "goggles":
         parts = []
         for x in (-0.04, 0.04):
-            parts.append((prim("cyl", r1=0.028, r2=0.028, h=0.025, seg=16), T(crown + Vector((x, -r - 0.004, -0.072))) @ Matrix.Rotation(math.pi / 2 - 0.35, 4, "X")))
-        parts.append((prim("cyl", r1=r + 0.006, r2=r + 0.006, h=0.016, seg=32), T(crown + Vector((0, 0.0, -0.075)))))
+            # Pushed up onto the hairline, lenses tipped skyward, as painted: clear of the brows.
+            parts.append((prim("cyl", r1=0.028, r2=0.028, h=0.025, seg=16), T(crown + Vector((x, -r + 0.012, -0.030))) @ Matrix.Rotation(math.pi / 2 - 0.75, 4, "X")))
+        parts.append((prim("cyl", r1=r + 0.006, r2=r + 0.006, h=0.016, seg=32), T(crown + Vector((0, 0.0, -0.040))) @ Matrix.Rotation(-0.25, 4, "X")))
         return [prop_mesh("Goggles", parts, color, rig, "Head")]
     if kind == "tool_belt":
         z = B.z["Spine"] - 0.05
@@ -619,12 +724,17 @@ def props(B, spec):
         return [prop_mesh("ToolBelt", parts, color, rig, "Hips")]
     if kind == "satchel":
         z = B.z["Hips"] - 0.04
-        side = max(p.x for p, bone in B.points() if abs(p.z - z) < 0.03 and bone.endswith(("Hips", "UpLeg")))
+        sign = -1.0 if spec.get("side") == "right" else 1.0
+        xs = [p.x for p, bone in B.points() if abs(p.z - z) < 0.03 and bone.endswith(("Hips", "UpLeg"))]
+        side = min(xs) if sign < 0 else max(xs)
         bag = prim("box", size=(0.07, 0.24, 0.19))
         flap = prim("box", size=(0.075, 0.245, 0.06))
-        x = side + OFFSET * 7 + 0.035
-        return [prop_mesh("Satchel", [(bag, T(Vector((x, 0.0, z)))), (flap, T(Vector((x + 0.004, 0.0, z + 0.07))))],
+        x = side + sign * (OFFSET * 7 + 0.035)
+        return [prop_mesh("Satchel", [(bag, T(Vector((x, 0.0, z)))),
+                                      (flap, T(Vector((x + sign * 0.004, 0.0, z + 0.07))))],
                           color, rig, "Hips")]
+    if kind == "braids":
+        return [braids(B, color, rig)]
     if kind == "lute":
         back = max(p.y for p, bone in B.points() if abs(p.z - B.z["Spine1"]) < 0.03 and bone.endswith(TORSO)) + OFFSET * 8 + 0.05
         tilt = Matrix.Rotation(0.6, 4, "Y")
@@ -965,7 +1075,7 @@ def dress(hero_id, body, rig, plugin):
             pieces.append(obj)
             covers.append((layer, kind, cover, obj))
         elif "kind" in item:
-            builder = {"skirt": skirt, "apron": apron, "cape": cape}[item["kind"]]
+            builder = {"skirt": skirt, "apron": apron, "cape": cape, "scarf_tails": scarf_tails}[item["kind"]]
             obj = builder(B, item)
             obj["layer"] = item["layer"]
             pieces.append(obj)
@@ -975,7 +1085,7 @@ def dress(hero_id, body, rig, plugin):
             hats += [o for o in made if o.name.startswith(("Cap", "Hat"))]
     # Skin, plugin cloth and inner shells that a closed outer layer hides completely are removed.
     closed = [(layer, kind, interior(B, cover, 2)) for layer, kind, cover, _ in covers
-              if kind not in ("braces", "sash", "collar", "scarf", "high_collar", "strap")]
+              if kind not in ("braces", "sash", "collar", "scarf", "high_collar", "strap", "capelet")]
     hidden_body = set().union(*(c for _, _, c in closed)) if closed else set()
     over_cloth = set().union(*(c for l, _, c in closed if l > 1)) if closed else set()
     for obj in cloth:

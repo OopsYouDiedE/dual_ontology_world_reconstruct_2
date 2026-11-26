@@ -1,0 +1,79 @@
+{
+ "macro": {
+  "gender": 0.0,
+  "age": 0.3214285714285714,
+  "muscle": 0.4,
+  "weight": 0.32,
+  "proportions": 0.55,
+  "race": {
+   "caucasian": 0.3,
+   "asian": 0.7,
+   "african": 0.0
+  }
+ },
+ "skin_reference": "young_asian_female",
+ "targets": {
+  "head-scale-vert-incr": 0.3584,
+  "head-scale-horiz-incr": 0.8195,
+  "neck-scale-vert-incr": 0.35,
+  "torso-scale-vert-incr": 0.6624,
+  "torso-scale-horiz-incr": 0.2748,
+  "measure-shoulder-dist-incr": 0.2012,
+  "torso-vshape-incr": 0.2155,
+  "hip-scale-horiz-incr": 0.3362,
+  "measure-upperarm-length-incr": 0.4779,
+  "measure-lowerarm-length-incr": 0.1218,
+  "head-square": 0.0943,
+  "head-round": 0.3198,
+  "forehead-scale-vert-incr": 0.2199,
+  "chin-width-incr": 0.0397,
+  "chin-height-decr": 0.0515,
+  "l-cheek-bones-decr": 0.2233,
+  "r-cheek-bones-decr": 0.2233,
+  "l-eye-scale-incr": 0.613,
+  "r-eye-scale-incr": 0.613,
+  "l-eye-trans-down": 0.3087,
+  "r-eye-trans-down": 0.3087,
+  "l-eye-trans-out": 0.5554,
+  "r-eye-trans-out": 0.5554,
+  "l-eye-height2-decr": 0.1525,
+  "r-eye-height2-decr": 0.1525,
+  "eyebrows-trans-up": 0.8,
+  "nose-scale-horiz-incr": 0.1073,
+  "nose-scale-vert-decr": 0.1942,
+  "nose-trans-up": 0.0727,
+  "mouth-scale-horiz-decr": 0.1524,
+  "mouth-trans-down": 0.1317,
+  "mouth-upperlip-height-incr": 0.0772
+ },
+ "solve": {
+  "body_mean_err_of_height": 0.0225,
+  "face_loop_nme": [
+   0.038,
+   0.0297,
+   0.0271,
+   0.0262,
+   0.0248,
+   0.0245,
+   0.0256
+  ]
+ },
+ "painting_head_pose": {
+  "yaw_deg": 0.49,
+  "pitch_deg": 0.69
+ },
+ "verify": {
+  "face_nme_iod": 0.0245,
+  "face_p90_iod": 0.0505,
+  "body_nme_height": 0.0253,
+  "body_max_height": 0.0488,
+  "head_ratio": 6.86
+ },
+ "baseline": {
+  "face_nme_iod": 0.0317,
+  "face_p90_iod": 0.0526,
+  "body_nme_height": 0.038,
+  "body_max_height": 0.0618,
+  "head_ratio": 7.35
+ }
+}

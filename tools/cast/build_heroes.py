@@ -38,16 +38,25 @@ def age(years):
 
 HEROES = {
     "detective": dict(height=1.76, macro=dict(gender=1.0, age=age(20), muscle=0.45, weight=0.40, proportions=0.6),
-                      hair="short02", hair_color=(0.20, 0.11, 0.06), brows="eyebrow010", skin=(0.80, 0.62, 0.50)),
+                      hair="short02", hair_color=(0.30, 0.17, 0.10), brows="eyebrow010", skin=(0.84, 0.64, 0.52)),
     "hale": dict(height=1.80, macro=dict(gender=1.0, age=age(38), muscle=0.72, weight=0.62, proportions=0.45),
-                 hair="short03", hair_color=(0.17, 0.12, 0.08), brows="eyebrow001", skin=(0.74, 0.54, 0.41)),
+                 hair="short02", hair_color=(0.30, 0.22, 0.15), brows="eyebrow001", skin=(0.86, 0.63, 0.50)),
     "quer": dict(height=1.56, macro=dict(gender=0.0, age=age(17), muscle=0.40, weight=0.32, proportions=0.55),
-                 hair="braid01", hair_color=(0.12, 0.08, 0.06), brows="eyebrow006", skin=(0.82, 0.66, 0.54)),
+                 hair="ponytail01", hair_color=(0.10, 0.08, 0.07), brows="eyebrow006", skin=(0.90, 0.69, 0.57)),
     "lucian": dict(height=1.86, macro=dict(gender=1.0, age=age(28), muscle=0.40, weight=0.36, proportions=0.75),
-                   hair="long01", hair_color=(0.55, 0.36, 0.18), brows="eyebrow003", skin=(0.83, 0.68, 0.57)),
+                   hair="long01", hair_color=(0.66, 0.36, 0.14), brows="eyebrow003", skin=(0.92, 0.73, 0.60)),
     "demon": dict(height=1.98, macro=dict(gender=0.85, age=age(45), muscle=0.30, weight=0.08, proportions=1.0),
                   hair="short01", hair_color=(0.03, 0.03, 0.035), brows="eyebrow012", skin=(0.62, 0.63, 0.64)),
 }
+
+# Heroes with a target painting (tools/cast/reference) carry a landmark fit from tools/cast/fit/fit_heroes.py:
+# race and age macros plus body-proportion and face-shape targets. Their head ratio follows the painting.
+FIT_DIR = Path(__file__).resolve().parent / "fit"
+
+
+def fitted(hero_id):
+    path = FIT_DIR / f"{hero_id}.json"
+    return json.loads(path.read_text()) if path.exists() else None
 
 # Game clip -> UAL action, with per-hero overrides that carry each character's manner.
 CLIPS = {"idle": "Idle_Loop", "walk": "Walk_Loop", "run": "Jog_Fwd_Loop", "interact": "Interact",
@@ -89,8 +98,10 @@ def evaluated(obj):
     return obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).data
 
 
-def fit(body, height):
-    """Solve the height slider and head-scale key so stature = height and stature/head = 6.5."""
+def fit(body, height, ratio=RATIO):
+    """Solve the height slider and head-scale key so stature = height and stature/head = ratio.
+
+    With ratio=None the body keeps its fitted proportions and is only scaled to the stature."""
     metadata = Path(LocationService.get_mpfb_data("mesh_metadata")) / "hm08_config.json"
     head = json.loads(metadata.read_text())["dimensions"]["Head"]
     crown, chin = head["zmax"], head["zmin"]
@@ -102,6 +113,25 @@ def fit(body, height):
         sole = min(v[i].co.z for i in ids)
         return {"sole": sole, "height": v[crown].co.z - sole, "head": v[crown].co.z - v[chin].co.z}
 
+    if ratio is None:
+        result, slider = measure(), None
+        key = None
+    else:
+        result, slider, key = solve_ratio(body, height, ratio, measure)
+    # The slider range cannot reach every stature at 6.5 heads; uniform scale closes the gap.
+    uniform = height / result["height"]
+    activate(body)
+    body.location.z = -result["sole"] * uniform * body.scale.z
+    body.scale *= uniform
+    bpy.ops.object.transform_apply(location=True, rotation=False, scale=True)
+    final = measure()
+    assert abs(final["height"] - height) < 0.003 and abs(final["sole"]) < 0.002, final
+    return {"height_m": round(final["height"], 4), "head_ratio": round(final["height"] / final["head"], 4),
+            "height_slider": slider and round(slider, 4), "head_key": key and round(key.value, 4),
+            "uniform_scale": round(uniform, 4)}
+
+
+def solve_ratio(body, height, ratio, measure):
     target = "head-scale-vert-incr"
     TargetService.load_target(body, TargetService.target_full_path(target), name=target)
     key = body.data.shape_keys.key_blocks[target]
@@ -115,24 +145,15 @@ def fit(body, height):
         a = measure()
         key.value = 1.0
         b = measure()
-        f0, f1 = a["height"] - RATIO * a["head"], b["height"] - RATIO * b["head"]
+        f0, f1 = a["height"] - ratio * a["head"], b["height"] - ratio * b["head"]
         key.value = -1.0 + 2.0 * f0 / (f0 - f1)
         result = measure()
         if result["height"] < height:
             low = slider
         else:
             high = slider
-    assert abs(result["height"] / result["head"] - RATIO) < 0.01, result
-    # The slider range cannot reach every stature at 6.5 heads; uniform scale closes the gap.
-    uniform = height / result["height"]
-    activate(body)
-    body.location.z = -result["sole"] * uniform * body.scale.z
-    body.scale *= uniform
-    bpy.ops.object.transform_apply(location=True, rotation=False, scale=True)
-    final = measure()
-    assert abs(final["height"] - height) < 0.003 and abs(final["sole"]) < 0.002, final
-    return {"height_m": round(final["height"], 4), "head_ratio": round(final["height"] / final["head"], 4),
-            "height_slider": round(slider, 4), "head_key": round(key.value, 4), "uniform_scale": round(uniform, 4)}
+    assert abs(result["height"] / result["head"] - ratio) < 0.01, result
+    return result, slider, key
 
 
 def flat_material(name, color, roughness=0.8):
@@ -286,9 +307,18 @@ def build(hero_id, spec, args, asset_root):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.context.scene.render.fps = 24
     macro = TargetService.get_default_macro_info_dict()
-    macro.update(spec["macro"])
+    landmark_fit = fitted(hero_id)
+    macro.update(landmark_fit["macro"] if landmark_fit else spec["macro"])
     body = HumanService.create_human(macro_detail_dict=macro, feet_on_ground=False)
-    receipt = {"id": hero_id, "fit": fit(body, spec["height"])}
+    if landmark_fit:
+        for name, value in landmark_fit["targets"].items():
+            TargetService.load_target(body, TargetService.target_full_path(name), weight=value, name=name)
+            kb = body.data.shape_keys.key_blocks[name]
+            kb.slider_max = max(1.0, value)
+            kb.value = value
+    receipt = {"id": hero_id, "fit": fit(body, spec["height"], None if landmark_fit else RATIO)}
+    if landmark_fit:
+        receipt["landmark_fit"] = landmark_fit["verify"]
     body.name = hero_id + "_body"
     rig = HumanService.add_builtin_rig(body, "mixamo")
     rig.name = hero_id + "_rig"

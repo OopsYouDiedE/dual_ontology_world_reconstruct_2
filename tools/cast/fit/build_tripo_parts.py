@@ -644,7 +644,53 @@ def clear_view(tree, p, n):
     return False
 
 
-def paint(obj, hero, parts, head, sym):
+def mouth_plug(obj, rig, face, fv, head):
+    """Tripo heads are often modelled with parted lips over an open cavity, which reads as a black slot
+    with teeth. Close it: an ellipse just behind the lip corners, part of the head part (so the sheet's
+    closed mouth is drawn on it) and riding the Head bone. `face`: landmarks in front-render pixels."""
+    unit = fv["size"] / max(fv["res"])
+
+    def world(i):
+        px, py = face[i][:2]
+        return np.array([(px - fv["res"][0] / 2) * unit, fv["centre"][1] - (py - fv["res"][1] / 2) * unit])
+
+    a, b = world(61), world(291)
+    width = float(np.linalg.norm(a - b))
+    height = max(float(np.linalg.norm(world(13) - world(14))) * 1.8, 0.3 * width)
+    centre = 0.5 * (a + b)
+    mesh = obj.data
+    tree = BVHTree.FromPolygons([tuple(v.co) for v in mesh.vertices], [tuple(p.vertices) for p in mesh.polygons])
+    depths = []
+    for x, z in (a, b):
+        hit = tree.ray_cast(Vector((x, -3.0, z)), Vector((0, 1, 0)), 6.0)
+        if hit[0] is not None:
+            depths.append(hit[0].y)
+    if not depths:
+        return 0
+    y = max(depths) + 0.001
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    part = bm.verts.layers.int.get("part")
+    ring = []
+    for k in range(24):
+        t = 2 * math.pi * k / 24
+        v = bm.verts.new((centre[0] + 0.5 * width * math.cos(t), y, centre[1] + 0.5 * height * math.sin(t)))
+        v[part] = head
+        ring.append(v)
+    mid = bm.verts.new((centre[0], y, centre[1]))
+    mid[part] = head
+    for k in range(24):
+        f = bm.faces.new((mid, ring[k], ring[(k + 1) % 24]))  # this winding faces -Y, the camera
+        f.smooth = True
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.update()
+    g = obj.vertex_groups.get(next(b.name for b in rig.data.bones if b.name.endswith(":Head")))
+    g.add([i for i in range(len(mesh.vertices) - 25, len(mesh.vertices))], 1.0, "REPLACE")
+    return 25
+
+
+def paint(obj, hero, parts, head, sym, rig):
     """Visibility and sheet coordinates per vertex here; the image work runs in parts_paint.py."""
     mesh = obj.data
     co, nrm = coords(obj), normals(obj)
@@ -653,6 +699,9 @@ def paint(obj, hero, parts, head, sym):
     if det["pose"]:
         # the full-body face is a few dozen pixels wide: always re-detect on a close-up
         det["face"] = R.closeup_face(obj, hero, det, fv) or det["face"]
+    plug = mouth_plug(obj, rig, det["face"], fv, head) if det["face"] else 0
+    parts = part_index(obj)
+    co, nrm = coords(obj), normals(obj)
     unit = fv["size"] / max(fv["res"])
     # Only surfaces lying on the head (skin, eyes, brows) take the drawn face; curls and brims in
     # front of it keep their own colour.
@@ -664,16 +713,35 @@ def paint(obj, hero, parts, head, sym):
     near_head = np.zeros(len(co), bool)
     for i in np.nonzero(((co > hlo) & (co < hhi)).all(1))[0]:
         near_head[i] = parts[i] == head or htree.find_nearest(Vector(co[i]))[3] < 0.006
-    # mirror-paired face parts (eyes, brows) can sit deep in their sockets: they take the drawn face too
-    near_head |= np.isin(parts, sym["paired_parts"])
+    # Sockets: eyes and brows (paired parts) and whatever lies just behind the lips can sit deep under the
+    # head's surface; they take the drawn face too.
+    socket = np.isin(parts, sym["paired_parts"])
+    mouth = np.zeros(len(co), bool)
+    if sym.get("mouth"):
+        mx, mz = sym["mouth"]
+        hy = co[hv, 1].mean()
+        # a flat ellipse over the lip line, at most 2.5 cm behind the lips' front
+        lip = (parts == head) & (np.hypot(co[:, 0] - mx, co[:, 2] - mz) < 0.02)
+        front_y = co[lip, 1].min() if lip.any() else co[hv, 1].min()
+        mouth = (((co[:, 0] - mx) / 0.03) ** 2 + ((co[:, 2] - mz) / 0.012) ** 2 < 1)             & (co[:, 1] < min(hy, front_y + 0.025)) & (parts != head) & ~socket
+        socket |= mouth
+    near_head |= socket
     plane_px = fv["res"][0] / 2 + sym["plane_x"] / unit
+    # hair, hats, goggles: parts the weights put whole on the Head bone (never skin)
+    hg = obj.vertex_groups.get(next(b.name for b in rig.data.bones if b.name.endswith(":Head")))
+    on_head = np.zeros(len(co), bool)
+    for v in mesh.vertices:
+        for g in v.groups:
+            if g.group == hg.index and g.weight > 0.999:
+                on_head[v.index] = True
+    on_head &= (parts != head) & ~socket
     rpx = np.c_[fv["res"][0] / 2 + co[:, 0] / unit, fv["res"][1] / 2 - (co[:, 2] - fv["centre"][1]) / unit]
     tree = BVHTree.FromObject(obj, bpy.context.evaluated_depsgraph_get())
     visible = np.zeros(len(co), bool)
     for i in np.nonzero(nrm[:, 1] < -0.3)[0]:
         visible[i] = clear_view(tree, co[i], nrm[i])
     # Hat brims stand in front of the eyes: for the face, only the face's own surfaces may occlude.
-    own = np.isin(parts, [head] + list(sym["paired_parts"]))
+    own = (parts == head) | socket
     fpolys = [tuple(p.vertices) for p in mesh.polygons if own[p.vertices[0]]]
     ftree = BVHTree.FromPolygons([tuple(c) for c in co], fpolys)
     for i in np.nonzero(near_head & (nrm[:, 1] < -0.3))[0]:
@@ -688,7 +756,7 @@ def paint(obj, hero, parts, head, sym):
     tri_uv = np.array([[loops[k].uv[:] for k in lt.loops] for lt in mesh.loop_triangles], np.float32)
     # Tripo scatters the face over dozens of atlas fragments; the drawn face needs one piece. The head
     # part and its eyes/brows get their own unwrap and texture (material slot 1).
-    face_set = np.isin(parts, [head] + list(sym["paired_parts"]))
+    face_set = (parts == head) | socket
     face_poly = np.array([face_set[p.vertices[0]] for p in mesh.polygons])
     activate(obj)
     bpy.ops.object.mode_set(mode="EDIT")
@@ -709,7 +777,7 @@ def paint(obj, hero, parts, head, sym):
     out = STAGE / f"{hero}-albedo.png"
     npz = STAGE / f"{hero}-paint.npz"
     np.savez(npz, co=co, nrm=nrm, part=parts, head=np.array([head]), visible=visible, uv=uv,
-             tri_v=tri_v, tri_uv=tri_uv, tri_uv2=tri_uv2, tri_face=tri_face, render_px=rpx, near_head=near_head, paired=np.isin(parts, sym["paired_parts"]), plane_px=np.array([plane_px]),
+             tri_v=tri_v, tri_uv=tri_uv, tri_uv2=tri_uv2, tri_face=tri_face, render_px=rpx, near_head=near_head, paired=socket, mouth=mouth, on_head=on_head, plane_px=np.array([plane_px]),
              render_pose=np.array(det["pose"] or [], float), render_face=np.array(det["face"] or [], float))
     env = {k: v for k, v in os.environ.items() if k not in ("PYTHONHOME", "PYTHONPATH")}
     face_out = STAGE / f"{hero}-face.png"
@@ -720,6 +788,7 @@ def paint(obj, hero, parts, head, sym):
     if r.returncode:
         raise RuntimeError(r.stderr[-3000:])
     info = json.loads((STAGE / f"{hero}-paint.json").read_text())
+    info["mouth_plug_vertices"] = plug
     mesh.materials.clear()
     for tag, png in (("toon", out), ("face", face_out)):
         painted = bpy.data.images.load(str(png))
@@ -790,10 +859,15 @@ def main():
         c = v.mean(0)
         if p != head and np.ptp(v, axis=0).max() < 0.05 and                 any(math.hypot(c[0] - e.x, c[2] - e.z) < 0.03 for e in pts) and int(p) not in sym["paired_parts"]:
             sym["paired_parts"].append(int(p))
+    # Mouth: Tripo lips are often parted over a separate mouth part; around the mouth corners that part is
+    # drawn with the sheet's closed mouth too.
+    lm = reg["landmarks"]["front"]
+    sym["mouth"] = [float(np.mean([sc * lm[i][0] + off[0] for i in (9, 10)])),
+                    float(np.mean([sc * lm[i][1] + off[2] for i in (9, 10)]))] if 9 in lm and 10 in lm else None
     pose_to(rig, body, reg["joints"], reg["skull_base"])
     weights = assign_weights(obj, body, rig, part_index(obj), names, head, hero)
     bpy.data.objects.remove(body, do_unlink=True)
-    info = paint(obj, hero, part_index(obj), head, sym)
+    info = paint(obj, hero, part_index(obj), head, sym, rig)
     obj.data.attributes.remove(obj.data.attributes["part"])
     for o in bpy.data.objects:
         o.hide_render = False
@@ -816,7 +890,7 @@ def main():
                      "parts": len(names), "cleanup_removed_vertices": removed,
                      "registration": {"scale": reg["scale"], "offset": reg["offset"],
                                       "skeleton_stature": stature, "crown_m": round(crown, 4)},
-                     "face_symmetry": {k: v for k, v in sym.items() if k != "paired_parts"}, "weights": weights,
+                     "face_symmetry": {k: v for k, v in sym.items() if k not in ("paired_parts", "mouth")}, "weights": weights,
                      "paint": {k: v for k, v in info.items() if k not in ("face_vertices", "face_weight")},
                      "clips": made, "height_m": round(float(co[:, 2].max() - co[:, 2].min()), 4),
                      "triangles": sum(len(p.vertices) - 2 for p in obj.data.polygons),

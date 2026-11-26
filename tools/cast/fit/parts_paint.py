@@ -12,7 +12,9 @@ a front render of the model whose pose and face landmarks were detected.
    (k-means in Lab, near-identical clusters merged): Tripo's own regions (lapel, lining, band, sole...).
 3. Each cluster takes the median sheet colour under its front-visible vertices. Clusters seen only from
    behind borrow the median of their nearest seen vertices, matched on position and Tripo colour.
-4. Texels become their cluster's flat colour, keeping an eighth of Tripo's lightness detail (seams, folds).
+4. Texels become their cluster's flat colour (labels mode-filtered so no speckle survives), keeping a
+   little of Tripo's blurred lightness (folds, not its painted grime). Clusters seen by too few vertices
+   take the part's main colour, shifted by their lightness. Islands are padded to the full atlas.
    The head part with its eyes and brows has its own unwrap (Tripo scatters faces over many atlas
    fragments) and its own texture: flat colours, with the sheet's face drawn through the warp.
 """
@@ -29,7 +31,7 @@ REF = FIT.parent / "reference"
 OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152,
         148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]
 POSE_IDS = (0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28)
-DETAIL = 0.12
+DETAIL = 0.08
 
 
 def similarity(src, dst):
@@ -113,18 +115,15 @@ def raster(tp, res):
     return np.clip(pts[keep].astype(int), 0, res - 1), wts
 
 
-def bleed(img, valid, rounds=10):
-    """Grow colours past island borders so mip levels and seams stay clean."""
-    img *= valid[..., None]
-    for _ in range(rounds):
-        acc = cv2.blur(img, (3, 3))
-        cnt = cv2.blur(valid, (3, 3))
-        grow = (valid == 0) & (cnt > 0)
-        img[grow] = acc[grow] / cnt[grow, None]
-        valid[grow] = 1.0
+def bleed(img, valid):
+    """Fill every empty texel with the nearest painted one: the black between islands otherwise creeps
+    into the islands' edges at the lower mip levels and reads as dirt."""
+    from scipy.ndimage import distance_transform_edt
+    _, (iy, ix) = distance_transform_edt(valid == 0, return_indices=True)
+    img[...] = img[iy, ix]
 
 
-def clusters(lab, max_k=3, merge=12.0, min_frac=0.02):
+def clusters(lab, max_k=3, merge=16.0, min_frac=0.08):
     if len(lab) < 60:
         return lab.mean(0, keepdims=True)
     pick = lab if len(lab) <= 20000 else lab[np.random.default_rng(1).choice(len(lab), 20000, replace=False)]
@@ -149,6 +148,20 @@ def clusters(lab, max_k=3, merge=12.0, min_frac=0.02):
             if changed:
                 break
     return np.array(cen)
+
+
+def dominant(smp):
+    """Median of the larger of two colour groups: a cluster whose vertices straddle two sheet colours
+    takes the one most of them see, not a muddy mean of both."""
+    if len(smp) < 12:
+        return np.median(smp, axis=0)
+    crit = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 0.5)
+    _, lbl, cen = cv2.kmeans(smp.astype(np.float32), 2, None, crit, 2, cv2.KMEANS_PP_CENTERS)
+    lbl = lbl.ravel()
+    if np.linalg.norm(cen[0] - cen[1]) < 10:
+        return np.median(smp, axis=0)
+    big = int(np.argmax(np.bincount(lbl, minlength=2)))
+    return np.median(smp[lbl == big], axis=0)
 
 
 def nearest(lab, cen):
@@ -177,11 +190,23 @@ def main():
     # 1. render pixel -> sheet pixel
     pose = d["render_pose"]
     ids = [i for i in POSE_IDS if len(pose) and pose[i][2] > 0.5 and ref["pose"][i][2] > 0.5]
-    body_map = similarity(np.array([pose[i][:2] for i in ids]), np.array([ref["pose"][i][:2] for i in ids]))
-    pp = body_map(rpx)
+    # Thin-plate spline on the pose points plus a few face-outline points: a single similarity leaves
+    # hands, bags and hat bands a few sheet pixels off, onto their neighbours' colours.
+    src_pts = [pose[i][:2] for i in ids]
+    dst_pts = [ref["pose"][i][:2] for i in ids]
+    rface = d["render_face"]
+    if len(rface) and ref["face"]:
+        for i in (10, 152, 234, 454):
+            src_pts.append(rface[i][:2])
+            dst_pts.append(ref["face"][i][:2])
+    src_pts, dst_pts = np.array(src_pts, float), np.array(dst_pts, float)
+    base = similarity(src_pts, dst_pts)
+    from scipy.interpolate import RBFInterpolator
+    tps = RBFInterpolator(src_pts, dst_pts - base(src_pts), kernel="thin_plate_spline", smoothing=1.0)
+    pp = base(rpx) + tps(rpx)
     face_w = np.zeros(n)
     face_v = np.zeros(n, bool)
-    rface = d["render_face"]
+    mouth = np.zeros(n, bool)
     if len(rface) and ref["face"]:
         src = rface[:468, :2].astype(float)
         dst = np.array(ref["face"])[:468, :2].astype(float)
@@ -192,15 +217,16 @@ def main():
         src = symmetric(src, pair, (np.array([axis_x, 0.0]), np.array([0.0, 1.0])))
         dst = symmetric(dst, pair)
         tri = Delaunay(src)
+        from matplotlib.path import Path as MPath  # noqa: E402  (matplotlib ships with mediapipe)
         oval = src[OVAL]
         width = np.ptp(oval[:, 0])
         # eyes and brows sit in their sockets under the lids: every front-facing point of them is drawn
         front = d["nrm"][:, 1] < -0.3
-        cand = d["near_head"].astype(bool) & (vis | (front & d["paired"].astype(bool)))
+        # Teeth and tongue parts behind the lips (found in Blender): head skin, never drawn.
+        mouth = d["mouth"].astype(bool)
+        cand = d["near_head"].astype(bool) & (vis | (front & d["paired"].astype(bool))) & ~mouth
         simplex = tri.find_simplex(rpx)
         inside = cand & (simplex >= 0)
-        # inside the oval polygon
-        from matplotlib.path import Path as MPath  # noqa: E402  (matplotlib ships with mediapipe)
         inside &= MPath(oval).contains_points(rpx)
         idx = np.nonzero(inside)[0]
         s = simplex[idx]
@@ -234,26 +260,52 @@ def main():
 
     # 3. clusters and their sheet colours
     out = np.zeros((H, W, 3), np.float32)
-    stats, colour, centres, vlabel = {}, {}, {}, np.zeros(n, int)
+    stats, colour, centres, vlabel, support = {}, {}, {}, np.zeros(n, int), {}
     for p in np.unique(part):
         tx = pmap == p
         lab = tex_lab[tx]
-        cen = clusters(lab) if len(lab) else vtex[part == p].mean(0, keepdims=True)
+        if not len(lab):
+            cen = vtex[part == p].mean(0, keepdims=True)
+        elif p == head:
+            # skin, and the hair Tripo painted on the back of the head; features come from the drawn face
+            cen = clusters(lab, max_k=2, merge=25.0)
+        else:
+            cen = clusters(lab)
         centres[p] = cen
         rows = np.nonzero(part == p)[0]
         vlabel[rows] = nearest(vtex[rows], cen)
         for c in range(len(cen)):
             r = rows[(vlabel[rows] == c) & seen[rows]]
+            support[(p, c)] = len(r)
             if len(r) >= 6:
                 smp = vsheet[r]
-                light = smp[smp[:, 0] > 30]
-                if len(light) >= 0.4 * len(smp):
-                    smp = light
-                colour[(p, c)] = np.median(smp, axis=0)
+                light = smp[:, 0] > 30
+                if light.sum() >= 0.4 * len(smp):
+                    smp, r = smp[light], r[light]
+                colour[(p, c)] = dominant(smp)
+    # The head part's skin is the cluster most of its seen vertices fall in; its other cluster (hair on
+    # the scalp) borrows from the hair parts around it, never from the face.
+    hrows = np.nonzero(part == head)[0]
+    skin_c = int(np.argmax(np.bincount(vlabel[hrows][seen[hrows]], minlength=len(centres[head]))))
+    for c in range(len(centres[head])):
+        if c != skin_c:
+            colour.pop((head, c), None)
+    skin_tripo = centres[head][skin_c]
+    skin_like = part == head
     resolved = np.array([(int(part[i]), int(vlabel[i])) in colour for i in range(n)]) & seen
     feat = np.c_[co * 100.0, vtex * 0.25]
-    tree = cKDTree(feat[resolved])
-    rcol = np.array([colour[(int(part[i]), int(vlabel[i]))] for i in np.nonzero(resolved)[0]])
+    skin_sheet = colour[(head, skin_c)]
+    resolved = np.array([(int(part[i]), int(vlabel[i])) in colour for i in range(n)]) & seen & ~skin_like
+    # Pieces on the head (hair, hats) borrow only from pieces on the head: hair at the nape must not
+    # take the collar's colour.
+    on_head_v = d["on_head"].astype(bool)
+    trees = {}
+    for key, m in (("head", resolved & on_head_v), ("body", resolved & ~on_head_v)):
+        idx = np.nonzero(m)[0]
+        if len(idx):
+            trees[key] = (cKDTree(feat[idx]), np.array([colour[(int(part[i]), int(vlabel[i]))] for i in idx]))
+    if "head" not in trees:
+        trees["head"] = trees["body"]
     borrowed = 0
     for p in np.unique(part):
         rows = np.nonzero(part == p)[0]
@@ -268,17 +320,105 @@ def main():
                     colour[(p, c)] = colour[(p, best)]
                 continue
             q = feat[r] if len(r) <= 400 else feat[r][np.linspace(0, len(r) - 1, 400).astype(int)]
-            _, nb = tree.query(q, k=12)
-            colour[(p, c)] = np.median(rcol[nb.ravel()], axis=0)
+            tree, rcol = trees["head" if on_head_v[r].mean() > 0.5 else "body"]
+            _, nb = tree.query(q, k=min(12, len(rcol)))
+            colour[(p, c)] = np.median(rcol[np.atleast_2d(nb).ravel()], axis=0)
             borrowed += 1
-    # 4. flat colours with a little of Tripo's lightness
+    # Texel labels, mode-filtered (a 5x5 median of the cluster index) so speckles take their surroundings.
+    lbl_img = np.full((H, W), 255, np.uint8)
+    for p in np.unique(part):
+        tx = pmap == p
+        if tx.any():
+            lbl_img[tx] = nearest(tex_lab[tx], centres[p])
+    lbl_med = cv2.medianBlur(lbl_img, 5)
+    # Weak clusters (few vertices saw the sheet): the part's main colour, shifted by their lightness.
+    for p in np.unique(part):
+        cen = centres[p]
+        if len(cen) < 2:
+            continue
+        tx = pmap == p
+        counts = np.bincount(lbl_img[tx], minlength=len(cen))[:len(cen)]
+        main = int(np.argmax(counts))
+        for c in range(len(cen)):
+            # Weak clusters, and clusters that only differ from the main one in lightness (hair strands,
+            # folds, Tripo's painted grime): one material, the main colour nudged by a fifth of the gap.
+            same = np.linalg.norm(cen[c][1:] - cen[main][1:]) < 12 and abs(cen[c][0] - cen[main][0]) < 25
+            if p != head and c != main and (support.get((p, c), 0) < 30 or same) and (p, main) in colour:
+                col = colour[(p, main)].copy()
+                col[0] += 0.2 * (cen[c][0] - cen[main][0])
+                colour[(p, c)] = col
+    # Skin that crept onto hair and hats: in a part whose main colour is not skin, a skin-coloured cluster
+    # is a registration slip (fringe strands under a brim sampling the forehead). It takes the main colour.
+    for p in np.unique(part):
+        cen = centres[p]
+        if p == head or len(cen) < 2:
+            continue
+        counts = np.bincount(lbl_img[pmap == p], minlength=len(cen))[:len(cen)]
+        main = int(np.argmax(counts))
+        if (p, main) not in colour or np.linalg.norm(colour[(p, main)] - skin_sheet) < 14:
+            continue
+        for c in range(len(cen)):
+            if c != main and (p, c) in colour and np.linalg.norm(colour[(p, c)] - skin_sheet) < 14:
+                col = colour[(p, main)].copy()
+                col[0] += 0.2 * (cen[c][0] - cen[main][0])
+                colour[(p, c)] = col
+    # Hair, hats and goggles (whole on the Head bone) are never skin: a skin-coloured cluster there takes
+    # the part's own non-skin colour, else the median of the other head pieces' non-skin colours.
+    on_head = d["on_head"].astype(bool)
+    linings = []
+    if len(d["render_face"]):
+        # not the skin linings that hang down the front of the neck under the head part
+        chin_py = d["render_face"][152][1]
+        front = co[:, 1] < co[part == head, 1].mean()
+        for p in np.unique(part[on_head]):
+            rows = part == p
+            if ((rpx[rows, 1] > chin_py + 0.4 * (chin_py - d["render_face"][10][1])) & front[rows]).any():
+                on_head[rows] = False
+                linings.append(p)
+                # a skin-coloured lining (Tripo's skin under the head part): its skin clusters are skin
+                for c in range(len(centres[p])):
+                    if np.linalg.norm(centres[p][c] - skin_tripo) < 15:
+                        colour[(p, c)] = skin_sheet
+    hparts = [p for p in np.unique(part[on_head])]
+    nonskin = [colour[(p, c)] for p in hparts for c in range(len(centres[p]))
+               if (p, c) in colour and np.linalg.norm(colour[(p, c)] - skin_sheet) >= 22]
+    for p in hparts:
+        own = [colour[(p, c)] for c in range(len(centres[p]))
+               if (p, c) in colour and np.linalg.norm(colour[(p, c)] - skin_sheet) >= 22]
+        for c in range(len(centres[p])):
+            if (p, c) in colour and np.linalg.norm(colour[(p, c)] - skin_sheet) < 22:
+                pool = own or nonskin
+                if pool:
+                    colour[(p, c)] = np.median(np.array(pool), axis=0)
+    # Necklines: garment points in front, below the chin, lying on the head part or a skin lining, where
+    # the sheet shows skin (a shirt edge Tripo raised above the collar) are skin.
+    neck = np.zeros(n, bool)
+    if len(d["render_face"]):
+        skin_parts = [head] + linings
+        dist = cKDTree(co[np.isin(part, skin_parts)]).query(co)[0]
+        neck = (~np.isin(part, skin_parts) & seen & (np.linalg.norm(vsheet - skin_sheet, axis=1) < 20)
+                & (dist < 0.03) & (rpx[:, 1] > d["render_face"][152][1])
+                & (co[:, 1] < co[part == head, 1].mean()))
+        # grow over the edge's unseen side (same conditions bar the sheet): two rings along triangles
+        near = ~np.isin(part, skin_parts) & (dist < 0.03) & (rpx[:, 1] > d["render_face"][152][1]) \
+            & (co[:, 1] < co[part == head, 1].mean())
+        for _ in range(2):
+            touch = np.zeros(n, bool)
+            touch[tri_v[neck[tri_v].any(1)].ravel()] = True
+            neck |= touch & near
+    lum = cv2.GaussianBlur(tex_lab[..., 0], (0, 0), 3)
+
+    # 4. flat colours with a little of Tripo's (blurred) lightness
     for p in np.unique(part):
         tx = pmap == p
         if not tx.any():
             continue
         lab = tex_lab[tx]
         cen = centres[p]
-        lbl = nearest(lab, cen)
+        lbl = lbl_med[tx].astype(int)
+        bad = lbl >= len(cen)
+        lbl[bad] = lbl_img[tx][bad]
+        light = lum[tx]
         fill = np.zeros_like(lab)
         for c in range(len(cen)):
             m = lbl == c
@@ -286,15 +426,40 @@ def main():
             if col is None:
                 col = np.median(vsheet[part == p], axis=0)
             fill[m] = col
-            fill[m, 0] += DETAIL * (lab[m, 0] - cen[c][0])
+            fill[m, 0] += DETAIL * (light[m] - cen[c][0])
         out[tx] = fill
         stats[int(p)] = len(cen)
     rgb = to_rgb(out.reshape(-1, 3)).reshape(H, W, 3).astype(np.float32)
+    skin = to_rgb(np.array([colour[(head, skin_c)]], np.float32))[0].astype(np.float32)
+    for t in np.nonzero(mouth[tri_v].any(1) | (neck[tri_v].sum(1) >= 2))[0]:
+        got = raster(px[t], W)
+        if got is not None:
+            rgb[got[0][:, 1], got[0][:, 0]] = skin
     bleed(rgb, (pmap >= 0).astype(np.float32))
     cv2.imwrite(str(a.out), cv2.cvtColor(np.clip(rgb, 0, 255).astype(np.uint8), cv2.COLOR_RGB2BGR))
     # Face texture (own unwrap): each vertex's flat cluster colour, then the sheet's face through the
     # warp, faded in from the oval.
     vlab = np.array([colour.get((int(part[i]), int(vlabel[i])), vsheet[i]) for i in range(n)], np.float32)
+    # Behind parted lips: head skin, so the drawn mouth on the lips reads closed.
+    if mouth.any() or neck.any():
+        vlab[mouth | neck] = colour[(head, skin_c)]
+    # The head part's darker cluster is hair only on the scalp (above the forehead or on the back half);
+    # elsewhere (neck, chest under an open collar) it is shaded skin.
+    if len(d["render_face"]):
+        rf = d["render_face"]
+        hy = co[part == head, 1]
+        back = co[:, 1] > hy.mean() + 0.3 * (hy.max() - hy.mean())  # behind the ears
+        scalp = (rpx[:, 1] < rf[10][1]) | (back & (rpx[:, 1] < rf[152][1]))
+        hide = (part == head) & (vlabel != skin_c) & ~scalp
+        vlab[hide] = colour[(head, skin_c)]
+        # The scalp takes the colour of the nearest hair (Tripo paints blond hair as near-skin, so its
+        # clusters cannot tell hair from skin there).
+        hv_ = np.nonzero(on_head)[0]
+        hcol = np.array([colour.get((int(part[i]), int(vlabel[i])), skin_sheet) for i in hv_])
+        ok = np.linalg.norm(hcol - skin_sheet, axis=1) >= 22
+        sc = np.nonzero((part == head) & scalp)[0]
+        if ok.any() and len(sc):
+            vlab[sc] = hcol[ok][cKDTree(co[hv_[ok]]).query(co[sc])[1]]
     vrgb = to_rgb(vlab).astype(np.float32)
     FR = 1024
     face_img = np.zeros((FR, FR, 3), np.float32)
@@ -321,8 +486,12 @@ def main():
     info = {"atlas": [W, H], "parts": int(len(np.unique(part))), "clusters": int(sum(stats.values())),
             "clusters_from_sheet": int(len(colour) - borrowed), "clusters_borrowed": borrowed,
             "seen_vertices": int(seen.sum()), "vertices": int(n), "pose_points": len(ids),
-            "face_warp": bool(face_v.any()), "face_pairs": int((pair != np.arange(len(pair))).sum()) if face_v.any() else 0, "face_vertices": fv.tolist(), "face_weight": face_w[fv].round(3).tolist()}
+            "mouth_vertices": int(mouth.sum()), "neckline_vertices": int(neck.sum()), "face_warp": bool(face_v.any()), "face_pairs": int((pair != np.arange(len(pair))).sum()) if face_v.any() else 0, "face_vertices": fv.tolist(), "face_weight": face_w[fv].round(3).tolist()}
     (a.npz.parent / f"{a.hero}-paint.json").write_text(json.dumps(info))
+    dbg = {f"{p}:{c}": [to_rgb(np.array([col], np.float32))[0].tolist(), int(support.get((p, c), 0)),
+                        to_rgb(np.array([centres[p][c]], np.float32))[0].tolist()] for (p, c), col in colour.items()}
+    dbg["_skin"] = int(skin_c)
+    (a.npz.parent / f"{a.hero}-colours.json").write_text(json.dumps(dbg))
     print("PAINT", a.hero, {k: v for k, v in info.items() if k not in ("face_vertices", "face_weight")})
 
 

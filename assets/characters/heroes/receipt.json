@@ -73,14 +73,17 @@
     2048
    ],
    "parts": 124,
-   "clusters": 257,
-   "clusters_from_sheet": 122,
-   "clusters_borrowed": 135,
-   "seen_vertices": 5530,
-   "vertices": 21938,
+   "clusters": 224,
+   "clusters_from_sheet": 110,
+   "clusters_borrowed": 114,
+   "seen_vertices": 5389,
+   "vertices": 21963,
    "pose_points": 17,
+   "mouth_vertices": 0,
+   "neckline_vertices": 0,
    "face_warp": true,
-   "face_pairs": 378
+   "face_pairs": 378,
+   "mouth_plug_vertices": 25
   },
   "clips": {
    "idle": {
@@ -113,8 +116,8 @@
    }
   },
   "height_m": 1.8119,
-  "triangles": 41890,
-  "glb_bytes": 6746016
+  "triangles": 41914,
+  "glb_bytes": 5095656
  },
  "hale": {
   "id": "hale",
@@ -184,14 +187,17 @@
     2048
    ],
    "parts": 52,
-   "clusters": 133,
-   "clusters_from_sheet": 80,
-   "clusters_borrowed": 53,
-   "seen_vertices": 4685,
-   "vertices": 22687,
+   "clusters": 125,
+   "clusters_from_sheet": 77,
+   "clusters_borrowed": 48,
+   "seen_vertices": 4756,
+   "vertices": 22712,
    "pose_points": 17,
+   "mouth_vertices": 0,
+   "neckline_vertices": 151,
    "face_warp": true,
-   "face_pairs": 378
+   "face_pairs": 378,
+   "mouth_plug_vertices": 25
   },
   "clips": {
    "idle": {
@@ -244,8 +250,8 @@
    }
   },
   "height_m": 1.8623,
-  "triangles": 45242,
-  "glb_bytes": 5222696
+  "triangles": 45266,
+  "glb_bytes": 4107028
  },
  "quer": {
   "id": "quer",
@@ -321,14 +327,17 @@
     2048
    ],
    "parts": 67,
-   "clusters": 164,
-   "clusters_from_sheet": 96,
-   "clusters_borrowed": 68,
-   "seen_vertices": 5694,
-   "vertices": 21077,
+   "clusters": 148,
+   "clusters_from_sheet": 90,
+   "clusters_borrowed": 58,
+   "seen_vertices": 5693,
+   "vertices": 21102,
    "pose_points": 17,
+   "mouth_vertices": 219,
+   "neckline_vertices": 8,
    "face_warp": true,
-   "face_pairs": 378
+   "face_pairs": 378,
+   "mouth_plug_vertices": 25
   },
   "clips": {
    "idle": {
@@ -365,8 +374,8 @@
    }
   },
   "height_m": 1.6224,
-  "triangles": 40707,
-  "glb_bytes": 6567328
+  "triangles": 40731,
+  "glb_bytes": 4899348
  },
  "lucian": {
   "id": "lucian",
@@ -458,14 +467,17 @@
     2048
    ],
    "parts": 97,
-   "clusters": 236,
-   "clusters_from_sheet": 98,
-   "clusters_borrowed": 137,
-   "seen_vertices": 8264,
-   "vertices": 45534,
+   "clusters": 188,
+   "clusters_from_sheet": 85,
+   "clusters_borrowed": 103,
+   "seen_vertices": 8561,
+   "vertices": 45559,
    "pose_points": 17,
+   "mouth_vertices": 0,
+   "neckline_vertices": 0,
    "face_warp": true,
-   "face_pairs": 378
+   "face_pairs": 378,
+   "mouth_plug_vertices": 25
   },
   "clips": {
    "idle": {
@@ -502,8 +514,8 @@
    }
   },
   "height_m": 1.9584,
-  "triangles": 90470,
-  "glb_bytes": 10127204
+  "triangles": 90494,
+  "glb_bytes": 8402292
  },
  "demon": {
   "id": "demon",

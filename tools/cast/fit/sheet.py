@@ -75,11 +75,11 @@ def hero_rows(hero, work, manifest, h=420):
     return rows
 
 
-def built_face_row(hero, work, manifest, h=420):
+def built_face_row(hero, work, manifest, h=420, sub="built", name="built GLB"):
     """Painting face with painting (red) and built-GLB (green) landmarks, then the built close-up."""
     src = load(REF / manifest[hero]["image"])
     ref = json.loads((work / "ref" / f"{hero}.json").read_text())
-    got = json.loads((work / "built" / f"{hero}-face.json").read_text())
+    got = json.loads((work / sub / f"{hero}-face.json").read_text())
     x0, y0, x1, y1 = ref["face_box"]
     crop = src[y0:y1, x0:x1].copy()
     plain = cv2.resize(crop, None, fx=h / crop.shape[0], fy=h / crop.shape[0], interpolation=cv2.INTER_CUBIC)
@@ -93,9 +93,9 @@ def built_face_row(hero, work, manifest, h=420):
             cv2.line(marked, pa, pb, (0, 220, 255), 1)
             cv2.circle(marked, pa, 2, (40, 40, 255), -1)
             cv2.circle(marked, pb, 2, (60, 255, 60), -1)
-    img = load(work / "built" / f"{hero}-face.png")
+    img = load(work / sub / f"{hero}-face.png")
     return np.hstack([label(plain, f"{hero}: painting"), label(marked, "red painting / green GLB"),
-                      label(fit_h(img, h), "built GLB")])
+                      label(fit_h(img, h), name)])
 
 
 def built_row(hero, work, manifest, h=900):
@@ -123,9 +123,17 @@ def main():
     p.add_argument("--work", type=Path, required=True)
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--built", action="store_true", help="sheet of built GLB renders instead of the fit")
+    p.add_argument("--godot", action="store_true", help="faces rendered by godot_faces.gd (game toon + ink)")
     a = p.parse_args()
     manifest = json.loads((REF / "manifest.json").read_text(encoding="utf-8"))
     a.out.mkdir(parents=True, exist_ok=True)
+    if a.godot:
+        faces = [built_face_row(h, a.work, manifest, sub="godot", name="Godot toon + ink") for h in a.heroes.split(",")]
+        w = max(f.shape[1] for f in faces)
+        faces = [np.pad(f, ((0, 0), (0, w - f.shape[1]), (0, 0))) for f in faces]
+        cv2.imwrite(str(a.out / "godot-faces.jpg"), np.vstack(faces), [cv2.IMWRITE_JPEG_QUALITY, 90])
+        print("SHEET godot")
+        return
     if a.built:
         rows = [built_row(h, a.work, manifest) for h in a.heroes.split(",")]
         cv2.imwrite(str(a.out / "built-sheet.jpg"), np.hstack(rows), [cv2.IMWRITE_JPEG_QUALITY, 88])

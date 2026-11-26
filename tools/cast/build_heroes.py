@@ -28,6 +28,8 @@ from bl_ext.user_default.mpfb.services.targetservice import TargetService
 
 sys.path.append(str(Path(__file__).resolve().parent))
 import wardrobe  # noqa: E402  (garment modelling, shares this Blender session)
+sys.path.append(str(Path(__file__).resolve().parent / "fit"))
+import face_paint  # noqa: E402  (painting projected onto the face texture)
 
 SYSTEM_SHA = "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
 RATIO = 6.5
@@ -365,6 +367,11 @@ def build(hero_id, spec, args, asset_root):
     paint(parts["brows"], hair_mat)
     solidify(parts["hair"], 0.006)
     skin = flat_material("Skin", spec["skin"], 0.62)
+    if landmark_fit:
+        # Still the full hm08 topology here, which face_map.json indexes.
+        painted = face_paint.paint_face(body, hero_id, spec["skin"],
+                                        Path(__file__).resolve().parents[2] / ".runtime" / "facefit" / "paint" / f"{hero_id}-skin.png")
+        skin = painted or skin
     activate(body)
     hide = body.modifiers.get("Hide helpers")
     if hide:
@@ -389,6 +396,7 @@ def build(hero_id, spec, args, asset_root):
     receipt["clips"] = retarget(src, rig, clips, 24)
     bpy.data.objects.remove(src, do_unlink=True)
     receipt["clipping"] = wardrobe.audit(body, garments, rig, list(clips))
+    receipt["painted_normals"] = face_paint.apply_flat_normals(body)
     meshes = [body, *parts.values(), *garments]
     for obj in meshes:
         obj.data.name = obj.name
@@ -411,7 +419,7 @@ def main():
     with args.system_pack.open("rb") as f:
         assert hashlib.file_digest(f, "sha256").hexdigest() == SYSTEM_SHA
     asset_root = Path(LocationService.get_user_data()).resolve()
-    extract(args.system_pack, asset_root, ("eyes/", "eyebrows/", "hair/", "clothes/"))
+    extract(args.system_pack, asset_root, ("eyes/", "eyebrows/", "eyelashes/", "hair/", "clothes/"))
     receipts = {}
     for hero_id, spec in HEROES.items():
         if args.only and hero_id not in args.only.split(","):

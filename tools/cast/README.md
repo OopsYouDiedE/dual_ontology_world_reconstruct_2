@@ -45,6 +45,8 @@ W() { cygpath -w "$1"; }
 | 标定 | `fit_heroes.py calibrate` | 渲染一个中性人体，记录人脸点落在哪些网格面上、人体点相对 MPFB 关节的偏差，写入 `fit/face_map.json` |
 | 身材 | `fit_heroes.py fit` 第一阶段 | 用有界最小二乘拟合头身、颈、躯干、肩宽、胯宽、腿长、臂长等形变目标，使肩、胯、膝、踝、眼和下巴位置与原画一致 |
 | 脸型 | `fit_heroes.py fit` 第二阶段 | 闭环：每轮渲染脸部，再用 MediaPipe 检测，按有限差分求雅可比后更新约 18 组成对的脸型参数；另有偏航、俯仰两个相机参数吸收原画的头部转向。只用合理范围内的参数，不用 `head-fat`、`cheek-volume` 一类会让脸变胖的目标 |
+| 游戏内闭环 | `fit_heroes.py facerig` + `fit/godot_loop.py` | 导出带脸型 blend shape 的脸模（身体、眼、眉、睫毛、头发都带形变），`godot_fitloop.gd` 在游戏描色渲染（AcademyStage 加墨线、toon）里把四个人放进同一个世界，用四个视口一起渲染，每轮一帧基准加每个参数一帧探针；Python 检测后更新，结果叠加回 `fit/<hero>.json` |
+| 原画投射 | `fit/face_paint.py`（生成时自动调用） | 468 个关键点在网格与原画之间建三角网，脸部每个顶点映射到原画像素，在 UV 里栅格化采样，把原画的眼线、睫毛、眉、鼻影、唇线、胡茬画进皮肤贴图；轮廓边缘和眉线以上逐渐淡出到原画肤色，避免把头发和帽檐阴影画上额头。脸部法线向正面压平 45%，让 toon 光像原画那样整块受光 |
 | 成品验收 | `fit/review_built.py` + `fit/sheet.py --built`；游戏描色渲染用 `fit/godot_faces.gd` + `fit/sheet.py --godot` | 加载生成的 GLB，取 idle 首帧做正面全身渲染，再按原画头部朝向做脸部特写，重新检测关键点并与原画叠图 |
 
 拟合结果写在 `fit/<hero>.json`（人种与年龄宏、目标权重、拟合前后误差），`build_heroes.py` 会自动读取。有拟合结果的角色不再强制 6.5 头身，只整体缩放到设定身高，头身比以原画为准，并记录在 `receipt.json`。
@@ -57,6 +59,16 @@ python -m venv --system-site-packages .runtime/facefit-venv   # 再装 mediapipe
 ```
 
 模型文件 `face_landmarker.task` 和 `pose_landmarker_heavy.task` 放在 `.runtime/facefit/models/`，从 MediaPipe 官方存储下载。
+
+## Tripo 重拓扑
+
+`reference/tripo/<hero>.glb` 是用原画在 Tripo 生成的四人高清模型（`.gdignore`，不进 Godot 导入）。只用它的形体，不用它的 UV 和贴图（Tripo 会把配色改掉）。`fit/retopo.py` 把零件合并、转成面向 -Y、按身高缩放，给单层布面加 1.2 cm 厚度，体素重建成封闭外壳，再用 QuadriFlow 生成约 2.5 万面的均匀四边面，最后沿法线吸附回 Tripo 外壳（限 2 cm）找回细节。QuadriFlow 拒绝时逐级加大体素（5 → 8 → 12 → 16 mm）；它偶尔直接崩溃，所以每个角色单独开一个 Blender 进程：
+
+```bash
+"/c/Program Files/Blender Foundation/Blender 4.2/blender.exe" -b --factory-startup --python tools/cast/fit/retopo.py -- --heroes quer
+```
+
+输出 `.runtime/facefit/retopo/<hero>.blend` 和线框图。绑定与贴图尚未接入生成流程。
 
 ## 已知待办
 

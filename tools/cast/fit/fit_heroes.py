@@ -40,21 +40,12 @@ REF = FIT.parent / "reference"
 WORK = ROOT / ".runtime" / "facefit"
 VENV = ROOT / ".runtime" / "facefit-venv" / "Scripts" / "python.exe"
 sys.path.append(str(FIT.parent))
+sys.path.append(str(FIT))
 from build_heroes import HEROES  # noqa: E402
+from face_params import (BROWS, EYE_L, EYE_R, EYES, FACE, FACE_LIMIT, FACE_PARAMS, FACE_W,  # noqa: E402,F401
+                         LIPS, NOSE, OVAL, pair, sym)
 
 # ------------------------------------------------------------------ MediaPipe landmark sets
-OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152,
-        148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]
-EYES = [33, 7, 163, 144, 145, 153, 154, 155, 133, 246, 161, 160, 159, 158, 157, 173,
-        263, 249, 390, 373, 374, 380, 381, 382, 362, 466, 388, 387, 386, 385, 384, 398]
-BROWS = [70, 63, 105, 66, 107, 55, 65, 52, 53, 46, 300, 293, 334, 296, 336, 285, 295, 282, 283, 276]
-NOSE = [1, 2, 98, 327, 168, 6, 197, 195, 5, 4, 48, 278, 129, 358, 64, 294]
-LIPS = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185,
-        78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308, 415, 310, 311, 312, 13, 82, 81, 80, 191]
-FACE = OVAL + EYES + BROWS + NOSE + LIPS
-# Forehead points of the oval hide under hats and fringes in the paintings; trust them less.
-FACE_W = {i: 0.35 for i in (10, 338, 297, 332, 284, 109, 67, 103, 54, 21, 251)}
-EYE_L, EYE_R = [263, 362, 386, 374], [33, 133, 159, 145]
 
 # MediaPipe pose index -> MPFB joint helper group (person's left = MakeHuman "l" = +X = image right).
 POSE = {11: "joint-l-shoulder", 12: "joint-r-shoulder", 23: "joint-l-upper-leg", 24: "joint-r-upper-leg",
@@ -63,9 +54,6 @@ ARMS = [((11, 13), ("joint-l-shoulder", "joint-l-elbow")), ((12, 14), ("joint-r-
         ((13, 15), ("joint-l-elbow", "joint-l-hand")), ((14, 16), ("joint-r-elbow", "joint-r-hand"))]
 
 
-def sym(name):
-    """Left/right target pair driven by one weight."""
-    return [f"l-{name}", f"r-{name}"]
 
 
 BODY_TARGETS = [
@@ -98,32 +86,6 @@ FACE_TARGETS = [
     ["mouth-lowerlip-height-incr"], ["mouth-lowerlip-height-decr"], ["mouth-angles-up"], ["mouth-angles-down"],
 ]
 
-# Closed-loop face parameters: (positive targets, negative targets); weight v in [-FACE_LIMIT, FACE_LIMIT].
-def pair(a, b, sided=False):
-    return (sym(a) if sided else [a], sym(b) if sided else [b])
-
-
-FACE_PARAMS = [
-    pair("head-scale-horiz-incr", "head-scale-horiz-decr"), pair("head-invertedtriangular", "head-square"),
-    pair("head-oval", "head-round"), pair("forehead-scale-vert-incr", "forehead-scale-vert-decr"),
-    pair("chin-width-incr", "chin-width-decr"), pair("chin-height-incr", "chin-height-decr"),
-    pair("cheek-bones-incr", "cheek-bones-decr", True),
-    pair("eye-scale-incr", "eye-scale-decr", True), pair("eye-trans-up", "eye-trans-down", True),
-    pair("eye-trans-out", "eye-trans-in", True), pair("eye-height2-incr", "eye-height2-decr", True),
-    pair("eyebrows-trans-up", "eyebrows-trans-down"),
-    pair("nose-scale-horiz-incr", "nose-scale-horiz-decr"), pair("nose-scale-vert-incr", "nose-scale-vert-decr"),
-    pair("nose-trans-up", "nose-trans-down"),
-    pair("mouth-scale-horiz-incr", "mouth-scale-horiz-decr"), pair("mouth-trans-up", "mouth-trans-down"),
-    pair("mouth-upperlip-height-incr", "mouth-upperlip-height-decr"),
-    # Outline freedom: jaw angle and drop, chin projection, temples, slimming of the cheeks only.
-    pair("chin-jaw-drop-incr", "chin-jaw-drop-decr"), pair("chin-prominent-incr", "chin-prominent-decr"),
-    pair("chin-bones-incr", "chin-bones-decr"), pair("forehead-temple-incr", "forehead-temple-decr"),
-    pair("head-triangular", "head-diamond"), pair("cheek-inner-incr", "cheek-inner-decr", True),
-    pair("eye-corner1-up", "eye-corner1-down", True), pair("eye-corner2-up", "eye-corner2-down", True),
-    pair("mouth-scale-vert-incr", "mouth-scale-vert-decr"), pair("mouth-lowerlip-height-incr", "mouth-lowerlip-height-decr"),
-    (sym("cheek-volume-decr"), []),
-]
-FACE_LIMIT = 1.0
 # Body targets that read as deformity well before they reach 1.
 BODY_CAP = {"neck-scale-vert-incr": 0.35, "neck-scale-vert-decr": 0.5, "head-scale-vert-decr": 0.5,
             "head-scale-horiz-decr": 0.5, "torso-vshape-decr": 0.5}
@@ -661,22 +623,189 @@ def compare_face(hero, det, fdet, f):
                                "face_box": det["face_box"]}))
 
 
+# ------------------------------------------------------------------ face rig for the Godot loop
+def evaluated_coords(obj):
+    bpy.context.view_layer.update()
+    m = obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).to_mesh()
+    co = np.empty(len(m.vertices) * 3)
+    m.vertices.foreach_get("co", co)
+    obj.evaluated_get(bpy.context.evaluated_depsgraph_get()).to_mesh_clear()
+    return co.reshape(-1, 3)
+
+
+def flat(name, color, image=None):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    shader = mat.node_tree.nodes["Principled BSDF"]
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in color]
+    shader.inputs["Base Color"].default_value = (*lin, 1.0)
+    shader.inputs["Roughness"].default_value = 0.6
+    if image:
+        tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
+        tex.image = bpy.data.images.load(str(image))
+        mat.node_tree.links.new(tex.outputs["Color"], shader.inputs["Base Color"])
+    return mat
+
+
+def rebuild(name, src, base, keys, keep=None, material=None):
+    """New mesh from `src` topology with positions `base`, shape keys `keys` {name: delta}, optional vertex mask."""
+    n = len(src.data.vertices)
+    keep = np.ones(n, bool) if keep is None else keep
+    remap = -np.ones(n, int)
+    remap[keep] = np.arange(keep.sum())
+    polys = [p for p in src.data.polygons if keep[list(p.vertices)].all()]
+    faces = [[int(remap[i]) for i in p.vertices] for p in polys]
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata([tuple(v) for v in base[keep]], [], faces)
+    if src.data.uv_layers.active:
+        uv_src = src.data.uv_layers.active.data
+        uv = mesh.uv_layers.new(name="UVMap").data
+        k = 0
+        for p in polys:
+            for li in p.loop_indices:
+                uv[k].uv = uv_src[li].uv
+                k += 1
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    obj.shape_key_add(name="Basis")
+    for kname, delta in keys.items():
+        kb = obj.shape_key_add(name=kname)
+        co = (base + delta)[keep]
+        kb.data.foreach_set("co", co.ravel())
+    if material:
+        mesh.materials.append(material)
+    for p in mesh.polygons:
+        p.use_smooth = True
+    return obj
+
+
+def export_facerig(hero, asset_root):
+    """Body, eyes, brows, lashes and hair at the current fit, with one shape key per face-parameter direction.
+
+    Keys 'p<k>' / 'n<k>' add +1 of FACE_PARAMS[k]'s positive / negative targets on top of the fit, assets
+    refitted, so Godot can move the face by blend-shape weights alone."""
+    spec = HEROES[hero]
+    fitd = json.loads((FIT / f"{hero}.json").read_text())
+    body = human(fitd["macro"], asset_root, fitd["skin_reference"], spec["brows"])
+    lashes = HumanService.add_mhclo_asset(asset_root / "eyelashes/eyelashes01/eyelashes01.mhclo", body,
+                                          asset_type="Eyelashes", subdiv_levels=0, material_type="GAMEENGINE")
+    HumanService.add_mhclo_asset(asset_root / f"hair/{spec['hair']}/{spec['hair']}.mhclo", body,
+                                 asset_type="Hair", subdiv_levels=0, material_type="GAMEENGINE")
+    keys = body.data.shape_keys.key_blocks
+    for name, value in fitd["targets"].items():
+        if name not in keys:
+            TargetService.load_target(body, TargetService.target_full_path(name), weight=0.0, name=name)
+        keys[name].slider_max = max(1.0, value)
+        keys[name].value = value
+    HumanService.refit(body)
+    assets = [o for o in bpy.data.objects if o.type == "MESH" and o is not body]
+    kinds = {}
+    for o in assets:
+        low = o.name.lower()
+        kinds[o] = ("brows" if "brow" in low else "lashes" if "lash" in low
+                    else "eyes" if ("low-poly" in low or "high-poly" in low) else "hair")
+    body_base, _ = keyed_coords(body)
+    asset_base = {o: evaluated_coords(o) for o in assets}
+    body_keys, asset_keys = {}, {o: {} for o in assets}
+    for k, (pos, neg) in enumerate(FACE_PARAMS):
+        for tag, names in (("p", pos), ("n", neg)):
+            if not names:
+                continue
+            for t in names:
+                if t not in keys:
+                    TargetService.load_target(body, TargetService.target_full_path(t), weight=0.0, name=t)
+                keys[t].slider_max = max(2.0, keys[t].slider_max)
+                keys[t].value += 1.0
+            HumanService.refit(body)
+            body_now, _ = keyed_coords(body)
+            body_keys[f"{tag}{k}"] = body_now - body_base
+            for o in assets:
+                asset_keys[o][f"{tag}{k}"] = evaluated_coords(o) - asset_base[o]
+            for t in names:
+                keys[t].value -= 1.0
+    HumanService.refit(body)
+    _, inside = body_faces(body)
+    mats = {"skin": flat("Skin", spec["skin"]), "hair": flat("Hair", spec["hair_color"]),
+            "lashes": flat("Lashes", (0.06, 0.05, 0.05)),
+            "eyes": flat("Eyes", (1, 1, 1), asset_root / f"eyes/materials/{spec.get('eyes', 'brown')}_eye.png")}
+    out = [rebuild(f"{hero}_body", body, body_base, body_keys, inside, mats["skin"])]
+    for o in assets:
+        kind = kinds[o]
+        out.append(rebuild(f"{hero}_{kind}", o, asset_base[o], asset_keys[o], None,
+                           mats["hair" if kind in ("hair", "brows") else kind]))
+    for o in [body, *assets]:
+        bpy.data.objects.remove(o, do_unlink=True)
+    rig_dir = WORK / "facerig"
+    rig_dir.mkdir(parents=True, exist_ok=True)
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in out:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = out[0]
+    bpy.ops.export_scene.gltf(filepath=str(rig_dir / f"{hero}.glb"), export_format="GLB", use_selection=True,
+                              export_morph=True, export_morph_normal=True, export_apply=False)
+    print("FACERIG", hero, len(body_keys), "keys", [o.name for o in out])
+
+
+# ------------------------------------------------------------------ Tripo 3D references
+TRIPO_YAWS = (0, 35, -35)
+
+
+def tripo_views(hero):
+    """Render the hero's Tripo model (reference/tripo/<hero>.glb) at TRIPO_YAWS and detect its landmarks.
+
+    Tripo meshes face +X and are 1 m tall; they are turned to face -Y like MPFB. Only the geometry is
+    used: Tripo repaints the costume, so colours keep coming from the painting."""
+    src = REF / "tripo" / f"{hero}.glb"
+    if not src.exists():
+        return None
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.import_scene.gltf(filepath=str(src))
+    meshes = [o for o in bpy.data.objects if o.type == "MESH"]
+    root = bpy.data.objects.new("TripoRoot", None)
+    bpy.context.scene.collection.objects.link(root)
+    for o in bpy.data.objects:
+        if o.parent is None and o is not root:
+            o.parent = root
+    root.rotation_euler = (0.0, 0.0, -math.pi / 2)
+    bpy.context.view_layer.update()
+    pts = np.array([tuple(o.matrix_world @ v.co) for o in meshes for v in o.data.vertices])
+    lo, hi = pts.min(0), pts.max(0)
+    height = hi[2] - lo[2]
+    out = {}
+    for yaw in TRIPO_YAWS:
+        png = WORK / f"tripo-{hero}-{yaw}.png"
+        render(png, (float((lo[0] + hi[0]) / 2), float((lo[2] + hi[2]) / 2)), height * 1.08, (1200, 2000),
+               yaw, 0.0, float((lo[1] + hi[1]) / 2))
+        out[str(yaw)] = detect(png, tag=f"tripo-{hero}-{yaw}")
+        print("TRIPO_VIEW", hero, yaw, "face" if out[str(yaw)]["face"] else "NO-FACE")
+    (REF / "landmarks" / f"{hero}-tripo.json").write_text(json.dumps(out))
+    return out
+
+
 # ------------------------------------------------------------------ main
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--system-pack", type=Path, required=True)
-    p.add_argument("mode", choices=("calibrate", "fit"))
+    p.add_argument("mode", choices=("calibrate", "fit", "facerig", "tripo"))
     p.add_argument("--only", default="")
     args = p.parse_args(sys.argv[sys.argv.index("--") + 1:])
     asset_root = Path(LocationService.get_user_data()).resolve()
     with zipfile.ZipFile(args.system_pack) as z:
         for entry in z.namelist():
-            if entry.startswith(("eyes/", "eyebrows/", "skins/")) and not entry.endswith("/"):
+            if entry.startswith(("eyes/", "eyebrows/", "eyelashes/", "skins/", "hair/")) and not entry.endswith("/"):
                 if not (asset_root / entry).exists():
                     z.extract(entry, asset_root)
     WORK.mkdir(parents=True, exist_ok=True)
     if args.mode == "calibrate":
         calibrate(asset_root)
+        return
+    if args.mode == "tripo":
+        for hero in (args.only.split(",") if args.only else ["detective", "hale", "quer", "lucian"]):
+            tripo_views(hero)
+        return
+    if args.mode == "facerig":
+        for hero in (args.only.split(",") if args.only else ["detective", "hale", "quer", "lucian"]):
+            export_facerig(hero, asset_root)
         return
     data = json.loads((FIT / "face_map.json").read_text())
     manifest = json.loads((REF / "manifest.json").read_text(encoding="utf-8"))

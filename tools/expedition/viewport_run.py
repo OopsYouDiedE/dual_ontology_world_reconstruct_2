@@ -21,7 +21,7 @@ PLANS = {
 
 def play(seed, out, lane):
     out.mkdir(parents=True, exist_ok=True)
-    run = Run(seed, scene_args=("--post-first-sortie",))
+    run = Run(seed, scene_args=("--post-first-sortie", "--lang=en"))
     evidence = []
     try:
         p = Player(run)

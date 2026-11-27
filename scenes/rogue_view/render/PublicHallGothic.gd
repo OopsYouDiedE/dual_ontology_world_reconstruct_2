@@ -746,22 +746,24 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	pendulum_pivot.position = Vector3(0.0, ceiling_y - 0.08, 0.0)
 	root.add_child(pendulum_pivot)
 
-	var cable_len := ceiling_y - 1.07
+	# Panthéon-proportioned low-clearance Foucault Pendulum: hovers cleanly at y=0.38m above the dial,
+	# keeping the 1.57m first-person sightline to the north lectern & rose window completely unobstructed.
+	var cable_len := ceiling_y - 0.38
 	var cable := MeshInstance3D.new()
 	var cable_mesh := CylinderMesh.new()
-	cable_mesh.top_radius = 0.010
-	cable_mesh.bottom_radius = 0.010
+	cable_mesh.top_radius = 0.008
+	cable_mesh.bottom_radius = 0.008
 	cable_mesh.height = cable_len
 	cable.mesh = cable_mesh
 	cable.position = Vector3(0.0, -cable_len * 0.5, 0.0)
 	cable.material_override = _mat_lead
 	pendulum_pivot.add_child(cable)
 
-	# Heavy turned brass bob + equatorial collar + plumb pointer
+	# Turned brass bob + equatorial collar + plumb pointer
 	pendulum_bob = Node3D.new()
 	pendulum_bob.name = "PendulumBob"
 	pendulum_bob.position = Vector3(0.0, -cable_len, 0.0)
-	pendulum_bob.scale = Vector3.ONE * 2.1
+	pendulum_bob.scale = Vector3.ONE * 1.18
 	pendulum_pivot.add_child(pendulum_bob)
 
 	var sphere := MeshInstance3D.new()
@@ -802,8 +804,31 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	drift_bezel.material_override = ring_mat
 	root.add_child(drift_bezel)
 
+	# Low brass Panthéon perimeter railing around the MeridianWell dial
+	var rail_r := well_r + 0.14
+	var rail_h := 0.74
+	var rail_ring := MeshInstance3D.new()
+	var rail_torus := TorusMesh.new()
+	rail_torus.inner_radius = rail_r - 0.018
+	rail_torus.outer_radius = rail_r + 0.018
+	rail_ring.mesh = rail_torus
+	rail_ring.position = Vector3(0.0, rail_h, 0.0)
+	rail_ring.material_override = _mat_brass
+	root.add_child(rail_ring)
+	for k in 8:
+		var ang := TAU * float(k) / 8.0
+		var post := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius = 0.022
+		pm.bottom_radius = 0.032
+		pm.height = rail_h
+		post.mesh = pm
+		post.position = Vector3(cos(ang) * rail_r, rail_h * 0.5, sin(ang) * rail_r)
+		post.material_override = _mat_brass
+		root.add_child(post)
+
 	essence_light = OmniLight3D.new()
-	essence_light.position = Vector3(0.0, 0.72, 0.0)
+	essence_light.position = Vector3(0.0, 0.52, 0.0)
 	essence_light.omni_range = 4.2
 	essence_light.shadow_enabled = false
 	root.add_child(essence_light)
@@ -851,6 +876,15 @@ func _build_functional_props(min_z: float) -> void:
 			var scroll := CylinderMesh.new(); scroll.height=0.68; scroll.top_radius=0.055; scroll.bottom_radius=0.055
 			var spindle := MeshInstance3D.new(); spindle.mesh=scroll; spindle.material_override=_mat_runner
 			spindle.position=Vector3(dx,1.16,0.15); spindle.rotation.x=PI/2; lec_root.add_child(spindle)
+		_glb_prop(lec_root, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(0.95, 1.08, -0.15), 0.3, 0.72, _mat_brass)
+
+	# KayKit CC0 Low-Poly Gothic/Academy furniture dressed in HallFinish Triplanar walnut
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/table_long.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 10.6), PI * 0.5, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.65, 0.0, min_z + 10.0), PI * 0.5, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.65, 0.0, min_z + 11.2), PI * 0.5, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/crates_stacked.glb", Vector3(pendulum_world_pos.x - 3.65, 0.0, min_z + 5.2), 0.25, 0.75, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chest.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 5.3), -0.35, 0.80, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/shelf_large.glb", Vector3(pendulum_world_pos.x - 3.95, 0.0, min_z + 10.6), PI * 0.5, 0.82, _mat_wood)
 
 func _reserve_station(pos: Vector3, footprint: Vector2, height: float) -> void:
 	station_bounds.append(Rect2(Vector2(pos.x,pos.z)-footprint*0.5,footprint))
@@ -871,6 +905,24 @@ func _camp_cot(parent: Node3D, pos: Vector3) -> void:
 			var axle := Node3D.new(); axle.position=Vector3(dx,0.25,0); axle.rotation.x=sign_z*0.98; cot.add_child(axle)
 			_box(axle,Vector3.ZERO,Vector3(0.055,0.91,0.055),_mat_wood)
 	_reserve_station(to_local(cot.global_position),Vector2(1.94,0.8),0.48)
+
+func _glb_prop(parent: Node3D, path: String, pos: Vector3, yaw := 0.0, uniform_scale := 1.0, mat_override: Material = null) -> Node3D:
+	if not ResourceLoader.exists(path):
+		return null
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return null
+	var inst := packed.instantiate() as Node3D
+	if inst == null:
+		return null
+	inst.position = pos
+	inst.rotation.y = yaw
+	inst.scale = Vector3.ONE * uniform_scale
+	if mat_override != null:
+		for child in inst.find_children("*", "MeshInstance3D", true, false):
+			(child as MeshInstance3D).material_override = mat_override
+	parent.add_child(inst)
+	return inst
 
 func _prop(parent: Node3D, recipe: String, pos: Vector3, yaw := 0.0, params := {}) -> Node3D:
 	var part := Factory.create(Factory.COMPONENT_ROOT + recipe.get_base_dir() + "/Recipe" + recipe.get_file() + ".gd")
@@ -1322,12 +1374,12 @@ func _process(delta: float) -> void:
 	if drifting:
 		var base_phase := _time * 1.15
 		var stutter := 0.055 * sin(_time * 3.45) * maxf(0.0, sin(base_phase))
-		var swing := 0.22 * sin(base_phase) + stutter
+		var swing := 0.115 * sin(base_phase) + stutter * 0.55
 		pendulum_pivot.rotation = Vector3(swing * sin(_drift_angle), _drift_angle + 0.04 * sin(_time * 0.4), swing * cos(_drift_angle))
 		if is_instance_valid(essence_light):
 			essence_light.light_energy = 1.15 + 0.35 * sin(_time * 4.0)
 	else:
-		var swing := 0.19 * sin(_time * 1.05)
+		var swing := 0.105 * sin(_time * 1.05)
 		var slow_precession := fmod(_time * 0.025, TAU)
 		pendulum_pivot.rotation = Vector3(swing * sin(slow_precession), slow_precession, swing * cos(slow_precession))
 		if is_instance_valid(essence_light):

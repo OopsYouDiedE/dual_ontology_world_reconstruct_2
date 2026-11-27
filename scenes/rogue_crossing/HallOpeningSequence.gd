@@ -13,6 +13,7 @@ signal finished
 const Cast = preload("res://scenes/rogue_crossing/ProductionCast.gd")
 const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
 const R18n = preload("res://scenes/components/shared/R18n.gd")
+const VoiceSynth = preload("res://scenes/components/shared/VoiceSynth.gd")
 
 # Offsets from the wake bed centre. The bed runs along X with its head against the west wall.
 const WAKE_EYE := Vector3(-0.72, 0.86, 0.0)
@@ -98,6 +99,7 @@ var _shift_from := 0.0
 
 var _top_lid: ColorRect
 var _bot_lid: ColorRect
+var _voice: Node
 var _fade_rect: ColorRect
 var _folio_label: Label
 var _speaker_label: Label
@@ -233,6 +235,12 @@ func _advance_beat() -> void:
 	_folio_label.text = str(beat.get("folio_en", beat.folio) if R18n.is_en() else beat.folio)
 	_speaker_label.text = str(beat.speaker) if not str(beat.speaker).is_empty() else R18n.pick("（意识渐清）", "(Vision clearing)")
 	_caption_label.text = str(beat.get("text_en", beat.text) if R18n.is_en() else beat.text)
+	if not is_instance_valid(_voice):
+		_voice = VoiceSynth.new()
+		add_child(_voice)
+	var spk := str(beat.speaker).to_lower()
+	if not spk.is_empty():
+		_voice.speak_line(_caption_label.text, spk)
 	# Hale talks with his hands on his lines and listens on the captain's.
 	if is_instance_valid(_hale_actor) and _hale_actor.has_meta("animation_player"):
 		(_hale_actor.get_meta("animation_player") as AnimationPlayer).play(&"signal" if beat.speaker == "Hale" else &"listen", 0.4)

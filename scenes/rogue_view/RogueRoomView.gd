@@ -90,6 +90,8 @@ func is_plan_open() -> bool:
 
 func set_hour(hour: float) -> void:
 	_hour = hour
+	if is_instance_valid(_gothic_hall) and _gothic_hall.has_method("set_hour"):
+		_gothic_hall.set_hour(_hour)
 	if is_instance_valid(_lights):
 		_lights.apply(_hour, "ember" if _template == "kitchen" else "ordinary")
 		if expedition_view and GeoBuilder.is_hall_shell(_template, _room_label):

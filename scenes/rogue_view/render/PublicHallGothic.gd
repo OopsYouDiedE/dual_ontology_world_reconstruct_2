@@ -7,6 +7,8 @@ extends Node3D
 ## hanging oil lanterns) and UV-mapped Notre-Dame-inspired stained glass.
 
 const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const StainedGlassShader := preload("res://scenes/rogue_view/render/StainedGlass.gdshader")
+const StainedGlassBeamShader := preload("res://scenes/rogue_view/render/StainedGlassBeam.gdshader")
 const RenderProfile := preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 const Factory := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
@@ -52,6 +54,9 @@ var _mat_wood: ShaderMaterial
 var _mat_runner: ShaderMaterial
 var _mat_lead: ShaderMaterial
 var _mat_brass: ShaderMaterial
+var _glass_mats: Array[ShaderMaterial] = []
+var _beam_mats: Array[ShaderMaterial] = []
+var _window_lights: Array[Dictionary] = []
 
 static func install(parent: Node3D, lot: Dictionary, floor_bounds: Rect2i, well: Rect2i, is_drifting: bool = true) -> Node3D:
 	var hall := preload("res://scenes/rogue_view/render/PublicHallGothic.gd").new()
@@ -141,12 +146,11 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	_build_blind_arcade(Vector3(cx, 0.0, max_z - 0.04), Vector3.RIGHT, Vector3.FORWARD, gable_len, 2.85, 4.55, 8)
 
 	# Clerestory oculi light each side lunette above the lancets and arcades.
-	var rose_glass := _make_stained_glass_mat(rose_south_tex, Color("6c92c9"), 0.6)
-	rose_glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var rose_glass := _make_stained_glass_mat(rose_south_tex, Color("6c92c9"), 0.65)
 	for bi in bays_z:
 		var oz := min_z + (float(bi) + 0.5) * bay_len
-		_build_lunette_oculus(Vector3(min_x + ARCADE_INSET + 0.06, SPRING_H + 1.15, oz), 1.0, rose_glass)
-		_build_lunette_oculus(Vector3(max_x - ARCADE_INSET - 0.06, SPRING_H + 1.15, oz), -1.0, rose_glass)
+		_build_lunette_oculus(Vector3(min_x + ARCADE_INSET + 0.06, SPRING_H + 1.15, oz), 1.0, rose_glass, rose_south_tex)
+		_build_lunette_oculus(Vector3(max_x - ARCADE_INSET - 0.06, SPRING_H + 1.15, oz), -1.0, rose_glass, rose_south_tex)
 
 	# 5. Bay-divided paving and the warm ochre runner framing the central axis (Hall 04 signature)
 	_build_floor_paving(min_x + ARCADE_INSET + PIER_INSET, max_x - ARCADE_INSET - PIER_INSET, min_z, bays_z, bay_len, well)
@@ -163,6 +167,7 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	if has_wings:
 		_build_watch_wings()
 		_build_brazier()
+	set_hour(4.0)
 
 func _pointed_arch_y(x_norm: float) -> float:
 	# Two circular segments meet at the pointed crown; vertical tangents at the imposts.
@@ -403,8 +408,30 @@ func _build_side_lancet_bay(wx: float, inward_x: float, z0: float, z1: float, va
 		for frac in [0.36, 0.68]:
 			_box(self, Vector3(wx + inward_x * 0.05, lerpf(dado_h, spring_y, frac), lcz), Vector3(0.03, 0.025, lhw * 2.0), _mat_lead)
 
+		# Colored Tyndall shaft streaming inward & downward from each lancet pane.
+		var u_slice_0 := (float(variant) + float(k) * 0.5) / 4.0
+		var u_slice_1 := (float(variant) + (float(k) + 1.0) * 0.5) / 4.0
+		var beam_len := 4.4 if win_top < SPRING_H else 7.2
+		var beam_dir := Vector3(inward_x, -0.46, 0.14).normalized()
+		_build_tyndall_beam(self, Vector3(wx + inward_x * 0.08, lerpf(dado_h, spring_y, 0.58), lcz), beam_dir,
+			0.36, 0.80, beam_len, tex, Color("6c98c4"), Vector4(u_slice_0, 0.08, u_slice_1, 0.92), 0.27,
+			"LancetBeam_%d_%d" % [variant, k])
+
 	frame_st.generate_normals()
 	_commit_mesh(frame_st, _mat_rib, "LancetFrames_%d" % variant)
+
+	var bay_spot := SpotLight3D.new()
+	bay_spot.position = Vector3(wx + inward_x * 0.36, spring_y, cz)
+	bay_spot.spot_range = 8.5 if win_top < SPRING_H else 12.0
+	bay_spot.spot_angle = 44.0
+	bay_spot.spot_attenuation = 1.1
+	bay_spot.light_specular = 0.0
+	bay_spot.shadow_enabled = false
+	if tex != null:
+		bay_spot.light_projector = tex
+	add_child(bay_spot)
+	bay_spot.look_at(bay_spot.position + Vector3(inward_x, -0.46, 0.14), Vector3.UP)
+	_window_lights.append({"light": bay_spot, "night": 0.42, "day": 1.85})
 
 func _build_end_gable_wall(min_x: float, max_x: float, wz: float, inward_z: float, is_north: bool, rose_tex: Texture2D, _lot: Dictionary) -> void:
 	var cx := (min_x + max_x) * 0.5
@@ -509,14 +536,34 @@ func _build_end_gable_wall(min_x: float, max_x: float, wz: float, inward_z: floa
 	tst.generate_normals()
 	_commit_mesh(tst, _mat_rib, "RoseTracery", rose_root)
 
-	# Soft cool stained-glass spill light inside the gable
+	# Soft stained-glass spill + projected rose light + Tyndall god-ray shaft
 	var rlight := OmniLight3D.new()
 	rlight.position = Vector3(0.0, -0.1, inward_z * 0.9)
 	rlight.light_color = Color("9abce8") if is_north else Color("d8b896")
 	rlight.light_energy = 0.55
+	rlight.light_specular = 0.0
 	rlight.omni_range = 6.5
 	rlight.shadow_enabled = false
 	rose_root.add_child(rlight)
+	_window_lights.append({"light": rlight, "night": 0.35, "day": 1.15, "tint": Color("9abce8") if is_north else Color("e5c197")})
+
+	var rose_dir := Vector3(0.0, -0.46, inward_z).normalized()
+	_build_tyndall_beam(rose_root, Vector3(0.0, -0.06, inward_z * 0.16), rose_dir,
+		1.42, 2.45, 11.4, rose_tex, Color("7fa6de") if is_north else Color("d8b088"),
+		Vector4(0.0, 0.0, 1.0, 1.0), 0.34, "RoseBeam_" + ("North" if is_north else "South"))
+
+	var rose_spot := SpotLight3D.new()
+	rose_spot.position = Vector3(0.0, 0.0, inward_z * 0.45)
+	rose_spot.spot_range = 18.0
+	rose_spot.spot_angle = 40.0
+	rose_spot.spot_attenuation = 1.05
+	rose_spot.light_specular = 0.0
+	rose_spot.shadow_enabled = false
+	if rose_tex != null:
+		rose_spot.light_projector = rose_tex
+	rose_root.add_child(rose_spot)
+	rose_spot.look_at(rose_spot.position + rose_dir, Vector3.UP)
+	_window_lights.append({"light": rose_spot, "night": 0.65, "day": 2.6, "tint": Color("9abce8") if is_north else Color("f0cba0")})
 
 func _build_floor_runner(cx: float, min_z: float, max_z: float, span: float) -> void:
 	for side: float in [-1.0, 1.0]:
@@ -561,7 +608,7 @@ func _build_blind_arcade(center: Vector3, along: Vector3, inward: Vector3, lengt
 	recess.generate_normals(); _commit_mesh(recess, _mat_vault, "BlindArcadeField")
 
 ## Round clerestory window with quatrefoil tracery inside a side lunette.
-func _build_lunette_oculus(pos: Vector3, inward_x: float, glass: Material) -> void:
+func _build_lunette_oculus(pos: Vector3, inward_x: float, glass: Material, beam_tex: Texture2D = null) -> void:
 	var root := Node3D.new()
 	root.name = "LunetteOculus"
 	root.position = pos
@@ -587,6 +634,8 @@ func _build_lunette_oculus(pos: Vector3, inward_x: float, glass: Material) -> vo
 			loop.append(Vector3(c.x, c.y, 0.04))
 		_sweep_rib(tracery, loop, ring[2])
 	tracery.generate_normals(); _commit_mesh(tracery, _mat_rib, "OculusTracery", root)
+	_build_tyndall_beam(root, Vector3(0.0, 0.0, 0.08), Vector3(0.0, -0.40, 1.0).normalized(),
+		0.46, 0.92, 4.6, beam_tex, Color("6c92c9"), Vector4(0.0, 0.0, 1.0, 1.0), 0.28, "OculusBeam")
 
 ## Pale stone bands divide the nave floor at every pier, framed by two edge borders.
 func _build_floor_paving(x0: float, x1: float, min_z: float, bays_z: int, bay_len: float, well: Rect2i) -> void:
@@ -908,15 +957,111 @@ func _build_brazier() -> void:
 	_pool(pan.position+Vector3.UP,Color("ffb169"),2.6,4.4)
 	_reserve_station(pan.position,Vector2(1.05,1.05),0.7)
 
-func _make_stained_glass_mat(tex: Texture2D, fallback: Color, _emit_gain: float) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	if tex != null:
-		m.albedo_texture = tex
-		m.albedo_color = Color(0.58, 0.54, 0.62, 1.0)
-	else:
-		m.albedo_color = fallback
+func _make_stained_glass_mat(tex: Texture2D, fallback: Color, emit_gain: float) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = StainedGlassShader
+	m.set_shader_parameter("glass_tex", tex)
+	m.set_shader_parameter("has_tex", tex != null)
+	m.set_shader_parameter("fallback_color", fallback)
+	m.set_shader_parameter("emit_gain", maxf(emit_gain, 0.45))
+	_glass_mats.append(m)
 	return m
+
+func _build_tyndall_beam(
+	parent: Node3D,
+	origin: Vector3,
+	dir: Vector3,
+	start_r: float,
+	end_r: float,
+	length: float,
+	tex: Texture2D,
+	fallback: Color,
+	uv_rect: Vector4,
+	base_intensity: float,
+	beam_name: String
+) -> void:
+	var n_dir := dir.normalized()
+	var ref_up := Vector3.UP if absf(n_dir.y) < 0.92 else Vector3.RIGHT
+	var side := n_dir.cross(ref_up).normalized()
+	var up := side.cross(n_dir).normalized()
+
+	var cone_mat := ShaderMaterial.new()
+	cone_mat.shader = StainedGlassBeamShader
+	cone_mat.render_priority = 105
+	cone_mat.set_shader_parameter("stained_tex", tex)
+	cone_mat.set_shader_parameter("has_tex", tex != null)
+	cone_mat.set_shader_parameter("fallback_color", fallback)
+	cone_mat.set_shader_parameter("uv_rect", uv_rect)
+	cone_mat.set_shader_parameter("beam_intensity", base_intensity)
+	cone_mat.set_shader_parameter("radial_wrap", 1.0)
+	cone_mat.set_meta("base_intensity", base_intensity)
+	_beam_mats.append(cone_mat)
+
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var segs := 12
+	for i in segs:
+		var u0 := float(i) / float(segs)
+		var u1 := float(i + 1) / float(segs)
+		var a0 := TAU * u0
+		var a1 := TAU * u1
+		var d0 := side * cos(a0) + up * sin(a0)
+		var d1 := side * cos(a1) + up * sin(a1)
+		var p0 := origin + d0 * start_r
+		var p1 := origin + d1 * start_r
+		var p2 := origin + n_dir * length + d1 * end_r
+		var p3 := origin + n_dir * length + d0 * end_r
+		var n := (d0 + d1).normalized()
+		_add_uv_quad(st, p0, p1, p2, p3, Vector2(u0, 0.0), Vector2(u1, 0.0), Vector2(u1, 1.0), Vector2(u0, 1.0), n)
+	var cone := MeshInstance3D.new()
+	cone.name = beam_name
+	cone.mesh = st.commit()
+	cone.material_override = cone_mat
+	cone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	cone.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	parent.add_child(cone)
+
+	# Crossed internal ray ribbons give volumetric depth from shallow camera angles.
+	var rib_mat := cone_mat.duplicate() as ShaderMaterial
+	rib_mat.set_shader_parameter("radial_wrap", 0.0)
+	rib_mat.set_shader_parameter("beam_intensity", base_intensity * 0.65)
+	rib_mat.set_meta("base_intensity", base_intensity * 0.65)
+	_beam_mats.append(rib_mat)
+	var rst := SurfaceTool.new()
+	rst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for axis: Vector3 in [side, up]:
+		var n := axis.cross(n_dir).normalized()
+		var p0 := origin - axis * start_r * 0.9
+		var p1 := origin + axis * start_r * 0.9
+		var p2 := origin + n_dir * length + axis * end_r * 0.9
+		var p3 := origin + n_dir * length - axis * end_r * 0.9
+		_add_uv_quad(rst, p0, p1, p2, p3, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0), n)
+	var ribs := MeshInstance3D.new()
+	ribs.name = beam_name + "_Core"
+	ribs.mesh = rst.commit()
+	ribs.material_override = rib_mat
+	ribs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	ribs.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	parent.add_child(ribs)
+
+func set_hour(hour: float) -> void:
+	var daylight := smoothstep(0.0, 1.0, maxf(0.0, cos((fposmod(hour, 24.0) - 12.0) * PI / 12.0)))
+	var sky_tint := Color("7fa8de").lerp(Color("ffeac2"), daylight)
+	for mat in _glass_mats:
+		mat.set_shader_parameter("daylight", daylight)
+		mat.set_shader_parameter("exterior_tint", sky_tint)
+	var beam_scale := lerpf(0.62, 1.15, daylight)
+	for mat in _beam_mats:
+		var base := float(mat.get_meta("base_intensity", 0.35))
+		mat.set_shader_parameter("beam_tint", sky_tint)
+		mat.set_shader_parameter("beam_intensity", base * beam_scale)
+	for entry in _window_lights:
+		var light := entry.get("light") as Light3D
+		if not is_instance_valid(light):
+			continue
+		var tint: Color = entry.get("tint", sky_tint)
+		light.light_color = tint.lerp(sky_tint, 0.55)
+		light.light_energy = lerpf(float(entry.get("night", 0.25)), float(entry.get("day", 1.35)), daylight)
 
 static func _load_texture(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):

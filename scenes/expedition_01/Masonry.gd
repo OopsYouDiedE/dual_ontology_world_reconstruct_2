@@ -21,17 +21,17 @@ func mat(k: String) -> Material:
 		RenderProfile.apply_material_preset(std, k)
 		materials[k] = std
 		return std
-	var m := ShaderMaterial.new()
-	m.shader = HALL_FINISH
-	m.set_shader_parameter("toon_on", true)
-	m.set_shader_parameter("toon_strength", 0.86)
-	m.set_shader_parameter("pigment", Color(COLORS[k]))
 	var preset: Dictionary = RenderProfile.MATERIAL_PRESETS.get(k, {})
-	m.set_shader_parameter("surface_roughness", float(preset.get("roughness", 0.84)))
-	m.set_shader_parameter("grain", 0.045 if k in ["brass", "iron"] else 0.075)
-	m.set_shader_parameter("wood", 1.0 if k in ["book", "door_green"] else 0.0)
-	m.set_shader_parameter("pale_wash", 0.14 if k in ["chalk", "trim"] else (0.08 if k == "floor" else 0.0))
-	m.set_shader_parameter("emission_gain", float(preset.get("emission_energy", 0.0)))
+	var m := RenderProfile.make_hall_finish(
+		Color(COLORS[k]),
+		float(preset.get("roughness", 0.84)),
+		0.045 if k in ["brass", "iron"] else 0.075,
+		k in ["book", "door_green"],
+		false,
+		0.0,
+		0.14 if k in ["chalk", "trim"] else (0.08 if k == "floor" else 0.0),
+		float(preset.get("emission_energy", 0.0))
+	)
 	materials[k] = m
 	return m
 func box(id:String,p:Vector3,size:Vector3,k:String="chalk",solid:=true,yaw:=0.0)->Node3D:

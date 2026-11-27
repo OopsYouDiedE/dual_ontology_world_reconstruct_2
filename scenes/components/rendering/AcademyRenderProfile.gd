@@ -2,6 +2,8 @@ extends RefCounted
 ## Unified PBR material presets, regional atmosphere grading, and soft light
 ## attenuation shared by Expedition-01 Masonry/Lighting and Rogue RoomLighting.
 
+const HALL_FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+
 const MATERIAL_PRESETS := {
 	"brass": {"metallic": 0.82, "roughness": 0.30, "specular": 0.65},
 	"iron": {"metallic": 0.72, "roughness": 0.44, "specular": 0.55},
@@ -84,3 +86,28 @@ static func atmosphere_for(region_id: String, darkroom_mix: float) -> Dictionary
 		fog_dens = lerpf(fog_dens, 0.0085, darkroom_mix)
 		amb = lerpf(amb, 0.09, darkroom_mix)
 	return {"fog_color": fog_col, "fog_density": fog_dens, "ambient": amb}
+
+## Shared Blue Prince painterly toon shader builder for Hall and Expedition opaque surfaces.
+static func make_hall_finish(
+	pigment: Color,
+	roughness: float = 0.84,
+	grain: float = 0.075,
+	is_wood: bool = false,
+	is_runner: bool = false,
+	vault_fill: float = 0.0,
+	pale_wash: float = 0.0,
+	emission_gain: float = 0.0
+) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = HALL_FINISH
+	m.set_shader_parameter("toon_on", true)
+	m.set_shader_parameter("toon_strength", 0.86)
+	m.set_shader_parameter("pigment", pigment)
+	m.set_shader_parameter("surface_roughness", roughness)
+	m.set_shader_parameter("grain", grain)
+	m.set_shader_parameter("wood", 1.0 if is_wood else 0.0)
+	m.set_shader_parameter("runner", 1.0 if is_runner else 0.0)
+	m.set_shader_parameter("vault_fill", vault_fill)
+	m.set_shader_parameter("pale_wash", pale_wash)
+	m.set_shader_parameter("emission_gain", emission_gain)
+	return m

@@ -392,7 +392,7 @@ func play_ui(kind:String,db:float)->void:
 	chime.stream=sounds[kind];chime.volume_db=db;chime.play()
 func build_lantern(offset:Vector3)->Node3D:
 	var prop:=Node3D.new();hale.add_child(prop);prop.position=offset
-	var frame:=StandardMaterial3D.new();frame.albedo_color=Color("795732");frame.metallic=.55;frame.roughness=.54
+	var frame:=RenderProfile.make_hall_finish(Color("795732"),.54,.045)
 	var flame:=StandardMaterial3D.new();flame.albedo_color=Color("ffbf6c");flame.emission_enabled=true;flame.emission=Color("ffaf51");flame.emission_energy_multiplier=2.5
 	for y in [-.066,.066]:
 		var cap:=MeshInstance3D.new();cap.mesh=BoxMesh.new();cap.mesh.size=Vector3(.15,.024,.115);cap.material_override=frame;prop.add_child(cap);cap.position.y=y
@@ -419,6 +419,7 @@ func light_stage()->void:
 	var ink:=Stage.ink()
 	if ink!=null:add_child(ink)
 	w.environment=e;add_child(w)
+	if Stage.is_compatibility():add_child(Stage.create_compatibility_fill_light())
 	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-33,0);sun.light_energy=.31;sun.light_color=Color("fff1dc");sun.shadow_enabled=true
 	sun.directional_shadow_max_distance=64;sun.directional_shadow_mode=DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS;sun.directional_shadow_blend_splits=true
 	sun.shadow_bias=.025;sun.shadow_normal_bias=.55;sun.light_angular_distance=.45;add_child(sun)

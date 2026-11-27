@@ -7,6 +7,7 @@ extends Node3D
 ## hanging oil lanterns) and UV-mapped Notre-Dame-inspired stained glass.
 
 const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const RenderProfile := preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 const Factory := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
 
@@ -50,7 +51,7 @@ var _mat_plinth: ShaderMaterial
 var _mat_wood: ShaderMaterial
 var _mat_runner: ShaderMaterial
 var _mat_lead: ShaderMaterial
-var _mat_brass: StandardMaterial3D
+var _mat_brass: ShaderMaterial
 
 static func install(parent: Node3D, lot: Dictionary, floor_bounds: Rect2i, well: Rect2i, is_drifting: bool = true) -> Node3D:
 	var hall := preload("res://scenes/rogue_view/render/PublicHallGothic.gd").new()
@@ -61,17 +62,7 @@ static func install(parent: Node3D, lot: Dictionary, floor_bounds: Rect2i, well:
 	return hall
 
 func _make_finish(hex: String, roughness := 0.84, grain := 0.075, is_wood := false, is_runner := false, vault_fill := 0.0) -> ShaderMaterial:
-	var m := ShaderMaterial.new()
-	m.shader = HallFinish
-	m.set_shader_parameter("pigment", Color(hex))
-	m.set_shader_parameter("surface_roughness", roughness)
-	m.set_shader_parameter("grain", grain)
-	m.set_shader_parameter("wood", 1.0 if is_wood else 0.0)
-	m.set_shader_parameter("runner", 1.0 if is_runner else 0.0)
-	m.set_shader_parameter("vault_fill", vault_fill)
-	m.set_shader_parameter("toon_on", true)
-	m.set_shader_parameter("toon_strength", 0.86)
-	return m
+	return RenderProfile.make_hall_finish(Color(hex), roughness, grain, is_wood, is_runner, vault_fill)
 
 func _init_materials() -> void:
 	# Locked Hall 04 cool slate-blue stone + warm walnut + ochre runner palette
@@ -88,10 +79,7 @@ func _init_materials() -> void:
 	_mat_rib.set_shader_parameter("pale_wash", 0.13)
 	_mat_vault.set_shader_parameter("pale_wash", 0.10)
 
-	_mat_brass = StandardMaterial3D.new()
-	_mat_brass.albedo_color = Color("cfa04c")
-	_mat_brass.metallic = 0.72
-	_mat_brass.roughness = 0.28
+	_mat_brass = RenderProfile.make_hall_finish(Color("cfa04c"), 0.28, 0.045)
 
 func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	_init_materials()
@@ -701,10 +689,7 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	ring_mesh.outer_radius = well_r
 	drift_bezel.mesh = ring_mesh
 	drift_bezel.position = Vector3(0.0, 0.022, 0.0)
-	var ring_mat := StandardMaterial3D.new()
-	ring_mat.roughness = 0.35
-	ring_mat.metallic = 0.5
-	ring_mat.emission_enabled = true
+	var ring_mat := RenderProfile.make_hall_finish(Color("4d8f75"), 0.35, 0.045, false, false, 0.0, 0.0, 0.22)
 	drift_bezel.material_override = ring_mat
 	root.add_child(drift_bezel)
 
@@ -717,11 +702,10 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 
 func set_drift_state(is_drifting: bool) -> void:
 	drifting = is_drifting
-	if is_instance_valid(drift_bezel) and drift_bezel.material_override is StandardMaterial3D:
-		var rm := drift_bezel.material_override as StandardMaterial3D
-		rm.albedo_color = Color("9e3a2b") if drifting else Color("4d8f75")
-		rm.emission = rm.albedo_color
-		rm.emission_energy_multiplier = 0.45 if drifting else 0.22
+	if is_instance_valid(drift_bezel) and drift_bezel.material_override is ShaderMaterial:
+		var rm := drift_bezel.material_override as ShaderMaterial
+		rm.set_shader_parameter("pigment", Color("9e3a2b") if drifting else Color("4d8f75"))
+		rm.set_shader_parameter("emission_gain", 0.45 if drifting else 0.22)
 	if is_instance_valid(essence_light):
 		essence_light.light_color = Color("f08a62") if drifting else Color("ffe0a3")
 		essence_light.light_energy = 1.25 if drifting else 0.90

@@ -1,5 +1,6 @@
 extends Node3D
 ## Projected hearing works vertically through the open shaft. No sound crosses its exit.
+const RenderProfile:=preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const CENTER:=Vector3(61,-9.9,10.1)
 const BAIT:=CENTER+Vector3(5,0,-7)
 var state:="sleep"
@@ -26,8 +27,8 @@ func _ready()->void:
 	var ring:=TorusMesh.new();ring.inner_radius=.88;ring.outer_radius=1.;pulse.mesh=ring;pulse.position.y=.08;pulse.material_override=finish(Color(.9,.025,.025,.65));add_child(pulse)
 	# A small wooden travel metronome. Spawn it beyond the camera near plane,
 	# not at the eye position, to avoid a close-up flash across the viewport.
-	var wood:=StandardMaterial3D.new();wood.albedo_color=Color("462c20");wood.roughness=.78
-	var brass:=StandardMaterial3D.new();brass.albedo_color=Color("82633e");brass.metallic=.36;brass.roughness=.72
+	var wood:=RenderProfile.make_hall_finish(Color("462c20"),.78,.06,true)
+	var brass:=RenderProfile.make_hall_finish(Color("82633e"),.72,.045)
 	add_child(lure);lure.top_level=true;lure.hide()
 	lure_piece(Vector3(0,.055,0),Vector3(.084,.11,.073),wood)
 	lure_piece(Vector3(0,.123,0),Vector3(.054,.032,.063),wood)

@@ -111,6 +111,8 @@ func _ready() -> void:
 	if expedition_view:
 		$RoomViewport/WorldEnvironment.environment = Stage.environment()
 		Stage.tune_viewport(_viewport)
+		if Stage.is_compatibility():
+			_viewport.add_child(Stage.create_compatibility_fill_light())
 		resized.connect(_fill_window)
 		_fill_window()
 		get_window().focus_exited.connect(_release_mouse)

@@ -12,6 +12,7 @@ const ACCENT := UiStyle.ACCENT
 const INK := UiStyle.INK
 const NODE_RADIUS := 44.0
 const DEADZONE := 34.0
+const OUTER_RADIUS := 235.0
 var options:Array=[]          # [{id,title,hint,cost?}]
 var index:=0
 var open:=false
@@ -70,6 +71,8 @@ func _hit_option(local_pos:Vector2)->int:
 	var dist:=rel.length()
 	if dist<DEADZONE:
 		return -2 # inside center cancel deadzone
+	if dist>OUTER_RADIUS:
+		return -1 # background outside the radial ring
 	var count:=options.size()
 	var span:=TAU/float(maxi(count,1))
 	# Shift angle so sector 0 is centered at -PI/2 (12 o'clock)

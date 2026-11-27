@@ -842,7 +842,7 @@ func order_options()->Array:
 				items.append({"id":"lamp_toggle","title":R18n.pick("让他亮灯","Raise Lantern"),"hint":R18n.pick("请他重新点亮提灯照亮后方。","Have him raise his lantern to light the rear.")})
 			else:
 				items.append({"id":"lamp_toggle","title":R18n.pick("让他熄灯","Douse Lantern"),"hint":R18n.pick("遵守独灯律，由你来掌灯。","Observe Single-Lamp Rule—you carry the light.")})
-	if hale_in_earshot():
+	if hale_in_earshot() or contracts.trust>=2:
 		items.append({"id":"advise","title":R18n.pick("察看周围","Check Surroundings"),"hint":R18n.pick("请他听声辨位并汇报当前风险。","Ask what he hears, sees, or warns about.")})
 	if hale.position.distance_to(walker.position)<5.5 and not hale_busy():
 		items.append({"id":"check_in","title":R18n.pick("简短交谈","Talk to Hale"),"hint":R18n.pick("与 Hale 核对眼下处境。","Check in with Hale about the situation.")})

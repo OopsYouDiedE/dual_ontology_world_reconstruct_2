@@ -14,6 +14,7 @@ const Cast = preload("res://scenes/rogue_crossing/ProductionCast.gd")
 const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
 const R18n = preload("res://scenes/components/shared/R18n.gd")
 const VoiceSynth = preload("res://scenes/components/shared/VoiceSynth.gd")
+const Captions = preload("res://scenes/expedition_01/ExpeditionCaptions.gd")
 
 # Offsets from the wake bed centre. The bed runs along X with its head against the west wall.
 const WAKE_EYE := Vector3(-0.72, 0.86, 0.0)
@@ -104,6 +105,7 @@ var _fade_rect: ColorRect
 var _folio_label: Label
 var _speaker_label: Label
 var _caption_label: Label
+var _captions: VBoxContainer
 var _hint_label: Label
 
 func _ready() -> void:
@@ -136,57 +138,26 @@ func _build_overlay() -> void:
 	_bot_lid.anchor_top = 0.5
 	_bot_lid.anchor_bottom = 1.0
 
-	var margin := MarginContainer.new()
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_theme_constant_override("margin_left", 64)
-	margin.add_theme_constant_override("margin_right", 64)
-	margin.add_theme_constant_override("margin_bottom", 46)
-	add_child(margin)
-	margin.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	# Grow upward from the bottom edge so the speaker and the line stay on screen.
-	margin.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	# Unified with Chapter 1 ExpeditionCaptions.gd (exact centered pill for speech, slanted outline for inner thought)
+	var font := UiStyle.make_font()
+	_captions = Captions.new()
+	add_child(_captions)
+	_captions.setup(font)
 
-	var plate := PanelContainer.new()
-	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	# Same caption plate and typeface as the expedition subtitles.
-	style.bg_color = Color(.035, .029, .023, .89)
-	style.border_color = UiStyle.ACCENT
-	style.border_width_left = 3
-	style.set_corner_radius_all(4)
-	style.set_content_margin_all(16)
-	plate.add_theme_stylebox_override("panel", style)
-	margin.add_child(plate)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 6)
-	plate.add_child(vbox)
-
-	_folio_label = Label.new()
-	_folio_label.add_theme_font_size_override("font_size", 12)
-	_folio_label.add_theme_color_override("font_color", Color("d8b97b"))
-	vbox.add_child(_folio_label)
-
-	_speaker_label = Label.new()
-	_speaker_label.add_theme_font_size_override("font_size", 17)
-	_speaker_label.add_theme_color_override("font_color", Color("f2ca82"))
-	vbox.add_child(_speaker_label)
-
-	_caption_label = Label.new()
-	_caption_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_caption_label.add_theme_font_size_override("font_size", 19)
-	_caption_label.add_theme_color_override("font_color", Color("f6ebd6"))
-	vbox.add_child(_caption_label)
+	# Keep hidden compatibility references so external scripts inspecting labels stay valid
+	_folio_label = Label.new(); _folio_label.visible = false; add_child(_folio_label)
+	_speaker_label = Label.new(); _speaker_label.visible = false; add_child(_speaker_label)
+	_caption_label = Label.new(); _caption_label.visible = false; add_child(_caption_label)
 
 	_hint_label = Label.new()
 	_hint_label.text = R18n.pick("Space / E · 下一句     |     Esc · 跳过开场", "Space / E · Next     |     Esc · Skip opening")
-	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_hint_label.add_theme_font_size_override("font_size", 12)
-	_hint_label.add_theme_color_override("font_color", Color("a89c88"))
-	vbox.add_child(_hint_label)
-	var font := UiStyle.make_font()
-	for label: Label in [_folio_label, _speaker_label, _caption_label, _hint_label]:
-		label.add_theme_font_override("font", font)
+	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_hint_label.offset_bottom = -18.0
+	_hint_label.offset_top = -40.0
+	_hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiStyle.style_label(_hint_label, font, 12, Color("b9a68a"), 3)
+	add_child(_hint_label)
 
 ## `shift` receives the essence instability (0–1) each frame while the sequence runs.
 func start(viewport: SubViewport, player_cam: Camera3D, cot_pos: Vector3, pendulum_pos: Vector3, _gate_pos: Vector3, shift := Callable()) -> void:
@@ -234,13 +205,18 @@ func _advance_beat() -> void:
 		_hint_label.text = R18n.pick("Space / E · 下一句     |     Esc · 跳过开场", "Space / E · Next     |     Esc · Skip opening")
 	_folio_label.text = str(beat.get("folio_en", beat.folio) if R18n.is_en() else beat.folio)
 	_speaker_label.text = str(beat.speaker) if not str(beat.speaker).is_empty() else R18n.pick("（意识渐清）", "(Vision clearing)")
-	_caption_label.text = str(beat.get("text_en", beat.text) if R18n.is_en() else beat.text)
+	var line_text := str(beat.get("text_en", beat.text) if R18n.is_en() else beat.text)
+	var speaker_name := str(beat.speaker)
+	_caption_label.text = line_text
+	if is_instance_valid(_captions):
+		_captions.clear()
+		_captions.post(str(beat.id), speaker_name, line_text)
 	if not is_instance_valid(_voice):
 		_voice = VoiceSynth.new()
 		add_child(_voice)
-	var spk := str(beat.speaker).to_lower()
+	var spk := speaker_name.to_lower()
 	if not spk.is_empty():
-		_voice.speak_line(_caption_label.text, spk)
+		_voice.speak_line(line_text, spk)
 	# Hale talks with his hands on his lines and listens on the captain's.
 	if is_instance_valid(_hale_actor) and _hale_actor.has_meta("animation_player"):
 		(_hale_actor.get_meta("animation_player") as AnimationPlayer).play(&"signal" if beat.speaker == "Hale" else &"listen", 0.4)

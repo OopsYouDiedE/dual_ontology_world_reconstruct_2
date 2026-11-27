@@ -1,49 +1,46 @@
 extends Node
-## Non-harsh procedural character voice synthesizer for The Sleeping Academy.
-## Supports two gentle voice modes designed to avoid piercing chiptune highs:
-##   1. "mumble"  — Soft low-pass dual-formant vocal hum + breath air (Animalese/Hollow Knight style)
-##   2. "chamber" — Warm low-register chamber instrument tones (muted cello / bass marimba / soft flute)
-##
-## Usage:
-##   var synth := preload("res://scenes/components/shared/VoiceSynth.gd").new()
-##   add_child(synth)
-##   synth.speak_line("……醒醒。先别急着起身，看着我——能看清吗？", "hale")
+## Copyright-free procedural human vocal-tract mumble synthesizer (NO musical instruments).
+## Generates warm, hushed human mumbling using a soft Rosenberg glottal pulse filtered
+## through 3 vocal-tract formant resonators (F1/F2/F3) + breathy consonant air + natural pitch contour.
 
 const SAMPLE_RATE := 22050
 
+# Formant frequencies (F1, F2, F3 in Hz) for muffled, non-harsh human vowels (uh, oo, oh, mm, eh)
+const VOWELS := [
+	[420.0, 1080.0, 2250.0], # ə (uh)
+	[340.0, 820.0, 2150.0],  # u (oo)
+	[460.0, 920.0, 2200.0],  # o (oh)
+	[310.0, 1150.0, 2100.0], # m (nasal hum)
+	[510.0, 1320.0, 2300.0], # e (soft eh)
+]
+
 const PROFILES := {
 	"hale": {
-		"mode": "chamber_mumble",
-		"base_hz": 146.83, # D3 warm baritone / cello
-		"scale": [1.0, 1.122, 1.189, 1.335, 1.498], # D minor pentatonic
-		"f1": 380.0,
-		"f2": 1020.0,
-		"breath": 0.08,
-		"syllable_ms": 96.0,
-		"gap_ms": 48.0,
-		"cutoff": 1450.0,
+		"f0_hz": 116.0,       # Warm low baritone male voice
+		"f0_span": 16.0,
+		"tract_scale": 0.94,  # Slightly deeper vocal tract
+		"breath": 0.14,
+		"syllable_ms": 105.0,
+		"gap_ms": 42.0,
+		"cutoff": 1450.0,     # Keeps speech hushed & warm, never piercing
 	},
 	"elder": {
-		"mode": "chamber",
-		"base_hz": 130.81, # C3 warm bass marimba / wood
-		"scale": [1.0, 1.122, 1.260, 1.498, 1.682],
-		"f1": 340.0,
-		"f2": 920.0,
-		"breath": 0.04,
-		"syllable_ms": 108.0,
-		"gap_ms": 62.0,
-		"cutoff": 1300.0,
+		"f0_hz": 98.0,        # Deep gravelly elder voice
+		"f0_span": 12.0,
+		"tract_scale": 0.88,
+		"breath": 0.18,
+		"syllable_ms": 118.0,
+		"gap_ms": 54.0,
+		"cutoff": 1280.0,
 	},
 	"resident": {
-		"mode": "mumble",
-		"base_hz": 196.00, # G3 soft alto hum
-		"scale": [1.0, 1.122, 1.189, 1.335, 1.498],
-		"f1": 460.0,
-		"f2": 1240.0,
-		"breath": 0.09,
-		"syllable_ms": 84.0,
-		"gap_ms": 44.0,
-		"cutoff": 1650.0,
+		"f0_hz": 168.0,       # Soft alto / mid-low human voice
+		"f0_span": 22.0,
+		"tract_scale": 1.06,
+		"breath": 0.15,
+		"syllable_ms": 92.0,
+		"gap_ms": 38.0,
+		"cutoff": 1580.0,
 	},
 }
 
@@ -51,14 +48,14 @@ var _player: AudioStreamPlayer
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
-	_player.volume_db = -8.0
+	_player.volume_db = -6.0
 	add_child(_player)
 
 func speak_line(text: String, speaker_id: String = "hale") -> void:
 	if not is_instance_valid(_player) or text.strip_edges().is_empty():
 		return
 	var profile: Dictionary = PROFILES.get(speaker_id.to_lower(), PROFILES["hale"])
-	var wav := synthesize_wav(text, profile)
+	var wav := synthesize_mumble_wav(text, profile)
 	if wav != null:
 		_player.stream = wav
 		_player.play()
@@ -67,21 +64,20 @@ func stop_voice() -> void:
 	if is_instance_valid(_player):
 		_player.stop()
 
-## Synthesizes a smooth, low-pass filtered AudioStreamWAV for a line of dialogue.
-static func synthesize_wav(text: String, profile: Dictionary) -> AudioStreamWAV:
-	var mode: String = str(profile.get("mode", "chamber_mumble"))
-	var base_hz: float = float(profile.get("base_hz", 146.83))
-	var scale: Array = profile.get("scale", [1.0, 1.122, 1.189, 1.335, 1.498])
-	var breath_amt: float = float(profile.get("breath", 0.08))
-	var syl_samples := int(SAMPLE_RATE * float(profile.get("syllable_ms", 92.0)) / 1000.0)
-	var gap_samples := int(SAMPLE_RATE * float(profile.get("gap_ms", 48.0)) / 1000.0)
-	var cutoff_hz: float = float(profile.get("cutoff", 1500.0))
+## Synthesizes a copyright-free human mumble AudioStreamWAV (no musical notes).
+static func synthesize_mumble_wav(text: String, profile: Dictionary) -> AudioStreamWAV:
+	var f0_base: float = float(profile.get("f0_hz", 116.0))
+	var f0_span: float = float(profile.get("f0_span", 16.0))
+	var tract_scale: float = float(profile.get("tract_scale", 0.95))
+	var breath_amt: float = float(profile.get("breath", 0.14))
+	var syl_samples := int(SAMPLE_RATE * float(profile.get("syllable_ms", 105.0)) / 1000.0)
+	var gap_samples := int(SAMPLE_RATE * float(profile.get("gap_ms", 42.0)) / 1000.0)
+	var cutoff_hz: float = float(profile.get("cutoff", 1450.0))
 
-	# Group every 2-3 printable characters into one gentle syllable so speech feels unhurried.
 	var syllables: Array[Dictionary] = []
 	var chars := text.strip_edges()
 	var idx := 0
-	var max_syls := 12
+	var max_syls := 14
 	while idx < chars.length() and syllables.size() < max_syls:
 		var ch := chars.unicode_at(idx)
 		if ch <= 32:
@@ -93,8 +89,11 @@ static func synthesize_wav(text: String, profile: Dictionary) -> AudioStreamWAV:
 				syllables[-1]["tail"] = ch
 			idx += 1
 			continue
-		var degree := int((ch * 31 + idx * 17) % scale.size())
-		syllables.append({"deg": degree, "tail": 0, "seed": ch + idx * 13})
+		syllables.append({
+			"v": int((ch * 19 + idx * 7) % VOWELS.size()),
+			"tail": 0,
+			"seed": ch * 13 + idx * 29,
+		})
 		idx += 2
 
 	if syllables.is_empty():
@@ -103,66 +102,81 @@ static func synthesize_wav(text: String, profile: Dictionary) -> AudioStreamWAV:
 	var total_samples := 0
 	for s in syllables:
 		total_samples += syl_samples + gap_samples + (gap_samples if int(s["tail"]) != 0 else 0)
-	total_samples += int(SAMPLE_RATE * 0.12) # soft room tail
+	total_samples += int(SAMPLE_RATE * 0.10)
 
 	var pcm := PackedByteArray()
 	pcm.resize(total_samples * 2)
 
-	# One-pole low-pass filter state to guarantee zero harsh high-frequency buzz
-	var rc := 1.0 / (TAU * cutoff_hz)
 	var dt := 1.0 / float(SAMPLE_RATE)
-	var alpha := dt / (rc + dt)
+	var rc := 1.0 / (TAU * cutoff_hz)
+	var lp_a := dt / (rc + dt)
 	var lp := 0.0
-	var lp2 := 0.0
+
+	# Two parallel 2-pole formant resonator states (F1, F2)
+	var y1_1 := 0.0; var y1_2 := 0.0
+	var y2_1 := 0.0; var y2_2 := 0.0
 
 	var cursor := 0
 	var rng := RandomNumberGenerator.new()
 	for s_i in syllables.size():
 		var s: Dictionary = syllables[s_i]
 		rng.seed = int(s["seed"])
-		var ratio: float = float(scale[int(s["deg"])])
-		var f0 := base_hz * ratio * rng.randf_range(0.985, 1.015)
+		var vowel: Array = VOWELS[int(s["v"])]
+		var f1: float = float(vowel[0]) * tract_scale
+		var f2: float = float(vowel[1]) * tract_scale
+
+		# Resonator coefficients for F1 (BW 95Hz) and F2 (BW 140Hz)
+		var r1 := exp(-PI * 95.0 * dt)
+		var c1 := 2.0 * r1 * cos(TAU * f1 * dt)
+		var g1 := 1.0 - r1 * r1
+
+		var r2 := exp(-PI * 140.0 * dt)
+		var c2 := 2.0 * r2 * cos(TAU * f2 * dt)
+		var g2 := (1.0 - r2 * r2) * 0.48
+
 		var tail_ch := int(s["tail"])
-		var pitch_end := 1.0
-		if tail_ch in [0xFF1F, 63]: # question mark -> gentle upward inflection
-			pitch_end = 1.14
-		elif tail_ch in [0x3002, 46]: # period -> calm downward cadence
-			pitch_end = 0.89
-		elif tail_ch in [0xFF0C, 44]: # comma -> slight lift
-			pitch_end = 1.04
+		# Natural speech declination across sentence + punctuation contour (non-musical)
+		var sentence_decl := 1.0 - 0.11 * (float(s_i) / float(maxi(syllables.size(), 1)))
+		var f0_start := (f0_base + rng.randf_range(-f0_span, f0_span)) * sentence_decl
+		var f0_end := f0_start * (1.16 if tail_ch in [0xFF1F, 63] else (0.84 if tail_ch in [0x3002, 46] else (1.05 if tail_ch in [0xFF0C, 44] else 0.94)))
 
 		var phase := 0.0
 		for n in syl_samples:
 			var u := float(n) / float(syl_samples)
-			# Smooth raised-cosine attack (22%) and gentle decay (50%) — never clicks
+			# Soft syllable envelope with gentle consonant breath at onset
 			var env := 1.0
-			if u < 0.22:
-				env = 0.5 - 0.5 * cos(PI * u / 0.22)
-			elif u > 0.48:
-				env = 0.5 + 0.5 * cos(PI * (u - 0.48) / 0.52)
+			if u < 0.18:
+				env = 0.5 - 0.5 * cos(PI * u / 0.18)
+			elif u > 0.58:
+				env = 0.5 + 0.5 * cos(PI * (u - 0.58) / 0.42)
 
-			var freq := lerpf(f0, f0 * pitch_end, u * u)
-			phase += TAU * freq * dt
+			# Subtle human vocal vibrato/jitter (~5.2Hz)
+			var vib := 1.0 + 0.012 * sin(float(cursor) * dt * TAU * 5.2)
+			var freq := lerpf(f0_start, f0_end, u) * vib
+			phase = fmod(phase + freq * dt, 1.0)
 
-			var raw := 0.0
-			if mode == "chamber":
-				# Warm wood/cello fundamental + soft octave & 3rd harmonic
-				raw = 0.68 * sin(phase) + 0.22 * sin(phase * 2.0) * (1.0 - 0.5 * u) + 0.08 * sin(phase * 3.0) * exp(-u * 3.5)
-			elif mode == "mumble":
-				# Soft vocal hum: fundamental + muted formant resonances + air
-				raw = 0.62 * sin(phase) + 0.26 * sin(phase * 2.0 + 0.4) + 0.12 * sin(phase * 3.0)
-				raw += rng.randf_range(-1.0, 1.0) * breath_amt
-			else:
-				# Hybrid chamber_mumble (warm cello-hum for Hale)
-				raw = 0.64 * sin(phase) + 0.24 * sin(phase * 2.0) * (1.0 - 0.35 * u) + 0.10 * sin(phase * 3.0) * (1.0 - 0.5 * u)
-				raw += rng.randf_range(-1.0, 1.0) * breath_amt
+			# Soft Rosenberg glottal pulse (smooth vocal-cord wave, not harsh sawtooth/square)
+			var glottal := 0.0
+			if phase < 0.42:
+				glottal = 0.5 * (1.0 - cos(PI * phase / 0.42))
+			elif phase < 0.60:
+				glottal = cos(PI * 0.5 * (phase - 0.42) / 0.18)
+			glottal = (glottal - 0.35) * 1.45
 
-			var sample_val := raw * env * 0.55
-			# Two-stage gentle low-pass filter
-			lp += alpha * (sample_val - lp)
-			lp2 += alpha * (lp - lp2)
+			# Breathy consonant onset + aspiration noise
+			var air := rng.randf_range(-1.0, 1.0) * breath_amt * (1.8 if u < 0.16 else 0.65)
+			var exc := (glottal + air) * env
 
-			var i16 := clampi(int(lp2 * 32767.0), -32768, 32767)
+			# Pass through vocal-tract formant resonators F1 + F2
+			var o1 := g1 * exc + c1 * y1_1 - (r1 * r1) * y1_2
+			y1_2 = y1_1; y1_1 = o1
+			var o2 := g2 * exc + c2 * y2_1 - (r2 * r2) * y2_2
+			y2_2 = y2_1; y2_1 = o2
+
+			var vocal := (o1 * 0.72 + o2 * 0.38) * 0.72
+			lp += lp_a * (vocal - lp)
+
+			var i16 := clampi(int(lp * 32767.0), -32768, 32767)
 			var bi := cursor * 2
 			pcm[bi] = i16 & 0xFF
 			pcm[bi + 1] = (i16 >> 8) & 0xFF
@@ -170,9 +184,9 @@ static func synthesize_wav(text: String, profile: Dictionary) -> AudioStreamWAV:
 
 		var rest := gap_samples + (gap_samples if tail_ch != 0 else 0)
 		for _r in rest:
-			lp *= 0.96
-			lp2 *= 0.96
-			var i16 := clampi(int(lp2 * 32767.0), -32768, 32767)
+			y1_1 *= 0.92; y1_2 *= 0.92; y2_1 *= 0.92; y2_2 *= 0.92
+			lp *= 0.94
+			var i16 := clampi(int(lp * 32767.0), -32768, 32767)
 			var bi := cursor * 2
 			pcm[bi] = i16 & 0xFF
 			pcm[bi + 1] = (i16 >> 8) & 0xFF

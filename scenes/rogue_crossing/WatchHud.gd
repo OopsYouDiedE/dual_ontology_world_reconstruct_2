@@ -77,7 +77,7 @@ func _build_footer() -> void:
 	instruction.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	instruction.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	instruction.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	UiStyle.style_label(instruction, font, 18, Color("fff3df"), 0)
+	UiStyle.style_label(instruction, font, 20, Color("fff3df"), 0)
 	var plate := StyleBoxFlat.new()
 	plate.bg_color = Color(.035, .029, .023, .89)
 	plate.set_corner_radius_all(4)
@@ -131,7 +131,7 @@ func _build_overlay() -> void:
 func fit_instruction(viewport_width: float) -> void:
 	var widest := 0.0
 	for line in instruction.text.split("\n"):
-		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x)
+		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x)
 	instruction.custom_minimum_size.x = minf(widest + 40.0, maxf(viewport_width - 112.0, 200.0))
 	instruction.visible = not instruction.text.is_empty()
 

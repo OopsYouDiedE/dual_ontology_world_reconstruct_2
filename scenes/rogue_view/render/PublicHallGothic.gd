@@ -10,6 +10,7 @@ const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 const StainedGlassShader := preload("res://scenes/rogue_view/render/StainedGlass.gdshader")
 const StainedGlassBeamShader := preload("res://scenes/rogue_view/render/StainedGlassBeam.gdshader")
 const StainedGlassGlowShader := preload("res://scenes/rogue_view/render/StainedGlassGlow.gdshader")
+const StylizedFireShader := preload("res://scenes/rogue_view/render/StylizedFire.gdshader")
 const RenderProfile := preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 const Factory := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
@@ -1089,17 +1090,83 @@ func _build_brazier(pos: Vector3 = Vector3(16.0, 0.0, 11.6), brazier_name: Strin
 	for layer in [[0.31,0.39,0.10,0.05],[0.15,0.25,0.31,0.255],[0.42,0.18,0.24,0.53]]:
 		var lathe := CylinderMesh.new(); lathe.top_radius=layer[0]; lathe.bottom_radius=layer[1]; lathe.height=layer[2]
 		var piece := MeshInstance3D.new(); piece.mesh=lathe; piece.material_override=_mat_brass; piece.position.y=layer[3]; pan.add_child(piece)
+
+	# 1. Glowing charcoal ember bed nestled inside the brass basin
+	var coal_mat := StandardMaterial3D.new()
+	coal_mat.albedo_color = Color("2a140c")
+	coal_mat.roughness = 0.92
+	coal_mat.emission_enabled = true
+	coal_mat.emission = Color("ff5a14")
+	coal_mat.emission_energy_multiplier = 2.8
+	var coal_mesh := CylinderMesh.new()
+	coal_mesh.top_radius = 0.34; coal_mesh.bottom_radius = 0.24; coal_mesh.height = 0.09
+	var coal_bed := MeshInstance3D.new()
+	coal_bed.name = "CoalBed"; coal_bed.mesh = coal_mesh; coal_bed.material_override = coal_mat
+	coal_bed.position.y = 0.64
+	pan.add_child(coal_bed)
+
+	# 2. Industry-standard multi-layer volumetric FBM fire cards (3 intersecting planes @ 60 deg)
 	var flames: Array[MeshInstance3D] = []
-	for i in 7:
-		var flame := CylinderMesh.new(); flame.top_radius=0; flame.bottom_radius=0.12; flame.height=0.36+0.08*cos(i*4.0); flame.radial_segments=9
-		var skin := ShaderMaterial.new(); skin.shader=preload("res://scenes/blue_prince_lab/reference/Flame.gdshader")
-		skin.set_shader_parameter("phase",i*2.4); skin.set_shader_parameter("ember",Color("ffbc58")); skin.set_shader_parameter("tip",Color("f56b28"))
-		var tongue := MeshInstance3D.new(); tongue.mesh=flame; tongue.material_override=skin
-		tongue.position=Vector3(0.20*cos(i*TAU/7),0.78,0.20*sin(i*TAU/7)); pan.add_child(tongue)
-		flames.append(tongue)
+	var fire_mats: Array[ShaderMaterial] = []
+	var b_idx := float(_brazier_lights.size())
+	for i in 3:
+		var q := QuadMesh.new()
+		q.size = Vector2(0.76, 0.96) if i == 0 else Vector2(0.68, 0.86)
+		var fmat := ShaderMaterial.new()
+		fmat.shader = StylizedFireShader
+		fmat.render_priority = 108
+		fmat.set_shader_parameter("seed", b_idx * 4.7 + float(i) * 2.13)
+		fmat.set_shader_parameter("speed", 2.45 + float(i) * 0.28)
+		fmat.set_shader_parameter("intensity", 1.15)
+		var card := MeshInstance3D.new()
+		card.name = "VolumetricFire_%d" % i
+		card.mesh = q
+		card.material_override = fmat
+		card.position = Vector3(0.0, 1.04, 0.0)
+		card.rotation.y = float(i) * PI / 3.0
+		card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		card.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		pan.add_child(card)
+		flames.append(card)
+		fire_mats.append(fmat)
+
+	# 3. Rising glowing ember sparks (GPUParticles3D)
+	var sparks := GPUParticles3D.new()
+	sparks.name = "EmberSparks"
+	sparks.position = Vector3(0.0, 0.72, 0.0)
+	sparks.amount = 22
+	sparks.lifetime = 1.65
+	sparks.preprocess = 0.8
+	sparks.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var pmat := ParticleProcessMaterial.new()
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_RING
+	pmat.emission_ring_radius = 0.24
+	pmat.emission_ring_inner_radius = 0.04
+	pmat.emission_ring_height = 0.06
+	pmat.direction = Vector3(0.0, 1.0, 0.0)
+	pmat.spread = 22.0
+	pmat.initial_velocity_min = 0.55
+	pmat.initial_velocity_max = 1.25
+	pmat.gravity = Vector3(0.0, 0.22, 0.0)
+	pmat.damping_min = 0.25
+	pmat.damping_max = 0.55
+	pmat.scale_min = 0.55
+	pmat.scale_max = 1.25
+	sparks.process_material = pmat
+	var spark_mesh := QuadMesh.new()
+	spark_mesh.size = Vector2(0.032, 0.032)
+	var spark_skin := StandardMaterial3D.new()
+	spark_skin.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	spark_skin.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	spark_skin.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	spark_skin.albedo_color = Color("ffba52")
+	spark_mesh.material = spark_skin
+	sparks.draw_pass_1 = spark_mesh
+	pan.add_child(sparks)
+
 	var fire_light := OmniLight3D.new()
 	fire_light.name = brazier_name + "_Light"
-	fire_light.position = pos + Vector3(0.0, 1.15, 0.0)
+	fire_light.position = pos + Vector3(0.0, 1.18, 0.0)
 	fire_light.light_color = Color("ff9a46")
 	fire_light.light_energy = night_energy
 	fire_light.omni_range = reach
@@ -1109,10 +1176,13 @@ func _build_brazier(pos: Vector3 = Vector3(16.0, 0.0, 11.6), brazier_name: Strin
 	_brazier_lights.append({
 		"light": fire_light,
 		"flames": flames,
+		"fire_mats": fire_mats,
+		"coal_mat": coal_mat,
+		"sparks": sparks,
 		"night": night_energy,
 		"day": 0.06,
 		"base": night_energy,
-		"phase": float(_brazier_lights.size()) * 1.9
+		"phase": b_idx * 1.9
 	})
 	_reserve_station(pan.position, Vector2(1.05, 1.05), 0.7)
 
@@ -1294,8 +1364,17 @@ func set_hour(hour: float) -> void:
 		var flames: Array = entry.get("flames", [])
 		for f in flames:
 			if is_instance_valid(f):
-				f.visible = fire_factor > 0.12
-				f.scale = Vector3(1.0, lerpf(0.35, 1.15, fire_factor), 1.0)
+				f.visible = fire_factor > 0.10
+				f.scale = Vector3(lerpf(0.55, 1.05, fire_factor), lerpf(0.45, 1.12, fire_factor), 1.0)
+		for fm in entry.get("fire_mats", []):
+			if fm is ShaderMaterial:
+				(fm as ShaderMaterial).set_shader_parameter("intensity", 1.25 * fire_factor)
+		var cm := entry.get("coal_mat") as StandardMaterial3D
+		if cm != null:
+			cm.emission_energy_multiplier = lerpf(0.18, 2.8, fire_factor)
+		var sp := entry.get("sparks") as GPUParticles3D
+		if is_instance_valid(sp):
+			sp.emitting = fire_factor > 0.18
 	for entry in _interior_pools:
 		var light := entry.get("light") as OmniLight3D
 		if is_instance_valid(light):

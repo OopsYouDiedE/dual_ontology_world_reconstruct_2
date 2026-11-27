@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_disabled;
+render_mode unshaded, cull_disabled;
 
 uniform sampler2D glass_tex : source_color, filter_linear_mipmap;
 uniform bool has_tex = false;
@@ -12,12 +12,8 @@ void fragment() {
 	vec3 sample_rgb = has_tex ? texture(glass_tex, UV).rgb : fallback_color.rgb;
 	float luma = dot(sample_rgb, vec3(0.299, 0.587, 0.114));
 	float glass_mask = smoothstep(0.06, 0.42, luma);
-	// Preserve dark leadwork while saturating translucent jewel-toned glass panels.
-	vec3 boosted = mix(sample_rgb, pow(max(sample_rgb, vec3(0.001)), vec3(0.84)) * 1.18, glass_mask);
-	float view_facing = mix(0.76, 1.15, abs(dot(normalize(NORMAL), normalize(VIEW))));
-	float transmit = (0.46 + 0.92 * daylight) * emit_gain * view_facing;
-	ALBEDO = boosted * 0.24;
-	ROUGHNESS = 0.35;
-	SPECULAR = 0.0;
-	EMISSION = boosted * exterior_tint.rgb * transmit * (0.20 + 0.80 * glass_mask);
+	// Opaque self-illuminated stained glass: unaffected by interior lamps, glowing purely from exterior light.
+	vec3 boosted = mix(sample_rgb * 0.25, pow(max(sample_rgb, vec3(0.001)), vec3(0.84)) * 1.25, glass_mask);
+	float transmit = (0.58 + 1.15 * daylight) * emit_gain;
+	ALBEDO = boosted * exterior_tint.rgb * mix(0.24, transmit, glass_mask);
 }

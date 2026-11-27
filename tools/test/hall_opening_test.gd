@@ -76,9 +76,9 @@ func run() -> void:
 		if not snap.active:
 			break
 		seen_beats.append(snap.beat_id)
-		seq._process(1.8)
+		seq._director._process(1.8)
 		fovs.append(seq.snapshot().camera_fov)
-		seq._advance_beat()
+		seq._director._advance_beat()
 
 	check(seen_beats == ["wake_shake", "wake_focus", "pendulum_drift", "essence_reason", "north_gate_handoff"], "Opening sequence plays all 5 revised narrative beats: " + str(seen_beats))
 	check(not seq.active, "Opening sequence finishes cleanly and restores control")

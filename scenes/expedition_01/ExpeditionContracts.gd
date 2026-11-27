@@ -80,7 +80,7 @@ func a_step(dt:float,count:int,first:int,self_watching:bool,hale_watching:bool)-
 	var second_w:=hale_watching if a_role==Seer.PLAYER else self_watching
 	if first_w and second_w:
 		a_hold=0. # A renewed overlap interrupts the solo hold.
-		if a_timer>A_GRACE:return a_breach("先看见者未在窗口内移开视线")
+		if a_timer>A_GRACE:return a_breach(R18n.pick("先看见者未在窗口内移开视线","First seer did not look away in time"))
 		return "overlap"
 	if not first_w and second_w:
 		a_hold+=dt
@@ -88,8 +88,8 @@ func a_step(dt:float,count:int,first:int,self_watching:bool,hale_watching:bool)-
 			a_state="idle";a_role=Seer.NONE;a_timer=0.;a_hold=0.
 			return "release"
 		return "overlap"
-	if first_w and not second_w:return a_breach("后看见者先移开视线")
-	return a_breach("两条视线同时消失")
+	if first_w and not second_w:return a_breach(R18n.pick("后看见者先移开视线","Second seer looked away first"))
+	return a_breach(R18n.pick("两条视线同时消失","Both sightlines broke at once"))
 
 func a_breach(reason:String)->String:
 	a_state="blackout";a_blackout=A_BLACKOUT;a_breaches+=1
@@ -146,9 +146,10 @@ func b_hint()->String:
 		return R18n.pick("契约B · 铁网呼唤 %d/%d","Contract B · Iron calls %d/%d")%[b_calls*B_CALLS+b_steps,B_CALLS*B_CALLS]
 	return ""
 
-func b_line(level)->String:
+func b_line(has_metronome_or_level: Variant = false)->String:
+	var has_metronome := bool(has_metronome_or_level) if has_metronome_or_level is bool else bool(has_metronome_or_level.equipped)
 	if b_remembered:
-		if b_pardons>0 and level.equipped:
+		if b_pardons>0 and has_metronome:
 			return R18n.pick("把节拍器扔远点，试试能不能引开它！","Throw the metronome far—see if it draws it away!")
 		return R18n.pick("听那动静。把脚步放轻。","Hear that? Keep your steps quiet.")
 	if b_calls>0:

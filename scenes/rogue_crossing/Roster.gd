@@ -35,7 +35,7 @@ static func witness(id: String) -> String:
 static func job(id: String) -> String:
 	return JOBS[NAMES.find(id)]
 
-const HERO_IDS := ["detective", "hale", "quer", "lucian"]
+const HERO_IDS := ["detective", "hale", "quer", "lucian", "demon"]
 
 static func attach(parent: Node3D, id: String) -> bool:
 	var low := id.to_lower()

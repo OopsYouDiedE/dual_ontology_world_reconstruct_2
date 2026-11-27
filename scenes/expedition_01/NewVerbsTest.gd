@@ -127,7 +127,7 @@ func run()->void:
 	level.use()
 	if not demand(level.captions.entries.has("残页"),"archive fragment missing from player captions"):return
 	var fragment:String=level.captions.entries["残页"].label.text
-	if not demand("玻璃外那块板" in fragment and not level.archive.note,"archive fragment should report the witnessed ripple without unlocking the comparison"):return
+	if not demand("玻璃外那块琥珀板" in fragment and not level.archive.note,"archive fragment should report the witnessed ripple without unlocking the comparison"):return
 	if not clean_copy(fragment,"archive fragment"):return
 	# 刻板①《同声律》：B4 阁楼
 	level.walker.position=Vector3(31.5,.62,16.6)

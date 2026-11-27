@@ -16,6 +16,17 @@ const WARN := Color("ffcf9a")
 const DANGER := Color("ff6a4d")
 const DANGER_OUTLINE := Color("2a0b06")
 const QUIET := Color("9fd6e8")
+const VIGNETTE_SHADER := """shader_type canvas_item;
+uniform float strength=.36;
+uniform float dread=.0;
+uniform float pulse=.0;
+void fragment(){
+	vec2 uv=UV-.5;uv.x*=1.12;
+	float d=smoothstep(.16,.82,dot(uv,uv)*2.2);
+	vec3 col=mix(vec3(.018,.014,.01),vec3(.42,.0,.018),clamp(dread+pulse,.0,1.));
+	COLOR=vec4(col,d*clamp(strength+dread*.5+pulse*.3,.0,.92));
+}
+"""
 
 static func make_font() -> Font:
 	var font := SystemFont.new()

@@ -102,6 +102,14 @@ static func locale() -> String:
 		if arg == "--lang=zh":
 			Engine.set_meta(LOCALE_META, "zh")
 			return "zh"
+	var args := OS.get_cmdline_args()
+	for i in args.size():
+		if args[i] == "--language=en" or (args[i] == "--language" and i + 1 < args.size() and args[i + 1].begins_with("en")):
+			Engine.set_meta(LOCALE_META, "en")
+			return "en"
+		if args[i] == "--language=zh" or (args[i] == "--language" and i + 1 < args.size() and args[i + 1].begins_with("zh")):
+			Engine.set_meta(LOCALE_META, "zh")
+			return "zh"
 	Engine.set_meta(LOCALE_META, "zh")
 	return "zh"
 

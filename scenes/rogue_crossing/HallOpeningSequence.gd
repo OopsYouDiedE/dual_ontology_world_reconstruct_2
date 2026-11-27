@@ -12,6 +12,7 @@ signal finished
 
 const Cast = preload("res://scenes/rogue_crossing/ProductionCast.gd")
 const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
+const R18n = preload("res://scenes/components/shared/R18n.gd")
 
 # Offsets from the wake bed centre. The bed runs along X with its head against the west wall.
 const WAKE_EYE := Vector3(-0.72, 0.86, 0.0)
@@ -26,7 +27,9 @@ const BEATS := [
 		"id": "wake_shake",
 		"speaker": "Hale",
 		"text": "……醒醒。先别急着起身，看着我——能看清吗？",
+		"text_en": "...Wake up. Don't get up too fast—look at me. Can you focus?",
 		"folio": "04:00  /  常数锚定厅 · 西翼宿舍",
+		"folio_en": "04:00  /  CONSTANT ANCHOR NAVE · WEST DORMITORY",
 		"duration": 3.4,
 		"shot": "wake",
 		"shift": 0.95
@@ -35,7 +38,9 @@ const BEATS := [
 		"id": "wake_focus",
 		"speaker": "",
 		"text": "提灯在墙上拖出一红一蓝两道边。床架的线条在晃，像隔着一层热浪看东西——不是没睡醒。",
+		"text_en": "The lantern drags red and blue fringes across the plaster. Bedframe edges waver through heat-haze—this isn't lingering sleep.",
 		"folio": "04:00  /  常数锚定厅 · 西翼宿舍",
+		"folio_en": "04:00  /  CONSTANT ANCHOR NAVE · WEST DORMITORY",
 		"duration": 3.8,
 		"shot": "hale_closeup",
 		"shift": 0.8
@@ -44,7 +49,9 @@ const BEATS := [
 		"id": "pendulum_drift",
 		"speaker": "Hale",
 		"text": "你也看见了：朝你来的发蓝，离你去的发红——源质在漂。中央铜摆过南象限慢了半拍，刻痕已经越过红线三格。",
+		"text_en": "You see it too: blueshift toward you, red away—the Essence is drifting. The central pendulum drags half a beat past south, three marks past the red line.",
 		"folio": "04:01  /  西翼拱廊 · 望向常数锚定井",
+		"folio_en": "04:01  /  WEST ARCADE · TOWARD THE ANCHOR WELL",
 		"duration": 5.0,
 		"shot": "pendulum_push",
 		"shift": 0.6
@@ -53,7 +60,9 @@ const BEATS := [
 		"id": "essence_reason",
 		"speaker": "Hale",
 		"text": "稳压井的源质回流断了。前班撤出时把隔离闸反锁在里面，备用源核还在井下。不换上它，整座学院只会漂得更厉害。",
+		"text_en": "The Stabilizer return loop snapped. Last watch bolted the isolating gate from inside, and the spare core is still down the well. Without it, the whole Academy keeps drifting.",
 		"folio": "04:01  /  常数锚定井 · 源质失衡",
+		"folio_en": "04:01  /  CONSTANT ANCHOR WELL · ESSENCE DRIFT",
 		"duration": 4.8,
 		"shot": "pendulum_hold",
 		"shift": 0.5
@@ -62,7 +71,9 @@ const BEATS := [
 		"id": "north_gate_handoff",
 		"speaker": "Hale",
 		"text": "井区守则只放双人编队过闸，整座大厅醒着的只剩你和我。灯和手册在你床头——拿上，北门见。",
+		"text_en": "Caisson rules only pass pairs through the gate, and we're the only two awake in the Hall. Your lamp and manual are by the cot—take them and meet me at the north gate.",
 		"folio": "04:02  /  西翼宿舍 · 出发",
+		"folio_en": "04:02  /  WEST DORMITORY · DEPARTURE",
 		"duration": 5.2,
 		"shot": "gate_handoff",
 		"shift": 0.3
@@ -166,7 +177,7 @@ func _build_overlay() -> void:
 	vbox.add_child(_caption_label)
 
 	_hint_label = Label.new()
-	_hint_label.text = "Space / E · 下一句     |     Esc · 跳过开场"
+	_hint_label.text = R18n.pick("Space / E · 下一句     |     Esc · 跳过开场", "Space / E · Next     |     Esc · Skip opening")
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_hint_label.add_theme_font_size_override("font_size", 12)
 	_hint_label.add_theme_color_override("font_color", Color("a89c88"))
@@ -217,9 +228,11 @@ func _advance_beat() -> void:
 		return
 	var beat: Dictionary = BEATS[beat_index]
 	if beat_index > 0: _shift_from = float(BEATS[beat_index - 1].shift)
-	_folio_label.text = beat.folio
-	_speaker_label.text = beat.speaker if not str(beat.speaker).is_empty() else "（意识渐清）"
-	_caption_label.text = beat.text
+	if is_instance_valid(_hint_label):
+		_hint_label.text = R18n.pick("Space / E · 下一句     |     Esc · 跳过开场", "Space / E · Next     |     Esc · Skip opening")
+	_folio_label.text = str(beat.get("folio_en", beat.folio) if R18n.is_en() else beat.folio)
+	_speaker_label.text = str(beat.speaker) if not str(beat.speaker).is_empty() else R18n.pick("（意识渐清）", "(Vision clearing)")
+	_caption_label.text = str(beat.get("text_en", beat.text) if R18n.is_en() else beat.text)
 	# Hale talks with his hands on his lines and listens on the captain's.
 	if is_instance_valid(_hale_actor) and _hale_actor.has_meta("animation_player"):
 		(_hale_actor.get_meta("animation_player") as AnimationPlayer).play(&"signal" if beat.speaker == "Hale" else &"listen", 0.4)

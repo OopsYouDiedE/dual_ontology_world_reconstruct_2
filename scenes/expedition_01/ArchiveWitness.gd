@@ -1,7 +1,14 @@
 extends RefCounted
 const R18n=preload("res://scenes/components/shared/R18n.gd")
-## Hale's side of the B2/B3 experiment. No cutscene or camera override:
-## the evidence is made from the same unobstructed rays that drive the plate.
+## Hale's side of the B2/B3 experiment. Emits signals for dialogue, sound, toast,
+## trail resets, and camera feedback rather than mutating parent internals directly.
+signal line_requested(id: String, text: String)
+signal toast_requested(text: String)
+signal sound_requested(cue: String, pos: Vector3, db: float, max_dist: float)
+signal camera_kick_requested(amount: float)
+signal trail_reset_requested(points: PackedVector3Array, clear_hold: bool)
+signal annotation_unlocked(delay: float)
+
 enum Beat { FOLLOW, WINDOW, WITHDRAW, DOOR, WAIT, PEEK, CROSS, DONE }
 const PLATE := Vector3(23.85,.11,12.02)
 const WINDOW := Vector3(23.28,0.,8.42)
@@ -40,6 +47,40 @@ func face(lv,target:Vector3,dt:float,rate:=15.)->void:
 	if Vector2(d.x,d.z).length()>.035:
 		lv.hale.rotation.y=lerp_angle(lv.hale.rotation.y,atan2(d.x,d.z),1.-exp(-rate*dt))
 
+func _emit_line(lv, id: String, text: String) -> void:
+	if not line_requested.get_connections().is_empty():
+		line_requested.emit(id, text)
+	elif lv != null:
+		lv.line_once(id, text)
+
+func _emit_toast(lv, text: String) -> void:
+	if not toast_requested.get_connections().is_empty():
+		toast_requested.emit(text)
+	elif lv != null:
+		lv.toast(text)
+
+func _emit_sound(lv, cue: String, pos: Vector3, db: float, max_dist := 90.0) -> void:
+	if not sound_requested.get_connections().is_empty():
+		sound_requested.emit(cue, pos, db, max_dist)
+	elif lv != null:
+		lv.sound_at(cue, pos, db, max_dist)
+
+func _emit_kick(lv, amount: float) -> void:
+	if not camera_kick_requested.get_connections().is_empty():
+		camera_kick_requested.emit(amount)
+	elif lv != null and lv.polish != null:
+		lv.polish.kick(amount)
+
+func _emit_trail_reset(lv, points: PackedVector3Array, clear_hold := false) -> void:
+	if not trail_reset_requested.get_connections().is_empty():
+		trail_reset_requested.emit(points, clear_hold)
+	elif lv != null:
+		lv.trail.clear()
+		if not points.is_empty():
+			lv.trail.append_array(points)
+		if clear_hold:
+			lv.hale_hold = false
+
 func step(lv,dt:float)->bool:
 	var p:Vector3=lv.walker.position
 	var h:Vector3=lv.hale.position
@@ -50,7 +91,7 @@ func step(lv,dt:float)->bool:
 		facts.decide("trial_entry",true,"B3 is open; the window trial is optional")
 	if lv.hale_hold and beat!=Beat.FOLLOW and beat!=Beat.DONE:return true
 	if beat==Beat.FOLLOW and not lv.hale_hold and h.distance_to(p)<18. and (in_window(p) or in_doorway(p) or entered_trial):
-		beat=Beat.WINDOW;lv.trail.clear();lv.hale_hold=false;route.clear()
+		beat=Beat.WINDOW;_emit_trail_reset(lv,PackedVector3Array(),true);route.clear()
 		if h.x>27.72:
 			if h.z<2.32:
 				route.append(Vector3(31.,0.,0.))
@@ -92,9 +133,9 @@ func step(lv,dt:float)->bool:
 					var can_speak:bool=not lv.captions.entries.has("Hale") or prev_id in ["start","sealed_well","collapse","hale_gate"]
 					if not lv.cues.has("ward_paired") and not lv.cues.has("ward_unseen") and can_speak:
 						if facts.evaluate("door_paired"):
-							lv.line_once("ward_paired",R18n.pick("别跨进去！守则写双人互保，但刚才隔窗同看它差点崩了。你要独自试板，我在门外守退路。","Stay out! Manual says pair up, yet our shared gaze nearly broke it. If you test it solo, I'll hold the door."))
+							_emit_line(lv,"ward_paired",R18n.pick("别跨进去！守则写双人互保，但刚才隔窗同看它差点崩了。你要独自试板，我在门外守退路。","Stay out! Manual says pair up, yet our shared gaze nearly broke it. If you test it solo, I'll hold the door."))
 						else:
-							lv.line_once("ward_unseen",R18n.pick("我在门外守着，有异动立刻退回来。里面是琥珀测试室，前班记录断在这儿，我不敢破旧守则硬进。","I'll hold the door—fall back if anything shifts. That's the amber test room where night shift's log stopped; I won't break manual rules."))
+							_emit_line(lv,"ward_unseen",R18n.pick("我在门外守着，有异动立刻退回来。里面是琥珀测试室，前班记录断在这儿，我不敢破旧守则硬进。","I'll hold the door—fall back if anything shifts. That's the amber test room where night shift's log stopped; I won't break manual rules."))
 					if lv.cues.has("ward_paired") or lv.cues.has("ward_unseen"):beat=Beat.WAIT
 				if entered_trial and (at_door or lv.cues.has("ward_paired") or lv.cues.has("ward_unseen")):beat=Beat.PEEK
 			return true
@@ -113,9 +154,9 @@ func step(lv,dt:float)->bool:
 			return true
 		Beat.CROSS:
 			if route.is_empty():
-				beat=Beat.DONE;lv.trail.clear()
+				beat=Beat.DONE
 				# Rejoin the known path, not a diagonal through the archive walls.
-				lv.trail.append_array(PackedVector3Array([Vector3(34.,0.,14.10),Vector3(38.8,0.,14.10),Vector3(38.8,0.,10.1)]))
+				_emit_trail_reset(lv,PackedVector3Array([Vector3(34.,0.,14.10),Vector3(38.8,0.,14.10),Vector3(38.8,0.,10.1)]),false)
 				return true
 			if route.size()==3:
 				var target:=Vector3(23.85,.11,13.46)
@@ -133,9 +174,9 @@ func compare(lv,count:int,dt:float)->void:
 	overlap=overlap+dt if count==2 else 0.
 	if overlap<.44:return
 	facts.record("dual_gaze_b2","two unobstructed window rays for 0.44 s")
-	lv.line_once("window",R18n.pick("移开眼！谁先看到的立刻转头——玻璃挡不住视线，咱俩同时看把板面看红了！","Look away! Whoever saw it first, turn now—glass didn't block our gaze and the plate went red!"))
+	_emit_line(lv,"window",R18n.pick("移开眼！谁先看到的立刻转头——玻璃挡不住视线，咱俩同时看把板面看红了！","Look away! Whoever saw it first, turn now—glass didn't block our gaze and the plate went red!"))
 	if lv.contracts.a_role==lv.contracts.Seer.HALE:
-		beat=Beat.WITHDRAW;recoil_left=.65;lv.polish.kick(.14)
+		beat=Beat.WITHDRAW;recoil_left=.65;_emit_kick(lv,.14)
 
 func handoff(lv)->void:
 	if beat not in [Beat.WINDOW,Beat.WITHDRAW] or not in_window(lv.walker.position):return
@@ -150,10 +191,13 @@ func record_lock(lv)->void:
 
 func update_annotation(lv)->void:
 	if not facts.evaluate("comparison") or lv.cues.has("evidence"):return
-	lv.cues["evidence"]=true
-	lv.evidence_thought_delay=.68
-	lv.sound_at("ink",lv.walker.position+Vector3.UP,-11.)
-	lv.toast("随身手册已新增批注")
+	if not annotation_unlocked.get_connections().is_empty():
+		annotation_unlocked.emit(.68)
+	else:
+		lv.cues["evidence"]=true
+		lv.evidence_thought_delay=.68
+	_emit_sound(lv,"ink",lv.walker.position+Vector3.UP,-11.)
+	_emit_toast(lv,R18n.pick("随身手册已新增批注","Field annotation added to manual"))
 
 func sees_crossing(lv)->bool:
 	if beat!=Beat.PEEK or lv.hale_hold or pose!=&"peek" or gaze!=Vector3.ZERO:return false
@@ -171,4 +215,4 @@ func record_crossing(lv, crossed_in_hale_view:bool)->void:
 	if crossed_in_hale_view:
 		facts.record("hale_saw_crossing_b3","Hale had a clear doorway sightline during the locked crossing")
 	if facts.evaluate("hale_comparison"):
-		lv.line_once("hale_evidence",R18n.pick("旧守则真的写反了。刚隔窗同看差点崩，你刚才独自盯住却稳稳走了过去。","The old manual really had it backwards. Shared gaze nearly broke it, and you just walked right across alone."))
+		_emit_line(lv,"hale_evidence",R18n.pick("旧守则真的写反了。刚隔窗同看差点崩，你刚才独自盯住却稳稳走了过去。","The old manual really had it backwards. Shared gaze nearly broke it, and you just walked right across alone."))

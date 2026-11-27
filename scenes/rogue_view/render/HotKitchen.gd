@@ -5,6 +5,7 @@ const Shell = preload("res://scenes/rogue_view/render/OrthogonalShell.gd")
 const Masks = preload("res://scenes/rogue_view/render/KitchenSurfaceMasks.gd")
 const Finish = preload("res://scenes/components/rendering/surfaces/KitchenFinish.gdshader")
 const Tile = preload("res://scenes/components/rendering/surfaces/AcademyTile.gdshader")
+const HallFinish = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 # Shared dimensions for authored geometry and the finite placement search.
 const PREP_HALF := Vector2(1350, 525) # millimetres
 const OVEN_SWEEP_HALF := Vector2(740, 655)
@@ -26,8 +27,8 @@ var wall_mat := ShaderMaterial.new()
 var floor_mat := ShaderMaterial.new()
 var wood := ShaderMaterial.new()
 var metal := ShaderMaterial.new()
-var paper := StandardMaterial3D.new()
-var brass := StandardMaterial3D.new()
+var paper := ShaderMaterial.new()
+var brass := ShaderMaterial.new()
 
 static func read_plan() -> Dictionary:
 	var state := State.new()
@@ -127,9 +128,18 @@ func build(document: Dictionary, floor_cells: Array) -> void:
 		material.set_shader_parameter("wear_masks",Masks.kitchen_texture())
 	_set_finish(wood,Color("77513a"),true)
 	_set_finish(metal,Color("494644"),false)
-	paper.albedo_color = Color("cbb38a")
-	brass.albedo_color = Color("977248")
-	brass.metallic = 0.58
+	paper.shader = HallFinish
+	paper.set_shader_parameter("pigment", Color("cbb38a"))
+	paper.set_shader_parameter("surface_roughness", 0.88)
+	paper.set_shader_parameter("pale_wash", 0.08)
+	paper.set_shader_parameter("toon_on", true)
+	paper.set_shader_parameter("toon_strength", 0.86)
+	brass.shader = HallFinish
+	brass.set_shader_parameter("pigment", Color("ba914e"))
+	brass.set_shader_parameter("surface_roughness", 0.30)
+	brass.set_shader_parameter("grain", 0.045)
+	brass.set_shader_parameter("toon_on", true)
+	brass.set_shader_parameter("toon_strength", 0.86)
 	var solids := shell_prisms(document, cells)
 	_add_solid("JoinedShell", solids, [floor_mat, wall_mat, metal])
 	for wall in plan.walls: _build_frames(wall)

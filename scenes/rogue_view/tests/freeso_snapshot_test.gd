@@ -40,9 +40,10 @@ func _run() -> void:
 	var before_ready: Error = view.set_freeso_snapshot("Lot", ["Exit"], json, 2)
 	root.add_child(view)
 	var avatar_found := false
-	for mesh in view.get_node("RoomViewport/Geometry").find_children("*", "MeshInstance3D", true, false):
-		if mesh is MeshInstance3D and mesh.mesh is CapsuleMesh:
-			avatar_found = mesh.position == Vector3(47.0 / 16.0, 0.44, 61.0 / 16.0)
+	for node in view.get_node("RoomViewport/Geometry").find_children("*", "Node3D", true, false):
+		if node.has_meta("model_source") and node.position == Vector3(47.0 / 16.0, 0.0, 61.0 / 16.0):
+			avatar_found = true
+			break
 	var results := {
 		"valid floors": first.error == OK and second.error == OK,
 		"all six distinct segments, shared edge deduplicated": first.lot.segments.size() == 6,

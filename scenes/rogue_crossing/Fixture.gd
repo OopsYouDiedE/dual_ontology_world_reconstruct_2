@@ -2,6 +2,8 @@ extends Node3D
 ## All player-facing fixture geometry comes from the authored Blender assets.
 const Rooms := preload("Rooms.gd")
 const Roster := preload("Roster.gd")
+const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const KIT_PIGMENTS := {"walnut": "53616b", "oxblood": "687884", "dark": "303940", "paper": "d9d5bd", "ivory": "d3d0bf", "ink": "30333a"}
 const GOLD := Color("f0cd8b")
 var plate_font: SystemFont
 var stage := ""
@@ -27,7 +29,7 @@ func install(chapter: String, frame: Transform3D, side_guest: String, variant: b
 	var asset := load("res://assets/architecture/night_crossing/%s.glb" % chapter) as PackedScene
 	assert(asset, "Missing authored fixture for " + chapter)
 	fixtures = asset.instantiate()
-	preload("res://scenes/components/rendering/surfaces/PaintedSurface.gd").finish_kit(fixtures)
+	_apply_hall_finish(fixtures)
 	add_child(fixtures)
 	for part in ["MainAction", "AuxAction", "ReceiptLeaf"]:
 		var node := fixtures.find_child(part, true, false) as Node3D
@@ -201,3 +203,25 @@ func _process(delta: float) -> void:
 func mark_released() -> void:
 	_released = true
 	signal_plate.text = "RELEASED"
+
+static func _apply_hall_finish(root: Node3D) -> void:
+	var paints := {}
+	for part: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		if part.mesh == null: continue
+		for i in part.mesh.get_surface_count():
+			var source := part.get_active_material(i) as StandardMaterial3D
+			if source == null or source.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED: continue
+			var key := source.resource_name if KIT_PIGMENTS.has(source.resource_name) else "__std_" + str(source.get_instance_id())
+			if not paints.has(key):
+				var mat := ShaderMaterial.new()
+				mat.shader = HallFinish
+				var color: Color = Color(KIT_PIGMENTS[key]) if KIT_PIGMENTS.has(key) else source.albedo_color
+				mat.set_shader_parameter("pigment", color)
+				mat.set_shader_parameter("surface_roughness", source.roughness)
+				mat.set_shader_parameter("grain", 0.045 if source.metallic > 0.35 else 0.06)
+				mat.set_shader_parameter("wood", 1.0 if key == "walnut" else 0.0)
+				mat.set_shader_parameter("pale_wash", 0.08 if key in ["paper", "ivory"] else 0.0)
+				mat.set_shader_parameter("toon_on", true)
+				mat.set_shader_parameter("toon_strength", 0.86)
+				paints[key] = mat
+			part.set_surface_override_material(i, paints[key])

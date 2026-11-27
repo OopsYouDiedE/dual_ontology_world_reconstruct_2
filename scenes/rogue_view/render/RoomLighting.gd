@@ -42,23 +42,25 @@ func build(lot: Dictionary, center: Vector3) -> void:
 		RenderProfile.tune_omni_light(light, "window")
 		windows.append(light)
 
+const MOOD_PRESETS := {
+	"ordinary": {"color": Color("f7f2e9"), "energy": 3.2},
+	"ember": {"color": Color("ffb77a"), "energy": 1.0},
+	"warm_shelter": {"color": Color("ffc68d"), "energy": 3.6},
+	"damp_mist": {"color": Color("a7c7c4"), "energy": 1.55},
+	"amber_alert": {"color": Color("e49581"), "energy": 1.65},
+	"cool_slate": {"color": Color("aec2e4"), "energy": 1.9},
+	# Legacy approach-stage aliases retained for older test scenes.
+	"shelter": {"color": Color("ffc68d"), "energy": 3.6},
+	"rain": {"color": Color("a7c7c4"), "energy": 1.55},
+	"rewrite": {"color": Color("e49581"), "energy": 1.65},
+	"echo": {"color": Color("aec2e4"), "energy": 1.9},
+}
+
 func apply(hour: float, mood: String) -> void:
+	var preset: Dictionary = MOOD_PRESETS.get(mood, MOOD_PRESETS["ordinary"])
 	for lamp in lamps:
-		lamp.light_color = Color("ffb77a") if mood == "ember" else Color("f7f2e9")
-		lamp.light_energy = 1.0 if mood == "ember" else 3.2
-		match mood:
-			"shelter":
-				lamp.light_color = Color("ffc68d")
-				lamp.light_energy = 3.6
-			"rain":
-				lamp.light_color = Color("a7c7c4")
-				lamp.light_energy = 1.55
-			"rewrite":
-				lamp.light_color = Color("e49581")
-				lamp.light_energy = 1.65
-			"echo":
-				lamp.light_color = Color("aec2e4")
-				lamp.light_energy = 1.9
+		lamp.light_color = preset.color
+		lamp.light_energy = float(preset.energy)
 	_hearth_base = 2.2 if mood == "ember" else 0.4
 	for fire in hearths:
 		fire.light_energy = _hearth_base

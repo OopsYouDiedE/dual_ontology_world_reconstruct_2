@@ -1,54 +1,45 @@
 extends Control
-## Walkable, read-only projection of native FreeSO lot data.
+## Walkable, read-only projection of native FreeSO lot data and campaign room viewport.
 
 signal exit_selected(index: int)
 signal landmark_inspected
 signal crossing_selected(group: int)
 signal witness_selected(id: String)
 
-const CrossingFixture := preload("res://scenes/rogue_crossing/Fixture.gd")
-const ServiceDoor := preload("res://assets/architecture/night_crossing/service_door.glb")
-var campaign_view := false
-var _crossing: Node3D
-var _witness_targets: Array[Dictionary] = []
-var field_model: Callable
-var routes_released := false
-var _route_hardware := []
-
-
-
+const GeoBuilder := preload("res://scenes/rogue_view/LotGeometryBuilder.gd")
+const CampaignPresenter := preload("res://scenes/rogue_view/CampaignStagePresenter.gd")
+const FreeSoSnapshot := preload("res://scenes/rogue_view/FreeSoSnapshot.gd")
+const Blueprint := preload("res://scenes/rogue_view/NativeBlueprint.gd")
+const Plan := preload("res://scenes/rogue_view/NativeLotPlan.gd")
 const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdshader")
-## Residual warp left in the hall while the pendulum still drifts after the opening.
-const HALL_DRIFT_SHIFT := 0.22
-const Followers := preload("res://scenes/rogue_view/FieldFollowers.gd")
 const Stage := preload("res://scenes/components/rendering/AcademyStage.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
-const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
-var expedition_view := false
-var _modal := false
-var _veil_material: ShaderMaterial
-var _shift_pass: MeshInstance3D
-var _crosshair: Control
-var _stability := 100
-var _followers: Node3D
-var _gate_root: Node3D
-var _gate_positions := {}
-var _gate_labels: Array = []
 
-const FreeSoSnapshot = preload("res://scenes/rogue_view/FreeSoSnapshot.gd")
-const Blueprint = preload("res://scenes/rogue_view/NativeBlueprint.gd")
-const Silhouette = preload("res://scenes/rogue_view/CatalogSilhouette.gd")
-const Plan = preload("res://scenes/rogue_view/NativeLotPlan.gd")
+const HALL_DRIFT_SHIFT := 0.22
 const PLAYER_SCENE := "res://scenes/rogue_player/RoguePlayer.tscn"
 const INTERACT := &"interact"
 const REACH := 1.85
 const APPROACH_HINT := 3.5
+
+var campaign_view := false
+var expedition_view := false
+var field_model: Callable
+var routes_released: bool:
+	get: return _campaign.routes_released
+	set(value): _campaign.routes_released = value
 
 @onready var _viewport: SubViewport = $RoomViewport
 @onready var _geometry: Node3D = $RoomViewport/Geometry
 @onready var _camera: Camera3D = $RoomViewport/Camera3D
 @onready var _title: Label = $RoomViewport/Title
 @onready var _pixels: TextureRect = $Frame/Pixels
+
+var _campaign := CampaignPresenter.new()
+var _veil_material: ShaderMaterial
+var _shift_pass: MeshInstance3D
+var _crosshair: Control
+var _modal := false
+var _stability := 100
 
 var _lot: Dictionary = {}
 var _blueprint: Dictionary = {}
@@ -83,41 +74,34 @@ var _keyboard_interact := false
 var _can_interact := false
 var _walkable_cells := {}
 
-
-const Kitchen = preload("res://scenes/rogue_view/render/HotKitchen.gd")
 var _kitchen
 var _kitchen_plan := {}
-const Lighting = preload("res://scenes/rogue_view/render/RoomLighting.gd")
-const PublicHallGothic = preload("res://scenes/rogue_view/render/PublicHallGothic.gd")
-const TileShader = preload("res://scenes/components/rendering/surfaces/AcademyTile.gdshader")
 var _lights: Node3D
 var _gothic_hall: Node3D
 var _pendulum_drifting := true
 var _hour := 12.0
 
+func mount_viewport_node(node: Node) -> void:
+	if is_instance_valid(_viewport) and node != null:
+		_viewport.add_child(node)
+
+func is_plan_open() -> bool:
+	return _plan_open
+
 func set_hour(hour: float) -> void:
 	_hour = hour
 	if is_instance_valid(_lights):
 		_lights.apply(_hour, "ember" if _template == "kitchen" else "ordinary")
-		if expedition_view and _room_label == "Public Hall":
-			# Same warm lamp ring as the expedition arcades; the nave keeps no cold key of its own.
+		if expedition_view and GeoBuilder.is_hall_shell(_template, _room_label):
 			for lamp in _lights.lamps:
 				lamp.position.y = 4.95
 				lamp.light_color = Color("ffe9cb")
 				lamp.light_energy = 1.35
 
-func _tile_surface(tint: Color, wall_surface: bool) -> ShaderMaterial:
-	var mat := ShaderMaterial.new()
-	mat.shader = TileShader
-	mat.set_shader_parameter("wall", wall_surface)
-	mat.set_shader_parameter("glaze", tint)
-	return mat
-
 func _resize_render_target() -> void:
 	var display := _pixels.get_global_transform_with_canvas().get_scale().abs() * _pixels.size
 	_viewport.size = Vector2i(display.round()).max(Vector2i.ONE)
 
-## First-person rooms have no frame: the native-resolution picture covers the whole window.
 func _fill_window() -> void:
 	$Frame.ratio = maxf(size.x, 1.0) / maxf(size.y, 1.0)
 
@@ -125,7 +109,6 @@ func _ready() -> void:
 	_pixels.resized.connect(_resize_render_target)
 	_resize_render_target.call_deferred()
 	if expedition_view:
-		# The walkable rooms render on the expedition's stage and fill the window like it does.
 		$RoomViewport/WorldEnvironment.environment = Stage.environment()
 		Stage.tune_viewport(_viewport)
 		resized.connect(_fill_window)
@@ -155,7 +138,6 @@ func _ready() -> void:
 		_veil_material = ShaderMaterial.new()
 		_veil_material.shader = Veil
 		veil.material = _veil_material
-		# The expedition reticle: a soft dot that gains an accent ring when something is in reach.
 		_crosshair = Control.new()
 		_crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_pixels.add_child(_crosshair)
@@ -166,6 +148,10 @@ func _ready() -> void:
 				_crosshair.draw_arc(Vector2.ZERO, 9.0, 0, TAU, 40, Color(UiStyle.ACCENT, 0.9), 1.8, true)
 		)
 	_pixels.gui_input.connect(_on_pixels_input)
+	_build_hud_overlay()
+	_rebuild()
+
+func _build_hud_overlay() -> void:
 	_plan = Plan.new()
 	_plan.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_plan.campaign_hud = campaign_view and expedition_view
@@ -188,7 +174,8 @@ func _ready() -> void:
 	bar.add_child(_heading)
 	_plan_button = Button.new()
 	_plan_button.focus_mode = Control.FOCUS_NONE
-	if expedition_view: UiStyle.style_button(_plan_button, font)
+	if expedition_view:
+		UiStyle.style_button(_plan_button, font)
 	_plan_button.pressed.connect(func():
 		_plan_open = not _plan_open
 		_release_mouse()
@@ -199,7 +186,8 @@ func _ready() -> void:
 	bar.add_child(_plan_button)
 	_level_button = Button.new()
 	_level_button.focus_mode = Control.FOCUS_NONE
-	if expedition_view: UiStyle.style_button(_level_button, font)
+	if expedition_view:
+		UiStyle.style_button(_level_button, font)
 	_level_button.pressed.connect(func():
 		_plan_level = 2 if _plan_level == 1 else 1
 		_refresh_ui()
@@ -214,7 +202,6 @@ func _ready() -> void:
 	_prompt.add_theme_constant_override("outline_size", 6)
 	_panel.add_child(_prompt)
 	if expedition_view:
-		# Interaction prompt sits under the reticle, exactly where the expedition shows its own.
 		_panel.remove_child(_prompt)
 		add_child(_prompt)
 		_prompt.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -230,8 +217,6 @@ func _ready() -> void:
 	_navigation.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_navigation.alignment = FlowContainer.ALIGNMENT_CENTER
 	_panel.add_child(_navigation)
-	_rebuild()
-
 
 ## Call before rendering a room. Same ID preserves the controlled player's pose.
 func set_instance_id(room_id: String) -> void:
@@ -250,19 +235,17 @@ func set_instance_id(room_id: String) -> void:
 	_mode = ""
 	_clicks.clear()
 	_keyboard_interact = false
-	if is_instance_valid(_crossing):
-		_crossing.hide()
-		_crossing.queue_free()
-	_crossing = null
-	_witness_targets.clear()
+	_campaign.drop_crossing()
 	_drop_player()
 
 func set_blueprint_room(title: String, exits: Array, xml_path: String) -> Error:
 	if xml_path == "res://content/academy_lots/kitchen.xml":
-		if _kitchen_plan.is_empty(): _kitchen_plan = Kitchen.read_plan()
-		if _kitchen_plan.is_empty(): return ERR_INVALID_DATA
+		if _kitchen_plan.is_empty():
+			_kitchen_plan = GeoBuilder.Kitchen.read_plan()
+		if _kitchen_plan.is_empty():
+			return ERR_INVALID_DATA
 		_template = "kitchen"
-		_apply(title, exits, Kitchen.layout(_kitchen_plan), "blueprint", 1)
+		_apply(title, exits, GeoBuilder.Kitchen.layout(_kitchen_plan), "blueprint", 1)
 		return OK
 	var stamp := int(FileAccess.get_modified_time(xml_path)) if FileAccess.file_exists(xml_path) else -1
 	var result := {"error": OK}
@@ -276,14 +259,11 @@ func set_blueprint_room(title: String, exits: Array, xml_path: String) -> Error:
 	_apply(title, exits, _blueprint, "blueprint" if not _blueprint.is_empty() else "", 1)
 	return result.error
 
-
 func set_freeso_room(label: String, exits: Array, path: String, level: int = 1) -> Error:
 	return _use_snapshot(label, exits, FreeSoSnapshot.read_file(path, level), level)
 
-
 func set_freeso_snapshot(label: String, exits: Array, snapshot: Dictionary, level: int = 1) -> Error:
 	return _use_snapshot(label, exits, FreeSoSnapshot.decode(snapshot, level), level)
-
 
 func _use_snapshot(label: String, exits: Array, result: Dictionary, level: int) -> Error:
 	if result.error != OK:
@@ -292,9 +272,8 @@ func _use_snapshot(label: String, exits: Array, result: Dictionary, level: int) 
 	_apply(label, exits, result.lot, "snapshot", level)
 	return OK
 
-
 func _apply(label: String, exits: Array, lot: Dictionary, mode: String, level: int) -> void:
-	var same_ground: bool = (_room_label in ["Public Hall", "Observatory"]) == (label in ["Public Hall", "Observatory"]) and _mode == mode and _lot_level == level and _lot.get("segments") == lot.get("segments") and _lot.get("patterns") == lot.get("patterns") and _lot.get("windows") == lot.get("windows")
+	var same_ground: bool = GeoBuilder.has_meridian_well(_template, _room_label) == GeoBuilder.has_meridian_well(_template, label) and GeoBuilder.is_hall_shell(_template, _room_label) == GeoBuilder.is_hall_shell(_template, label) and _mode == mode and _lot_level == level and _lot.get("segments") == lot.get("segments") and _lot.get("patterns") == lot.get("patterns") and _lot.get("windows") == lot.get("windows")
 	var changed_objects: bool = _lot.get("objects") != lot.get("objects")
 	var changed_avatars: bool = _lot.get("avatars") != lot.get("avatars")
 	_room_label = label
@@ -308,19 +287,17 @@ func _apply(label: String, exits: Array, lot: Dictionary, mode: String, level: i
 		_rebuild()
 		return
 	if changed_objects and is_instance_valid(_object_root):
-		_rebuild_objects()
+		GeoBuilder.rebuild_objects(_object_root, _lot, _template, expedition_view)
 	if changed_avatars and is_instance_valid(_avatar_root):
-		_update_lot_avatars()
+		GeoBuilder.update_lot_avatars(_avatar_root, _lot)
 	_refresh_targets()
 	_refresh_ui()
-
 
 func set_inspection_target(active: bool) -> void:
 	_inspection_active = active
 	if is_node_ready():
 		_refresh_targets()
 		_update_prompt()
-
 
 func _rebuild() -> void:
 	for child in _geometry.get_children():
@@ -330,11 +307,7 @@ func _rebuild() -> void:
 	_lights = null
 	_gothic_hall = null
 	set_essence_instability(0.0)
-	_crossing = null
-	_gate_root = null
-	_gate_positions.clear()
-	_gate_labels.clear()
-	_route_hardware.clear()
+	_campaign.clear_room()
 	_walkable_cells.clear()
 	_avatar_root = null
 	_object_root = null
@@ -342,168 +315,27 @@ func _rebuild() -> void:
 	if _lot.is_empty():
 		_drop_player()
 	else:
-		_rebuild_architecture()
+		var built: Dictionary = GeoBuilder.build_room(_geometry, _camera, _lot, _template, _room_label, expedition_view, _pendulum_drifting, _kitchen_plan)
+		_walkable_cells = built.walkable_cells
+		_kitchen = built.kitchen
+		_lights = built.lights
+		_gothic_hall = built.gothic_hall
+		_avatar_root = built.avatar_root
+		_object_root = built.object_root
+		if is_instance_valid(_gothic_hall):
+			set_essence_instability(essence_baseline())
+		if is_instance_valid(_lights):
+			set_hour(_hour)
 		_spawn_if_needed()
 	_refresh_targets()
 	_refresh_ui()
-
-
-func _rebuild_architecture() -> void:
-	if _template == "kitchen" and not _kitchen_plan.is_empty():
-		for cell in _lot.floors: _walkable_cells[cell] = true
-		_kitchen = Kitchen.new()
-		_geometry.add_child(_kitchen)
-		_kitchen.build(_kitchen_plan, _lot.floors)
-		return
-	var static_body := StaticBody3D.new()
-	_geometry.add_child(static_body)
-	var tile := BoxMesh.new()
-	tile.size = Vector3(1, 0.15, 1)
-	var batches := {}
-	var floor_bounds := Rect2i()
-	var well := Rect2i()
-	if expedition_view and _room_label in ["Public Hall", "Observatory"]:
-		well = Rect2i(14, 15, 4, 4) if _template == "public_nave" else preload("render/MeridianWell.gd").plan(_lot)
-		if well.has_area(): preload("render/MeridianWell.gd").install(_geometry, well, _template == "public_nave")
-	for cell: Vector2i in _lot.floors:
-		var pattern: int = _lot.patterns.get(cell, 0)
-		var pos := Vector3(cell.x + 0.5, -0.075, cell.y + 0.5)
-		if not well.has_point(cell):
-			if not batches.has(pattern):
-				var surface := SurfaceTool.new()
-				surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-				batches[pattern] = surface
-			batches[pattern].append_from(tile, 0, Transform3D(Basis.IDENTITY, pos))
-		var area := Rect2i(cell, Vector2i.ONE)
-		floor_bounds = area if not floor_bounds.has_area() else floor_bounds.merge(area)
-		if pattern != 65535:
-			_walkable_cells[cell] = true
-			_add_shape(static_body, pos, tile.size)
-	for pattern: int in batches:
-		var floor_tint: Color = Color("525e6a") if (expedition_view and _room_label == "Public Hall") else Plan.floor_color(pattern).darkened(0.22)
-		_commit_static_mesh(batches[pattern], _tile_surface(floor_tint, false))
-	var wall := BoxMesh.new()
-	wall.size = Vector3(1, 2.45, 0.13)
-	var walls := SurfaceTool.new()
-	walls.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var gothic_shell := expedition_view and _room_label == "Public Hall"
-	for edge: Vector4i in _lot.segments:
-		var a := Vector2(edge.x, edge.y)
-		var b := Vector2(edge.z, edge.w)
-		var d := b - a
-		var middle := (a + b) * 0.5
-		var position := Vector3(middle.x, wall.size.y * 0.5, middle.y)
-		var basis := Basis(Vector3.UP, -d.angle())
-		if not gothic_shell:
-			if _lot.get("windows", {}).has(edge):
-				_build_window(position, basis, d.length())
-			else:
-				walls.append_from(wall, 0, Transform3D(basis * Basis.from_scale(Vector3(d.length(), 1, 1)), position))
-		_add_shape(static_body, position, Vector3(d.length(), wall.size.y, wall.size.z), basis)
-	if not gothic_shell:
-		_commit_static_mesh(walls, _tile_surface(Color("aa997e"), true))
-	if expedition_view and _room_label == "Public Hall":
-		_gothic_hall = PublicHallGothic.install(_geometry, _lot, Rect2i(11, 5, 10, 20) if _template == "public_nave" else floor_bounds, well, _pendulum_drifting)
-		set_essence_instability(essence_baseline())
-		# Same unshadowed warm fill ring the expedition hangs down its arcades.
-		var nave := Rect2(Vector2(11, 5), Vector2(10, 20)) if _template == "public_nave" else Rect2(floor_bounds)
-		for i in 3:
-			var fill := OmniLight3D.new()
-			fill.name = "NaveFill%d" % i
-			_geometry.add_child(fill)
-			fill.position = Vector3(nave.get_center().x, 4.1, lerpf(nave.position.y + 2.5, nave.end.y - 2.5, i / 2.0))
-			fill.omni_range = 12.0
-			fill.light_energy = 0.52
-			fill.light_color = Color("ffe9cb")
-			fill.omni_attenuation = 1.25
-	elif expedition_view:
-		# The old orbit view needed a cutaway roof. First person needs an interior ceiling.
-		var ceiling := SurfaceTool.new()
-		ceiling.begin(Mesh.PRIMITIVE_TRIANGLES)
-		for cell: Vector2i in _walkable_cells:
-			ceiling.append_from(tile, 0, Transform3D(Basis.IDENTITY, Vector3(cell.x + 0.5, 2.49, cell.y + 0.5)))
-		_commit_static_mesh(ceiling, _material(Color("30383a")))
-	_avatar_root = Node3D.new()
-	_object_root = Node3D.new()
-	_geometry.add_child(_avatar_root)
-	_geometry.add_child(_object_root)
-	_update_lot_avatars()
-	_rebuild_objects()
-	var center := Vector3(floor_bounds.get_center().x, 0.0, floor_bounds.get_center().y)
-	_camera.projection = Camera3D.PROJECTION_PERSPECTIVE
-	_camera.position = center + Vector3(1, 10, 8)
-	_camera.look_at(center)
-	_lights = Lighting.new()
-	_geometry.add_child(_lights)
-	_lights.build(_lot, center)
-	set_hour(_hour)
-
-
-func _build_window(wall_center: Vector3, basis: Basis, width: float) -> void:
-	var anchor := Node3D.new()
-	_geometry.add_child(anchor)
-	anchor.transform = Transform3D(basis, Vector3(wall_center.x, 0, wall_center.z))
-	var plaster := _material(Color("aeb8b5"))
-	var frame := _material(Color("43362f"))
-	var glass := StandardMaterial3D.new()
-	glass.albedo_color = Color(0.39, 0.74, 0.89, 0.30)
-	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass.roughness = 0.18
-	_window_part(anchor, Vector3(0, 0.40, 0), Vector3(width, 0.80, 0.13), plaster)
-	_window_part(anchor, Vector3(0, 2.285, 0), Vector3(width, 0.33, 0.13), plaster)
-	for x in [-width * 0.45, width * 0.45, 0.0]:
-		_window_part(anchor, Vector3(x, 1.46, 0), Vector3(0.09, 1.32, 0.19), frame)
-	for y in [0.83, 1.46, 2.09]:
-		_window_part(anchor, Vector3(0, y, 0), Vector3(width, 0.07, 0.21), frame)
-	_window_part(anchor, Vector3(0, 1.46, 0), Vector3(width - 0.12, 1.24, 0.018), glass)
-
-
-static func _window_part(anchor: Node3D, point: Vector3, dimensions: Vector3, material: Material) -> void:
-	var mesh := BoxMesh.new()
-	mesh.size = dimensions
-	mesh.material = material
-	var part := MeshInstance3D.new()
-	part.mesh = mesh
-	part.position = point
-	anchor.add_child(part)
-
-
-func _rebuild_objects() -> void:
-	for child in _object_root.get_children():
-		_object_root.remove_child(child)
-		child.queue_free()
-	for item: Dictionary in _lot.objects:
-		if item.role == "window" or item.get("layout_only", false): continue
-		# The nave supplies its own detailed station meshes; native objects remain activity anchors.
-		if _template == "public_nave" and expedition_view: continue
-		var anchor := Node3D.new()
-		_object_root.add_child(anchor)
-		anchor.position = _world(item.position)
-		anchor.rotation.y = item.yaw
-		anchor.set_meta("native_guid", item.guid)
-		var role: String = item.role
-		var marker := MeshInstance3D.new()
-		var body := BoxMesh.new()
-		var word := String(item.label).to_lower()
-		body.size = Vector3(0.74, 0.70, 0.66)
-		if "table" in word or "desk" in word or "counter" in word: body.size = Vector3(0.94, 0.76, 0.64)
-		if "shelf" in word or "cabinet" in word or "bookcase" in word: body.size = Vector3(0.82, 1.48, 0.40)
-		if role in ["entry", "exit"] or item.get("annotation_only", false): body.size = Vector3(0.76, 0.035, 0.76)
-		body.material = _material(Color("5ba47f") if role == "entry" else Color("ce9b58") if role == "exit" else Color("866d55"))
-		var populated := Silhouette.populate(anchor, int(item.guid))
-		if not populated:
-			marker.mesh = body
-			marker.position.y = body.size.y * 0.5
-			anchor.add_child(marker)
-		else:
-			marker.free()
-
 
 func _spawn_if_needed() -> void:
 	if is_instance_valid(_player):
 		var current_cell := Vector2i(floori(_player.position.x), floori(_player.position.z))
 		if not _walkable_cells.has(current_cell) or _player.position.y < -0.75:
-			if not _walkable_cells.is_empty(): _player.spawn_at(_spawn_point())
+			if not _walkable_cells.is_empty():
+				_player.spawn_at(_spawn_point())
 		return
 	if _walkable_cells.is_empty() or not ResourceLoader.exists(PLAYER_SCENE):
 		return
@@ -517,100 +349,32 @@ func _spawn_if_needed() -> void:
 	if not expedition_view:
 		_player.orbit_by(Vector2(0.0, -41.0))
 		_player.zoom_by(2.4)
-		if is_instance_valid(_kitchen): _player.set_room_camera(0.20,3.0)
+		if is_instance_valid(_kitchen):
+			_player.set_room_camera(0.20, 3.0)
 	elif _template == "public_nave":
 		_player.set_first_person_framing(Stage.BASE_FOV, deg_to_rad(7.1))
 	else:
 		_player.orbit_by(Vector2(0.0, 380.0))
-	_player.spawn_at(point, _spawn_yaw(point))
-
+	_player.spawn_at(point, GeoBuilder.spawn_yaw(_lot))
 
 func _drop_player() -> void:
-	if is_instance_valid(_followers):
-		_viewport.remove_child(_followers)
-		_followers.queue_free()
-		_followers = null
+	_campaign.drop_followers(_viewport)
 	if is_instance_valid(_player):
 		_viewport.remove_child(_player)
 		_player.queue_free()
 	_player = null
 
-
 func _spawn_point() -> Vector3:
-	if _template == "public_nave": return Vector3(16, 0, 24.4)
-	if is_instance_valid(_kitchen): return Kitchen.SPAWN
-	for object: Dictionary in _lot.objects:
-		if object.role == "entry":
-			var interior: Vector2 = object.get("interior", object.position)
-			var start := _nearest_walkable(interior)
-			var step := Vector2i((interior - Vector2(object.position)).normalized().round())
-			var cell := Vector2i(floori(start.x), floori(start.z))
-			for i in 2:
-				var next := cell + step
-				if not _is_clear_cell(next) or _has_wall_between(cell, next): break
-				cell = next
-			return _world(Vector2(cell) + Vector2(0.5, 0.5))
-	# A genuine floor tile is a safe fallback when an imported snapshot has no entry annotation.
-	var bounds := Rect2i(_lot.floors[0], Vector2i.ONE)
-	for cell: Vector2i in _lot.floors:
-		bounds = bounds.merge(Rect2i(cell, Vector2i.ONE))
-	return _nearest_walkable(Vector2(bounds.get_center()))
-
-
-func _spawn_yaw(_point: Vector3) -> float:
-	for item: Dictionary in _lot.objects:
-		if item.role == "entry" and item.has("interior"):
-			var inward: Vector2 = item.interior - item.position
-			if inward.length_squared() > 0.01:
-				return atan2(-inward.x, -inward.y)
-	return NAN
-
+	return GeoBuilder.spawn_point(_lot, _template, _kitchen, _is_clear_cell, _has_wall_between, _nearest_walkable)
 
 func _nearest_walkable(point: Vector2) -> Vector3:
-	var best := INF
-	var result := Vector3.ZERO
-	for cell: Vector2i in _walkable_cells:
-		if not _is_clear_cell(cell): continue
-		var center := Vector2(cell) + Vector2(0.5, 0.5)
-		var distance := center.distance_squared_to(point)
-		if distance < best:
-			best = distance
-			result = _world(center)
-	if best == INF and not _walkable_cells.is_empty():
-		var first: Vector2i = _walkable_cells.keys()[0]
-		return _world(Vector2(first) + Vector2(0.5, 0.5))
-	return result
-
+	return GeoBuilder.nearest_walkable(_lot, _walkable_cells, _is_clear_cell, point)
 
 func _is_clear_cell(cell: Vector2i) -> bool:
-	if not _walkable_cells.has(cell): return false
-	var center := Vector2(cell) + Vector2(0.5, 0.5)
-	if _template == "public_nave" and is_instance_valid(_gothic_hall):
-		for bounds: Rect2 in _gothic_hall.station_bounds:
-			if bounds.has_point(center): return false
-	if campaign_view and is_instance_valid(_crossing):
-		var local := _crossing.to_local(_world(center))
-		if absf(local.x) < 1.52 and absf(local.z) < .63: return false
-	for item: Dictionary in _lot.objects:
-		if not item.get("annotation_only", false) and item.role not in ["window", "entry", "exit"] and center.distance_to(item.position) < 0.48:
-			return false
-	for edge: Vector4i in _lot.segments:
-		if edge.x != edge.z and edge.y != edge.w and Vector2(edge.x + edge.z, edge.y + edge.w) * 0.5 == center:
-			return false
-	return true
-
+	return GeoBuilder.is_clear_cell(_lot, _walkable_cells, _template, _gothic_hall, _campaign.crossing, campaign_view, cell)
 
 func _has_wall_between(from: Vector2i, to: Vector2i) -> bool:
-	if from == to: return false
-	var edge: Vector4i
-	if from.x != to.x:
-		var x := maxi(from.x, to.x)
-		edge = Vector4i(x, from.y, x, from.y + 1)
-	else:
-		var y := maxi(from.y, to.y)
-		edge = Vector4i(from.x, y, from.x + 1, y)
-	return edge in _lot.segments
-
+	return GeoBuilder.has_wall_between(_lot, from, to)
 
 func _refresh_targets() -> void:
 	_targets.clear()
@@ -621,42 +385,47 @@ func _refresh_targets() -> void:
 	var portals: Array[Dictionary] = []
 	var entrances: Array[Dictionary] = []
 	for item: Dictionary in _lot.objects:
-		if item.role == "exit": portals.append(item)
-		if item.role == "entry": entrances.append(item)
-		if item.role in ["focal", "inspect"] and (focus.is_empty() or focus.role not in ["focal", "inspect"]): focus = item
-		elif focus.is_empty() and item.role not in ["entry", "exit", "window"]: focus = item
-	if is_instance_valid(_crossing): _targets.append_array(_crossing.targets)
-	_targets.append_array(_witness_targets)
-	if _inspection_active and _exits.is_empty():
-		if not focus.is_empty():
-			_targets.append({"kind": "inspect", "position": _world(focus.position), "label": _item_name(focus, "Landmark")})
+		if item.role == "exit":
+			portals.append(item)
+		if item.role == "entry":
+			entrances.append(item)
+		if item.role in ["focal", "inspect"] and (focus.is_empty() or focus.role not in ["focal", "inspect"]):
+			focus = item
+		elif focus.is_empty() and item.role not in ["entry", "exit", "window"]:
+			focus = item
+	if is_instance_valid(_campaign.crossing):
+		_targets.append_array(_campaign.crossing.targets)
+	_targets.append_array(_campaign.witness_targets)
+	if _inspection_active and _exits.is_empty() and not focus.is_empty():
+		_targets.append({"kind": "inspect", "position": GeoBuilder.world_pos(focus.position), "label": _item_name(focus, "Landmark")})
 	if portals.size() < _exits.size():
 		portals.append_array(entrances)
-	if expedition_view and (not campaign_view or routes_released or is_instance_valid(_crossing)):
-		_sync_gates(portals)
-		for i in _gate_positions:
-			_targets.append({"kind": "exit", "index": i, "position": _gate_positions[i], "label": _exit_label(i)})
+	if expedition_view and (not campaign_view or _campaign.routes_released or is_instance_valid(_campaign.crossing)):
+		_campaign.sync_gates(_geometry, _player, campaign_view, _exits, portals, _reachable_cells(), _spawn_point(), _exit_label, _portal_position)
+		for i in _campaign.gate_positions:
+			_targets.append({"kind": "exit", "index": i, "position": _campaign.gate_positions[i], "label": _exit_label(i)})
 	elif not expedition_view:
 		for i in mini(portals.size(), _exits.size()):
 			_targets.append({"kind": "exit", "index": i, "position": _portal_position(portals[i]), "label": _exit_label(i)})
-	if is_instance_valid(_kitchen): _targets.append_array(_kitchen.targets())
-	if campaign_view: return
+	if is_instance_valid(_kitchen):
+		_targets.append_array(_kitchen.targets())
+	if campaign_view:
+		return
 	if not is_instance_valid(_focus_ring):
 		_focus_ring = MeshInstance3D.new()
 		var ring := TorusMesh.new()
 		ring.inner_radius = 0.46
 		ring.outer_radius = 0.51
-		ring.material = _material(Color("74c9b0"), Color("569986"))
+		ring.material = GeoBuilder.painted_material(Color("74c9b0"), Color("569986"))
 		_focus_ring.mesh = ring
 		_geometry.add_child(_focus_ring)
 	_focus_ring.visible = not _targets.is_empty() and _targets[0].kind == "inspect"
-	if _focus_ring.visible: _focus_ring.position = _targets[0].position + Vector3.UP * 0.06
-
+	if _focus_ring.visible:
+		_focus_ring.position = _targets[0].position + Vector3.UP * 0.06
 
 func _portal_position(portal: Dictionary) -> Vector3:
 	var center := _nearest_walkable(portal.get("interior", portal.position))
-	return _world(portal.position).lerp(center, 0.25)
-
+	return GeoBuilder.world_pos(portal.position).lerp(center, 0.25)
 
 func _refresh_ui() -> void:
 	var has_lot := not _lot.is_empty()
@@ -675,10 +444,11 @@ func _refresh_ui() -> void:
 			var source := "Live FreeSO VM" if _lot.source_kind == "live-vm" else "Saved FreeSO VM"
 			heading += " · %s, floor %d" % [source, _lot_level]
 	_heading.text = _room_label if campaign_view and not plan_mode else "%s  |  %s" % [heading, _room_label]
-	# In the campaign the HUD card names the room; keep top-left clear of the card even in plan view.
-	if campaign_view and expedition_view: _heading.text = ""
+	if campaign_view and expedition_view:
+		_heading.text = ""
 	_navigation.visible = not campaign_view
-	if is_instance_valid(_player): _player.set_controls_enabled(not plan_mode and not _modal)
+	if is_instance_valid(_player):
+		_player.set_controls_enabled(not plan_mode and not _modal)
 	if is_instance_valid(_crosshair):
 		_crosshair.visible = not _modal and not _plan_open and not _cinematic
 		_crosshair.queue_redraw()
@@ -696,11 +466,11 @@ func _refresh_ui() -> void:
 			_navigation.add_child(button)
 	_update_prompt()
 
-
 func _nearest_target() -> Dictionary:
 	var result := {}
 	var distance := INF
-	if not is_instance_valid(_player): return result
+	if not is_instance_valid(_player):
+		return result
 	for target in _targets:
 		var next := _flat_distance(target.position)
 		if next < distance:
@@ -708,10 +478,8 @@ func _nearest_target() -> Dictionary:
 			distance = next
 	return result
 
-
 func _flat_distance(point: Vector3) -> float:
 	return Vector2(point.x, point.z).distance_to(Vector2(_player.position.x, _player.position.z))
-
 
 func _update_prompt() -> void:
 	var target := _nearest_target()
@@ -722,22 +490,23 @@ func _update_prompt() -> void:
 	elif target.is_empty():
 		_prompt.text = "" if expedition_view else "WASD · Move     Q / R or right-drag · Orbit"
 	else:
-		if campaign_view and target.kind == "exit" and not routes_released:
+		if campaign_view and target.kind == "exit" and not _campaign.routes_released:
 			_prompt.text = "Sealed passage · " + target.label
 		else:
 			var verb := "Inspect" if target.kind == "inspect" else ("Examine" if target.kind in ["crossing", "fixture"] else ("Speak to" if target.kind == "witness" else "Travel"))
 			_prompt.text = ("E · %s %s" if campaign_view else "E / A / Click · %s %s") % [verb, target.label] if _can_interact else "Approach · " + target.label
-			# First person names a target only once it is near, as the expedition does.
-			if expedition_view and not _can_interact and _flat_distance(target.position) > APPROACH_HINT: _prompt.text = ""
-	# Until the world holds the cursor, the first line says how to take the view.
+			if expedition_view and not _can_interact and _flat_distance(target.position) > APPROACH_HINT:
+				_prompt.text = ""
 	if expedition_view and not _modal and not _plan_open and is_instance_valid(_player) and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		_prompt.text = "Click to look  ·  WASD to move" + ("\n" + _prompt.text if not _prompt.text.is_empty() else "")
-	if is_instance_valid(_crosshair): _crosshair.queue_redraw()
-
+	if is_instance_valid(_crosshair):
+		_crosshair.queue_redraw()
 
 func _input(event: InputEvent) -> void:
-	if not expedition_view or _modal or _plan_open or not is_instance_valid(_player): return
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED: return
+	if not expedition_view or _modal or _plan_open or not is_instance_valid(_player):
+		return
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		return
 	if event is InputEventMouseMotion:
 		_player.orbit_by(event.relative)
 		get_viewport().set_input_as_handled()
@@ -745,12 +514,10 @@ func _input(event: InputEvent) -> void:
 		_release_mouse()
 		get_viewport().set_input_as_handled()
 
-
 func _unhandled_input(event: InputEvent) -> void:
 	if not _modal and is_instance_valid(_player) and not _plan_open and event.is_action_pressed(INTERACT):
 		_keyboard_interact = true
 		get_viewport().set_input_as_handled()
-
 
 func _on_pixels_input(event: InputEvent) -> void:
 	if not is_instance_valid(_player) or _plan_open or _modal:
@@ -768,7 +535,6 @@ func _on_pixels_input(event: InputEvent) -> void:
 		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and _player.has_method("zoom_by"):
 			_player.zoom_by(1.0 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1.0)
 		_pixels.accept_event()
-
 
 func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(_player) or _plan_open or _modal:
@@ -795,11 +561,9 @@ func _physics_process(_delta: float) -> void:
 				_clicks.clear()
 				return
 
-
 func _is_reachable(target: Dictionary) -> bool:
 	if target.is_empty() or _flat_distance(target.position) > REACH:
 		return false
-	# Check native walls and line of sight before firing a nearby interaction.
 	var start := _player.position + Vector3.UP * 0.65
 	var destination: Vector3 = target.position + Vector3.UP * 0.65
 	if start.distance_squared_to(destination) > 0.01:
@@ -808,12 +572,14 @@ func _is_reachable(target: Dictionary) -> bool:
 			return false
 	return true
 
-
 func _activate(target: Dictionary) -> bool:
-	if campaign_view and target.get("kind") == "exit" and not routes_released: return false
-	if not _is_reachable(target): return false
+	if campaign_view and target.get("kind") == "exit" and not _campaign.routes_released:
+		return false
+	if not _is_reachable(target):
+		return false
 	if target.kind == "fixture":
-		if not is_instance_valid(_kitchen) or not _kitchen.toggle(target.id, _player.global_position): return false
+		if not is_instance_valid(_kitchen) or not _kitchen.toggle(target.id, _player.global_position):
+			return false
 		_player.play_action("interact")
 		return true
 	_player.play_action("interact")
@@ -827,7 +593,6 @@ func _activate(target: Dictionary) -> bool:
 	else:
 		exit_selected.emit(target.index)
 	return true
-
 
 func player_observation() -> Dictionary:
 	var player: Dictionary = _player.snapshot() if is_instance_valid(_player) else {}
@@ -847,7 +612,8 @@ func player_observation() -> Dictionary:
 		var p := _player.position
 		player.position = [p.x, p.y, p.z]
 	var velocity: Variant = player.get("velocity")
-	if velocity is Vector3: player.velocity = [velocity.x, velocity.y, velocity.z]
+	if velocity is Vector3:
+		player.velocity = [velocity.x, velocity.y, velocity.z]
 	player["perspective"] = "first_person" if expedition_view else "third_person"
 	player["action"] = player.get("animation", "")
 	player["prompt"] = _prompt.text if is_instance_valid(_prompt) else ""
@@ -865,152 +631,32 @@ func player_observation() -> Dictionary:
 		player["fov"] = eye.fov
 	return player
 
-
-static func _world(point: Vector2) -> Vector3:
-	return Vector3(point.x, 0.0, point.y)
-
-
-static func _item_name(item: Dictionary, fallback: String) -> String:
-	var title: String = item.label
-	return fallback if title.is_empty() else title
-
-
-static func _add_shape(body: StaticBody3D, point: Vector3, size: Vector3, basis := Basis.IDENTITY) -> void:
-	var shape := BoxShape3D.new()
-	shape.size = size
-	var collision := CollisionShape3D.new()
-	collision.shape = shape
-	collision.transform = Transform3D(basis, point)
-	body.add_child(collision)
-
-
-func _commit_static_mesh(surface: SurfaceTool, material: Material) -> void:
-	var mesh := surface.commit()
-	if mesh == null or mesh.get_surface_count() == 0:
-		return
-	var instance := MeshInstance3D.new()
-	instance.mesh = mesh
-	instance.material_override = material
-	instance.gi_mode = GeometryInstance3D.GI_MODE_STATIC
-	_geometry.add_child(instance)
-
-
-func _update_lot_avatars() -> void:
-	var positions: PackedVector2Array = _lot.avatars
-	while _avatar_root.get_child_count() > positions.size():
-		var last := _avatar_root.get_child(-1)
-		_avatar_root.remove_child(last)
-		last.queue_free()
-	var cast := preload("res://scenes/rogue_crossing/Roster.gd")
-	for i in positions.size():
-		if i == _avatar_root.get_child_count():
-			var actor := Node3D.new()
-			_avatar_root.add_child(actor)
-			cast.attach(actor, cast.NAMES[i % cast.NAMES.size()])
-		var actor := _avatar_root.get_child(i) as Node3D
-		actor.position = Vector3(positions[i].x, 0, positions[i].y)
-
-
 func _exit_label(index: int) -> String:
 	var entry: Variant = _exits[index]
 	var fallback := "Exit %d" % (index + 1)
 	var text := str(entry.get("label", fallback)) if entry is Dictionary else (str(entry) if entry is String else fallback)
 	text = text.replace("\n", " ").strip_edges()
-	if text.is_empty():
-		return fallback
-	return text
+	return fallback if text.is_empty() else text
 
+static func _item_name(item: Dictionary, fallback: String) -> String:
+	var title: String = item.label
+	return fallback if title.is_empty() else title
 
-func _material(color: Color, emission := Color.BLACK) -> ShaderMaterial:
-	return preload("res://scenes/components/rendering/surfaces/PaintedSurface.gd").make(color, 0.89, emission)
-
-## The camp AI and the player use the same floor, furniture and wall edges.
 func camp_layout(names: Array) -> Dictionary:
-	var graph := {}
-	for cell: Vector2i in _walkable_cells:
-		if _is_clear_cell(cell): graph[cell] = []
-	for cell: Vector2i in graph:
-		for dir: Vector2i in [Vector2i.LEFT, Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN]:
-			if graph.has(cell + dir) and not _has_wall_between(cell, cell + dir): graph[cell].append(cell + dir)
-	var objects := []
-	var taken := {}
-	for item: Dictionary in _lot.get("objects", []):
-		var need: String = {0x06ea4309:"hunger", 0x68ea432a:"fatigue", 0x5dea43f0:"social"}.get(item.guid, "")
-		if need.is_empty(): continue
-		var cell := Vector2i(item.position)
-		for dir: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP]:
-			var stand := cell + dir
-			if graph.has(stand) and not taken.has(stand) and not _has_wall_between(cell, stand):
-				taken[stand] = true
-				var title: String = {"hunger":"Meal table", "fatigue":"Armchair", "social":"Common table seat"}[need]
-				objects.append({"id":"%s (%d,%d)" % [title,cell.x,cell.y], "stand":stand, "need":need, "duration":12, "relief":55})
-				break
-	var people := []
-	if is_instance_valid(_player): taken[Vector2i(_player.position.x, _player.position.z)] = true
-	var seats: Array = graph.keys()
-	if campaign_view and not names.is_empty():
-		seats = _hall_floor_positions(graph, taken, names.size())
-	for cell: Vector2i in seats:
-		if people.size() == names.size(): break
-		if taken.has(cell): continue
-		var index := people.size()
-		people.append({"id":names[index], "cell":cell,"needs":{"hunger":75 if index % 3 == 0 else 20,"fatigue":75 if index % 3 == 1 else 20,"social":75 if index % 3 == 2 else 20}})
-	return {"graph":graph, "objects":objects, "people":people}
-
-
-## Keep the witness aisle clear and distribute initial jobs across the actual Hall floor.
-func _hall_floor_positions(graph: Dictionary, reserved: Dictionary, count: int) -> Array[Vector2i]:
-	var positions: Array[Vector2i] = []
-	var room_cells: Array[Vector2i] = []
-	var origin := _player.position
-	var first := Vector2i(floori(origin.x), floori(origin.z))
-	if not graph.has(first):
-		var adjusted := _nearest_walkable(Vector2(origin.x, origin.z))
-		first = Vector2i(floori(adjusted.x), floori(adjusted.z))
-	var queue: Array[Vector2i] = [first]
-	var visited := {first:true}
-	for idx in 512:
-		if idx == queue.size(): break
-		var cell := queue[idx]
-		for next: Vector2i in graph.get(cell, []):
-			if visited.has(next): continue
-			visited[next] = true
-			queue.append(next)
-		if reserved.has(cell) or not graph.has(cell): continue
-		if _template == "public_nave" and absf(cell.x + 0.5 - _gothic_hall.pendulum_world_pos.x) < 3.0: continue
-		if is_instance_valid(_crossing):
-			var local := _crossing.to_local(_world(Vector2(cell) + Vector2(.5,.5)))
-			if absf(local.x) < 1.7 and local.z > -.62 and local.z < 2.0: continue
-		room_cells.append(cell)
-	for i in mini(count, room_cells.size()):
-		var chosen := 0
-		var best := -INF
-		for j in room_cells.size():
-			var candidate := room_cells[j]
-			var from_desk := Vector2(candidate).distance_to(Vector2(first))
-			var score := -from_desk if i == 0 else minf(from_desk, 5.0)
-			for other in positions: score = minf(score, Vector2(candidate).distance_to(Vector2(other)))
-			if score > best:
-				best = score
-				chosen = j
-		positions.append(room_cells[chosen])
-		room_cells.remove_at(chosen)
-	return positions
-
+	return _campaign.camp_layout(_lot, _walkable_cells, _player, campaign_view, _template, _gothic_hall, names, _is_clear_cell, _has_wall_between, _nearest_walkable)
 
 func _release_mouse() -> void:
 	if expedition_view and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-
-## Cutscenes: hide the room heading, plan toggle, crosshair and prompt over the 3D view.
 func set_cinematic(active: bool) -> void:
 	_cinematic = active
 	set_modal(active or _modal)
 	for item: CanvasItem in [_heading, _plan_button, _prompt, _crosshair]:
-		if is_instance_valid(item): item.visible = not active
-	if not active: _plan_button.visible = is_instance_valid(_player)
-
+		if is_instance_valid(item):
+			item.visible = not active
+	if not active:
+		_plan_button.visible = is_instance_valid(_player)
 
 func close_plan() -> void:
 	if not _plan_open:
@@ -1021,253 +667,82 @@ func close_plan() -> void:
 	if is_node_ready():
 		_refresh_ui()
 
-
 func set_modal(active: bool) -> void:
 	_modal = active
 	if active:
 		_release_mouse()
 		_clicks.clear()
 		_keyboard_interact = false
-	if is_instance_valid(_player): _player.set_controls_enabled(not _plan_open and not _modal)
-	if is_node_ready(): _update_prompt()
+	if is_instance_valid(_player):
+		_player.set_controls_enabled(not _plan_open and not _modal)
+	if is_node_ready():
+		_update_prompt()
 	if is_instance_valid(_crosshair):
 		_crosshair.visible = not _modal and not _plan_open and not _cinematic
 		_crosshair.queue_redraw()
-
 
 func is_walking_view() -> bool:
 	return not _plan_open and not _modal and is_instance_valid(_player)
 
 func set_stability(value: int) -> void:
 	_stability = value
-	if _veil_material == null: return
+	if _veil_material == null:
+		return
 	_veil_material.set_shader_parameter("fracture", clampf((76.0 - value) / 76.0, 0.0, 1.0))
-
-func _plaque(text: String, point: Vector3, tint: Color, parent: Node3D) -> Label3D:
-	var sign := Label3D.new()
-	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sign.text = text
-	sign.font_size = 42
-	sign.pixel_size = 0.0024
-	sign.modulate = tint
-	sign.outline_size = 13
-	sign.position = point
-	parent.add_child(sign)
-	return sign
-
-func _sync_gates(portals: Array[Dictionary]) -> void:
-	if is_instance_valid(_gate_root) and _gate_labels == _exits: return
-	if is_instance_valid(_gate_root):
-		_geometry.remove_child(_gate_root)
-		_gate_root.queue_free()
-	_gate_positions.clear()
-	_route_hardware.clear()
-	_gate_labels = _exits.duplicate()
-	_gate_root = Node3D.new()
-	_geometry.add_child(_gate_root)
-	var cells := _reachable_cells()
-	for i in _exits.size():
-		var at := Vector3.ZERO
-		if i < portals.size(): at = _portal_position(portals[i])
-		if i >= portals.size() or _gate_positions.values().any(func(p: Vector3): return at.distance_squared_to(p) < 0.64):
-			# The topology can have more doors than a native blueprint. Dress the surplus
-			# as folded thresholds on reachable floor rather than leaving them menu-only.
-			for cell in cells:
-				var candidate := _world(Vector2(cell) + Vector2(0.5, 0.5))
-				if candidate.distance_squared_to(_spawn_point()) < 4.0: continue
-				if is_instance_valid(_crossing) and candidate.distance_squared_to(_crossing.position) < 3.6: continue
-				if _gate_positions.values().any(func(p: Vector3): return candidate.distance_squared_to(p) < 2.0): continue
-				at = candidate
-				break
-		if at == Vector3.ZERO: continue
-		var tint := Color("e7bb77") if not str(_exits[i]).begins_with("E") else Color("9bc7c5")
-		_gate_positions[i] = at
-		_plaque(_exit_label(i), at + Vector3.UP * 1.90, tint, _gate_root)
-		if campaign_view:
-			_build_watch_door(at)
-			continue
-		var plinth := MeshInstance3D.new()
-		var slab := BoxMesh.new()
-		slab.size = Vector3(0.78, 0.024, 0.42)
-		plinth.mesh = slab
-		plinth.material_override = _material(tint.darkened(0.43), tint.darkened(0.52))
-		_gate_root.add_child(plinth)
-		plinth.position = at + Vector3.UP * 0.029
-
 
 func _reachable_cells(limit := 120) -> Array[Vector2i]:
 	var start := _spawn_point()
-	var cell := Vector2i(floori(start.x), floori(start.z))
-	var result: Array[Vector2i] = [cell]
-	var seen := {cell: true}
-	var cursor := 0
-	while cursor < result.size() and result.size() < limit:
-		var from := result[cursor]
-		for dir: Vector2i in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
-			var next := from + dir
-			if not seen.has(next) and _is_clear_cell(next) and not _has_wall_between(from, next):
-				seen[next] = true
-				result.append(next)
-		cursor += 1
-	return result
-
+	return GeoBuilder.reachable_cells(Vector2i(floori(start.x), floori(start.z)), _is_clear_cell, _has_wall_between, limit)
 
 func set_field_party(names: Array) -> void:
-	if not is_instance_valid(_player): return
-	if is_instance_valid(_followers):
-		_followers.sync(names)
-		return
-	if names.is_empty(): return
-	_followers = Followers.new()
-	_viewport.add_child(_followers)
-	var points: Array[Vector3] = []
-	var origin := _player.position if campaign_view else _spawn_point()
-	var cells := _reachable_cells(40 if campaign_view else 12)
-	var back: Vector3 = _player.camera().global_basis.z
-	var cursor := Vector2i(floori(origin.x), floori(origin.z))
-	var seen := {cursor: true}
-	var previous := back
-	for i in 4:
-		var best_score := -INF
-		var chosen := cursor
-		for dir: Vector2i in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
-			var next := cursor + dir
-			if seen.has(next) or not cells.has(next) or _has_wall_between(cursor, next): continue
-			var score := Vector3(dir.x, 0.0, dir.y).dot(previous)
-			if score > best_score:
-				best_score = score
-				chosen = next
-		if cursor == chosen: break
-		previous = Vector3(chosen.x - cursor.x, 0.0, chosen.y - cursor.y)
-		cursor = chosen
-		seen[chosen] = true
-		points.append(_world(Vector2(cursor) + Vector2(0.5, 0.5)))
-	_followers.setup(_player, points, field_model)
-	_followers.sync(names)
+	var origin := _player.position if (campaign_view and is_instance_valid(_player)) else _spawn_point()
+	_campaign.set_field_party(_viewport, _player, origin, field_model, names, _reachable_cells(40 if campaign_view else 12), _has_wall_between)
 
-## Mount on a real run of floor, with three separate approaches and a clear aisle.
 func set_crossing(stage: String, survivor: String, variant: bool, stability: int, resolved: bool) -> void:
-	if not is_instance_valid(_player): return
-	var climate: String = {"returns":"echo", "exchange":"echo", "wash":"rain", "airlock":"rain", "shutter":"rewrite", "hall":"shelter", "darkroom":"rewrite", "relay":"echo"}.get(stage, "")
-	if is_instance_valid(_lights): _lights.apply(_hour, climate)
+	if not is_instance_valid(_player):
+		return
+	var climate: String = _campaign.STAGE_CLIMATE.get(stage, "")
+	if is_instance_valid(_lights):
+		_lights.apply(_hour, climate)
 	set_stability(stability)
-	if is_instance_valid(_crossing): return
-	var origin := _spawn_point()
-	var accessible := _reachable_cells(280)
-	var best := INF
-	var placement := Transform3D.IDENTITY
-	for cell in accessible:
-		for front: Vector2i in [Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP, Vector2i.RIGHT]:
-			var across := Vector2i(front.y, -front.x)
-			var clear := true
-			for row in 3:
-				for col in range(-1, 2):
-					var at: Vector2i = cell + front * row + across * col
-					if not accessible.has(at) or (row > 0 and _has_wall_between(at, at - front)) or (col > -1 and _has_wall_between(at, at - across)):
-						clear = false
-			if not clear: continue
-			var at := _world(Vector2(cell) + Vector2(.5, .5))
-			var f := Vector3(front.x, 0, front.y)
-			var score := origin.distance_squared_to(at + f * 2.05)
-			for item: Dictionary in _lot.objects:
-				if item.role in ["entry", "exit"] and Vector2(at.x, at.z).distance_squared_to(item.position) < 2.25: score += 20.0
-			if score >= best: continue
-			best = score
-			placement = Transform3D(Basis(Vector3.UP.cross(f), Vector3.UP, f), at)
-	assert(best < INF, "No accessible installation aisle for " + stage + " in " + _instance_id)
-	if best == INF: return
-	_crossing = CrossingFixture.new()
-	_geometry.add_child(_crossing)
-	_crossing.install(stage, placement, survivor, variant)
-	if resolved: _crossing.mark_released()
-	var front := placement.basis.z
-	var spawn := placement.origin + front * 2.22
-	if stage == "intake": spawn -= placement.basis.x * .58
-	var face := spawn - placement.origin
-	_player.spawn_at(spawn, atan2(face.x, face.z))
-	_refresh_targets()
-
+	if _campaign.set_crossing(_geometry, _player, _lot, _instance_id, stage, survivor, variant, resolved, _spawn_point(), _reachable_cells(280), _has_wall_between):
+		_refresh_targets()
 
 func show_crossing_action(group: int, action: String, result: Dictionary) -> void:
-	if is_instance_valid(_crossing): _crossing.react(group, action, result)
-
+	if is_instance_valid(_campaign.crossing):
+		_campaign.crossing.react(group, action, result)
 
 func set_witness_targets(rows: Array[Dictionary]) -> void:
-	_witness_targets = rows
+	_campaign.witness_targets = rows
 	_refresh_targets()
 
-
 func show_crossing_turn(actors: Dictionary, beat: int) -> void:
-	if not is_instance_valid(_crossing): return
-	_crossing.turn(beat)
-	if not is_instance_valid(_followers): return
-	var docks: Dictionary = {}
-	for id in actors:
-		docks[id] = _crossing.to_global(Vector3(-.66 if actors[id] == 0 else .68, 0, 1.24))
-	_followers.rehearse(docks)
-
-
-func _build_watch_door(at: Vector3) -> void:
-	var door := ServiceDoor.instantiate() as Node3D
-	_gate_root.add_child(door)
-	door.position = at
-	var inward := _player.position - at
-	if absf(inward.x) > absf(inward.z): door.rotation.y = PI * .5 * signf(inward.x)
-	elif inward.z < 0: door.rotation.y = PI
-	var panel := door.find_child("Leaf", true, false) as Node3D
-	var blocker := StaticBody3D.new()
-	door.add_child(blocker)
-	_add_shape(blocker, Vector3(0, 1.05, .03), Vector3(1.04, 2.10, .085))
-	var collision := blocker.get_child(0) as CollisionShape3D
-	_route_hardware.append({"leaf":panel, "blocker":collision})
-	panel.rotation.y = -.96 if routes_released else 0.0
-	collision.set_deferred("disabled", routes_released)
-
+	_campaign.show_crossing_turn(actors, beat)
 
 func release_routes(released: bool) -> void:
-	if released and is_instance_valid(_crossing): _crossing.mark_released()
-	if routes_released == released: return
-	routes_released = released
-	for hardware: Dictionary in _route_hardware:
-		if not is_instance_valid(hardware.leaf): continue
-		hardware.blocker.set_deferred("disabled", released)
-		var swing: Tween = hardware.leaf.create_tween()
-		swing.tween_property(hardware.leaf, "rotation:y", -.96 if released else 0.0, .38)
+	_campaign.release_routes(released)
 
-
-## Read-only traversable cell graph used by the input-driven viewport regression.
 func viewport_routes() -> Array:
-	var grid: Array = []
-	var all: Dictionary = camp_layout([]).graph
-	for c: Vector2i in all:
-		var edge := 0
-		for j in 4:
-			var neighbor: Vector2i = c + [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP][j]
-			if all.has(neighbor) and neighbor in all[c]: edge |= 1 << j
-		grid.append([c.x, c.y, edge])
-	return grid
+	return CampaignPresenter.viewport_routes_grid(camp_layout([]).graph)
+
 func set_pendulum_drifting(drifting: bool) -> void:
 	_pendulum_drifting = drifting
 	set_essence_instability(essence_baseline())
 	if is_instance_valid(_gothic_hall) and _gothic_hall.has_method("set_drift_state"):
 		_gothic_hall.set_drift_state(drifting)
 
-
 func place_player(point: Vector3, facing: Vector3) -> void:
 	if is_instance_valid(_player):
 		_player.spawn_at(point, atan2(-facing.x, -facing.z))
 
-
-## Screen-space essence warp and red/blue shift; 0 hides the pass entirely.
 func set_essence_instability(value: float) -> void:
-	if not is_instance_valid(_shift_pass): return
+	if not is_instance_valid(_shift_pass):
+		return
 	_shift_pass.visible = value > 0.001
 	_shift_pass.material_override.set_shader_parameter("instability", clampf(value, 0.0, 1.0))
 
-
 func essence_baseline() -> float:
 	return HALL_DRIFT_SHIFT if is_instance_valid(_gothic_hall) and _pendulum_drifting else 0.0
-
 
 func hall_opening_anchors() -> Dictionary:
 	if not is_instance_valid(_gothic_hall) or not is_instance_valid(_player):

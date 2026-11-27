@@ -1,6 +1,17 @@
 extends RefCounted
 ## Fit a recessed, glazed mechanism into a contiguous, unfurnished part of a native lot.
 const Watch = preload("res://scenes/blue_prince_lab/studies/Meridian.gd")
+const HallFinish = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+
+static func _hall_mat(hex: String, roughness: float, grain: float) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = HallFinish
+	m.set_shader_parameter("pigment", Color(hex))
+	m.set_shader_parameter("surface_roughness", roughness)
+	m.set_shader_parameter("grain", grain)
+	m.set_shader_parameter("toon_on", true)
+	m.set_shader_parameter("toon_strength", 0.86)
+	return m
 static func plan(lot: Dictionary) -> Rect2i:
 	var allowed := {}
 	var center := Vector2.ZERO
@@ -54,8 +65,7 @@ static func install(parent: Node3D, area: Rect2i, flush_display := false) -> voi
 		watch.hour.hide(); watch.minute.hide()
 		for child in watch.get_children():
 			if child is MeshInstance3D and child.mesh is SphereMesh: child.hide()
-		var brass := StandardMaterial3D.new()
-		brass.albedo_color = Color("ddae5b"); brass.metallic = 0.64; brass.roughness = 0.27
+		var brass := _hall_mat("ddae5b", 0.28, 0.04)
 		for assembly in [watch.yaw,watch.pitch,watch.roll]:
 			for piece in assembly.get_children():
 				if piece.name in [&"BlueSwing", &"SilverCarrier", &"CageDrive"]:
@@ -67,7 +77,7 @@ static func install(parent: Node3D, area: Rect2i, flush_display := false) -> voi
 			var band := MeshInstance3D.new(); band.mesh=hoop; band.material_override=brass
 			band.rotation.x = PI/2 if pair[0] != watch.pitch else 0.92
 			band.position.z=0.18; pair[0].add_child(band)
-		var ivory := StandardMaterial3D.new(); ivory.albedo_color=Color("efdbb1")
+		var ivory := _hall_mat("efdbb1", 0.84, 0.04)
 		var dial := TorusMesh.new(); dial.inner_radius=width*0.397; dial.outer_radius=width*0.447
 		var chapter := MeshInstance3D.new(); chapter.mesh=dial; chapter.material_override=ivory
 		chapter.position.y=-0.11; chapter.scale.y=0.28; root.add_child(chapter)
@@ -79,10 +89,8 @@ static func install(parent: Node3D, area: Rect2i, flush_display := false) -> voi
 			_box(root,Vector3(side*width*0.45,-0.14,0),Vector3(0.065,0.09,width*0.52),brass)
 	else:
 		root.add_child(watch)
-	var bronze:=StandardMaterial3D.new()
-	bronze.albedo_color=Color("807159")
-	var well:=StandardMaterial3D.new()
-	well.albedo_color=Color("283037")
+	var bronze := _hall_mat("807159", 0.42, 0.05)
+	var well := _hall_mat("283037", 0.88, 0.05)
 	var glass: Material = ShaderMaterial.new()
 	(glass as ShaderMaterial).shader=preload("res://scenes/blue_prince_lab/reference/Sapphire.gdshader")
 	_box(root,Vector3(0,-1.83*s,0),Vector3(width,.10,width),well)
@@ -101,8 +109,7 @@ static func install(parent: Node3D, area: Rect2i, flush_display := false) -> voi
 	_box(root,Vector3(0,-.01,0),Vector3(width,.008,width),glass)
 	if flush_display:
 		# Four stone spandrels trim the square tile opening to a brass-edged octagon.
-		var stone := StandardMaterial3D.new()
-		stone.albedo_color = Color("576572")
+		var stone := _hall_mat("576572", 0.88, 0.04)
 		for corner in 4:
 			var quadrant := Node3D.new()
 			quadrant.rotation.y = corner * PI / 2

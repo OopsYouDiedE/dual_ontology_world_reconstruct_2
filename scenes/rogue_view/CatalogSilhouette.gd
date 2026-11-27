@@ -3,13 +3,16 @@ extends RefCounted
 ## The lot always supplies the anchor, direction and existence of the object.
 
 const ACADEMY_SIDE_CHAIR := preload("res://assets/props/academy/academy_side_chair.glb")
+const HALL_FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 
 static func populate(anchor: Node3D, guid: int) -> bool:
 	var wood := Color("594231")
 	var upholstery := Color("765b57")
 	match guid:
 		0x5dea43f0:
-			anchor.add_child(ACADEMY_SIDE_CHAIR.instantiate())
+			var chair := ACADEMY_SIDE_CHAIR.instantiate() as Node3D
+			_apply_hall_finish(chair)
+			anchor.add_child(chair)
 		0x68ea432a, 0x53ea43a5, 0x3cea43f8:
 			var armchair := guid == 0x68ea432a
 			var width := 0.76 if armchair else 0.50
@@ -76,11 +79,31 @@ static func _cylinder(anchor: Node3D, pos: Vector3, top: float, bottom: float, h
 	_piece(anchor, mesh, pos, color)
 
 static func _piece(anchor: Node3D, mesh: PrimitiveMesh, pos: Vector3, color: Color) -> void:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.roughness = 0.87
+	var material := ShaderMaterial.new()
+	material.shader = HALL_FINISH
+	material.set_shader_parameter("pigment", color)
+	material.set_shader_parameter("surface_roughness", 0.85)
+	material.set_shader_parameter("grain", 0.055)
+	material.set_shader_parameter("toon_on", true)
+	material.set_shader_parameter("toon_strength", 0.86)
 	mesh.material = material
 	var part := MeshInstance3D.new()
 	part.mesh = mesh
 	part.position = pos
 	anchor.add_child(part)
+
+static func _apply_hall_finish(node: Node3D) -> void:
+	for mesh: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
+		if mesh.mesh == null: continue
+		for i in mesh.mesh.get_surface_count():
+			var src := mesh.get_active_material(i) as StandardMaterial3D
+			if src == null: continue
+			var mat := ShaderMaterial.new()
+			mat.shader = HALL_FINISH
+			mat.set_shader_parameter("pigment", src.albedo_color)
+			mat.set_shader_parameter("surface_roughness", src.roughness)
+			mat.set_shader_parameter("grain", 0.055)
+			mat.set_shader_parameter("wood", 1.0 if "wood" in src.resource_name.to_lower() else 0.0)
+			mat.set_shader_parameter("toon_on", true)
+			mat.set_shader_parameter("toon_strength", 0.86)
+			mesh.set_surface_override_material(i, mat)

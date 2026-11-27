@@ -80,10 +80,10 @@ var _scroll: ScrollContainer
 var _entry: LineEdit
 
 func _ready() -> void:
-	if "--lang=zh" in OS.get_cmdline_user_args():
-		R18n.set_locale("zh")
-	else:
+	if "--lang=en" in OS.get_cmdline_user_args():
 		R18n.set_locale("en")
+	else:
+		R18n.set_locale("zh")
 	_no_save = "--no-rule-save" in OS.get_cmdline_user_args()
 	_storage = Storage.new(_no_save)
 	margins = _storage.load_margins()

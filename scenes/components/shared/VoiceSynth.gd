@@ -48,7 +48,7 @@ var _player: AudioStreamPlayer
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
-	_player.volume_db = -6.0
+	_player.volume_db = -14.0
 	add_child(_player)
 
 func speak_line(text: String, speaker_id: String = "hale") -> void:
@@ -173,7 +173,7 @@ static func synthesize_mumble_wav(text: String, profile: Dictionary) -> AudioStr
 			var o2 := g2 * exc + c2 * y2_1 - (r2 * r2) * y2_2
 			y2_2 = y2_1; y2_1 = o2
 
-			var vocal := (o1 * 0.72 + o2 * 0.38) * 0.72
+			var vocal := (o1 * 0.72 + o2 * 0.38) * 0.44
 			lp += lp_a * (vocal - lp)
 
 			var i16 := clampi(int(lp * 32767.0), -32768, 32767)

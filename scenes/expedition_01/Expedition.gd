@@ -8,6 +8,8 @@ const OIL_PICKUP:=35.
 const Cast=preload("res://scenes/rogue_crossing/ProductionCast.gd")
 const R18n=preload("res://scenes/components/shared/R18n.gd")
 const VoiceSynth=preload("res://scenes/components/shared/VoiceSynth.gd")
+const EssenceShiftPass=preload("res://scenes/components/rendering/post/EssenceShiftPass.gd")
+const EssenceSurgeShader=preload("res://scenes/expedition_01/EssenceSurge.gdshader")
 const Feel=preload("res://scenes/components/shared/FeelProfile.gd")
 const RenderProfile=preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const Stage=preload("res://scenes/components/rendering/AcademyStage.gd")
@@ -225,6 +227,9 @@ var retry:=0.
 var _hale_voice:Node
 var hale_lamp_off:=false
 var hale_quiet:=false
+var _wing_shift:MeshInstance3D
+var _wing_surges:Array[Dictionary]=[]
+var _wing_instability:=0.0
 var notice:=""
 var msg_time:=0.
 var last_pos:=Vector3.ZERO
@@ -433,6 +438,86 @@ func light_stage()->void:
 	for x in [13.,26.]:
 		var f:=OmniLight3D.new();f.position=Vector3(x,3.2,0);f.omni_range=9;f.light_energy=.38;f.light_color=Color("ffdcae");f.omni_attenuation=1.4;add_child(f)
 	var well:=OmniLight3D.new();well.position=Vector3(61,-8.2,10.1);well.omni_range=16;well.light_energy=.7;well.light_color=Color("8fc4d8");well.omni_attenuation=1.2;add_child(well)
+	if RenderingServer.get_current_rendering_method()==&"forward_plus":
+		_wing_shift=EssenceShiftPass.create();_wing_shift.name="WingEssenceShift";add_child(_wing_shift)
+	_build_archive_essence_surges()
+
+func _build_archive_essence_surges()->void:
+	# Archive Wing (side wing: z > 3.2, x < 46) is far more distorted than the Public Hall,
+	# with intermittent Essence Upwelling fissures erupting asynchronously along the wing.
+	var spots:Array[Dictionary]=[
+		{"pos":Vector3(24.0,0.0,6.2),"freq":0.62,"phase":0.4,"height":2.7},
+		{"pos":Vector3(29.8,0.0,14.1),"freq":0.48,"phase":2.1,"height":2.9},
+		{"pos":Vector3(36.8,0.0,14.3),"freq":0.55,"phase":4.0,"height":2.8},
+		{"pos":Vector3(38.2,0.0,8.8),"freq":0.70,"phase":5.3,"height":2.6},
+	]
+	var root_node:=Node3D.new();root_node.name="ArchiveEssenceSurges";add_child(root_node)
+	for i in spots.size():
+		var cfg:Dictionary=spots[i]
+		var base_pos:Vector3=cfg.pos
+		var anchor:=Node3D.new();anchor.name="EssenceUpwelling_%d"%i;anchor.position=base_pos;root_node.add_child(anchor)
+		# Floor fissure rift disc
+		var rift_mat:=StandardMaterial3D.new()
+		rift_mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+		rift_mat.blend_mode=BaseMaterial3D.BLEND_MODE_ADD
+		rift_mat.albedo_color=Color(0.35,0.68,1.0,0.55)
+		var rift_mesh:=CylinderMesh.new();rift_mesh.top_radius=0.58;rift_mesh.bottom_radius=0.58;rift_mesh.height=0.015;rift_mesh.radial_segments=16
+		var rift:=MeshInstance3D.new();rift.mesh=rift_mesh;rift.material_override=rift_mat;rift.position.y=0.018;anchor.add_child(rift)
+		# Two intersecting twisted Essence plume sheets
+		var plume_mats:Array[ShaderMaterial]=[]
+		var h:float=float(cfg.height)
+		for k in 2:
+			var q:=QuadMesh.new();q.size=Vector2(1.15,h)
+			var sm:=ShaderMaterial.new();sm.shader=EssenceSurgeShader;sm.render_priority=106
+			sm.set_shader_parameter("seed",float(i)*3.7+float(k)*1.9)
+			sm.set_shader_parameter("surge_level",0.0)
+			var card:=MeshInstance3D.new();card.mesh=q;card.material_override=sm
+			card.position.y=h*0.5;card.rotation.y=float(k)*PI*0.5
+			card.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			card.gi_mode=GeometryInstance3D.GI_MODE_DISABLED
+			anchor.add_child(card);plume_mats.append(sm)
+		# Rising chromatic Essence motes
+		var motes:=GPUParticles3D.new();motes.amount=18;motes.lifetime=1.9;motes.position.y=0.12
+		motes.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var pm:=ParticleProcessMaterial.new()
+		pm.emission_shape=ParticleProcessMaterial.EMISSION_SHAPE_RING;pm.emission_ring_radius=0.45;pm.emission_ring_inner_radius=0.08
+		pm.direction=Vector3.UP;pm.spread=16.0;pm.initial_velocity_min=0.7;pm.initial_velocity_max=1.55
+		pm.gravity=Vector3(0.0,0.35,0.0);pm.scale_min=0.5;pm.scale_max=1.1
+		motes.process_material=pm
+		var mq:=QuadMesh.new();mq.size=Vector2(0.045,0.045)
+		var mskin:=StandardMaterial3D.new();mskin.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+		mskin.billboard_mode=BaseMaterial3D.BILLBOARD_ENABLED;mskin.blend_mode=BaseMaterial3D.BLEND_MODE_ADD
+		mskin.albedo_color=Color("6ec0ff");mq.material=mskin;motes.draw_pass_1=mq;anchor.add_child(motes)
+		# Pulsing red/blue chromatic OmniLight3D
+		var glow:=OmniLight3D.new();glow.position.y=1.15;glow.omni_range=6.8;glow.light_energy=0.0;glow.shadow_enabled=false;anchor.add_child(glow)
+		_wing_surges.append({"anchor":anchor,"pos":base_pos,"mats":plume_mats,"rift_mat":rift_mat,"motes":motes,"light":glow,"freq":float(cfg.freq),"phase":float(cfg.phase)})
+
+func _update_archive_essence(dt:float)->void:
+	if _wing_surges.is_empty():return
+	var p:=walker.position
+	var in_wing:=(p.z>3.2 and p.x>12.0 and p.x<46.0)
+	var local_surge_boost:=0.0
+	for s in _wing_surges:
+		var raw_wave:=maxf(0.0,sin(phase*float(s.freq)+float(s.phase)))
+		# Sharp intermittent upwelling eruptions (quiet simmer most of the time, periodic surges)
+		var erupt:=pow(raw_wave,4.2)
+		var level:=0.14+1.18*erupt
+		for sm in s.mats:
+			(sm as ShaderMaterial).set_shader_parameter("surge_level",level)
+		var hue_mix:=0.5+0.5*sin(phase*1.7+float(s.phase))
+		var col:=Color("4da8ff").lerp(Color("ff523b"),hue_mix)
+		(s.rift_mat as StandardMaterial3D).albedo_color=Color(col.r,col.g,col.b,0.20+0.68*erupt)
+		var l:=s.light as OmniLight3D
+		l.light_color=col;l.light_energy=0.22+2.65*erupt
+		(s.motes as GPUParticles3D).emitting=erupt>0.16
+		var d:=p.distance_to(s.pos as Vector3)
+		if d<9.5:
+			local_surge_boost=maxf(local_surge_boost,erupt*(1.0-d/9.5))
+	var target_instab:=(0.54+0.14*sin(phase*1.3)+0.32*local_surge_boost) if in_wing else (0.06+0.16*local_surge_boost)
+	_wing_instability=lerpf(_wing_instability,clampf(target_instab,0.0,0.96),1.0-exp(-4.5*dt))
+	if is_instance_valid(_wing_shift):
+		EssenceShiftPass.set_instability(_wing_shift,_wing_instability)
+
 func _release_mouse()->void:
 	mouse_lifecycle.release()
 	aiming=false
@@ -1092,6 +1177,7 @@ func update_soundscape(dt:float)->void:
 	score.volume_db=linear_to_db(maxf(.00032,shaft_mix*(.041 if collected else .025)))
 
 func update_lantern(dt:float)->void:
+	_update_archive_essence(dt)
 	var p:=walker.position
 	var dark:=in_b4(p)
 	darkroom_mix=move_toward(darkroom_mix,1. if dark else 0.,dt*4.)

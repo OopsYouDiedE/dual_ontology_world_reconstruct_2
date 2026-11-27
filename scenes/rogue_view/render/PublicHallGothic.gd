@@ -9,6 +9,8 @@ extends Node3D
 const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
 const StainedGlassShader := preload("res://scenes/rogue_view/render/StainedGlass.gdshader")
 const StainedGlassBeamShader := preload("res://scenes/rogue_view/render/StainedGlassBeam.gdshader")
+const StainedGlassGlowShader := preload("res://scenes/rogue_view/render/StainedGlassGlow.gdshader")
+const StylizedFireShader := preload("res://scenes/rogue_view/render/StylizedFire.gdshader")
 const RenderProfile := preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 const Factory := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
@@ -56,7 +58,12 @@ var _mat_lead: ShaderMaterial
 var _mat_brass: ShaderMaterial
 var _glass_mats: Array[ShaderMaterial] = []
 var _beam_mats: Array[ShaderMaterial] = []
+var _glow_mats: Array[ShaderMaterial] = []
 var _window_lights: Array[Dictionary] = []
+var _daylight_fills: Array[Dictionary] = []
+var _nave_lanterns: Array[Node3D] = []
+var _brazier_lights: Array[Dictionary] = []
+var _interior_pools: Array[Dictionary] = []
 
 static func install(parent: Node3D, lot: Dictionary, floor_bounds: Rect2i, well: Rect2i, is_drifting: bool = true) -> Node3D:
 	var hall := preload("res://scenes/rogue_view/render/PublicHallGothic.gd").new()
@@ -164,9 +171,12 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 
 	# 8. Real ArchBuilder furniture for Watch Cot Alcove & Calibration Lectern
 	_build_functional_props(min_z)
+	_build_daylight_fills(cx, min_z, max_z, bays_z, bay_len)
 	if has_wings:
 		_build_watch_wings()
-		_build_brazier()
+		_build_brazier(Vector3(16.0, 0.0, 11.6), "WatchBrazier", 5.2, 11.0)
+	_build_brazier(Vector3(cx - 3.35, 0.0, min_z + bay_len * 1.45), "NaveBrazierWest", 4.4, 9.5)
+	_build_brazier(Vector3(cx + 3.35, 0.0, min_z + bay_len * 1.45), "NaveBrazierEast", 4.4, 9.5)
 	set_hour(4.0)
 
 func _pointed_arch_y(x_norm: float) -> float:
@@ -422,16 +432,43 @@ func _build_side_lancet_bay(wx: float, inward_x: float, z0: float, z1: float, va
 
 	var bay_spot := SpotLight3D.new()
 	bay_spot.position = Vector3(wx + inward_x * 0.36, spring_y, cz)
-	bay_spot.spot_range = 8.5 if win_top < SPRING_H else 12.0
-	bay_spot.spot_angle = 44.0
-	bay_spot.spot_attenuation = 1.1
+	bay_spot.spot_range = 10.5 if win_top < SPRING_H else 16.5
+	bay_spot.spot_angle = 52.0
+	bay_spot.spot_attenuation = 1.0
 	bay_spot.light_specular = 0.0
 	bay_spot.shadow_enabled = false
 	if tex != null:
 		bay_spot.light_projector = tex
 	add_child(bay_spot)
 	bay_spot.look_at(bay_spot.position + Vector3(inward_x, -0.46, 0.14), Vector3.UP)
-	_window_lights.append({"light": bay_spot, "night": 0.42, "day": 1.85})
+	_window_lights.append({"light": bay_spot, "night": 0.0, "day": 5.6})
+	# Soft colored window-reveal halation (cathedral bloom around mullions)
+	var bay_u0 := float(variant) / 4.0
+	var bay_u1 := float(variant + 1) / 4.0
+	var halo_h := (win_top - dado_h) * 1.06
+	var halo_w := bay_w * 0.92
+	_build_glass_glow_quad(
+		self,
+		Vector3(wx + inward_x * 0.14, (dado_h + win_top) * 0.5, cz),
+		Vector3(0.0, 0.0, 1.0) * halo_w,
+		Vector3(0.0, 1.0, 0.0) * halo_h,
+		Vector3(inward_x, 0.0, 0.0),
+		tex, Color("5a92e0"), Vector4(bay_u0, 0.04, bay_u1, 0.96),
+		0.30, 0.0, "LancetHalo_%d" % variant
+	)
+	# Colored stained-glass light pool projected onto the nave floor along the sunbeam
+	if win_top >= SPRING_H:
+		var pool_x := wx + inward_x * 3.15
+		var pool_z := cz + 0.55
+		_build_glass_glow_quad(
+			self,
+			Vector3(pool_x, 0.032, pool_z),
+			Vector3(inward_x, 0.0, 0.12).normalized() * 3.8,
+			Vector3(0.0, 0.0, 1.0) * (bay_w * 0.88),
+			Vector3.UP,
+			tex, Color("6ca4ee"), Vector4(bay_u0, 0.08, bay_u1, 0.92),
+			0.36, 0.0, "LancetFloorCaustic_%d" % variant
+		)
 
 func _build_end_gable_wall(min_x: float, max_x: float, wz: float, inward_z: float, is_north: bool, rose_tex: Texture2D, _lot: Dictionary) -> void:
 	var cx := (min_x + max_x) * 0.5
@@ -542,28 +579,49 @@ func _build_end_gable_wall(min_x: float, max_x: float, wz: float, inward_z: floa
 	rlight.light_color = Color("9abce8") if is_north else Color("d8b896")
 	rlight.light_energy = 0.55
 	rlight.light_specular = 0.0
-	rlight.omni_range = 6.5
+	rlight.omni_range = 13.0
 	rlight.shadow_enabled = false
 	rose_root.add_child(rlight)
-	_window_lights.append({"light": rlight, "night": 0.35, "day": 1.15, "tint": Color("9abce8") if is_north else Color("e5c197")})
+	_window_lights.append({"light": rlight, "night": 0.0, "day": 3.4, "tint": Color("b8d8ff") if is_north else Color("ffe0b2")})
 
 	var rose_dir := Vector3(0.0, -0.46, inward_z).normalized()
 	_build_tyndall_beam(rose_root, Vector3(0.0, -0.06, inward_z * 0.16), rose_dir,
-		1.42, 2.45, 11.4, rose_tex, Color("7fa6de") if is_north else Color("d8b088"),
-		Vector4(0.0, 0.0, 1.0, 1.0), 0.34, "RoseBeam_" + ("North" if is_north else "South"))
+		1.42, 2.55, 12.2, rose_tex, Color("7fa6de") if is_north else Color("d8b088"),
+		Vector4(0.0, 0.0, 1.0, 1.0), 0.38, "RoseBeam_" + ("North" if is_north else "South"))
 
 	var rose_spot := SpotLight3D.new()
 	rose_spot.position = Vector3(0.0, 0.0, inward_z * 0.45)
-	rose_spot.spot_range = 18.0
-	rose_spot.spot_angle = 40.0
-	rose_spot.spot_attenuation = 1.05
+	rose_spot.spot_range = 24.0
+	rose_spot.spot_angle = 48.0
+	rose_spot.spot_attenuation = 0.95
 	rose_spot.light_specular = 0.0
 	rose_spot.shadow_enabled = false
 	if rose_tex != null:
 		rose_spot.light_projector = rose_tex
 	rose_root.add_child(rose_spot)
 	rose_spot.look_at(rose_spot.position + rose_dir, Vector3.UP)
-	_window_lights.append({"light": rose_spot, "night": 0.65, "day": 2.6, "tint": Color("9abce8") if is_north else Color("f0cba0")})
+	_window_lights.append({"light": rose_spot, "night": 0.0, "day": 7.2, "tint": Color("b8d8ff") if is_north else Color("ffe0b2")})
+	# Luminous cathedral halation aura in front of the Rose Window
+	var rose_halo_s := r * 2.55
+	_build_glass_glow_quad(
+		rose_root,
+		Vector3(0.0, 0.0, inward_z * 0.14),
+		Vector3(1.0, 0.0, 0.0) * rose_halo_s,
+		Vector3(0.0, 1.0, 0.0) * rose_halo_s,
+		Vector3(0.0, 0.0, inward_z),
+		rose_tex, Color("74a8f0") if is_north else Color("f2be84"),
+		Vector4(0.0, 0.0, 1.0, 1.0), 0.36, 1.0, "RoseHalo_" + ("North" if is_north else "South")
+	)
+	# Colored rose projection pool on the central nave floor
+	_build_glass_glow_quad(
+		self,
+		Vector3(cx, 0.035, wz + inward_z * 6.8),
+		Vector3(1.0, 0.0, 0.0) * 5.2,
+		Vector3(0.0, 0.0, 1.0) * 5.6,
+		Vector3.UP,
+		rose_tex, Color("84b6ff") if is_north else Color("f4c48e"),
+		Vector4(0.0, 0.0, 1.0, 1.0), 0.32, 1.0, "RoseFloorCaustic_" + ("North" if is_north else "South")
+	)
 
 func _build_floor_runner(cx: float, min_z: float, max_z: float, span: float) -> void:
 	for side: float in [-1.0, 1.0]:
@@ -635,7 +693,9 @@ func _build_lunette_oculus(pos: Vector3, inward_x: float, glass: Material, beam_
 		_sweep_rib(tracery, loop, ring[2])
 	tracery.generate_normals(); _commit_mesh(tracery, _mat_rib, "OculusTracery", root)
 	_build_tyndall_beam(root, Vector3(0.0, 0.0, 0.08), Vector3(0.0, -0.40, 1.0).normalized(),
-		0.46, 0.92, 4.6, beam_tex, Color("6c92c9"), Vector4(0.0, 0.0, 1.0, 1.0), 0.28, "OculusBeam")
+		0.46, 0.92, 4.6, beam_tex, Color("6c92c9"), Vector4(0.0, 0.0, 1.0, 1.0), 0.26, "OculusBeam")
+	_build_glass_glow_quad(root, Vector3(0.0, 0.0, 0.11), Vector3(1.75, 0.0, 0.0), Vector3(0.0, 1.75, 0.0), Vector3.BACK,
+		beam_tex, Color("7ba8e8"), Vector4(0.0, 0.0, 1.0, 1.0), 0.28, 1.0, "OculusHalo")
 
 ## Pale stone bands divide the nave floor at every pier, framed by two edge borders.
 func _build_floor_paving(x0: float, x1: float, min_z: float, bays_z: int, bay_len: float, well: Rect2i) -> void:
@@ -656,11 +716,12 @@ func _build_nave_lanterns(min_x: float, max_x: float, min_z: float, bay_len: flo
 		for lx in [min_x + 0.64, max_x - 0.64]:
 			var lamp := OilLamp.instantiate()
 			lamp.hang_length = 0.68
-			lamp.light_energy = 1.55
+			lamp.light_energy = 2.85
 			lamp.shadow_enabled = false
 			lamp.scale = Vector3.ONE * 1.32
 			lamp.position = Vector3(lx, SPRING_H - 0.5, lz)
 			add_child(lamp)
+			_nave_lanterns.append(lamp)
 
 func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	var root := Node3D.new()
@@ -686,22 +747,24 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	pendulum_pivot.position = Vector3(0.0, ceiling_y - 0.08, 0.0)
 	root.add_child(pendulum_pivot)
 
-	var cable_len := ceiling_y - 1.07
+	# Panthéon-proportioned low-clearance Foucault Pendulum: hovers cleanly at y=0.38m above the dial,
+	# keeping the 1.57m first-person sightline to the north lectern & rose window completely unobstructed.
+	var cable_len := ceiling_y - 0.38
 	var cable := MeshInstance3D.new()
 	var cable_mesh := CylinderMesh.new()
-	cable_mesh.top_radius = 0.010
-	cable_mesh.bottom_radius = 0.010
+	cable_mesh.top_radius = 0.008
+	cable_mesh.bottom_radius = 0.008
 	cable_mesh.height = cable_len
 	cable.mesh = cable_mesh
 	cable.position = Vector3(0.0, -cable_len * 0.5, 0.0)
 	cable.material_override = _mat_lead
 	pendulum_pivot.add_child(cable)
 
-	# Heavy turned brass bob + equatorial collar + plumb pointer
+	# Turned brass bob + equatorial collar + plumb pointer
 	pendulum_bob = Node3D.new()
 	pendulum_bob.name = "PendulumBob"
 	pendulum_bob.position = Vector3(0.0, -cable_len, 0.0)
-	pendulum_bob.scale = Vector3.ONE * 2.1
+	pendulum_bob.scale = Vector3.ONE * 1.18
 	pendulum_pivot.add_child(pendulum_bob)
 
 	var sphere := MeshInstance3D.new()
@@ -742,8 +805,31 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	drift_bezel.material_override = ring_mat
 	root.add_child(drift_bezel)
 
+	# Low brass Panthéon perimeter railing around the MeridianWell dial
+	var rail_r := well_r + 0.14
+	var rail_h := 0.74
+	var rail_ring := MeshInstance3D.new()
+	var rail_torus := TorusMesh.new()
+	rail_torus.inner_radius = rail_r - 0.018
+	rail_torus.outer_radius = rail_r + 0.018
+	rail_ring.mesh = rail_torus
+	rail_ring.position = Vector3(0.0, rail_h, 0.0)
+	rail_ring.material_override = _mat_brass
+	root.add_child(rail_ring)
+	for k in 8:
+		var ang := TAU * float(k) / 8.0
+		var post := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius = 0.022
+		pm.bottom_radius = 0.032
+		pm.height = rail_h
+		post.mesh = pm
+		post.position = Vector3(cos(ang) * rail_r, rail_h * 0.5, sin(ang) * rail_r)
+		post.material_override = _mat_brass
+		root.add_child(post)
+
 	essence_light = OmniLight3D.new()
-	essence_light.position = Vector3(0.0, 0.72, 0.0)
+	essence_light.position = Vector3(0.0, 0.52, 0.0)
 	essence_light.omni_range = 4.2
 	essence_light.shadow_enabled = false
 	root.add_child(essence_light)
@@ -791,6 +877,15 @@ func _build_functional_props(min_z: float) -> void:
 			var scroll := CylinderMesh.new(); scroll.height=0.68; scroll.top_radius=0.055; scroll.bottom_radius=0.055
 			var spindle := MeshInstance3D.new(); spindle.mesh=scroll; spindle.material_override=_mat_runner
 			spindle.position=Vector3(dx,1.16,0.15); spindle.rotation.x=PI/2; lec_root.add_child(spindle)
+		_glb_prop(lec_root, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(0.95, 1.08, -0.15), 0.3, 0.72, _mat_brass)
+
+	# KayKit CC0 Low-Poly Gothic/Academy furniture dressed in HallFinish Triplanar walnut
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/table_long.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 10.6), PI * 0.5, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.65, 0.0, min_z + 10.0), PI * 0.5, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.65, 0.0, min_z + 11.2), PI * 0.5, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/crates_stacked.glb", Vector3(pendulum_world_pos.x - 3.65, 0.0, min_z + 5.2), 0.25, 0.75, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chest.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 5.3), -0.35, 0.80, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/shelf_large.glb", Vector3(pendulum_world_pos.x - 3.95, 0.0, min_z + 10.6), PI * 0.5, 0.82, _mat_wood)
 
 func _reserve_station(pos: Vector3, footprint: Vector2, height: float) -> void:
 	station_bounds.append(Rect2(Vector2(pos.x,pos.z)-footprint*0.5,footprint))
@@ -812,6 +907,24 @@ func _camp_cot(parent: Node3D, pos: Vector3) -> void:
 			_box(axle,Vector3.ZERO,Vector3(0.055,0.91,0.055),_mat_wood)
 	_reserve_station(to_local(cot.global_position),Vector2(1.94,0.8),0.48)
 
+func _glb_prop(parent: Node3D, path: String, pos: Vector3, yaw := 0.0, uniform_scale := 1.0, mat_override: Material = null) -> Node3D:
+	if not ResourceLoader.exists(path):
+		return null
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return null
+	var inst := packed.instantiate() as Node3D
+	if inst == null:
+		return null
+	inst.position = pos
+	inst.rotation.y = yaw
+	inst.scale = Vector3.ONE * uniform_scale
+	if mat_override != null:
+		for child in inst.find_children("*", "MeshInstance3D", true, false):
+			(child as MeshInstance3D).material_override = mat_override
+	parent.add_child(inst)
+	return inst
+
 func _prop(parent: Node3D, recipe: String, pos: Vector3, yaw := 0.0, params := {}) -> Node3D:
 	var part := Factory.create(Factory.COMPONENT_ROOT + recipe.get_base_dir() + "/Recipe" + recipe.get_file() + ".gd")
 	part.recipe_parameters.merge(params,true)
@@ -820,13 +933,15 @@ func _prop(parent: Node3D, recipe: String, pos: Vector3, yaw := 0.0, params := {
 	parent.add_child(part)
 	return part
 
-func _pool(pos: Vector3, tint: Color, energy: float, reach: float) -> void:
+func _pool(pos: Vector3, tint: Color, energy: float, reach: float) -> OmniLight3D:
 	var lamp := OmniLight3D.new()
 	lamp.position = pos
 	lamp.light_color = tint
 	lamp.light_energy = energy
 	lamp.omni_range = reach
 	add_child(lamp)
+	_interior_pools.append({"light": lamp, "night": energy, "day": energy * 0.14})
+	return lamp
 
 func _build_open_arch(x: float, inward: float, z0: float, z1: float) -> void:
 	var cz := (z0+z1)*0.5
@@ -943,19 +1058,175 @@ func _build_wing_partition(cx: float, side: int) -> void:
 	bead.generate_normals(); _commit_mesh(bead,_mat_rib,"WingArchivolt")
 	for dx: float in [-1.5,1.5]: _box(self,Vector3(opening+dx,WING_SPRING*0.5,17),Vector3(0.19,WING_SPRING,0.23),_mat_rib)
 
-func _build_brazier() -> void:
-	var pan := Node3D.new(); pan.name="WatchBrazier"; pan.position=Vector3(16,0,11.6); add_child(pan)
+func _build_daylight_fills(cx: float, min_z: float, max_z: float, bays_z: int, bay_len: float) -> void:
+	# Soft cathedral skylight / stained-glass bounce lights that illuminate the whole nave in daytime only.
+	for bi in bays_z:
+		var bz := min_z + (float(bi) + 0.5) * bay_len
+		var fill := OmniLight3D.new()
+		fill.name = "CathedralDayFill_%d" % bi
+		fill.position = Vector3(cx, SPRING_H + 1.4, bz)
+		fill.light_color = Color("e8eff8") if bi % 2 == 0 else Color("fff0d4")
+		fill.light_energy = 0.0
+		fill.omni_range = 17.0
+		fill.omni_attenuation = 1.15
+		fill.light_specular = 0.0
+		fill.shadow_enabled = false
+		add_child(fill)
+		_daylight_fills.append({"light": fill, "day": 1.15})
+	var sun_bounce := OmniLight3D.new()
+	sun_bounce.name = "CathedralFloorBounce"
+	sun_bounce.position = Vector3(cx, 2.6, (min_z + max_z) * 0.5)
+	sun_bounce.light_color = Color("f6ebd6")
+	sun_bounce.light_energy = 0.0
+	sun_bounce.omni_range = 24.0
+	sun_bounce.omni_attenuation = 1.2
+	sun_bounce.light_specular = 0.0
+	sun_bounce.shadow_enabled = false
+	add_child(sun_bounce)
+	_daylight_fills.append({"light": sun_bounce, "day": 0.95})
+
+func _build_brazier(pos: Vector3 = Vector3(16.0, 0.0, 11.6), brazier_name: String = "WatchBrazier", night_energy: float = 4.8, reach: float = 10.0) -> void:
+	var pan := Node3D.new(); pan.name = brazier_name; pan.position = pos; add_child(pan)
 	for layer in [[0.31,0.39,0.10,0.05],[0.15,0.25,0.31,0.255],[0.42,0.18,0.24,0.53]]:
 		var lathe := CylinderMesh.new(); lathe.top_radius=layer[0]; lathe.bottom_radius=layer[1]; lathe.height=layer[2]
 		var piece := MeshInstance3D.new(); piece.mesh=lathe; piece.material_override=_mat_brass; piece.position.y=layer[3]; pan.add_child(piece)
-	for i in 7:
-		var flame := CylinderMesh.new(); flame.top_radius=0; flame.bottom_radius=0.115; flame.height=0.33+0.07*cos(i*4.0); flame.radial_segments=9
-		var skin := ShaderMaterial.new(); skin.shader=preload("res://scenes/blue_prince_lab/reference/Flame.gdshader")
-		skin.set_shader_parameter("phase",i*2.4); skin.set_shader_parameter("ember",Color("ffbc58")); skin.set_shader_parameter("tip",Color("f56b28"))
-		var tongue := MeshInstance3D.new(); tongue.mesh=flame; tongue.material_override=skin
-		tongue.position=Vector3(0.20*cos(i*TAU/7),0.78,0.20*sin(i*TAU/7)); pan.add_child(tongue)
-	_pool(pan.position+Vector3.UP,Color("ffb169"),2.6,4.4)
-	_reserve_station(pan.position,Vector2(1.05,1.05),0.7)
+
+	# 1. Glowing charcoal ember bed nestled inside the brass basin
+	var coal_mat := StandardMaterial3D.new()
+	coal_mat.albedo_color = Color("2a140c")
+	coal_mat.roughness = 0.92
+	coal_mat.emission_enabled = true
+	coal_mat.emission = Color("ff5a14")
+	coal_mat.emission_energy_multiplier = 2.8
+	var coal_mesh := CylinderMesh.new()
+	coal_mesh.top_radius = 0.34; coal_mesh.bottom_radius = 0.24; coal_mesh.height = 0.09
+	var coal_bed := MeshInstance3D.new()
+	coal_bed.name = "CoalBed"; coal_bed.mesh = coal_mesh; coal_bed.material_override = coal_mat
+	coal_bed.position.y = 0.64
+	pan.add_child(coal_bed)
+
+	# 2. Industry-standard multi-layer volumetric FBM fire cards (3 intersecting planes @ 60 deg)
+	var flames: Array[MeshInstance3D] = []
+	var fire_mats: Array[ShaderMaterial] = []
+	var b_idx := float(_brazier_lights.size())
+	for i in 3:
+		var q := QuadMesh.new()
+		q.size = Vector2(0.76, 0.96) if i == 0 else Vector2(0.68, 0.86)
+		var fmat := ShaderMaterial.new()
+		fmat.shader = StylizedFireShader
+		fmat.render_priority = 108
+		fmat.set_shader_parameter("seed", b_idx * 4.7 + float(i) * 2.13)
+		fmat.set_shader_parameter("speed", 2.45 + float(i) * 0.28)
+		fmat.set_shader_parameter("intensity", 1.15)
+		var card := MeshInstance3D.new()
+		card.name = "VolumetricFire_%d" % i
+		card.mesh = q
+		card.material_override = fmat
+		card.position = Vector3(0.0, 1.04, 0.0)
+		card.rotation.y = float(i) * PI / 3.0
+		card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		card.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		pan.add_child(card)
+		flames.append(card)
+		fire_mats.append(fmat)
+
+	# 3. Rising glowing ember sparks (GPUParticles3D)
+	var sparks := GPUParticles3D.new()
+	sparks.name = "EmberSparks"
+	sparks.position = Vector3(0.0, 0.72, 0.0)
+	sparks.amount = 22
+	sparks.lifetime = 1.65
+	sparks.preprocess = 0.8
+	sparks.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var pmat := ParticleProcessMaterial.new()
+	pmat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_RING
+	pmat.emission_ring_radius = 0.24
+	pmat.emission_ring_inner_radius = 0.04
+	pmat.emission_ring_height = 0.06
+	pmat.direction = Vector3(0.0, 1.0, 0.0)
+	pmat.spread = 22.0
+	pmat.initial_velocity_min = 0.55
+	pmat.initial_velocity_max = 1.25
+	pmat.gravity = Vector3(0.0, 0.22, 0.0)
+	pmat.damping_min = 0.25
+	pmat.damping_max = 0.55
+	pmat.scale_min = 0.55
+	pmat.scale_max = 1.25
+	sparks.process_material = pmat
+	var spark_mesh := QuadMesh.new()
+	spark_mesh.size = Vector2(0.032, 0.032)
+	var spark_skin := StandardMaterial3D.new()
+	spark_skin.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	spark_skin.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	spark_skin.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	spark_skin.albedo_color = Color("ffba52")
+	spark_mesh.material = spark_skin
+	sparks.draw_pass_1 = spark_mesh
+	pan.add_child(sparks)
+
+	var fire_light := OmniLight3D.new()
+	fire_light.name = brazier_name + "_Light"
+	fire_light.position = pos + Vector3(0.0, 1.18, 0.0)
+	fire_light.light_color = Color("ff9a46")
+	fire_light.light_energy = night_energy
+	fire_light.omni_range = reach
+	fire_light.omni_attenuation = 1.15
+	fire_light.shadow_enabled = false
+	add_child(fire_light)
+	_brazier_lights.append({
+		"light": fire_light,
+		"flames": flames,
+		"fire_mats": fire_mats,
+		"coal_mat": coal_mat,
+		"sparks": sparks,
+		"night": night_energy,
+		"day": 0.06,
+		"base": night_energy,
+		"phase": b_idx * 1.9
+	})
+	_reserve_station(pan.position, Vector2(1.05, 1.05), 0.7)
+
+func _build_glass_glow_quad(
+	parent: Node3D,
+	center: Vector3,
+	u_vec: Vector3,
+	v_vec: Vector3,
+	normal: Vector3,
+	tex: Texture2D,
+	fallback: Color,
+	uv_rect: Vector4,
+	base_strength: float,
+	is_circular: float,
+	quad_name: String
+) -> void:
+	var mat := ShaderMaterial.new()
+	mat.shader = StainedGlassGlowShader
+	mat.render_priority = 104
+	mat.set_shader_parameter("glass_tex", tex)
+	mat.set_shader_parameter("has_tex", tex != null)
+	mat.set_shader_parameter("fallback_color", fallback)
+	mat.set_shader_parameter("uv_rect", uv_rect)
+	mat.set_shader_parameter("glow_strength", 0.0)
+	mat.set_shader_parameter("is_circular", is_circular)
+	mat.set_meta("base_strength", base_strength)
+	_glow_mats.append(mat)
+
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hu := u_vec * 0.5
+	var hv := v_vec * 0.5
+	var p0 := center - hu - hv
+	var p1 := center + hu - hv
+	var p2 := center + hu + hv
+	var p3 := center - hu + hv
+	_add_uv_quad(st, p0, p1, p2, p3, Vector2(0.0, 1.0), Vector2(1.0, 1.0), Vector2(1.0, 0.0), Vector2(0.0, 0.0), normal)
+	var inst := MeshInstance3D.new()
+	inst.name = quad_name
+	inst.mesh = st.commit()
+	inst.material_override = mat
+	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	inst.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	parent.add_child(inst)
 
 func _make_stained_glass_mat(tex: Texture2D, fallback: Color, emit_gain: float) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
@@ -1046,22 +1317,68 @@ func _build_tyndall_beam(
 
 func set_hour(hour: float) -> void:
 	var daylight := smoothstep(0.0, 1.0, maxf(0.0, cos((fposmod(hour, 24.0) - 12.0) * PI / 12.0)))
-	var sky_tint := Color("7fa8de").lerp(Color("ffeac2"), daylight)
+	var night_mix := 1.0 - daylight
+	var sky_tint := Color("1f3154").lerp(Color("fff4d6"), daylight)
 	for mat in _glass_mats:
 		mat.set_shader_parameter("daylight", daylight)
 		mat.set_shader_parameter("exterior_tint", sky_tint)
-	var beam_scale := lerpf(0.62, 1.15, daylight)
+	var beam_scale := lerpf(0.0, 1.05, pow(daylight, 0.85))
+	var beam_tint := Color("7fa8de").lerp(Color("fff1cc"), daylight)
 	for mat in _beam_mats:
 		var base := float(mat.get_meta("base_intensity", 0.35))
-		mat.set_shader_parameter("beam_tint", sky_tint)
+		mat.set_shader_parameter("beam_tint", beam_tint)
 		mat.set_shader_parameter("beam_intensity", base * beam_scale)
+	var glow_scale := pow(daylight, 0.85)
+	for mat in _glow_mats:
+		var base_g := float(mat.get_meta("base_strength", 0.30))
+		mat.set_shader_parameter("glow_tint", beam_tint)
+		mat.set_shader_parameter("glow_strength", base_g * glow_scale)
 	for entry in _window_lights:
 		var light := entry.get("light") as Light3D
 		if not is_instance_valid(light):
 			continue
-		var tint: Color = entry.get("tint", sky_tint)
-		light.light_color = tint.lerp(sky_tint, 0.55)
-		light.light_energy = lerpf(float(entry.get("night", 0.25)), float(entry.get("day", 1.35)), daylight)
+		var tint: Color = entry.get("tint", beam_tint)
+		light.light_color = tint.lerp(beam_tint, 0.45)
+		var energy := lerpf(float(entry.get("night", 0.0)), float(entry.get("day", 4.8)), daylight)
+		light.light_energy = energy
+		light.visible = energy > 0.02
+	for entry in _daylight_fills:
+		var light := entry.get("light") as Light3D
+		if not is_instance_valid(light):
+			continue
+		var energy := lerpf(0.0, float(entry.get("day", 2.8)), daylight)
+		light.light_energy = energy
+		light.visible = energy > 0.02
+	var lamp_factor := lerpf(0.04, 1.0, pow(night_mix, 0.72))
+	for lamp in _nave_lanterns:
+		if is_instance_valid(lamp) and lamp.has_method("set_lit_factor"):
+			lamp.set_lit_factor(lamp_factor, 2.9, 8.5)
+	var fire_factor := pow(night_mix, 0.70)
+	for entry in _brazier_lights:
+		var light := entry.get("light") as OmniLight3D
+		var base_e := lerpf(float(entry.get("day", 0.06)), float(entry.get("night", 4.8)), fire_factor)
+		entry["base"] = base_e
+		if is_instance_valid(light):
+			light.light_energy = base_e
+			light.visible = base_e > 0.05
+		var flames: Array = entry.get("flames", [])
+		for f in flames:
+			if is_instance_valid(f):
+				f.visible = fire_factor > 0.10
+				f.scale = Vector3(lerpf(0.55, 1.05, fire_factor), lerpf(0.45, 1.12, fire_factor), 1.0)
+		for fm in entry.get("fire_mats", []):
+			if fm is ShaderMaterial:
+				(fm as ShaderMaterial).set_shader_parameter("intensity", 1.25 * fire_factor)
+		var cm := entry.get("coal_mat") as StandardMaterial3D
+		if cm != null:
+			cm.emission_energy_multiplier = lerpf(0.18, 2.8, fire_factor)
+		var sp := entry.get("sparks") as GPUParticles3D
+		if is_instance_valid(sp):
+			sp.emitting = fire_factor > 0.18
+	for entry in _interior_pools:
+		var light := entry.get("light") as OmniLight3D
+		if is_instance_valid(light):
+			light.light_energy = lerpf(float(entry.get("day", 0.15)), float(entry.get("night", 1.5)), night_mix)
 
 static func _load_texture(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
@@ -1136,13 +1453,20 @@ func _process(delta: float) -> void:
 	if drifting:
 		var base_phase := _time * 1.15
 		var stutter := 0.055 * sin(_time * 3.45) * maxf(0.0, sin(base_phase))
-		var swing := 0.22 * sin(base_phase) + stutter
+		var swing := 0.115 * sin(base_phase) + stutter * 0.55
 		pendulum_pivot.rotation = Vector3(swing * sin(_drift_angle), _drift_angle + 0.04 * sin(_time * 0.4), swing * cos(_drift_angle))
 		if is_instance_valid(essence_light):
 			essence_light.light_energy = 1.15 + 0.35 * sin(_time * 4.0)
 	else:
-		var swing := 0.19 * sin(_time * 1.05)
+		var swing := 0.105 * sin(_time * 1.05)
 		var slow_precession := fmod(_time * 0.025, TAU)
 		pendulum_pivot.rotation = Vector3(swing * sin(slow_precession), slow_precession, swing * cos(slow_precession))
 		if is_instance_valid(essence_light):
 			essence_light.light_energy = 0.85 + 0.06 * sin(_time * 1.2)
+	for entry in _brazier_lights:
+		var light := entry.get("light") as OmniLight3D
+		var base_e := float(entry.get("base", 0.0))
+		if is_instance_valid(light) and base_e > 0.1:
+			var ph := float(entry.get("phase", 0.0))
+			var wave := 1.0 + 0.065 * sin(_time * 9.7 + ph) + 0.035 * sin(_time * 21.3 + ph * 1.7)
+			light.light_energy = base_e * wave

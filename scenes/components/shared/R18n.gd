@@ -55,6 +55,7 @@ const STRINGS := {
 	"hale.hold": {"zh": "原地留守", "en": "Holding Position"},
 	"hale.gate": {"zh": "试推铁闸", "en": "Testing Gate"},
 	"hale.follow": {"zh": "跟随中", "en": "Following"},
+	"hale.quiet_follow": {"zh": "静步跟随", "en": "Quiet Follow"},
 	"hale.returning": {"zh": "归队中", "en": "Rejoining"},
 	"hale.archive": {"zh": "守着档案翼", "en": "Covering the Archive"},
 	"hale.bridgehead": {"zh": "在桥头等你", "en": "Waiting at the Bridgehead"},

@@ -2,6 +2,7 @@ extends Control
 ## Corner watch HUD card, footer action flow, and parchment document overlay for FirstWatch.
 
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
+const R18n := preload("res://scenes/components/shared/R18n.gd")
 
 var font: Font
 var card: PanelContainer
@@ -76,7 +77,7 @@ func _build_footer() -> void:
 	instruction.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	instruction.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	instruction.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	UiStyle.style_label(instruction, font, 18, Color("fff3df"), 0)
+	UiStyle.style_label(instruction, font, 20, Color("fff3df"), 0)
 	var plate := StyleBoxFlat.new()
 	plate.bg_color = Color(.035, .029, .023, .89)
 	plate.set_corner_radius_all(4)
@@ -130,7 +131,7 @@ func _build_overlay() -> void:
 func fit_instruction(viewport_width: float) -> void:
 	var widest := 0.0
 	for line in instruction.text.split("\n"):
-		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x)
+		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x)
 	instruction.custom_minimum_size.x = minf(widest + 40.0, maxf(viewport_width - 112.0, 200.0))
 	instruction.visible = not instruction.text.is_empty()
 
@@ -220,8 +221,14 @@ func set_flow_disabled(disabled: bool) -> void:
 
 func update_readout(room_title: String, clock: float, hp: int, nerve: int, party_count: int, supplies: int, pack: Dictionary) -> void:
 	place_label.text = "%s    %02d:%02d" % [room_title, floori(clock) % 24, floori(fposmod(clock, 1.0) * 60)]
-	status_label.text = "HP %d/9   ·   Nerve %d   ·   Party %d   ·   Crates %d" % [hp, nerve, party_count + 1, supplies]
-	kit_label.text = "Felt %d   ·   Ratchets %d" % [pack.felt, pack.ratchet]
+	status_label.text = R18n.pick(
+		"生命 %d/9   ·   镇定 %d   ·   队伍 %d   ·   补给箱 %d",
+		"HP %d/9   ·   Nerve %d   ·   Party %d   ·   Crates %d"
+	) % [hp, nerve, party_count + 1, supplies]
+	kit_label.text = R18n.pick(
+		"毛毡 %d   ·   棘轮 %d",
+		"Felt %d   ·   Ratchets %d"
+	) % [pack.felt, pack.ratchet]
 
 func hide_for_opening() -> void:
 	_hidden_for_opening.clear()

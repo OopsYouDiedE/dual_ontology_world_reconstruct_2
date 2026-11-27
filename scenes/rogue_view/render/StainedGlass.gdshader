@@ -11,9 +11,24 @@ uniform float emit_gain = 0.70;
 void fragment() {
 	vec3 sample_rgb = has_tex ? texture(glass_tex, UV).rgb : fallback_color.rgb;
 	float luma = dot(sample_rgb, vec3(0.299, 0.587, 0.114));
-	float glass_mask = smoothstep(0.06, 0.42, luma);
-	// Opaque self-illuminated stained glass: unaffected by interior lamps, glowing purely from exterior light.
-	vec3 boosted = mix(sample_rgb * 0.25, pow(max(sample_rgb, vec3(0.001)), vec3(0.84)) * 1.25, glass_mask);
-	float transmit = (0.58 + 1.15 * daylight) * emit_gain;
-	ALBEDO = boosted * exterior_tint.rgb * mix(0.24, transmit, glass_mask);
+	// Sharp threshold so lead cames stay pitch-dark silhouettes against blazing backlit glass.
+	float glass_mask = smoothstep(0.09, 0.32, luma);
+
+	// Preserve deep jewel-like chroma (cobalt, crimson, amber, emerald) while pushing HDR luminance.
+	vec3 jewel = pow(max(sample_rgb, vec3(0.002)), vec3(1.08)) * 1.45;
+	float jewel_luma = dot(jewel, vec3(0.299, 0.587, 0.114));
+	float sat_boost = mix(0.85, 1.65, daylight);
+	jewel = max(vec3(0.0), mix(vec3(jewel_luma), jewel, sat_boost));
+
+	// Natural backlit sun-sky gradient: hotter luminous core near upper/center glass, deeper jewel tones at edges.
+	float sun_grad = 0.78 + 0.48 * smoothstep(0.0, 1.0, 1.0 - UV.y);
+	float core_hot = 1.0 + 0.35 * smoothstep(0.35, 0.95, luma);
+
+	float day_curve = pow(clamp(daylight, 0.0, 1.0), 0.78);
+	// Strong HDR transmit in daytime (triggers colored cathedral bloom), near-black at night.
+	float transmit = mix(0.035, 3.85, day_curve) * emit_gain * sun_grad * core_hot;
+	float lead_level = mix(0.012, 0.022, day_curve);
+
+	vec3 final_color = mix(sample_rgb * lead_level, jewel * transmit, glass_mask);
+	ALBEDO = final_color * exterior_tint.rgb;
 }

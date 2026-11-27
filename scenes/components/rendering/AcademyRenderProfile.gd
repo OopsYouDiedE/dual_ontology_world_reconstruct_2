@@ -87,6 +87,17 @@ static func atmosphere_for(region_id: String, darkroom_mix: float) -> Dictionary
 		amb = lerpf(amb, 0.09, darkroom_mix)
 	return {"fog_color": fog_col, "fog_density": fog_dens, "ambient": amb}
 
+const TRI_PLASTER_ALBEDO := "res://assets/textures/hall_triplanar/plaster_albedo.png"
+const TRI_PLASTER_NORMAL := "res://assets/textures/hall_triplanar/plaster_normal.png"
+const TRI_WOOD_ALBEDO := "res://assets/textures/hall_triplanar/wood_albedo.png"
+const TRI_WOOD_NORMAL := "res://assets/textures/hall_triplanar/wood_normal.png"
+const TRI_MACRO := "res://assets/textures/hall_triplanar/macro_variation.png"
+
+static func _load_tex(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null
+
 ## Shared Blue Prince painterly toon shader builder for Hall and Expedition opaque surfaces.
 static func make_hall_finish(
 	pigment: Color,
@@ -110,4 +121,16 @@ static func make_hall_finish(
 	m.set_shader_parameter("vault_fill", vault_fill)
 	m.set_shader_parameter("pale_wash", pale_wash)
 	m.set_shader_parameter("emission_gain", emission_gain)
+	var albedo := _load_tex(TRI_WOOD_ALBEDO if is_wood else TRI_PLASTER_ALBEDO)
+	var normal := _load_tex(TRI_WOOD_NORMAL if is_wood else TRI_PLASTER_NORMAL)
+	var macro := _load_tex(TRI_MACRO)
+	if albedo != null and normal != null and macro != null:
+		m.set_shader_parameter("use_triplanar", true)
+		m.set_shader_parameter("albedo_tex", albedo)
+		m.set_shader_parameter("normal_tex", normal)
+		m.set_shader_parameter("macro_tex", macro)
+		m.set_shader_parameter("triplanar_scale", 0.62 if is_wood else 0.42)
+		m.set_shader_parameter("macro_scale", 0.09)
+		m.set_shader_parameter("triplanar_detail", 0.90 if is_wood else 0.88)
+		m.set_shader_parameter("normal_strength", 0.36 if is_wood else (0.18 if is_runner else 0.32))
 	return m

@@ -63,3 +63,15 @@ static func tune_viewport(vp: Viewport) -> void:
 ## Native-resolution HallInk outline at the shared strength.
 static func ink() -> MeshInstance3D:
 	return preload("res://scenes/components/rendering/post/InkPass.gd").create()
+
+static func is_compatibility() -> bool:
+	return RenderingServer.get_current_rendering_method() == &"gl_compatibility"
+
+static func create_compatibility_fill_light() -> DirectionalLight3D:
+	var fill := DirectionalLight3D.new()
+	fill.name = "CompatibilityFillLight"
+	fill.rotation_degrees = Vector3(-52.0, -28.0, 0.0)
+	fill.light_color = Color("dde6f2")
+	fill.light_energy = 0.45
+	fill.shadow_enabled = false
+	return fill

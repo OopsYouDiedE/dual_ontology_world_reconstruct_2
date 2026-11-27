@@ -7,6 +7,7 @@ const Relay=preload("ServiceSignal.gd")
 const OIL_PICKUP:=35.
 const Cast=preload("res://scenes/rogue_crossing/ProductionCast.gd")
 const R18n=preload("res://scenes/components/shared/R18n.gd")
+const VoiceSynth=preload("res://scenes/components/shared/VoiceSynth.gd")
 const Feel=preload("res://scenes/components/shared/FeelProfile.gd")
 const RenderProfile=preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const Stage=preload("res://scenes/components/rendering/AcademyStage.gd")
@@ -221,6 +222,7 @@ const HALE_TALK_EN:={
 	"talk_exit":"The Foucault pendulum won't hold much longer. Take the core and go—I'll guard the rear.",
 	"talk_idle":"...Hear the pendulum overhead in Anchor Hall? Its swing is drifting worse. We need to hurry."}
 var retry:=0.
+var _hale_voice:Node
 var notice:=""
 var msg_time:=0.
 var last_pos:=Vector3.ZERO

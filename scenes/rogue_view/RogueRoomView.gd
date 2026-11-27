@@ -168,6 +168,7 @@ func _ready() -> void:
 	_pixels.gui_input.connect(_on_pixels_input)
 	_plan = Plan.new()
 	_plan.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_plan.campaign_hud = campaign_view and expedition_view
 	$Frame.add_child(_plan)
 	_panel = VBoxContainer.new()
 	_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -674,10 +675,13 @@ func _refresh_ui() -> void:
 			var source := "Live FreeSO VM" if _lot.source_kind == "live-vm" else "Saved FreeSO VM"
 			heading += " · %s, floor %d" % [source, _lot_level]
 	_heading.text = _room_label if campaign_view and not plan_mode else "%s  |  %s" % [heading, _room_label]
-	# In the campaign the HUD card names the room; the heading only labels the plan.
-	if campaign_view and expedition_view and not plan_mode: _heading.text = ""
+	# In the campaign the HUD card names the room; keep top-left clear of the card even in plan view.
+	if campaign_view and expedition_view: _heading.text = ""
 	_navigation.visible = not campaign_view
 	if is_instance_valid(_player): _player.set_controls_enabled(not plan_mode and not _modal)
+	if is_instance_valid(_crosshair):
+		_crosshair.visible = not _modal and not _plan_open and not _cinematic
+		_crosshair.queue_redraw()
 	if _displayed_exits != _exits:
 		_displayed_exits = _exits.duplicate(true)
 		for button in _navigation.get_children():
@@ -714,7 +718,7 @@ func _update_prompt() -> void:
 	if _modal:
 		_prompt.text = ""
 	elif _plan_open or not is_instance_valid(_player):
-		_prompt.text = "Travel links" if not _exits.is_empty() else ""
+		_prompt.text = "" if (campaign_view and expedition_view) else ("Travel links" if not _exits.is_empty() else "")
 	elif target.is_empty():
 		_prompt.text = "" if expedition_view else "WASD · Move     Q / R or right-drag · Orbit"
 	else:
@@ -1008,6 +1012,16 @@ func set_cinematic(active: bool) -> void:
 	if not active: _plan_button.visible = is_instance_valid(_player)
 
 
+func close_plan() -> void:
+	if not _plan_open:
+		return
+	_plan_open = false
+	_keyboard_interact = false
+	_clicks.clear()
+	if is_node_ready():
+		_refresh_ui()
+
+
 func set_modal(active: bool) -> void:
 	_modal = active
 	if active:
@@ -1015,6 +1029,10 @@ func set_modal(active: bool) -> void:
 		_clicks.clear()
 		_keyboard_interact = false
 	if is_instance_valid(_player): _player.set_controls_enabled(not _plan_open and not _modal)
+	if is_node_ready(): _update_prompt()
+	if is_instance_valid(_crosshair):
+		_crosshair.visible = not _modal and not _plan_open and not _cinematic
+		_crosshair.queue_redraw()
 
 
 func is_walking_view() -> bool:

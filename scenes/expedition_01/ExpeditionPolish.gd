@@ -133,7 +133,7 @@ func _build_hud(canvas:CanvasLayer)->void:
 	var top_row:=HBoxContainer.new();col.add_child(top_row);top_row.add_theme_constant_override("separation",14);top_row.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	oil_label=Label.new();top_row.add_child(oil_label)
 	lang_badge=Label.new();top_row.add_child(lang_badge)
-	oil_bar=ProgressBar.new();col.add_child(oil_bar);oil_bar.custom_minimum_size=Vector2(146,4);oil_bar.show_percentage=false;oil_bar.max_value=100
+	oil_bar=ProgressBar.new();col.add_child(oil_bar);oil_bar.custom_minimum_size=Vector2(146,4);oil_bar.show_percentage=false;oil_bar.max_value=100;oil_bar.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	oil_fill=box(ACCENT,2,Vector2.ZERO);oil_bar.add_theme_stylebox_override("fill",oil_fill);oil_bar.add_theme_stylebox_override("background",box(Color(1,1,1,.12),2,Vector2.ZERO))
 	objective_label=Label.new();objective_label.text=R18n.t("hud.obj.fetch");col.add_child(objective_label)
 	field_note=Label.new();col.add_child(field_note);field_note.hide()
@@ -192,7 +192,7 @@ func _build_rule_hud(canvas:CanvasLayer,font:Font)->void:
 	bead_row.add_theme_constant_override("separation",6);bead_row.alignment=BoxContainer.ALIGNMENT_CENTER
 	bead_row.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	for i in 3:
-		var bead:=Panel.new();bead.custom_minimum_size=Vector2(10,10);bead_row.add_child(bead)
+		var bead:=Panel.new();bead.custom_minimum_size=Vector2(10,10);bead.mouse_filter=Control.MOUSE_FILTER_IGNORE;bead_row.add_child(bead)
 		var s:=box(Color(1,1,1,.13),5,Vector2.ZERO);bead.add_theme_stylebox_override("panel",s);beads.append(bead)
 	# Region card, top right.
 	var holder:=PanelContainer.new();canvas.add_child(holder)

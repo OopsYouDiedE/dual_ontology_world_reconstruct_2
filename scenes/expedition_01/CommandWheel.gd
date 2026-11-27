@@ -4,6 +4,7 @@ extends Node
 ## caller filters options, so the wheel never offers an order that cannot be executed.
 
 signal chosen(id:String)
+signal cancelled
 
 const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
 const R18n = preload("res://scenes/components/shared/R18n.gd")
@@ -79,6 +80,10 @@ func _on_gui_input(ev:InputEvent)->void:
 			index=clicked
 			confirm()
 			wheel.accept_event()
+	elif ev is InputEventMouseButton and ev.pressed and ev.button_index==MOUSE_BUTTON_RIGHT:
+		dismiss()
+		cancelled.emit()
+		wheel.accept_event()
 
 func _process(dt:float)->void:
 	t+=dt
@@ -101,8 +106,8 @@ func _draw()->void:
 	var ease:=smoothstep(0.,1.,clampf(t/.14,0.,1.))
 	var controls:=R18n.t("wheel.controls")
 	var controls_width:=font.get_string_size(controls,HORIZONTAL_ALIGNMENT_LEFT,-1,15).x
-	wheel.draw_rect(Rect2(Vector2(-controls_width*.5-10,218),Vector2(controls_width+20,27)),Color(INK,.9))
-	wheel.draw_string(font,Vector2(-controls_width*.5,237),controls,HORIZONTAL_ALIGNMENT_LEFT,-1,15,UiStyle.TEXT_MAIN)
+	wheel.draw_rect(Rect2(Vector2(-controls_width*.5-10,248),Vector2(controls_width+20,27)),Color(INK,.9))
+	wheel.draw_string(font,Vector2(-controls_width*.5,267),controls,HORIZONTAL_ALIGNMENT_LEFT,-1,15,UiStyle.TEXT_MAIN)
 	var radius:=150.*(.86+.14*ease)
 	wheel.draw_circle(Vector2.ZERO,radius+26.,Color(INK, .44*ease))
 	wheel.draw_circle(Vector2.ZERO,58.,Color(INK, .32*ease))
@@ -123,7 +128,7 @@ func _draw()->void:
 		if picked:
 			var hint:String=String(opt.get("hint",""))
 			var cost:String=String(opt.get("cost",""))
-			var y_top:=-radius-116.
+			var y_top:=-radius-(142. if cost!="" else 120.)
 			if hint!="":
 				var hw:=font.get_string_size(hint,HORIZONTAL_ALIGNMENT_LEFT,-1,15).x
 				var cw:=font.get_string_size(cost,HORIZONTAL_ALIGNMENT_LEFT,-1,14).x if cost!="" else 0.

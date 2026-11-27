@@ -75,7 +75,8 @@ func _ready() -> void:
 	_make_hud()
 	_no_save = "--no-rule-save" in OS.get_cmdline_user_args()
 	if not _no_save and FileAccess.file_exists(MARGINS): margins = FileAccess.get_file_as_string(MARGINS).left(180)
-	first_returned = not _no_save and FileAccess.file_exists(FIRST_SEAL)
+	first_returned = (not _no_save and FileAccess.file_exists(FIRST_SEAL)) or ("--post-first-sortie" in OS.get_cmdline_user_args())
+	resized.connect(_on_viewport_resized)
 	var chosen_seed := int(randi())
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--run-seed=") and arg.get_slice("=", 1).is_valid_int(): chosen_seed = int(arg.get_slice("=", 1))
@@ -189,9 +190,10 @@ func _make_hud() -> void:
 	center.add_child(panel)
 	_scroll = ScrollContainer.new()
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_scroll.custom_minimum_size.x = 650
+	_scroll.custom_minimum_size.x = 660
 	panel.add_child(_scroll)
 	_sheet = VBoxContainer.new()
+	_sheet.custom_minimum_size.x = 636
 	_sheet.size_flags_horizontal = SIZE_EXPAND_FILL
 	_sheet.add_theme_constant_override("separation", 10)
 	_scroll.add_child(_sheet)
@@ -228,10 +230,14 @@ func _label(text: String, size := 16, gold := false) -> void:
 	var node := Label.new()
 	node.text = text
 	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	node.custom_minimum_size.x = 636
+	node.size_flags_horizontal = SIZE_EXPAND_FILL
 	UiStyle.style_label(node, _font, size, Color("7a4a1c") if gold else UiStyle.PARCHMENT_INK, 0)
 	_sheet.add_child(node)
 
 func _open(kind: String, title: String, folio: String) -> void:
+	if is_instance_valid(room_view) and room_view.has_method("close_plan"):
+		room_view.close_plan()
 	_clear(_sheet)
 	modal = kind
 	_overlay.show()
@@ -245,19 +251,31 @@ func _open(kind: String, title: String, folio: String) -> void:
 
 func _fit_sheet() -> void:
 	if modal.is_empty(): return
+	_sheet.size.x = 636
+	for child in _sheet.get_children():
+		if child is Control:
+			child.size.x = 636
 	_scroll.custom_minimum_size.y = minf(_sheet.get_combined_minimum_size().y, get_viewport_rect().size.y * .80)
 	# Wrapped lines only know their height once the page has its width: measure again after layout.
 	await get_tree().process_frame
 	if modal.is_empty(): return
 	_scroll.custom_minimum_size.y = minf(_sheet.get_combined_minimum_size().y, get_viewport_rect().size.y * .80)
 
+func _on_viewport_resized() -> void:
+	if is_instance_valid(_instruction):
+		_fit_instruction()
+	if not modal.is_empty():
+		_fit_sheet()
+
 func _close() -> void:
 	modal = ""
 	_acting = -1
 	_overlay.hide()
-	room_view.set_modal(phase in ["lost", "won"])
+	room_view.set_modal(_performing or phase in ["lost", "won"])
 
 func new_run(value: int) -> void:
+	if is_instance_valid(_opening) and _opening.active:
+		_opening.skip()
 	_close()
 	_leave_hall()
 	run_seed = value
@@ -321,10 +339,13 @@ func _can_agree() -> bool:
 func _input(event: InputEvent) -> void:
 	if is_instance_valid(first_sortie) or (is_instance_valid(_opening) and _opening.active): return
 	if _performing or not event is InputEventKey or not event.pressed or event.echo or house == null: return
-	if event.physical_keycode == KEY_TAB and handbook:
+	if event.physical_keycode == KEY_TAB and handbook and modal != "margin":
 		if modal == "guide": _close()
 		else: _read_guide()
-	elif event.physical_keycode == KEY_ESCAPE and not modal.is_empty(): _close()
+	elif event.physical_keycode == KEY_ESCAPE:
+		if not modal.is_empty(): _close()
+		elif is_instance_valid(room_view) and room_view.has_method("close_plan") and room_view._plan_open: room_view.close_plan()
+		else: return
 	else: return
 	get_viewport().set_input_as_handled()
 
@@ -386,6 +407,8 @@ func _act(room_id: String, group: int, id: String) -> void:
 		if not reservations.is_empty() and not party.is_empty():
 			var watch := _watch_number
 			_performing = true
+			for node in _flow.get_children():
+				if node is Button: node.disabled = true
 			room_view.set_modal(true)
 			for beat in range(1 + int(reservations[-1].beat)):
 				var operations := PackedStringArray()
@@ -439,14 +462,15 @@ func _hall_recruit(id: String) -> void:
 func _team() -> void:
 	if phase != "camp": return
 	_open("crew", "Hall roll call", "CREW AND FACILITIES   /   %d CRATES" % crew.supplies)
+	_button(_sheet, "Back to the floor", _close)
 	for id in roster:
-		var b := _button(_sheet, "%s · %s · %s" % ["Stand down" if party.has(id) else "Deploy", id, _protocol(id)], _deploy.bind(id))
+		var state_note := "" if crew.deployable(id) else (" · " + crew.status(id))
+		var b := _button(_sheet, "%s · %s · %s%s" % ["Stand down" if party.has(id) else "Deploy", id, _protocol(id), state_note], _deploy.bind(id))
 		b.disabled = not crew.deployable(id) or (party.size() >= 3 and not party.has(id))
 	_label("Speak to a witness in the room to record their account or add them to the roster.", 14)
 	for name in crew.upgrades:
 		var b := _button(_sheet, "%s / %s" % [name, "installed" if crew.upgrades[name] else "3 crates"], _improve.bind(name))
 		b.disabled = crew.upgrades[name] or crew.supplies < 3
-	_button(_sheet, "Back to the floor", _close)
 
 func _deploy(id: String) -> void:
 	if phase != "camp" or id not in roster: return
@@ -500,6 +524,8 @@ func _update_hall(dt: float) -> void:
 
 func _depart_first() -> void:
 	_close()
+	if is_instance_valid(room_view) and room_view.has_method("close_plan"):
+		room_view.close_plan()
 	phase = "first_expedition"
 	room_view.set_modal(true)
 	for child in get_children():
@@ -555,7 +581,26 @@ func _death_note() -> void:
 	_entry = LineEdit.new()
 	_entry.text = margins
 	_entry.max_length = 180
+	_entry.placeholder_text = "Write a brief note for the next captain..."
+	_entry.add_theme_font_override("font", _font)
+	_entry.add_theme_font_size_override("font_size", 16)
+	_entry.add_theme_color_override("font_color", UiStyle.PARCHMENT_INK)
+	_entry.add_theme_color_override("font_placeholder_color", Color(UiStyle.PARCHMENT_INK, 0.45))
+	_entry.add_theme_color_override("caret_color", UiStyle.PARCHMENT_INK)
+	var entry_box := StyleBoxFlat.new()
+	entry_box.bg_color = Color("efe0be")
+	entry_box.border_color = UiStyle.PARCHMENT_BORDER
+	entry_box.set_border_width_all(2)
+	entry_box.set_corner_radius_all(3)
+	entry_box.content_margin_left = 10
+	entry_box.content_margin_right = 10
+	entry_box.content_margin_top = 6
+	entry_box.content_margin_bottom = 6
+	_entry.add_theme_stylebox_override("normal", entry_box)
+	_entry.add_theme_stylebox_override("focus", entry_box)
+	_entry.text_submitted.connect(func(_text: String): _file_note())
 	_sheet.add_child(_entry)
+	_entry.grab_focus.call_deferred()
 	_button(_sheet, "Leave it in the margin", _file_note)
 	_button(_sheet, "Close", _close)
 
@@ -589,6 +634,7 @@ func _route_name(id: String) -> String:
 	return Rooms.TITLES[house.room_stage(id)] + (" / +1 " + reward if reward else "")
 
 func _chart() -> void:
+	if _performing: return
 	_open("chart", "Expedition chart", "PUBLIC HALL   /   WATCH %d" % run_seed)
 	_button(_sheet, "Fold chart", _close)
 	if phase == "camp" and not first_returned:
@@ -664,11 +710,13 @@ func _process(dt: float) -> void:
 func mcp_observe() -> Dictionary:
 	if is_instance_valid(first_sortie): return first_sortie.mcp_observe()
 	var buttons := []
-	var ui: Container = _flow if modal.is_empty() else _sheet
-	for node in ui.get_children():
-		if node is Button:
-			var center: Vector2 = node.get_global_rect().get_center()
-			buttons.append({"label":node.text, "x":center.x, "y":center.y, "enabled":not node.disabled})
+	var opening_active: bool = is_instance_valid(_opening) and bool(_opening.active)
+	if not opening_active:
+		var ui: Container = _flow if modal.is_empty() else _sheet
+		for node in ui.get_children():
+			if node is Button and node.is_visible_in_tree():
+				var center: Vector2 = node.get_global_rect().get_center()
+				buttons.append({"label":node.text, "x":center.x, "y":center.y, "enabled":not node.disabled})
 	var r := _room()
 	return {"phase":phase, "stage":_stage(), "room":current, "camp":house.camp_room(), "goal":house.goal_room(),
 		"pack":pack.duplicate(),"recalled":recalled,"seed":run_seed, "moves":moves, "health":hp, "nerve":nerve, "supplies":crew.supplies, "modal":modal,

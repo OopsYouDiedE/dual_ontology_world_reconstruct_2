@@ -1,6 +1,7 @@
 extends Control
 ## High-contrast native overhead mode. Coordinates and IDs come from the lot.
 var lot: Dictionary = {}
+var campaign_hud := false
 var _scale := 1.0
 var _origin := Vector2.ZERO
 
@@ -20,10 +21,12 @@ func _draw() -> void:
 	for item: Dictionary in lot.objects:
 		bounds = bounds.expand(Vector2i(item.position.floor()))
 	var extent := Vector2(bounds.size) + Vector2(2, 2)
-	_scale = maxf(1.0, minf((size.x - 54) / extent.x, (size.y - 150) / extent.y))
-	_origin = Vector2(size.x * 0.5, (size.y - 16) * 0.5) - (Vector2(bounds.position) + Vector2(bounds.size) * 0.5) * _scale
+	var top_pad := 175.0 if campaign_hud else 150.0
+	var y_center := (size.y + (36.0 if campaign_hud else -16.0)) * 0.5
+	_scale = maxf(1.0, minf((size.x - 54) / extent.x, (size.y - top_pad) / extent.y))
+	_origin = Vector2(size.x * 0.5, y_center) - (Vector2(bounds.position) + Vector2(bounds.size) * 0.5) * _scale
 	var font := ThemeDB.fallback_font
-	draw_string(font, Vector2(20, 72), "N ↑    Native tile grid   |   pale: walls   ·   blue: glazing", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("bcd6de"))
+	draw_string(font, Vector2(22, 134 if campaign_hud else 72), "N ↑    Native tile grid   |   pale: walls   ·   blue: glazing", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("bcd6de"))
 	for cell: Vector2i in lot.floors:
 		var rect := Rect2(_point(Vector2(cell)), Vector2.ONE * _scale)
 		draw_rect(rect, floor_color(int(lot.patterns.get(cell, 0))))
@@ -54,7 +57,9 @@ func _draw() -> void:
 		var box_size := Vector2(label_size.x + 14, 24)
 		var p: Vector2 = note.point
 		for delta in [Vector2(10, -12), Vector2(-box_size.x - 10, -12), Vector2(2, -35), Vector2(2, 12), Vector2(2, 36), Vector2(2, -59)]:
-			var rect := Rect2((p + delta).clamp(Vector2(12, 84), size - box_size - Vector2(12, 54)), box_size)
+			var min_y := 152.0 if campaign_hud else 84.0
+			var max_pad_y := 110.0 if campaign_hud else 54.0
+			var rect := Rect2((p + delta).clamp(Vector2(12, min_y), size - box_size - Vector2(12, max_pad_y)), box_size)
 			if occupied.any(func(other: Rect2): return other.intersects(rect.grow(2))):
 				continue
 			occupied.append(rect)

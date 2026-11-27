@@ -302,7 +302,8 @@ func _ready()->void:
 	book_controls.add_theme_constant_override("outline_size",6);book_controls.hide()
 	add_child(polish);polish.setup(self,canvas)
 	add_child(wheel);wheel.setup(canvas,font)
-	wheel.chosen.connect(pick_order)
+	wheel.chosen.connect(_on_wheel_chosen)
+	wheel.cancelled.connect(_on_wheel_cancelled)
 	contracts.reset()
 	update_target()
 	toast(R18n.t("hud.start_toast"))
@@ -394,6 +395,13 @@ func _close_wheel(confirm:=false)->void:
 	if confirm:wheel.confirm()
 	else:wheel.dismiss()
 
+func _on_wheel_chosen(id:String)->void:
+	wheel_open=false
+	pick_order(id)
+
+func _on_wheel_cancelled()->void:
+	wheel_open=false
+
 func _unhandled_input(ev:InputEvent)->void:
 	if finished or manual.visible or wheel_open or mode>=0:return
 	if mouse_lifecycle.capture_world_click(ev,get_viewport()):
@@ -416,11 +424,12 @@ func _input(ev:InputEvent)->void:
 		_release_mouse()
 		if manual.visible:toggle_book()
 		if wheel_open:_close_wheel()
+		elif mode>=0:mode=2;section_view()
 		get_viewport().set_input_as_handled()
 		return
-	if key==KEY_I or watch:_release_mouse()
+	if key in [KEY_I,KEY_TAB] or watch:_release_mouse()
 	if ev is InputEventKey and ev.pressed and not ev.echo and mode<0:
-		if key==KEY_I or (not wheel_open and key in [KEY_1,KEY_KP_1]):
+		if key in [KEY_I,KEY_TAB] or (not wheel_open and key in [KEY_1,KEY_KP_1]):
 			toggle_book();get_viewport().set_input_as_handled();return
 		if ev.physical_keycode==KEY_SHIFT and not manual.visible:running=not running;return
 	if manual.visible:
@@ -466,9 +475,6 @@ func _input(ev:InputEvent)->void:
 		else:
 			wheel.bind(items);wheel.reveal();wheel_open=true
 		return
-	if key==KEY_ALT:
-		if not manual.visible:toggle_book()
-		book_page=3;render_book();return
 func section_view()->void:
 	_release_mouse()
 	if wheel_open:_close_wheel()
@@ -647,7 +653,8 @@ func use()->void:
 			if kit.solo_hatch:create_tween().tween_property(kit.solo_hatch,"position:y",kit.solo_hatch.position.y+2.05,.40)
 			var solo_tw:=create_tween()
 			solo_tw.tween_interval(.5)
-			solo_tw.tween_callback(func()->void:finish_expedition(true))
+			solo_tw.tween_callback(func()->void:
+				if solo_escape and retry<=0. and not finished:finish_expedition(true))
 		"vault_oil":
 			oil=minf(100.,oil+20.);kit.vault_can.hide();say("已收起备用灯油")
 		"pump_valve":
@@ -709,6 +716,9 @@ func relay_hint()->String:
 	if service_signal.on_felt(walker.position,relay_focus):return "[E] 敲击"
 	return "站上毡垫聆听"
 func finish_expedition(solo:=false)->void:
+	if finished:return
+	if wheel_open:_close_wheel()
+	if manual.visible:toggle_book()
 	finished=true;_release_mouse()
 	if solo:
 		var solo_ending:Tween=polish.finish(R18n.pick("孤 身 撤 离","SOLO EVACUATION"),R18n.pick("备用源核已送回稳压室 · 气密滑门在身后合拢 · Hale 的提灯仍停在井区深处","Spare core returned to Stabilizer · The slide sealed behind you · Hale's lantern still burns inside the caisson"))
@@ -1567,6 +1577,8 @@ func sees_span(origin:Vector3)->bool:
 				if space.intersect_ray(ray).is_empty():return true
 	return false
 func fail(reason:String)->void:
+	if wheel_open:_close_wheel()
+	if manual.visible:toggle_book()
 	retry=3.;polish.fail_beat();fail_reason=reason
 	var clause:=rule_clause_for(reason)
 	notice="";msg_time=0.
@@ -1588,7 +1600,7 @@ func rule_clause_for(reason:String)->String:
 	return ""
 func reset_at_checkpoint()->void:
 	hale_gate_guide=0
-	shortcut_open=false;shortcut_used=false;return_started=false;return_gate_open=false;north_pause=0.;gallery_bell.stop();gallery_impact.stop();kit.return_exit_gate.position.y=0.;siren.volume_db=-17.;exit_requested=false;exit_open=false;reunited=false;evidence_thought_delay=-1.;cues.erase("bait_answer")
+	shortcut_open=false;shortcut_used=false;return_started=false;return_gate_open=false;north_pause=0.;gallery_bell.stop();gallery_impact.stop();kit.return_exit_gate.position.y=0.;siren.volume_db=-17.;exit_requested=false;exit_open=false;solo_escape=false;reunited=false;evidence_thought_delay=-1.;cues.erase("bait_answer")
 	kit.leave_pivot.rotation.y=0.;kit.airlock.position.y=2.4;hale_return_path.clear()
 	hale_gate_attempt=false
 	crossing=false;crossing_locked=false;distraction=0.;running=false;collected=false;kit.core.show();siren.stop();emergency.hide();cues.erase("core");cues.erase("post");captions.clear()

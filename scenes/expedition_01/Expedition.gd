@@ -516,6 +516,7 @@ func _update_archive_essence(dt:float)->void:
 	var target_instab:=(0.54+0.14*sin(phase*1.3)+0.32*local_surge_boost) if in_wing else (0.06+0.16*local_surge_boost)
 	_wing_instability=lerpf(_wing_instability,clampf(target_instab,0.0,0.96),1.0-exp(-4.5*dt))
 	if is_instance_valid(_wing_shift) and _wing_shift.material_override is ShaderMaterial:
+		_wing_shift.visible=_wing_instability>0.01
 		(_wing_shift.material_override as ShaderMaterial).set_shader_parameter("instability",_wing_instability)
 
 func _release_mouse()->void:

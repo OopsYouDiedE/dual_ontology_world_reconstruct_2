@@ -223,6 +223,8 @@ const HALE_TALK_EN:={
 	"talk_idle":"...Hear the pendulum overhead in Anchor Hall? Its swing is drifting worse. We need to hurry."}
 var retry:=0.
 var _hale_voice:Node
+var hale_lamp_off:=false
+var hale_quiet:=false
 var notice:=""
 var msg_time:=0.
 var last_pos:=Vector3.ZERO
@@ -612,6 +614,7 @@ func hale_order_text()->String:
 	if hale_gate_attempt:return R18n.t("hale.gate")
 	if archive_busy():return R18n.t("hale.archive")
 	if released and walker.position.x>50.:return R18n.t("hale.bridgehead")
+	if hale_quiet:return R18n.t("hale.quiet_follow")
 	return R18n.t("hale.follow")
 func thought(id:String,text:String)->void:
 	subtitle_id=id;captions.post(id,"",text)
@@ -830,8 +833,19 @@ func order_options()->Array:
 			items.append({"id":"trail","title":R18n.pick("跟紧我","Stay Close"),"hint":R18n.pick("他沿你走过的路跟上来。","He catches up along the way you walked.")})
 		else:
 			items.append({"id":"hold","title":R18n.pick("原地待命","Hold Here"),"hint":R18n.pick("请他在这里等你。","Have him wait here for you.")})
-	if contracts.trust>=2:
-		items.append({"id":"advise","title":R18n.pick("听他的建议","Ask His Advice"),"hint":R18n.pick("问他有没有听见或看见什么。","Ask what he has heard or seen.")})
+		if hale_quiet:
+			items.append({"id":"quiet_pace","title":R18n.pick("恢复步速","Normal Pace"),"hint":R18n.pick("恢复正常步行速度跟进。","Resume normal walking speed.")})
+		else:
+			items.append({"id":"quiet_pace","title":R18n.pick("压低脚步","Quiet Steps"),"hint":R18n.pick("遵守同声律，放轻脚步避免惊动井底。","Tread lightly to avoid overlapping footsteps.")})
+		if released:
+			if hale_lamp_off:
+				items.append({"id":"lamp_toggle","title":R18n.pick("让他亮灯","Raise Lantern"),"hint":R18n.pick("请他重新点亮提灯照亮后方。","Have him raise his lantern to light the rear.")})
+			else:
+				items.append({"id":"lamp_toggle","title":R18n.pick("让他熄灯","Douse Lantern"),"hint":R18n.pick("遵守独灯律，由你来掌灯。","Observe Single-Lamp Rule—you carry the light.")})
+	if hale_in_earshot():
+		items.append({"id":"advise","title":R18n.pick("察看周围","Check Surroundings"),"hint":R18n.pick("请他听声辨位并汇报当前风险。","Ask what he hears, sees, or warns about.")})
+	if hale.position.distance_to(walker.position)<5.5 and not hale_busy():
+		items.append({"id":"check_in","title":R18n.pick("简短交谈","Talk to Hale"),"hint":R18n.pick("与 Hale 核对眼下处境。","Check in with Hale about the situation.")})
 	return items
 
 ## Q on Hale, the gate or the north window carries out that one order if it is available.
@@ -882,12 +896,24 @@ func pick_order(id:String)->void:
 			# The trail keeps recording, so he can follow your exact route when called.
 			hale_hold=true;holding=false;posting=false;command_path.clear()
 			say(R18n.pick("Hale 留在原地等你。","Hale holds here for you."))
+		"quiet_pace":
+			hale_quiet=not hale_quiet
+			show_line("quiet_ack",R18n.pick("明白，我放轻脚步。","Got it—keeping my steps quiet.") if hale_quiet else R18n.pick("好，我跟上正常步速。","Alright, back to normal pace."))
+		"lamp_toggle":
+			hale_lamp_off=not hale_lamp_off
+			show_line("lamp_ack",R18n.pick("我把灯压暗了，你来照路。","My lantern is doused—lead the light.") if hale_lamp_off else R18n.pick("提灯重新点亮了。","Lantern's back up."))
+		"check_in":
+			talk_to_hale()
 		"advise":
 			if not hale_in_earshot():
 				say(R18n.pick("离 Hale 太远，听不清。","Too far from Hale to hear him."));return
 			var reply:=hale_hears_well()
+			if reply.is_empty() and released and lamp_on and not hale_lamp_off:
+				reply=R18n.pick("注意独灯律——咱俩的灯现在都亮着，最好熄一盏。","Watch the Single-Lamp Rule—both our lanterns are lit right now.")
+			if reply.is_empty() and oil<28.:
+				reply=R18n.pick("你的灯油快见底了，留意墙龛和补油阀。","Your oil is running low—check the niches or counterweight valve.")
 			if contracts.a_state=="overlap" and archive.gaze!=Vector3.ZERO:reply=R18n.pick("我还盯着那块板。你那边怎么样？","Still holding eyes on that plate. How does it look on your side?")
-			show_line("advise",reply if not reply.is_empty() else R18n.pick("等一下，让我听听。","Hold on, let me listen."))
+			show_line("advise",reply if not reply.is_empty() else R18n.pick("暂时没有异常动静，我们可以继续推进。","All quiet for now—we can keep moving."))
 ## Scripted path (tests, recorders): the aimed order if any, else the most specific available.
 func order()->void:
 	if quick_order():return
@@ -1096,7 +1122,8 @@ func update_lantern(dt:float)->void:
 	if released and hale_hand>=0:
 		var grip:=hale.to_local(hale_rig.to_global(hale_rig.get_bone_global_pose(hale_hand).origin))
 		hale_prop.position=grip+Vector3(0,-.14,.032)
-	hale_lantern.light_energy=(1.22 if posting else .48)*flicker
+	if posting or holding:hale_lamp_off=false
+	hale_lantern.light_energy=0. if hale_lamp_off else (1.22 if posting else .48)*flicker
 func update_target()->void:
 	var goal:=R18n.t("goal.arcade")
 	if exit_requested:goal=R18n.t("goal.enter_hall")
@@ -1305,7 +1332,7 @@ func advance_hale(dt:float)->void:
 		else:hale_stuck=0.
 		rejoin_trail(dt)
 		if not trail.is_empty():
-			hale.position=hale.position.move_toward(trail[0],4.7*dt)
+			hale.position=hale.position.move_toward(trail[0],(2.35 if hale_quiet else 4.7)*dt)
 			if hale.position.distance_to(trail[0])<.055:trail.remove_at(0)
 ## Skip trail points Hale no longer needs: jump ahead to the nearest one in clear sight, so
 ## after a hold, a recall or a scripted walk he takes the shortest walkable way back to you.

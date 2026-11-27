@@ -511,8 +511,9 @@ func _update_prompt() -> void:
 		if campaign_view and target.kind == "exit" and not _campaign.routes_released:
 			_prompt.text = "Sealed passage · " + target.label
 		else:
-			var verb := "Inspect" if target.kind == "inspect" else ("Examine" if target.kind in ["crossing", "fixture"] else ("Speak to" if target.kind == "witness" else "Travel"))
-			_prompt.text = ("E · %s %s" if campaign_view else "E / A / Click · %s %s") % [verb, target.label] if _can_interact else "Approach · " + target.label
+			var verb := R18n.pick("查看", "Inspect") if target.kind == "inspect" else (R18n.pick("检视", "Examine") if target.kind in ["crossing", "fixture"] else (R18n.pick("交谈", "Speak to") if target.kind == "witness" else R18n.pick("前往", "Travel")))
+			var approach := R18n.pick("走近 · ", "Approach · ")
+			_prompt.text = ("E · %s %s" if campaign_view else "E / A / Click · %s %s") % [verb, target.label] if _can_interact else approach + target.label
 			if expedition_view and not _can_interact and _flat_distance(target.position) > APPROACH_HINT:
 				_prompt.text = ""
 	if expedition_view and not _modal and not _plan_open and is_instance_valid(_player) and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:

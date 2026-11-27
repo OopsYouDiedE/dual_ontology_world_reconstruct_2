@@ -11,6 +11,7 @@ const HeroCast := preload("ProductionCast.gd")
 const Crew := preload("res://scenes/rogue_rules/ExpeditionCrew.gd")
 const Camp := preload("res://scenes/rogue_camp/CampResidents.gd")
 const R18n := preload("res://scenes/components/shared/R18n.gd")
+const VoiceSynth := preload("res://scenes/components/shared/VoiceSynth.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 const Hud := preload("WatchHud.gd")
 const Storage := preload("WatchStorage.gd")
@@ -52,6 +53,7 @@ var crew := Crew.new()
 var camp := Camp.new()
 var camp_actors: Node3D
 var hall_hale: Node3D
+var _hall_voice: Node
 var camp_time := 0.0
 var margins := ""
 var inherited := false
@@ -365,39 +367,108 @@ func _act(room_id: String, group: int, id: String) -> void:
 				message += "\n%s: %s" % [stances[i], r.report[i]]
 	_refresh()
 
+func _speak_hall_mumble(text: String, speaker_profile: String = "resident") -> void:
+	if not is_instance_valid(_hall_voice):
+		_hall_voice = VoiceSynth.new()
+		add_child(_hall_voice)
+	_hall_voice.speak_line(text, speaker_profile)
+
 func _take_deposition(id: String) -> void:
-	if phase != "camp" or not modal.is_empty() or id not in Cast.NAMES:
+	if phase != "camp" or not modal.is_empty():
+		return
+	# Pre-sortie Hale at the north gate: direct briefing + one-click departure
+	if id == "Hale" and not first_returned:
+		if is_instance_valid(hall_hale) and hall_hale.has_meta("animation_player"):
+			(hall_hale.get_meta("animation_player") as AnimationPlayer).play(&"signal", 0.25)
+		var line := R18n.pick(
+			"铜摆已经越过红线三格了。带上提灯和手册，准备好了我们就从北门下井，取回备用源核。",
+			"The pendulum is three marks past the red line. Grab your lamp and manual—whenever you're ready, we take the north gate down the well."
+		)
+		_speak_hall_mumble(line, "hale")
+		_open("witness", R18n.pick("Hale · 外勤搭档", "Hale · Watch Partner"), R18n.pick("北门待命   /   首次出征", "NORTH GATE   /   FIRST EXPEDITION"))
+		_label(line)
+		_label(R18n.pick("井区守则只放双人编队过闸。出征途中可按 Q 呼出指令轮盘与 Hale 协同。", "Caisson rules only pass pairs. Press Q on expedition to open the radial command wheel with Hale."), 14)
+		_button(_sheet, R18n.pick("立即与 Hale 出发", "Depart with Hale now"), _depart_first)
+		_button(_sheet, R18n.pick("先在大厅转转", "Stay in the Hall"), _close)
+		return
+
+	if id not in Cast.NAMES:
 		return
 	depositions[id] = true
-	_open("witness", id + " · " + Cast.job(id), "SIGNED DEPOSITION   /   %s COPY" % _protocol(id).to_upper())
-	_label(Cast.witness(id))
-	_label("Filed in your evidence wallet. Two independent signatures can support a common relay order.", 14)
-	if not roster.has(id):
-		_button(_sheet, "Recruit to the Hall roster", _hall_recruit.bind(id))
-	_button(_sheet, "Return to the Hall", _close)
+	var ed := _protocol(id)
+	var ed_disp := Cast.edition_localized(ed, R18n.is_en())
+	var job_disp := Cast.job_localized(id, R18n.is_en())
+	var acct := Cast.witness(id)
+	var v_prof := "elder" if (Cast.NAMES.find(id) % 3 == 0) else "resident"
+	_speak_hall_mumble(acct, v_prof)
 
-func _hall_recruit(id: String) -> void:
+	_open(
+		"witness",
+		"%s · %s" % [id, job_disp],
+		R18n.pick("已录证词   /   %s守则副本", "SIGNED DEPOSITION   /   %s COPY") % (ed.to_upper() if R18n.is_en() else ed_disp)
+	)
+	_label(acct)
+	if roster.has(id) and crew.people.has(id):
+		var member = crew.people[id]
+		var status_str := R18n.pick("待命可出征", "Ready to deploy") if crew.deployable(id) else str(crew.status(id))
+		_label(R18n.pick("当前状态：%s   ·   信任 %d   ·   压力 %d   ·   出征小队 %d/3", "Status: %s   ·   Trust %d   ·   Stress %d   ·   Party %d/3") % [status_str, member.trust, member.stress, party.size()], 14, true)
+	else:
+		_label(R18n.pick("证词已收入档案夹。集齐两份独立签名可在中继站下达联合指令。", "Filed in your evidence wallet. Two independent signatures can support a common relay order."), 14)
+
+	# One-stop recruit & direct party deploy right inside the resident conversation
+	if not roster.has(id):
+		_button(_sheet, R18n.pick("招募进入大厅名册", "Recruit to the Hall roster"), _hall_recruit.bind(id, false))
+		if party.size() < 3:
+			_button(_sheet, R18n.pick("招募并直接编入出征小队（%d/3）", "Recruit & deploy to party (%d/3)") % party.size(), _hall_recruit.bind(id, true))
+	else:
+		if party.has(id):
+			_button(_sheet, R18n.pick("移出出征小队（留厅休整）", "Stand down from party"), _toggle_party_from_sheet.bind(id))
+		else:
+			var dep_btn := _button(_sheet, R18n.pick("编入本次出征小队（%d/3）", "Deploy to expedition party (%d/3)") % party.size(), _toggle_party_from_sheet.bind(id))
+			dep_btn.disabled = not crew.deployable(id) or party.size() >= 3
+	_button(_sheet, R18n.pick("返回大厅", "Return to the Hall"), _close)
+
+func _toggle_party_from_sheet(id: String) -> void:
+	if phase != "camp" or id not in roster:
+		return
+	if party.has(id):
+		party.erase(id)
+		message = R18n.pick("%s 已退回大厅休整。", "%s stands down to rest in the Hall.") % id
+	elif party.size() < 3 and crew.deployable(id):
+		party.append(id)
+		message = R18n.pick("%s 已编入本次出征小队（%d/3）。", "%s joins your expedition party (%d/3).") % [id, party.size()]
+	_close()
+	_refresh()
+
+func _hall_recruit(id: String, also_deploy := false) -> void:
 	if phase != "camp" or id not in Cast.NAMES:
 		return
 	if not roster.has(id):
 		roster.append(id)
 		crew.recruit(id)
+	if also_deploy and not party.has(id) and party.size() < 3 and crew.deployable(id):
+		party.append(id)
+		message = R18n.pick("%s 已入册并编入出征小队（%d/3）。", "%s signs into the Hall roster and joins your party (%d/3).") % [id, party.size()]
+	else:
+		message = R18n.pick("%s 已签入大厅名册，可在「人员与设施」或再次交谈时编入小队。", "%s signs into the Hall roster. Assign their expedition duty in Crew & facilities.") % id
 	_close()
-	message = id + " signs into the Hall roster. Assign their expedition duty in Crew & facilities."
 	_refresh()
 
 func _team() -> void:
 	if phase != "camp":
 		return
-	_open("crew", "Hall roll call", "CREW AND FACILITIES   /   %d CRATES" % crew.supplies)
-	_button(_sheet, "Back to the floor", _close)
+	_open("crew", R18n.pick("大厅点名与设施", "Hall roll call"), R18n.pick("人员与设施   /   %d 补给箱", "CREW AND FACILITIES   /   %d CRATES") % crew.supplies)
+	_button(_sheet, R18n.pick("返回大厅", "Back to the floor"), _close)
 	for id in roster:
 		var state_note := "" if crew.deployable(id) else (" · " + crew.status(id))
-		var b := _button(_sheet, "%s · %s · %s%s" % ["Stand down" if party.has(id) else "Deploy", id, _protocol(id), state_note], _deploy.bind(id))
+		var act_label := R18n.pick("退回休整", "Stand down") if party.has(id) else R18n.pick("编入出征", "Deploy")
+		var ed_disp := Cast.edition_localized(_protocol(id), R18n.is_en())
+		var b := _button(_sheet, "%s · %s · %s%s" % [act_label, id, ed_disp, state_note], _deploy.bind(id))
 		b.disabled = not crew.deployable(id) or (party.size() >= 3 and not party.has(id))
-	_label("Speak to a witness in the room to record their account or add them to the roster.", 14)
+	_label(R18n.pick("在大厅中走近任意居民按 E 即可录证词、招募或直接编队。", "Speak to a witness in the room to record their account, recruit, or deploy directly."), 14)
 	for name in crew.upgrades:
-		var b := _button(_sheet, "%s / %s" % [name, "installed" if crew.upgrades[name] else "3 crates"], _improve.bind(name))
+		var status_txt := R18n.pick("已安装", "installed") if crew.upgrades[name] else R18n.pick("需 3 补给箱", "3 crates")
+		var b := _button(_sheet, "%s / %s" % [name, status_txt], _improve.bind(name))
 		b.disabled = crew.upgrades[name] or crew.supplies < 3
 
 func _deploy(id: String) -> void:
@@ -447,14 +518,21 @@ func _post_hall_hale() -> void:
 	var anchors: Dictionary = room_view.hall_opening_anchors()
 	if anchors.is_empty():
 		return
-	var none: Array[Dictionary] = []
-	room_view.set_witness_targets(none)
 	hall_hale = Node3D.new()
 	hall_hale.name = "HallHale"
 	room_view.mount_viewport_node(hall_hale)
 	hall_hale.position = anchors.gate + Vector3(1.15, 0.0, 1.3)
 	hall_hale.rotation.y = 0.35
 	HeroCast.attach_hero(hall_hale, "hale")
+	var hale_tag := Label3D.new()
+	hale_tag.text = "Hale"
+	hale_tag.modulate = Color("f4dca8")
+	hale_tag.pixel_size = 0.0022
+	hale_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	hale_tag.position.y = 1.94
+	hall_hale.add_child(hale_tag)
+	var hale_target: Array[Dictionary] = [{"kind": "witness", "id": "Hale", "label": "Hale", "position": hall_hale.position}]
+	room_view.set_witness_targets(hale_target)
 
 func _update_hall(dt: float) -> void:
 	var rows: Array[Dictionary] = camp_actors.sync(camp.snapshot().residents, dt)
@@ -642,6 +720,11 @@ func _refresh() -> void:
 	_hud.fit_instruction(get_viewport_rect().size.x)
 
 func _process(dt: float) -> void:
+	if phase == "camp" and is_instance_valid(hall_hale) and is_instance_valid(room_view) and is_instance_valid(room_view._player):
+		var p_pos: Vector3 = room_view._player.position
+		var d := Vector2(p_pos.x - hall_hale.position.x, p_pos.z - hall_hale.position.z)
+		if d.length() < 4.5 and d.length() > 0.35:
+			hall_hale.rotation.y = lerp_angle(hall_hale.rotation.y, atan2(d.x, d.y), 1.0 - exp(-5.0 * dt))
 	if phase != "camp" or not is_instance_valid(camp_actors):
 		return
 	crew.rest(dt)

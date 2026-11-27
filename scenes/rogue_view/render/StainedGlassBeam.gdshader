@@ -22,25 +22,28 @@ float scene_view_depth(vec2 uv, mat4 inv_proj) {
 }
 
 void fragment() {
+	if (beam_intensity <= 0.001) {
+		discard;
+	}
 	// UV.y runs 0.0 (window glass) -> 1.0 (far tip into nave).
 	float along = UV.y;
-	float entry_fade = smoothstep(0.0, 0.14, along);
-	float tail_fade = pow(clamp(1.0 - along, 0.0, 1.0), 1.35);
+	float entry_fade = smoothstep(0.0, 0.12, along);
+	float tail_fade = pow(clamp(1.0 - along, 0.0, 1.0), 1.25);
 
 	// UV.x wraps 0..1: cone uses smooth cylindrical Fresnel only (no seam); ribbons fade edges with sin(pi*x).
 	float ribbon_fade = pow(sin(clamp(UV.x, 0.0, 1.0) * 3.14159265), 1.65);
 	float edge_profile = mix(ribbon_fade, 1.0, radial_wrap);
-	float fresnel_soft = pow(abs(dot(normalize(NORMAL), normalize(VIEW))), 1.50);
+	float fresnel_soft = pow(abs(dot(normalize(NORMAL), normalize(VIEW))), 1.40);
 
 	// Sample stained glass pattern across the beam cross-section for colored Tyndall streaks.
 	float slice_u = mix(uv_rect.x, uv_rect.z, fract(UV.x));
 	float slice_v = mix(uv_rect.y, uv_rect.w, clamp(0.18 + 0.64 * sin(UV.x * 3.14159265), 0.0, 1.0));
 	vec3 glass_rgb = has_tex ? texture(stained_tex, vec2(slice_u, slice_v)).rgb : fallback_color.rgb;
-	vec3 boosted_glass = pow(max(glass_rgb, vec3(0.03)), vec3(0.75)) * 1.25;
+	vec3 boosted_glass = pow(max(glass_rgb, vec3(0.03)), vec3(0.72)) * 1.35;
 	vec3 ray_color = mix(fallback_color.rgb, boosted_glass, has_tex ? 0.85 : 0.0) * beam_tint.rgb;
 
 	// Distinct Tyndall shaft striations + gentle floating dust motes.
-	float streak = 0.72 + 0.28 * sin(UV.x * 31.415926 + along * 2.5 - TIME * 0.25);
+	float streak = 0.74 + 0.26 * sin(UV.x * 31.415926 + along * 2.5 - TIME * 0.25);
 	float mote = 0.90 + 0.10 * sin(UV.x * 53.0 - along * 12.0 + TIME * 0.55);
 
 	// Soft-fade before solid floor/walls so shafts never leave sharp intersections.
@@ -50,5 +53,5 @@ void fragment() {
 
 	float alpha = entry_fade * tail_fade * edge_profile * fresnel_soft * depth_soft * streak * mote * beam_intensity;
 	ALBEDO = ray_color;
-	ALPHA = clamp(alpha, 0.0, 0.36);
+	ALPHA = clamp(alpha, 0.0, 0.24);
 }

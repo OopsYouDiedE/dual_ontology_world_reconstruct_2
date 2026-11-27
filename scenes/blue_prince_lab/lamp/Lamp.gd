@@ -16,10 +16,34 @@ var _wind := Vector3.ZERO
 var _tilt := Vector3.ZERO
 var _velocity := Vector3.ZERO
 var _swing: Node3D
+var _oil_light: OmniLight3D
+var _flame_nodes: Array[MeshInstance3D] = []
+var _globe_mat: StandardMaterial3D
+var _base_range := 3.4
 
 
 func set_wind(wind: Vector3) -> void:
 	_wind = wind.limit_length(20.0) if wind.is_finite() else Vector3.ZERO
+
+
+func set_lit_factor(factor: float, target_energy: float = -1.0, target_range: float = -1.0) -> void:
+	var f := clampf(factor, 0.0, 1.5)
+	var energy := (light_energy if target_energy < 0.0 else target_energy) * f
+	if is_instance_valid(_oil_light):
+		_oil_light.light_energy = energy
+		if target_range > 0.0:
+			_oil_light.omni_range = target_range
+		else:
+			_oil_light.omni_range = _base_range
+		_oil_light.visible = energy > 0.02
+	for flame in _flame_nodes:
+		if is_instance_valid(flame):
+			flame.visible = f > 0.12
+			flame.scale = Vector3.ONE * lerpf(0.45, 1.15, clampf(f, 0.0, 1.0))
+	if _globe_mat != null:
+		_globe_mat.emission_enabled = f > 0.12
+		_globe_mat.emission = Color("ffae52")
+		_globe_mat.emission_energy_multiplier = 1.65 * f
 
 
 func _ready() -> void:
@@ -43,8 +67,12 @@ func _ready() -> void:
 	_cylinder(_swing, "WickCollar", 0.022, 0.025, 0.023, y - 0.051, iron)
 	var glass := StandardMaterial3D.new()
 	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass.albedo_color = Color(0.97, 0.62, 0.29, 0.20)
+	glass.albedo_color = Color(0.97, 0.62, 0.29, 0.24)
 	glass.roughness = 0.29
+	glass.emission_enabled = true
+	glass.emission = Color("ffae52")
+	glass.emission_energy_multiplier = 1.2
+	_globe_mat = glass
 	_cylinder(_swing, "AmberGlobe", 0.078, 0.087, 0.135, y + 0.005, glass, false)
 	for i in range(8):
 		var angle := TAU * i / 8.0
@@ -56,19 +84,21 @@ func _ready() -> void:
 		strut.rotation = Vector3(0.0, angle, 0.06)
 	var ember := StandardMaterial3D.new()
 	ember.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ember.albedo_color = Color(1.0, 0.67, 0.27)
-	_cylinder(_swing, "FlameFoot", 0.011, 0.004, 0.019, y - 0.032, ember, false)
-	_cylinder(_swing, "FlameTip", 0.001, 0.011, 0.037, y - 0.004, ember, false)
+	ember.albedo_color = Color(1.0, 0.72, 0.30)
+	_flame_nodes.clear()
+	_flame_nodes.append(_cylinder(_swing, "FlameFoot", 0.011, 0.004, 0.019, y - 0.032, ember, false))
+	_flame_nodes.append(_cylinder(_swing, "FlameTip", 0.001, 0.011, 0.037, y - 0.004, ember, false))
 	var light := OmniLight3D.new()
 	light.name = "OilLight"
 	light.position.y = y + 0.008
 	light.light_color = Color("ffbe78")
 	light.light_energy = light_energy
-	light.omni_range = 3.4
+	light.omni_range = _base_range
 	light.shadow_enabled = shadow_enabled
 	light.omni_shadow_mode = OmniLight3D.SHADOW_DUAL_PARABOLOID
 	# The thin housing does not occlude its own emitter; room geometry still casts shadows.
 	_swing.add_child(light)
+	_oil_light = light
 
 
 func _physics_process(delta: float) -> void:
@@ -108,7 +138,7 @@ func _mesh(parent: Node3D, label: String, shape: Mesh, material: Material) -> Me
 
 
 func _cylinder(parent: Node3D, label: String, top: float, bottom: float,
-		height: float, y: float, material: Material, caps := true) -> void:
+		height: float, y: float, material: Material, caps := true) -> MeshInstance3D:
 	var shape := CylinderMesh.new()
 	shape.top_radius = top
 	shape.bottom_radius = bottom
@@ -117,7 +147,9 @@ func _cylinder(parent: Node3D, label: String, top: float, bottom: float,
 	shape.rings = 0
 	shape.cap_top = caps
 	shape.cap_bottom = caps
-	_mesh(parent, label, shape, material).position.y = y
+	var node := _mesh(parent, label, shape, material)
+	node.position.y = y
+	return node
 
 
 func _ring(parent: Node3D, label: String, radius: float, wire: float, y: float,

@@ -78,8 +78,10 @@ var _scroll: ScrollContainer
 var _entry: LineEdit
 
 func _ready() -> void:
-	if not ("--lang=zh" in OS.get_cmdline_user_args()):
+	if "--lang=en" in OS.get_cmdline_user_args():
 		R18n.set_locale("en")
+	else:
+		R18n.set_locale("zh")
 	_no_save = "--no-rule-save" in OS.get_cmdline_user_args()
 	_storage = Storage.new(_no_save)
 	margins = _storage.load_margins()
@@ -236,7 +238,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if _performing or not event is InputEventKey or not event.pressed or event.echo or house == null:
 		return
-	if event.physical_keycode == KEY_TAB and handbook and modal != "margin":
+	if event.physical_keycode == KEY_F8:
+		R18n.toggle_locale()
+		_refresh()
+	elif event.physical_keycode == KEY_TAB and handbook and modal != "margin":
 		if modal == "guide":
 			_close()
 		else:
@@ -550,11 +555,11 @@ func _routes() -> PackedStringArray:
 
 func _route_name(id: String) -> String:
 	if phase == "camp" and not first_returned:
-		return "First Expedition · Hale"
+		return R18n.pick("首次出征 · Hale", "First Expedition · Hale")
 	if id == house.camp_room():
-		return "Return to camp · recover"
+		return R18n.pick("返回大厅 · 休整", "Return to camp · recover")
 	if id == "turntable":
-		return "Return Junction"
+		return R18n.pick("折返闸", "Return Junction")
 	var reward := _reward(id)
 	return Rooms.TITLES[house.room_stage(id)] + (" / +1 " + reward if reward else "")
 
@@ -607,7 +612,7 @@ func _refresh() -> void:
 			play_hall_opening.call_deferred()
 	if not is_instance_valid(_hud):
 		return
-	_hud.update_readout("Public Hall" if phase == "camp" else title, clock, hp, nerve, party.size(), crew.supplies, pack)
+	_hud.update_readout(R18n.pick("公共大厅", "Public Hall") if phase == "camp" else title, clock, hp, nerve, party.size(), crew.supplies, pack)
 	if phase == "won":
 		_instruction.text = message + "\nMorning. The Hall has a name for everyone who returned."
 	elif phase == "lost":
@@ -619,18 +624,18 @@ func _refresh() -> void:
 		if current == "turntable" and message.is_empty():
 			_instruction.text = "The return tram is behind this shutter. Release the drawbar to board or push on."
 		if cleared.has(current):
-			_instruction.text += "\nPassage open · Follow a named doorway and press E."
+			_instruction.text += R18n.pick("\n通道已开启 · 前往标牌门洞按 E 出发。", "\nPassage open · Follow a named doorway and press E.")
 		if phase == "camp" and message.is_empty():
-			_instruction.text = "Choose a supply route. Speak to a resident to recruit before leaving."
+			_instruction.text = R18n.pick("选择一条补给路线。出发前可与大厅居民交谈招募队员。", "Choose a supply route. Speak to a resident to recruit before leaving.")
 		if phase == "camp" and not first_returned:
-			_instruction.text = FIRST_BRIEF
+			_instruction.text = R18n.pick("源质正在漂移。Hale 在北门等你：两人一起下井，取回备用源核。", FIRST_BRIEF)
 		for i in destinations.size():
 			_button(_flow, _route_name(destinations[i]), travel.bind(i))
-		_button(_flow, "Route chart", _chart).disabled = _performing
+		_button(_flow, R18n.pick("路线图", "Route chart"), _chart).disabled = _performing
 		if handbook:
-			_button(_flow, "Field manual · Tab", _read_guide).disabled = _performing
+			_button(_flow, R18n.pick("外勤手册 · Tab", "Field manual · Tab"), _read_guide).disabled = _performing
 		if phase == "camp" and first_returned:
-			_button(_flow, "Crew & facilities", _team)
+			_button(_flow, R18n.pick("人员与设施", "Crew & facilities"), _team)
 	if not alive:
 		_button(_flow, "Replay this watch", new_run.bind(run_seed))
 		_button(_flow, "Start a new watch", func(): new_run(int(randi())))
@@ -694,5 +699,5 @@ func _on_opening_finished() -> void:
 	room_view.set_essence_instability(room_view.essence_baseline())
 	room_view.set_modal(not modal.is_empty() or phase in ["lost", "won"])
 	if phase == "camp" and not first_returned and is_instance_valid(_hud):
-		_instruction.text = FIRST_BRIEF
+		_instruction.text = R18n.pick("源质正在漂移。Hale 在北门等你：两人一起下井，取回备用源核。", FIRST_BRIEF)
 		_hud.fit_instruction(get_viewport_rect().size.x)

@@ -2,6 +2,7 @@ extends Control
 ## Corner watch HUD card, footer action flow, and parchment document overlay for FirstWatch.
 
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
+const R18n := preload("res://scenes/components/shared/R18n.gd")
 
 var font: Font
 var card: PanelContainer
@@ -220,8 +221,14 @@ func set_flow_disabled(disabled: bool) -> void:
 
 func update_readout(room_title: String, clock: float, hp: int, nerve: int, party_count: int, supplies: int, pack: Dictionary) -> void:
 	place_label.text = "%s    %02d:%02d" % [room_title, floori(clock) % 24, floori(fposmod(clock, 1.0) * 60)]
-	status_label.text = "HP %d/9   ·   Nerve %d   ·   Party %d   ·   Crates %d" % [hp, nerve, party_count + 1, supplies]
-	kit_label.text = "Felt %d   ·   Ratchets %d" % [pack.felt, pack.ratchet]
+	status_label.text = R18n.pick(
+		"生命 %d/9   ·   镇定 %d   ·   队伍 %d   ·   补给箱 %d",
+		"HP %d/9   ·   Nerve %d   ·   Party %d   ·   Crates %d"
+	) % [hp, nerve, party_count + 1, supplies]
+	kit_label.text = R18n.pick(
+		"毛毡 %d   ·   棘轮 %d",
+		"Felt %d   ·   Ratchets %d"
+	) % [pack.felt, pack.ratchet]
 
 func hide_for_opening() -> void:
 	_hidden_for_opening.clear()

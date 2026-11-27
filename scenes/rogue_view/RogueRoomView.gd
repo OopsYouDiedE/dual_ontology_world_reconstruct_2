@@ -12,6 +12,7 @@ const FreeSoSnapshot := preload("res://scenes/rogue_view/FreeSoSnapshot.gd")
 const Blueprint := preload("res://scenes/rogue_view/NativeBlueprint.gd")
 const Plan := preload("res://scenes/rogue_view/NativeLotPlan.gd")
 const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdshader")
+const R18n := preload("res://scenes/components/shared/R18n.gd")
 const Stage := preload("res://scenes/components/rendering/AcademyStage.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 
@@ -90,15 +91,28 @@ func is_plan_open() -> bool:
 
 func set_hour(hour: float) -> void:
 	_hour = hour
+	var daylight := smoothstep(0.0, 1.0, maxf(0.0, cos((fposmod(_hour, 24.0) - 12.0) * PI / 12.0)))
 	if is_instance_valid(_gothic_hall) and _gothic_hall.has_method("set_hour"):
 		_gothic_hall.set_hour(_hour)
 	if is_instance_valid(_lights):
 		_lights.apply(_hour, "ember" if _template == "kitchen" else "ordinary")
 		if expedition_view and GeoBuilder.is_hall_shell(_template, _room_label):
 			for lamp in _lights.lamps:
-				lamp.position.y = 4.95
-				lamp.light_color = Color("ffe9cb")
-				lamp.light_energy = 1.35
+				lamp.position.y = 5.6
+				lamp.light_color = Color("ffbe78").lerp(Color("fff6e4"), daylight)
+				lamp.light_energy = lerpf(0.16, 1.35, daylight)
+				lamp.omni_range = lerpf(10.0, 24.0, daylight)
+	if expedition_view and GeoBuilder.is_hall_shell(_template, _room_label):
+		var env: Environment = $RoomViewport/WorldEnvironment.environment
+		if env != null:
+			env.ambient_light_color = Color("222f46").lerp(Color("9fb4cc"), daylight)
+			env.ambient_light_energy = lerpf(0.14, 0.34, daylight)
+			env.fog_light_color = Color("1b2230").lerp(Color("eee6d6"), daylight)
+			env.glow_intensity = lerpf(0.36, 0.72, daylight)
+			env.glow_bloom = lerpf(0.03, 0.14, daylight)
+		var compat_fill := _viewport.get_node_or_null("CompatibilityFillLight") as DirectionalLight3D
+		if compat_fill != null:
+			compat_fill.light_energy = lerpf(0.05, 0.18, daylight)
 
 func _resize_render_target() -> void:
 	var display := _pixels.get_global_transform_with_canvas().get_scale().abs() * _pixels.size
@@ -440,7 +454,7 @@ func _refresh_ui() -> void:
 	_level_button.text = "Floor %d · switch" % _plan_level
 	_plan.set_lot(_upper_plan if _level_button.visible and _plan_level == 2 else _lot)
 	_plan_button.visible = has_lot and is_instance_valid(_player) and not _cinematic
-	_plan_button.text = "Walk view" if _plan_open else "Overhead plan"
+	_plan_button.text = R18n.pick("返回视角", "Walk view") if _plan_open else R18n.pick("俯视平面图", "Overhead plan")
 	var heading := "Topology navigation · no native lot available"
 	if has_lot:
 		heading = "Native lot plan" if plan_mode else ("First person" if expedition_view else "Native lot · Walk view")
@@ -502,7 +516,7 @@ func _update_prompt() -> void:
 			if expedition_view and not _can_interact and _flat_distance(target.position) > APPROACH_HINT:
 				_prompt.text = ""
 	if expedition_view and not _modal and not _plan_open and is_instance_valid(_player) and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-		_prompt.text = "Click to look  ·  WASD to move" + ("\n" + _prompt.text if not _prompt.text.is_empty() else "")
+		_prompt.text = R18n.pick("点击画面控制视角  ·  WASD 移动", "Click to look  ·  WASD to move") + ("\n" + _prompt.text if not _prompt.text.is_empty() else "")
 	if is_instance_valid(_crosshair):
 		_crosshair.queue_redraw()
 

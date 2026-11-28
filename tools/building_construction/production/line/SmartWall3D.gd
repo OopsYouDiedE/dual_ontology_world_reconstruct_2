@@ -1,5 +1,5 @@
 @tool
-extends Node3D
+extends "res://scenes/components/structure/StructurePiece3D.gd"
 
 ## SmartWall3D: Godot 4.7 @tool parametric wall component.
 ## Supports grid-snap dragging (start_point -> end_point), automatic skirting boards,
@@ -11,24 +11,29 @@ signal wall_rebuilt()
 @export var start_point: Vector3 = Vector3.ZERO:
 	set(v):
 		start_point = _snap_vector(v)
-		_queue_rebuild()
+		shape_changed()
 
 @export var end_point: Vector3 = Vector3(4.0, 0.0, 0.0):
 	set(v):
 		end_point = _snap_vector(v)
-		_queue_rebuild()
+		shape_changed()
 
 @export_range(0.5, 40.0, 0.01) var wall_height: float = 3.0:
 	set(v):
 		wall_height = maxf(0.5, v)
-		_queue_rebuild()
+		shape_changed()
 
 @export_range(0.02, 3.0, 0.01) var wall_thickness: float = 0.25:
 	set(v):
 		wall_thickness = maxf(0.05, v)
-		_queue_rebuild()
+		shape_changed()
 
 @export_range(0.0, 1.0, 0.05) var grid_snap: float = 0.25
+## Close corners and T-joints: an end touching another wall extends by half its thickness.
+@export var join_corners: bool = true:
+	set(v):
+		join_corners = v
+		_queue_rebuild()
 
 @export_group("Skirting & Cutaway")
 @export var skirting_enabled: bool = true:
@@ -81,9 +86,8 @@ signal wall_rebuilt()
 		draw_mesh = v
 		_queue_rebuild()
 var _rebuild_pending: bool = false
-
-func _ready() -> void:
-	rebuild()
+## Build-time origin and length offset (corner joins extend the ends beyond the endpoints).
+var _origin: Vector3 = Vector3.ZERO
 
 func _snap_vector(v: Vector3) -> Vector3:
 	if grid_snap <= 0.0:
@@ -94,12 +98,54 @@ func _snap_vector(v: Vector3) -> Vector3:
 		snappedf(v.z, grid_snap)
 	)
 
+## Mesh-only change (materials, trims, openings): only this wall rebuilds.
 func _queue_rebuild() -> void:
-	if not is_inside_tree():
-		return
-	if not _rebuild_pending:
-		_rebuild_pending = true
-		call_deferred(&"rebuild")
+	mesh_changed()
+
+# ── StructurePiece3D interface ────────────────────────────────────────────────
+
+func shape_key() -> Array:
+	return [start_point, end_point, wall_thickness, wall_height]
+
+func neighbor_margin() -> float:
+	return wall_thickness * 0.5 + 0.05
+
+func plan_outline() -> PackedVector2Array:
+	var a := to_plan(start_point)
+	var b := to_plan(end_point)
+	var side := (b - a).orthogonal().normalized() * wall_thickness * 0.5
+	return PackedVector2Array([a + side, b + side, b - side, a - side])
+
+func plan_handles() -> Array:
+	return [{"id": &"start", "position": to_plan(start_point)}, {"id": &"end", "position": to_plan(end_point)}]
+
+func set_plan_handle(id: StringName, plan_position: Vector2) -> void:
+	match id:
+		&"start": start_point = from_plan(plan_position, start_point.y)
+		&"end": end_point = from_plan(plan_position, end_point.y)
+
+func snap_targets() -> PackedVector2Array:
+	return PackedVector2Array([to_plan(start_point), to_plan(end_point)])
+
+## How far an end reaches past its endpoint to close a corner with another wall.
+func _end_extension(end: Vector3, away: Vector2) -> float:
+	if not join_corners:
+		return 0.0
+	var p := to_plan(end)
+	var reach := 0.0
+	for n in neighbors():
+		if not ("start_point" in n and "wall_thickness" in n):
+			continue
+		var a: Vector2 = n.to_plan(n.start_point)
+		var b: Vector2 = n.to_plan(n.end_point)
+		if a.distance_to(b) < 0.01:
+			continue
+		if Geometry2D.get_closest_point_to_segment(p, a, b).distance_to(p) > 0.02:
+			continue
+		if absf((b - a).normalized().dot(away)) > 0.99:
+			continue  # collinear continuation: no overlap needed
+		reach = maxf(reach, float(n.wall_thickness) * 0.5)
+	return reach
 
 func register_opening(from_m: float, to_m: float, bottom_m: float, top_m: float) -> void:
 	openings.append({
@@ -166,6 +212,10 @@ func rebuild() -> void:
 	var length := wall_vec.length()
 	if length < 0.05:
 		return
+	var plan_dir := (to_plan(end_point) - to_plan(start_point)).normalized()
+	var ext_start := _end_extension(start_point, -plan_dir)
+	var ext_end := _end_extension(end_point, plan_dir)
+	_origin = start_point - wall_vec.normalized() * ext_start
 
 	var active_openings: Array[Dictionary] = openings.duplicate()
 	active_openings.append_array(detect_child_openings())
@@ -200,17 +250,18 @@ func rebuild() -> void:
 	# Sort openings along wall length
 	var valid_openings: Array[Dictionary] = []
 	for op in active_openings:
-		var f: float = clampf(float(op.from), 0.0, length)
-		var t: float = clampf(float(op.to), 0.0, length)
+		var f: float = clampf(float(op.from), 0.0, length) + ext_start
+		var t: float = clampf(float(op.to), 0.0, length) + ext_start
 		if t > f:
 			valid_openings.append({
-				"profile":op.get("profile",PackedVector2Array()),
+				"profile":_shift_profile(op.get("profile",PackedVector2Array()), ext_start),
 				"from": f,
 				"to": t,
 				"bottom": clampf(float(op.bottom), 0.0, effective_height),
 				"top": clampf(float(op.top), 0.0, effective_height)
 			})
 	valid_openings.sort_custom(func(a, b): return a.from < b.from)
+	length += ext_start + ext_end
 
 	# Generate wall blocks
 	var st := SurfaceTool.new()
@@ -276,6 +327,14 @@ func rebuild() -> void:
 	visual_root.visible = draw_mesh or Engine.is_editor_hint()
 	wall_rebuilt.emit()
 
+static func _shift_profile(profile: PackedVector2Array, dx: float) -> PackedVector2Array:
+	if dx == 0.0 or profile.is_empty():
+		return profile
+	var out := PackedVector2Array()
+	for p in profile:
+		out.append(p + Vector2(dx, 0))
+	return out
+
 # The kit's round and arched profiles are convex in each vertical slice.
 func _span(op: Dictionary, x: float, height: float) -> Vector2:
 	var poly: PackedVector2Array = op.profile
@@ -290,10 +349,10 @@ func _span(op: Dictionary, x: float, height: float) -> Vector2:
 
 func _generate_box_segment(st: SurfaceTool, col: PackedVector3Array, x0: float, x1: float, y0: float, y1: float, dir: Vector3, normal: Vector3, low_right: float, high_right: float) -> void:
 	var hw := wall_thickness * 0.5
-	var p0 := start_point + dir * x0 - normal * hw + Vector3.UP * y0
-	var p1 := start_point + dir * x1 - normal * hw + Vector3.UP * low_right
-	var p2 := start_point + dir * x1 + normal * hw + Vector3.UP * low_right
-	var p3 := start_point + dir * x0 + normal * hw + Vector3.UP * y0
+	var p0 := _origin + dir * x0 - normal * hw + Vector3.UP * y0
+	var p1 := _origin + dir * x1 - normal * hw + Vector3.UP * low_right
+	var p2 := _origin + dir * x1 + normal * hw + Vector3.UP * low_right
+	var p3 := _origin + dir * x0 + normal * hw + Vector3.UP * y0
 	var q0 := p0 + Vector3.UP * (y1 - y0)
 	var q1 := p1 + Vector3.UP * (high_right - low_right)
 	var q2 := p2 + Vector3.UP * (high_right - low_right)
@@ -339,7 +398,7 @@ func _generate_opening_frame(parent: Node3D, op: Dictionary, dir: Vector3, norma
 		mesh.size = Vector3(strip.z, strip.w, wall_thickness + 0.04)
 		bar.mesh = mesh
 		bar.material_override = skirting_material
-		bar.transform = Transform3D(Basis(dir, Vector3.UP, normal), start_point + dir * strip.x + Vector3.UP * strip.y)
+		bar.transform = Transform3D(Basis(dir, Vector3.UP, normal), _origin + dir * strip.x + Vector3.UP * strip.y)
 		parent.add_child(bar)
 
 func _build_skirting(parent: Node3D, openings_list: Array[Dictionary], length: float, dir: Vector3, normal: Vector3) -> void:
@@ -372,16 +431,16 @@ func _build_skirting_strip(st: SurfaceTool, col: PackedVector3Array, x0: float, 
 	var sw := skirting_thickness
 	var sh := skirting_height
 	# Side 1 (+normal)
-	var a0 := start_point + dir * x0 + normal * hw
-	var a1 := start_point + dir * x1 + normal * hw
+	var a0 := _origin + dir * x0 + normal * hw
+	var a1 := _origin + dir * x1 + normal * hw
 	var b1 := a1 + normal * sw
 	var b0 := a0 + normal * sw
 	_add_quad(st, col, b1, b0, b0 + Vector3.UP * sh, b1 + Vector3.UP * sh)
 	_add_quad(st, col, a0 + Vector3.UP * sh, a1 + Vector3.UP * sh, b1 + Vector3.UP * sh, b0 + Vector3.UP * sh)
 
 	# Side 2 (-normal)
-	var c0 := start_point + dir * x0 - normal * hw
-	var c1 := start_point + dir * x1 - normal * hw
+	var c0 := _origin + dir * x0 - normal * hw
+	var c1 := _origin + dir * x1 - normal * hw
 	var d1 := c1 - normal * sw
 	var d0 := c0 - normal * sw
 	_add_quad(st, col, d0, d1, d1 + Vector3.UP * sh, d0 + Vector3.UP * sh)
@@ -393,10 +452,10 @@ func _build_cutaway_cap(parent: Node3D, x0: float, x1: float, elevation: float, 
 	st.set_smooth_group(-1)
 	var dummy := PackedVector3Array()
 	var hw := wall_thickness * 0.5
-	var p0 := start_point + dir * x0 - normal * hw + Vector3.UP * elevation
-	var p1 := start_point + dir * x1 - normal * hw + Vector3.UP * elevation
-	var p2 := start_point + dir * x1 + normal * hw + Vector3.UP * elevation
-	var p3 := start_point + dir * x0 + normal * hw + Vector3.UP * elevation
+	var p0 := _origin + dir * x0 - normal * hw + Vector3.UP * elevation
+	var p1 := _origin + dir * x1 - normal * hw + Vector3.UP * elevation
+	var p2 := _origin + dir * x1 + normal * hw + Vector3.UP * elevation
+	var p3 := _origin + dir * x0 + normal * hw + Vector3.UP * elevation
 	_add_quad(st, dummy, p0, p1, p2, p3)
 	st.generate_normals()
 	var cap_mesh := st.commit()

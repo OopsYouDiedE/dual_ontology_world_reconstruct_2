@@ -1,5 +1,5 @@
 @tool
-extends Node3D
+extends "res://scenes/components/structure/StructurePiece3D.gd"
 
 ## SmartFloorZone3D: Godot 4.7 @tool parametric floor zone and room boundary.
 ## Generates polygon floor parquet/stone slab, ceiling (optional), editor reference grid,
@@ -20,7 +20,7 @@ signal floor_zone_rebuilt()
 ]):
 	set(v):
 		polygon = v
-		_queue_rebuild()
+		shape_changed()
 
 ## Lot floor pattern id (11 = stone; 65535 = not walkable). Gameplay reads it via LevelStructure3D.
 @export var pattern: int = 11
@@ -33,7 +33,7 @@ signal floor_zone_rebuilt()
 @export_range(0.02, 1.0, 0.01) var floor_thickness: float = 0.2:
 	set(v):
 		floor_thickness = v
-		_queue_rebuild()
+		shape_changed()
 
 @export var ceiling_enabled: bool = false:
 	set(v):
@@ -68,15 +68,38 @@ signal floor_zone_rebuilt()
 
 var _rebuild_pending: bool = false
 
-func _ready() -> void:
-	rebuild()
-
+## Mesh-only change (materials, ceiling, grid): only this zone rebuilds.
 func _queue_rebuild() -> void:
-	if not is_inside_tree():
+	mesh_changed()
+
+# ── StructurePiece3D interface ────────────────────────────────────────────────
+
+func shape_key() -> Array:
+	return [polygon, floor_thickness]
+
+func plan_outline() -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in polygon:
+		out.append(to_plan(Vector3(p.x, 0, p.y)))
+	return out
+
+func plan_handles() -> Array:
+	var out: Array = []
+	for i in polygon.size():
+		out.append({"id": StringName("v%d" % i), "position": to_plan(Vector3(polygon[i].x, 0, polygon[i].y))})
+	return out
+
+func set_plan_handle(id: StringName, plan_position: Vector2) -> void:
+	var i := str(id).trim_prefix("v").to_int()
+	if i < 0 or i >= polygon.size():
 		return
-	if not _rebuild_pending:
-		_rebuild_pending = true
-		call_deferred(&"rebuild")
+	var local := from_plan(plan_position)
+	var next := polygon.duplicate()
+	next[i] = Vector2(local.x, local.z)
+	polygon = next
+
+func snap_targets() -> PackedVector2Array:
+	return plan_outline()
 
 func get_zone_aabb() -> AABB:
 	if polygon.size() < 3:

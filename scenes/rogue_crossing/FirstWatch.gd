@@ -18,6 +18,9 @@ const Storage := preload("WatchStorage.gd")
 const FirstExpedition := preload("res://scenes/expedition_01/Sortie.tscn")
 const HallOpening := preload("HallOpeningSequence.gd")
 const DualInteractionHud := preload("res://scenes/components/shared/DualModeInteractionHud.gd")
+const LevelPipeline := preload("res://scenes/components/shared/AcademyLevelPipeline.gd")
+const DialoguePresenter := preload("res://scenes/components/shared/UnifiedDialoguePresenter.gd")
+const TeammateWheel := preload("res://scenes/components/shared/UnifiedTeammateWheel.gd")
 
 const MARGINS := Storage.MARGINS
 const FIRST_SEAL := Storage.FIRST_SEAL
@@ -37,6 +40,9 @@ var _wrpg_actions: Array[Callable] = []
 var _opening: CanvasLayer
 var _opening_played := false
 var dual_ui: DualModeInteractionHud
+var dialogue_presenter: DialoguePresenter
+var teammate_wheel: TeammateWheel
+var level_capabilities: Dictionary = LevelPipeline.capabilities_hall()
 
 var pack := {"felt": 0, "ratchet": 0}
 var recalled := false
@@ -383,7 +389,14 @@ func _act(room_id: String, group: int, id: String) -> void:
 				message += "\n%s: %s" % [stances[i], r.report[i]]
 	_refresh()
 
-func _speak_hall_mumble(text: String, speaker_profile: String = "resident") -> void:
+func _speak_hall_mumble(text: String, speaker_profile: String = "resident", speaker_name: String = "") -> void:
+	_ensure_dual_ui()
+	var display_speaker := speaker_name
+	if display_speaker.is_empty():
+		display_speaker = R18n.pick("霍铎", "Hale") if speaker_profile == "hale" else R18n.pick("学员", "Resident")
+	if is_instance_valid(dialogue_presenter):
+		dialogue_presenter.say("hall_" + speaker_profile, display_speaker, text, speaker_profile)
+		return
 	if not is_instance_valid(_hall_voice):
 		_hall_voice = VoiceSynth.new()
 		add_child(_hall_voice)
@@ -422,7 +435,7 @@ func _take_deposition(id: String) -> void:
 	var job_disp := Cast.job_localized(id, R18n.is_en())
 	var acct := Cast.witness(id)
 	var v_prof := "elder" if (Cast.NAMES.find(id) % 3 == 0) else "resident"
-	_speak_hall_mumble(acct, v_prof)
+	_speak_hall_mumble(acct, v_prof, id)
 
 	_open(
 		"witness",
@@ -1009,14 +1022,53 @@ func _ask_hale_pendulum() -> void:
 
 ## ---- Dual-Mode Three-State Spatial Interaction UI (Unified Across Hall & All Campaign Rooms) ----
 func _ensure_dual_ui() -> void:
+	level_capabilities = LevelPipeline.capabilities_hall() if phase == "camp" else LevelPipeline.capabilities_campaign_room()
 	if is_instance_valid(dual_ui):
 		return
-	dual_ui = DualInteractionHud.new()
-	add_child(dual_ui)
+	var stack := LevelPipeline.bootstrap_ui_stack(self, self, level_capabilities, 62.0, -98.0)
+	dual_ui = stack.dual_ui
+	dialogue_presenter = stack.dialogue
+	teammate_wheel = stack.teammate_wheel
+	if is_instance_valid(teammate_wheel):
+		teammate_wheel.order_selected.connect(_on_hall_wheel_order)
+		teammate_wheel.wheel_opened.connect(func():
+			if is_instance_valid(room_view): room_view.set_modal(true)
+		)
+		teammate_wheel.wheel_closed.connect(func():
+			if is_instance_valid(room_view) and modal.is_empty(): room_view.set_modal(false)
+		)
 	if is_instance_valid(room_view):
 		room_view.unified_hud_active = true
 		if not ("FoucaultPendulum" in room_view.suppressed_prompt_ids):
 			room_view.suppressed_prompt_ids.append("FoucaultPendulum")
+
+func _hall_wheel_options() -> Array:
+	if phase == "camp" and not first_returned:
+		var opts: Array = []
+		if pendulum_measured:
+			opts.append({"id": "ask_pendulum", "title": R18n.pick("询问傅科摆", "Ask Pendulum"), "hint": R18n.pick("与霍铎核对 %.1f 秒周期与偏心" % pendulum_measured_sec, "Compare %.1f s period with Hale" % pendulum_measured_sec)})
+		else:
+			opts.append({"id": "measure_pendulum", "title": R18n.pick("观测傅科摆", "Measure Pendulum"), "hint": R18n.pick("立即进入傅科摆周期测算", "Measure the Foucault pendulum cycle")})
+		opts.append({"id": "talk_hale", "title": R18n.pick("与霍铎交谈", "Speak to Hale"), "hint": R18n.pick("听取霍铎对北门白雾的判断", "Hear Hale's report on the north archway")})
+		opts.append({"id": "depart_north", "title": R18n.pick("进入北翼", "Enter North Wing"), "hint": R18n.pick("与霍铎一同出发执行首次勘察", "Depart with Hale on Expedition-01")})
+		return opts
+	var crew_opts: Array = [
+		{"id": "open_chart", "title": R18n.pick("路线图", "Route Chart"), "hint": R18n.pick("查看当前章节房间连线", "Inspect chapter route topology")},
+		{"id": "open_manual", "title": R18n.pick("外勤手册", "Field Manual"), "hint": R18n.pick("核对守则与随身笔记", "Review academy rules and notes")},
+	]
+	if phase == "camp" and first_returned:
+		crew_opts.insert(0, {"id": "open_team", "title": R18n.pick("人员与编队", "Crew & Party"), "hint": R18n.pick("调整大厅队友编队与设施", "Manage Hall residents and sortie party")})
+	return crew_opts
+
+func _on_hall_wheel_order(order_id: String) -> void:
+	match order_id:
+		"ask_pendulum": _ask_hale_pendulum()
+		"measure_pendulum": _begin_pendulum_judge()
+		"talk_hale": _take_deposition("Hale")
+		"depart_north": _depart_first()
+		"open_team": _team()
+		"open_chart": _chart()
+		"open_manual": _read_guide()
 
 func _sync_dual_ui() -> void:
 	_ensure_dual_ui()
@@ -1095,6 +1147,13 @@ func _dual_ui_ask_hale() -> void:
 		_take_deposition("Hale")
 
 func _handle_dual_ui_input(event: InputEvent) -> bool:
-	if not is_instance_valid(dual_ui) or not dual_ui.active_enabled or not modal.is_empty():
+	if not modal.is_empty():
+		return false
+	if is_instance_valid(teammate_wheel) and bool(level_capabilities.get("allow_command_wheel", true)):
+		if teammate_wheel.handle_input(event, _hall_wheel_options):
+			return true
+		if teammate_wheel.is_open():
+			return false
+	if not is_instance_valid(dual_ui) or not dual_ui.active_enabled:
 		return false
 	return dual_ui.handle_input(event, true)

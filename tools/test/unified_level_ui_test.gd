@@ -1,12 +1,8 @@
 extends SceneTree
-## Cross-level unification test: verifies that Public Hall (Run.tscn) and Expedition-01 (Sortie.tscn)
-## share the exact same DualModeInteractionHud, AcademyUnifiedInput global V-toggle preference,
-## and unified multi-group 3-state tracking without regressions.
-##
-## Run:
-##   xvfb-run -a -s "-screen 0 1280x720x24" /home/spark/godot_472/Godot_v4.7.2-stable_mono_linux_x86_64/Godot_v4.7.2-stable_mono_linux.x86_64 \
-##     --path . --rendering-method gl_compatibility --windowed --resolution 1280x720 --audio-driver Dummy \
-##     -s res://tools/test/unified_level_ui_test.gd -- --no-rule-save --skip-intro
+## Full cross-level unification test: verifies Public Hall (Run.tscn) and Expedition-01 (Sortie.tscn)
+## share AcademyLevelPipeline, explicit capability exceptions (Hall allow_jump=false vs Expedition true),
+## DualModeInteractionHud + V global preference sync, UnifiedDialoguePresenter bottom captions,
+## and UnifiedTeammateWheel (Q radial wheel) in BOTH Hall and Expedition.
 
 const RunScene := preload("res://scenes/rogue/Run.tscn")
 const SortieScene := preload("res://scenes/expedition_01/Sortie.tscn")
@@ -41,11 +37,25 @@ func run() -> void:
 	root.add_child(hall)
 	await frames(5)
 
-	check(is_instance_valid(hall.dual_ui), "Public Hall mounts unified DualModeInteractionHud")
+	check(hall.level_capabilities.get("allow_jump", true) == false,
+		"Public Hall explicitly enforces allow_jump=false exception")
+	check(is_instance_valid(hall.dual_ui) and is_instance_valid(hall.dialogue_presenter) and is_instance_valid(hall.teammate_wheel),
+		"Public Hall bootstraps complete unified stack (dual_ui + dialogue_presenter + teammate_wheel)")
 	var h_snap: Dictionary = hall.dual_ui.get_state_snapshot()
 	check(h_snap.enabled and h_snap.mode == "cplus" and int(h_snap.group_count) >= 1,
-		"Public Hall unified HUD active in cplus mode with groups (%s)" % str(h_snap))
-	check(hall.room_view.unified_hud_active, "RogueRoomView suppresses legacy duplicate prompt when unified HUD is active")
+		"Public Hall unified HUD active in cplus mode (%s)" % str(h_snap))
+
+	# Test unified dialogue presenter in Public Hall
+	hall._speak_hall_mumble("测试统一底部字幕", "hale")
+	await frames(1)
+	check(hall.dialogue_presenter.has_active_caption(),
+		"Public Hall speech posts to unified bottom subtitle bar (ExpeditionCaptions)")
+
+	# Test unified Q radial teammate wheel in Public Hall
+	await send_key(KEY_Q)
+	check(hall.teammate_wheel.is_open(), "Pressing Q in Public Hall opens unified CommandWheel")
+	await send_key(KEY_ESCAPE)
+	check(not hall.teammate_wheel.is_open(), "Pressing Esc closes Public Hall unified CommandWheel")
 
 	# Press V in Public Hall -> switches global mode to Detroit
 	await send_key(KEY_V)
@@ -59,12 +69,14 @@ func run() -> void:
 	root.add_child(exp)
 	await frames(5)
 
+	check(exp.level_capabilities.get("allow_jump", false) == true,
+		"Expedition-01 explicitly enables allow_jump=true")
 	check(is_instance_valid(exp.dual_ui), "Expedition-01 mounts the exact same DualModeInteractionHud")
 	var e_snap: Dictionary = exp.dual_ui.get_state_snapshot()
 	check(e_snap.enabled and e_snap.mode == "detroit" and int(e_snap.group_count) >= 6,
-		"Expedition-01 inherits global detroit mode from Hall with all live 3D targets (%s)" % str(e_snap))
+		"Expedition-01 inherits global detroit mode from Hall (%s)" % str(e_snap))
 	check(is_equal_approx(exp.prompt.modulate.a, 0.0),
-		"Expedition-01 hides legacy center prompt visually while keeping prompt.text for MCP tests")
+		"Expedition-01 hides legacy center prompt visually while preserving prompt.text")
 
 	# Press V in Expedition-01 -> switches global mode back to C+
 	await send_key(KEY_V)

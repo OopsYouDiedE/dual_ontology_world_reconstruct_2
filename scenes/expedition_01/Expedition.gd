@@ -15,6 +15,7 @@ const RenderProfile=preload("res://scenes/components/rendering/AcademyRenderProf
 const Stage=preload("res://scenes/components/rendering/AcademyStage.gd")
 const DualInteractionHud=preload("res://scenes/components/shared/DualModeInteractionHud.gd")
 const UnifiedInput=preload("res://scenes/components/shared/AcademyUnifiedInput.gd")
+const LevelPipeline=preload("res://scenes/components/shared/AcademyLevelPipeline.gd")
 var kit:=Kit.new()
 var walker:=CharacterBody3D.new()
 var eye:=Camera3D.new()
@@ -116,6 +117,7 @@ var plate_spill:=OmniLight3D.new()
 var prompt:=Label.new()
 var prompt_notice:=Label.new()
 var dual_ui:DualModeInteractionHud
+var level_capabilities:Dictionary=LevelPipeline.capabilities_expedition()
 var read_book:=false
 var running:=false
 var subtitle_id:=""
@@ -614,9 +616,9 @@ func _input(ev:InputEvent)->void:
 		if watch:_close_wheel();return
 		if key==KEY_E or key==KEY_ENTER:_close_wheel(true)
 		return
-	if retry<=0 and (key==KEY_SPACE or ev.is_action_pressed("expedition_hop")):jump_buffer=.16;return
-	if retry<=0 and (key==KEY_R or ev.is_action_pressed("expedition_lamp")):toggle_lamp();return
-	if retry<=0 and (key==KEY_F or ev.is_action_pressed("expedition_stomp")):stomp();return
+	if retry<=0 and bool(level_capabilities.get("allow_jump",true)) and (key==KEY_SPACE or ev.is_action_pressed("expedition_hop")):jump_buffer=.16;return
+	if retry<=0 and bool(level_capabilities.get("allow_lamp",true)) and (key==KEY_R or ev.is_action_pressed("expedition_lamp")):toggle_lamp();return
+	if retry<=0 and bool(level_capabilities.get("allow_stomp",true)) and (key==KEY_F or ev.is_action_pressed("expedition_stomp")):stomp();return
 	if key==KEY_E or ev.is_action_pressed("expedition_use"):use()
 	if watch:
 		if retry>0:return

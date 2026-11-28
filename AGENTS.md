@@ -6,4 +6,4 @@
 - Godot 使用 4.7.2 .NET / .NET 8、Forward+、SDFGI 与原分辨率三渲二 Toon。美术以《蓝图王子》为主、《巴别塔圣歌》补充建筑色面，房间连接与事件节奏参考《邪恶冥刻》。正式人形统一写实 6.5 头身，走同一加载管线（见 docs/production/）；室内氛围与时间光分开，只有外窗引入时间光。通过项目游戏 MCP 操作和检查真实画面；无头模式用于逻辑检查。
 - `goal.md` 的运行窗口只在用户明确授权时修改。当前入口、运行和测试见 README。
 - 项目生图首选 `image-2.6-sunburst`（已验证供应商的请求模型 ID：`gpt-image-2.6-sunburst`，`quality=high`）。使用项目已配置的专用生图接口，勿走当前会话接口或 `/v1/responses`。带参考图的编辑走供应商的 `/v1/images/edits`，调用方式见 [热厨生图记录](docs/design/kitchen-paintover/README.md#本机已验证的生图路径)。若专用接口未配置或无法确认，先向用户确认，再发起调用。
-- 全关卡统一操作、渲染与 UI 铁律：所有现有关卡与未来新增关卡必须统一使用 `AcademyStage.apply_to_viewport`（渲染/相机）、`AcademyUnifiedInput`（无冲突键位：`E` 主交互、`V` 热切换双模、`Q/R/F/Tab` 保留系统键）与 `DualModeInteractionHud`（C+ 集合式 / 底特律分散式 + 潜在/可激活/当前选择三态），禁止在单关卡内另写独立交互提示 UI（详见 `docs/design/unified-level-ui-and-render-contract.md`）。
+- 全关卡统一构建流水线、操作、渲染、台词与队友交互铁律：所有现有关卡与未来新增关卡必须统一走 `AcademyLevelPipeline`（`AcademyStage` 渲染/相机 + `AcademyUnifiedInput` 无冲突键位 + `DualModeInteractionHud` 双模三态交互 + `UnifiedDialoguePresenter` 底部字幕与共振峰语音 + `UnifiedTeammateWheel` Q 键队友径向轮盘），仅通过显式 `level_capabilities` 声明关卡特例（如大厅 `allow_jump = false`），详见 `docs/design/unified-level-ui-and-render-contract.md`。

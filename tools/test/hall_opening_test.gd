@@ -46,7 +46,7 @@ func run() -> void:
 	var gothic := game.find_child("PublicHallGothic", true, false)
 	check(gothic != null, "PublicHallGothic architectural shell is mounted in Public Hall")
 	if gothic != null:
-		var well := game.find_child("TourbillonTray", true, false) as Node3D
+		var well := gothic.find_child("FloorMeridian", true, false) as Node3D
 		for arch_z: int in [15, 17]:
 			for door_x: int in [11, 21]:
 				var a := Vector2i(door_x-1, arch_z)
@@ -56,8 +56,8 @@ func run() -> void:
 		for interior: Vector2i in [Vector2i(9,15),Vector2i(9,19),Vector2i(24,15),Vector2i(22,19)]:
 			check(reachable.has(interior), "Hall spawn reaches furnished wing interior %s" % str(interior))
 		var desk := gothic.find_child("EssenceCalibrationLectern", true, false) as Node3D
-		check(well != null and well.global_position.distance_to(gothic.pendulum_world_pos) < 0.01, "Flush tourbillon and suspension share one axis")
-		check(desk != null and is_equal_approx(desk.position.x, gothic.pendulum_world_pos.x), "North desk is centered beyond pendulum")
+		check(well != null and well.global_position.distance_to(gothic.global_transform * gothic.pendulum_world_pos) < 0.01, "Flush meridian dial and suspension share one axis")
+		check(desk != null and desk.global_position.distance_to(gothic.global_transform * gothic.lectern_pos) < 0.01, "Watch desk stands on the scene's lectern anchor (west study, north of the pendulum)")
 		check(gothic.find_child("FoucaultPendulum", true, false) != null, "Central brass FoucaultPendulum is mounted")
 		check(gothic.find_child("WatchCotAlcove", true, false) != null, "WatchCotAlcove awakening zone is mounted")
 		check(gothic.find_child("EssenceCalibrationLectern", true, false) != null, "EssenceCalibrationLectern zone is mounted")

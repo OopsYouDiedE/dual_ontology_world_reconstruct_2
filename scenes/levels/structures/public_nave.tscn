@@ -4,6 +4,24 @@
 [ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd" id="2_vbgbr"]
 [ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd" id="3_g6ln4"]
 [ext_resource type="Script" path="res://scenes/components/structure/LevelAnchor3D.gd" id="4_a6vuq"]
+[ext_resource type="Script" path="res://scenes/rogue_view/render/PublicHallGothic.gd" id="5_la5j6"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicVault3D.gd" id="6_o38vw"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicPier3D.gd" id="7_eddt7"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicLancetBay3D.gd" id="8_02mi4"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicOpenArch3D.gd" id="9_ge05a"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicBlindArcade3D.gd" id="10_mbc7p"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicGableWall3D.gd" id="11_yl8n8"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicOculus3D.gd" id="12_ma3gu"]
+[ext_resource type="Script" path="res://scenes/components/hall/NavePaving3D.gd" id="13_woq14"]
+[ext_resource type="Script" path="res://scenes/components/hall/HallRug3D.gd" id="14_wlhfl"]
+[ext_resource type="Script" path="res://scenes/components/hall/FoucaultPendulum3D.gd" id="15_f4dyh"]
+[ext_resource type="Script" path="res://scenes/components/hall/HallLantern3D.gd" id="16_bthx7"]
+[ext_resource type="Script" path="res://scenes/components/hall/HallFloorLamp3D.gd" id="17_26u78"]
+[ext_resource type="Script" path="res://scenes/components/hall/HallLight3D.gd" id="18_gmde4"]
+[ext_resource type="Script" path="res://scenes/components/hall/HallCot3D.gd" id="19_irn3u"]
+[ext_resource type="Script" path="res://scenes/components/hall/HallFurniture3D.gd" id="20_goihm"]
+[ext_resource type="Script" path="res://scenes/components/hall/HallBox3D.gd" id="21_umrmr"]
+[ext_resource type="Script" path="res://scenes/components/hall/GothicWingPartition3D.gd" id="22_v2c7p"]
 
 [node name="PublicNaveStructure" type="Node3D" unique_id=1653842335]
 script = ExtResource("1_t3fxe")
@@ -499,6 +517,1028 @@ extra = {
 "yaw": 0.0
 }
 
+[node name="Spawn" type="Marker3D" parent="Anchors" unique_id=1472378844]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 24.4)
+script = ExtResource("4_a6vuq")
+anchor_id = "spawn"
+
+[node name="Cot" type="Marker3D" parent="Anchors" unique_id=279082282]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.65, 0, 18.45)
+script = ExtResource("4_a6vuq")
+anchor_id = "cot"
+
+[node name="NorthGate" type="Marker3D" parent="Anchors" unique_id=315741430]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 5.45)
+script = ExtResource("4_a6vuq")
+anchor_id = "north_gate"
+
+[node name="Lectern" type="Marker3D" parent="Anchors" unique_id=1967729702]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.35, 0, 8.4)
+script = ExtResource("4_a6vuq")
+anchor_id = "lectern"
+
 [node name="Stations" type="Node3D" parent="." unique_id=342004114]
 
 [node name="Components" type="Node3D" parent="." unique_id=2139559574]
+
+[node name="PublicHallGothic" type="Node3D" parent="." unique_id=93398092]
+script = ExtResource("5_la5j6")
+
+[node name="Nave" type="Node3D" parent="PublicHallGothic" unique_id=342453372]
+
+[node name="Vault" type="Node3D" parent="PublicHallGothic/Nave" unique_id=647617927]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.3, 0, 5)
+script = ExtResource("6_o38vw")
+
+[node name="Piers" type="Node3D" parent="PublicHallGothic/Nave" unique_id=322760737]
+
+[node name="PierW0" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=736422516]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.59, 0, 5)
+script = ExtResource("7_eddt7")
+
+[node name="PierE0" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=993197612]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.41, 0, 5)
+script = ExtResource("7_eddt7")
+inward = -1.0
+
+[node name="PierW1" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=1823092772]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.59, 0, 9)
+script = ExtResource("7_eddt7")
+
+[node name="PierE1" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=860419800]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.41, 0, 9)
+script = ExtResource("7_eddt7")
+inward = -1.0
+
+[node name="PierW2" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=1908322214]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.59, 0, 13)
+script = ExtResource("7_eddt7")
+
+[node name="PierE2" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=115069319]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.41, 0, 13)
+script = ExtResource("7_eddt7")
+inward = -1.0
+
+[node name="PierW3" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=1850915805]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.59, 0, 17)
+script = ExtResource("7_eddt7")
+
+[node name="PierE3" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=615282010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.41, 0, 17)
+script = ExtResource("7_eddt7")
+inward = -1.0
+
+[node name="PierW4" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=1338922371]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.59, 0, 21)
+script = ExtResource("7_eddt7")
+
+[node name="PierE4" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=144539703]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.41, 0, 21)
+script = ExtResource("7_eddt7")
+inward = -1.0
+
+[node name="PierW5" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=2069806911]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.59, 0, 25)
+script = ExtResource("7_eddt7")
+
+[node name="PierE5" type="Node3D" parent="PublicHallGothic/Nave/Piers" unique_id=1110086089]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.41, 0, 25)
+script = ExtResource("7_eddt7")
+inward = -1.0
+
+[node name="SideBays" type="Node3D" parent="PublicHallGothic/Nave" unique_id=373600219]
+
+[node name="LancetW0" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=1857194951]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.34, 0, 5)
+script = ExtResource("8_02mi4")
+
+[node name="LancetW1" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=235769919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.34, 0, 9)
+script = ExtResource("8_02mi4")
+variant = 1
+
+[node name="OpenArchW2" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=950931150]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.34, 0, 13)
+script = ExtResource("9_ge05a")
+
+[node name="TriforiumW2" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=472892529]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.34, 0, 15)
+script = ExtResource("10_mbc7p")
+length = 3.1
+bottom = 4.95
+top = 5.86
+count = 4
+
+[node name="OpenArchW3" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=725731626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.34, 0, 17)
+script = ExtResource("9_ge05a")
+
+[node name="TriforiumW3" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=1582940079]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.34, 0, 19)
+script = ExtResource("10_mbc7p")
+length = 3.1
+bottom = 4.95
+top = 5.86
+count = 4
+
+[node name="LancetW4" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=1328945142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.34, 0, 21)
+script = ExtResource("8_02mi4")
+
+[node name="LancetE0" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=599253937]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.66, 0, 5)
+script = ExtResource("8_02mi4")
+inward = -1.0
+variant = 1
+
+[node name="LancetE1" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=404154810]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.66, 0, 9)
+script = ExtResource("8_02mi4")
+inward = -1.0
+variant = 2
+
+[node name="OpenArchE2" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=1614852816]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.66, 0, 13)
+script = ExtResource("9_ge05a")
+inward = -1.0
+
+[node name="TriforiumE2" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=1071860333]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.66, 0, 15)
+script = ExtResource("10_mbc7p")
+length = 3.1
+bottom = 4.95
+top = 5.86
+count = 4
+
+[node name="OpenArchE3" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=1011577509]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.66, 0, 17)
+script = ExtResource("9_ge05a")
+inward = -1.0
+
+[node name="TriforiumE3" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=91395159]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.66, 0, 19)
+script = ExtResource("10_mbc7p")
+length = 3.1
+bottom = 4.95
+top = 5.86
+count = 4
+
+[node name="LancetE4" type="Node3D" parent="PublicHallGothic/Nave/SideBays" unique_id=499118433]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.66, 0, 21)
+script = ExtResource("8_02mi4")
+inward = -1.0
+variant = 1
+
+[node name="Gables" type="Node3D" parent="PublicHallGothic/Nave" unique_id=440630558]
+
+[node name="NorthGable" type="Node3D" parent="PublicHallGothic/Nave/Gables" unique_id=264637642]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 5.04)
+script = ExtResource("11_yl8n8")
+
+[node name="SouthGable" type="Node3D" parent="PublicHallGothic/Nave/Gables" unique_id=807256797]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 24.96)
+script = ExtResource("11_yl8n8")
+inward = -1.0
+north = false
+portals = false
+rose_height = 6.85
+
+[node name="NorthArcade" type="Node3D" parent="PublicHallGothic/Nave/Gables" unique_id=134353260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 5.04)
+script = ExtResource("10_mbc7p")
+length = 8.4
+count = 10
+
+[node name="SouthArcade" type="Node3D" parent="PublicHallGothic/Nave/Gables" unique_id=2008767043]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 16, 0, 24.96)
+script = ExtResource("10_mbc7p")
+length = 8.4
+bottom = 2.85
+top = 4.55
+
+[node name="Oculi" type="Node3D" parent="PublicHallGothic/Nave" unique_id=1535171716]
+
+[node name="OculusW0" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=1667423091]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.36, 7.15, 7)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusE0" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=1349198865]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.64, 7.15, 7)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusW1" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=377635822]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.36, 7.15, 11)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusE1" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=81911440]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.64, 7.15, 11)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusW2" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=768317925]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.36, 7.15, 15)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusE2" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=2082238173]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.64, 7.15, 15)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusW3" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=1278790009]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.36, 7.15, 19)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusE3" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=662477204]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.64, 7.15, 19)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusW4" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=1023189559]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.36, 7.15, 23)
+script = ExtResource("12_ma3gu")
+
+[node name="OculusE4" type="Node3D" parent="PublicHallGothic/Nave/Oculi" unique_id=1700988539]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.64, 7.15, 23)
+script = ExtResource("12_ma3gu")
+
+[node name="Floor" type="Node3D" parent="PublicHallGothic" unique_id=2136168493]
+
+[node name="Paving" type="Node3D" parent="PublicHallGothic/Floor" unique_id=1660857757]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.59, 0, 5)
+script = ExtResource("13_woq14")
+gap = Rect2(2.41, 10, 4, 4)
+
+[node name="RunnerW" type="Node3D" parent="PublicHallGothic/Floor" unique_id=1189861148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.9, 0, 15)
+script = ExtResource("14_wlhfl")
+
+[node name="RunnerE" type="Node3D" parent="PublicHallGothic/Floor" unique_id=2044210509]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.1, 0, 15)
+script = ExtResource("14_wlhfl")
+
+[node name="NorthCarpet" type="Node3D" parent="PublicHallGothic/Floor" unique_id=232057993]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 9.9)
+script = ExtResource("14_wlhfl")
+size = Vector2(1.9, 8.2)
+center_height = 0.008
+thickness = 0.014
+edge_offset = 0.96
+edge_size = Vector2(0.035, 0.01)
+edge_height = 0.01
+edge_material = "brass"
+
+[node name="SouthCarpet" type="Node3D" parent="PublicHallGothic/Floor" unique_id=747584552]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 22.1)
+script = ExtResource("14_wlhfl")
+size = Vector2(1.9, 4.4)
+center_height = 0.008
+thickness = 0.014
+edge_offset = 0.96
+edge_size = Vector2(0.035, 0.01)
+edge_height = 0.01
+edge_material = "brass"
+
+[node name="FoucaultPendulum" type="Node3D" parent="PublicHallGothic" unique_id=1345115350]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 17)
+script = ExtResource("15_f4dyh")
+
+[node name="Lighting" type="Node3D" parent="PublicHallGothic" unique_id=1335857272]
+
+[node name="LanternW0" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1045076229]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.64, 5.5, 7)
+script = ExtResource("16_bthx7")
+
+[node name="LanternE0" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=78918390]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.36, 5.5, 7)
+script = ExtResource("16_bthx7")
+
+[node name="LanternW1" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1575448641]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.64, 5.5, 11)
+script = ExtResource("16_bthx7")
+
+[node name="LanternE1" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=2054704777]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.36, 5.5, 11)
+script = ExtResource("16_bthx7")
+
+[node name="LanternW2" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1462219181]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.64, 5.5, 15)
+script = ExtResource("16_bthx7")
+
+[node name="LanternE2" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1413669742]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.36, 5.5, 15)
+script = ExtResource("16_bthx7")
+
+[node name="LanternW3" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=483282582]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.64, 5.5, 19)
+script = ExtResource("16_bthx7")
+
+[node name="LanternE3" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=2008569835]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.36, 5.5, 19)
+script = ExtResource("16_bthx7")
+
+[node name="LanternW4" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1516523632]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.64, 5.5, 23)
+script = ExtResource("16_bthx7")
+
+[node name="LanternE4" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1734764301]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.36, 5.5, 23)
+script = ExtResource("16_bthx7")
+
+[node name="FloorLampNW" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=588137343]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.25, 0, 9)
+script = ExtResource("17_26u78")
+
+[node name="FloorLampNE" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=779208978]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.75, 0, 9)
+script = ExtResource("17_26u78")
+
+[node name="FloorLampSW" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=827863993]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.25, 0, 13)
+script = ExtResource("17_26u78")
+night_energy = 2.6
+reach = 9.0
+
+[node name="FloorLampSE" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=483382468]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.75, 0, 13)
+script = ExtResource("17_26u78")
+night_energy = 2.6
+reach = 9.0
+
+[node name="DayFill0" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=947841166]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.4, 7)
+script = ExtResource("18_gmde4")
+mode = "daylight"
+color = Color(0.9098039, 0.9372549, 0.972549, 1)
+day_energy = 1.15
+reach = 17.0
+attenuation = 1.15
+specular = 0.0
+
+[node name="DayFill1" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1115242951]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.4, 11)
+script = ExtResource("18_gmde4")
+mode = "daylight"
+color = Color(1, 0.9411765, 0.83137256, 1)
+day_energy = 1.15
+reach = 17.0
+attenuation = 1.15
+specular = 0.0
+
+[node name="DayFill2" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1731199382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.4, 15)
+script = ExtResource("18_gmde4")
+mode = "daylight"
+color = Color(0.9098039, 0.9372549, 0.972549, 1)
+day_energy = 1.15
+reach = 17.0
+attenuation = 1.15
+specular = 0.0
+
+[node name="DayFill3" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1308796995]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.4, 19)
+script = ExtResource("18_gmde4")
+mode = "daylight"
+color = Color(1, 0.9411765, 0.83137256, 1)
+day_energy = 1.15
+reach = 17.0
+attenuation = 1.15
+specular = 0.0
+
+[node name="DayFill4" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1056614439]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.4, 23)
+script = ExtResource("18_gmde4")
+mode = "daylight"
+color = Color(0.9098039, 0.9372549, 0.972549, 1)
+day_energy = 1.15
+reach = 17.0
+attenuation = 1.15
+specular = 0.0
+
+[node name="FloorBounce" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=381491239]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2.6, 15)
+script = ExtResource("18_gmde4")
+mode = "daylight"
+color = Color(0.9647059, 0.92156863, 0.8392157, 1)
+day_energy = 0.95
+reach = 24.0
+attenuation = 1.2
+specular = 0.0
+
+[node name="NaveFill0" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=286764725]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 4.1, 7.5)
+script = ExtResource("18_gmde4")
+mode = "static"
+color = Color(1, 0.9137255, 0.79607844, 1)
+energy = 0.52
+reach = 12.0
+attenuation = 1.25
+
+[node name="NaveFill1" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=1878227995]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 4.1, 15)
+script = ExtResource("18_gmde4")
+mode = "static"
+color = Color(1, 0.9137255, 0.79607844, 1)
+energy = 0.52
+reach = 12.0
+attenuation = 1.25
+
+[node name="NaveFill2" type="Node3D" parent="PublicHallGothic/Lighting" unique_id=2034158246]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 4.1, 22.5)
+script = ExtResource("18_gmde4")
+mode = "static"
+color = Color(1, 0.9137255, 0.79607844, 1)
+energy = 0.52
+reach = 12.0
+attenuation = 1.25
+
+[node name="WatchCotAlcove" type="Node3D" parent="PublicHallGothic" unique_id=188435075]
+
+[node name="NaveCot" type="Node3D" parent="PublicHallGothic/WatchCotAlcove" unique_id=1580749446]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.45, 0, 22.6)
+script = ExtResource("19_irn3u")
+
+[node name="CotStool" type="Node3D" parent="PublicHallGothic/WatchCotAlcove" unique_id=1698488047]
+transform = Transform3D(0.9800666, 0, 0.19866933, 0, 1, 0, -0.19866933, 0, 0.9800666, 13.599999, 0, 22.35)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/stool.glb"
+preset = "oak_aged"
+uniform_scale = 0.74
+
+[node name="CotCandles" type="Node3D" parent="PublicHallGothic/WatchCotAlcove" unique_id=166031817]
+transform = Transform3D(0.9887711, 0, 0.14943814, 0, 1, 0, -0.14943814, 0, 0.9887711, 13.599999, 0.48, 22.35)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/candle_triple.glb"
+preset = "brass_antique"
+uniform_scale = 0.56
+
+[node name="CotGlow" type="Node3D" parent="PublicHallGothic/WatchCotAlcove" unique_id=1533754038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.599999, 0.85, 22.35)
+script = ExtResource("18_gmde4")
+color = Color(1, 0.78039217, 0.49019608, 1)
+energy = 1.15
+reach = 3.6
+
+[node name="WakeBedLamp" type="Node3D" parent="PublicHallGothic/WatchCotAlcove" unique_id=959158474]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 0, 17.67)
+script = ExtResource("20_goihm")
+recipe = "Lighting/CagedLamp"
+
+[node name="WakeBedGlow" type="Node3D" parent="PublicHallGothic/WatchCotAlcove" unique_id=267673027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.25, 0.55, 17.6)
+script = ExtResource("18_gmde4")
+
+[node name="WatchStudy" type="Node3D" parent="PublicHallGothic" unique_id=1058252763]
+
+[node name="EssenceCalibrationLectern" type="Node3D" parent="PublicHallGothic/WatchStudy" unique_id=259503872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.35, 0, 8.4)
+
+[node name="Desk" type="Node3D" parent="PublicHallGothic/WatchStudy/EssenceCalibrationLectern" unique_id=233026015]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
+script = ExtResource("20_goihm")
+recipe = "Tables/ReceptionDesk"
+preset = "walnut_varnish"
+params = {
+"width": 1.8
+}
+station_size = Vector2(1.8, 0.9)
+station_height = 1.08
+
+[node name="BankerLamp" type="Node3D" parent="PublicHallGothic/WatchStudy/EssenceCalibrationLectern" unique_id=867801203]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 1.08, 0)
+script = ExtResource("20_goihm")
+recipe = "Lighting/BankerLamp"
+params = {
+"light_energy": 1.3
+}
+
+[node name="Schematic" type="Node3D" parent="PublicHallGothic/WatchStudy/EssenceCalibrationLectern" unique_id=1338711722]
+transform = Transform3D(1, 0, 0, 0, 0.28671524, 0.95801586, 0, -0.95801586, 0.28671524, 0.18, 1.13, 0.14)
+script = ExtResource("20_goihm")
+recipe = "Props/Schematic"
+params = {
+"height": 0.56,
+"width": 0.95
+}
+
+[node name="Candles" type="Node3D" parent="PublicHallGothic/WatchStudy/EssenceCalibrationLectern" unique_id=1266548765]
+transform = Transform3D(0.9553365, 0, 0.29552022, 0, 1, 0, -0.29552022, 0, 0.9553365, 0.68, 1.08, -0.12)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/candle_triple.glb"
+preset = "brass_antique"
+uniform_scale = 0.68
+
+[node name="OfficerChair" type="Node3D" parent="PublicHallGothic/WatchStudy" unique_id=1207863389]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 13.35, 0, 9.35)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/chair.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.76
+
+[node name="ArchiveShelf" type="Node3D" parent="PublicHallGothic/WatchStudy" unique_id=367758625]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.95, 0, 11.2)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/shelf_large.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.82
+
+[node name="CouncilSalon" type="Node3D" parent="PublicHallGothic" unique_id=711025025]
+
+[node name="CouncilTable" type="Node3D" parent="PublicHallGothic/CouncilSalon" unique_id=2108422995]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 19.55, 0, 10.75)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/table_long.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.78
+
+[node name="CouncilCandles" type="Node3D" parent="PublicHallGothic/CouncilSalon" unique_id=1507592971]
+transform = Transform3D(0.9950042, 0, 0.09983342, 0, 1, 0, -0.09983342, 0, 0.9950042, 19.55, 0.74, 10.75)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/candle_triple.glb"
+preset = "brass_antique"
+uniform_scale = 0.64
+
+[node name="ChairW1" type="Node3D" parent="PublicHallGothic/CouncilSalon" unique_id=565773269]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 18.72, 0, 10.2)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/chair.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.76
+
+[node name="ChairW2" type="Node3D" parent="PublicHallGothic/CouncilSalon" unique_id=1182594718]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 18.72, 0, 11.3)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/chair.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.76
+
+[node name="ChairN" type="Node3D" parent="PublicHallGothic/CouncilSalon" unique_id=265972445]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.55, 0, 9.35)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/chair.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.76
+
+[node name="InstrumentTrunk" type="Node3D" parent="PublicHallGothic/CouncilSalon" unique_id=707564890]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 19.85, 0, 8.25)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/chest.glb"
+preset = "oak_aged"
+uniform_scale = 0.76
+
+[node name="SalonGlow" type="Node3D" parent="PublicHallGothic/CouncilSalon" unique_id=379869282]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.4, 1.55, 10.75)
+script = ExtResource("18_gmde4")
+color = Color(1, 0.8117647, 0.54901963, 1)
+energy = 1.6
+reach = 4.8
+
+[node name="WestWing" type="Node3D" parent="PublicHallGothic" unique_id=975930518]
+
+[node name="Shell" type="Node3D" parent="PublicHallGothic/WestWing" unique_id=265003212]
+
+[node name="EndWall13" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1312929626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.65, 2.6, 13)
+script = ExtResource("21_umrmr")
+size = Vector3(5.3, 5.2, 0.12)
+
+[node name="EndDado13" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=328416331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0.6, 13.08)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 1.2, 0.12)
+material_key = "wood"
+
+[node name="EndWall21" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1058651179]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.65, 2.6, 21)
+script = ExtResource("21_umrmr")
+size = Vector3(5.3, 5.2, 0.12)
+
+[node name="EndDado21" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1818273682]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0.6, 20.92)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 1.2, 0.12)
+material_key = "wood"
+
+[node name="Lancet0" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1485151219]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 13)
+script = ExtResource("8_02mi4")
+window_top = 5.2
+
+[node name="Lancet1" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1053055699]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 17)
+script = ExtResource("8_02mi4")
+variant = 1
+window_top = 5.2
+
+[node name="Roof" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=855326530]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.65, 5.2, 17)
+script = ExtResource("21_umrmr")
+size = Vector3(5.3, 0.18, 8)
+material_key = "vault"
+
+[node name="RoofRib" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=316683567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 5.03, 13.2)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 0.24, 0.23)
+material_key = "rib"
+
+[node name="RoofRib2" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1444061629]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 5.03, 17)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 0.24, 0.23)
+material_key = "rib"
+
+[node name="RoofRib3" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1497043502]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 5.03, 20.8)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 0.24, 0.23)
+material_key = "rib"
+
+[node name="Partition" type="Node3D" parent="PublicHallGothic/WestWing/Shell" unique_id=1824480956]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0, 17)
+script = ExtResource("22_v2c7p")
+
+[node name="Dormitory" type="Node3D" parent="PublicHallGothic/WestWing" unique_id=2015163664]
+
+[node name="LinenCabinet" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=1609338212]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 9.65, 0, 20.62)
+script = ExtResource("20_goihm")
+recipe = "Cabinets/LinenCabinet"
+station_size = Vector2(1.45, 0.68)
+station_height = 1.9
+
+[node name="Washstand" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=143105412]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 6.53, 0, 16.9)
+script = ExtResource("20_goihm")
+recipe = "Props/Washstand"
+
+[node name="MedicineCabinet" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=2107909242]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.35, 0, 13.38)
+script = ExtResource("20_goihm")
+recipe = "Cabinets/MedicineCabinet"
+
+[node name="CotScreen" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=1413839525]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 12.25, 0, 21.55)
+script = ExtResource("20_goihm")
+recipe = "Props/Screen"
+
+[node name="ArchScreen" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=541716962]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 10.55, 0, 13.85)
+script = ExtResource("20_goihm")
+recipe = "Props/Screen"
+
+[node name="Bed1" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=806301779]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.65, 0, 14.25)
+script = ExtResource("20_goihm")
+recipe = "Beds/Bed"
+params = {
+"medical": true
+}
+station_size = Vector2(2.15, 1.15)
+station_height = 0.52
+
+[node name="Bed2" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=449767235]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.65, 0, 15.85)
+script = ExtResource("20_goihm")
+recipe = "Beds/Bed"
+params = {
+"medical": true
+}
+station_size = Vector2(2.15, 1.15)
+station_height = 0.52
+
+[node name="Bed3" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=551917682]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.65, 0, 18.45)
+script = ExtResource("20_goihm")
+recipe = "Beds/Bed"
+params = {
+"medical": false
+}
+station_size = Vector2(2.15, 1.15)
+station_height = 0.52
+
+[node name="Bed4" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=2040518298]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.65, 0, 20)
+script = ExtResource("20_goihm")
+recipe = "Beds/Bed"
+params = {
+"medical": false
+}
+station_size = Vector2(2.15, 1.15)
+station_height = 0.52
+
+[node name="Stool1" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=1515944934]
+transform = Transform3D(0.9950042, 0, 0.09983342, 0, 1, 0, -0.09983342, 0, 0.9950042, 6.65, 0, 15.05)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/stool.glb"
+preset = "oak_aged"
+uniform_scale = 0.7
+
+[node name="Stool2" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=966151507]
+transform = Transform3D(0.9950042, 0, -0.09983342, 0, 1, 0, 0.09983342, 0, 0.9950042, 6.65, 0, 19.22)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/stool.glb"
+preset = "oak_aged"
+uniform_scale = 0.7
+
+[node name="DormGlow" type="Node3D" parent="PublicHallGothic/WestWing/Dormitory" unique_id=19041691]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 2.45, 16.2)
+script = ExtResource("18_gmde4")
+color = Color(0.78431374, 0.8862745, 1, 1)
+energy = 3.2
+reach = 6.2
+
+[node name="EastWing" type="Node3D" parent="PublicHallGothic" unique_id=74856240]
+
+[node name="Shell" type="Node3D" parent="PublicHallGothic/EastWing" unique_id=993213093]
+
+[node name="EndWall13" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=471318908]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.35, 2.6, 13)
+script = ExtResource("21_umrmr")
+size = Vector3(5.3, 5.2, 0.12)
+
+[node name="EndDado13" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=1459402115]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 0.6, 13.08)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 1.2, 0.12)
+material_key = "wood"
+
+[node name="EndWall21" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=1089808764]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.35, 2.6, 21)
+script = ExtResource("21_umrmr")
+size = Vector3(5.3, 5.2, 0.12)
+
+[node name="EndDado21" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=1998888218]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 0.6, 20.92)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 1.2, 0.12)
+material_key = "wood"
+
+[node name="Lancet0" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=1927982726]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, 13)
+script = ExtResource("8_02mi4")
+inward = -1.0
+variant = 2
+window_top = 5.2
+
+[node name="Lancet1" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=560867885]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0, 17)
+script = ExtResource("8_02mi4")
+inward = -1.0
+variant = 3
+window_top = 5.2
+
+[node name="Roof" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=196889077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.35, 5.2, 17)
+script = ExtResource("21_umrmr")
+size = Vector3(5.3, 0.18, 8)
+material_key = "vault"
+
+[node name="RoofRib" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=1086798260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 5.03, 13.2)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 0.24, 0.23)
+material_key = "rib"
+
+[node name="RoofRib2" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=1861931900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 5.03, 17)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 0.24, 0.23)
+material_key = "rib"
+
+[node name="RoofRib3" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=1612396224]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 5.03, 20.8)
+script = ExtResource("21_umrmr")
+size = Vector3(5, 0.24, 0.23)
+material_key = "rib"
+
+[node name="Partition" type="Node3D" parent="PublicHallGothic/EastWing/Shell" unique_id=906112789]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 0, 17)
+script = ExtResource("22_v2c7p")
+side = 1
+
+[node name="Refectory" type="Node3D" parent="PublicHallGothic/EastWing" unique_id=1138311116]
+
+[node name="WorkCounter" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=189010936]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.65, 0, 13.52)
+script = ExtResource("20_goihm")
+recipe = "Tables/WorkCounter"
+station_size = Vector2(1.95, 0.72)
+station_height = 0.94
+
+[node name="CrockeryShelf" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=2025143441]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 25.75, 0, 18.7)
+script = ExtResource("20_goihm")
+recipe = "Props/CrockeryShelf"
+
+[node name="RefectoryTable" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=1685913929]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 24.15, 0, 18.7)
+script = ExtResource("20_goihm")
+recipe = "Tables/Table"
+params = {
+"width": 3.4
+}
+station_size = Vector2(2.05, 3.4)
+station_height = 0.75
+
+[node name="TableCandles" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=1015140003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.15, 0.75, 18.7)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/candle_triple.glb"
+preset = "brass_antique"
+uniform_scale = 0.7
+
+[node name="Bench" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=55465064]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 23.37, 0, 18.7)
+script = ExtResource("20_goihm")
+recipe = "Chairs/Bench"
+params = {
+"width": 3.1
+}
+
+[node name="Bench2" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=270391160]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 24.93, 0, 18.7)
+script = ExtResource("20_goihm")
+recipe = "Chairs/Bench"
+params = {
+"width": 3.1
+}
+
+[node name="Hearth" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=1997805502]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.35, 0, 14.55)
+
+[node name="Stove" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=1411704248]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0, 0)
+script = ExtResource("20_goihm")
+recipe = "Props/Stove"
+params = {
+"width": 2.0
+}
+station_size = Vector2(0.85, 2.05)
+station_height = 0.95
+
+[node name="KitchenHood" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=792822096]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 1.45, 0)
+script = ExtResource("20_goihm")
+recipe = "Props/KitchenHood"
+
+[node name="Embers" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=92584780]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.435, 0.5, 0)
+script = ExtResource("21_umrmr")
+size = Vector3(0.06, 0.36, 1.44)
+material_key = "embers"
+
+[node name="GrateBar" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=294795419]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, -0.64)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar2" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=1919215288]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, -0.48)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar3" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=411755326]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, -0.32)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar4" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=305802353]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, -0.16)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar5" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=1556915905]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, 0)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar6" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=193320337]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, 0.16)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar7" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=1640246331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, 0.32)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar8" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=1184883064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, 0.48)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="GrateBar9" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=1463516064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.48, 0.5, 0.64)
+script = ExtResource("21_umrmr")
+size = Vector3(0.05, 0.41, 0.034)
+material_key = "lead"
+
+[node name="HearthGlow" type="Node3D" parent="PublicHallGothic/EastWing/Refectory/Hearth" unique_id=723774758]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.85, 1.02, 0)
+script = ExtResource("18_gmde4")
+color = Color(1, 0.61960787, 0.3137255, 1)
+energy = 5.2
+reach = 7.8
+
+[node name="TableGlow" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=1995843975]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.4, 1.65, 18.7)
+script = ExtResource("18_gmde4")
+color = Color(1, 0.78039217, 0.53333336, 1)
+energy = 2.1
+reach = 5.2
+
+[node name="SupplyCrates" type="Node3D" parent="PublicHallGothic/EastWing/Refectory" unique_id=1971717607]
+transform = Transform3D(0.9887711, 0, 0.14943814, 0, 1, 0, -0.14943814, 0, 0.9887711, 21.65, 0, 20.35)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/crates_stacked.glb"
+preset = "oak_aged"
+uniform_scale = 0.7
+
+[node name="ScholarAlcove" type="Node3D" parent="PublicHallGothic" unique_id=585294691]
+
+[node name="Chalkboard" type="Node3D" parent="PublicHallGothic/ScholarAlcove" unique_id=137215186]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 20.42, 0.45, 22.6)
+script = ExtResource("20_goihm")
+recipe = "Props/Chalkboard"
+
+[node name="StudyTable" type="Node3D" parent="PublicHallGothic/ScholarAlcove" unique_id=834814590]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 19.25, 0, 22.6)
+script = ExtResource("20_goihm")
+recipe = "Tables/Table"
+params = {
+"width": 2.0
+}
+station_size = Vector2(1.35, 2)
+station_height = 0.75
+
+[node name="BankerLamp" type="Node3D" parent="PublicHallGothic/ScholarAlcove" unique_id=1832815284]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.35, 0.75, 21.95)
+script = ExtResource("20_goihm")
+recipe = "Lighting/BankerLamp"
+params = {
+"light_energy": 1.1
+}
+
+[node name="Chair1" type="Node3D" parent="PublicHallGothic/ScholarAlcove" unique_id=1955924142]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 18.35, 0, 22.1)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/chair.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.76
+
+[node name="Chair2" type="Node3D" parent="PublicHallGothic/ScholarAlcove" unique_id=582820556]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 18.35, 0, 23.1)
+script = ExtResource("20_goihm")
+glb = "res://assets/furniture/kaykit_cc0/chair.glb"
+preset = "walnut_varnish"
+uniform_scale = 0.76
+
+[node name="NorthLibrary" type="Node3D" parent="PublicHallGothic" unique_id=831367207]
+
+[node name="BookshelfW" type="Node3D" parent="PublicHallGothic/NorthLibrary" unique_id=243861212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.1, 0, 5.38)
+script = ExtResource("20_goihm")
+recipe = "Cabinets/Bookshelf"
+params = {
+"bays": 3,
+"shelves": 5,
+"width": 1.95
+}
+
+[node name="BenchW" type="Node3D" parent="PublicHallGothic/NorthLibrary" unique_id=735578839]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.1, 0, 6.65)
+script = ExtResource("20_goihm")
+recipe = "Chairs/Bench"
+params = {
+"width": 1.65
+}
+
+[node name="BookshelfE" type="Node3D" parent="PublicHallGothic/NorthLibrary" unique_id=435910472]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.9, 0, 5.38)
+script = ExtResource("20_goihm")
+recipe = "Cabinets/Bookshelf"
+params = {
+"bays": 3,
+"shelves": 5,
+"width": 1.95
+}
+
+[node name="BenchE" type="Node3D" parent="PublicHallGothic/NorthLibrary" unique_id=1720532809]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.9, 0, 6.65)
+script = ExtResource("20_goihm")
+recipe = "Chairs/Bench"
+params = {
+"width": 1.65
+}
+
+[node name="LibraryGlow" type="Node3D" parent="PublicHallGothic/NorthLibrary" unique_id=949781924]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 2.6, 7.2)
+script = ExtResource("18_gmde4")
+color = Color(1, 0.85882354, 0.6156863, 1)
+energy = 2.4
+reach = 6.2

@@ -7,7 +7,12 @@ const RunScene := preload("res://scenes/rogue/Run.tscn")
 var failed := 0
 var out_dir := ProjectSettings.globalize_path("res://.runtime/hall_layout_shots")
 
+## Run with  -- --no-rule-save --skip-intro  so the opening cinematic does not hold the camera.
+## Optional  --out=<res:// or absolute dir>  to keep before/after sets apart.
 func _initialize() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--out="):
+			out_dir = ProjectSettings.globalize_path(arg.get_slice("=", 1))
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	run.call_deferred()
 

@@ -80,6 +80,17 @@ func station_bounds() -> Array[Rect2]:
 	var out: Array[Rect2] = []
 	for node: LevelStation3D in stations_nodes():
 		out.append(node.bounds_in(relative(node).origin))
+	# Components that reserve their own footprints (furniture, lamps, arch cheeks…).
+	for node in _collect(func(n): return n.has_method("reserved_stations")):
+		out.append_array(node.reserved_stations())
+	return out
+
+## All named anchors: {anchor_id: position in structure space}.
+func anchor_points() -> Dictionary:
+	var out := {}
+	for node: LevelAnchor3D in anchors():
+		if node.anchor_id != "":
+			out[node.anchor_id] = relative(node).origin
 	return out
 
 # ── gameplay lot (same shape as NativeBlueprint.read().lot) ────────────────────
@@ -148,7 +159,7 @@ func derive_lot() -> Dictionary:
 			objects.append(node.lot_object(relative(node).origin))
 	return {"width": lot_size, "height": lot_size, "segments": segments, "windows": windows,
 		"floors": floors_list, "patterns": patterns, "objects": objects, "avatars": PackedVector2Array(),
-		"template": template_id}
+		"template": template_id, "anchors": anchor_points()}
 
 # ── editor helpers ────────────────────────────────────────────────────────────
 

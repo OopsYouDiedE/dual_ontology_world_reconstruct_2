@@ -42,6 +42,9 @@ func run() -> void:
 		var structure: Node3D = Converter.build(source, template, template.capitalize(), upper)
 		same_lot(source, structure.derive_lot(), template + " (converted)")
 		var path := ("%s/%s.tscn" % [OUT, template]) if write else ("res://.runtime/structure_test/%s.tscn" % template)
+		# Scenes that were edited past the XML (the Public Hall's components) are never overwritten.
+		if write and ResourceLoader.exists(path) and FileAccess.get_file_as_string(path).contains("PublicHallGothic"):
+			path = "res://.runtime/structure_test/%s.tscn" % template
 		check(Converter.save(structure, path) == OK, "%s: saved %s" % [template, path])
 		structure.free()
 		var loaded := (ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene).instantiate()

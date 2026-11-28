@@ -1209,7 +1209,7 @@ func _hall_interaction_groups() -> Array:
 						"callback": _inspect_north_draft,
 					}],
 				})
-				var desk_pos := Vector3(pend_base.x - 2.65, 1.05, 8.40)
+				var desk_pos: Vector3 = anchors.get("lectern", pend_base) + Vector3(0.0, 1.05, 0.0)
 				groups.append({
 					"id": "WatchOfficerDesk",
 					"title": R18n.pick("值班书案", "Watch Officer's Desk"),

@@ -57,10 +57,18 @@ static func build_room(geometry: Node3D, camera: Camera3D, lot: Dictionary, temp
 	# own collision and the wall shell; floor tiles are still drawn per cell so the meridian
 	# well recess and floor patterns read exactly as before.
 	var structure: Node3D = null
+	var hall_node: Node3D = null
 	if lot.has("structure_scene"):
 		structure = (load(str(lot.structure_scene)) as PackedScene).instantiate()
 		structure.name = "LevelStructure"
 		var gothic := expedition_view and is_hall_shell(template, room_label)
+		# The hall's Gothic architecture, pendulum, lights and furniture are component nodes in
+		# the structure scene (PublicHallGothic). Plain/overhead views keep only the shell.
+		hall_node = structure.get_node_or_null("PublicHallGothic")
+		if hall_node != null and not gothic:
+			structure.remove_child(hall_node)
+			hall_node.free()
+			hall_node = null
 		var wall_mat := tile_surface(Color("b9b1a1"), true)
 		for zone: Node3D in structure.floors():
 			zone.draw_mesh = false
@@ -78,9 +86,12 @@ static func build_room(geometry: Node3D, camera: Camera3D, lot: Dictionary, temp
 	var floor_bounds := Rect2i()
 	var well := Rect2i()
 	if expedition_view and has_meridian_well(template, room_label):
-		well = Rect2i(14, 15, 4, 4) if template == "public_nave" else MeridianWell.plan(lot)
-		if well.has_area():
-			MeridianWell.install(geometry, well, template == "public_nave")
+		if hall_node != null:
+			well = hall_node.well_rect()  # the pendulum component builds its own dial
+		else:
+			well = MeridianWell.plan(lot)
+			if well.has_area():
+				MeridianWell.install(geometry, well, false)
 
 	var hall_shell := is_hall_shell(template, room_label)
 	for cell: Vector2i in lot.floors:
@@ -127,17 +138,12 @@ static func build_room(geometry: Node3D, camera: Camera3D, lot: Dictionary, temp
 
 	var gothic_hall: Node3D = null
 	if gothic_shell:
-		gothic_hall = PublicHallGothic.install(geometry, lot, Rect2i(11, 5, 10, 20) if template == "public_nave" else floor_bounds, well, pendulum_drifting)
-		var nave := Rect2(Vector2(11, 5), Vector2(10, 20)) if template == "public_nave" else Rect2(floor_bounds)
-		for i in 3:
-			var fill := OmniLight3D.new()
-			fill.name = "NaveFill%d" % i
-			geometry.add_child(fill)
-			fill.position = Vector3(nave.get_center().x, 4.1, lerpf(nave.position.y + 2.5, nave.end.y - 2.5, i / 2.0))
-			fill.omni_range = 12.0
-			fill.light_energy = 0.52
-			fill.light_color = Color("ffe9cb")
-			fill.omni_attenuation = 1.25
+		gothic_hall = hall_node
+		if gothic_hall != null:
+			gothic_hall.refresh()
+			gothic_hall.set_drift_state(pendulum_drifting)
+		else:
+			push_warning("Public Hall shell has no PublicHallGothic component node in its structure scene.")
 	elif expedition_view:
 		# First-person rooms share Blue Prince painterly plaster ceilings illuminated evenly.
 		var ceiling := SurfaceTool.new()
@@ -325,8 +331,9 @@ static func reachable_cells(start: Vector2i, clear_fn: Callable, wall_fn: Callab
 	return result
 
 static func spawn_point(lot: Dictionary, template: String, kitchen: Node, clear_fn: Callable, wall_fn: Callable, nearest_fn: Callable) -> Vector3:
-	if template == "public_nave":
-		return Vector3(16, 0, 24.4)
+	var anchors: Dictionary = lot.get("anchors", {})
+	if anchors.has("spawn"):
+		return anchors.spawn  # LevelAnchor3D "spawn" in the structure scene
 	if is_instance_valid(kitchen):
 		return Kitchen.SPAWN
 	for object: Dictionary in lot.objects:

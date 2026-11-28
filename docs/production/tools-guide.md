@@ -198,17 +198,36 @@ python tools/inspect_level.py --scene r01
 | 物品来源 | 同一份 `catalog.json` | 同一份 `catalog.json` |
 | 进游戏 | 关卡清单引用房间与家具 | 物品上的 `Interactable` 由关卡运行时统一显示 |
 
-## 6. 现状：主要关卡的结构还没有接入 ArchBuilder
+## 6. 现状：关卡结构接入进度
 
 2026-11-28 盘点：关卡**家具**大多已走统一家具库（`AcademyFurnitureCatalog` → `ComponentFactory`），但**建筑结构**（墙、地面、门窗、拱顶）基本都是各关卡自己用代码或其他格式搭的，没有读 ArchBuilder 文档。
 
 | 关卡 | 结构从哪来 | 家具从哪来 | 读 ArchBuilder 文档 |
 |---|---|---|---|
-| 公共大厅（FirstWatch 营地） | 地面与碰撞读 FreeSO XML `content/academy_lots/public_nave.xml`；可见的哥特外壳全部写在 `PublicHallGothic.gd` 代码里 | 统一家具库，坐标手写 | 否 |
-| 战役房间（foyer、lecture、clinic 等） | XML 地块 + `LotGeometryBuilder` 生成方块墙；过场布景是 GLB | XML 物件按 GUID 画占位剪影 | 否（XML 是早先从 `architect_rooms.json` 离线转出的） |
+| 公共大厅（FirstWatch 营地） | **已迁入（2026-11-28）**：`scenes/levels/structures/public_nave.tscn` 里的 154 个可编辑构件（拱顶、柱、窗间、山墙玫瑰窗、高侧窗、地面、灯、傅科摆、家具），见第 7 节 | 统一家具库，作为 `HallFurniture3D` 节点摆在场景里 | 是（场景即数据） |
+| 战役房间（foyer、lecture、clinic 等） | **已迁入**：`scenes/levels/structures/*.tscn`（墙、地面、锚点为节点，由 XML 一次性转换） | XML 物件按 GUID 画占位剪影 | 是（场景即数据） |
 | 厨房（kitchen） | 读 `content/archbuilder/hot-kitchen.json`，`HotKitchen.gd` 自己挤出墙体与门窗 | 只取文档里的家具锚点，器物手写 | **是**（唯一一个） |
 | Expedition-01 | `ExpeditionKit.gd` / `Masonry.gd` 代码拼方块 | 主要手写，只有书架走家具库 | 否 |
 | 第一章 R01 | `Chapter1R01Level.gd` 里一块地板两面墙的占位 | 关卡清单 `objects[]` 走家具库 | 否 |
 | 物理实验室各房间 | 各自代码，只借用了 ArchBuilder 的肋拱几何函数 | 各自代码 | 否 |
 
 可复用的桥接代码：`HotKitchen.gd` 的文档读取与墙体挤出、`RoomBlockout.gd` 用 `WallPathGeometry.build` 生成外壳。
+
+## 7. 在 Godot 编辑器里编辑公共大厅
+
+大厅不再由代码生成：打开 `scenes/levels/structures/public_nave.tscn`，`PublicHallGothic` 节点下就是整座大厅的构件。选中任何一个，在检视器里改参数、用移动手柄挪位置，保存后进游戏即生效。
+
+![Godot 编辑器里的公共大厅：选中西侧第一个窗间，检视器显示 Length / Inward / Variant / Window Top 等参数](media/tools/11_hall_in_godot_editor.jpg)
+
+| 分组 | 构件（`scenes/components/hall/`） | 可调参数举例 |
+|---|---|---|
+| `Nave` | `GothicVault3D` 拱顶、`GothicPier3D` 束柱 ×12、`GothicLancetBay3D` 窗间、`GothicOpenArch3D` 侧廊拱、`GothicBlindArcade3D` 盲拱廊、`GothicGableWall3D` 山墙与玫瑰窗、`GothicOculus3D` 高侧圆窗 | 尺寸、开间数、朝向、彩窗贴图与分格、窗顶高度、门洞距墙端距离、玫瑰窗高度 |
+| `Floor` | `NavePaving3D` 分格石带、`HallRug3D` 走道与地毯 | 尺寸、避让区、厚度、包边材质 |
+| `FoucaultPendulum` | `FoucaultPendulum3D`（含地面刻度盘） | 悬挂高度、刻度盘格数、是否漂移、编辑器里预览摆动 |
+| `Lighting` | `HallLantern3D` 吊灯、`HallFloorLamp3D` 落地灯、`HallLight3D` 光池 / 日光补光 / 常亮补光 | 亮度、范围、白天/夜晚亮度 |
+| 各功能区 | `HallFurniture3D`（家具库配方或 GLB）、`HallCot3D`、`HallBox3D` | 配方、参数、材质预设、占地（自动生成碰撞并阻挡寻路） |
+| `Anchors` | `LevelAnchor3D`：`spawn`、`cot`、`north_gate`、`lectern` | 位置（出生点、醒来床位、北门、值班书案） |
+
+验证：`tools/test/hall_parity_test.gd` 把场景与原程序化大厅逐个比对，2259 个网格、1212 个碰撞体、28 盏灯、23 个占地全部一致（唯一差异是书架书脊颜色的循环顺序，原版依赖引擎运行时的节点编号）。改造前后实机对比：
+
+![左：原程序化大厅；右：构件场景。上起：中殿、北侧书房与客厅、西翼宿舍、东翼餐厅](media/tools/10_hall_before_after.jpg)

@@ -784,6 +784,7 @@ func hall_opening_anchors() -> Dictionary:
 		"cot": _gothic_hall.watch_cot_pos,
 		"pendulum": _gothic_hall.pendulum_world_pos,
 		"gate": _gothic_hall.north_gate_pos,
+		"lectern": _gothic_hall.lectern_pos,
 	}
 
 ## Export all active room targets in the unified DualModeInteractionHud group schema.

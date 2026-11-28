@@ -6,7 +6,7 @@ extends EditorPlugin
 ## and rebuilds. Everything else is plain Godot: move with gizmos, tune in the Inspector, save.
 ##
 ## Verification hook (real editor window, see tools/test/README or tools-guide):
-##   Godot --editor --path . -- --archbuilder-editor-capture=<scene.tscn>,<out.jpg>
+##   Godot --editor --path . -- --archbuilder-editor-capture=<scene.tscn>,<out.jpg>[,<node path to select>]
 
 const Components := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
 const Structure := preload("res://scenes/components/structure/LevelStructure3D.gd")
@@ -229,6 +229,7 @@ func _add_structure_root() -> void:
 func _capture(spec: String) -> void:
 	var scene := spec.get_slice(",", 0)
 	var out := spec.get_slice(",", 1)
+	var select_path := spec.get_slice(",", 2) if spec.get_slice_count(",") > 2 else ""
 	var ei := get_editor_interface()
 	while ei.get_resource_filesystem().is_scanning():
 		await get_tree().process_frame
@@ -260,7 +261,9 @@ func _capture(spec: String) -> void:
 	var target: Node = root
 	if root:
 		var walls := root.find_children("*", "", true, true).filter(func(n): return LevelStructure3D.is_wall(n))
-		if not walls.is_empty():
+		if select_path != "" and root.has_node(select_path):
+			target = root.get_node(select_path)
+		elif not walls.is_empty():
 			target = walls[0]
 	ei.get_selection().clear()
 	if target:

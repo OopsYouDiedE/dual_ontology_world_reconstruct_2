@@ -852,8 +852,16 @@ func set_drift_state(is_drifting: bool) -> void:
 		essence_light.light_energy = 1.25 if drifting else 0.90
 
 func _build_functional_props(min_z: float) -> void:
-	# Awakening spot. In the full hall it is a dormitory bed in the west wing, with the
-	# lantern Hale left on the floor beside it; residents keep their cots in the nave.
+	# 1. Ceremonial Manor / Cathedral Axial Carpet Runners (North & South of the Ø3.2m Foucault Dial)
+	# Gives clear residential/palace processional framing without encroaching on the slate dial.
+	_box(self, Vector3(pendulum_world_pos.x, 0.008, min_z + 4.90), Vector3(1.90, 0.014, 8.20), _mat_runner)
+	_box(self, Vector3(pendulum_world_pos.x, 0.008, pendulum_world_pos.z + 5.10), Vector3(1.90, 0.014, 4.40), _mat_runner)
+	# Subtle brass runner edge strips
+	for side_x: float in [-0.96, 0.96]:
+		_box(self, Vector3(pendulum_world_pos.x + side_x, 0.010, min_z + 4.90), Vector3(0.035, 0.010, 8.20), _mat_brass)
+		_box(self, Vector3(pendulum_world_pos.x + side_x, 0.010, pendulum_world_pos.z + 5.10), Vector3(0.035, 0.010, 4.40), _mat_brass)
+
+	# 2. Awakening Spot & Framed Watchman's Alcove (South-West Bay 4)
 	var cot_root := Node3D.new()
 	cot_root.name = "WatchCotAlcove"
 	cot_root.position = watch_cot_pos
@@ -864,11 +872,15 @@ func _build_functional_props(min_z: float) -> void:
 		_camp_cot(self, _nave_cot_pos)
 		_prop(cot_root, "Lighting/CagedLamp", Vector3(0.55, 0.0, -0.78))
 		_pool(watch_cot_pos + Vector3(0.6, 0.55, -0.85), Color("ffc27a"), 1.3, 3.2)
+	# Bedside stool + warm night-watch lamp beside the nave watchman's cot
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/stool.glb", _nave_cot_pos + Vector3(1.15, 0.0, -0.25), 0.2, 0.74, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/candle_triple.glb", _nave_cot_pos + Vector3(1.15, 0.48, -0.25), 0.15, 0.56, _mat_brass)
+	_pool(_nave_cot_pos + Vector3(1.15, 0.85, -0.25), Color("ffc77d"), 1.15, 3.6)
 
-	# Offset 1.80m Watch Lectern (leaving central North Axis completely open to the North Gate!)
+	# 3. Bay 1 West — Watch Officer's Study Alcove (Recessed cleanly along west pier wall)
 	var lec_root := Node3D.new()
 	lec_root.name = "EssenceCalibrationLectern"
-	lec_root.position = Vector3(pendulum_world_pos.x - 2.60, 0.0, min_z + 3.20)
+	lec_root.position = Vector3(pendulum_world_pos.x - 2.65, 0.0, min_z + 3.40)
 	add_child(lec_root)
 	var lectern := Factory.create("res://tools/building_construction/BuildingConstruction/Tables/RecipeReceptionDesk.gd")
 	if lectern != null:
@@ -876,18 +888,23 @@ func _build_functional_props(min_z: float) -> void:
 		lectern.rotation.y = PI
 		lec_root.add_child(lectern)
 		_reserve_station(lec_root.position, Vector2(1.80, 0.90), 1.08)
-		_prop(lec_root, "Lighting/BankerLamp", Vector3(-0.55, 1.08, 0), 0, {"light_energy": 1.2})
+		_prop(lec_root, "Lighting/BankerLamp", Vector3(-0.55, 1.08, 0), 0, {"light_energy": 1.3})
 		var map := _prop(lec_root, "Props/Schematic", Vector3(0.18, 1.13, 0.14), 0, {"width": 0.95, "height": 0.56})
 		map.rotation.x = -1.28
-		_glb_prop(lec_root, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(0.68, 1.08, -0.12), 0.3, 0.70, _mat_brass)
+		_glb_prop(lec_root, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(0.68, 1.08, -0.12), 0.3, 0.68, _mat_brass)
+	# Officer chair facing the desk + tall archive bookcase flush against the west wainscot
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x - 2.65, 0.0, min_z + 4.35), PI, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/shelf_large.glb", Vector3(pendulum_world_pos.x - 4.05, 0.0, min_z + 6.20), PI * 0.5, 0.82, _mat_wood)
 
-	# KayKit CC0 furniture consolidated into Bay 1 (Z=9.8-11.8) so Bay 2-3 cross-axis around the pendulum is wide open (>=2.2m)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/table_long.glb", Vector3(pendulum_world_pos.x + 3.65, 0.0, min_z + 6.4), PI * 0.5, 0.76, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.80, 0.0, min_z + 5.9), PI * 0.5, 0.76, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.80, 0.0, min_z + 6.9), PI * 0.5, 0.76, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/crates_stacked.glb", Vector3(pendulum_world_pos.x - 3.75, 0.0, min_z + 4.8), 0.25, 0.72, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chest.glb", Vector3(pendulum_world_pos.x + 3.65, 0.0, min_z + 4.2), -0.35, 0.78, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/shelf_large.glb", Vector3(pendulum_world_pos.x - 3.95, 0.0, min_z + 6.4), PI * 0.5, 0.80, _mat_wood)
+	# 4. Bay 1 East — Manor Council & Reading Salon (Symmetric counterpart to West Study)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/table_long.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 5.75), PI * 0.5, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(pendulum_world_pos.x + 3.55, 0.74, min_z + 5.75), 0.1, 0.64, _mat_brass)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.72, 0.0, min_z + 5.20), PI * 0.5, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.72, 0.0, min_z + 6.30), PI * 0.5, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 4.35), 0.0, 0.76, _mat_wood)
+	# Brass-bound instrument trunk neatly tucked beside the north-east pier (no loose shipping crates in the nave!)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chest.glb", Vector3(pendulum_world_pos.x + 3.85, 0.0, min_z + 3.25), -PI * 0.5, 0.76, _mat_wood)
+	_pool(Vector3(pendulum_world_pos.x + 3.40, 1.55, min_z + 5.75), Color("ffcf8c"), 1.6, 4.8)
 
 func _reserve_station(pos: Vector3, footprint: Vector2, height: float) -> void:
 	station_bounds.append(Rect2(Vector2(pos.x,pos.z)-footprint*0.5,footprint))
@@ -997,58 +1014,69 @@ func _build_watch_wings() -> void:
 		for z: float in [13.2,17,20.8]:
 			_box(self,Vector3(cx,WING_ROOF-0.17,z),Vector3(5,0.24,0.23),_mat_rib)
 		_build_wing_partition(cx,side)
-	_prop(self,"Cabinets/LinenCabinet",Vector3(9.5,0,20.65),PI)
-	_reserve_station(Vector3(9.5,0,20.65),Vector2(1.45,0.68),1.9)
-	_prop(self,"Props/Washstand",Vector3(6.53,0,15.15),PI/2)
-	_prop(self,"Tables/WorkCounter",Vector3(24.6,0,13.5))
-	_reserve_station(Vector3(24.6,0,13.5),Vector2(2.05,0.75),0.94)
-	_prop(self,"Props/CrockeryShelf",Vector3(25.75,0,18.2),-PI/2)
-	_prop(self,"Props/Screen",Vector3(11.65,0,23.6),0.0)
-	for z: float in [14.25,15.9,18.45,20.0]:
-		var bed := Vector3(9.6 if z==14.25 else 7.65,0,z)
+	# --- WEST WING: Monastery / Academy Dormitory & Infirmary (neat single wall-aligned row, clear central passage X=9) ---
+	_prop(self,"Cabinets/LinenCabinet",Vector3(9.65,0,20.62),PI)
+	_reserve_station(Vector3(9.65,0,20.62),Vector2(1.45,0.68),1.9)
+	_prop(self,"Props/Washstand",Vector3(6.53,0,16.90),PI/2)
+	_prop(self,"Cabinets/MedicineCabinet",Vector3(7.35,0,13.38))
+	# Privacy screens: one shielding the nave watchman's cot, one shielding the north dormitory arch
+	_prop(self,"Props/Screen",Vector3(12.25,0,21.55),PI*0.5)
+	_prop(self,"Props/Screen",Vector3(10.55,0,13.85),PI*0.5)
+	# All 4 beds cleanly aligned along the west dormitory wall (no bed jutting out into the cathedral archway!)
+	for z: float in [14.25,15.85,18.45,20.0]:
+		var bed := Vector3(7.65,0,z)
 		_prop(self,"Beds/Bed",bed,PI/2,{"medical":z<17.0})
 		_reserve_station(bed,Vector2(2.15,1.15),0.52)
-	_prop(self,"Cabinets/MedicineCabinet",Vector3(7.35,0,13.38))
-	_pool(Vector3(9.8,2.5,16.2),Color("b9dfff"),3.8,6.4)
-	# 1900s natural charcoal-black slate chalkboard mounted cleanly on Bay 4 east solid wall (clear Bay 3 arch!)
+	# Bedside stools between pairs of dormitory beds
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/stool.glb", Vector3(6.65, 0.0, 15.05), 0.1, 0.70, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/stool.glb", Vector3(6.65, 0.0, 19.22), -0.1, 0.70, _mat_wood)
+	_pool(Vector3(9.2,2.45,16.2),Color("c8e2ff"),3.2,6.2)
+
+	# --- BAY 4 EAST: Quiet Scholar's Chalkboard & Study Alcove ---
 	var board := _prop(self,"Props/Chalkboard",Vector3(20.42,0.45,22.6),-PI*0.5)
 	var slate_board_mat := _make_finish("1d2126", 0.90, 0.04)
 	for child in board.find_children("*", "MeshInstance3D", true, false):
 		if (child as MeshInstance3D).name.to_lower().contains("board") or (child as MeshInstance3D).name.to_lower().contains("slate"):
 			(child as MeshInstance3D).material_override = slate_board_mat
-	# Compact 2.0m study desk in Bay 4 east (Z=22.6) + full 3.4m dining table inside East Wing (Z=18.7)
-	_prop(self,"Tables/Table",Vector3(19.15,0,22.6),PI/2,{"width":2.0})
-	_reserve_station(Vector3(19.15,0,22.6),Vector2(1.4,2.0),0.75)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(18.25, 0.0, 22.1), PI * 0.5, 0.76, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(18.25, 0.0, 23.1), PI * 0.5, 0.76, _mat_wood)
-	_prop(self,"Tables/Table",Vector3(24.25,0,18.7),PI/2,{"width":3.4})
-	_reserve_station(Vector3(24.25,0,18.7),Vector2(2.15,3.4),0.75)
+	_prop(self,"Tables/Table",Vector3(19.25,0,22.6),PI/2,{"width":2.0})
+	_reserve_station(Vector3(19.25,0,22.6),Vector2(1.35,2.0),0.75)
+	_prop(self,"Lighting/BankerLamp",Vector3(19.35,0.75,21.95),0,{"light_energy":1.1})
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(18.35, 0.0, 22.1), PI * 0.5, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(18.35, 0.0, 23.1), PI * 0.5, 0.76, _mat_wood)
+
+	# --- EAST WING: Castle Refectory Dining Hall & Recessed Hearth Kitchen (keeps industrial hood out of nave sightline!) ---
+	_prop(self,"Tables/WorkCounter",Vector3(22.65,0,13.52))
+	_reserve_station(Vector3(22.65,0,13.52),Vector2(1.95,0.72),0.94)
+	_prop(self,"Props/CrockeryShelf",Vector3(25.75,0,18.7),-PI/2)
+	_prop(self,"Tables/Table",Vector3(24.15,0,18.7),PI/2,{"width":3.4})
+	_reserve_station(Vector3(24.15,0,18.7),Vector2(2.05,3.4),0.75)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(24.15, 0.75, 18.7), 0.0, 0.70, _mat_brass)
 	for dx: float in [-0.78,0.78]:
-		_prop(self,"Chairs/Bench",Vector3(24.25+dx,0,18.7),PI/2,{"width":3.1})
-	var stove := Vector3(22.08,0,13.88)
-	_reserve_station(stove,Vector2(2.05,0.8),0.95)
-	_prop(self,"Props/Stove",stove,0,{"width":2.0})
-	var hood := _prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45)
+		_prop(self,"Chairs/Bench",Vector3(24.15+dx,0,18.7),PI/2,{"width":3.1})
+	# Recessed hearth/stove tucked neatly against the far east wall (facing west into the dining wing, not jutting into nave!)
+	var stove := Vector3(25.35,0,14.55)
+	_reserve_station(stove,Vector2(0.85,2.05),0.95)
+	_prop(self,"Props/Stove",stove,-PI*0.5,{"width":2.0})
+	var hood := _prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45,-PI*0.5)
 	for hchild in hood.find_children("*", "MeshInstance3D", true, false):
 		(hchild as MeshInstance3D).material_override = _mat_lead
 	var embers := StandardMaterial3D.new()
 	embers.albedo_color = Color("ff862d"); embers.emission_enabled = true
 	embers.emission = Color("ff7022"); embers.emission_energy_multiplier = 3.4
-	_box(self,stove+Vector3(0,0.5,0.435),Vector3(1.44,0.36,0.06),embers)
-	for i in 9: _box(self,stove+Vector3((i-4)*0.16,0.5,0.48),Vector3(0.034,0.41,0.05),_mat_lead)
-	_pool(stove+Vector3(0,1.02,0.82),Color("ff9e50"),5.4,7.5)
-	_pool(Vector3(21.1,1.45,16.65),Color("ffc182"),1.7,4.4)
-	# Flanking north bookcases leaving central (16.0, 5.0) completely clear for the North Wing Archway
+	_box(self,stove+Vector3(-0.435,0.5,0.0),Vector3(0.06,0.36,1.44),embers)
+	for i in 9: _box(self,stove+Vector3(-0.48,0.5,(i-4)*0.16),Vector3(0.05,0.41,0.034),_mat_lead)
+	_pool(stove+Vector3(-0.85,1.02,0.0),Color("ff9e50"),5.2,7.8)
+	_pool(Vector3(22.4,1.65,18.7),Color("ffc788"),2.1,5.2)
+	# Relocated supply crates & felt rolls neatly stored inside the East Wing service corner (out of North Library!)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/crates_stacked.glb", Vector3(21.65, 0.0, 20.35), 0.15, 0.70, _mat_wood)
+
+	# --- NORTH APSE: Symmetrical Royal Library Alcoves flanking the North Wing Archway (completely clear of clutter) ---
 	_prop(self,"Cabinets/Bookshelf",Vector3(13.1,0,5.38),0,{"width":1.95,"bays":3,"shelves":5})
 	_prop(self,"Cabinets/Bookshelf",Vector3(18.9,0,5.38),0,{"width":1.95,"bays":3,"shelves":5})
-	for sx: float in [13.85,18.15]:
-		_prop(self,"Props/Crates",Vector3(sx,0,6.18))
-		for i in 2:
-			var roll := MeshInstance3D.new()
-			var felt := CylinderMesh.new(); felt.top_radius=0.15; felt.bottom_radius=0.15; felt.height=0.85
-			roll.mesh=felt; roll.material_override=_mat_plinth; roll.rotation.x=PI/2
-			roll.position=Vector3(sx+0.32*i,0.15,7.25); add_child(roll)
-	_pool(Vector3(16,2.6,7.5),Color("ffdb9d"),2.1,5.6)
+	# Symmetrical chapter-house oak reading benches flanking the north processional threshold
+	_prop(self,"Chairs/Bench",Vector3(13.1,0,6.65),0,{"width":1.65})
+	_prop(self,"Chairs/Bench",Vector3(18.9,0,6.65),0,{"width":1.65})
+	_pool(Vector3(16,2.6,7.2),Color("ffdb9d"),2.4,6.2)
 
 func _build_wing_partition(cx: float, side: int) -> void:
 	# Two enclosed rooms share a generous pointed passage facing the central arcade.

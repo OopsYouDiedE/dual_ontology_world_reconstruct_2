@@ -69,6 +69,10 @@ var component_filter = ""
 var gesture_build: RefCounted
 var pending_build: RefCounted
 var pending_window: ConfirmationDialog
+var settings_tabs: TabContainer
+const MAIN_PAGES = ["Walls","Openings","Furniture","Floors"]
+const MORE_PAGES = ["Stairs","Layout","Furnish","Rooms"]
+const TOOL_PAGES = {"wall":"Walls","floor":"Floors","opening":"Openings","prop":"Furniture","railing":"Stairs"}
 var layout_seed := 47
 var layout_pairs := 2
 
@@ -141,6 +145,9 @@ func section(parent: Node, text: String) -> Label:
 	return item
 func primary(parent: Node, text: String, callback: Callable, tip := "") -> Button:
 	return styled(button(parent,text,callback,tip),"PrimaryButton")
+func move_first(control: Control) -> Control:
+	control.get_parent().move_child(control, 0)
+	return control
 func flat(parent: Node, text: String, callback: Callable, tip := "") -> Button:
 	return styled(button(parent,text,callback,tip),"FlatButton")
 func number(parent: Node, text: String, value: float, callback: Callable, step := 0.1, minimum := -10000.0, maximum := 10000.0, decimal_step := 0.001) -> SpinBox:
@@ -221,22 +228,15 @@ func _make_ui() -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_theme_constant_override("separation",0)
 	add_child(root)
-	# 顶栏：标题 · 视图切换 · 撤销/重做 · 文件 … 右侧放生成类操作。
+	# 顶栏（三级层次）：标题 · 撤销/重做（常用，二级）· File/View 菜单 …… 右侧视图切换与低频工具菜单。
 	var top_bar = styled(PanelContainer.new(),"TopBar")
 	root.add_child(top_bar)
 	var header = HBoxContainer.new()
 	top_bar.add_child(header)
 	styled(label(header,"ArchBuilder"),"TitleLabel")
 	header.add_child(VSeparator.new())
-	var view_group = ButtonGroup.new()
-	for spec in [["Split",true,true],["2D",true,false],["3D",false,true]]:
-		var view_button: Button = styled(button(header,spec[0],func(): blueprint.visible = spec[1]; view3.visible = spec[2],"Show the 2D plan and/or the 3D preview"),"ToolButton")
-		view_button.toggle_mode = true
-		view_button.button_group = view_group
-		view_button.button_pressed = spec[0]=="Split"
-	header.add_child(VSeparator.new())
-	flat(header,"Undo",func(): if state.undo(-1): refresh(),"Ctrl+Z")
-	flat(header,"Redo",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
+	button(header,"Undo",func(): if state.undo(-1): refresh(),"Ctrl+Z")
+	button(header,"Redo",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
 	# 文件操作收进菜单：顶栏只留常用按钮。
 	var file_menu = MenuButton.new()
 	file_menu.text = "File ▾"
@@ -277,13 +277,61 @@ func _make_ui() -> void:
 	var spacer = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
-	flat(header,"Structure Lab",func():
-		if not has_node("StructureLab"): add_child(preload("production/building/StructureLab.tscn").instantiate()))
-	primary(header,"Generate Layout",preview_generated_layout,"Preview a new single-storey layout")
+	var view_group = ButtonGroup.new()
+	for spec in [["Split",true,true],["2D",true,false],["3D",false,true]]:
+		var view_button: Button = styled(button(header,spec[0],func(): blueprint.visible = spec[1]; view3.visible = spec[2],"Show the 2D plan and/or the 3D preview"),"ToolButton")
+		view_button.toggle_mode = true
+		view_button.button_group = view_group
+		view_button.button_pressed = spec[0]=="Split"
+	header.add_child(VSeparator.new())
+	# 低频工具收进菜单，不和绘制主流程抢注意力。
+	var more_menu = MenuButton.new()
+	more_menu.text = "Tools ▾"
+	more_menu.tooltip_text = "Less frequent tools: generated layouts and the structure lab."
+	more_menu.get_popup().add_item("Generate Layout…", 0)
+	more_menu.get_popup().add_item("Structure Lab", 1)
+	more_menu.get_popup().id_pressed.connect(func(id: int):
+		if id == 0: preview_generated_layout()
+		elif id == 1 and not has_node("StructureLab"): add_child(preload("production/building/StructureLab.tscn").instantiate()))
+	header.add_child(more_menu)
 	var body = HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation",0)
 	root.add_child(body)
+	# 左侧工具栏：最常用的绘制工具放大、竖排、带快捷键；当前工具是一整块蓝色。
+	var rail_panel = styled(PanelContainer.new(),"RailPanel")
+	body.add_child(rail_panel)
+	var rail = VBoxContainer.new()
+	rail.custom_minimum_size.x = 132
+	rail.add_theme_constant_override("separation",4)
+	rail_panel.add_child(rail)
+	var tool_group = ButtonGroup.new()
+	section(rail,"DRAW")
+	for spec in [["select","Select","V"],["wall","Wall","W"],["floor","Floor",""],["opening","Opening","O"],["prop","Furniture","P"],["__more"],["railing","Railing",""]]:
+		if spec[0] == "__more":
+			section(rail,"MORE")
+			continue
+		var tool_button = Button.new()
+		tool_button.text = spec[1]
+		tool_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		tool_button.theme_type_variation = "RailButton"
+		tool_button.toggle_mode = true
+		tool_button.button_group = tool_group
+		tool_button.button_pressed = spec[0]=="select"
+		tool_button.tooltip_text = ("Shortcut: %s. " % spec[2] if spec[2] != "" else "") + "Press Esc to return to Select."
+		tool_button.pressed.connect(func(): set_tool(spec[0]))
+		rail.add_child(tool_button)
+		if spec[2] != "":
+			var key: Label = styled(Label.new(),"KeyLabel")
+			key.text = spec[2]
+			key.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			key.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+			key.offset_left = -26
+			key.offset_right = -10
+			key.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			key.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			tool_button.add_child(key)
+		tool_buttons[spec[0]] = tool_button
 	var center_margin = MarginContainer.new()
 	center_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for side_name in ["left","right","top","bottom"]: center_margin.add_theme_constant_override("margin_"+side_name,8)
@@ -291,22 +339,9 @@ func _make_ui() -> void:
 	var center = VBoxContainer.new()
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center_margin.add_child(center)
-	# 工具条：一组互斥的绘制工具（分段按钮），右侧是吸附、居中和光标坐标。
+	# 视图上方只留一条细的情境栏：吸附、居中、光标坐标。
 	var actions = HBoxContainer.new()
 	center.add_child(actions)
-	var tool_group = ButtonGroup.new()
-	for spec in [["select","Select","V"],["wall","Wall","W"],["floor","Floor",""],["opening","Opening","O"],["railing","Railing",""],["prop","Furniture","P"]]:
-		var tool_button = Button.new()
-		tool_button.text = spec[1]
-		tool_button.theme_type_variation = "ToolButton"
-		tool_button.toggle_mode = true
-		tool_button.button_group = tool_group
-		tool_button.button_pressed = spec[0]=="select"
-		tool_button.tooltip_text = ("Shortcut: %s. " % spec[2] if spec[2] != "" else "") + "Press Esc to return to Select."
-		tool_button.pressed.connect(func(): set_tool(spec[0]))
-		actions.add_child(tool_button)
-		tool_buttons[spec[0]] = tool_button
-	actions.add_child(VSeparator.new())
 	choice(actions,"Snap",{"0":"Off","0.1":"0.10m","0.2":"0.20m","0.5":"0.50m","1":"1m"},"0.2",func(v): state.grid_snap = float(v))
 	flat(actions,"Center",reset_views,"Center the building in the view. Shortcut: F")
 	cursor_label = styled(label(actions,""),"HintLabel")
@@ -363,15 +398,13 @@ func _make_ui() -> void:
 	var side = VBoxContainer.new()
 	side.custom_minimum_size.x = 372
 	side_panel.add_child(side)
-	# 8 个页签平铺成 2×4 分段按钮，全部一眼可见，不再需要左右滚动页签条。
-	var tab_grid = GridContainer.new()
-	tab_grid.columns = 4
-	tab_grid.add_theme_constant_override("h_separation",4)
-	tab_grid.add_theme_constant_override("v_separation",4)
+	# 设置页导航：4 个常用页平铺，4 个低频页收进 More ▾。选工具时自动跳到对应设置页。
+	var tab_grid = HBoxContainer.new()
+	tab_grid.add_theme_constant_override("separation",2)
 	side.add_child(tab_grid)
 	var tabs = TabContainer.new()
 	tabs.tabs_visible = false
-	tabs.custom_minimum_size.y = 200
+	tabs.custom_minimum_size.y = 220
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side.add_child(tabs)
 	var floors = page(tabs,"Floors")
@@ -385,7 +418,7 @@ func _make_ui() -> void:
 	ui_fields.layer_y = number(floors,"Floor Height (m)",0,func(v):
 		if edit_build(func(draft): draft.layer().y = v) and auto_y: sync_wall("baseY",v))
 	ui_fields.floor_style = choice(floors,"Floor Finish",FLOOR_STYLES,"octagonal_tile",func(v): edit_build(func(draft): draft.layer().style = v))
-	primary(floors,"Draw Floor in 2D",func(): set_tool("floor"))
+	move_first(primary(floors,"Draw Floor in 2D",func(): set_tool("floor")))
 	hint(floors,"Nearby floors merge within 0.3 m.")
 	var walls = page(tabs,"Walls")
 	check(walls,"Match Floor Elevation",true,func(v): auto_y = v; if v: sync_wall("baseY",state.layer().get("y",0)))
@@ -395,9 +428,12 @@ func _make_ui() -> void:
 		ui_fields[key] = number(walls,spec[1],wall_params[key],func(v): sync_wall(key,v),spec[2])
 	hint(walls,"Adjacent rooms share wall junctions.")
 	check(walls,"Decorative Corner and End Columns",true,func(v): wall_params.hasPillars = v)
-	primary(walls,"Draw Walls in 2D",func(): set_tool("wall"))
-	button(walls,"Close Wall Loop",func(): finish_path(true))
-	button(walls,"Finish Open Wall",func(): finish_path(false))
+	move_first(primary(walls,"Draw Walls in 2D",func(): set_tool("wall")))
+	var path_row = HBoxContainer.new()
+	walls.add_child(path_row)
+	walls.move_child(path_row, 1)
+	flat(path_row,"Close Loop  (Enter)",func(): finish_path(true)).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	flat(path_row,"Finish Open",func(): finish_path(false)).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button(walls,"Build Walls Around Floor",func():
 		var draft: RefCounted = state.fork_candidate()
 		if draft.auto_walls(wall_params): preview_build(draft, "Walls from Floor")
@@ -406,7 +442,7 @@ func _make_ui() -> void:
 	number(layout,"Seed",layout_seed,func(v): layout_seed = int(v),1,0,2147483647,1.0)
 	number(layout,"Room pairs",layout_pairs,func(v): layout_pairs = int(v),1,1,4,1.0)
 	hint(layout,"Generate rooms on both sides of one shared hall.")
-	primary(layout,"Preview New Layout",preview_generated_layout)
+	move_first(primary(layout,"Preview New Layout",preview_generated_layout))
 	var openings = page(tabs,"Openings")
 	choice(openings,"Opening Type",OPENINGS,opening_params.type,func(v):
 		opening_params.type = v
@@ -416,26 +452,17 @@ func _make_ui() -> void:
 	for spec in [["width","Width (m)"],["height","Height (m)"],["bottom","Height Above Floor (m)"],["rise","Arch Rise (m)"]]:
 		var key = spec[0]
 		ui_fields["op_"+key] = number(openings,spec[1],opening_params[key],func(v): opening_params[key] = v)
-	primary(openings,"Place Opening on Wall",func(): set_tool("opening"))
+	move_first(primary(openings,"Place Opening on Wall",func(): set_tool("opening")))
 	var stairs = page(tabs,"Stairs")
 	for key in ["rise","run","risers","width","yaw"]:
 		number(stairs,{"rise":"Rise (m)","run":"Run (m)","risers":"Steps","width":"Width (m)","yaw":"Rotation (deg)"}[key],stair_params[key],func(v): stair_params[key] = v,1 if key=="risers" else 0.1,1 if key=="risers" else (-360.0 if key=="yaw" else 0.1), 360.0 if key=="yaw" else 10000.0, 1.0 if key=="risers" else 0.01)
 	choice(stairs,"Stair handrail",{"both":"Both sides","left":"Left","right":"Right","none":"None"},"both",func(v): stair_params.railingPos = v)
-	primary(stairs,"Preview Straight Stair",spawn_stair)
+	move_first(primary(stairs,"Preview Straight Stair",spawn_stair))
 	number(stairs,"Railing height (m)",0.9,func(v): rail_params.height = v)
 	number(stairs,"Post spacing (m)",0.18,func(v): rail_params.spacing = v,0.02,0.02)
 	button(stairs,"Draw Railing in 2D",func(): set_tool("railing"))
 	var props = page(tabs,"Furniture")
-	choice(props,"Fixture",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
-	prop_fields = VBoxContainer.new()
-	props.add_child(prop_fields)
-	refresh_prop_fields()
-	number(props,"Position X",0,func(v): prop_position.x = v)
-	number(props,"Position Z",0,func(v): prop_position.y = v)
-	number(props,"Rotation (deg)",0,func(v): prop_yaw = v,15)
-	button(props,"Preview Furniture at Coordinates",func(): prop_entry = {}; place_prop(prop_position))
-	button(props,"Place Original Furniture in 2D",func(): prop_entry = {}; set_tool("prop"))
-	section(props,"NATIVE COMPONENT LIBRARY")
+	section(props,"COMPONENT LIBRARY")
 	var filter = LineEdit.new()
 	filter.placeholder_text = "Search components…"
 	filter.clear_button_enabled = true
@@ -448,9 +475,18 @@ func _make_ui() -> void:
 		prop_params = Components.parameter_defaults(prop_entry))
 	props.add_child(component_list)
 	refresh_component_list()
-	# Original web furniture remains the default selection.
-	button(props,"Place Component in 2D",func(): set_tool("prop"))
-	primary(props,"Open Component Library",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
+	primary(props,"Place Component in 2D",func(): set_tool("prop"))
+	button(props,"Open Component Library",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
+	section(props,"BUILT-IN FIXTURES")
+	choice(props,"Fixture",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
+	prop_fields = VBoxContainer.new()
+	props.add_child(prop_fields)
+	refresh_prop_fields()
+	number(props,"Position X",0,func(v): prop_position.x = v)
+	number(props,"Position Z",0,func(v): prop_position.y = v)
+	number(props,"Rotation (deg)",0,func(v): prop_yaw = v,15)
+	button(props,"Place Fixture in 2D",func(): prop_entry = {}; set_tool("prop"))
+	flat(props,"Preview at Coordinates",func(): prop_entry = {}; place_prop(prop_position))
 	var furnish_page = page(tabs,"Furnish")
 	var furnish_help = hint(furnish_page,"Preview furniture by room type. Placement keeps furniture inside the room and clear of doorways and other objects.")
 	furnish_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -476,29 +512,51 @@ func _make_ui() -> void:
 	if rooms.size()>1: room_select.select(1)
 	primary(presets,"Load Room Preset",func():
 		load_build(JSON.stringify(rooms[room_select.selected])))
-	var tab_group = ButtonGroup.new()
-	var tab_buttons: Array = []
-	for i in tabs.get_tab_count():
-		var tab_button: Button = styled(button(tab_grid,tabs.get_tab_title(i),func(): tabs.current_tab = i),"ToolButton")
+	settings_tabs = tabs
+	var tab_index := {}
+	for i in tabs.get_tab_count(): tab_index[tabs.get_tab_title(i)] = i
+	var tab_buttons := {}
+	for title in MAIN_PAGES:
+		var tab_button: Button = styled(button(tab_grid,title,func(): tabs.current_tab = tab_index[title]),"ToolButton")
 		tab_button.toggle_mode = true
-		tab_button.button_group = tab_group
 		tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		tab_button.button_pressed = i == tabs.current_tab
-		tab_buttons.append(tab_button)
-	tabs.tab_changed.connect(func(i):
-		for j in tab_buttons.size(): tab_buttons[j].set_pressed_no_signal(j == i))
-	section(side,"OUTLINE")
+		tab_buttons[tab_index[title]] = tab_button
+	var more_pages = MenuButton.new()
+	more_pages.text = "More ▾"
+	more_pages.tooltip_text = "Stairs, generated layouts, auto-furnish and room presets."
+	for title in MORE_PAGES: more_pages.get_popup().add_item(title, tab_index[title])
+	more_pages.get_popup().id_pressed.connect(func(id: int): tabs.current_tab = id)
+	tab_grid.add_child(more_pages)
+	var sync_tabs = func(i: int):
+		for j in tab_buttons: tab_buttons[j].set_pressed_no_signal(j == i)
+		var in_more: bool = not tab_buttons.has(i)
+		more_pages.text = (tabs.get_tab_title(i) + " ▾") if in_more else "More ▾"
+		more_pages.add_theme_color_override("font_color", ToolTheme.ACCENT_HOVER if in_more else ToolTheme.MUTED)
+	tabs.tab_changed.connect(sync_tabs)
+	tabs.current_tab = tab_index["Walls"]
+	sync_tabs.call(tabs.current_tab)
+	# 设置页与“选中/属性”之间可拖动分隔：编辑选中物体时把属性区拉大。
+	side.remove_child(tabs)
+	var side_split = VSplitContainer.new()
+	side_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	side.add_child(side_split)
+	side_split.add_child(tabs)
+	var selection_area = VBoxContainer.new()
+	selection_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	side_split.add_child(selection_area)
+	side = selection_area
+	section(side,"SELECTION")
 	outline = ItemList.new()
-	outline.custom_minimum_size.y = 96
+	outline.custom_minimum_size.y = 80
 	side.add_child(outline)
 	outline.item_selected.connect(func(index): state.selected = outline.get_item_metadata(index).duplicate(); refresh_inspector())
 	var edit_actions = HBoxContainer.new()
 	side.add_child(edit_actions)
-	flat(edit_actions,"Properties (E)",show_parameters)
+	button(edit_actions,"Edit Properties  (E)",show_parameters).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	styled(button(edit_actions,"Delete",delete_selected),"DangerButton")
-	section(side,"PROPERTIES")
 	var scroll = ScrollContainer.new()
-	scroll.custom_minimum_size.y = 90
+	scroll.custom_minimum_size.y = 80
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	side.add_child(scroll)
 	inspector = VBoxContainer.new()
@@ -525,6 +583,10 @@ func set_tool(value: String) -> void:
 	drawing = []
 	for key in tool_buttons: tool_buttons[key].set_pressed_no_signal(key==tool)
 	if tool=="wall" and auto_y: sync_wall("baseY",state.layer().get("y",0))
+	# 选工具 = 打开它的设置页，常用参数总在手边。
+	if settings_tabs != null and TOOL_PAGES.has(tool):
+		for i in settings_tabs.get_tab_count():
+			if settings_tabs.get_tab_title(i) == TOOL_PAGES[tool]: settings_tabs.current_tab = i
 	update_status()
 func update_status() -> void:
 	status.text = {"select":"Select or drag with the left mouse button. Double-click a node or press E to edit. Delete removes, Ctrl+Z undoes, F centers.", "wall":"Place wall nodes. Click the start or press Enter to close, or choose Finish Open Path.", "floor":"Place floor vertices. Click the start or press Enter to finish.", "opening":"Click a wall to place an opening. In Select mode, drag it along the wall.", "railing":"Place railing nodes and press Enter to finish.", "prop":"Click in 2D to place the selected component."}.get(tool,tool)+"  |  Nodes: "+str(drawing.size())

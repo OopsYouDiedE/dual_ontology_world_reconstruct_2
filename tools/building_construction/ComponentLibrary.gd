@@ -29,6 +29,10 @@ var rotation_y := 0.0
 var orbit := Vector2(-0.7, 0.8)
 var distance := 18.0
 var target := Vector3.ZERO
+var search: LineEdit
+var recent_bar: HFlowContainer
+var recent: Array = []  # most recently placed catalog entries, newest first
+const RECENT_MAX := 6
 
 func _ready() -> void:
 	catalog = Components.load_catalog(CATALOG_PATH)
@@ -132,6 +136,18 @@ func _make_ui() -> void:
 	var column := VBoxContainer.new()
 	panel.add_child(column)
 	_label(column, "Component Library", "TitleLabel")
+	# 最常用：搜索和“最近使用”，一步就能再放同一件物品。
+	search = LineEdit.new()
+	search.placeholder_text = "Search all components…"
+	search.clear_button_enabled = true
+	search.text_changed.connect(func(_text): _refresh(category.selected))
+	column.add_child(search)
+	_section(column, "RECENT")
+	recent_bar = HFlowContainer.new()
+	recent_bar.add_theme_constant_override("h_separation", 4)
+	recent_bar.add_theme_constant_override("v_separation", 4)
+	column.add_child(recent_bar)
+	_refresh_recent()
 	_section(column, "CATALOG")
 	category = OptionButton.new()
 	column.add_child(category)
@@ -139,18 +155,17 @@ func _make_ui() -> void:
 		category.add_item(str(catalog.categories[key]))
 		category.set_item_metadata(category.item_count - 1, key)
 	items = ItemList.new()
-	items.custom_minimum_size = Vector2(250, 160)
+	items.custom_minimum_size = Vector2(250, 90)
 	items.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	items.size_flags_stretch_ratio = 1.6
 	column.add_child(items)
-	_button(column, "Select / Cancel Placement  (Esc)", _cancel, "FlatButton")
 	_section(column, "SCENE")
 	var actions := HBoxContainer.new()
 	column.add_child(actions)
-	for spec in [["Undo", func(): _restore(history_index - 1), "FlatButton"], ["Redo", func(): _restore(history_index + 1), "FlatButton"], ["Delete", _delete_selected, "DangerButton"]]:
+	for spec in [["Esc", _cancel, "FlatButton"], ["Undo", func(): _restore(history_index - 1), "FlatButton"], ["Redo", func(): _restore(history_index + 1), "FlatButton"], ["Delete", _delete_selected, "DangerButton"]]:
 		_button(actions, spec[0], spec[1], spec[2]).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outline = ItemList.new()
-	outline.custom_minimum_size = Vector2(250, 110)
+	outline.custom_minimum_size = Vector2(250, 64)
 	outline.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(outline)
 	outline.item_selected.connect(func(index: int): _select(outline.get_item_metadata(index)))
@@ -163,7 +178,7 @@ func _make_ui() -> void:
 	status = _label(column, "", "HintLabel")
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.custom_minimum_size.x = 250
-	status.text = "Pick a component, click a support to place it.  R turn · F swap end · Right-drag orbit · Shift+right-drag pan · Scroll zoom"
+	status.text = "R turn · F swap end · Right-drag orbit · Shift pan · Scroll zoom"
 	var right := PanelContainer.new()
 	right.theme_type_variation = "FloatingPanel"
 	right.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
@@ -187,8 +202,10 @@ func _refresh(index: int) -> void:
 	entries.clear()
 	selected_path = ""
 	var key = category.get_item_metadata(index)
+	var query := search.text.strip_edges().to_lower() if search else ""
 	for entry in catalog.items:
-		if entry.category == key:
+		var hit: bool = (query in str(entry.label).to_lower() or query in str(entry.id).to_lower()) if query != "" else entry.category == key
+		if hit:
 			entries.append(entry)
 			var row := items.add_item(str(entry.label))
 			items.set_item_tooltip(row, _production_note(entry))
@@ -197,10 +214,30 @@ func _production_note(entry: Dictionary) -> String:
 	return Components.production_note(entry)
 
 func _select_item(index: int) -> void:
-	selected_path = str(entries[index].path)
-	selected_entry = entries[index]
+	_arm(entries[index])
+
+func _arm(entry: Dictionary) -> void:
+	selected_path = str(entry.path)
+	selected_entry = entry
 	var production := Components.production_note(selected_entry).get_slice("\n", 0)
 	status.text = "%s · %s mount\n%s\nClick a support. R: turn. F: swap end." % [selected_entry.label, selected_entry.mount, production]
+
+func _note_recent(entry: Dictionary) -> void:
+	recent = recent.filter(func(e): return e.id != entry.id)
+	recent.push_front(entry)
+	recent.resize(mini(recent.size(), RECENT_MAX))
+	_refresh_recent()
+
+func _refresh_recent() -> void:
+	for child in recent_bar.get_children():
+		recent_bar.remove_child(child)
+		child.queue_free()
+	if recent.is_empty():
+		_label(recent_bar, "Placed components appear here.", "HintLabel")
+		return
+	for entry in recent:
+		var chip := _button(recent_bar, str(entry.label), func(): _arm(entry), "ChipButton")
+		chip.tooltip_text = "Place another " + str(entry.label)
 
 func _cancel() -> void:
 	selected_path = ""
@@ -264,6 +301,7 @@ func _place(mouse: Vector2) -> void:
 	_own_interaction(instance)
 	_remember()
 	_select(instance)
+	_note_recent(selected_entry)
 	status.text = "Placed %s%s" % [selected_entry.label, " on " + str(host.name) if host else ""]
 
 func _make_part(entry: Dictionary) -> Node3D:
@@ -287,33 +325,39 @@ func _select(node: Node3D) -> void:
 	selected = node
 	_clear_inspector()
 	_label(inspector, str(node.name), "TitleLabel")
-	_section(inspector, "MECHANISM")
-	_activity_fields(node)
-	if node.has_method("interact"):
-		_button(inspector,"Operate",node.interact)
-	if node.has_method("set_angle_checked"):
-		_button(inspector,"Swing leaf",func():
-			var open_angle: float = Socket.open_angle(node)
-			node.set_angle_checked(open_angle if is_zero_approx(node.current_angle) else 0.0))
-	if node.has_method("set_wind"):
-		_button(inspector,"Apply breeze",func(): node.set_wind(node.global_basis * Vector3(1,0,1)))
-		_button(inspector,"Still air",func(): node.set_wind(Vector3.ZERO))
+	_inspector_body(node)
+	_mechanism_fields(node)
+	_refresh_outline()
+
+## Frequently edited groups, top to bottom: transform, interaction, parameters.
+func _inspector_body(node: Node3D) -> void:
 	# Pinned fittings keep their mount and dimensions until removed. Moving a
 	# free assembly root carries its subtree. Replacing its geometry needs a refit.
 	if node.get_parent() != candidates:
 		_label(inspector, "Mounted on: " + str(node.get_parent().name), "HintLabel")
-		_refresh_outline()
 		return
 	_section(inspector, "TRANSFORM")
 	_vector_field("Position", "position", node.position)
 	_vector_field("Rotation", "rotation_degrees", node.rotation_degrees)
 	_interaction_fields(node)
 	if not Assembly.members(node).is_empty():
-		_refresh_outline()
 		return
 	_section(inspector, "PARAMETERS")
 	_script_fields(node)
-	_refresh_outline()
+
+## Rarely used: mechanism activity, outputs and quick test actions.
+func _mechanism_fields(node: Node3D) -> void:
+	_section(inspector, "MECHANISM")
+	_activity_fields(node)
+	if node.has_method("interact"):
+		_button(inspector,"Operate",node.interact, "FlatButton")
+	if node.has_method("set_angle_checked"):
+		_button(inspector,"Swing leaf",func():
+			var open_angle: float = Socket.open_angle(node)
+			node.set_angle_checked(open_angle if is_zero_approx(node.current_angle) else 0.0))
+	if node.has_method("set_wind"):
+		_button(inspector,"Apply breeze",func(): node.set_wind(node.global_basis * Vector3(1,0,1)), "FlatButton")
+		_button(inspector,"Still air",func(): node.set_wind(Vector3.ZERO), "FlatButton")
 
 ## Every exported script variable of `target` becomes an editable field.
 func _script_fields(target: Object) -> void:
@@ -393,7 +437,7 @@ func _activity_fields(node: Node3D) -> void:
 			if socket.activate(activity_layer):
 				activity_layer.show(); socket.dismissed.connect(activity_layer.hide,CONNECT_ONE_SHOT))
 	var button := node.has_method("pulse") and Assembly.id(node) == "PhysicalButton"
-	if button: _button(inspector,"Press button",func(): _socket(node).press())
+	if button: _button(inspector,"Press button",func(): _socket(node).press(), "FlatButton")
 	if button or not activity.is_empty() or node.has_signal("running_changed") or node.has_signal("open_changed"):
 		var outputs := OptionButton.new(); inspector.add_child(outputs)
 		outputs.add_item("Output: unconnected"); outputs.set_item_metadata(0,null)

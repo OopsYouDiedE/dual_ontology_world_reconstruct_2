@@ -3,8 +3,13 @@ extends RefCounted
 ## Flat dark surfaces, one accent colour, rounded controls, quiet borders.
 ## Type variations used by the tools:
 ##   TitleLabel / SectionLabel / FieldLabel / HintLabel        (Label)
-##   FlatButton / PrimaryButton / DangerButton / ToolButton     (Button)
-##   TopBar / SidePanel / FloatingPanel / StatusBar             (PanelContainer)
+## Three tiers of emphasis so the eye finds the common action first:
+##   1. PrimaryButton  – filled accent, one per area (the next step you usually take)
+##   2. Button         – filled neutral (regular actions)
+##   3. FlatButton     – muted text only (rare / secondary actions)
+##   RailButton (big tool rail), ToolButton (segmented), ChipButton (quick picks), DangerButton
+##   TitleLabel / SectionLabel / FieldLabel / HintLabel / KeyLabel (Label)
+##   TopBar / SidePanel / RailPanel / FloatingPanel / StatusBar (PanelContainer)
 
 const BG := Color("111318")
 const PANEL := Color("181b21")
@@ -66,7 +71,7 @@ static func build() -> Theme:
 
 	# Labels
 	t.set_color("font_color", "Label", TEXT)
-	for spec in [["TitleLabel", TEXT, 19], ["SectionLabel", MUTED, 12], ["FieldLabel", MUTED, 13], ["HintLabel", MUTED, 13]]:
+	for spec in [["TitleLabel", TEXT, 19], ["SectionLabel", MUTED, 12], ["FieldLabel", MUTED, 13], ["HintLabel", MUTED, 13], ["KeyLabel", Color(1, 1, 1, 0.55), 12]]:
 		t.set_type_variation(spec[0], "Label")
 		t.set_color("font_color", spec[0], spec[1])
 		t.set_font_size("font_size", spec[0], spec[2])
@@ -76,11 +81,34 @@ static func build() -> Theme:
 	_font_colors(t, "Button", TEXT)
 	t.set_type_variation("FlatButton", "Button")
 	_button_styles(t, "FlatButton", clear, SURFACE_HOVER, ACCENT)
+	_font_colors(t, "FlatButton", MUTED)
+	t.set_font_size("font_size", "FlatButton", 14)
+	# Tool rail: large, left-aligned, the active tool is a solid accent block.
+	t.set_type_variation("RailButton", "Button")
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		var col: Color = {"normal": clear, "hover": SURFACE_HOVER, "pressed": ACCENT, "hover_pressed": ACCENT_HOVER, "disabled": clear}[state]
+		t.set_stylebox(state, "RailButton", box(col, 8, Vector4(14, 10, 14, 10)))
+	t.set_stylebox("focus", "RailButton", _focus())
+	_font_colors(t, "RailButton", TEXT)
+	t.set_font_size("font_size", "RailButton", 16)
+	# Chips: compact pills for quick picks (recent components).
+	t.set_type_variation("ChipButton", "Button")
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		var chip: Color = {"normal": SURFACE, "hover": SURFACE_HOVER, "pressed": ACCENT, "hover_pressed": ACCENT_HOVER}[state]
+		t.set_stylebox(state, "ChipButton", box(chip, 14, Vector4(10, 3, 10, 3)))
+	t.set_stylebox("focus", "ChipButton", _focus())
+	_font_colors(t, "ChipButton", TEXT)
+	t.set_font_size("font_size", "ChipButton", 13)
 	t.set_type_variation("ToolButton", "Button")
 	_button_styles(t, "ToolButton", clear, SURFACE_HOVER, ACCENT)
 	_font_colors(t, "ToolButton", MUTED)
 	t.set_type_variation("PrimaryButton", "Button")
 	_button_styles(t, "PrimaryButton", ACCENT, ACCENT_HOVER, ACCENT.darkened(0.15))
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		var big: StyleBoxFlat = t.get_stylebox(state, "PrimaryButton")
+		big.content_margin_top = 9
+		big.content_margin_bottom = 9
+	t.set_font_size("font_size", "PrimaryButton", 16)
 	_font_colors(t, "PrimaryButton", Color.WHITE)
 	t.set_color("font_hover_color", "PrimaryButton", Color.WHITE)
 	t.set_type_variation("DangerButton", "Button")
@@ -168,6 +196,11 @@ static func build() -> Theme:
 	side.border_width_left = 1
 	side.border_color = BORDER
 	t.set_stylebox("panel", "SidePanel", side)
+	t.set_type_variation("RailPanel", "PanelContainer")
+	var rail := box(PANEL, 0, Vector4(8, 10, 8, 10))
+	rail.border_width_right = 1
+	rail.border_color = BORDER
+	t.set_stylebox("panel", "RailPanel", rail)
 	t.set_type_variation("StatusBar", "PanelContainer")
 	var status := box(BG, 0, Vector4(14, 6, 14, 6))
 	status.border_width_top = 1

@@ -17,7 +17,15 @@
 
 三个工具读的是同一份物品目录（`ComponentFactory.load_catalog()`）。物品只存数据，提示框由所在关卡的运行时统一绘制。
 
-两个编辑工具共用一套现代简洁主题 `tools/building_construction/ToolTheme.gd`：深色平面、单一蓝色强调色、圆角控件。蓝色实心按钮是当前页面的主操作，红色文字按钮是删除类操作，灰色小号大写字是分组标题。
+两个编辑工具共用一套现代简洁主题 `tools/building_construction/ToolTheme.gd`，按“主次三级”排版，眼睛先落在最常用的那一步：
+
+| 层级 | 样式 | 用在哪 |
+|---|---|---|
+| 一级 · 主操作 | 蓝色实心大按钮，每个区域最多一个 | 这一页通常要做的下一步，如 `Draw Walls in 2D`、`Place Component in 2D`、`Make selectable`、`Save Candidate` |
+| 二级 · 常规操作 | 灰底按钮 | `Undo / Redo`、`Edit Properties`、`Open Component Library` |
+| 三级 · 低频操作 | 无底色的灰字 | `Close Loop`、`Preview at Coordinates`、`Show All`、机关测试按钮 |
+| 危险操作 | 红字 | `Delete`、`Remove interaction` |
+| 分组标题 | 灰色小号大写字 | DRAW、SELECTION、TRANSFORM、INTERACTION…… |
 
 ---
 
@@ -29,12 +37,12 @@
 
 | 区域 | 位置 | 用法 |
 |---|---|---|
-| 顶栏 | 最上方 | `Split / 2D / 3D` 分段按钮切换视图；`Undo / Redo`；`File ▾` 导入/保存 JSON、YAML，或导出 Godot 场景；`View ▾` 线框、剖面、显隐。右侧 `Structure Lab` 打开结构实验室，蓝色 `Generate Layout` 自动布局 |
-| 工具条 | 第二行 | 一组互斥的绘制工具，当前工具高亮为蓝色：`Select`(V)、`Wall`(W)、`Floor`、`Opening`(O)、`Railing`、`Furniture`(P)，快捷键见悬停提示；`Snap` 设置吸附步长，`Center`(F) 居中；最右侧实时显示光标坐标和所在房间 |
-| 左侧 2D 平面 | 左半边 | 点击落节点；回车或点回起点闭合；拖动可移动；双击节点或按 E 编辑 |
-| 中间 3D 预览 | 中间 | 和平面同步生成，可以直接看墙洞、采光和家具尺度 |
-| 右侧页签 | 右上 | 8 个页签平铺成 2×4 按钮，一眼可见：Floors / Walls / Layout / Openings / Stairs / Furniture / Furnish / Rooms，分别设置楼层高度、材质、门窗、楼梯、家具和房型预设。每页的蓝色按钮就是这一页最常用的一步 |
-| OUTLINE / PROPERTIES | 右下 | 大纲列出房间、墙和开口；选中后下方直接显示参数，点 `Properties (E)` 弹出大窗口编辑，红色 `Delete` 删除 |
+| 左侧工具栏 | 最左 | **最常用的绘制工具**，大号竖排，右侧标着快捷键：`Select`(V)、`Wall`(W)、`Floor`、`Opening`(O)、`Furniture`(P)；低频的 `Railing` 放在 MORE 下面。当前工具整块高亮为蓝色 |
+| 顶栏 | 最上方 | 左边是 `Undo / Redo`、`File ▾`（导入/保存 JSON、YAML，导出 Godot 场景）、`View ▾`（线框、剖面、显隐）；右边是 `Split / 2D / 3D` 视图切换和 `Tools ▾`（低频的 Generate Layout、Structure Lab） |
+| 情境栏 | 视图上方 | `Snap` 吸附步长、`Center`(F) 居中，最右是光标坐标和所在房间 |
+| 中间视图 | 中间 | 左边 2D 平面（点击落节点；回车或点回起点闭合；拖动移动；双击节点或按 E 编辑），右边同步的 3D 预览 |
+| 右侧设置页 | 右上 | 常用的 `Walls / Openings / Furniture / Floors` 平铺，低频的 Stairs / Layout / Furnish / Rooms 收进 `More ▾`。**选工具会自动打开对应设置页**（选 Wall 就到 Walls 页）。每页最上面的蓝色按钮就是这页的主操作，参数在它下面 |
+| SELECTION | 右下 | 大纲列出房间、墙和开口，选中后下方直接显示参数；`Edit Properties (E)` 弹出大窗口编辑，红色 `Delete` 删除。设置页和这块之间的分隔条可以上下拖动 |
 | 状态栏 | 最底部 | 当前工具的操作提示、已放节点数，以及预览/应用的结果 |
 
 常用快捷键：`Ctrl+Z` 撤销，`Delete` 删除，`F` 居中。
@@ -43,8 +51,8 @@
 
 ![ArchBuilder Furniture 页](media/tools/02_archbuilder_props.jpg)
 
-- 上半部分是原有家具和灯具：`Fixture` 下拉框选家具，填灯光强度、安装高度和坐标，然后点 `Preview Furniture at Coordinates` 预览，或点 `Place Original Furniture in 2D` 在平面上点击放置。
-- 下半部分是 **NATIVE COMPONENT LIBRARY**：列出共享目录里的全部组件，可用搜索框过滤。选中后点 `Place Component in 2D` 放到平面里，或点蓝色 **`Open Component Library`** 进入下面的物品属性工具。
+- 上半部分是更常用的 **COMPONENT LIBRARY**：列出共享目录里的全部组件，可用搜索框过滤。选中后点蓝色 `Place Component in 2D` 放到平面里，或点 **`Open Component Library`** 进入下面的物品属性工具。
+- 下半部分是 **BUILT-IN FIXTURES**（原有家具和灯具）：`Fixture` 下拉框选家具，填灯光强度、安装高度和坐标，然后点 `Place Fixture in 2D` 在平面上点击放置，或点 `Preview at Coordinates` 按坐标预览。
 
 ---
 
@@ -54,10 +62,12 @@
 
 | 区域 | 用法 |
 |---|---|
-| 左侧 · CATALOG | 下拉框选分类（如 Props and Equipment），列表选物品后，在 3D 视图里点击支撑面放置。`R` 旋转，`F` 换端或换栏杆侧；右键拖动环绕，`Shift`+右键拖动平移，滚轮缩放；`Esc` 取消放置 |
-| 左侧 · SCENE | `Undo / Redo`，红色 `Delete`；下面是当前候选场景里的所有物品（如 RecipeTable / RecipeChest / RecipeBookshelf），点击即可选中 |
-| 左侧 · FILE | 蓝色 `Save Candidate` 保存、`Open Candidate` 打开候选场景；`Show All` 一次性生成全部组件用来对比；`Screenshot` 截图 |
-| 右侧 · 检视器 | 选中物品后按分组显示：MECHANISM（机关活动）、TRANSFORM（位置和旋转，每个向量一行 X/Y/Z）、**INTERACTION**、PARAMETERS（尺寸、层数等）。数值和开关是“左边名字、右边控件”的属性表 |
+| 左侧 · 搜索框 | 最上方，跨所有分类搜索物品名 |
+| 左侧 · RECENT | 最近放过的物品（最多 6 个），点一下就能接着放同一件 |
+| 左侧 · CATALOG | 下拉框选分类（如 Props and Equipment），列表选物品后，在 3D 视图里点击支撑面放置。`R` 旋转，`F` 换端或换栏杆侧；右键拖动环绕，`Shift`+右键拖动平移，滚轮缩放 |
+| 左侧 · SCENE | `Esc` 取消放置、`Undo / Redo`、红色 `Delete`；下面是当前候选场景里的所有物品，点击即可选中 |
+| 左侧 · FILE | 蓝色 `Save Candidate` 保存，`Open Candidate` 打开候选场景；`Show All` 一次性生成全部组件用来对比；`Screenshot` 截图 |
+| 右侧 · 检视器 | 按使用频率从上到下：TRANSFORM（位置和旋转，每个向量一行 X/Y/Z）、**INTERACTION**、PARAMETERS（尺寸、层数等），最后才是低频的 MECHANISM（机关活动和测试按钮）。数值和开关是“左边名字、右边控件”的属性表 |
 
 ### Interaction 区：配置“这件物品能不能被选中、按 E 做什么”
 
@@ -187,3 +197,18 @@ python tools/inspect_level.py --scene r01
 | 数据形态 | JSON/YAML 文档，可导出 Godot 场景 | Godot 场景（`.tscn`） |
 | 物品来源 | 同一份 `catalog.json` | 同一份 `catalog.json` |
 | 进游戏 | 关卡清单引用房间与家具 | 物品上的 `Interactable` 由关卡运行时统一显示 |
+
+## 6. 现状：主要关卡的结构还没有接入 ArchBuilder
+
+2026-11-28 盘点：关卡**家具**大多已走统一家具库（`AcademyFurnitureCatalog` → `ComponentFactory`），但**建筑结构**（墙、地面、门窗、拱顶）基本都是各关卡自己用代码或其他格式搭的，没有读 ArchBuilder 文档。
+
+| 关卡 | 结构从哪来 | 家具从哪来 | 读 ArchBuilder 文档 |
+|---|---|---|---|
+| 公共大厅（FirstWatch 营地） | 地面与碰撞读 FreeSO XML `content/academy_lots/public_nave.xml`；可见的哥特外壳全部写在 `PublicHallGothic.gd` 代码里 | 统一家具库，坐标手写 | 否 |
+| 战役房间（foyer、lecture、clinic 等） | XML 地块 + `LotGeometryBuilder` 生成方块墙；过场布景是 GLB | XML 物件按 GUID 画占位剪影 | 否（XML 是早先从 `architect_rooms.json` 离线转出的） |
+| 厨房（kitchen） | 读 `content/archbuilder/hot-kitchen.json`，`HotKitchen.gd` 自己挤出墙体与门窗 | 只取文档里的家具锚点，器物手写 | **是**（唯一一个） |
+| Expedition-01 | `ExpeditionKit.gd` / `Masonry.gd` 代码拼方块 | 主要手写，只有书架走家具库 | 否 |
+| 第一章 R01 | `Chapter1R01Level.gd` 里一块地板两面墙的占位 | 关卡清单 `objects[]` 走家具库 | 否 |
+| 物理实验室各房间 | 各自代码，只借用了 ArchBuilder 的肋拱几何函数 | 各自代码 | 否 |
+
+可复用的桥接代码：`HotKitchen.gd` 的文档读取与墙体挤出、`RoomBlockout.gd` 用 `WallPathGeometry.build` 生成外壳。

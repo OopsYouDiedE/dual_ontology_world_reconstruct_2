@@ -47,6 +47,7 @@ func run() -> void:
 	root.add_child(sim)
 	await frames(12)
 	sim.reset_views()  # same as pressing Center once the window has its final size
+	sim.set_tool("wall")  # picking a tool opens its settings page
 	await shot("01_archbuilder_overview")
 	tab(sim, "Furniture")
 	await frames(4)
@@ -67,6 +68,7 @@ func run() -> void:
 		part.owner = lib.candidates
 		lib._own_interaction(part)
 		placed.append(part)
+		lib._note_recent(entry(catalog, spec[0]))
 	lib.target = Vector3(0, 0.6, 0)
 	lib.distance = 6.5
 	lib._update_camera()

@@ -1,0 +1,385 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/components/structure/LevelStructure3D.gd" id="1_xbrtq"]
+[ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd" id="2_uf82w"]
+[ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd" id="3_lo7xh"]
+[ext_resource type="Script" path="res://scenes/components/structure/LevelAnchor3D.gd" id="4_0i1m6"]
+
+[node name="DiningStructure" type="Node3D" unique_id=1431850167]
+script = ExtResource("1_xbrtq")
+template_id = "dining"
+room_label = "Dining"
+
+[node name="Floors" type="Node3D" parent="." unique_id=938777915]
+
+[node name="Floor_9_10" type="Node3D" parent="Floors" unique_id=1689503859]
+script = ExtResource("2_uf82w")
+polygon = PackedVector2Array(9, 10, 23, 10, 23, 22, 9, 22)
+floor_thickness = 0.15
+show_grid = false
+
+[node name="Walls" type="Node3D" parent="." unique_id=202759404]
+
+[node name="Wall_9_10_10_10" type="Node3D" parent="Walls" unique_id=2140810451]
+script = ExtResource("3_lo7xh")
+start_point = Vector3(9, 0, 10)
+end_point = Vector3(10, 0, 10)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_11_10_21_10" type="Node3D" parent="Walls" unique_id=1155239896]
+script = ExtResource("3_lo7xh")
+start_point = Vector3(11, 0, 10)
+end_point = Vector3(21, 0, 10)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_22_10_23_10" type="Node3D" parent="Walls" unique_id=323572247]
+script = ExtResource("3_lo7xh")
+start_point = Vector3(22, 0, 10)
+end_point = Vector3(23, 0, 10)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_9_22_23_22" type="Node3D" parent="Walls" unique_id=1861677374]
+script = ExtResource("3_lo7xh")
+start_point = Vector3(9, 0, 22)
+end_point = Vector3(23, 0, 22)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_9_10_9_22" type="Node3D" parent="Walls" unique_id=497096285]
+script = ExtResource("3_lo7xh")
+start_point = Vector3(9, 0, 10)
+end_point = Vector3(9, 0, 22)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_23_10_23_22" type="Node3D" parent="Walls" unique_id=1322614889]
+script = ExtResource("3_lo7xh")
+start_point = Vector3(23, 0, 10)
+end_point = Vector3(23, 0, 22)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Anchors" type="Node3D" parent="." unique_id=727078195]
+
+[node name="Landmark1" type="Marker3D" parent="Anchors" unique_id=1752993531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 13.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "landmark_1"
+role = "landmark"
+label = "Dining table"
+guid = 2313831316
+extra = {
+"cell": Vector2i(12, 13),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object1" type="Marker3D" parent="Anchors" unique_id=809792855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 12.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_1"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(12, 12),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object2" type="Marker3D" parent="Anchors" unique_id=1884289540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 12.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_2"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(13, 12),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object3" type="Marker3D" parent="Anchors" unique_id=2137529761]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 15.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_3"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(12, 15),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object4" type="Marker3D" parent="Anchors" unique_id=801150003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 15.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_4"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(13, 15),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Landmark2" type="Marker3D" parent="Anchors" unique_id=1229201311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 18.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "landmark_2"
+role = "landmark"
+label = "Dining table"
+guid = 2313831316
+extra = {
+"cell": Vector2i(12, 18),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object5" type="Marker3D" parent="Anchors" unique_id=1996503257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 17.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_5"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(12, 17),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object6" type="Marker3D" parent="Anchors" unique_id=205122443]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 17.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_6"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(13, 17),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object7" type="Marker3D" parent="Anchors" unique_id=784753631]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 20.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_7"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(12, 20),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object8" type="Marker3D" parent="Anchors" unique_id=1367732330]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 20.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_8"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(13, 20),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Landmark3" type="Marker3D" parent="Anchors" unique_id=1863373263]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 13.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "landmark_3"
+role = "landmark"
+label = "Dining table"
+guid = 2313831316
+extra = {
+"cell": Vector2i(19, 13),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object9" type="Marker3D" parent="Anchors" unique_id=1344634015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 12.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_9"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(19, 12),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object10" type="Marker3D" parent="Anchors" unique_id=1224044273]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0, 12.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_10"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(20, 12),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object11" type="Marker3D" parent="Anchors" unique_id=684955556]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 15.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_11"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(19, 15),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object12" type="Marker3D" parent="Anchors" unique_id=1215280401]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0, 15.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_12"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(20, 15),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Landmark4" type="Marker3D" parent="Anchors" unique_id=1241589427]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 18.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "landmark_4"
+role = "landmark"
+label = "Dining table"
+guid = 2313831316
+extra = {
+"cell": Vector2i(19, 18),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object13" type="Marker3D" parent="Anchors" unique_id=258118892]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 17.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_13"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(19, 17),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object14" type="Marker3D" parent="Anchors" unique_id=1039879161]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0, 17.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_14"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(20, 17),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object15" type="Marker3D" parent="Anchors" unique_id=2090507077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 20.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_15"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(19, 20),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object16" type="Marker3D" parent="Anchors" unique_id=526167243]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0, 20.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_16"
+role = "object"
+guid = 1021985784
+extra = {
+"cell": Vector2i(20, 20),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object17" type="Marker3D" parent="Anchors" unique_id=1797409760]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 0, 10.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_17"
+role = "object"
+guid = 45724076
+extra = {
+"cell": Vector2i(15, 10),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object18" type="Marker3D" parent="Anchors" unique_id=1349952358]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 10.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_18"
+role = "object"
+guid = 45724076
+extra = {
+"cell": Vector2i(16, 10),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object19" type="Marker3D" parent="Anchors" unique_id=771232311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 0, 20.5)
+script = ExtResource("4_0i1m6")
+anchor_id = "object_19"
+role = "object"
+guid = 3119137576
+extra = {
+"cell": Vector2i(22, 20),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Entry1" type="Marker3D" parent="Anchors" unique_id=1744439829]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, 10)
+script = ExtResource("4_0i1m6")
+anchor_id = "entry_1"
+role = "entry"
+label = "Entry threshold"
+extra = {
+"annotation_only": true,
+"interior": Vector2(10.5, 10.5),
+"yaw": 0.0
+}
+
+[node name="Exit1" type="Marker3D" parent="Anchors" unique_id=109189157]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.5, 0, 10)
+script = ExtResource("4_0i1m6")
+anchor_id = "exit_1"
+role = "exit"
+label = "Exit threshold"
+extra = {
+"annotation_only": true,
+"interior": Vector2(21.5, 10.5),
+"yaw": 0.0
+}
+
+[node name="Stations" type="Node3D" parent="." unique_id=1659763623]
+
+[node name="Components" type="Node3D" parent="." unique_id=1648704568]

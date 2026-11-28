@@ -22,7 +22,15 @@ signal floor_zone_rebuilt()
 		polygon = v
 		_queue_rebuild()
 
-@export_range(0.05, 1.0, 0.05) var floor_thickness: float = 0.2:
+## Lot floor pattern id (11 = stone; 65535 = not walkable). Gameplay reads it via LevelStructure3D.
+@export var pattern: int = 11
+## false keeps collision and walkable cells but hides the mesh at runtime. Always drawn in the editor.
+@export var draw_mesh: bool = true:
+	set(v):
+		draw_mesh = v
+		_queue_rebuild()
+
+@export_range(0.02, 1.0, 0.01) var floor_thickness: float = 0.2:
 	set(v):
 		floor_thickness = v
 		_queue_rebuild()
@@ -217,6 +225,7 @@ func rebuild() -> void:
 		_build_reference_grid(visual_root)
 
 	_update_materials()
+	visual_root.visible = draw_mesh or Engine.is_editor_hint()
 	floor_zone_rebuilt.emit()
 
 func _build_reference_grid(parent: Node3D) -> void:

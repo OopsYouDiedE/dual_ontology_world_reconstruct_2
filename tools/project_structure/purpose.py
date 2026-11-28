@@ -137,7 +137,7 @@ EXACT = {
     'tools/building_construction/architect_prop_presets.json':'ArchBuilder 道具参数预设，供目录应用到家具、门灯等组件。',
     'tools/building_construction/architect_rooms.json':'ArchBuilder 房间蓝图库，保存楼层轮廓、开口和部件摆放。',
     'tools/building_construction/catalog.json':'定义 ArchBuilder 构件分类与项目索引。',
-    'tools/building_construction/plugin.cfg':'Godot 编辑器建筑组件库插件的注册配置。',
+    'addons/archbuilder/plugin.cfg':'Godot 编辑器关卡结构插件（墙/地面/锚点/站位/目录构件）的注册配置。',
     'tools/building_construction/candidates/BuildingCandidate.yaml':'ArchBuilder 候选楼层的可编辑布局参数。',
     'scenes/blue_prince_lab/reference/interface/cabinets.json':'参考柜组的布局及组件规格数据。',
     'scenes/blue_prince_lab/HallToon.gdshaderinc':'房间 Toon 着色器共用的 uniform 与公共片段。',

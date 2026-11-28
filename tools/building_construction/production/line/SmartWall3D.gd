@@ -18,17 +18,17 @@ signal wall_rebuilt()
 		end_point = _snap_vector(v)
 		_queue_rebuild()
 
-@export_range(0.5, 10.0, 0.1) var wall_height: float = 3.0:
+@export_range(0.5, 40.0, 0.01) var wall_height: float = 3.0:
 	set(v):
 		wall_height = maxf(0.5, v)
 		_queue_rebuild()
 
-@export_range(0.05, 1.0, 0.05) var wall_thickness: float = 0.25:
+@export_range(0.02, 3.0, 0.01) var wall_thickness: float = 0.25:
 	set(v):
 		wall_thickness = maxf(0.05, v)
 		_queue_rebuild()
 
-@export_range(0.05, 1.0, 0.05) var grid_snap: float = 0.25
+@export_range(0.0, 1.0, 0.05) var grid_snap: float = 0.25
 
 @export_group("Skirting & Cutaway")
 @export var skirting_enabled: bool = true:
@@ -74,6 +74,12 @@ signal wall_rebuilt()
 
 # Persist authored openings in .tscn; detected child openings remain transient.
 @export var openings: Array[Dictionary] = []
+## Level structures: false keeps collision and gameplay edges but hides the mesh at runtime
+## (e.g. the Public Hall, whose visible shell is a Gothic component). Always drawn in the editor.
+@export var draw_mesh: bool = true:
+	set(v):
+		draw_mesh = v
+		_queue_rebuild()
 var _rebuild_pending: bool = false
 
 func _ready() -> void:
@@ -267,6 +273,7 @@ func rebuild() -> void:
 		collision_root.add_child(col_shape)
 
 	_update_materials()
+	visual_root.visible = draw_mesh or Engine.is_editor_hint()
 	wall_rebuilt.emit()
 
 # The kit's round and arched profiles are convex in each vertical slice.

@@ -16,6 +16,10 @@ window/stretch/mode="canvas_items"
 [dotnet]
 project/assembly_name="DualOntologyWorldReconstruct2"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/archbuilder/plugin.cfg")
+
 [input]
 
 move_up={

@@ -255,6 +255,8 @@ func set_blueprint_room(title: String, exits: Array, xml_path: String) -> Error:
 		_template = "kitchen"
 		_apply(title, exits, GeoBuilder.Kitchen.layout(_kitchen_plan), "blueprint", 1)
 		return OK
+	if xml_path.ends_with(".tscn"):
+		return _use_structure(title, exits, xml_path)
 	var stamp := int(FileAccess.get_modified_time(xml_path)) if FileAccess.file_exists(xml_path) else -1
 	var result := {"error": OK}
 	if _blueprint.is_empty() or _blueprint_path != xml_path or _blueprint_stamp != stamp:
@@ -266,6 +268,26 @@ func set_blueprint_room(title: String, exits: Array, xml_path: String) -> Error:
 	_template = xml_path.get_file().get_basename() if xml_path.begins_with("res://content/academy_lots/") else ""
 	_apply(title, exits, _blueprint, "blueprint" if not _blueprint.is_empty() else "", 1)
 	return result.error
+
+## Rooms authored as editable Godot scenes (LevelStructure3D). The scene is the single source:
+## its floors/walls/anchors give the gameplay lot, and LotGeometryBuilder instances it as the shell.
+func _use_structure(title: String, exits: Array, path: String) -> Error:
+	if not ResourceLoader.exists(path):
+		return ERR_FILE_NOT_FOUND
+	if _blueprint.is_empty() or _blueprint_path != path:
+		var probe := (load(path) as PackedScene).instantiate()
+		if not probe is LevelStructure3D:
+			probe.free()
+			return ERR_INVALID_DATA
+		_blueprint = probe.derive_lot()
+		_blueprint["structure_scene"] = path
+		_upper_plan = probe.upper_plan.duplicate(true)
+		_blueprint_path = path
+		_blueprint_stamp = -1
+		probe.free()
+	_template = str(_blueprint.get("template", ""))
+	_apply(title, exits, _blueprint, "blueprint", 1)
+	return OK
 
 func set_freeso_room(label: String, exits: Array, path: String, level: int = 1) -> Error:
 	return _use_snapshot(label, exits, FreeSoSnapshot.read_file(path, level), level)

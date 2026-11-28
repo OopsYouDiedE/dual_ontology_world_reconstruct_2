@@ -731,9 +731,12 @@ func _refresh() -> void:
 	room_view.set_instance_id(current)
 	room_view.release_routes(cleared.has(current))
 	var title: String = "Return Junction" if current == "turntable" else Rooms.TITLES[_stage()]
-	var path := "res://content/academy_lots/%s.xml" % house.template_id(current)
-	if phase == "camp":
-		path = "res://content/academy_lots/public_nave.xml"
+	# Every room is an editable Godot structure scene (LevelStructure3D); the kitchen keeps its
+	# ArchBuilder-document path until it is migrated.
+	var template: String = "public_nave" if phase == "camp" else str(house.template_id(current))
+	var path := "res://scenes/levels/structures/%s.tscn" % template
+	if not ResourceLoader.exists(path):
+		path = "res://content/academy_lots/%s.xml" % template
 	var err: Error = room_view.set_blueprint_room(title, labels, path)
 	assert(err == OK, "Missing native room blueprint " + path)
 	if phase != "camp":

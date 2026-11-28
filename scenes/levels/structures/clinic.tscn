@@ -1,0 +1,233 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/components/structure/LevelStructure3D.gd" id="1_2s7q6"]
+[ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd" id="2_lg2kg"]
+[ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd" id="3_jyrbo"]
+[ext_resource type="Script" path="res://scenes/components/structure/LevelAnchor3D.gd" id="4_80rmf"]
+
+[node name="ClinicStructure" type="Node3D" unique_id=1772699607]
+script = ExtResource("1_2s7q6")
+template_id = "clinic"
+room_label = "Clinic"
+
+[node name="Floors" type="Node3D" parent="." unique_id=1910787326]
+
+[node name="Floor_12_12" type="Node3D" parent="Floors" unique_id=1310702941]
+script = ExtResource("2_lg2kg")
+polygon = PackedVector2Array(12, 12, 21, 12, 21, 20, 12, 20)
+pattern = 10
+floor_thickness = 0.15
+show_grid = false
+
+[node name="Walls" type="Node3D" parent="." unique_id=195357189]
+
+[node name="Wall_12_12_16_12" type="Node3D" parent="Walls" unique_id=1090706270]
+script = ExtResource("3_jyrbo")
+start_point = Vector3(12, 0, 12)
+end_point = Vector3(16, 0, 12)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_17_12_21_12" type="Node3D" parent="Walls" unique_id=1082450224]
+script = ExtResource("3_jyrbo")
+start_point = Vector3(17, 0, 12)
+end_point = Vector3(21, 0, 12)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_12_20_21_20" type="Node3D" parent="Walls" unique_id=1223046481]
+script = ExtResource("3_jyrbo")
+start_point = Vector3(12, 0, 20)
+end_point = Vector3(21, 0, 20)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_12_12_12_20" type="Node3D" parent="Walls" unique_id=170996522]
+script = ExtResource("3_jyrbo")
+start_point = Vector3(12, 0, 12)
+end_point = Vector3(12, 0, 20)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_21_12_21_20" type="Node3D" parent="Walls" unique_id=849177301]
+script = ExtResource("3_jyrbo")
+start_point = Vector3(21, 0, 12)
+end_point = Vector3(21, 0, 20)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Anchors" type="Node3D" parent="." unique_id=1818708735]
+
+[node name="Object1" type="Marker3D" parent="Anchors" unique_id=193006039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 0, 12.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_1"
+role = "object"
+guid = 45724076
+extra = {
+"cell": Vector2i(14, 12),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object2" type="Marker3D" parent="Anchors" unique_id=94333112]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0, 12.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_2"
+role = "object"
+guid = 45724076
+extra = {
+"cell": Vector2i(18, 12),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Landmark1" type="Marker3D" parent="Anchors" unique_id=183048687]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 14.5)
+script = ExtResource("4_80rmf")
+anchor_id = "landmark_1"
+role = "landmark"
+label = "Treatment bed"
+guid = 434783094
+extra = {
+"cell": Vector2i(13, 14),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Object3" type="Marker3D" parent="Anchors" unique_id=254545060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 0, 14.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_3"
+role = "object"
+guid = 317342582
+extra = {
+"cell": Vector2i(14, 14),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Landmark2" type="Marker3D" parent="Anchors" unique_id=606956283]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 18.5)
+script = ExtResource("4_80rmf")
+anchor_id = "landmark_2"
+role = "landmark"
+label = "Treatment bed"
+guid = 434783094
+extra = {
+"cell": Vector2i(13, 18),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Object4" type="Marker3D" parent="Anchors" unique_id=1544324636]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 0, 18.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_4"
+role = "object"
+guid = 317342582
+extra = {
+"cell": Vector2i(14, 18),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Landmark3" type="Marker3D" parent="Anchors" unique_id=1173749643]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 14.5)
+script = ExtResource("4_80rmf")
+anchor_id = "landmark_3"
+role = "landmark"
+label = "Treatment bed"
+guid = 434783094
+extra = {
+"cell": Vector2i(19, 14),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Object5" type="Marker3D" parent="Anchors" unique_id=280727641]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0, 14.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_5"
+role = "object"
+guid = 317342582
+extra = {
+"cell": Vector2i(18, 14),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Landmark4" type="Marker3D" parent="Anchors" unique_id=1478703846]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 18.5)
+script = ExtResource("4_80rmf")
+anchor_id = "landmark_4"
+role = "landmark"
+label = "Treatment bed"
+guid = 434783094
+extra = {
+"cell": Vector2i(19, 18),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Object6" type="Marker3D" parent="Anchors" unique_id=1127551908]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0, 18.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_6"
+role = "object"
+guid = 317342582
+extra = {
+"cell": Vector2i(18, 18),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Object7" type="Marker3D" parent="Anchors" unique_id=1802589874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 19.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_7"
+role = "object"
+guid = 1575633904
+extra = {
+"cell": Vector2i(16, 19),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object8" type="Marker3D" parent="Anchors" unique_id=1191269740]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 0, 19.5)
+script = ExtResource("4_80rmf")
+anchor_id = "object_8"
+role = "object"
+guid = 1575633904
+extra = {
+"cell": Vector2i(17, 19),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Entry1" type="Marker3D" parent="Anchors" unique_id=1913592545]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 12)
+script = ExtResource("4_80rmf")
+anchor_id = "entry_1"
+role = "entry"
+label = "Entry threshold"
+extra = {
+"annotation_only": true,
+"interior": Vector2(16.5, 12.5),
+"yaw": 0.0
+}
+
+[node name="Stations" type="Node3D" parent="." unique_id=1343283764]
+
+[node name="Components" type="Node3D" parent="." unique_id=741722817]

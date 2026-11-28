@@ -53,6 +53,23 @@ static func build_room(geometry: Node3D, camera: Camera3D, lot: Dictionary, temp
 		kitchen.build(kitchen_plan, lot.floors)
 		return {"walkable_cells": walkable_cells, "kitchen": kitchen, "lights": null, "gothic_hall": null, "avatar_root": null, "object_root": null}
 
+	# Editable Godot structure scene (LevelStructure3D): its SmartFloorZone3D/SmartWall3D nodes
+	# own collision and the wall shell; floor tiles are still drawn per cell so the meridian
+	# well recess and floor patterns read exactly as before.
+	var structure: Node3D = null
+	if lot.has("structure_scene"):
+		structure = (load(str(lot.structure_scene)) as PackedScene).instantiate()
+		structure.name = "LevelStructure"
+		var gothic := expedition_view and is_hall_shell(template, room_label)
+		var wall_mat := tile_surface(Color("b9b1a1"), true)
+		for zone: Node3D in structure.floors():
+			zone.draw_mesh = false
+		for wall: Node3D in structure.walls():
+			var window: bool = wall.openings.any(func(op): return float(op.get("bottom", 0)) > 0.01)
+			wall.draw_mesh = not gothic and not window
+			if wall.wall_material == null:
+				wall.wall_material = wall_mat
+		geometry.add_child(structure)
 	var static_body := StaticBody3D.new()
 	geometry.add_child(static_body)
 	var tile := BoxMesh.new()
@@ -79,7 +96,8 @@ static func build_room(geometry: Node3D, camera: Camera3D, lot: Dictionary, temp
 		floor_bounds = area if not floor_bounds.has_area() else floor_bounds.merge(area)
 		if pattern != 65535:
 			walkable_cells[cell] = true
-			add_shape(static_body, pos, tile.size)
+			if structure == null:
+				add_shape(static_body, pos, tile.size)
 
 	for pattern: int in batches:
 		var floor_tint: Color = Color("525e6a") if (expedition_view and hall_shell) else Plan.floor_color(pattern).darkened(0.24)
@@ -100,10 +118,11 @@ static func build_room(geometry: Node3D, camera: Camera3D, lot: Dictionary, temp
 		if not gothic_shell:
 			if lot.get("windows", {}).has(edge):
 				_build_window(geometry, position, basis, d.length())
-			else:
+			elif structure == null:
 				walls.append_from(wall, 0, Transform3D(basis * Basis.from_scale(Vector3(d.length(), 1, 1)), position))
-		add_shape(static_body, position, Vector3(d.length(), wall.size.y, wall.size.z), basis)
-	if not gothic_shell:
+		if structure == null:
+			add_shape(static_body, position, Vector3(d.length(), wall.size.y, wall.size.z), basis)
+	if not gothic_shell and structure == null:
 		commit_static_mesh(geometry, walls, tile_surface(Color("b9b1a1"), true))
 
 	var gothic_hall: Node3D = null

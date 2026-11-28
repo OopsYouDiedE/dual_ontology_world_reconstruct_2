@@ -1,0 +1,229 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/components/structure/LevelStructure3D.gd" id="1_kykm8"]
+[ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd" id="2_j87sx"]
+[ext_resource type="Script" path="res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd" id="3_l48pf"]
+[ext_resource type="Script" path="res://scenes/components/structure/LevelAnchor3D.gd" id="4_5p8dh"]
+
+[node name="LivingHallStructure" type="Node3D" unique_id=1011984564]
+script = ExtResource("1_kykm8")
+template_id = "living_hall"
+room_label = "Living Hall"
+
+[node name="Floors" type="Node3D" parent="." unique_id=1717939769]
+
+[node name="Floor_11_12" type="Node3D" parent="Floors" unique_id=1694905850]
+script = ExtResource("2_j87sx")
+polygon = PackedVector2Array(11, 12, 21, 12, 21, 20, 11, 20)
+floor_thickness = 0.15
+show_grid = false
+
+[node name="Walls" type="Node3D" parent="." unique_id=1522476785]
+
+[node name="Wall_11_12_12_12" type="Node3D" parent="Walls" unique_id=1710297245]
+script = ExtResource("3_l48pf")
+start_point = Vector3(11, 0, 12)
+end_point = Vector3(12, 0, 12)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_13_12_19_12" type="Node3D" parent="Walls" unique_id=1711103]
+script = ExtResource("3_l48pf")
+start_point = Vector3(13, 0, 12)
+end_point = Vector3(19, 0, 12)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_20_12_21_12" type="Node3D" parent="Walls" unique_id=415431672]
+script = ExtResource("3_l48pf")
+start_point = Vector3(20, 0, 12)
+end_point = Vector3(21, 0, 12)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_11_20_21_20" type="Node3D" parent="Walls" unique_id=1598405789]
+script = ExtResource("3_l48pf")
+start_point = Vector3(11, 0, 20)
+end_point = Vector3(21, 0, 20)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_11_12_11_20" type="Node3D" parent="Walls" unique_id=1107094976]
+script = ExtResource("3_l48pf")
+start_point = Vector3(11, 0, 12)
+end_point = Vector3(11, 0, 20)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Wall_21_12_21_20" type="Node3D" parent="Walls" unique_id=863727005]
+script = ExtResource("3_l48pf")
+start_point = Vector3(21, 0, 12)
+end_point = Vector3(21, 0, 20)
+wall_height = 2.75
+wall_thickness = 0.13
+grid_snap = 0.0
+skirting_enabled = false
+
+[node name="Anchors" type="Node3D" parent="." unique_id=277433840]
+
+[node name="Landmark1" type="Marker3D" parent="Anchors" unique_id=1197588701]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 12.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "landmark_1"
+role = "landmark"
+label = "Record station"
+guid = 2901033898
+extra = {
+"cell": Vector2i(13, 12),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Landmark2" type="Marker3D" parent="Anchors" unique_id=180080332]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 0, 12.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "landmark_2"
+role = "landmark"
+label = "Record station"
+guid = 2901033898
+extra = {
+"cell": Vector2i(15, 12),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Landmark3" type="Marker3D" parent="Anchors" unique_id=2040660117]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 0, 12.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "landmark_3"
+role = "landmark"
+label = "Record station"
+guid = 2901033898
+extra = {
+"cell": Vector2i(17, 12),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Landmark4" type="Marker3D" parent="Anchors" unique_id=1417934831]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, 17.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "landmark_4"
+role = "landmark"
+label = "Central stand"
+guid = 3723117552
+extra = {
+"cell": Vector2i(16, 17),
+"dir": 4,
+"yaw": -3.141592653589793
+}
+
+[node name="Object1" type="Marker3D" parent="Anchors" unique_id=1217874567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0, 16.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "object_1"
+role = "object"
+guid = 1760183082
+extra = {
+"cell": Vector2i(11, 16),
+"dir": 2,
+"yaw": -1.5707963267948966
+}
+
+[node name="Object2" type="Marker3D" parent="Anchors" unique_id=854951132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0, 16.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "object_2"
+role = "object"
+guid = 1760183082
+extra = {
+"cell": Vector2i(20, 16),
+"dir": 6,
+"yaw": -4.71238898038469
+}
+
+[node name="Object3" type="Marker3D" parent="Anchors" unique_id=110509794]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 14.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "object_3"
+role = "object"
+guid = 116015881
+extra = {
+"cell": Vector2i(13, 14),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object4" type="Marker3D" parent="Anchors" unique_id=517621762]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 15.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "object_4"
+role = "object"
+guid = 1575633904
+extra = {
+"cell": Vector2i(13, 15),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object5" type="Marker3D" parent="Anchors" unique_id=1563630952]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 17.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "object_5"
+role = "object"
+guid = 3085583168
+extra = {
+"cell": Vector2i(19, 17),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Object6" type="Marker3D" parent="Anchors" unique_id=940470082]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0, 19.5)
+script = ExtResource("4_5p8dh")
+anchor_id = "object_6"
+role = "object"
+guid = 3119137576
+extra = {
+"cell": Vector2i(20, 19),
+"dir": 0,
+"yaw": 0.0
+}
+
+[node name="Entry1" type="Marker3D" parent="Anchors" unique_id=2068678997]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, 12)
+script = ExtResource("4_5p8dh")
+anchor_id = "entry_1"
+role = "entry"
+label = "Entry threshold"
+extra = {
+"annotation_only": true,
+"interior": Vector2(12.5, 12.5),
+"yaw": 0.0
+}
+
+[node name="Exit1" type="Marker3D" parent="Anchors" unique_id=1145225449]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, 12)
+script = ExtResource("4_5p8dh")
+anchor_id = "exit_1"
+role = "exit"
+label = "Exit threshold"
+extra = {
+"annotation_only": true,
+"interior": Vector2(19.5, 12.5),
+"yaw": 0.0
+}
+
+[node name="Stations" type="Node3D" parent="." unique_id=231853043]
+
+[node name="Components" type="Node3D" parent="." unique_id=909583660]

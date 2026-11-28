@@ -5,7 +5,7 @@ extends SceneTree
 const RunScene := preload("res://scenes/rogue/Run.tscn")
 
 var failed := 0
-var out_dir := "/tmp/hall_layout_shots"
+var out_dir := ProjectSettings.globalize_path("res://.runtime/hall_layout_shots")
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)

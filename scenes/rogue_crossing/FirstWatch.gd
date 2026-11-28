@@ -20,7 +20,7 @@ const HallOpening := preload("HallOpeningSequence.gd")
 
 const MARGINS := Storage.MARGINS
 const FIRST_SEAL := Storage.FIRST_SEAL
-const FIRST_BRIEF := "The Essence is drifting. Hale is waiting at the north gate: go down the well together and bring back the spare core."
+const FIRST_BRIEF := "03:38 · 公共大厅。可先观察中央傅科摆或与霍铎交谈，再前往北翼门廊。"
 
 var first_sortie
 var first_returned := false
@@ -28,6 +28,11 @@ var pendulum_measured := false
 var pendulum_note_recorded := false
 var pendulum_measured_sec := 8.1
 var field_notes: Array[String] = []
+var _wrpg_panel: PanelContainer
+var _wrpg_title: Label
+var _wrpg_body: Label
+var _wrpg_choices: VBoxContainer
+var _wrpg_actions: Array[Callable] = []
 var _opening: CanvasLayer
 var _opening_played := false
 
@@ -385,21 +390,21 @@ func _take_deposition(id: String) -> void:
 		_open_pendulum_sheet()
 		return
 
-	# Pre-sortie Hale: Epistemic-Firewall-compliant dialogue + unlockable Foucault Pendulum Q&A
+	# Pre-sortie Hale: Compact WRPG dialogue menu (no full-screen dossier!)
 	if id == "Hale" and not first_returned:
 		if is_instance_valid(hall_hale) and hall_hale.has_meta("animation_player"):
 			(hall_hale.get_meta("animation_player") as AnimationPlayer).play(&"signal", 0.25)
 		var line := R18n.pick(
-			"大厅里没有任何外力损坏，只有北门门缝在往里渗白雾和海盐味。整点前我们得进北翼核查落闸，带上提灯和怀表随时出发。",
-			"Nothing in the Hall is physically damaged—only the north archway is leaking ground mist and sea-salt air. We should inspect the North Wing before the hour bell."
+			"大厅里没有任何外力损坏，只有北门门缝在往里渗白雾和海盐味。整点前我们得进北翼查一趟。",
+			"Nothing in the Hall is damaged—only the north archway is leaking mist and sea-salt air. We should check the North Wing before the hour bell."
 		)
 		_speak_hall_mumble(line, "hale")
-		_open("witness", R18n.pick("霍铎（Hale） · 同行学员", "Hale · Watch Partner"), R18n.pick("03:38 大厅待命", "03:38 PUBLIC HALL"))
-		_label(line)
+		var opts: Array[Dictionary] = []
 		if pendulum_measured:
-			_button(_sheet, R18n.pick("询问关于傅科摆周期与偏心的事", "Ask Hale about the Foucault pendulum"), _ask_hale_pendulum)
-		_button(_sheet, R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), _depart_first)
-		_button(_sheet, R18n.pick("先在大厅观察", "Keep looking around the Hall"), _close)
+			opts.append({"label": R18n.pick("询问关于傅科摆周期与偏心的事", "Ask about the Foucault pendulum"), "cb": _ask_hale_pendulum})
+		opts.append({"label": R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), "cb": _depart_first})
+		opts.append({"label": R18n.pick("先在大厅观察", "Step back"), "cb": _close_wrpg})
+		_open_wrpg(R18n.pick("霍铎（Hale）", "Hale"), line, opts)
 		return
 
 	if id not in Cast.NAMES:
@@ -719,7 +724,7 @@ func _refresh() -> void:
 		if phase == "camp" and message.is_empty():
 			_instruction.text = R18n.pick("选择一条补给路线。出发前可与大厅居民交谈招募队员。", "Choose a supply route. Speak to a resident to recruit before leaving.")
 		if phase == "camp" and not first_returned:
-			_instruction.text = R18n.pick("源质正在漂移。Hale 在北门等你：两人一起下井，取回备用源核。", FIRST_BRIEF)
+			_instruction.text = R18n.pick("大厅傅科摆周期异常，霍铎正在等你。可先观测傅科摆，或走近与他交谈。", FIRST_BRIEF)
 		for i in destinations.size():
 			_button(_flow, _route_name(destinations[i]), travel.bind(i))
 		_button(_flow, R18n.pick("路线图", "Route chart"), _chart).disabled = _performing
@@ -795,11 +800,127 @@ func _on_opening_finished() -> void:
 	room_view.set_essence_instability(room_view.essence_baseline())
 	room_view.set_modal(not modal.is_empty() or phase in ["lost", "won"])
 	if phase == "camp" and not first_returned and is_instance_valid(_hud):
-		_instruction.text = R18n.pick("源质正在漂移。Hale 在北门等你：两人一起下井，取回备用源核。", FIRST_BRIEF)
+		_instruction.text = R18n.pick("大厅傅科摆周期异常，霍铎正在等你。可先观测傅科摆，或走近与他交谈。", FIRST_BRIEF)
 		_hud.fit_instruction(get_viewport_rect().size.x)
 
 
-## ---- Foucault Pendulum: Single-Pass Judge -> 1-Cycle Animation -> Exact g Period ----
+## ---- Compact Western-RPG Bottom Action Menu (Pendulum & Hale) ----
+func _ensure_wrpg_menu() -> void:
+	if is_instance_valid(_wrpg_panel):
+		return
+	var font := UiStyle.make_font()
+	_wrpg_panel = PanelContainer.new()
+	_wrpg_panel.name = "WrpgActionMenu"
+	_wrpg_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	_wrpg_panel.offset_left = -310.0
+	_wrpg_panel.offset_right = 310.0
+	_wrpg_panel.offset_bottom = -28.0
+	_wrpg_panel.offset_top = -230.0
+	_wrpg_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.055, 0.065, 0.085, 0.90)
+	sb.border_color = Color("cfa04c")
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(3)
+	sb.content_margin_left = 20
+	sb.content_margin_right = 20
+	sb.content_margin_top = 14
+	sb.content_margin_bottom = 14
+	_wrpg_panel.add_theme_stylebox_override("panel", sb)
+	add_child(_wrpg_panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	_wrpg_panel.add_child(vbox)
+
+	_wrpg_title = Label.new()
+	UiStyle.style_label(_wrpg_title, font, 15, Color("f0c475"), 2)
+	vbox.add_child(_wrpg_title)
+
+	_wrpg_body = Label.new()
+	_wrpg_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiStyle.style_label(_wrpg_body, font, 14, Color("e6e1d6"), 2)
+	vbox.add_child(_wrpg_body)
+
+	var sep := HSeparator.new()
+	sep.modulate = Color(0.81, 0.63, 0.30, 0.45)
+	vbox.add_child(sep)
+
+	_wrpg_choices = VBoxContainer.new()
+	_wrpg_choices.add_theme_constant_override("separation", 5)
+	vbox.add_child(_wrpg_choices)
+	_wrpg_panel.hide()
+
+func _open_wrpg(title: String, body: String, options: Array[Dictionary]) -> void:
+	_ensure_wrpg_menu()
+	modal = "wrpg"
+	room_view.set_modal(true)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_wrpg_title.text = title
+	_wrpg_body.text = body
+	for c in _wrpg_choices.get_children():
+		c.queue_free()
+	_wrpg_actions.clear()
+	var font := UiStyle.make_font()
+	for i in options.size():
+		var opt: Dictionary = options[i]
+		var cb: Callable = opt.cb
+		_wrpg_actions.append(cb)
+		var btn := Button.new()
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		btn.text = "[%d]  %s" % [i + 1, str(opt.label)]
+		btn.add_theme_font_override("font", font)
+		btn.add_theme_font_size_override("font_size", 14)
+		btn.add_theme_color_override("font_color", Color("f2efe9"))
+		btn.add_theme_color_override("font_hover_color", Color("f0c475"))
+		var b_norm := StyleBoxFlat.new()
+		b_norm.bg_color = Color(0.11, 0.13, 0.17, 0.72)
+		b_norm.content_margin_left = 12; b_norm.content_margin_right = 12
+		b_norm.content_margin_top = 6; b_norm.content_margin_bottom = 6
+		var b_hov := b_norm.duplicate() as StyleBoxFlat
+		b_hov.bg_color = Color(0.22, 0.19, 0.13, 0.92)
+		b_hov.border_color = Color("cfa04c"); b_hov.set_border_width_all(1)
+		btn.add_theme_stylebox_override("normal", b_norm)
+		btn.add_theme_stylebox_override("hover", b_hov)
+		btn.add_theme_stylebox_override("pressed", b_hov)
+		btn.pressed.connect(cb)
+		_wrpg_choices.add_child(btn)
+	if is_instance_valid(_instruction):
+		_instruction.hide()
+	if is_instance_valid(_flow):
+		_flow.hide()
+	_wrpg_panel.show()
+
+func _close_wrpg() -> void:
+	if is_instance_valid(_wrpg_panel):
+		_wrpg_panel.hide()
+	if is_instance_valid(_instruction):
+		_instruction.show()
+	if is_instance_valid(_flow):
+		_flow.show()
+	_wrpg_actions.clear()
+	if modal == "wrpg":
+		modal = ""
+		room_view.set_modal(false)
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if modal != "wrpg" or not event is InputEventKey or not event.pressed or event.echo:
+		return
+	var code := (event as InputEventKey).physical_keycode
+	if code == KEY_ESCAPE:
+		_close_wrpg()
+		get_viewport().set_input_as_handled()
+		return
+	var idx := -1
+	match code:
+		KEY_1: idx = 0
+		KEY_2: idx = 1
+		KEY_3: idx = 2
+		KEY_4: idx = 3
+	if idx >= 0 and idx < _wrpg_actions.size():
+		_wrpg_actions[idx].call()
+		get_viewport().set_input_as_handled()
+
 func _hall_pendulum_period() -> float:
 	var gothic: Node = room_view.find_child("PublicHallGothic", true, false) if is_instance_valid(room_view) else null
 	if gothic != null and gothic.has_method("get_pendulum_period_sec"):
@@ -807,42 +928,47 @@ func _hall_pendulum_period() -> float:
 	return 7.0 if first_returned else 8.1
 
 func _open_pendulum_sheet() -> void:
-	var period := _hall_pendulum_period()
-	_open("witness", R18n.pick("中央傅科摆 · 先贤祠刻度盘", "Foucault Pendulum · Azimuth Dial"), R18n.pick("物理仪器观测", "INSTRUMENT OBSERVATION"))
-	_label(R18n.pick(
-		"悬索、黄铜摆锤与地面深石板刻度盘均完好无损。周圈 24 根计角立柱中有两根已倒伏在石板上。",
-		"The suspension wire, brass bob, and dark-slate azimuth dial show no physical damage. Two of the twenty-four perimeter pegs lie tipped on the slate."
-	))
+	var title := R18n.pick("傅科摆 · 观测选项", "Foucault Pendulum")
+	var opts: Array[Dictionary] = []
 	if pendulum_measured:
-		var traj := R18n.pick("摆迹精准掠过中心铜钉。", "The bob crosses the center brass pin cleanly.") if first_returned else R18n.pick("摆迹明显绕开了中心铜钉。", "The bob's path visibly curves around the center brass pin.")
-		_label(R18n.pick("已测周期：%.1f 秒（%s）", "Measured period: %.1f s (%s)") % [pendulum_measured_sec, traj], 15, true)
+		var traj := R18n.pick("摆迹掠过中心铜钉", "crosses center pin") if first_returned else R18n.pick("摆迹绕开中心铜钉", "misses center pin")
+		var body := R18n.pick("实测周期：%.1f 秒（%s）；悬索与摆锤完好无损。", "Measured: %.1f s (%s). Wire and bob undamaged.") % [pendulum_measured_sec, traj]
 		if not pendulum_note_recorded:
-			_button(_sheet, R18n.pick("在笔记上记载这件事", "Record this observation in your notebook"), _record_pendulum_note)
-		else:
-			_label(R18n.pick("✓ 已记载于随身笔记。", "✓ Recorded in your field notebook."), 14)
+			opts.append({"label": R18n.pick("在笔记上记载这件事", "Record in notebook"), "cb": _record_pendulum_note})
 		if not first_returned:
-			_button(_sheet, R18n.pick("询问霍铎关于傅科摆的事", "Ask Hale about the Foucault pendulum"), _ask_hale_pendulum)
+			opts.append({"label": R18n.pick("询问霍铎关于傅科摆的事", "Ask Hale about the pendulum"), "cb": _ask_hale_pendulum})
+		opts.append({"label": R18n.pick("离开", "Step back"), "cb": _close_wrpg})
+		_open_wrpg(title, body, opts)
 	else:
-		_label(R18n.pick("你可以掏出随身怀表，在摆锤掠过最低点时完成一次判定，随后观摩一个完整周期得出精确读数。", "Raise your pocket watch, mark one pass at the lowest point, and follow one full cycle for an exact reading."), 14)
-		_button(_sheet, R18n.pick("统计周期", "Measure period"), _begin_pendulum_judge)
-	_button(_sheet, R18n.pick("离开刻度盘", "Step back"), _close)
+		var body := R18n.pick("悬索与摆锤无外力损伤；深石板刻度盘周圈 24 根立柱已有两根倒伏。", "Wire and brass bob are intact; two of twenty-four perimeter pegs lie tipped on the dark slate.")
+		opts.append({"label": R18n.pick("统计周期", "Measure period"), "cb": _begin_pendulum_judge})
+		opts.append({"label": R18n.pick("离开", "Step back"), "cb": _close_wrpg})
+		_open_wrpg(title, body, opts)
 
 func _begin_pendulum_judge() -> void:
-	_open("witness", R18n.pick("统计周期 · 起点判定", "Measure Period · Mark Pass"), R18n.pick("步骤 1 / 2 · 单次判定", "STEP 1 / 2 · SINGLE PASS"))
-	_label(R18n.pick("盯紧黄铜摆锤掠过深石板最低点的瞬间，按下确认锁定起点——随后将自动完成一次完整往返周期观测。", "Watch the brass bob sweep past the lowest point and mark the start—one complete cycle will then be timed automatically."))
-	_button(_sheet, R18n.pick("确认：摆锤已过最低点（开始计时）", "Mark pass now (start cycle)"), _run_pendulum_cycle_anim)
-	_button(_sheet, R18n.pick("取消", "Cancel"), _close)
+	_open_wrpg(
+		R18n.pick("统计周期 · 判定起点", "Measure Period · Mark Pass"),
+		R18n.pick("观察前方摆锤，在它掠过最低点时确认一次，随后将自动完成一个完整往返周期。", "Watch the bob ahead and mark one pass at the lowest point—one full cycle will then complete automatically."),
+		[
+			{"label": R18n.pick("确认：摆锤已过最低点（开始计时）", "Mark pass now"), "cb": _run_pendulum_cycle_anim},
+			{"label": R18n.pick("取消", "Cancel"), "cb": _close_wrpg},
+		]
+	)
 
 func _run_pendulum_cycle_anim() -> void:
 	var watch := _watch_number
-	_open("witness", R18n.pick("统计周期 · 完整往返观测中……", "Measuring Period · Tracking 1 Full Cycle..."), R18n.pick("步骤 2 / 2 · 怀表读秒", "STEP 2 / 2 · TIMING"))
-	_label(R18n.pick("怀表秒针走动中：摆锤正荡向远端折返点……", "Pocket watch ticking: bob sweeping toward the far apex..."))
+	_open_wrpg(
+		R18n.pick("统计周期 · 单周期观测中……", "Measuring Period · 1 Full Cycle..."),
+		R18n.pick("怀表计时中：摆锤正荡向远端折返点……", "Pocket watch ticking: bob sweeping to the far apex..."),
+		[{"label": R18n.pick("中止观测", "Cancel"), "cb": _close_wrpg}]
+	)
 	await get_tree().create_timer(0.95).timeout
-	if watch != _watch_number or modal != "witness":
+	if watch != _watch_number or modal != "wrpg":
 		return
-	_label(R18n.pick("怀表秒针走动中：摆锤回摆，即将回到起点完成 1 个完整周期……", "Pocket watch ticking: bob returning to complete 1 full cycle..."), 14)
+	if is_instance_valid(_wrpg_body):
+		_wrpg_body.text = R18n.pick("怀表计时中：摆锤回摆，完成 1 个完整周期……", "Pocket watch ticking: bob returning to complete 1 full cycle...")
 	await get_tree().create_timer(0.95).timeout
-	if watch != _watch_number or modal != "witness":
+	if watch != _watch_number or modal != "wrpg":
 		return
 	pendulum_measured = true
 	pendulum_measured_sec = _hall_pendulum_period()
@@ -852,22 +978,22 @@ func _record_pendulum_note() -> void:
 	if not pendulum_note_recorded:
 		pendulum_note_recorded = true
 		var entry := R18n.pick(
-			"03:38 · 公共大厅傅科摆完好无损，但实测完整周期为 %.1f 秒，且摆迹绕开中心铜钉。",
-			"03:38 · Public Hall Foucault pendulum is physically intact, yet measures %.1f s per cycle and misses the center pin."
+			"03:38 · 公共大厅傅科摆完好无损，实测完整周期 %.1f 秒，摆迹绕开中心铜钉。",
+			"03:38 · Public Hall Foucault pendulum intact; measured %.1f s per cycle, missing center pin."
 		) % pendulum_measured_sec
 		field_notes.append(entry)
-		message = R18n.pick("已在随身笔记上记载傅科摆观测数据（%.1f 秒）。", "Recorded Foucault pendulum reading (%.1f s) in your notebook.") % pendulum_measured_sec
+		message = R18n.pick("已记入随身笔记（%.1f 秒）。", "Recorded in notebook (%.1f s).") % pendulum_measured_sec
 	_open_pendulum_sheet()
 
 func _ask_hale_pendulum() -> void:
 	var line := R18n.pick(
-		"你也掐出来是 %.1f 秒了？按大厅 12.24 米的摆长和标准重力算，它正常完整周期就该是 7.0 秒，而且工作时一定笔直穿过中心铜钉。仪器没坏却走慢偏心，说明出问题的不是摆——是这间大厅本身。",
-		"You timed %.1f seconds too? With a 12.24 m cable under standard gravity, its normal period is strictly 7.0 seconds and it always crosses the center pin. If an undamaged instrument drifts, it's not the pendulum—it's the Hall."
+		"你也掐出来 %.1f 秒了？按大厅 12.24 米摆长和标准重力算，正常周期该是 7.0 秒，且必经中心铜钉。仪器没坏却走慢偏心，说明出问题的是这间大厅本身。",
+		"You timed %.1f s too? With a 12.24 m cable under standard gravity, its normal period is 7.0 s and it always crosses the center pin. It's not the pendulum—it's the Hall."
 	) % pendulum_measured_sec
 	_speak_hall_mumble(line, "hale")
-	_open("witness", R18n.pick("霍铎（Hale） · 关于傅科摆", "Hale · On the Foucault Pendulum"), R18n.pick("实测 %.1f 秒 / 基准 7.0 秒", "MEASURED %.1f s / BASELINE 7.0 s") % pendulum_measured_sec)
-	_label(line)
+	var opts: Array[Dictionary] = []
 	if not pendulum_note_recorded:
-		_button(_sheet, R18n.pick("在笔记上记载这件事", "Record this in your notebook"), _record_pendulum_note)
-	_button(_sheet, R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), _depart_first)
-	_button(_sheet, R18n.pick("返回大厅", "Back to the Hall"), _close)
+		opts.append({"label": R18n.pick("在笔记上记载这件事", "Record in notebook"), "cb": _record_pendulum_note})
+	opts.append({"label": R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), "cb": _depart_first})
+	opts.append({"label": R18n.pick("返回大厅", "Step back"), "cb": _close_wrpg})
+	_open_wrpg(R18n.pick("霍铎（Hale） · 关于傅科摆", "Hale · On the Pendulum"), line, opts)

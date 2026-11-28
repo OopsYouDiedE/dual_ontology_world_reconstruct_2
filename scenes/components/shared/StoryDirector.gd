@@ -125,7 +125,18 @@ func play_sequence(config: Dictionary) -> void:
 	_advance_beat()
 
 func _input(event: InputEvent) -> void:
-	if not active or not event is InputEventKey or not event.pressed or event.echo:
+	if not active:
+		return
+	if event is InputEventMouseButton and event.pressed:
+		var mb := (event as InputEventMouseButton).button_index
+		if mb == MOUSE_BUTTON_LEFT:
+			_advance_beat()
+			get_viewport().set_input_as_handled()
+		elif mb == MOUSE_BUTTON_RIGHT:
+			skip()
+			get_viewport().set_input_as_handled()
+		return
+	if not event is InputEventKey or not event.pressed or event.echo:
 		return
 	var code := (event as InputEventKey).physical_keycode
 	if code == KEY_ESCAPE:
@@ -146,8 +157,8 @@ func _advance_beat() -> void:
 		_shift_from = float(_beats[beat_index - 1].get("shift", 0.0))
 	if is_instance_valid(_hint_label):
 		_hint_label.text = R18n.pick(
-			"Space / E · 下一句     |     Esc · 跳过剧情",
-			"Space / E · Next     |     Esc · Skip cutscene"
+			"左键 / Space / E · 下一句     |     右键 / Esc · 跳过全部",
+			"LMB / Space / E · Next     |     RMB / Esc · Skip all"
 		)
 	var line_text := str(beat.get("text_en", beat.get("text", "")) if R18n.is_en() else beat.get("text", ""))
 	var speaker_name := str(beat.get("speaker", ""))

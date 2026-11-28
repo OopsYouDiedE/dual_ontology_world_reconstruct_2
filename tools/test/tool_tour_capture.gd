@@ -46,6 +46,7 @@ func run() -> void:
 	var sim := Simulator.instantiate()
 	root.add_child(sim)
 	await frames(12)
+	sim.reset_views()  # same as pressing Center once the window has its final size
 	await shot("01_archbuilder_overview")
 	tab(sim, "Furniture")
 	await frames(4)

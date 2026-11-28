@@ -5,6 +5,7 @@ const Assembly = preload("production/assembly/ComponentAssembly.gd")
 const Socket = preload("BuildingConstruction/Shared/MechanismSocket.gd")
 const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
 const Interactable = preload("res://scenes/components/interaction/AcademyInteractable.gd")
+const ToolTheme = preload("ToolTheme.gd")
 const CANDIDATE_PATH := "res://tools/building_construction/candidates/BuildingCandidate.tscn"
 
 var camera: Camera3D
@@ -40,7 +41,7 @@ func _ready() -> void:
 	var environment := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.12, 0.15, 0.19)
+	env.background_color = ToolTheme.BG
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color.WHITE
 	env.ambient_light_energy = 0.65
@@ -64,7 +65,7 @@ func _make_grid() -> void:
 	var mesh := ImmediateMesh.new()
 	var surface := StandardMaterial3D.new()
 	surface.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	surface.albedo_color = Color(0.28, 0.34, 0.39)
+	surface.albedo_color = Color(0.2, 0.23, 0.28)
 	mesh.surface_begin(Mesh.PRIMITIVE_LINES, surface)
 	for line in range(-20, 21):
 		mesh.surface_add_vertex(Vector3(line, -0.01, -20))
@@ -76,62 +77,106 @@ func _make_grid() -> void:
 	grid.mesh = mesh
 	add_child(grid)
 
-func _button(parent: Node, label: String, callback: Callable) -> void:
+func _button(parent: Node, label: String, callback: Callable, variation := "") -> Button:
 	var button := Button.new()
 	button.text = label
+	button.theme_type_variation = variation
 	button.pressed.connect(callback)
 	parent.add_child(button)
+	return button
+
+func _label(parent: Node, text: String, variation := "") -> Label:
+	var label := Label.new()
+	label.text = text
+	label.theme_type_variation = variation
+	parent.add_child(label)
+	return label
+
+## Small muted heading that groups the controls below it.
+func _section(parent: Node, text: String) -> Label:
+	var label := _label(parent, text, "SectionLabel")
+	label.custom_minimum_size.y = 24
+	label.uppercase = true
+	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	return label
+
+## Label on the left, control on the right: the inspector reads as a property sheet.
+func _row(parent: Node, text: String, control: Control) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	parent.add_child(row)
+	var label := _label(row, text, "FieldLabel")
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.clip_text = true
+	control.custom_minimum_size.x = 150
+	row.add_child(control)
+	return row
 
 func _make_ui() -> void:
+	# 现代简洁风：与 ArchBuilder 共用 ToolTheme；左右两块浮动面板贴满高度，中间留给 3D 视图。
 	var layer := CanvasLayer.new()
 	add_child(layer)
+	var ui := Control.new()
+	ui.name = "ToolUI"
+	ui.theme = ToolTheme.get_theme()
+	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(ui)
 	var panel := PanelContainer.new()
-	panel.position = Vector2(12, 12)
-	panel.custom_minimum_size = Vector2(270, 480)
-	layer.add_child(panel)
+	panel.theme_type_variation = "FloatingPanel"
+	panel.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
+	panel.offset_left = 12
+	panel.offset_top = 12
+	panel.offset_right = 312
+	panel.offset_bottom = -12
+	ui.add_child(panel)
 	var column := VBoxContainer.new()
 	panel.add_child(column)
-	var heading := Label.new()
-	heading.text = "Component Library"
-	column.add_child(heading)
+	_label(column, "Component Library", "TitleLabel")
+	_section(column, "CATALOG")
 	category = OptionButton.new()
 	column.add_child(category)
 	for key in catalog.categories:
 		category.add_item(str(catalog.categories[key]))
 		category.set_item_metadata(category.item_count - 1, key)
 	items = ItemList.new()
-	items.custom_minimum_size = Vector2(250, 230)
+	items.custom_minimum_size = Vector2(250, 160)
+	items.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	items.size_flags_stretch_ratio = 1.6
 	column.add_child(items)
-	_button(column, "Select / Cancel Placement (Esc)", _cancel)
+	_button(column, "Select / Cancel Placement  (Esc)", _cancel, "FlatButton")
+	_section(column, "SCENE")
 	var actions := HBoxContainer.new()
 	column.add_child(actions)
-	_button(actions, "Undo", func(): _restore(history_index - 1))
-	_button(actions, "Redo", func(): _restore(history_index + 1))
-	_button(actions, "Delete", _delete_selected)
+	for spec in [["Undo", func(): _restore(history_index - 1), "FlatButton"], ["Redo", func(): _restore(history_index + 1), "FlatButton"], ["Delete", _delete_selected, "DangerButton"]]:
+		_button(actions, spec[0], spec[1], spec[2]).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outline = ItemList.new()
-	outline.custom_minimum_size = Vector2(250, 150)
+	outline.custom_minimum_size = Vector2(250, 110)
+	outline.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(outline)
 	outline.item_selected.connect(func(index: int): _select(outline.get_item_metadata(index)))
-	_button(column, "Save Candidate", _save_candidate)
-	_button(column, "Open Candidate", _open_candidate)
-	_button(column, "Show All Components", _show_catalog)
-	_button(column, "Save Screenshot", _capture)
-	status = Label.new()
+	_section(column, "FILE")
+	var file_grid := GridContainer.new()
+	file_grid.columns = 2
+	column.add_child(file_grid)
+	for spec in [["Save Candidate", _save_candidate, "PrimaryButton"], ["Open Candidate", _open_candidate, ""], ["Show All", _show_catalog, "FlatButton"], ["Screenshot", _capture, "FlatButton"]]:
+		_button(file_grid, spec[0], spec[1], spec[2]).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status = _label(column, "", "HintLabel")
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.custom_minimum_size.x = 250
-	status.text = "Select a component and click its support. R: turn. F: swap end or stair-rail side. Right-drag: orbit. Shift+right-drag: pan. Scroll: zoom."
-	column.add_child(status)
+	status.text = "Pick a component, click a support to place it.  R turn · F swap end · Right-drag orbit · Shift+right-drag pan · Scroll zoom"
 	var right := PanelContainer.new()
-	right.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	right.offset_left = -290
+	right.theme_type_variation = "FloatingPanel"
+	right.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+	right.offset_left = -352
 	right.offset_right = -12
 	right.offset_top = 12
-	right.offset_bottom = 860
-	layer.add_child(right)
+	right.offset_bottom = -12
+	ui.add_child(right)
 	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right.add_child(scroll)
 	inspector = VBoxContainer.new()
-	inspector.custom_minimum_size.x = 250
+	inspector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(inspector)
 	category.item_selected.connect(_refresh)
 	items.item_selected.connect(_select_item)
@@ -241,9 +286,8 @@ func _pick(mouse: Vector2) -> void:
 func _select(node: Node3D) -> void:
 	selected = node
 	_clear_inspector()
-	var title := Label.new()
-	title.text = str(node.name)
-	inspector.add_child(title)
+	_label(inspector, str(node.name), "TitleLabel")
+	_section(inspector, "MECHANISM")
 	_activity_fields(node)
 	if node.has_method("interact"):
 		_button(inspector,"Operate",node.interact)
@@ -257,17 +301,17 @@ func _select(node: Node3D) -> void:
 	# Pinned fittings keep their mount and dimensions until removed. Moving a
 	# free assembly root carries its subtree. Replacing its geometry needs a refit.
 	if node.get_parent() != candidates:
-		var hint := Label.new()
-		hint.text = "Mounted on: " + str(node.get_parent().name)
-		inspector.add_child(hint)
+		_label(inspector, "Mounted on: " + str(node.get_parent().name), "HintLabel")
 		_refresh_outline()
 		return
+	_section(inspector, "TRANSFORM")
 	_vector_field("Position", "position", node.position)
 	_vector_field("Rotation", "rotation_degrees", node.rotation_degrees)
 	_interaction_fields(node)
 	if not Assembly.members(node).is_empty():
 		_refresh_outline()
 		return
+	_section(inspector, "PARAMETERS")
 	_script_fields(node)
 	_refresh_outline()
 
@@ -290,9 +334,7 @@ func _script_fields(target: Object) -> void:
 			_line_field(target, key, value)
 
 func _line_field(target: Object, key: String, value: Variant) -> void:
-	var label := Label.new()
-	label.text = key + ("（JSON）" if not value is String else "")
-	inspector.add_child(label)
+	_label(inspector, key + ("（JSON）" if not value is String else ""), "FieldLabel")
 	var field := LineEdit.new()
 	field.text = value if value is String else (str(value) if value is Vector3 else JSON.stringify(value))
 	inspector.add_child(field)
@@ -304,24 +346,23 @@ func _line_field(target: Object, key: String, value: Variant) -> void:
 ## Item interaction (scene-side selectable): edit its exported data, or make the item
 ## selectable. Only data is edited here; prompts are drawn by each level's runtime.
 func _interaction_fields(node: Node3D) -> void:
-	var header := Label.new()
-	header.text = "Interaction"
-	inspector.add_child(header)
+	_section(inspector, "Interaction")
 	var it := node.get_node_or_null("Interactable") as Interactable
 	if it == null:
+		_label(inspector, "Not selectable in levels yet.", "HintLabel")
 		_button(inspector, "Make selectable", func():
 			var spec := {"id": str(node.name), "title_en": str(node.name), "title_zh": str(node.name)}
 			Interactable.attach_to(node, spec)
 			_own_interaction(node)
 			_remember()
-			_select(node))
+			_select(node), "PrimaryButton")
 		return
 	_script_fields(it)
 	_button(inspector, "Remove interaction", func():
 		node.remove_child(it)
 		it.queue_free()
 		_remember()
-		_select(node))
+		_select(node), "DangerButton")
 
 func _own_interaction(node: Node) -> void:
 	var it := node.get_node_or_null("Interactable")
@@ -341,7 +382,7 @@ func _socket(node: Node3D) -> Node:
 func _activity_fields(node: Node3D) -> void:
 	var socket := node.get_node_or_null("MechanismSocket")
 	var activity: String = socket.activity if socket else ""
-	var picker := OptionButton.new(); inspector.add_child(picker)
+	var picker := OptionButton.new(); _row(inspector, "Activity", picker)
 	for key in activity_choices:
 		picker.add_item(activity_choices[key]); picker.set_item_metadata(picker.item_count-1,key)
 		if key == activity: picker.select(picker.item_count-1)
@@ -371,20 +412,21 @@ func _clear_inspector() -> void:
 		child.queue_free()
 
 func _vector_field(label: String, key: String, value: Vector3) -> void:
-	var title := Label.new()
-	title.text = label
-	inspector.add_child(title)
+	# One compact row per vector: three spin boxes prefixed X / Y / Z.
+	_label(inspector, label, "FieldLabel")
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	inspector.add_child(row)
 	for axis in range(3):
-		var row := HBoxContainer.new()
-		inspector.add_child(row)
-		var heading := Label.new()
-		heading.text = ["X", "Y", "Z"][axis]
-		row.add_child(heading)
 		var spin := SpinBox.new()
+		spin.prefix = ["X", "Y", "Z"][axis]
 		spin.min_value = -1000
 		spin.max_value = 1000
 		spin.step = 0.05
 		spin.value = value[axis]
+		spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		spin.custom_minimum_size.x = 0
+		spin.get_line_edit().add_theme_constant_override("minimum_character_width", 3)
 		row.add_child(spin)
 		spin.value_changed.connect(func(amount: float):
 			if is_instance_valid(selected):
@@ -394,13 +436,11 @@ func _vector_field(label: String, key: String, value: Vector3) -> void:
 				_remember())
 
 func _property_field(key: String, value: Variant, property: Dictionary, target: Object = null) -> void:
-	var label := Label.new()
-	label.text = key
-	inspector.add_child(label)
 	if value is bool:
-		var toggle := CheckBox.new()
+		var toggle := CheckButton.new()
 		toggle.button_pressed = value
-		inspector.add_child(toggle)
+		toggle.alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_row(inspector, key, toggle)
 		toggle.toggled.connect(func(enabled: bool): _change(key, enabled, target))
 	elif property.hint == PROPERTY_HINT_ENUM:
 		var options := OptionButton.new()
@@ -408,7 +448,7 @@ func _property_field(key: String, value: Variant, property: Dictionary, target: 
 		for option in values:
 			options.add_item(option)
 		options.select(values.find(str(value)) if value is String else int(value))
-		inspector.add_child(options)
+		_row(inspector, key, options)
 		options.item_selected.connect(func(index: int): _change(key, values[index] if value is String else index, target))
 	else:
 		var spin := SpinBox.new()
@@ -422,7 +462,7 @@ func _property_field(key: String, value: Variant, property: Dictionary, target: 
 			if limits.size() > 2:
 				spin.step = float(limits[2])
 		spin.value = float(value)
-		inspector.add_child(spin)
+		_row(inspector, key, spin)
 		spin.value_changed.connect(func(amount: float): _change(key, int(amount) if value is int else amount, target))
 
 func _change(key: String, value: Variant, target: Object = null) -> void:

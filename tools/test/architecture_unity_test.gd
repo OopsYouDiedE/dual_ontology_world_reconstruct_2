@@ -158,7 +158,7 @@ func _ready():
 	library.candidates.add_child(lib_chest)
 	library._own_interaction(lib_chest)
 	library._select(lib_chest)
-	var labels: Array = library.inspector.get_children().filter(func(c): return c is Label).map(func(c): return c.text)
+	var labels: Array = library.inspector.find_children("*", "Label", true, false).map(func(c): return c.text)
 	check("Interaction" in labels and "action_id" in labels and "title_en" in labels, "Inspector shows the item's interaction properties")
 	var lib_it: Interactable = lib_chest.get_node("Interactable")
 	library._change("action_id", "loot_chest", lib_it)

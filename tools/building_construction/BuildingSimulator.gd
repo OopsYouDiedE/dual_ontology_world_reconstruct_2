@@ -13,6 +13,7 @@ const WebProps = preload("BuildingConstruction/Props/ArchitectProps.gd")
 const Footprint = preload("BuildingConstruction/Props/PropFootprint.gd")
 const Furnish = preload("AutoFurnish.gd")
 const DisplayNames = preload("ArchitectDisplayNames.gd")
+const ToolTheme = preload("ToolTheme.gd")
 const STYLES = {"classical":"Classical Trim","dado":"Half-Height Paneling","stone":"Rough Stone Blocks","plain":"Plain Plaster"}
 const OPENINGS = {"arched_window":"Arched Window","rectangular_window":"Rectangular Multi-Pane Window","round_window":"Round Window","double_door":"Double Wooden Door","closed_door":"Wooden Door","arched_closed_door":"Arched Wooden Door","portal_arch":"Open Archway"}
 const FLOOR_STYLES = {"octagonal_tile":"Octagonal Tile","parquet_wood":"Walnut Parquet","stone_slab":"Stone Slabs","plain_grout":"Plain Gray Stone"}
@@ -101,6 +102,7 @@ func _ready() -> void:
 	prop_presets = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_prop_presets.json"))
 	_make_ui()
 	refresh()
+	update_status()
 	# 等布局真正完成再 fit：原先只等一帧，blueprint.size 还是 0/很小，
 	# reset_views 算出的 zoom/pan 把房间缩到左上角（实机截图：2D 房间只有一小块）。
 	await get_tree().process_frame
@@ -121,11 +123,32 @@ func label(parent: Node, text: String) -> Label:
 	item.text = text
 	parent.add_child(item)
 	return item
+func styled(control: Control, variation: String) -> Control:
+	control.theme_type_variation = variation
+	return control
+## Muted, wrapping helper text.
+func hint(parent: Node, text: String) -> Label:
+	var item: Label = styled(label(parent,text),"HintLabel")
+	item.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	item.custom_minimum_size.x = 200
+	return item
+## Small muted heading that groups the controls below it.
+func section(parent: Node, text: String) -> Label:
+	var item: Label = styled(label(parent,text),"SectionLabel")
+	item.custom_minimum_size.y = 22
+	item.uppercase = true
+	item.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	return item
+func primary(parent: Node, text: String, callback: Callable, tip := "") -> Button:
+	return styled(button(parent,text,callback,tip),"PrimaryButton")
+func flat(parent: Node, text: String, callback: Callable, tip := "") -> Button:
+	return styled(button(parent,text,callback,tip),"FlatButton")
 func number(parent: Node, text: String, value: float, callback: Callable, step := 0.1, minimum := -10000.0, maximum := 10000.0, decimal_step := 0.001) -> SpinBox:
 	var row = HBoxContainer.new()
 	parent.add_child(row)
 	var caption = label(row,text)
 	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	caption.clip_text = true
 	var item = SpinBox.new()
 	item.min_value = minimum
 	item.max_value = maximum
@@ -138,9 +161,16 @@ func number(parent: Node, text: String, value: float, callback: Callable, step :
 	item.value_changed.connect(callback)
 	return item
 func choice(parent: Node, text: String, options: Dictionary, current: String, callback: Callable) -> OptionButton:
-	label(parent,text)
+	# Label and picker share one row, like number(): the panel reads as a property sheet.
+	var row = HBoxContainer.new()
+	parent.add_child(row)
+	var caption = label(row,text)
+	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL if not parent is HBoxContainer else 0
+	caption.clip_text = not parent is HBoxContainer
 	var item = OptionButton.new()
-	parent.add_child(item)
+	item.custom_minimum_size.x = 96 if parent is HBoxContainer else 170
+	item.clip_text = true
+	row.add_child(item)
 	for key in options:
 		item.add_item(options[key])
 		item.set_item_metadata(item.item_count-1,key)
@@ -155,7 +185,7 @@ func check(parent: Node, text: String, value: bool, callback: Callable) -> Check
 	item.toggled.connect(callback)
 	return item
 func text_field(parent: Node, title: String, value: String, callback: Callable) -> void:
-	label(parent,title)
+	styled(label(parent,title),"FieldLabel")
 	var edit = LineEdit.new()
 	var shown := DisplayNames.english(value)
 	edit.text = shown
@@ -168,36 +198,46 @@ func page(tabs: TabContainer, title: String) -> VBoxContainer:
 	var scroll = ScrollContainer.new()
 	scroll.name = title
 	tabs.add_child(scroll)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var margin = MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_"+side, 4 if side!="top" else 12)
+	scroll.add_child(margin)
 	var column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation",8)
-	scroll.add_child(column)
+	column.add_theme_constant_override("separation",10)
+	margin.add_child(column)
 	return column
 
 func _make_ui() -> void:
-	var theme = Theme.new()
-	# 编辑器原先用 Godot 内置字体 14px：中文细、糊、按钮文字溢出。改用项目自带的 NotoSansSC 16px。
-	theme.default_font_size = 16
-	theme.set_font_size("font_size", "Button", 15)
-	theme.set_font_size("font_size", "TabContainer", 15)
-	self.theme = theme
+	# 现代简洁风：两个建筑工具共用 ToolTheme（深色平面 + 单一强调色 + 圆角）。
+	self.theme = ToolTheme.get_theme()
+	var backdrop = ColorRect.new()
+	backdrop.color = ToolTheme.BG
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(backdrop)
 	var root = VBoxContainer.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_theme_constant_override("separation",0)
 	add_child(root)
+	# 顶栏：标题 · 视图切换 · 撤销/重做 · 文件 … 右侧放生成类操作。
+	var top_bar = styled(PanelContainer.new(),"TopBar")
+	root.add_child(top_bar)
 	var header = HBoxContainer.new()
-	root.add_child(header)
-	label(header,"ArchBuilder")
-	button(header,"Split View",func(): blueprint.show(); view3.show())
-	button(header,"2D Only",func(): blueprint.show(); view3.hide())
-	button(header,"3D Only",func(): blueprint.hide(); view3.show())
-	button(header,"Structure Lab",func():
-		if not has_node("StructureLab"): add_child(preload("production/building/StructureLab.tscn").instantiate()))
-	button(header,"Generate Layout",preview_generated_layout,"Preview a new single-storey layout")
+	top_bar.add_child(header)
+	styled(label(header,"ArchBuilder"),"TitleLabel")
 	header.add_child(VSeparator.new())
-	button(header,"Undo",func(): if state.undo(-1): refresh(),"Ctrl+Z")
-	button(header,"Redo",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
+	var view_group = ButtonGroup.new()
+	for spec in [["Split",true,true],["2D",true,false],["3D",false,true]]:
+		var view_button: Button = styled(button(header,spec[0],func(): blueprint.visible = spec[1]; view3.visible = spec[2],"Show the 2D plan and/or the 3D preview"),"ToolButton")
+		view_button.toggle_mode = true
+		view_button.button_group = view_group
+		view_button.button_pressed = spec[0]=="Split"
 	header.add_child(VSeparator.new())
-	# 文件操作收进菜单：顶栏只留常用按钮，避免 20 个按钮挤一行（实机截图问题）。
+	flat(header,"Undo",func(): if state.undo(-1): refresh(),"Ctrl+Z")
+	flat(header,"Redo",func(): if state.undo(1): refresh(),"Ctrl+Shift+Z / Ctrl+Y")
+	# 文件操作收进菜单：顶栏只留常用按钮。
 	var file_menu = MenuButton.new()
 	file_menu.text = "File ▾"
 	file_menu.tooltip_text = "Import, save, or export JSON, YAML, or a Godot scene."
@@ -215,26 +255,6 @@ func _make_ui() -> void:
 		elif id == 3: open_file("scene")
 		elif id == 4: clear_dialog())
 	header.add_child(file_menu)
-	var body = HBoxContainer.new()
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	root.add_child(body)
-	var center = VBoxContainer.new()
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.add_child(center)
-	var actions = HBoxContainer.new()
-	center.add_child(actions)
-	for spec in [["select","Select (V)"],["wall","Wall (W)"],["floor","Floor"],["opening","Opening (O)"],["railing","Railing"],["prop","Furniture (P)"]]:
-		var tool_button = Button.new()
-		tool_button.text = spec[1]
-		tool_button.toggle_mode = true
-		tool_button.button_pressed = spec[0]=="select"
-		tool_button.tooltip_text = "Press Esc to return to Select."
-		tool_button.pressed.connect(func(): set_tool(spec[0]))
-		actions.add_child(tool_button)
-		tool_buttons[spec[0]] = tool_button
-	actions.add_child(VSeparator.new())
-	choice(actions,"Snap",{"0":"Off","0.1":"0.10m","0.2":"0.20m","0.5":"0.50m","1":"1m"},"0.2",func(v): state.grid_snap = float(v))
-	button(actions,"Center (F)",reset_views,"Center the building in the view.")
 	var view_menu = MenuButton.new()
 	view_menu.text = "View ▾"
 	view_menu.tooltip_text = "Wireframe, path tools, and visibility."
@@ -253,8 +273,43 @@ func _make_ui() -> void:
 			auto_cutaway = not auto_cutaway
 			vmp.set_item_text(4, "Cutaway: %s" % ("On" if auto_cutaway else "Off"))
 			apply_visibility())
-	actions.add_child(view_menu)
-	cursor_label = label(actions,"")
+	header.add_child(view_menu)
+	var spacer = Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(spacer)
+	flat(header,"Structure Lab",func():
+		if not has_node("StructureLab"): add_child(preload("production/building/StructureLab.tscn").instantiate()))
+	primary(header,"Generate Layout",preview_generated_layout,"Preview a new single-storey layout")
+	var body = HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation",0)
+	root.add_child(body)
+	var center_margin = MarginContainer.new()
+	center_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for side_name in ["left","right","top","bottom"]: center_margin.add_theme_constant_override("margin_"+side_name,8)
+	body.add_child(center_margin)
+	var center = VBoxContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center_margin.add_child(center)
+	# 工具条：一组互斥的绘制工具（分段按钮），右侧是吸附、居中和光标坐标。
+	var actions = HBoxContainer.new()
+	center.add_child(actions)
+	var tool_group = ButtonGroup.new()
+	for spec in [["select","Select","V"],["wall","Wall","W"],["floor","Floor",""],["opening","Opening","O"],["railing","Railing",""],["prop","Furniture","P"]]:
+		var tool_button = Button.new()
+		tool_button.text = spec[1]
+		tool_button.theme_type_variation = "ToolButton"
+		tool_button.toggle_mode = true
+		tool_button.button_group = tool_group
+		tool_button.button_pressed = spec[0]=="select"
+		tool_button.tooltip_text = ("Shortcut: %s. " % spec[2] if spec[2] != "" else "") + "Press Esc to return to Select."
+		tool_button.pressed.connect(func(): set_tool(spec[0]))
+		actions.add_child(tool_button)
+		tool_buttons[spec[0]] = tool_button
+	actions.add_child(VSeparator.new())
+	choice(actions,"Snap",{"0":"Off","0.1":"0.10m","0.2":"0.20m","0.5":"0.50m","1":"1m"},"0.2",func(v): state.grid_snap = float(v))
+	flat(actions,"Center",reset_views,"Center the building in the view. Shortcut: F")
+	cursor_label = styled(label(actions,""),"HintLabel")
 	cursor_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cursor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	cursor_label.clip_text = true
@@ -303,11 +358,20 @@ func _make_ui() -> void:
 	world.add_child(camera)
 	view3.gui_input.connect(_camera_input)
 	_update_camera()
+	var side_panel = styled(PanelContainer.new(),"SidePanel")
+	body.add_child(side_panel)
 	var side = VBoxContainer.new()
-	side.custom_minimum_size.x = 350
-	body.add_child(side)
+	side.custom_minimum_size.x = 372
+	side_panel.add_child(side)
+	# 8 个页签平铺成 2×4 分段按钮，全部一眼可见，不再需要左右滚动页签条。
+	var tab_grid = GridContainer.new()
+	tab_grid.columns = 4
+	tab_grid.add_theme_constant_override("h_separation",4)
+	tab_grid.add_theme_constant_override("v_separation",4)
+	side.add_child(tab_grid)
 	var tabs = TabContainer.new()
-	tabs.custom_minimum_size.y = 410
+	tabs.tabs_visible = false
+	tabs.custom_minimum_size.y = 200
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side.add_child(tabs)
 	var floors = page(tabs,"Floors")
@@ -321,17 +385,17 @@ func _make_ui() -> void:
 	ui_fields.layer_y = number(floors,"Floor Height (m)",0,func(v):
 		if edit_build(func(draft): draft.layer().y = v) and auto_y: sync_wall("baseY",v))
 	ui_fields.floor_style = choice(floors,"Floor Finish",FLOOR_STYLES,"octagonal_tile",func(v): edit_build(func(draft): draft.layer().style = v))
-	button(floors,"Draw Floor in 2D",func(): set_tool("floor"))
-	label(floors,"Nearby floors merge within 0.3 m.")
+	primary(floors,"Draw Floor in 2D",func(): set_tool("floor"))
+	hint(floors,"Nearby floors merge within 0.3 m.")
 	var walls = page(tabs,"Walls")
 	check(walls,"Match Floor Elevation",true,func(v): auto_y = v; if v: sync_wall("baseY",state.layer().get("y",0)))
 	choice(walls,"Wall Finish",STYLES,"classical",func(v): wall_params.style = v)
 	for spec in [["height","Wall Height (m)",0.1],["thickness","Wall Thickness (m)",0.02],["baseY","Base Height (m)",0.1]]:
 		var key = spec[0]
 		ui_fields[key] = number(walls,spec[1],wall_params[key],func(v): sync_wall(key,v),spec[2])
-	label(walls,"Adjacent rooms share wall junctions.")
+	hint(walls,"Adjacent rooms share wall junctions.")
 	check(walls,"Decorative Corner and End Columns",true,func(v): wall_params.hasPillars = v)
-	button(walls,"Draw Walls in 2D",func(): set_tool("wall"))
+	primary(walls,"Draw Walls in 2D",func(): set_tool("wall"))
 	button(walls,"Close Wall Loop",func(): finish_path(true))
 	button(walls,"Finish Open Wall",func(): finish_path(false))
 	button(walls,"Build Walls Around Floor",func():
@@ -341,8 +405,8 @@ func _make_ui() -> void:
 	var layout := page(tabs,"Layout")
 	number(layout,"Seed",layout_seed,func(v): layout_seed = int(v),1,0,2147483647,1.0)
 	number(layout,"Room pairs",layout_pairs,func(v): layout_pairs = int(v),1,1,4,1.0)
-	label(layout,"Generate rooms on both sides of one shared hall.")
-	button(layout,"Preview New Layout",preview_generated_layout)
+	hint(layout,"Generate rooms on both sides of one shared hall.")
+	primary(layout,"Preview New Layout",preview_generated_layout)
 	var openings = page(tabs,"Openings")
 	choice(openings,"Opening Type",OPENINGS,opening_params.type,func(v):
 		opening_params.type = v
@@ -352,17 +416,17 @@ func _make_ui() -> void:
 	for spec in [["width","Width (m)"],["height","Height (m)"],["bottom","Height Above Floor (m)"],["rise","Arch Rise (m)"]]:
 		var key = spec[0]
 		ui_fields["op_"+key] = number(openings,spec[1],opening_params[key],func(v): opening_params[key] = v)
-	button(openings,"Place Opening on Wall",func(): set_tool("opening"))
+	primary(openings,"Place Opening on Wall",func(): set_tool("opening"))
 	var stairs = page(tabs,"Stairs")
 	for key in ["rise","run","risers","width","yaw"]:
 		number(stairs,{"rise":"Rise (m)","run":"Run (m)","risers":"Steps","width":"Width (m)","yaw":"Rotation (deg)"}[key],stair_params[key],func(v): stair_params[key] = v,1 if key=="risers" else 0.1,1 if key=="risers" else (-360.0 if key=="yaw" else 0.1), 360.0 if key=="yaw" else 10000.0, 1.0 if key=="risers" else 0.01)
 	choice(stairs,"Stair handrail",{"both":"Both sides","left":"Left","right":"Right","none":"None"},"both",func(v): stair_params.railingPos = v)
-	button(stairs,"Preview Straight Stair",spawn_stair)
+	primary(stairs,"Preview Straight Stair",spawn_stair)
 	number(stairs,"Railing height (m)",0.9,func(v): rail_params.height = v)
 	number(stairs,"Post spacing (m)",0.18,func(v): rail_params.spacing = v,0.02,0.02)
 	button(stairs,"Draw Railing in 2D",func(): set_tool("railing"))
 	var props = page(tabs,"Furniture")
-	choice(props,"Original Furniture and Lighting",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
+	choice(props,"Fixture",prop_names(),web_prop_kind,func(v): web_prop_kind = v; refresh_prop_fields())
 	prop_fields = VBoxContainer.new()
 	props.add_child(prop_fields)
 	refresh_prop_fields()
@@ -371,7 +435,7 @@ func _make_ui() -> void:
 	number(props,"Rotation (deg)",0,func(v): prop_yaw = v,15)
 	button(props,"Preview Furniture at Coordinates",func(): prop_entry = {}; place_prop(prop_position))
 	button(props,"Place Original Furniture in 2D",func(): prop_entry = {}; set_tool("prop"))
-	label(props,"Native Component Library")
+	section(props,"NATIVE COMPONENT LIBRARY")
 	var filter = LineEdit.new()
 	filter.placeholder_text = "Search components…"
 	filter.clear_button_enabled = true
@@ -386,9 +450,9 @@ func _make_ui() -> void:
 	refresh_component_list()
 	# Original web furniture remains the default selection.
 	button(props,"Place Component in 2D",func(): set_tool("prop"))
-	button(props,"Open Component Library",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
+	primary(props,"Open Component Library",func(): get_tree().change_scene_to_file("res://tools/building_construction/ComponentLibrary.tscn"))
 	var furnish_page = page(tabs,"Furnish")
-	var furnish_help = label(furnish_page,"Preview furniture by room type. Placement keeps furniture inside the room and clear of doorways and other objects.")
+	var furnish_help = hint(furnish_page,"Preview furniture by room type. Placement keeps furniture inside the room and clear of doorways and other objects.")
 	furnish_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	furnish_help.custom_minimum_size.x = 300
 	choice(furnish_page,"Room type",Furnish.template_names(),furnish_template,func(v): furnish_template = v)
@@ -396,37 +460,53 @@ func _make_ui() -> void:
 	furnish_room = OptionButton.new()
 	furnish_page.add_child(furnish_room)
 	furnish_clear = check(furnish_page,"Replace existing furniture in selected rooms",true,func(_v): pass)
-	button(furnish_page,"Preview Selected Room",func(): furnish_rooms([furnish_room.selected]))
+	primary(furnish_page,"Preview Selected Room",func(): furnish_rooms([furnish_room.selected]))
 	button(furnish_page,"Preview All Rooms on Floor",func(): furnish_rooms(range(furnish_room.item_count)))
 	button(furnish_page,"Preview Clearing Selected Room",clear_room_props)
 	furnish_report = label(furnish_page,"")
 	furnish_report.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	furnish_report.custom_minimum_size.x = 300
 	var presets = page(tabs,"Rooms")
-	label(presets,"%d furnished room presets" % rooms.size())
+	hint(presets,"%d furnished room presets" % rooms.size())
 	var room_select = OptionButton.new()
 	room_select.custom_minimum_size.x = 260
 	room_select.clip_text = true
 	presets.add_child(room_select)
 	for room in rooms: room_select.add_item(str(room.id)+" · "+DisplayNames.name_of(room))
 	if rooms.size()>1: room_select.select(1)
-	button(presets,"Load Room Preset",func():
+	primary(presets,"Load Room Preset",func():
 		load_build(JSON.stringify(rooms[room_select.selected])))
+	var tab_group = ButtonGroup.new()
+	var tab_buttons: Array = []
+	for i in tabs.get_tab_count():
+		var tab_button: Button = styled(button(tab_grid,tabs.get_tab_title(i),func(): tabs.current_tab = i),"ToolButton")
+		tab_button.toggle_mode = true
+		tab_button.button_group = tab_group
+		tab_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab_button.button_pressed = i == tabs.current_tab
+		tab_buttons.append(tab_button)
+	tabs.tab_changed.connect(func(i):
+		for j in tab_buttons.size(): tab_buttons[j].set_pressed_no_signal(j == i))
+	section(side,"OUTLINE")
 	outline = ItemList.new()
-	outline.custom_minimum_size.y = 125
+	outline.custom_minimum_size.y = 96
 	side.add_child(outline)
 	outline.item_selected.connect(func(index): state.selected = outline.get_item_metadata(index).duplicate(); refresh_inspector())
 	var edit_actions = HBoxContainer.new()
 	side.add_child(edit_actions)
-	button(edit_actions,"Properties (E)",show_parameters)
-	button(edit_actions,"Delete",delete_selected)
+	flat(edit_actions,"Properties (E)",show_parameters)
+	styled(button(edit_actions,"Delete",delete_selected),"DangerButton")
+	section(side,"PROPERTIES")
 	var scroll = ScrollContainer.new()
-	scroll.custom_minimum_size.y = 220
+	scroll.custom_minimum_size.y = 90
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	side.add_child(scroll)
 	inspector = VBoxContainer.new()
 	inspector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(inspector)
-	status = label(root,"")
+	var status_bar = styled(PanelContainer.new(),"StatusBar")
+	root.add_child(status_bar)
+	status = styled(label(status_bar,""),"HintLabel")
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	file_dialog = FileDialog.new()
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
@@ -913,8 +993,8 @@ func refresh_inspector() -> void:
 	fill_parameters(inspector)
 func fill_parameters(parent: Node) -> void:
 	var s = state.selected
-	if s.is_empty(): label(parent,"Select a component to view its properties."); return
-	label(parent,"Selected: "+str(s.kind))
+	if s.is_empty(): hint(parent,"Select a component to view its properties."); return
+	styled(label(parent,str(s.kind).capitalize()),"TitleLabel")
 	if s.kind in ["wall","wallNode"]:
 		var wall = state.data.walls[s.wallIndex]
 		text_field(parent,"Name",wall.name,func(v): set_build_field(["walls",s.wallIndex,"name"],v))
@@ -925,7 +1005,7 @@ func fill_parameters(parent: Node) -> void:
 		check(parent,"Decorative Columns",wall.get("hasPillars",true),func(v): set_build_field(["walls",s.wallIndex,"hasPillars"],v))
 		var indices = [s.ptIndex] if s.kind=="wallNode" else range(wall.points.size()-(1 if wall.closed else 0))
 		for index in indices:
-			label(parent,"Node #"+str(index+1))
+			section(parent,"NODE #"+str(index+1))
 			for axis in range(3):
 				number(parent,["X","Y","Z"][axis],wall.points[index][axis],func(v): edit_build(func(draft): draft.set_node(draft.data.walls[s.wallIndex],index,axis,v)))
 	elif s.kind=="opening":
@@ -994,6 +1074,11 @@ func show_parameters() -> void:
 	add_child(modal)
 	var scroll = ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var modal_bg = ColorRect.new()
+	modal_bg.color = ToolTheme.PANEL
+	modal_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	modal.add_child(modal_bg)
+	scroll.offset_left = 12; scroll.offset_top = 12; scroll.offset_right = -12; scroll.offset_bottom = -12
 	modal.add_child(scroll)
 	var column = VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL

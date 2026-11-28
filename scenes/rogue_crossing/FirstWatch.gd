@@ -17,6 +17,7 @@ const Hud := preload("WatchHud.gd")
 const Storage := preload("WatchStorage.gd")
 const FirstExpedition := preload("res://scenes/expedition_01/Sortie.tscn")
 const HallOpening := preload("HallOpeningSequence.gd")
+const DualInteractionHud := preload("res://scenes/components/shared/DualModeInteractionHud.gd")
 
 const MARGINS := Storage.MARGINS
 const FIRST_SEAL := Storage.FIRST_SEAL
@@ -35,6 +36,7 @@ var _wrpg_choices: VBoxContainer
 var _wrpg_actions: Array[Callable] = []
 var _opening: CanvasLayer
 var _opening_played := false
+var dual_ui: DualModeInteractionHud
 
 var pack := {"felt": 0, "ratchet": 0}
 var recalled := false
@@ -247,7 +249,12 @@ func _can_agree() -> bool:
 func _input(event: InputEvent) -> void:
 	if is_instance_valid(first_sortie) or (is_instance_valid(_opening) and _opening.active):
 		return
-	if _performing or not event is InputEventKey or not event.pressed or event.echo or house == null:
+	if _performing or house == null:
+		return
+	if _handle_dual_ui_input(event):
+		get_viewport().set_input_as_handled()
+		return
+	if not event is InputEventKey or not event.pressed or event.echo:
 		return
 	if event.physical_keycode == KEY_F8:
 		R18n.toggle_locale()
@@ -738,6 +745,7 @@ func _refresh() -> void:
 	_hud.fit_instruction(get_viewport_rect().size.x)
 
 func _process(dt: float) -> void:
+	_sync_dual_ui()
 	if phase == "camp" and is_instance_valid(hall_hale) and is_instance_valid(room_view) and is_instance_valid(room_view._player):
 		var p_pos: Vector3 = room_view._player.position
 		var d := Vector2(p_pos.x - hall_hale.position.x, p_pos.z - hall_hale.position.z)
@@ -997,3 +1005,107 @@ func _ask_hale_pendulum() -> void:
 	opts.append({"label": R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), "cb": _depart_first})
 	opts.append({"label": R18n.pick("返回大厅", "Step back"), "cb": _close_wrpg})
 	_open_wrpg(R18n.pick("霍铎（Hale） · 关于傅科摆", "Hale · On the Pendulum"), line, opts)
+
+
+## ---- Dual-Mode Three-State Spatial Interaction UI (C+ Aggregated / Detroit Distributed) ----
+func _ensure_dual_ui() -> void:
+	if is_instance_valid(dual_ui):
+		return
+	dual_ui = DualInteractionHud.new()
+	add_child(dual_ui)
+	if is_instance_valid(room_view) and not ("FoucaultPendulum" in room_view.suppressed_prompt_ids):
+		room_view.suppressed_prompt_ids.append("FoucaultPendulum")
+
+func _sync_dual_ui() -> void:
+	_ensure_dual_ui()
+	var can_show: bool = (
+		phase == "camp"
+		and modal.is_empty()
+		and not _performing
+		and not (is_instance_valid(_opening) and _opening.active)
+		and is_instance_valid(room_view)
+		and is_instance_valid(room_view._player)
+		and not room_view.is_plan_open()
+	)
+	if not can_show:
+		dual_ui.sync_view(null, Rect2(), Vector2.ONE, Vector3.ZERO, false)
+		return
+	var anchors: Dictionary = room_view.hall_opening_anchors()
+	if anchors.is_empty():
+		dual_ui.sync_view(null, Rect2(), Vector2.ONE, Vector3.ZERO, false)
+		return
+	var cam: Camera3D = room_view._player.camera()
+	var pend_base: Vector3 = anchors.pendulum
+	var pin_pos := pend_base + Vector3(0.0, 0.14, 0.0)
+	var ring_pos := pend_base + Vector3(-1.35, 0.08, 0.35)
+	var hale_pos := (hall_hale.position + Vector3(0.0, 1.45, 0.0)) if is_instance_valid(hall_hale) else (pend_base + Vector3(1.25, 0.35, -0.35))
+
+	var note_verb := R18n.pick("查看笔记记录", "Review note") if pendulum_note_recorded else R18n.pick("记入笔记", "Record in notebook")
+	var measure_verb := R18n.pick("重新测周期 (%.1fs)" % pendulum_measured_sec, "Re-measure (%.1fs)" % pendulum_measured_sec) if pendulum_measured else R18n.pick("统计周期", "Measure period")
+	var hale_verb := R18n.pick("询问霍铎", "Ask Hale")
+
+	var items: Array[Dictionary] = [
+		{
+			"id": "pin",
+			"part_name": R18n.pick("中心铜钉", "Center Brass Pin"),
+			"verb": measure_verb,
+			"world_pos": pin_pos,
+			"callback": _begin_pendulum_judge,
+		},
+		{
+			"id": "ring",
+			"part_name": R18n.pick("刻度外环", "Outer Degree Ring"),
+			"verb": note_verb,
+			"world_pos": ring_pos,
+			"callback": _dual_ui_record_note,
+		},
+		{
+			"id": "hale",
+			"part_name": R18n.pick("询问霍铎", "Ask Hale"),
+			"verb": hale_verb,
+			"world_pos": hale_pos,
+			"callback": _dual_ui_ask_hale,
+		},
+	]
+	dual_ui.configure_target(R18n.pick("傅科摆", "Foucault Pendulum"), pin_pos, items)
+	dual_ui.sync_view(cam, room_view._pixels.get_global_rect(), Vector2(room_view._viewport.size), room_view._player.position, true)
+
+func _dual_ui_record_note() -> void:
+	if not pendulum_measured:
+		if is_instance_valid(dual_ui):
+			dual_ui.show_toast(R18n.pick("先对准中心铜钉按 E 统计周期，再记入笔记", "Measure the pendulum period first before recording"))
+		return
+	_record_pendulum_note()
+
+func _dual_ui_ask_hale() -> void:
+	if pendulum_measured:
+		_ask_hale_pendulum()
+	else:
+		_take_deposition("Hale")
+
+func _handle_dual_ui_input(event: InputEvent) -> bool:
+	if not is_instance_valid(dual_ui) or not dual_ui.active_enabled or not modal.is_empty():
+		return false
+	if event is InputEventKey and event.pressed and not event.echo:
+		var code := (event as InputEventKey).physical_keycode
+		if code == KEY_V:
+			dual_ui.toggle_mode()
+			return true
+		if dual_ui.is_selected_active():
+			if code == KEY_E:
+				return dual_ui.trigger_selected()
+			if dual_ui.mode == DualInteractionHud.Mode.AGGREGATED_CPLUS:
+				match code:
+					KEY_1: return dual_ui.trigger_index(0)
+					KEY_2: return dual_ui.trigger_index(1)
+					KEY_3: return dual_ui.trigger_index(2)
+	elif event is InputEventMouseButton and event.pressed:
+		if dual_ui.mode == DualInteractionHud.Mode.AGGREGATED_CPLUS and dual_ui.is_selected_active():
+			var mb := (event as InputEventMouseButton).button_index
+			if mb == MOUSE_BUTTON_WHEEL_UP:
+				dual_ui.cycle_cplus(-1)
+				return true
+			elif mb == MOUSE_BUTTON_WHEEL_DOWN:
+				dual_ui.cycle_cplus(1)
+				return true
+	return false

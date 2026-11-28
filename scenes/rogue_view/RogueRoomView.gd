@@ -80,6 +80,7 @@ var _kitchen_plan := {}
 var _lights: Node3D
 var _gothic_hall: Node3D
 var _pendulum_drifting := true
+var suppressed_prompt_ids: PackedStringArray = PackedStringArray()
 var _hour := 12.0
 
 func mount_viewport_node(node: Node) -> void:
@@ -505,7 +506,7 @@ func _update_prompt() -> void:
 		_prompt.text = ""
 	elif _plan_open or not is_instance_valid(_player):
 		_prompt.text = "" if (campaign_view and expedition_view) else ("Travel links" if not _exits.is_empty() else "")
-	elif target.is_empty():
+	elif target.is_empty() or (target.has("id") and str(target.id) in suppressed_prompt_ids):
 		_prompt.text = "" if expedition_view else "WASD · Move     Q / R or right-drag · Orbit"
 	else:
 		if campaign_view and target.kind == "exit" and not _campaign.routes_released:

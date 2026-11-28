@@ -1,20 +1,27 @@
 @tool
 extends EditorPlugin
 ## Godot editor front-end for level structures. Levels are ordinary scenes built from @tool
-## nodes (LevelStructure3D + SmartWall3D / SmartFloorZone3D / LevelAnchor3D / LevelStation3D /
-## catalog components); this dock adds them with undo, files them under the right group,
-## and rebuilds. Everything else is plain Godot: move with gizmos, tune in the Inspector, save.
+## nodes (LevelStructure3D + walls, floors, columns, arches, stairs, triggers, movers,
+## anchors, stations, catalog components); everything is edited as plain Godot nodes:
+##   - 3D viewport: click any piece (its generated meshes select it), drag its handles
+##     (structure_gizmo.gd), move it with the gizmo (snap points pull it into place);
+##   - "平面" main-screen tab: the plan view with grid snapping and drawing tools (plan_view.gd);
+##   - this dock: add pieces, group a selection into a StructureAssembly3D and expose its
+##     member properties as the assembly's own parameters, save it as a reusable scene;
+##   - the Inspector: every exported parameter, trigger actions, mover poses.
 ##
-## Verification hook (real editor window, see tools/test/README or tools-guide):
-##   Godot --editor --path . -- --archbuilder-editor-capture=<scene.tscn>,<out.jpg>[,<node path to select>]
+## Verification hook (real editor window, see docs/production/tools-guide.md):
+##   Godot --editor --path . -- --archbuilder-editor-capture=<scene.tscn>,<out.jpg>[,<node path>[,<view>]]
+##   view: 3d (default) | plan | pick (clicks the 3D viewport centre, reports the selection)
 
 const Components := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
 const Structure := preload("res://scenes/components/structure/LevelStructure3D.gd")
-const Anchor := preload("res://scenes/components/structure/LevelAnchor3D.gd")
-const Station := preload("res://scenes/components/structure/LevelStation3D.gd")
-const Wall := preload("res://tools/building_construction/BuildingConstruction/Walls/SmartWall3D.gd")
-const FloorZone := preload("res://tools/building_construction/BuildingConstruction/Floors/SmartFloorZone3D.gd")
 const ToolTheme := preload("res://tools/building_construction/ToolTheme.gd")
+const Ops := preload("res://addons/archbuilder/structure_ops.gd")
+const Adopt := preload("res://addons/archbuilder/structure_adopt.gd")
+const PlanView := preload("res://addons/archbuilder/plan_view.gd")
+const Gizmo := preload("res://addons/archbuilder/structure_gizmo.gd")
+const Assembly := preload("res://scenes/components/structure/StructureAssembly3D.gd")
 
 var dock: Control
 var category: OptionButton
@@ -23,12 +30,33 @@ var search: LineEdit
 var info: Label
 var catalog: Dictionary
 var entries: Array = []
+var ops
+var plan
+var gizmo
+var assembly_box: VBoxContainer
+var bind_member: OptionButton
+var bind_property: OptionButton
+var bind_name: LineEdit
+var bind_list: ItemList
+var _adopt_queue: Array = []
+var _info_pending := false
+var _last_selected: Array = []
 
 func _enter_tree() -> void:
+	ops = Ops.new(self)
 	catalog = Components.load_catalog()
 	dock = _build_dock()
 	add_control_to_dock(DOCK_SLOT_LEFT_BR, dock)
-	get_editor_interface().get_selection().selection_changed.connect(_update_info)
+	gizmo = Gizmo.new(ops)
+	add_node_3d_gizmo_plugin(gizmo)
+	plan = PlanView.new()
+	plan.setup(self, ops)
+	EditorInterface.get_editor_main_screen().add_child(plan)
+	plan.hide()
+	EditorInterface.get_selection().selection_changed.connect(_on_selection_changed)
+	get_tree().node_added.connect(_on_node_added)
+	scene_changed.connect(func(_root): _sweep.call_deferred(); _schedule_info())
+	_sweep.call_deferred()
 	_refresh()
 	_update_info()
 	for arg in OS.get_cmdline_user_args():
@@ -36,40 +64,147 @@ func _enter_tree() -> void:
 			_capture.call_deferred(arg.get_slice("=", 1))
 
 func _exit_tree() -> void:
+	if get_tree().node_added.is_connected(_on_node_added):
+		get_tree().node_added.disconnect(_on_node_added)
+	if gizmo:
+		remove_node_3d_gizmo_plugin(gizmo)
+	if plan:
+		plan.queue_free()
 	if dock:
 		remove_control_from_docks(dock)
 		dock.queue_free()
 
+# ── main screen tab ───────────────────────────────────────────────────────────
+
+func _has_main_screen() -> bool:
+	return true
+
+func _get_plugin_name() -> String:
+	return "平面"
+
+func _get_plugin_icon() -> Texture2D:
+	return EditorInterface.get_editor_theme().get_icon(&"GridContainer", &"EditorIcons")
+
+func _make_visible(visible: bool) -> void:
+	if plan:
+		plan.visible = visible
+		if visible:
+			plan.mark_dirty()
+
+# ── click selection of generated meshes ───────────────────────────────────────
+
+func _on_node_added(node: Node) -> void:
+	if Adopt.wants(node):
+		if _adopt_queue.is_empty():
+			_flush_adopt.call_deferred()
+		_adopt_queue.append(node)
+
+## Deferred: nodes the editor adds itself get their owner in the same step and are skipped.
+func _flush_adopt() -> void:
+	var root := EditorInterface.get_edited_scene_root()
+	var queue := _adopt_queue
+	_adopt_queue = []
+	for node in queue:
+		if is_instance_valid(node):
+			Adopt.adopt(node, root)
+
+func _sweep() -> void:
+	Adopt.sweep(EditorInterface.get_edited_scene_root())
+
+func _on_selection_changed() -> void:
+	# Redraw the outline / handles of pieces that were or now are selected.
+	var now: Array = EditorInterface.get_selection().get_selected_nodes()
+	for n in _last_selected + now:
+		if is_instance_valid(n) and n is Node3D:
+			n.update_gizmos()
+	_last_selected = now.duplicate()
+	_schedule_info()
+
 # ── dock ──────────────────────────────────────────────────────────────────────
 
 func _build_dock() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.name = "关卡结构"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var root := VBoxContainer.new()
-	root.name = "关卡结构"
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 6)
+	scroll.add_child(root)
 	info = Label.new()
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.theme_type_variation = "HintLabel"
 	root.add_child(info)
-	_section(root, "结构")
+	_section(root, "添加构件（也可在顶部「平面」标签里画）")
 	var grid := GridContainer.new()
-	grid.columns = 2
+	grid.columns = 3
 	root.add_child(grid)
-	for spec in [["墙", _add_wall], ["地面", _add_floor], ["锚点", _add_anchor], ["站位", _add_station]]:
+	for spec in [["墙", "wall"], ["地面", "floor"], ["柱", "column"], ["拱", "arch"], ["柱廊", "colonnade"], ["楼梯", "stair"],
+			["触发器", "trigger"], ["移动体", "mover"], ["站位", "station"], ["锚点", "anchor"]]:
 		var b := Button.new()
 		b.text = "+ " + spec[0]
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.pressed.connect(spec[1])
+		b.pressed.connect(_add_kind.bind(spec[1]))
 		grid.add_child(b)
+	var row := HBoxContainer.new()
+	root.add_child(row)
 	var rebuild := Button.new()
 	rebuild.text = "重建结构"
+	rebuild.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rebuild.pressed.connect(func():
 		var s := _structure()
-		if s: s.rebuild_all(); _update_info())
-	root.add_child(rebuild)
+		if s:
+			s.rebuild_all()
+			_update_info())
+	row.add_child(rebuild)
 	var new_root := Button.new()
-	new_root.text = "在当前场景新建 LevelStructure3D"
+	new_root.text = "新建结构根"
+	new_root.tooltip_text = "在当前场景新建 LevelStructure3D"
+	new_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	new_root.pressed.connect(_add_structure_root)
-	root.add_child(new_root)
+	row.add_child(new_root)
+	_section(root, "组合结构")
+	var group_row := HBoxContainer.new()
+	root.add_child(group_row)
+	var group_btn := Button.new()
+	group_btn.text = "组合选中"
+	group_btn.tooltip_text = "把选中的构件放进一个新的 StructureAssembly3D"
+	group_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	group_btn.pressed.connect(_group_selection)
+	group_row.add_child(group_btn)
+	var save_btn := Button.new()
+	save_btn.text = "存为组件场景"
+	save_btn.tooltip_text = "把选中的结构组存成 scenes/components/assemblies/<名字>.tscn，并换成它的实例"
+	save_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	save_btn.pressed.connect(_save_assembly)
+	group_row.add_child(save_btn)
+	assembly_box = VBoxContainer.new()
+	root.add_child(assembly_box)
+	var hint := Label.new()
+	hint.text = "暴露参数：成员 + 属性 → 结构组检视器里的「参数/名字」；同名参数一起驱动"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.theme_type_variation = "HintLabel"
+	assembly_box.add_child(hint)
+	bind_member = OptionButton.new()
+	bind_member.item_selected.connect(func(_i): _fill_properties())
+	assembly_box.add_child(bind_member)
+	bind_property = OptionButton.new()
+	assembly_box.add_child(bind_property)
+	var bind_row := HBoxContainer.new()
+	assembly_box.add_child(bind_row)
+	bind_name = LineEdit.new()
+	bind_name.placeholder_text = "参数名"
+	bind_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bind_row.add_child(bind_name)
+	var bind_btn := Button.new()
+	bind_btn.text = "暴露"
+	bind_btn.pressed.connect(_expose_param)
+	bind_row.add_child(bind_btn)
+	bind_list = ItemList.new()
+	bind_list.custom_minimum_size = Vector2(0, 70)
+	bind_list.item_activated.connect(_unexpose_param)
+	bind_list.tooltip_text = "双击删除一个参数"
+	assembly_box.add_child(bind_list)
+	assembly_box.hide()
 	_section(root, "目录构件")
 	search = LineEdit.new()
 	search.placeholder_text = "搜索构件…"
@@ -83,7 +218,7 @@ func _build_dock() -> Control:
 	category.item_selected.connect(func(_i): _refresh())
 	root.add_child(category)
 	items = ItemList.new()
-	items.custom_minimum_size = Vector2(220, 220)
+	items.custom_minimum_size = Vector2(220, 200)
 	items.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(items)
 	var add := Button.new()
@@ -91,7 +226,7 @@ func _build_dock() -> Control:
 	add.theme_type_variation = "PrimaryButton"
 	add.pressed.connect(_add_component)
 	root.add_child(add)
-	return root
+	return scroll
 
 func _section(parent: Control, text: String) -> void:
 	var l := Label.new()
@@ -113,26 +248,36 @@ func _refresh() -> void:
 			var row := items.add_item(str(entry.label))
 			items.set_item_tooltip(row, Components.production_note(entry))
 
+## Selection changes are frequent: the dock text refreshes at most once per idle frame and
+## shows the cached summary (walking the whole structure on every click made clicks lag).
+func _schedule_info() -> void:
+	if not _info_pending:
+		_info_pending = true
+		_update_info.call_deferred()
+
 func _update_info() -> void:
-	var s := _structure()
+	_info_pending = false
 	if info == null:
 		return
+	var s := _structure()
 	if s == null:
-		info.text = "打开一个含 LevelStructure3D 的关卡场景，或点下方按钮新建。"
+		info.text = "打开一个含 LevelStructure3D 的关卡场景，或点「新建结构根」。2D 平面编辑在顶部的「平面」标签。"
 	else:
-		s.refresh_summary()
+		if s.summary == "":
+			s.refresh_summary()
 		info.text = "%s\n%s" % [s.name, s.summary]
+	_update_assembly_panel()
 
 # ── structure helpers ─────────────────────────────────────────────────────────
 
 func _scene_root() -> Node:
-	return get_editor_interface().get_edited_scene_root()
+	return EditorInterface.get_edited_scene_root()
 
 func _structure() -> Node:
 	var root := _scene_root()
 	if root == null:
 		return null
-	for node in get_editor_interface().get_selection().get_selected_nodes():
+	for node in EditorInterface.get_selection().get_selected_nodes():
 		var n: Node = node
 		while n != null:
 			if n is LevelStructure3D:
@@ -143,67 +288,58 @@ func _structure() -> Node:
 	var found := root.find_children("*", "LevelStructure3D", true, true)
 	return found[0] if not found.is_empty() else null
 
-func _group(structure: Node, title: String) -> Node:
-	var g := structure.get_node_or_null(title)
-	if g == null:
-		g = Node3D.new()
-		g.name = title
-		structure.add_child(g)
-		g.owner = _scene_root()
-	return g
-
-func _add(kind: String, node: Node3D, title: String) -> void:
+func _add_kind(kind: String) -> void:
 	var s := _structure()
 	if s == null:
 		push_warning("先打开或新建一个 LevelStructure3D 场景。")
 		return
-	var parent := _group(s, kind)
-	node.name = title
-	var undo := get_undo_redo()
-	undo.create_action("添加%s" % title)
-	undo.add_do_method(parent, "add_child", node, true)
-	undo.add_do_method(node, "set_owner", _scene_root())
-	undo.add_do_reference(node)
-	undo.add_undo_method(parent, "remove_child", node)
-	undo.commit_action()
-	get_editor_interface().get_selection().clear()
-	get_editor_interface().get_selection().add_node(node)
-	_update_info()
+	var c := _spawn_point(s)
+	var made: Node3D
+	match kind:
+		"wall": made = ops.add_wall(s, c, c + Vector2(4, 0))
+		"floor": made = ops.add_floor(s, Rect2(c - Vector2(2, 2), Vector2(4, 4)))
+		"column": made = ops.add_column(s, c)
+		"arch": made = ops.add_arch(s, c, c + Vector2(3, 0))
+		"colonnade": made = ops.add_colonnade(s, c, c + Vector2(7.5, 0))
+		"stair": made = ops.add_stair(s, c, c + Vector2(4, 0))
+		"trigger": made = ops.add_trigger(s, Rect2(c - Vector2.ONE, Vector2(2, 2)))
+		"mover": made = ops.add_mover(s, Rect2(c - Vector2(1, 0.2), Vector2(2, 0.4)))
+		"station": made = ops.add_station(s, Rect2(c - Vector2(0.5, 0.5), Vector2.ONE))
+		"anchor": made = ops.add_anchor(s, c)
+	_select(made)
 
-func _add_wall() -> void:
-	var wall: Node3D = Wall.new()
-	wall.start_point = Vector3.ZERO
-	wall.end_point = Vector3(4, 0, 0)
-	wall.wall_height = 2.75
-	wall.wall_thickness = 0.13
-	wall.skirting_enabled = false
-	_add("Walls", wall, "Wall")
+## New pieces appear next to the selected node, else in the middle of the lot.
+func _spawn_point(s: Node3D) -> Vector2:
+	for n in EditorInterface.get_selection().get_selected_nodes():
+		if n is Node3D and n != s and s.is_ancestor_of(n):
+			var o := Ops.relative(s, n).origin
+			return Vector2(o.x, o.z).snappedf(0.25) + Vector2(1, 1)
+	var lot: int = s.lot_size if "lot_size" in s else 16
+	return Vector2(lot, lot) * 0.5
 
-func _add_floor() -> void:
-	var zone: Node3D = FloorZone.new()
-	zone.polygon = PackedVector2Array([Vector2(0, 0), Vector2(4, 0), Vector2(4, 4), Vector2(0, 4)])
-	zone.floor_thickness = 0.15
-	_add("Floors", zone, "Floor")
-
-func _add_anchor() -> void:
-	var a: Node3D = Anchor.new()
-	a.anchor_id = "anchor"
-	_add("Anchors", a, "Anchor")
-
-func _add_station() -> void:
-	_add("Stations", Station.new(), "Station")
+func _select(node: Node) -> void:
+	if node == null:
+		return
+	EditorInterface.get_selection().clear()
+	EditorInterface.get_selection().add_node(node)
+	EditorInterface.edit_node(node)
+	_schedule_info()
 
 func _add_component() -> void:
 	var selected := items.get_selected_items()
 	if selected.is_empty():
 		push_warning("先在列表里选一个构件。")
 		return
+	var s := _structure()
+	if s == null:
+		push_warning("先打开或新建一个 LevelStructure3D 场景。")
+		return
 	var entry: Dictionary = entries[selected[0]]
 	var instance := Components.create_entry(entry)
 	if instance == null:
 		push_error("无法加载构件：" + str(entry.path))
 		return
-	_add("Components", instance, str(entry.id))
+	_select(ops.add(s, "component", instance, str(entry.id), Ops.at_plan(_spawn_point(s))))
 
 func _add_structure_root() -> void:
 	var root := _scene_root()
@@ -219,18 +355,135 @@ func _add_structure_root() -> void:
 	undo.add_do_reference(s)
 	undo.add_undo_method(root, "remove_child", s)
 	undo.commit_action()
-	for title in ["Floors", "Walls", "Anchors", "Stations", "Components"]:
-		_group(s, title)
-	get_editor_interface().get_selection().clear()
-	get_editor_interface().get_selection().add_node(s)
+	for title in ["Floors", "Walls", "Structure", "Anchors", "Stations", "Triggers", "Components"]:
+		ops.group(s, title)
+	_select(s)
+
+# ── assemblies ────────────────────────────────────────────────────────────────
+
+func _selected_assembly() -> Node:
+	for n in EditorInterface.get_selection().get_selected_nodes():
+		if n is Assembly:
+			return n
+	return null
+
+func _group_selection() -> void:
+	var s := _structure()
+	if s == null:
+		push_warning("先打开或新建一个 LevelStructure3D 场景。")
+		return
+	var nodes: Array = EditorInterface.get_selection().get_selected_nodes().filter(func(n): return n is Node3D and n != s and s.is_ancestor_of(n))
+	if nodes.is_empty():
+		push_warning("先在结构里选中要组合的构件（可多选）。")
+		return
+	_select(ops.group_into_assembly(s, nodes))
+
+func _save_assembly() -> void:
+	var a := _selected_assembly()
+	if a == null:
+		push_warning("先选中一个结构组（StructureAssembly3D）。")
+		return
+	var path := save_assembly_scene(a, "res://scenes/components/assemblies")
+	if path == "":
+		return
+	EditorInterface.get_resource_filesystem().scan()
+	# Replace the assembly by an instance of the saved scene (undoable).
+	var instance: Node3D = (load(path) as PackedScene).instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
+	instance.name = a.name
+	instance.transform = a.transform
+	var parent := a.get_parent()
+	var index := a.get_index()
+	var owned: Array = [a] + a.find_children("*", "", true, false).filter(func(n): return n.owner == _scene_root())
+	var undo := get_undo_redo()
+	undo.create_action("存为组件场景 %s" % path.get_file())
+	undo.add_do_method(parent, "remove_child", a)
+	undo.add_do_method(parent, "add_child", instance, true)
+	undo.add_do_method(parent, "move_child", instance, index)
+	undo.add_do_method(instance, "set_owner", _scene_root())
+	undo.add_do_reference(instance)
+	undo.add_undo_method(parent, "remove_child", instance)
+	undo.add_undo_method(parent, "add_child", a, true)
+	undo.add_undo_method(parent, "move_child", a, index)
+	for n in owned:
+		undo.add_undo_method(n, "set_owner", _scene_root())
+	undo.add_undo_reference(a)
+	undo.commit_action()
+	_select(instance)
+	print("ARCHBUILDER_ASSEMBLY_SAVED ", path)
+
+## Save an assembly (its authored members only) as <dir>/<name>.tscn. Returns the path.
+static func save_assembly_scene(a: Node3D, dir: String) -> String:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+	var path := "%s/%s.tscn" % [dir, str(a.name).to_snake_case()]
+	var packed: PackedScene = a.to_packed_scene()
+	if packed == null or ResourceSaver.save(packed, path) != OK:
+		push_error("保存结构组失败：" + path)
+		return ""
+	return path
+
+func _update_assembly_panel() -> void:
+	var a := _selected_assembly()
+	if assembly_box == null:
+		return
+	assembly_box.visible = a != null
+	if a == null:
+		return
+	bind_member.clear()
+	for n in a.find_children("*", "Node3D", true, false):
+		if n.owner != null and not n.has_meta(&"_structure_generated"):
+			bind_member.add_item(str(a.get_path_to(n)))
+	_fill_properties()
+	bind_list.clear()
+	for param in a.bindings:
+		bind_list.add_item("%s → %s" % [param, ", ".join(a.bindings[param])])
+		bind_list.set_item_metadata(bind_list.item_count - 1, param)
+
+func _fill_properties() -> void:
+	bind_property.clear()
+	var a := _selected_assembly()
+	if a == null or bind_member.item_count == 0:
+		return
+	var n := a.get_node_or_null(bind_member.get_item_text(bind_member.selected))
+	if n == null:
+		return
+	for prop in n.get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.usage & PROPERTY_USAGE_EDITOR:
+			bind_property.add_item(prop.name)
+	for extra in ["position", "rotation_degrees", "scale", "visible"]:
+		bind_property.add_item(extra)
+
+func _expose_param() -> void:
+	var a := _selected_assembly()
+	if a == null or bind_member.item_count == 0 or bind_property.item_count == 0:
+		return
+	var member := bind_member.get_item_text(bind_member.selected)
+	var prop := bind_property.get_item_text(bind_property.selected)
+	var param := bind_name.text.strip_edges()
+	if param == "":
+		param = prop
+	var before := [Ops.snapshot(a)]
+	a.expose(param, member, prop)
+	ops.commit("暴露参数 %s" % param, [a], before)
+	_update_assembly_panel()
+
+func _unexpose_param(index: int) -> void:
+	var a := _selected_assembly()
+	if a == null:
+		return
+	var before := [Ops.snapshot(a)]
+	a.unexpose(str(bind_list.get_item_metadata(index)))
+	ops.commit("删除参数", [a], before)
+	_update_assembly_panel()
 
 # ── real-window verification ──────────────────────────────────────────────────
 
 func _capture(spec: String) -> void:
-	var scene := spec.get_slice(",", 0)
-	var out := spec.get_slice(",", 1)
-	var select_path := spec.get_slice(",", 2) if spec.get_slice_count(",") > 2 else ""
-	var ei := get_editor_interface()
+	var parts := spec.split(",")
+	var scene := parts[0]
+	var out := parts[1]
+	var select_path := parts[2] if parts.size() > 2 else ""
+	var view := parts[3] if parts.size() > 3 else "3d"
+	var ei := EditorInterface
 	while ei.get_resource_filesystem().is_scanning():
 		await get_tree().process_frame
 	# Let the editor finish restoring last session's scene tabs first.
@@ -250,6 +503,7 @@ func _capture(spec: String) -> void:
 		for i in 20:
 			await get_tree().process_frame
 	_frame_editor_camera(scene)
+	var t0 := Time.get_ticks_msec()
 	for attempt in 5:
 		ei.open_scene_from_path(scene)
 		for i in 40:
@@ -257,6 +511,7 @@ func _capture(spec: String) -> void:
 		var current := ei.get_edited_scene_root()
 		if current and current.scene_file_path == scene:
 			break
+	print("ARCHBUILDER_OPEN_MS %d" % (Time.get_ticks_msec() - t0))
 	var root := ei.get_edited_scene_root()
 	var target: Node = root
 	if root:
@@ -265,31 +520,70 @@ func _capture(spec: String) -> void:
 			target = root.get_node(select_path)
 		elif not walls.is_empty():
 			target = walls[0]
-	ei.get_selection().clear()
-	if target:
-		ei.get_selection().add_node(target)
-		ei.edit_node(target)
 	ei.set_main_screen_editor("3D")
-	_update_info()
-	ei.get_selection().clear()
-	if target:
-		ei.get_selection().add_node(target)
-		ei.edit_node(target)
-	# The editor 3D view only re-renders on interaction; force fresh frames for the capture.
+	_select(target)
 	var vp3 := ei.get_editor_viewport_3d(0)
 	if vp3:
 		vp3.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	var tabs := dock.get_parent() as TabContainer
-	if tabs:
-		tabs.current_tab = dock.get_index()
+	# Bring the "关卡结构" dock tab to the front (the dock may sit inside a wrapper).
+	var page: Node = dock
+	while page != null and page.get_parent() != null and not (page.get_parent() is TabContainer):
+		page = page.get_parent()
+	if page != null and page.get_parent() is TabContainer:
+		(page.get_parent() as TabContainer).current_tab = page.get_index()
 	for i in 60:
+		await get_tree().process_frame
+	var report := "selected=%s" % (target.name if target else "none")
+	if view == "plan":
+		ei.set_main_screen_editor("平面")
+		for i in 30:
+			await get_tree().process_frame
+		plan.refresh()
+		plan.frame_all()
+		for i in 20:
+			await get_tree().process_frame
+		report += " plan_items=%d" % plan.items.size()
+	elif view == "pick":
+		report += " " + await _pick_test(vp3)
+	# Swap tab timing: switch away and back (was ~0.9 s per switch before the queue fix).
+	var swap := Time.get_ticks_msec()
+	if view != "plan":
+		ei.set_main_screen_editor("Script")
+		await get_tree().process_frame
+		ei.set_main_screen_editor("3D")
+		await get_tree().process_frame
+	report += " swap_ms=%d" % (Time.get_ticks_msec() - swap)
+	for i in 10:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var img := ei.get_base_control().get_viewport().get_texture().get_image()
 	img.convert(Image.FORMAT_RGB8)
 	var err := img.save_jpg(ProjectSettings.globalize_path(out), 0.86)
-	print("ARCHBUILDER_EDITOR_CAPTURE %s %s selected=%s" % [out, error_string(err), target.name if target else "none"])
+	print("ARCHBUILDER_EDITOR_CAPTURE %s %s %s" % [out, error_string(err), report])
 	get_tree().quit()
+
+## Click the middle of the 3D viewport like a user and report what the editor selected.
+func _pick_test(vp3: SubViewport) -> String:
+	var container := vp3.get_parent() as Control if vp3 else null
+	if container == null:
+		return "pick=no-viewport"
+	EditorInterface.get_selection().clear()
+	await get_tree().process_frame
+	var adopted := Adopt.sweep(EditorInterface.get_edited_scene_root())
+	var centre := container.get_global_rect().get_center()
+	for pressed in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = pressed
+		ev.position = centre
+		ev.global_position = centre
+		Input.parse_input_event(ev)
+		for i in 4:
+			await get_tree().process_frame
+	for i in 10:
+		await get_tree().process_frame
+	var picked: Array = EditorInterface.get_selection().get_selected_nodes().map(func(n): return "%s(%s)" % [n.name, n.get_script().resource_path.get_file() if n.get_script() else n.get_class()])
+	return "late_adopted=%d pick=%s" % [adopted, ",".join(picked) if not picked.is_empty() else "none"]
 
 ## The editor restores each scene's 3D camera from .godot/editor/<scene>-editstate-<md5>.cfg.
 ## Writing that state before opening frames the whole structure from above at 3/4 view.
@@ -317,14 +611,14 @@ func _frame_editor_camera(scene: String) -> void:
 	var views: Array = three.get("viewports", [{}])
 	if views.is_empty():
 		views.append({})
-	var view: Dictionary = views[0]
-	view["position"] = center
-	view["distance"] = span * 1.6
-	view["x_rotation"] = 0.95
-	view["y_rotation"] = 0.0
-	view["orthogonal"] = false
-	view["view_type"] = 0
-	views[0] = view
+	var v: Dictionary = views[0]
+	v["position"] = center
+	v["distance"] = span * 1.6
+	v["x_rotation"] = 0.95
+	v["y_rotation"] = 0.0
+	v["orthogonal"] = false
+	v["view_type"] = 0
+	views[0] = v
 	three["viewports"] = views
 	three["viewport_mode"] = 1
 	state.set_value("editor_states", "3D", three)

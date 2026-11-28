@@ -209,7 +209,6 @@ python tools/inspect_level.py --scene r01
 | 厨房（kitchen） | 读 `content/archbuilder/hot-kitchen.json`，`HotKitchen.gd` 自己挤出墙体与门窗 | 只取文档里的家具锚点，器物手写 | **是**（唯一一个） |
 | Expedition-01 | `ExpeditionKit.gd` / `Masonry.gd` 代码拼方块 | 主要手写，只有书架走家具库 | 否 |
 | 第一章 R01 | `Chapter1R01Level.gd` 里一块地板两面墙的占位 | 关卡清单 `objects[]` 走家具库 | 否 |
-| 物理实验室各房间 | 各自代码，只借用了 ArchBuilder 的肋拱几何函数 | 各自代码 | 否 |
 
 可复用的桥接代码：`HotKitchen.gd` 的文档读取与墙体挤出、`RoomBlockout.gd` 用 `WallPathGeometry.build` 生成外壳。
 
@@ -231,3 +230,62 @@ python tools/inspect_level.py --scene r01
 验证：`tools/test/hall_parity_test.gd` 把场景与原程序化大厅逐个比对，2259 个网格、1212 个碰撞体、28 盏灯、23 个占地全部一致（唯一差异是书架书脊颜色的循环顺序，原版依赖引擎运行时的节点编号）。改造前后实机对比：
 
 ![左：原程序化大厅；右：构件场景。上起：中殿、北侧书房与客厅、西翼宿舍、东翼餐厅](media/tools/10_hall_before_after.jpg)
+
+## 8. 在 Godot 编辑器里搭关卡：平面、3D 手柄、柱拱组合、触发器与动画
+
+所有构件都继承 `StructurePiece3D`（`scenes/components/structure/`），3D 视口、顶部「平面」标签和检视器改的是同一组导出参数，保存即生效；每次拖动都是一步撤销。
+
+### 三种编辑方式
+
+| 方式 | 怎么用 | 说明 |
+|---|---|---|
+| 3D 视口 | 直接点构件（点到它生成的任何网格都会选中构件本身）；选中后出现橙色轮廓与手柄 | 墙/拱/楼梯/柱廊两端、地面顶点、门窗位置、柱半径、触发器/站位角点都能拖；手柄在水平面上移动，吸附结构网格和邻居的吸附点（按住 Alt 关闭）；用移动工具挪整个构件时，端点靠近邻居 0.2 m 内会自动贴上（`LevelStructure3D.editor_magnet`） |
+| 「平面」标签（与 2D / 3D / 脚本并列） | 俯视平面图，左键选/拖/框选，中键或右键拖动平移，滚轮缩放 | 网格 0.05–1 m 可选，吸附网格和吸附点；工具：选择 V、墙 W（连续画）、地面 F（拖矩形）、门 D、窗 N（点在墙上）、柱 C、拱 A、柱廊 L、楼梯 S、触发器 T、站位 B、移动体 M、锚点 K；Del 删除、R / Shift+R 旋转 90°、Ctrl+D 复制、Ctrl+单击边加顶点或单击顶点/门窗删除、F 全部、G 吸附开关、Esc 结束 |
+| 检视器 | 选中后改参数 | 所有尺寸、剖面、材质键、动作列表都在这里 |
+
+平面图上的显示与 3D 不同（例如门画成开启弧线、楼梯画踏步线、移动体用虚线画出打开后的位置），这是有意的：两边是同一份节点数据的两种视图。
+
+### 新构件
+
+| 构件 | 作用 | 主要参数 |
+|---|---|---|
+| `StructureColumn3D` 柱 | 柱础、柱身、柱头与碰撞；圆心是吸附点 | 样式（圆/方/八角/束柱）、半径、高度、柱础/柱头高度、材质键 |
+| `StructureArch3D` 拱 | 两点之间的拱，可带门柱与拱肩填充 | 剖面（圆/尖/弧/平）、起拱高、矢高、拱圈厚、墙厚、门柱、填充到 |
+| `Colonnade3D` 柱廊 | 一个节点生成一排柱子和拱 | 开间数、柱样式/半径/高、拱剖面/矢高比、拱圈、墙厚、填充 |
+| `StructureAssembly3D` 结构组 | 把任意构件组合成一个，挑选成员属性暴露为自己的「参数/名字」 | 在「关卡结构」面板选成员与属性→暴露；同名参数一起驱动；「存为组件场景」保存到 `scenes/components/assemblies/` 并换成实例，各实例保留自己的参数值 |
+| `SmartStair3D` 楼梯、`LevelStation3D` 站位 | 现在也是 `StructurePiece3D`，有平面手柄 | 起止点、宽度；占地尺寸 |
+| `LevelTrigger3D` 触发器 | 区域进入/离开、按 E 交互、关卡开始时、由脚本触发 | 区域尺寸、触发对象组（默认 `player`）、只触发一次、动作列表；清单字段（条件、效果、`action_id`、台词 id） |
+| `LevelMover3D` 移动体 | 把它下面的节点在静止姿态与打开姿态之间移动：闸门、升降台、旋转门 | 打开偏移/旋转、时长、缓动、单次或往返循环、自动播放；`preview` 滑条在编辑器里预览，保存时自动复位 |
+
+### 触发器动作（检视器里 `actions` → 新建）
+
+| 动作 | 做什么 |
+|---|---|
+| `SetPropertyAction` | 设置节点属性（支持 `position:y` 这类子属性；值写成 `1.5`、`true`、`Vector3(0, 2, 0)`） |
+| `TweenPropertyAction` | 把属性在一段时间内动画到目标值（可相对、可等待完成） |
+| `PlayAnimationAction` | 播放 AnimationPlayer 里的动画（用 Godot 自带的动画面板制作） |
+| `MoverAction` | 打开 / 关闭 / 切换 / 播放一个移动体 |
+| `CallMethodAction` | 调用节点方法 |
+| `LevelEventAction` | 发 `action_id` 给关卡（`AcademyLevelBase._on_level_action`）、设置解锁标记、播放已声明的台词 |
+
+动作按顺序执行，每个可设延迟。触发器会自动进入关卡清单（`AcademyLevelBase` 把结构里的 `LevelTrigger3D` 合并进 `triggers[]`，照常过 `AcademyLevelAudit` 和 F2 蓝图），结构根节点同时发出 `trigger_fired(trigger_id, action_id, ctx)`。
+
+### 性能与点选的修复
+
+| 问题 | 原因 | 修复 |
+|---|---|---|
+| 3D 视口里点物体没反应 | Godot 只给「属于当前场景」的节点建可点选的 gizmo；构件运行时生成的网格没有 owner | 插件把生成的网格过继给所属构件（`structure_adopt.gd`）：点网格即选中构件；场景树里不显示，也不会被保存 |
+| 切换场景标签卡顿约 0.9 秒 | 场景离开树时，每个构件都重建一次邻居索引（154 个构件 × 5500 个节点） | 改为在下一次重建时统一处理，整个场景离开时什么都不做：0.9 s → 4 ms |
+| 每次点选都卡一下 | 面板在每次选择变化时遍历整个结构生成统计 | 改为每帧最多刷新一次，只显示缓存的统计 |
+
+验证：`tools/test/structure_editor_test.gd`（柱、拱、柱廊、结构组参数、楼梯/站位/门窗/地面顶点手柄、触发器动作链、移动体、清单审计、点选过继、退出耗时），以及下方实机截图。
+
+实机截图（真实编辑器窗口，`--archbuilder-editor-capture`）：
+
+![在公共大厅 3D 视口中央模拟一次鼠标单击：选中的是拱顶构件 Vault（GothicVault3D），检视器显示它的参数](media/tools/12_click_selects_piece.jpg)
+
+![「平面」标签里的公共大厅：203 个构件、墙与门洞、锚点标签，选中西侧第一个窗间](media/tools/13_plan_tab_hall.jpg)
+
+![新构件在 3D 视口：四跨尖拱柱廊（选中，两端手柄）、半圆拱、束柱、楼梯、墙上的门窗洞、绿色触发区与闸门移动体](media/tools/14_columns_arches_triggers_3d.jpg)
+
+![同一结构的平面图：门的开启弧线、窗、楼梯踏步、柱、触发区（绿色虚线）、闸门；选中的墙显示端点与门窗手柄](media/tools/15_plan_tab_tools.jpg)

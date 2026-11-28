@@ -101,6 +101,39 @@ func set_plan_handle(id: StringName, plan_position: Vector2) -> void:
 func snap_targets() -> PackedVector2Array:
 	return plan_outline()
 
+func plan_kind() -> String:
+	return "floor"
+
+## Insert a vertex on the nearest edge (plan view: Ctrl+click on an edge).
+func plan_insert_handle(plan_position: Vector2) -> bool:
+	var outline := plan_outline()
+	if outline.size() < 3:
+		return false
+	var best := -1
+	var best_d := 0.4
+	for i in outline.size():
+		var q := Geometry2D.get_closest_point_to_segment(plan_position, outline[i], outline[(i + 1) % outline.size()])
+		var d := q.distance_to(plan_position)
+		if d < best_d:
+			best_d = d
+			best = i
+	if best < 0:
+		return false
+	var local := from_plan(plan_position)
+	var next := polygon.duplicate()
+	next.insert(best + 1, Vector2(local.x, local.z))
+	polygon = next
+	return true
+
+func plan_remove_handle(id: StringName) -> bool:
+	var i := str(id).trim_prefix("v").to_int()
+	if polygon.size() <= 3 or i < 0 or i >= polygon.size():
+		return false
+	var next := polygon.duplicate()
+	next.remove_at(i)
+	polygon = next
+	return true
+
 func get_zone_aabb() -> AABB:
 	if polygon.size() < 3:
 		return AABB(global_position, Vector3(1, 1, 1))

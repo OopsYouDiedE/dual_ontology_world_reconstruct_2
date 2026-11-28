@@ -67,6 +67,7 @@ func get_teammate_wheel_options() -> Array:
 
 func _ready() -> void:
 	level_manifest = define_level_manifest()
+	_merge_structure_triggers()
 	audit_report = LevelAudit.validate_manifest(level_manifest)
 	if not audit_report.ok:
 		push_error("AcademyLevelBase manifest audit FAILED for '%s': %s" % [
@@ -120,6 +121,21 @@ func _ready() -> void:
 	_build_blueprint_inspector()
 
 	_on_level_ready()
+
+## Triggers placed as LevelTrigger3D nodes in the level's structure scenes join the manifest
+## (audit, F2 blueprint) unless the manifest already declares the same id.
+func _merge_structure_triggers() -> void:
+	var declared := {}
+	var list: Array = level_manifest.get("triggers", [])
+	for trg in list:
+		declared[str(trg.get("id", ""))] = true
+	for structure in find_children("*", "LevelStructure3D", true, false):
+		for entry: Dictionary in structure.trigger_manifest():
+			if not declared.has(entry.id):
+				list.append(entry)
+				declared[entry.id] = true
+	if not list.is_empty():
+		level_manifest["triggers"] = list
 
 ## Optional hook for subclasses after unified bootstrap completes.
 func _on_level_ready() -> void:

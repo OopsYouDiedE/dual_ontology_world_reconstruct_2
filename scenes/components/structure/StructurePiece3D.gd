@@ -12,11 +12,23 @@ extends Node3D
 ##   Rebuilding a mesh never changes a shape, so neighbour updates stop after one hop.
 ## StructureRebuildQueue coalesces requests, skips unchanged inputs and caps the rounds.
 ## Neighbour propagation runs in the editor only; at runtime each piece builds once.
+##
+## Editing: the 3D viewport (gizmo handles, magnet to neighbour snap points while moving),
+## the 2D plan tab (drag, grid snap) and the Inspector all write the same exported values.
 
 const Queue := preload("res://scenes/components/structure/StructureRebuildQueue.gd")
+## Set on generated helper nodes the editor adopts for click selection (never saved).
+const GENERATED_META := &"_structure_generated"
+
+## Generated (rebuilt, never saved) rather than authored in the scene.
+static func is_generated(node: Node) -> bool:
+	return node.owner == null or node.has_meta(GENERATED_META)
 
 ## Seconds-free hash of the inputs of the last build (shape + neighbour shapes).
 var _built_inputs: int = 0
+var _magnet_busy := false
+## Movers posing their children (editor preview) switch the magnet off meanwhile.
+static var magnet_suspended := false
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
@@ -25,7 +37,7 @@ func _ready() -> void:
 	_built_inputs = input_hash()
 	Queue.remember(self)
 	# Editor: a newly placed piece lets the pieces around it re-check (unchanged ones skip).
-	if Queue.editor_rules():
+	if Queue.editor_rules() and not has_meta(GENERATED_META):
 		for n in neighbors():
 			Queue.request(n, false, false)
 
@@ -39,10 +51,10 @@ func _notification(what: int) -> void:
 		NOTIFICATION_EXIT_TREE:
 			var scope_node := scope()
 			# Editor: neighbours that leaned on this piece (corner joins…) rebuild without it.
-			if Queue.editor_rules() and scope_node and not scope_node.is_queued_for_deletion():
-				for n in neighbors():
-					if n != self:
-						Queue.request(n, false, true)
+			# Deferred to the flush: when a whole scene leaves the tree (tab switch, close)
+			# its scope is gone by then and nothing is queried or rebuilt.
+			if Queue.editor_rules() and scope_node and not has_meta(GENERATED_META):
+				Queue.removed(scope_node, self)
 			Queue.invalidate(scope_node)
 
 # ── overridable interface ─────────────────────────────────────────────────────
@@ -73,6 +85,22 @@ func snap_targets() -> PackedVector2Array:
 ## Extra reach when looking for neighbours (e.g. half a wall thickness).
 func neighbor_margin() -> float:
 	return 0.05
+
+## Plan view: add a handle near this point (e.g. a floor vertex on an edge). True if added.
+func plan_insert_handle(_position: Vector2) -> bool:
+	return false
+
+## Plan view: remove a handle (e.g. a floor vertex). True if removed.
+func plan_remove_handle(_id: StringName) -> bool:
+	return false
+
+## Plan view colour family: floor, wall, column, arch, stair, trigger, station, mover, assembly, piece.
+func plan_kind() -> String:
+	return "piece"
+
+## Height of a handle in local space (3D gizmo); default the node origin height.
+func handle_height(_id: StringName) -> float:
+	return 0.0
 
 # ── change notification ───────────────────────────────────────────────────────
 
@@ -145,6 +173,32 @@ func input_hash() -> int:
 
 func _shape_signature() -> String:
 	return var_to_str([get_class(), name, to_scope(), shape_key()])
+
+# ── magnet (editor moves) ─────────────────────────────────────────────────────
+
+## While a piece is moved in the 3D viewport, pull it onto a neighbour's snap point when one
+## of its own snap points comes within LevelStructure3D.editor_magnet metres.
+func _magnet() -> void:
+	var s := scope()
+	var radius: float = s.get(&"editor_magnet") if s != null and s.get(&"editor_magnet") != null else 0.0
+	var own := snap_targets()
+	if radius <= 0.0 or own.is_empty() or not is_inside_tree():
+		return
+	var best := Vector2.ZERO
+	var best_d := radius
+	for n in Queue.query(s, plan_bounds().grow(radius), self):
+		for t: Vector2 in n.snap_targets():
+			for o: Vector2 in own:
+				var d := o.distance_to(t)
+				if d < best_d and d > 0.0005:
+					best_d = d
+					best = t - o
+	if best == Vector2.ZERO:
+		return
+	var parent_to_scope := to_scope() * transform.affine_inverse()
+	_magnet_busy = true
+	position += parent_to_scope.basis.inverse() * Vector3(best.x, 0, best.y)
+	_magnet_busy = false
 
 # ── snapping helper (plan space) ──────────────────────────────────────────────
 

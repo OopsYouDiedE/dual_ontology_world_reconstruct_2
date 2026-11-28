@@ -1,33 +1,53 @@
 @tool
 class_name LevelStation3D
-extends Node3D
+extends "res://scenes/components/structure/StructurePiece3D.gd"
 ## A reserved floor footprint (furniture, lamps, jambs): adds a box collider and marks the
-## covered cells as not clear for room gameplay. Resize it in the Inspector; the editor shows
-## a translucent box so it can be placed by eye.
+## covered cells as not clear for room gameplay. Resize it in the Inspector, by its corner
+## handles in 3D, or in the plan tab; the editor shows a translucent box.
 
 @export var footprint: Vector2 = Vector2(1, 1):
 	set(v):
-		footprint = v
-		_rebuild()
+		footprint = Vector2(maxf(0.05, v.x), maxf(0.05, v.y))
+		shape_changed()
 @export var height: float = 1.0:
 	set(v):
 		height = v
-		_rebuild()
+		mesh_changed()
 @export var collision: bool = true:
 	set(v):
 		collision = v
-		_rebuild()
+		mesh_changed()
 
-func _ready() -> void:
+func _enter_tree() -> void:
 	add_to_group(&"level_station")
-	_rebuild()
 
 func bounds_in(local_position: Vector3) -> Rect2:
 	return Rect2(Vector2(local_position.x, local_position.z) - footprint * 0.5, footprint)
 
-func _rebuild() -> void:
-	if not is_inside_tree():
-		return
+func plan_kind() -> String:
+	return "station"
+
+func shape_key() -> Array:
+	return [footprint]
+
+func plan_outline() -> PackedVector2Array:
+	var h := footprint * 0.5
+	return PackedVector2Array([to_plan(Vector3(-h.x, 0, -h.y)), to_plan(Vector3(h.x, 0, -h.y)), to_plan(Vector3(h.x, 0, h.y)), to_plan(Vector3(-h.x, 0, h.y))])
+
+## Corner handle: the opposite corner stays put.
+func plan_handles() -> Array:
+	var h := footprint * 0.5
+	return [{"id": &"corner", "position": to_plan(Vector3(h.x, 0, h.y))}]
+
+func set_plan_handle(_id: StringName, plan_position: Vector2) -> void:
+	var local := from_plan(plan_position)
+	var anchor := Vector2(-footprint.x * 0.5, -footprint.y * 0.5)
+	var size := (Vector2(local.x, local.z) - anchor).abs()
+	var centre := anchor + size * 0.5
+	position += transform.basis * Vector3(centre.x, 0, centre.y)
+	footprint = size
+
+func rebuild() -> void:
 	for child in get_children():
 		if child.name in [&"StationBody", &"EditorBox"]:
 			remove_child(child)

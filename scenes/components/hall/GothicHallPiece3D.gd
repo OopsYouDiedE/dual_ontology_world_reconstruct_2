@@ -59,7 +59,7 @@ func _build() -> void:
 
 func _clear_generated() -> void:
 	for child in get_children():
-		if child.owner == null:  # generated (never saved); authored children have an owner
+		if is_generated(child):  # generated (never saved); authored children are owned by the scene
 			remove_child(child)
 			child.queue_free()
 	_glass_mats.clear(); _beam_mats.clear(); _glow_mats.clear()

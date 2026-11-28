@@ -116,13 +116,66 @@ func plan_outline() -> PackedVector2Array:
 	var side := (b - a).orthogonal().normalized() * wall_thickness * 0.5
 	return PackedVector2Array([a + side, b + side, b - side, a - side])
 
+func plan_kind() -> String:
+	return "wall"
+
+## Endpoints plus one handle per authored opening (door/window), slid along the wall.
 func plan_handles() -> Array:
-	return [{"id": &"start", "position": to_plan(start_point)}, {"id": &"end", "position": to_plan(end_point)}]
+	var out: Array = [{"id": &"start", "position": to_plan(start_point)}, {"id": &"end", "position": to_plan(end_point)}]
+	var dir := (end_point - start_point).normalized()
+	for i in openings.size():
+		var mid := (float(openings[i].get("from", 0)) + float(openings[i].get("to", 0))) * 0.5
+		out.append({"id": StringName("op%d" % i), "position": to_plan(start_point + dir * mid)})
+	return out
 
 func set_plan_handle(id: StringName, plan_position: Vector2) -> void:
 	match id:
 		&"start": start_point = from_plan(plan_position, start_point.y)
 		&"end": end_point = from_plan(plan_position, end_point.y)
+		_:
+			var i := str(id).trim_prefix("op").to_int()
+			if not str(id).begins_with("op") or i < 0 or i >= openings.size():
+				return
+			var length := start_point.distance_to(end_point)
+			var a := to_plan(start_point)
+			var b := to_plan(end_point)
+			var along := clampf((plan_position - a).dot((b - a).normalized()), 0.0, length)
+			var op: Dictionary = openings[i].duplicate()
+			var half := (float(op.get("to", 0)) - float(op.get("from", 0))) * 0.5
+			along = clampf(along, half, length - half)
+			op["from"] = snappedf(along - half, 0.01)
+			op["to"] = snappedf(along + half, 0.01)
+			var next := openings.duplicate()
+			next[i] = op
+			openings = next
+			_queue_rebuild()
+
+func handle_height(id: StringName) -> float:
+	if str(id).begins_with("op"):
+		var op: Dictionary = openings[str(id).trim_prefix("op").to_int()]
+		return start_point.y + float(op.get("bottom", 0))
+	return (start_point if id == &"start" else end_point).y
+
+## Door (bottom 0) or window, centred at a plan point projected onto the wall.
+func add_opening_at(plan_position: Vector2, width: float, bottom: float, top: float) -> int:
+	var a := to_plan(start_point)
+	var b := to_plan(end_point)
+	var length := a.distance_to(b)
+	var along := clampf((plan_position - a).dot((b - a).normalized()), width * 0.5, maxf(width * 0.5, length - width * 0.5))
+	var next := openings.duplicate()
+	next.append({"from": snappedf(along - width * 0.5, 0.01), "to": snappedf(along + width * 0.5, 0.01), "bottom": bottom, "top": top})
+	openings = next
+	_queue_rebuild()
+	return openings.size() - 1
+
+func plan_remove_handle(id: StringName) -> bool:
+	if not str(id).begins_with("op"):
+		return false
+	var next := openings.duplicate()
+	next.remove_at(str(id).trim_prefix("op").to_int())
+	openings = next
+	_queue_rebuild()
+	return true
 
 func snap_targets() -> PackedVector2Array:
 	return PackedVector2Array([to_plan(start_point), to_plan(end_point)])

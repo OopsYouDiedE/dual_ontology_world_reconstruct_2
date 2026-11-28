@@ -1,5 +1,5 @@
 @tool
-extends Node3D
+extends "res://scenes/components/structure/StructurePiece3D.gd"
 
 ## SmartStair3D: Godot 4.7 @tool parametric stair generator.
 ## Dual handle stretch (start_point -> end_point), auto step calculation based on
@@ -11,12 +11,12 @@ signal stair_rebuilt()
 @export var start_point: Vector3 = Vector3.ZERO:
 	set(v):
 		start_point = v
-		_queue_rebuild()
+		shape_changed()
 
 @export var end_point: Vector3 = Vector3(3.0, 2.0, 0.0):
 	set(v):
 		end_point = v
-		_queue_rebuild()
+		shape_changed()
 
 @export_range(0.6, 5.0, 0.1) var stair_width: float = 1.2:
 	set(v):
@@ -62,15 +62,36 @@ signal stair_rebuilt()
 
 var _rebuild_pending: bool = false
 
-func _ready() -> void:
-	rebuild()
-
 func _queue_rebuild() -> void:
-	if not is_inside_tree():
-		return
-	if not _rebuild_pending:
-		_rebuild_pending = true
-		call_deferred(&"rebuild")
+	mesh_changed()
+
+# ── StructurePiece3D interface ────────────────────────────────────────────────
+
+func plan_kind() -> String:
+	return "stair"
+
+func shape_key() -> Array:
+	return [start_point, end_point, stair_width]
+
+func plan_outline() -> PackedVector2Array:
+	var a := to_plan(start_point)
+	var b := to_plan(end_point)
+	var side := (b - a).orthogonal().normalized() * stair_width * 0.5
+	return PackedVector2Array([a + side, b + side, b - side, a - side])
+
+func plan_handles() -> Array:
+	return [{"id": &"start", "position": to_plan(start_point)}, {"id": &"end", "position": to_plan(end_point)}]
+
+func set_plan_handle(id: StringName, plan_position: Vector2) -> void:
+	match id:
+		&"start": start_point = from_plan(plan_position, start_point.y)
+		&"end": end_point = from_plan(plan_position, end_point.y)
+
+func handle_height(id: StringName) -> float:
+	return (start_point if id == &"start" else end_point).y
+
+func snap_targets() -> PackedVector2Array:
+	return PackedVector2Array([to_plan(start_point), to_plan(end_point)])
 
 func rebuild() -> void:
 	_rebuild_pending = false

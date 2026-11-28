@@ -14,6 +14,7 @@ static var _scheduled := false
 static var _batch := 0
 static var _index := {}      # scope instance id -> {Vector2i cell: Array[piece]}
 static var _old_bounds := {} # instance id -> Rect2 at last build (finds former neighbours)
+static var _removed: Array = [] # [scope, Rect2] of pieces that left the tree
 ## Tests switch the editor-only rules (neighbour propagation) on outside the editor.
 static var force_editor_rules := false
 ## Counters for tests and the editor dock.
@@ -43,6 +44,14 @@ static func end_batch() -> void:
 	if _batch == 0 and not (_shape.is_empty() and _mesh.is_empty()):
 		flush()
 
+## A piece left the tree: its former neighbours re-check at the next flush, if its scope
+## is still live then (a closing or hidden scene costs nothing).
+static func removed(scope: Node, piece: Node) -> void:
+	var id := piece.get_instance_id()
+	_removed.append([scope, _old_bounds.get(id, Rect2())])
+	_old_bounds.erase(id)
+	_schedule()
+
 static func pending() -> int:
 	return _mesh.size()
 
@@ -60,6 +69,16 @@ static func _live(p) -> bool:
 
 static func flush() -> void:
 	_scheduled = false
+	var gone := _removed
+	_removed = []
+	for item in gone:
+		var sc = item[0]
+		if is_instance_valid(sc) and sc.is_inside_tree() and not sc.is_queued_for_deletion():
+			invalidate(sc)
+			for n in query(sc, item[1]):
+				_mesh[n.get_instance_id()] = {"node": n, "force": true}
+	if _shape.is_empty() and _mesh.is_empty():
+		return
 	_bump("flushes", 1)
 	var built := {}
 	var rounds := 0
@@ -156,7 +175,8 @@ static func query(scope: Node, rect: Rect2, exclude: Node = null) -> Array:
 static func _build_index(scope: Node) -> Dictionary:
 	var cells := {}
 	for p in scope.find_children("*", "", true, false):
-		if not p.has_method("_shape_signature") or p.scope() != scope:
+		# Pieces generated inside another piece (a colonnade's columns) are its own business.
+		if not p.has_method("_shape_signature") or p.has_meta(&"_structure_generated") or p.scope() != scope:
 			continue
 		var r: Rect2 = p.plan_bounds()
 		for cx in range(floori(r.position.x / CELL), floori(r.end.x / CELL) + 1):

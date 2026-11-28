@@ -2,30 +2,8 @@ extends Node
 ## Opt-in testing bridge. Normal game launches leave it dormant.
 
 const TEST_SCENES := [
-	"res://tools/research/french_gothic_nodes/InteriorFlight.tscn",
-	"res://tools/research/french_gothic_nodes/WholeReview.tscn",
-	"res://tools/research/french_gothic_nodes/BayReview.tscn",
 	"res://scenes/expedition_01/Expedition.tscn",
-	"res://scenes/physics_lab/airlock/Airlock.tscn",
-	"res://scenes/physics_lab/Lab.tscn",
-	"res://scenes/physics_lab/chronograph/Chronograph.tscn",
-	"res://scenes/physics_lab/evidence_register/EvidenceRegister.tscn",
-	"res://scenes/physics_lab/palimpsest/Palimpsest.tscn",
-	"res://scenes/physics_lab/shutter_loom/ShutterLoom.tscn",
-	"res://scenes/physics_lab/afterimage/Afterimage.tscn",
-	"res://scenes/physics_lab/duet/Duet.tscn",
-	"res://scenes/physics_lab/strata/Strata.tscn",
-	"res://scenes/physics_lab/counterfactual/Tempered.tscn",
-	"res://scenes/physics_lab/b_series/BSeriesReview.tscn",
-	"res://scenes/rule_evaluation/Evaluation.tscn",
-	"res://scenes/rubber_whitebox/gyro06/Gyro06.tscn",
-	"res://scenes/rubber_whitebox/bellflower/Bellflower.tscn",
-	"res://scenes/rubber_whitebox/shadecloth/Shadecloth.tscn",
 	"res://scenes/rogue/Run.tscn",
-	"res://scenes/rubber_whitebox/RubberYard.tscn",
-	"res://scenes/rubber_whitebox/kinetic_pilot/Gallery.tscn",
-	"res://scenes/rubber_whitebox/rule_arena/RuleArena.tscn",
-	"res://scenes/rubber_whitebox/room_review/RoomReview.tscn",
 ]
 var run_dir := ""
 var busy := false

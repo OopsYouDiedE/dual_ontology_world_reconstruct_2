@@ -9,7 +9,13 @@ extends Node3D
 ##   catalog components (RecipeComponent and other @tool items)
 ##   LevelAnchor3D     named gameplay points and lot objects
 ##   LevelStation3D    reserved footprints (blocked cells + collider)
+##   StructureColumn3D / StructureArch3D / Colonnade3D / StructureAssembly3D
+##   LevelTrigger3D    zones and E-key triggers with ordered actions (LevelAction resources)
+##   LevelMover3D      gates, lifts, doors: children moved between rest and open poses
 ## Gameplay never hand-builds a shell: it instances this scene and reads derive_lot()/anchor().
+
+## A LevelTrigger3D under this structure fired (also sent to AcademyLevelBase._on_level_action).
+signal trigger_fired(trigger_id: String, action_id: String, ctx: Dictionary)
 
 @export var template_id: String = ""
 @export var room_label: String = ""
@@ -18,6 +24,12 @@ extends Node3D
 ## Optional upper-floor plan data for the overhead map (lot dictionary), carried over from the
 ## original lots. Data only: no geometry is built from it.
 @export var upper_plan: Dictionary = {}
+@export_group("Editor")
+## Grid of the 2D plan tab and of 3D handle drags (metres; 0 = off).
+@export var editor_grid: float = 0.25
+## Moving a piece in 3D pulls its snap points onto a neighbour's within this distance (0 = off).
+@export var editor_magnet: float = 0.2
+@export_group("")
 @export_tool_button("Rebuild structure", "Reload") var rebuild_action := rebuild_all
 @export_multiline var summary: String = ""
 
@@ -45,12 +57,28 @@ func anchors() -> Array:
 func stations_nodes() -> Array:
 	return _collect(func(n): return n is LevelStation3D)
 
+func triggers() -> Array:
+	return _collect(func(n): return n is LevelTrigger3D)
+
+func movers() -> Array:
+	return _collect(func(n): return n is LevelMover3D)
+
+## Trigger entries for the level manifest (AcademyLevelAudit schema).
+func trigger_manifest() -> Array:
+	return triggers().map(func(t): return t.manifest_entry())
+
+func trigger(id: String) -> Node:
+	for t in triggers():
+		if t.resolved_id() == id:
+			return t
+	return null
+
 func _collect(test: Callable) -> Array:
 	var out: Array = []
 	var stack: Array = get_children()
 	while not stack.is_empty():
 		var node: Node = stack.pop_front()
-		if node.owner == null and node.get_parent() != self and Engine.is_editor_hint():
+		if node.has_meta(&"_structure_generated") or (node.owner == null and node.get_parent() != self and Engine.is_editor_hint()):
 			continue  # skip generated helpers
 		if test.call(node):
 			out.append(node)
@@ -170,7 +198,8 @@ func rebuild_all() -> void:
 
 func refresh_summary() -> void:
 	var lot := derive_lot()
-	summary = "%d floors · %d walls · %d anchors · %d stations\n%d walkable cells · %d wall edges · %d lot objects" % [
-		floors().size(), walls().size(), anchors().size(), stations_nodes().size(),
+	summary = "%d floors · %d walls · %d anchors · %d stations · %d triggers · %d movers
+%d walkable cells · %d wall edges · %d lot objects" % [
+		floors().size(), walls().size(), anchors().size(), stations_nodes().size(), triggers().size(), movers().size(),
 		lot.floors.size(), lot.segments.size(), lot.objects.size()]
 	notify_property_list_changed()

@@ -2,7 +2,7 @@ extends Node3D
 ## All player-facing fixture geometry comes from the authored Blender assets.
 const Rooms := preload("Rooms.gd")
 const Roster := preload("Roster.gd")
-const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const HallFinish := preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 const KIT_PIGMENTS := {"walnut": "53616b", "oxblood": "687884", "dark": "303940", "paper": "d9d5bd", "ivory": "d3d0bf", "ink": "30333a"}
 const GOLD := Color("f0cd8b")
 var plate_font: SystemFont

@@ -3,7 +3,7 @@ class_name UnifiedDialoguePresenter
 ## Unified bottom subtitle + formant speech presenter shared across Public Hall,
 ## Campaign Rooms, Expedition-01, StoryDirector cutscenes, and all future levels.
 
-const CaptionsScene := preload("res://scenes/expedition_01/ExpeditionCaptions.gd")
+const CaptionsScene := preload("res://scenes/components/shared/AcademyCaptions.gd")
 const VoiceSynthScript := preload("res://scenes/components/shared/VoiceSynth.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 

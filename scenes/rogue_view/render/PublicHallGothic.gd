@@ -6,13 +6,13 @@ extends Node3D
 ## limestone, pale stone ribs, dark walnut wainscoting, warm ochre runner,
 ## hanging oil lanterns) and UV-mapped Notre-Dame-inspired stained glass.
 
-const HallFinish := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const HallFinish := preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 const StainedGlassShader := preload("res://scenes/rogue_view/render/StainedGlass.gdshader")
 const StainedGlassBeamShader := preload("res://scenes/rogue_view/render/StainedGlassBeam.gdshader")
 const StainedGlassGlowShader := preload("res://scenes/rogue_view/render/StainedGlassGlow.gdshader")
 const StylizedFireShader := preload("res://scenes/rogue_view/render/StylizedFire.gdshader")
 const RenderProfile := preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
-const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
+const OilLamp := preload("res://scenes/components/props/lamp/Lamp.tscn")
 const Factory := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
 const FurnitureCatalog := preload("res://scenes/components/shared/AcademyFurnitureCatalog.gd")
 

@@ -8,7 +8,7 @@ const Kitchen = preload("res://scenes/rogue_view/render/HotKitchen.gd")
 const Lighting = preload("res://scenes/rogue_view/render/RoomLighting.gd")
 const PublicHallGothic = preload("res://scenes/rogue_view/render/PublicHallGothic.gd")
 const MeridianWell = preload("res://scenes/rogue_view/render/MeridianWell.gd")
-const HallFinish = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const HallFinish = preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 const RenderProfile = preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const Roster = preload("res://scenes/rogue_crossing/Roster.gd")
 

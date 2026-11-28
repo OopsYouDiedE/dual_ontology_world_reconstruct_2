@@ -63,6 +63,15 @@ rogue_orbit_right={
 "events": [Object(InputEventKey,"physical_keycode":82)]
 }
 
+interact={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":69), Object(InputEventJoypadButton,"button_index":0)]
+}
+toggle_interaction_ui={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":86)]
+}
+
 [rendering]
 renderer/rendering_method="forward_plus"
 environment/defaults/default_clear_color=Color(0.04, 0.06, 0.07, 1)

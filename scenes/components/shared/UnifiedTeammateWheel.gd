@@ -5,7 +5,7 @@ class_name UnifiedTeammateWheel
 ## Uses the exact same Q key, 34px center cancel deadzone, 235px outer ring,
 ## mouse hover / wheel / 1-5 / E confirm / Esc cancel semantics everywhere.
 
-const CommandWheelScript := preload("res://scenes/expedition_01/CommandWheel.gd")
+const CommandWheelScript := preload("res://scenes/components/shared/AcademyCommandWheel.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 
 signal order_selected(id: String)

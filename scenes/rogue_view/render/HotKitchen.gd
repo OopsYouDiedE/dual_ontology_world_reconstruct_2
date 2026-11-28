@@ -5,7 +5,7 @@ const Shell = preload("res://scenes/rogue_view/render/OrthogonalShell.gd")
 const Masks = preload("res://scenes/rogue_view/render/KitchenSurfaceMasks.gd")
 const Finish = preload("res://scenes/components/rendering/surfaces/KitchenFinish.gdshader")
 const Tile = preload("res://scenes/components/rendering/surfaces/AcademyTile.gdshader")
-const HallFinish = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const HallFinish = preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 # Shared dimensions for authored geometry and the finite placement search.
 const PREP_HALF := Vector2(1350, 525) # millimetres
 const OVEN_SWEEP_HALF := Vector2(740, 655)

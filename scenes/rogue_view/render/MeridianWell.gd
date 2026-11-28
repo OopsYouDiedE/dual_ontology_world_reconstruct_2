@@ -4,8 +4,8 @@ extends RefCounted
 ## pendulum compass dial (dark slate basin, engraved degree ring, inlaid meridian
 ## crosshairs, center brass sighting pin, and perimeter knock-down pegs) instead of a
 ## clockwork tourbillon.
-const Watch = preload("res://scenes/blue_prince_lab/studies/Meridian.gd")
-const HallFinish = preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const Watch = preload("res://scenes/components/props/meridian/Meridian.gd")
+const HallFinish = preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 
 static func _hall_mat(hex: String, roughness: float, grain: float) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
@@ -77,7 +77,7 @@ static func install(parent: Node3D, area: Rect2i, flush_display := false) -> voi
 	var bronze := _hall_mat("807159", 0.42, 0.05)
 	var well := _hall_mat("283037", 0.88, 0.05)
 	var glass: Material = ShaderMaterial.new()
-	(glass as ShaderMaterial).shader = preload("res://scenes/blue_prince_lab/reference/Sapphire.gdshader")
+	(glass as ShaderMaterial).shader = preload("res://scenes/components/props/meridian/Sapphire.gdshader")
 	_box(root, Vector3(0, -1.83 * s, 0), Vector3(width, 0.10, width), well)
 	for side: float in [-1.0, 1.0]:
 		for lateral in [false, true]:

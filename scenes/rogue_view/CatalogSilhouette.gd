@@ -3,7 +3,7 @@ extends RefCounted
 ## The lot always supplies the anchor, direction and existence of the object.
 
 const ACADEMY_SIDE_CHAIR := preload("res://assets/props/academy/academy_side_chair.glb")
-const HALL_FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const HALL_FINISH := preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 
 static func populate(anchor: Node3D, guid: int) -> bool:
 	var wood := Color("594231")

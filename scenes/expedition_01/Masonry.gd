@@ -2,7 +2,7 @@ extends Node3D
 ## Metric primitives shared by the A/B/C construction recipes. Y is feet elevation.
 ## Uses the project's Blue Prince painterly toon shader (HallFinish.gdshader)
 ## for opaque architecture and props so Expedition-01 matches Hall 04 aesthetics.
-const HALL_FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const HALL_FINISH := preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 const RenderProfile = preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const COLORS = {"brick":"796a5f","abyss":"090b10","pit":"47484a","test_amber":"e99425","chalk":"c7c3b6","trim":"ded9cb","joint":"b1ad9e","floor":"cdc8bc","iron":"40474a","dark":"232735","felt_dark":"353b39","brass":"ba914e","amber":"ffc35a","green":"65d39c","door_green":"31604b","glass":"bfdedd","book":"9f998a"}
 var materials := {}

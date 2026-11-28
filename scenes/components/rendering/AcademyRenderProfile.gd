@@ -2,7 +2,7 @@ extends RefCounted
 ## Unified PBR material presets, regional atmosphere grading, and soft light
 ## attenuation shared by Expedition-01 Masonry/Lighting and Rogue RoomLighting.
 
-const HALL_FINISH := preload("res://scenes/blue_prince_lab/HallFinish.gdshader")
+const HALL_FINISH := preload("res://scenes/components/rendering/surfaces/HallFinish.gdshader")
 
 const MATERIAL_PRESETS := {
 	"brass": {"metallic": 0.82, "roughness": 0.30, "specular": 0.65},

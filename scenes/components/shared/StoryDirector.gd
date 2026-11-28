@@ -8,7 +8,7 @@ extends CanvasLayer
 signal finished(skipped: bool)
 signal beat_changed(index: int, beat_id: String)
 
-const Captions = preload("res://scenes/expedition_01/ExpeditionCaptions.gd")
+const Captions = preload("res://scenes/components/shared/AcademyCaptions.gd")
 const VoiceSynth = preload("res://scenes/components/shared/VoiceSynth.gd")
 const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
 const R18n = preload("res://scenes/components/shared/R18n.gd")

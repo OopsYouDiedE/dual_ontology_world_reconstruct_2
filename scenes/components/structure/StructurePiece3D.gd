@@ -14,7 +14,7 @@ extends Node3D
 ## Neighbour propagation runs in the editor only; at runtime each piece builds once.
 ##
 ## Editing: the 3D viewport (gizmo handles, magnet to neighbour snap points while moving),
-## the 2D plan tab (drag, grid snap) and the Inspector all write the same exported values.
+## the plan in the 2D tab (drag, grid snap) and the Inspector all write the same exported values.
 
 const Queue := preload("res://scenes/components/structure/StructureRebuildQueue.gd")
 ## Set on generated helper nodes the editor adopts for click selection (never saved).

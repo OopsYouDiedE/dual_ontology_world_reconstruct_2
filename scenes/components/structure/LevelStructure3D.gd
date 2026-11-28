@@ -25,7 +25,7 @@ signal trigger_fired(trigger_id: String, action_id: String, ctx: Dictionary)
 ## original lots. Data only: no geometry is built from it.
 @export var upper_plan: Dictionary = {}
 @export_group("Editor")
-## Grid of the 2D plan tab and of 3D handle drags (metres; 0 = off).
+## Grid of the plan in the 2D tab and of 3D handle drags (metres; 0 = off).
 @export var editor_grid: float = 0.25
 ## Moving a piece in 3D pulls its snap points onto a neighbour's within this distance (0 = off).
 @export var editor_magnet: float = 0.2

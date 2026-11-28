@@ -5,14 +5,16 @@ extends EditorPlugin
 ## anchors, stations, catalog components); everything is edited as plain Godot nodes:
 ##   - 3D viewport: click any piece (its generated meshes select it), drag its handles
 ##     (structure_gizmo.gd), move it with the gizmo (snap points pull it into place);
-##   - "平面" main-screen tab: the plan view with grid snapping and drawing tools (plan_view.gd);
+##   - Godot's 2D tab: the plan view (plan_view.gd) painted over the 2D viewport, with grid
+##     snapping and drawing tools in the 2D toolbar (Godot's 2D editor itself draws only
+##     2D nodes, so without this a 3D level shows nothing there);
 ##   - this dock: add pieces, group a selection into a StructureAssembly3D and expose its
 ##     member properties as the assembly's own parameters, save it as a reusable scene;
 ##   - the Inspector: every exported parameter, trigger actions, mover poses.
 ##
 ## Verification hook (real editor window, see docs/production/tools-guide.md):
 ##   Godot --editor --path . -- --archbuilder-editor-capture=<scene.tscn>,<out.jpg>[,<node path>[,<view>]]
-##   view: 3d (default) | plan | pick (clicks the 3D viewport centre, reports the selection)
+##   view: 3d (default) | 2d (plan in the 2D tab) | pick (clicks the 3D viewport centre, reports the selection)
 
 const Components := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
 const Structure := preload("res://scenes/components/structure/LevelStructure3D.gd")
@@ -51,8 +53,10 @@ func _enter_tree() -> void:
 	add_node_3d_gizmo_plugin(gizmo)
 	plan = PlanView.new()
 	plan.setup(self, ops)
-	EditorInterface.get_editor_main_screen().add_child(plan)
-	plan.hide()
+	add_child(plan)
+	add_control_to_container(CONTAINER_CANVAS_EDITOR_MENU, plan.toolbar)
+	set_force_draw_over_forwarding_enabled()
+	main_screen_changed.connect(_on_main_screen_changed)
 	EditorInterface.get_selection().selection_changed.connect(_on_selection_changed)
 	get_tree().node_added.connect(_on_node_added)
 	scene_changed.connect(func(_root): _sweep.call_deferred(); _schedule_info())
@@ -69,27 +73,44 @@ func _exit_tree() -> void:
 	if gizmo:
 		remove_node_3d_gizmo_plugin(gizmo)
 	if plan:
+		remove_control_from_container(CONTAINER_CANVAS_EDITOR_MENU, plan.toolbar)
+		plan.toolbar.queue_free()
 		plan.queue_free()
 	if dock:
 		remove_control_from_docks(dock)
 		dock.queue_free()
 
-# ── main screen tab ───────────────────────────────────────────────────────────
+# ── plan in Godot's 2D tab ─────────────────────────────────────────────────────
 
-func _has_main_screen() -> bool:
-	return true
+## Nodes of a scene with a level structure are "ours" in the 2D tab: the plan takes the mouse.
+func _handles(object: Object) -> bool:
+	if not (object is Node) or plan == null:
+		return false
+	var root := EditorInterface.get_edited_scene_root()
+	return root != null and (object == root or root.is_ancestor_of(object)) and plan.find_structure() != null
 
-func _get_plugin_name() -> String:
-	return "平面"
+func _forward_canvas_force_draw_over_viewport(overlay: Control) -> void:
+	plan.draw(overlay)
 
-func _get_plugin_icon() -> Texture2D:
-	return EditorInterface.get_editor_theme().get_icon(&"GridContainer", &"EditorIcons")
+func _forward_canvas_gui_input(event: InputEvent) -> bool:
+	return plan.input(event)
 
-func _make_visible(visible: bool) -> void:
-	if plan:
-		plan.visible = visible
-		if visible:
-			plan.mark_dirty()
+## Opening the 2D tab on a structure scene with nothing selected selects the structure,
+## so the plan receives clicks right away.
+func _on_main_screen_changed(screen: String) -> void:
+	if screen != "2D" and Time.get_ticks_msec() < plan.hold_2d_until:
+		(func(): EditorInterface.set_main_screen_editor("2D")).call_deferred()
+		return
+	plan.in_2d = screen == "2D"
+	if screen != "2D":
+		return
+	plan.refresh()
+	var s: Node = plan.find_structure()
+	if s != null and EditorInterface.get_selection().get_selected_nodes().is_empty():
+		plan.stay_in_2d()
+		EditorInterface.get_selection().add_node(s)
+		EditorInterface.edit_node(s)
+	update_overlays()
 
 # ── click selection of generated meshes ───────────────────────────────────────
 
@@ -134,7 +155,7 @@ func _build_dock() -> Control:
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.theme_type_variation = "HintLabel"
 	root.add_child(info)
-	_section(root, "添加构件（也可在顶部「平面」标签里画）")
+	_section(root, "添加构件（也可在 2D 标签里直接画）")
 	var grid := GridContainer.new()
 	grid.columns = 3
 	root.add_child(grid)
@@ -261,7 +282,7 @@ func _update_info() -> void:
 		return
 	var s := _structure()
 	if s == null:
-		info.text = "打开一个含 LevelStructure3D 的关卡场景，或点「新建结构根」。2D 平面编辑在顶部的「平面」标签。"
+		info.text = "打开一个含 LevelStructure3D 的关卡场景，或点「新建结构根」。切到 2D 标签可在平面图上拖拽、吸附和绘制。"
 	else:
 		if s.summary == "":
 			s.refresh_summary()
@@ -534,20 +555,21 @@ func _capture(spec: String) -> void:
 	for i in 60:
 		await get_tree().process_frame
 	var report := "selected=%s" % (target.name if target else "none")
-	if view == "plan":
-		ei.set_main_screen_editor("平面")
+	if view == "2d":
+		ei.set_main_screen_editor("2D")
 		for i in 30:
 			await get_tree().process_frame
 		plan.refresh()
-		plan.frame_all()
+		update_overlays()
 		for i in 20:
 			await get_tree().process_frame
-		report += " plan_items=%d" % plan.items.size()
+		report += " plan_items=%d handles_target=%s" % [plan.items.size(), str(_handles(target))]
+		report += " " + await _pick_2d_test("PierW1")
 	elif view == "pick":
 		report += " " + await _pick_test(vp3)
 	# Swap tab timing: switch away and back (was ~0.9 s per switch before the queue fix).
 	var swap := Time.get_ticks_msec()
-	if view != "plan":
+	if view != "2d":
 		ei.set_main_screen_editor("Script")
 		await get_tree().process_frame
 		ei.set_main_screen_editor("3D")
@@ -561,6 +583,38 @@ func _capture(spec: String) -> void:
 	var err := img.save_jpg(ProjectSettings.globalize_path(out), 0.86)
 	print("ARCHBUILDER_EDITOR_CAPTURE %s %s %s" % [out, error_string(err), report])
 	get_tree().quit()
+
+## Click a piece's plan outline in the 2D tab like a user and report the selection.
+func _pick_2d_test(piece_name: String) -> String:
+	var target: Dictionary = {}
+	for it in plan.items:
+		if it.node.name == piece_name:
+			target = it
+	var vp2 := EditorInterface.get_editor_viewport_2d()
+	if target.is_empty() or vp2 == null:
+		return "pick2d=no-target"
+	plan._sync_view()
+	var centre := Vector2.ZERO
+	for p in target.outline:
+		centre += p
+	centre /= float(target.outline.size())
+	var container := vp2.get_parent() as Control
+	var at: Vector2 = container.get_global_rect().position + plan.to_screen(centre)
+	for pressed in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = pressed
+		ev.position = at
+		ev.global_position = at
+		Input.parse_input_event(ev)
+		for i in 4:
+			await get_tree().process_frame
+	update_overlays()
+	for i in 12:
+		await get_tree().process_frame
+	var screen := "2D" if plan.in_2d else "other"
+	var picked: Array = EditorInterface.get_selection().get_selected_nodes().map(func(n): return str(n.name))
+	return "pick2d=%s still_in=%s" % [",".join(picked), screen]
 
 ## Click the middle of the 3D viewport like a user and report what the editor selected.
 func _pick_test(vp3: SubViewport) -> String:
@@ -594,6 +648,7 @@ func _frame_editor_camera(scene: String) -> void:
 	var probe := packed.instantiate()
 	var center := Vector3(16, 0, 16)
 	var span := 16.0
+	var box2 := Rect2(0, 0, 32, 32)
 	if probe is LevelStructure3D:
 		var lot: Dictionary = probe.derive_lot()
 		if not lot.floors.is_empty():
@@ -602,6 +657,7 @@ func _frame_editor_camera(scene: String) -> void:
 				box = box.merge(Rect2(Vector2(c), Vector2.ONE))
 			center = Vector3(box.get_center().x, 0.0, box.get_center().y)
 			span = maxf(box.size.x, box.size.y)
+			box2 = box
 	probe.free()
 	# Start from the state the editor itself saved (complete keys), override only the camera.
 	var file := "res://.godot/editor/%s-editstate-%s.cfg" % [scene.get_file(), scene.md5_text()]
@@ -622,4 +678,10 @@ func _frame_editor_camera(scene: String) -> void:
 	three["viewports"] = views
 	three["viewport_mode"] = 1
 	state.set_value("editor_states", "3D", three)
+	# 2D tab: frame the plan (PlanView.PX canvas pixels per metre) in a ~1280 x 560 view.
+	var two: Dictionary = state.get_value("editor_states", "2D", {})
+	var z := minf(1240.0 / (box2.size.x * PlanView.PX + 80.0), 380.0 / (box2.size.y * PlanView.PX + 80.0))
+	two["zoom"] = z
+	two["ofs"] = box2.get_center() * PlanView.PX - Vector2(620, 250) / z
+	state.set_value("editor_states", "2D", two)
 	state.save(file)

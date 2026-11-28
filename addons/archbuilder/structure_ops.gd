@@ -1,6 +1,6 @@
 @tool
 extends RefCounted
-## Editor operations shared by the plan tab, the 3D gizmo and the dock: undoable add,
+## Editor operations shared by the 2D-tab plan, the 3D gizmo and the dock: undoable add,
 ## delete, duplicate, move and rotate in plan space, and "edit then commit" undo steps
 ## built from before/after snapshots of a node's saved properties.
 

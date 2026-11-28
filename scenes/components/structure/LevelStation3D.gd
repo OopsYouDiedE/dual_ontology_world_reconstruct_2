@@ -3,7 +3,7 @@ class_name LevelStation3D
 extends "res://scenes/components/structure/StructurePiece3D.gd"
 ## A reserved floor footprint (furniture, lamps, jambs): adds a box collider and marks the
 ## covered cells as not clear for room gameplay. Resize it in the Inspector, by its corner
-## handles in 3D, or in the plan tab; the editor shows a translucent box.
+## handles in 3D, or in the 2D tab plan; the editor shows a translucent box.
 
 @export var footprint: Vector2 = Vector2(1, 1):
 	set(v):

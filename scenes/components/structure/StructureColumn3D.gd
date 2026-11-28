@@ -2,7 +2,7 @@
 class_name StructureColumn3D
 extends "res://scenes/components/structure/StructurePiece3D.gd"
 ## A free-standing column: plinth, shaft and capital, with a collider. Its centre is a snap
-## point for walls, arches and other columns. Drag the radius handle (3D or plan tab),
+## point for walls, arches and other columns. Drag the radius handle (3D or the 2D tab plan),
 ## or tune everything in the Inspector.
 
 const Hall := preload("res://scenes/components/hall/GothicHallPiece3D.gd")

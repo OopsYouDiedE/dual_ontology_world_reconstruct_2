@@ -4,7 +4,7 @@ extends "res://scenes/components/structure/StructurePiece3D.gd"
 ## An arch between two points (like a wall): round/elliptical, pointed, segmental or flat
 ## (lintel) profile, optional jambs down to the floor and an optional spandrel fill up to
 ## `fill_to`. Its ends snap onto columns and wall ends. Drag the end handles in 3D or in
-## the plan tab; the crown handle (3D) sets the rise.
+## the 2D tab plan; set the rise in the Inspector.
 
 const Hall := preload("res://scenes/components/hall/GothicHallPiece3D.gd")
 

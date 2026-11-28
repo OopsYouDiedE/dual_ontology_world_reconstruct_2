@@ -3,7 +3,7 @@ class_name LevelTrigger3D
 extends "res://scenes/components/structure/StructurePiece3D.gd"
 ## A level trigger: a box zone (or an E-key interaction) that runs its `actions` in order
 ## (set / animate properties, play animations, call methods, drive movers, send level
-## events and dialogue). Place and resize it in 3D or in the plan tab; it is listed in the
+## events and dialogue). Place and resize it in 3D or in the 2D tab plan; it is listed in the
 ## level manifest (id / how / condition / effect / dialogue) and the F2 blueprint, and the
 ## level hears it through AcademyLevelBase._on_level_action(action_id) and
 ## LevelStructure3D.trigger_fired.

@@ -3,7 +3,7 @@ extends SceneTree
 ## columns, arches, colonnades, assemblies with exposed parameters, stairs and stations on
 ## the shared plan interface, triggers with ordered actions, movers, the level manifest,
 ## click-selection adoption of generated meshes, and the cheap scene-exit path.
-## The plan tab and 3D handles are checked in a real editor window (tools-guide §8).
+## The 2D-tab plan and 3D handles are checked in a real editor window (tools-guide §8).
 
 const Structure := preload("res://scenes/components/structure/LevelStructure3D.gd")
 const Queue := preload("res://scenes/components/structure/StructureRebuildQueue.gd")

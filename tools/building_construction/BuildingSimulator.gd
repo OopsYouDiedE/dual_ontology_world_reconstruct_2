@@ -97,7 +97,7 @@ func _ready() -> void:
 	rooms = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_rooms.json"))
 	for room in rooms:
 		if room.id=="R01": state.restore(JSON.stringify(room)); state.remember(); break
-	catalog = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/catalog.json"))
+	catalog = Components.load_catalog()
 	prop_presets = JSON.parse_string(FileAccess.get_file_as_string("res://tools/building_construction/architect_prop_presets.json"))
 	_make_ui()
 	refresh()

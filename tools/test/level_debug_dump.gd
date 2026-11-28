@@ -58,7 +58,10 @@ func run() -> void:
 		"room_objects": [],
 		"interactable_candidates": [],
 		"ai_routes": [],
+		"architecture_audit": {},
 	}
+	var audit := preload("res://scenes/components/shared/AcademyArchitectureAudit.gd").scan()
+	report.architecture_audit = {"ok": audit.ok, "scanned": audit.scanned, "violations": audit.violations}
 
 	if scene_key == "r01":
 		var lvl := R01Level.new()
@@ -68,7 +71,7 @@ func run() -> void:
 		report.loaded_level = {
 			"level_id": str(m.get("level_id", "")),
 			"title": str(m.get("title", "")),
-			"pipeline": "AcademyLevelBase",
+			"pipeline": "AcademyLevelBase → AcademyLevelRuntime",
 			"audit_ok": bool(lvl.audit_report.get("ok", false)),
 			"capabilities": lvl.level_capabilities,
 			"ui_mode": lvl.dual_ui.get_mode_name() if is_instance_valid(lvl.dual_ui) else "none",
@@ -90,7 +93,7 @@ func run() -> void:
 		report.loaded_level = {
 			"level_id": "expedition_01_north_wing",
 			"title": "Expedition-01 (Sortie.tscn)",
-			"pipeline": "AcademyLevelPipeline + DualModeInteractionHud",
+			"pipeline": "AcademyLevelRuntime (director → DualModeInteractionHud)",
 			"capabilities": exp.level_capabilities,
 			"ui_mode": exp.dual_ui.get_mode_name() if is_instance_valid(exp.dual_ui) else "none",
 		}
@@ -112,7 +115,7 @@ func run() -> void:
 			"title": "Public Hall (Run.tscn / FirstWatch)",
 			"phase": str(obs.get("phase", "")),
 			"stage": str(obs.get("stage", "")),
-			"pipeline": "AcademyLevelPipeline + DualModeInteractionHud",
+			"pipeline": "AcademyLevelRuntime (director → DualModeInteractionHud)",
 			"capabilities": game.level_capabilities,
 			"ui_mode": game.dual_ui.get_mode_name() if is_instance_valid(game.dual_ui) else "none",
 		}

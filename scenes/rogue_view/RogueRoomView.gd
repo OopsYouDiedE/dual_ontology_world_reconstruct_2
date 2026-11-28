@@ -14,6 +14,7 @@ const Plan := preload("res://scenes/rogue_view/NativeLotPlan.gd")
 const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdshader")
 const R18n := preload("res://scenes/components/shared/R18n.gd")
 const Stage := preload("res://scenes/components/rendering/AcademyStage.gd")
+const LevelPipeline := preload("res://scenes/components/shared/AcademyLevelPipeline.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 const UnifiedInput := preload("res://scenes/components/shared/AcademyUnifiedInput.gd")
 
@@ -128,7 +129,9 @@ func _ready() -> void:
 	_pixels.resized.connect(_resize_render_target)
 	_resize_render_target.call_deferred()
 	if expedition_view:
-		var applied := Stage.apply_to_viewport(_viewport, $RoomViewport/WorldEnvironment, true, true)
+		# Same render stage contract as every other level (environment, ink, essence post).
+		var caps := LevelPipeline.capabilities_campaign_room() if campaign_view else LevelPipeline.capabilities_hall()
+		var applied := LevelPipeline.bootstrap_viewport(_viewport, $RoomViewport/WorldEnvironment, caps)
 		_shift_pass = applied.essence
 		resized.connect(_fill_window)
 		_fill_window()

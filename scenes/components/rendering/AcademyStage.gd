@@ -78,7 +78,8 @@ static func create_compatibility_fill_light() -> DirectionalLight3D:
 
 ## Single-call rendering contract for ALL current and future first-person levels.
 ## Applies shared Environment, MSAA/shadow tuning, CompatibilityFillLight, HallInk, and optional EssenceShiftPass.
-static func apply_to_viewport(vp: Viewport, world_env: WorldEnvironment = null, attach_ink := true, attach_essence := false) -> Dictionary:
+static func apply_to_viewport(vp: Viewport, world_env: WorldEnvironment = null, attach_ink := true, attach_essence := false, attach_parent: Node = null) -> Dictionary:
+	var holder: Node = attach_parent if attach_parent != null else vp
 	var result := {"environment": null, "ink": null, "essence": null, "compat_fill": null}
 	var env := environment()
 	if world_env != null:
@@ -86,24 +87,25 @@ static func apply_to_viewport(vp: Viewport, world_env: WorldEnvironment = null, 
 	result.environment = env
 	tune_viewport(vp)
 	if is_compatibility():
-		var existing_fill := vp.get_node_or_null("CompatibilityFillLight") as DirectionalLight3D
+		var existing_fill := holder.get_node_or_null("CompatibilityFillLight") as DirectionalLight3D
 		if existing_fill == null:
 			existing_fill = create_compatibility_fill_light()
-			vp.add_child(existing_fill)
+			existing_fill.name = "CompatibilityFillLight"
+			holder.add_child(existing_fill)
 		result.compat_fill = existing_fill
 	if RenderingServer.get_current_rendering_method() == &"forward_plus":
 		if attach_ink:
-			var ink_node := vp.get_node_or_null("ExpeditionInk") as MeshInstance3D
+			var ink_node := holder.get_node_or_null("ExpeditionInk") as MeshInstance3D
 			if ink_node == null:
 				ink_node = ink()
 				ink_node.name = "ExpeditionInk"
-				vp.add_child(ink_node)
+				holder.add_child(ink_node)
 			result.ink = ink_node
 		if attach_essence:
-			var shift_node := vp.get_node_or_null("EssenceShift") as MeshInstance3D
+			var shift_node := holder.get_node_or_null("EssenceShift") as MeshInstance3D
 			if shift_node == null:
 				shift_node = preload("res://scenes/components/rendering/post/EssenceShiftPass.gd").create()
 				shift_node.name = "EssenceShift"
-				vp.add_child(shift_node)
+				holder.add_child(shift_node)
 			result.essence = shift_node
 	return result

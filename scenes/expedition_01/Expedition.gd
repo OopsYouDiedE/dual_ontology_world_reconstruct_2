@@ -8,14 +8,14 @@ const OIL_PICKUP:=35.
 const Cast=preload("res://scenes/rogue_crossing/ProductionCast.gd")
 const R18n=preload("res://scenes/components/shared/R18n.gd")
 const VoiceSynth=preload("res://scenes/components/shared/VoiceSynth.gd")
-const EssenceShiftPass=preload("res://scenes/components/rendering/post/EssenceShiftPass.gd")
 const EssenceSurgeShader=preload("res://scenes/expedition_01/EssenceSurge.gdshader")
 const Feel=preload("res://scenes/components/shared/FeelProfile.gd")
 const RenderProfile=preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const Stage=preload("res://scenes/components/rendering/AcademyStage.gd")
-const DualInteractionHud=preload("res://scenes/components/shared/DualModeInteractionHud.gd")
 const UnifiedInput=preload("res://scenes/components/shared/AcademyUnifiedInput.gd")
 const LevelPipeline=preload("res://scenes/components/shared/AcademyLevelPipeline.gd")
+const LevelRuntime=preload("res://scenes/components/shared/AcademyLevelRuntime.gd")
+const InteractionSchema=preload("res://scenes/components/interaction/AcademyInteractionSchema.gd")
 var kit:=Kit.new()
 var walker:=CharacterBody3D.new()
 var eye:=Camera3D.new()
@@ -85,7 +85,8 @@ var genome:={
 	"solo_bridge_sonar_exposure":0.68,"hunter_rage_speed":5.4,"catwalk_grace_sec":3.5
 }
 var trust_line_cd:=0.
-var wheel:Node=preload("CommandWheel.gd").new()
+## Shared AcademyCommandWheel owned by the unified runtime (UnifiedTeammateWheel.wheel).
+var wheel:Node
 var wheel_open:=false
 var mouse_lifecycle:=preload("ExpeditionMouse.gd").new()
 const Contracts=preload("ExpeditionContracts.gd")
@@ -117,6 +118,7 @@ var plate_spill:=OmniLight3D.new()
 var prompt:=Label.new()
 var prompt_notice:=Label.new()
 var dual_ui:DualModeInteractionHud
+var runtime:AcademyLevelRuntime
 var level_capabilities:Dictionary=LevelPipeline.capabilities_expedition()
 var read_book:=false
 var running:=false
@@ -154,7 +156,8 @@ var demo_grace:=1.
 var observers:=-1
 var phase:=0.
 var stride:=0.
-var captions:=preload("ExpeditionCaptions.gd").new()
+## Shared AcademyCaptions owned by the unified runtime (UnifiedDialoguePresenter.captions).
+var captions:Node
 var cues:={}
 var foot:=AudioStreamPlayer.new()
 var chime:=AudioStreamPlayer.new()
@@ -264,7 +267,12 @@ func _ready()->void:
 	canvas.add_child(review_hud);review_hud.position=hud.position;review_hud.hide()
 	review_hud.add_theme_font_override("font",font);review_hud.add_theme_constant_override("outline_size",6)
 	review_hud.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	canvas.add_child(captions);captions.setup(font)
+	# Unified runtime: interaction UI, bottom captions and the Q teammate wheel are the shared
+	# components every level uses; this level advances captions on its own clock.
+	runtime=LevelRuntime.install(self,canvas,level_capabilities,{"mode_pill_y":18.0,"caption_bottom":-52.0,"auto_refresh":false,"caption_auto_advance":false})
+	dual_ui=runtime.dual_ui;captions=runtime.dialogue.captions;wheel=runtime.teammate_wheel.wheel
+	runtime.set_view_provider(_expedition_interaction_view)
+	runtime.interactions.register_provider("expedition",_expedition_interaction_groups)
 	canvas.add_child(caption_toast);caption_toast.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	caption_toast.offset_left=-460.;caption_toast.offset_top=-176.;caption_toast.offset_right=-28.;caption_toast.offset_bottom=-140.
 	caption_toast.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT
@@ -318,7 +326,6 @@ func _ready()->void:
 	prompt_notice.add_theme_color_override("font_color",Color("ffcf9a"))
 	prompt_notice.mouse_filter=Control.MOUSE_FILTER_IGNORE;prompt_notice.hide()
 	manual_ui.setup(canvas, font)
-	dual_ui=DualInteractionHud.new();dual_ui.mode_pill_y=18.0;canvas.add_child(dual_ui)
 	add_child(polish);polish.setup(self,canvas,hud)
 	polish.sound_requested.connect(sound_at)
 	archive.line_requested.connect(line_once)
@@ -332,7 +339,6 @@ func _ready()->void:
 	archive.annotation_unlocked.connect(func(delay: float) -> void:
 		cues["evidence"] = true
 		evidence_thought_delay = delay)
-	add_child(wheel);wheel.setup(canvas,font)
 	wheel.chosen.connect(_on_wheel_chosen)
 	wheel.cancelled.connect(_on_wheel_cancelled)
 	contracts.reset()
@@ -430,11 +436,8 @@ func sound_at(kind:String,pos:Vector3,db:float,distance:=90.)->void:
 	audio.finished.connect(audio.queue_free);audio.play()
 func light_stage()->void:
 	# The Public Hall and every night-watch room render on this same stage.
-	var w:=WorldEnvironment.new();var e:=Stage.environment()
-	var ink:=Stage.ink()
-	if ink!=null:add_child(ink)
-	w.environment=e;add_child(w)
-	if Stage.is_compatibility():add_child(Stage.create_compatibility_fill_light())
+	var w:=WorldEnvironment.new();add_child(w)
+	var stage_nodes:=LevelPipeline.bootstrap_viewport(get_viewport(),w,level_capabilities,self)
 	var sun:=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-33,0);sun.light_energy=.31;sun.light_color=Color("fff1dc");sun.shadow_enabled=true
 	sun.directional_shadow_max_distance=64;sun.directional_shadow_mode=DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS;sun.directional_shadow_blend_splits=true
 	sun.shadow_bias=.025;sun.shadow_normal_bias=.55;sun.light_angular_distance=.45;add_child(sun)
@@ -444,8 +447,7 @@ func light_stage()->void:
 	for x in [13.,26.]:
 		var f:=OmniLight3D.new();f.position=Vector3(x,3.2,0);f.omni_range=9;f.light_energy=.38;f.light_color=Color("ffdcae");f.omni_attenuation=1.4;add_child(f)
 	var well:=OmniLight3D.new();well.position=Vector3(61,-8.2,10.1);well.omni_range=16;well.light_energy=.7;well.light_color=Color("8fc4d8");well.omni_attenuation=1.2;add_child(well)
-	if RenderingServer.get_current_rendering_method()==&"forward_plus":
-		_wing_shift=EssenceShiftPass.create();_wing_shift.name="WingEssenceShift";add_child(_wing_shift)
+	_wing_shift=stage_nodes.essence
 	_build_archive_essence_surges()
 
 func _build_archive_essence_surges()->void:
@@ -566,7 +568,7 @@ func _input(ev:InputEvent)->void:
 	if key==KEY_F3:
 		polish.toggle_debug();get_viewport().set_input_as_handled();return
 	if key==KEY_V and mode<0 and not manual.visible and not wheel_open:
-		if is_instance_valid(dual_ui):dual_ui.toggle_mode()
+		if is_instance_valid(runtime):runtime.toggle_ui_mode()
 		get_viewport().set_input_as_handled();return
 	if key==KEY_F8:
 		R18n.toggle_locale()
@@ -1828,34 +1830,33 @@ func review_props()->void:
 	warning.stream=Sound.SPRING;warning.volume_db=-9.;warning.position=Vector3(61,1,10.1);add_child(warning)
 
 
+## Scene-side interaction data for the unified runtime. This level only publishes
+## AcademyInteractionSchema descriptors; the runtime's director presents them.
+var _ix_seen:=""
+var _ix_hints:Dictionary={}
+
 func _sync_expedition_dual_ui(seen:String, hints:Dictionary)->void:
-	if not is_instance_valid(dual_ui):return
-	var can_show:bool=(mode<0 and not manual.visible and not wheel_open and not finished and retry<=0.)
-	if not can_show:
-		dual_ui.sync_groups(null, Rect2(), Vector2.ONE, Vector3.ZERO, [], false)
-		return
+	if not is_instance_valid(runtime):return
+	_ix_seen=seen;_ix_hints=hints
+	runtime.refresh_interactions()
+
+func _expedition_interaction_view()->Dictionary:
+	var vp_rect:=get_viewport().get_visible_rect()
+	return {
+		"camera": eye,
+		"rect": vp_rect,
+		"vp_size": vp_rect.size,
+		"player_pos": walker.position,
+		"can_show": mode<0 and not manual.visible and not wheel_open and not finished and retry<=0.,
+	}
+
+func _expedition_interaction_groups()->Array:
+	var seen:=_ix_seen
+	var hints:=_ix_hints
 	var groups:Array[Dictionary]=[]
 	var add_pt:=func(id:String, title:String, wpos:Vector3, custom_verb:String=""):
 		var verb:String=custom_verb if custom_verb!="" else str(hints.get(id, title))
-		# Strip leading "E · " or "[E] " prefix so the unified keycap never duplicates E
-		for pref in ["E · ", "[E] ", "E - ", "E: "]:
-			if verb.begins_with(pref):
-				verb=verb.substr(pref.length())
-		if verb.is_empty():verb=title
-		groups.append({
-			"id": id,
-			"title": title,
-			"anchor_world": wpos,
-			"force_selected": seen==id,
-			"hotspots": [{
-				"id": id,
-				"part_name": title,
-				"verb": verb,
-				"world_pos": wpos,
-				"force_selected": seen==id,
-				"callback": use,
-			}],
-		})
+		groups.append(InteractionSchema.single(id, title, wpos, verb, use, {"force_selected": seen==id}))
 	if not released:
 		add_pt.call("gate", R18n.pick("北翼闸门","North Gate"), Vector3(36.0, 1.57, 0.0))
 		add_pt.call("lever", R18n.pick("主释放杆","Master Lever"), Vector3(36.3, 1.35, 7.72))
@@ -1885,5 +1886,4 @@ func _sync_expedition_dual_ui(seen:String, hints:Dictionary)->void:
 		add_pt.call("relay", R18n.pick("中继端口","Relay Port"), Relay.PORTS[relay_focus], relay_hint())
 	if hale.visible:
 		add_pt.call("hale", R18n.pick("霍铎 (Hale)","Hale"), hale.position+Vector3.UP*1.25)
-	var vp_rect:=get_viewport().get_visible_rect()
-	dual_ui.sync_groups(eye, vp_rect, vp_rect.size, walker.position, groups, true)
+	return groups

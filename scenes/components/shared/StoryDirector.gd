@@ -8,8 +8,7 @@ extends CanvasLayer
 signal finished(skipped: bool)
 signal beat_changed(index: int, beat_id: String)
 
-const Captions = preload("res://scenes/components/shared/AcademyCaptions.gd")
-const VoiceSynth = preload("res://scenes/components/shared/VoiceSynth.gd")
+const DialoguePresenter = preload("res://scenes/components/shared/UnifiedDialoguePresenter.gd")
 const UiStyle = preload("res://scenes/components/shared/UiTheme.gd")
 const R18n = preload("res://scenes/components/shared/R18n.gd")
 
@@ -35,6 +34,7 @@ var _bot_lid: ColorRect
 var _captions: VBoxContainer
 var _hint_label: Label
 var _voice: Node
+var _presenter: Node
 
 func _ready() -> void:
 	layer = 20
@@ -67,9 +67,12 @@ func _build_ui() -> void:
 	_bot_lid.anchor_bottom = 1.0
 
 	var font := UiStyle.make_font()
-	_captions = Captions.new()
-	add_child(_captions)
-	_captions.setup(font)
+	# Cutscene lines use the same caption bar + formant voice as every level.
+	_presenter = DialoguePresenter.new()
+	_presenter.auto_advance = false  # beats own their timing
+	add_child(_presenter)
+	_presenter.setup(self, -52.0)
+	_captions = _presenter.captions
 
 	_hint_label = Label.new()
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -80,8 +83,7 @@ func _build_ui() -> void:
 	UiStyle.style_label(_hint_label, font, 12, Color("b9a68a"), 3)
 	add_child(_hint_label)
 
-	_voice = VoiceSynth.new()
-	add_child(_voice)
+	_voice = _presenter.voice
 
 ## Starts a packaged dynamic story sequence.
 ## `config` keys:

@@ -19,6 +19,9 @@ func define_level_manifest() -> Dictionary:
 			{"id": "r01_shelf_n", "kind": "recipe", "catalog_id": "bookshelf", "pos": Vector3(-2.6, 0.0, -8.2), "yaw": PI * 0.5, "params": {"width": 2.0, "bays": 2, "shelves": 4}, "zone": "北端门牌柜"},
 			{"id": "r01_table_side", "kind": "glb", "catalog_id": "manor_table_long", "pos": Vector3(2.4, 0.0, -8.6), "yaw": PI * 0.5, "scale": 0.76, "zone": "海侧窗台旁"},
 			{"id": "r01_candle", "kind": "glb", "catalog_id": "brass_candle_triple", "pos": Vector3(2.4, 0.74, -8.6), "yaw": 0.2, "scale": 0.65, "zone": "海侧窗台旁"},
+			# Catalog item made selectable with its catalog default (Search chest) + a level dialogue.
+			{"id": "r01_supply_chest", "kind": "glb", "catalog_id": "manor_chest", "pos": Vector3(-2.3, 0.0, -6.2), "yaw": PI * 0.5, "scale": 0.8, "zone": "门廊西侧",
+				"interaction": {"from_catalog": true, "action_id": "search_supply_chest", "dialogue_id": "dlg_chest_supplies"}},
 		],
 		"interactables": [
 			{
@@ -72,6 +75,7 @@ func define_level_manifest() -> Dictionary:
 			{"id": "dlg_letter_salt", "speaker": "", "voice_profile": "resident", "text_zh": "信封潮湿并带着浓重海盐味，邮戳日期竟是昨天——绝不能带回主楼。", "text_en": "The envelope is damp with sea salt and postmarked yesterday—do not bring this into the main hall."},
 			{"id": "dlg_hale_h2_turn", "speaker": "霍铎", "voice_profile": "hale", "text_zh": "……汽笛声。别看窗户，低头等它过去。", "text_en": "...A foghorn. Don't look at the windows—keep your eyes down until it passes."},
 			{"id": "dlg_hale_r04_mistake", "speaker": "霍铎", "voice_profile": "hale", "text_zh": "奇怪，这儿没风，提灯火苗怎么发白还往一边倒？我把灯芯拧大一点看看……", "text_en": "Odd—no draft here, yet the flame went pale and tilted. Let me turn the wick up a bit..."},
+			{"id": "dlg_chest_supplies", "speaker": "", "voice_profile": "resident", "text_zh": "箱里只有几截受潮的蜡烛头和一卷麻绳，封条完好。", "text_en": "Only a few damp candle stubs and a coil of rope inside; the seal was intact."},
 			{"id": "dlg_hale_h5_nod", "speaker": "霍铎", "voice_profile": "hale", "text_zh": "做得对，别徒手碰带海盐味和近日期的东西。我们可以往 N-02 走了。", "text_en": "Good call—never pocket anything damp with sea salt and a fresh date. Let's push on to N-02."},
 		],
 		"ai_routes": [

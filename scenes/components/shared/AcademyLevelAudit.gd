@@ -25,7 +25,8 @@ const FORBIDDEN_EARLY_TERMS := [
 static func _normalize_for_firewall(text: String) -> String:
 	var s := text.to_lower()
 	for ch in [" ", "	", "
-", "", "·", "-", "_", "—", "–", ":", "：", "/", "（", "）", "(", ")"]:
+", "
+", "·", "-", "_", "—", "–", ":", "：", "/", "（", "）", "(", ")"]:
 		s = s.replace(ch, "")
 	return s
 
@@ -134,6 +135,25 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 			var hdlg := str(h.get("dialogue_id", ""))
 			if not hdlg.is_empty() and not dialogue_ids.has(hdlg):
 				errors.append("Hotspot '%s' references unknown dialogue_id '%s'" % [hid, hdlg])
+
+	# 3b. Object-attached interactions (catalog item → AcademyInteractable), same rules as hotspots
+	for obj in manifest.get("objects", []):
+		var declared = obj.get("interaction", {})
+		if not declared is Dictionary or (declared as Dictionary).is_empty():
+			continue
+		var oid := str(obj.get("id", ""))
+		var spec := FurnitureCatalog.resolve_interaction(str(obj.get("catalog_id", "")), declared)
+		var iid := str(spec.get("id", oid))
+		if interact_ids.has(iid):
+			errors.append("Object '%s' interaction id '%s' collides with an interactable group" % [oid, iid])
+		interact_ids[iid] = true
+		if str(spec.get("action_id", "")).is_empty():
+			errors.append("Object '%s' interaction has no 'action_id' (declare it or use from_catalog on a selectable item)" % oid)
+		for field in ["title_zh", "title_en", "verb_zh", "verb_en"]:
+			_check_firewall_text(str(spec.get(field, "")), "object '%s'.interaction.%s" % [oid, field], deep_lore_allowed, errors)
+		var odlg := str(spec.get("dialogue_id", ""))
+		if not odlg.is_empty() and not dialogue_ids.has(odlg):
+			errors.append("Object '%s' interaction references unknown dialogue_id '%s'" % [oid, odlg])
 
 	# 4. Validate Triggers
 	var trigger_ids := {}

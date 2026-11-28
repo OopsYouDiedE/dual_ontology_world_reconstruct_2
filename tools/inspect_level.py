@@ -24,6 +24,7 @@ def find_godot() -> str:
         os.environ.get("GODOT_BIN", ""),
         shutil.which("godot") or "",
         shutil.which("godot4") or "",
+        str(ROOT / ".runtime/godot/4.7.2/Godot_v4.7.2-stable_mono_win64_console.exe"),
         "/home/spark/godot_472/Godot_v4.7.2-stable_mono_linux_x86_64/Godot_v4.7.2-stable_mono_linux.x86_64",
         "/home/spark/godot/Godot_v4.7.2-stable_mono_linux_x86_64/Godot_v4.7.2-stable_mono_linux.x86_64",
     ]:
@@ -46,6 +47,8 @@ def check_dependency_uniqueness() -> dict:
             continue
         for f in p.rglob("*"):
             if f.suffix not in (".gd", ".tscn", ".gdshader", ".cs"):
+                continue
+            if f.name == "AcademyArchitectureAudit.gd":  # holds the forbidden paths as rule data
                 continue
             txt = f.read_text(encoding="utf-8", errors="ignore")
             if "scenes/blue_prince_lab" in txt:
@@ -76,7 +79,7 @@ def main() -> None:
         "-s", "res://tools/test/level_debug_dump.gd", "--",
         "--no-rule-save", "--skip-intro", f"--scene={args.scene}",
     ]
-    proc = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=60)
+    proc = subprocess.run(cmd, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
     out = proc.stdout + "\n" + proc.stderr
     m = re.search(r"===LEVEL_DEBUG_JSON_START===\s*(\{.*?\})\s*===LEVEL_DEBUG_JSON_END===", out, re.S)
     if not m:
@@ -100,6 +103,10 @@ def main() -> None:
     caps = lvl.get("capabilities", {})
     print(f"能力开关     : jump={caps.get('allow_jump')}  lamp={caps.get('allow_lamp')}  stomp={caps.get('allow_stomp')}  wheel={caps.get('allow_command_wheel')}")
     print(f"依赖唯一门禁 : {'PASS (0 反向依赖)' if dep['ok'] else 'FAIL ' + str(dep)}")
+    arch = data.get("architecture_audit", {})
+    print(f"统一架构门禁 : {'PASS' if arch.get('ok') else 'FAIL'} ({arch.get('scanned', 0)} 个正式运行时文件)")
+    for v in arch.get("violations", []):
+        print(f"    [{v['rule']}] {v['file']}:{v['line']}  {v['text']}")
     print("-" * 72)
     print("门拓扑逻辑 (Door & Route Topology):")
     if "active_exits" in topo:

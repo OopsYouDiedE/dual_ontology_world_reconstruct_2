@@ -17,8 +17,9 @@ const Hud := preload("WatchHud.gd")
 const Storage := preload("WatchStorage.gd")
 const FirstExpedition := preload("res://scenes/expedition_01/Sortie.tscn")
 const HallOpening := preload("HallOpeningSequence.gd")
-const DualInteractionHud := preload("res://scenes/components/shared/DualModeInteractionHud.gd")
 const LevelPipeline := preload("res://scenes/components/shared/AcademyLevelPipeline.gd")
+const LevelRuntime := preload("res://scenes/components/shared/AcademyLevelRuntime.gd")
+const InteractionSchema := preload("res://scenes/components/interaction/AcademyInteractionSchema.gd")
 const DialoguePresenter := preload("res://scenes/components/shared/UnifiedDialoguePresenter.gd")
 const TeammateWheel := preload("res://scenes/components/shared/UnifiedTeammateWheel.gd")
 
@@ -33,6 +34,7 @@ var pendulum_note_recorded := false
 var north_draft_inspected := false
 var watch_desk_inspected := false
 var pendulum_measured_sec := 8.1
+var _pendulum_measuring := false
 var field_notes: Array[String] = []
 var _wrpg_panel: PanelContainer
 var _wrpg_title: Label
@@ -41,6 +43,7 @@ var _wrpg_choices: VBoxContainer
 var _wrpg_actions: Array[Callable] = []
 var _opening: CanvasLayer
 var _opening_played := false
+var runtime: AcademyLevelRuntime
 var dual_ui: DualModeInteractionHud
 var dialogue_presenter: DialoguePresenter
 var teammate_wheel: TeammateWheel
@@ -219,6 +222,10 @@ func new_run(value: int) -> void:
 	inherited = false
 	_performing = false
 	_watch_number += 1
+	pendulum_measured = false
+	pendulum_note_recorded = false
+	_pendulum_measuring = false
+	field_notes.clear()
 	_opening_played = false
 	message = ""
 	_refresh()
@@ -268,8 +275,11 @@ func _input(event: InputEvent) -> void:
 		_check_pocket_watch()
 	elif event.physical_keycode == KEY_F8:
 		R18n.toggle_locale()
+		var was_guide := modal == "guide"
 		_refresh()
-	elif event.physical_keycode == KEY_TAB and handbook and modal != "margin":
+		if was_guide:
+			_read_guide()
+	elif (event.physical_keycode == KEY_TAB or event.physical_keycode == KEY_I) and handbook and modal != "margin":
 		if modal == "guide":
 			_close()
 		else:
@@ -288,16 +298,25 @@ func _input(event: InputEvent) -> void:
 func _read_guide() -> void:
 	if _performing:
 		return
-	_open("guide", "Night watch field manual", "ACADEMY PRESS  /  IVORY  /  No. 04")
-	for line in Rooms.IVORY:
+	_open(
+		"guide",
+		R18n.pick("夜间值守外勤守则", "Night watch field manual"),
+		R18n.pick("学院印务  /  象牙版  /  第 04 号", "ACADEMY PRESS  /  IVORY  /  No. 04")
+	)
+	for line in Rooms.ivory_lines():
 		_label(line)
 	for id in party:
 		var edition := _protocol(id)
-		_label("%s · %s copy" % [id, edition], 15, true)
-		_label("  ·  ".join(Rooms.VERSIONS[edition]), 14)
+		var ed_disp := Cast.edition_localized(edition, R18n.is_en())
+		_label(R18n.pick("%s · %s", "%s · %s copy") % [id, ed_disp], 15, true)
+		_label("  ·  ".join(Rooms.version_lines(edition)), 14)
+	if not field_notes.is_empty():
+		_label(R18n.pick("随身笔记", "Field notes"), 15, true)
+		for note_line in field_notes:
+			_label(note_line, 14)
 	if not margins.is_empty():
-		_label("Inherited pencil note / " + margins, 14)
-	_button(_sheet, "Fold manual · Tab", _close)
+		_label(R18n.pick("前任留下的铅笔批注 / ", "Inherited pencil note / ") + margins, 14)
+	_button(_sheet, R18n.pick("合上手册 · Tab / I", "Fold manual · Tab / I"), _close)
 
 func _inspect(group: int) -> void:
 	if _performing or phase in ["won", "lost"] or not modal.is_empty() or group not in [0, 1, 2]:
@@ -414,7 +433,7 @@ func _take_deposition(id: String) -> void:
 		_open_pendulum_sheet()
 		return
 
-	# Pre-sortie Hale: Compact WRPG dialogue menu (no full-screen dossier!)
+	# Pre-sortie Hale: Unified bottom subtitle + voice + Q-wheel hint (no popup modal)
 	if id == "Hale" and not first_returned:
 		if is_instance_valid(hall_hale) and hall_hale.has_meta("animation_player"):
 			(hall_hale.get_meta("animation_player") as AnimationPlayer).play(&"signal", 0.25)
@@ -423,12 +442,8 @@ func _take_deposition(id: String) -> void:
 			"Nothing in the Hall is damaged—only the north archway is leaking mist and sea-salt air. We should check the North Wing before the hour bell."
 		)
 		_speak_hall_mumble(line, "hale")
-		var opts: Array[Dictionary] = []
-		if pendulum_measured:
-			opts.append({"label": R18n.pick("询问关于傅科摆周期与偏心的事", "Ask about the Foucault pendulum"), "cb": _ask_hale_pendulum})
-		opts.append({"label": R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), "cb": _depart_first})
-		opts.append({"label": R18n.pick("先在大厅观察", "Step back"), "cb": _close_wrpg})
-		_open_wrpg(R18n.pick("霍铎（Hale）", "Hale"), line, opts)
+		if is_instance_valid(dual_ui):
+			dual_ui.show_toast(R18n.pick("按 Q 打开队友轮盘可询问傅科摆或与霍铎一同进入北翼", "Press Q for teammate wheel: ask about pendulum or enter North Wing"), 2.8)
 		return
 
 	if id not in Cast.NAMES:
@@ -956,52 +971,64 @@ func _hall_pendulum_period() -> float:
 		return float(gothic.get_pendulum_period_sec())
 	return 7.0 if first_returned else 8.1
 
+func _post_pendulum_feedback(id: String, text: String, duration := 2.8) -> void:
+	_ensure_dual_ui()
+	if is_instance_valid(dialogue_presenter):
+		dialogue_presenter.thought(id, text)
+	if is_instance_valid(dual_ui):
+		dual_ui.show_toast(text, duration)
+
 func _open_pendulum_sheet() -> void:
-	var title := R18n.pick("傅科摆 · 观测选项", "Foucault Pendulum")
-	var opts: Array[Dictionary] = []
-	if pendulum_measured:
+	if not pendulum_measured:
+		_begin_pendulum_judge()
+	elif not pendulum_note_recorded:
+		_record_pendulum_note()
+	else:
 		var traj := R18n.pick("摆迹掠过中心铜钉", "crosses center pin") if first_returned else R18n.pick("摆迹绕开中心铜钉", "misses center pin")
 		var body := R18n.pick("实测周期：%.1f 秒（%s）；悬索与摆锤完好无损。", "Measured: %.1f s (%s). Wire and bob undamaged.") % [pendulum_measured_sec, traj]
-		if not pendulum_note_recorded:
-			opts.append({"label": R18n.pick("在笔记上记载这件事", "Record in notebook"), "cb": _record_pendulum_note})
-		if not first_returned:
-			opts.append({"label": R18n.pick("询问霍铎关于傅科摆的事", "Ask Hale about the pendulum"), "cb": _ask_hale_pendulum})
-		opts.append({"label": R18n.pick("离开", "Step back"), "cb": _close_wrpg})
-		_open_wrpg(title, body, opts)
-	else:
-		var body := R18n.pick("悬索与摆锤无外力损伤；深石板刻度盘周圈 24 根立柱已有两根倒伏。", "Wire and brass bob are intact; two of twenty-four perimeter pegs lie tipped on the dark slate.")
-		opts.append({"label": R18n.pick("统计周期", "Measure period"), "cb": _begin_pendulum_judge})
-		opts.append({"label": R18n.pick("离开", "Step back"), "cb": _close_wrpg})
-		_open_wrpg(title, body, opts)
+		_post_pendulum_feedback("pendulum_status", body, 3.0)
 
 func _begin_pendulum_judge() -> void:
-	_open_wrpg(
-		R18n.pick("统计周期 · 判定起点", "Measure Period · Mark Pass"),
-		R18n.pick("观察前方摆锤，在它掠过最低点时确认一次，随后将自动完成一个完整往返周期。", "Watch the bob ahead and mark one pass at the lowest point—one full cycle will then complete automatically."),
-		[
-			{"label": R18n.pick("确认：摆锤已过最低点（开始计时）", "Mark pass now"), "cb": _run_pendulum_cycle_anim},
-			{"label": R18n.pick("取消", "Cancel"), "cb": _close_wrpg},
-		]
-	)
+	if _pendulum_measuring or _performing or phase != "camp":
+		return
+	_run_pendulum_cycle_anim()
 
 func _run_pendulum_cycle_anim() -> void:
+	if _pendulum_measuring:
+		return
+	_pendulum_measuring = true
 	var watch := _watch_number
-	_open_wrpg(
-		R18n.pick("统计周期 · 单周期观测中……", "Measuring Period · 1 Full Cycle..."),
-		R18n.pick("怀表计时中：摆锤正荡向远端折返点……", "Pocket watch ticking: bob sweeping to the far apex..."),
-		[{"label": R18n.pick("中止观测", "Cancel"), "cb": _close_wrpg}]
+	var start_msg := R18n.pick(
+		"怀表计时中：以中心铜钉为起点，观测摆锤掠过远端折返点……",
+		"Pocket watch ticking: marking center pin pass, watching bob sweep to far apex..."
 	)
+	_post_pendulum_feedback("pendulum_measure", start_msg, 1.8)
 	await get_tree().create_timer(0.95).timeout
-	if watch != _watch_number or modal != "wrpg":
+	if watch != _watch_number or phase != "camp":
+		_pendulum_measuring = false
 		return
-	if is_instance_valid(_wrpg_body):
-		_wrpg_body.text = R18n.pick("怀表计时中：摆锤回摆，完成 1 个完整周期……", "Pocket watch ticking: bob returning to complete 1 full cycle...")
+	var mid_msg := R18n.pick(
+		"怀表计时中：摆锤回摆，完成 1 个完整周期……",
+		"Pocket watch ticking: bob returning to complete 1 full cycle..."
+	)
+	_post_pendulum_feedback("pendulum_measure", mid_msg, 1.8)
 	await get_tree().create_timer(0.95).timeout
-	if watch != _watch_number or modal != "wrpg":
+	if watch != _watch_number or phase != "camp":
+		_pendulum_measuring = false
 		return
+	_pendulum_measuring = false
 	pendulum_measured = true
 	pendulum_measured_sec = _hall_pendulum_period()
-	_open_pendulum_sheet()
+	var traj := R18n.pick("摆迹掠过中心铜钉", "crosses center pin") if first_returned else R18n.pick("摆迹绕开中心铜钉", "misses center pin")
+	var done_msg := R18n.pick(
+		"实测周期：%.1f 秒（%s）；悬索与摆锤完好无损。可对准刻度外环按 E 记入笔记，或询问霍铎。",
+		"Measured: %.1f s (%s). Wire and bob undamaged. Aim at the outer ring and press E to record, or ask Hale."
+	) % [pendulum_measured_sec, traj]
+	message = done_msg
+	_post_pendulum_feedback("pendulum_result", done_msg, 3.4)
+	if is_instance_valid(_hud) and is_instance_valid(_instruction):
+		_instruction.text = done_msg
+		_hud.fit_instruction(get_viewport_rect().size.x)
 
 func _record_pendulum_note() -> void:
 	if not pendulum_note_recorded:
@@ -1011,8 +1038,14 @@ func _record_pendulum_note() -> void:
 			"03:38 · Public Hall Foucault pendulum intact; measured %.1f s per cycle, missing center pin."
 		) % pendulum_measured_sec
 		field_notes.append(entry)
-		message = R18n.pick("已记入随身笔记（%.1f 秒）。", "Recorded in notebook (%.1f s).") % pendulum_measured_sec
-	_open_pendulum_sheet()
+		message = R18n.pick(
+			"已记入随身笔记（%.1f 秒）。按 Tab / I 可在守则中查看。",
+			"Recorded in notebook (%.1f s). Press Tab / I to view in manual."
+		) % pendulum_measured_sec
+		_post_pendulum_feedback("pendulum_note", message, 3.0)
+	else:
+		var latest := field_notes[-1] if not field_notes.is_empty() else R18n.pick("随身笔记已有记录。", "Already recorded in notebook.")
+		_post_pendulum_feedback("pendulum_note", latest, 3.0)
 
 func _ask_hale_pendulum() -> void:
 	var line := R18n.pick(
@@ -1020,31 +1053,33 @@ func _ask_hale_pendulum() -> void:
 		"You timed %.1f s too? With a 12.24 m cable under standard gravity, its normal period is 7.0 s and it always crosses the center pin. It's not the pendulum—it's the Hall."
 	) % pendulum_measured_sec
 	_speak_hall_mumble(line, "hale")
-	var opts: Array[Dictionary] = []
-	if not pendulum_note_recorded:
-		opts.append({"label": R18n.pick("在笔记上记载这件事", "Record in notebook"), "cb": _record_pendulum_note})
-	opts.append({"label": R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), "cb": _depart_first})
-	opts.append({"label": R18n.pick("返回大厅", "Step back"), "cb": _close_wrpg})
-	_open_wrpg(R18n.pick("霍铎（Hale） · 关于傅科摆", "Hale · On the Pendulum"), line, opts)
+	if is_instance_valid(dual_ui):
+		dual_ui.show_toast(R18n.pick("按 Q 打开队友轮盘可与霍铎一同进入北翼", "Press Q for teammate wheel to enter the North Wing with Hale"), 2.8)
 
 
 ## ---- Dual-Mode Three-State Spatial Interaction UI (Unified Across Hall & All Campaign Rooms) ----
 func _ensure_dual_ui() -> void:
 	level_capabilities = LevelPipeline.capabilities_hall() if phase == "camp" else LevelPipeline.capabilities_campaign_room()
-	if is_instance_valid(dual_ui):
+	if is_instance_valid(runtime):
+		runtime.set_capabilities(level_capabilities)
 		return
-	var stack := LevelPipeline.bootstrap_ui_stack(self, self, level_capabilities, 62.0, -98.0)
-	dual_ui = stack.dual_ui
-	dialogue_presenter = stack.dialogue
-	teammate_wheel = stack.teammate_wheel
-	if is_instance_valid(teammate_wheel):
-		teammate_wheel.order_selected.connect(_on_hall_wheel_order)
-		teammate_wheel.wheel_opened.connect(func():
-			if is_instance_valid(room_view): room_view.set_modal(true)
-		)
-		teammate_wheel.wheel_closed.connect(func():
-			if is_instance_valid(room_view) and modal.is_empty(): room_view.set_modal(false)
-		)
+	# One runtime for the Hall and every campaign room: the host only publishes interaction
+	# descriptors (hall provider + room targets) and a view; the runtime owns all UI.
+	runtime = LevelRuntime.install(self, self, level_capabilities, {"mode_pill_y": 62.0, "caption_bottom": -98.0, "auto_refresh": false})
+	dual_ui = runtime.dual_ui
+	dialogue_presenter = runtime.dialogue
+	teammate_wheel = runtime.teammate_wheel
+	runtime.set_view_provider(_hall_interaction_view)
+	runtime.set_wheel_options_provider(_hall_wheel_options)
+	runtime.interactions.register_provider("hall_landmarks", _hall_interaction_groups)
+	runtime.interactions.register_provider("room_targets", _room_interaction_groups)
+	runtime.wheel_order_selected.connect(_on_hall_wheel_order)
+	runtime.wheel_opened.connect(func():
+		if is_instance_valid(room_view): room_view.set_modal(true)
+	)
+	runtime.wheel_closed.connect(func():
+		if is_instance_valid(room_view) and modal.is_empty(): room_view.set_modal(false)
+	)
 	if is_instance_valid(room_view):
 		room_view.unified_hud_active = true
 		if not ("FoucaultPendulum" in room_view.suppressed_prompt_ids):
@@ -1080,6 +1115,9 @@ func _on_hall_wheel_order(order_id: String) -> void:
 
 func _sync_dual_ui() -> void:
 	_ensure_dual_ui()
+	runtime.refresh_interactions()
+
+func _hall_interaction_view() -> Dictionary:
 	var can_show: bool = (
 		phase not in ["lost", "won", "first_expedition"]
 		and modal.is_empty()
@@ -1090,11 +1128,18 @@ func _sync_dual_ui() -> void:
 		and not room_view.is_plan_open()
 	)
 	if not can_show:
-		dual_ui.sync_groups(null, Rect2(), Vector2.ONE, Vector3.ZERO, [], false)
-		return
-	var cam: Camera3D = room_view._player.camera()
-	var groups: Array[Dictionary] = []
+		return {"can_show": false}
+	return {
+		"camera": room_view._player.camera(),
+		"rect": room_view._pixels.get_global_rect(),
+		"vp_size": Vector2(room_view._viewport.size),
+		"player_pos": room_view._player.position,
+		"can_show": true,
+	}
 
+## Hall landmarks (pendulum, north draft, watch desk) as UI-agnostic descriptors.
+func _hall_interaction_groups() -> Array:
+	var groups: Array[Dictionary] = []
 	if phase == "camp":
 		var anchors: Dictionary = room_view.hall_opening_anchors()
 		if not anchors.is_empty():
@@ -1175,12 +1220,16 @@ func _sync_dual_ui() -> void:
 					}],
 				})
 
-	# Append all remaining active room targets (Hale, 16 residents, crossing stations, fixtures, exits)
+	return groups
+
+## Every remaining room target (Hale, residents, crossing stations, fixtures, exits).
+func _room_interaction_groups() -> Array:
+	if not is_instance_valid(room_view):
+		return []
 	var exclude := PackedStringArray(["FoucaultPendulum"])
 	if phase == "camp" and not first_returned:
 		exclude.append("Hale")  # Hale already wired in Foucault group + direct talk
-	groups.append_array(room_view.unified_room_targets(exclude))
-	dual_ui.sync_groups(cam, room_view._pixels.get_global_rect(), Vector2(room_view._viewport.size), room_view._player.position, groups, true)
+	return room_view.unified_room_targets(exclude)
 
 func _dual_ui_record_note() -> void:
 	if not pendulum_measured:
@@ -1198,14 +1247,9 @@ func _dual_ui_ask_hale() -> void:
 func _handle_dual_ui_input(event: InputEvent) -> bool:
 	if not modal.is_empty():
 		return false
-	if is_instance_valid(teammate_wheel) and bool(level_capabilities.get("allow_command_wheel", true)):
-		if teammate_wheel.handle_input(event, _hall_wheel_options):
-			return true
-		if teammate_wheel.is_open():
-			return false
-	if not is_instance_valid(dual_ui) or not dual_ui.active_enabled:
+	if not is_instance_valid(runtime):
 		return false
-	return dual_ui.handle_input(event, true)
+	return runtime.handle_input(event)
 
 func _inspect_pendulum_dial() -> void:
 	_ensure_dual_ui()

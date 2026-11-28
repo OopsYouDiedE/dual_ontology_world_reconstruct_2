@@ -11,7 +11,7 @@ const RunScene := preload("res://scenes/rogue/Run.tscn")
 const DualHud := preload("res://scenes/components/shared/DualModeInteractionHud.gd")
 
 var failed := 0
-var out_dir := "/tmp/foucault_ui_shots"
+var out_dir := ".runtime/foucault_ui_shots"
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
@@ -27,6 +27,10 @@ func frames(n: int) -> void:
 		await process_frame
 
 func snap(name: String) -> void:
+	# Headless (dummy renderer) never emits frame_post_draw; screenshots need a real window.
+	if DisplayServer.get_name() == "headless":
+		print("SKIP screenshot %s (headless)" % name)
+		return
 	await RenderingServer.frame_post_draw
 	var img := root.get_texture().get_image()
 	var path := "%s/%s.png" % [out_dir, name]
@@ -113,11 +117,34 @@ func run() -> void:
 	check(st6.detroit_states.get("pin") == "potential", "Detroit State 1 = potential (got %s)" % str(st6))
 	await snap("06_detroit_potential")
 
-	# Functional test: step back to Selected and press E -> directly launches pendulum timing judge
+	# Functional test: step back to Selected and press E -> directly launches in-world pendulum timing (NO wrpg popup)
 	await aim_player_at(view, player, pend + Vector3(0.0, 0.0, 2.15), pin)
 	await send_key(KEY_E)
-	check(game.modal == "wrpg" and is_instance_valid(game._wrpg_title) and "统计周期" in game._wrpg_title.text,
-		"Pressing E in Selected state directly starts pendulum timing judge (modal=%s)" % game.modal)
+	check(game.modal == "" and game._pendulum_measuring == true,
+		"Pressing E in Selected state directly starts in-world pendulum timing without popup modal (modal=%s, measuring=%s)" % [game.modal, str(game._pendulum_measuring)])
+	await create_timer(2.1).timeout
+	check(game.pendulum_measured == true and game.modal == "",
+		"Pendulum timing completes in-world without popup modal (measured=%s, sec=%.1f)" % [str(game.pendulum_measured), game.pendulum_measured_sec])
+
+	# Verify Field Manual localization in Chinese (default) and English (F8)
+	await send_key(KEY_TAB)
+	var zh_texts := PackedStringArray()
+	for child in game._hud.sheet.get_children():
+		if child is Label:
+			zh_texts.append((child as Label).text)
+	var zh_joined := "\n".join(zh_texts)
+	check(game.modal == "guide" and "夜间值守外勤守则" in zh_joined and not ("Night watch field manual" in zh_joined),
+		"Field Manual renders in Chinese when locale is zh")
+	await send_key(KEY_F8)
+	var en_texts := PackedStringArray()
+	for child in game._hud.sheet.get_children():
+		if child is Label:
+			en_texts.append((child as Label).text)
+	var en_joined := "\n".join(en_texts)
+	check(game.modal == "guide" and "Night watch field manual" in en_joined,
+		"Field Manual switches to English when F8 is pressed")
+	await send_key(KEY_F8)
+	await send_key(KEY_TAB)
 
 	print("TEST_SUMMARY failed=%d" % failed)
 	quit(0 if failed == 0 else 1)

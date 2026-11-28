@@ -2,6 +2,8 @@
 
 从 ArchBuilder → **Props → Open Component Library** 进入。目录 `catalog.json` 的 `production.kind` 显示生产类别，`production.generator` 指向实际运行的 GDScript。`id`、`path`、`mount` 分别保留组件标识、可实例化入口和安装语义。编辑器插件和组件库共用 `ComponentFactory.create_entry()`；ArchBuilder 从同一目录恢复已保存的配方道具。原有脚本路径和 UID 留在原位，旧场景、导出的建筑和历史配方可以继续加载。
 
+目录统一由 `ComponentFactory.load_catalog()` 读取（ArchBuilder、组件库、编辑器停靠栏三处共用），标为 `optional` 且脚本不在本仓库的条目会被剔除，避免选中后加载失败。条目可带 `interaction` 块（`title_zh/en`、`verb_zh/en`、`action_id`、`anchor_offset: [x, y, z]`、`hotspots`），`create_entry()` 会为物品挂上 `AcademyInteractable`。组件库检视器的 **Interaction** 区可直接编辑这些属性，或对任意物品点 **Make selectable**；属性随候选场景一起保存。物品只发布数据，提示由所在关卡的 `AcademyLevelRuntime` 统一呈现，见[统一契约](../../../docs/design/unified-level-ui-and-render-contract.md)。
+
 | 类别 | 真实生产代码 | 可调参数示例 |
 | --- | --- | --- |
 | `line/` | `WallPathGeometry`、`SmartWall3D` 和 `ArchitectureRecipes` 沿轴线生成墙体、扶手和立柱；`PathRecipes` 提供采样、偏移和距离查询。 | 路径点、墙高、厚度、开口范围、扶手高、立柱间距。`PipeRecipes` 用同一条采样中心线生成管壳和装配端口；`nodes` 接受 Z-up 折线，`radius` 控制截面半径。 |

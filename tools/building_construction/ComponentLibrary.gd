@@ -4,6 +4,7 @@ const CATALOG_PATH := "res://tools/building_construction/catalog.json"
 const Assembly = preload("production/assembly/ComponentAssembly.gd")
 const Socket = preload("BuildingConstruction/Shared/MechanismSocket.gd")
 const Components = preload("BuildingConstruction/Shared/ComponentFactory.gd")
+const Interactable = preload("res://scenes/components/interaction/AcademyInteractable.gd")
 const CANDIDATE_PATH := "res://tools/building_construction/candidates/BuildingCandidate.tscn"
 
 var camera: Camera3D
@@ -29,17 +30,9 @@ var distance := 18.0
 var target := Vector3.ZERO
 
 func _ready() -> void:
-	var file := FileAccess.open(CATALOG_PATH, FileAccess.READ)
-	if file == null:
-		push_error("Could not open the building catalog.")
+	catalog = Components.load_catalog(CATALOG_PATH)
+	if catalog.is_empty():
 		return
-	var parsed = JSON.parse_string(file.get_as_text())
-	if not parsed is Dictionary:
-		push_error("Invalid building catalog.")
-		return
-	catalog = parsed
-	catalog.items = catalog.items.filter(func(entry: Dictionary) -> bool:
-		return not entry.get("optional", false) or ResourceLoader.exists(str(entry.path)))
 	activity_choices = Socket.choices()
 	candidates = Node3D.new()
 	candidates.name = "BuilderCandidates"
@@ -223,6 +216,7 @@ func _place(mouse: Vector2) -> void:
 		instance.free()
 		status.text = issue
 		return
+	_own_interaction(instance)
 	_remember()
 	_select(instance)
 	status.text = "Placed %s%s" % [selected_entry.label, " on " + str(host.name) if host else ""]
@@ -270,30 +264,72 @@ func _select(node: Node3D) -> void:
 		return
 	_vector_field("Position", "position", node.position)
 	_vector_field("Rotation", "rotation_degrees", node.rotation_degrees)
+	_interaction_fields(node)
 	if not Assembly.members(node).is_empty():
 		_refresh_outline()
 		return
-	for property in node.get_property_list():
+	_script_fields(node)
+	_refresh_outline()
+
+## Every exported script variable of `target` becomes an editable field.
+func _script_fields(target: Object) -> void:
+	for property in target.get_property_list():
 		if property.usage & PROPERTY_USAGE_SCRIPT_VARIABLE == 0 or property.usage & PROPERTY_USAGE_EDITOR == 0:
 			continue
 		var key: String = property.name
 		if key in ["recipe_module","recipe_function","recipe_parameters"]: continue
-		var value = node.get(key)
+		var value = target.get(key)
 		if value is Vector3:
-			_vector_field(key, key, value)
+			if target == selected:
+				_vector_field(key, key, value)
+			else:
+				_line_field(target, key, value)
 		elif value is float or value is int or value is bool or property.hint == PROPERTY_HINT_ENUM:
-			_property_field(key, value, property)
+			_property_field(key, value, property, target)
 		elif value is Array or value is Dictionary or value is String:
-			var label := Label.new()
-			label.text = key + ("（JSON）" if not value is String else "")
-			inspector.add_child(label)
-			var field := LineEdit.new()
-			field.text = value if value is String else JSON.stringify(value)
-			inspector.add_child(field)
-			field.text_submitted.connect(func(text: String):
-				var parsed = text if value is String else JSON.parse_string(text)
-				if parsed != null: _change(key, parsed))
-	_refresh_outline()
+			_line_field(target, key, value)
+
+func _line_field(target: Object, key: String, value: Variant) -> void:
+	var label := Label.new()
+	label.text = key + ("（JSON）" if not value is String else "")
+	inspector.add_child(label)
+	var field := LineEdit.new()
+	field.text = value if value is String else (str(value) if value is Vector3 else JSON.stringify(value))
+	inspector.add_child(field)
+	var commit := func(text: String):
+		var parsed = text if value is String else (str_to_var("Vector3" + text) if value is Vector3 else JSON.parse_string(text))
+		if parsed != null: _change(key, parsed, target)
+	field.text_submitted.connect(commit)
+
+## Item interaction (scene-side selectable): edit its exported data, or make the item
+## selectable. Only data is edited here; prompts are drawn by each level's runtime.
+func _interaction_fields(node: Node3D) -> void:
+	var header := Label.new()
+	header.text = "Interaction"
+	inspector.add_child(header)
+	var it := node.get_node_or_null("Interactable") as Interactable
+	if it == null:
+		_button(inspector, "Make selectable", func():
+			var spec := {"id": str(node.name), "title_en": str(node.name), "title_zh": str(node.name)}
+			Interactable.attach_to(node, spec)
+			_own_interaction(node)
+			_remember()
+			_select(node))
+		return
+	_script_fields(it)
+	_button(inspector, "Remove interaction", func():
+		node.remove_child(it)
+		it.queue_free()
+		_remember()
+		_select(node))
+
+func _own_interaction(node: Node) -> void:
+	var it := node.get_node_or_null("Interactable")
+	if it == null:
+		return
+	it.owner = candidates
+	for child in it.get_children():
+		child.owner = candidates
 
 func _socket(node: Node3D) -> Node:
 	var socket := node.get_node_or_null("MechanismSocket")
@@ -357,7 +393,7 @@ func _vector_field(label: String, key: String, value: Vector3) -> void:
 				selected.set(key, vector)
 				_remember())
 
-func _property_field(key: String, value: Variant, property: Dictionary) -> void:
+func _property_field(key: String, value: Variant, property: Dictionary, target: Object = null) -> void:
 	var label := Label.new()
 	label.text = key
 	inspector.add_child(label)
@@ -365,7 +401,7 @@ func _property_field(key: String, value: Variant, property: Dictionary) -> void:
 		var toggle := CheckBox.new()
 		toggle.button_pressed = value
 		inspector.add_child(toggle)
-		toggle.toggled.connect(func(enabled: bool): _change(key, enabled))
+		toggle.toggled.connect(func(enabled: bool): _change(key, enabled, target))
 	elif property.hint == PROPERTY_HINT_ENUM:
 		var options := OptionButton.new()
 		var values: PackedStringArray = str(property.hint_string).split(",")
@@ -373,7 +409,7 @@ func _property_field(key: String, value: Variant, property: Dictionary) -> void:
 			options.add_item(option)
 		options.select(values.find(str(value)) if value is String else int(value))
 		inspector.add_child(options)
-		options.item_selected.connect(func(index: int): _change(key, values[index] if value is String else index))
+		options.item_selected.connect(func(index: int): _change(key, values[index] if value is String else index, target))
 	else:
 		var spin := SpinBox.new()
 		spin.min_value = -1000
@@ -387,11 +423,12 @@ func _property_field(key: String, value: Variant, property: Dictionary) -> void:
 				spin.step = float(limits[2])
 		spin.value = float(value)
 		inspector.add_child(spin)
-		spin.value_changed.connect(func(amount: float): _change(key, int(amount) if value is int else amount))
+		spin.value_changed.connect(func(amount: float): _change(key, int(amount) if value is int else amount, target))
 
-func _change(key: String, value: Variant) -> void:
-	if is_instance_valid(selected):
-		selected.set(key, value)
+func _change(key: String, value: Variant, target: Object = null) -> void:
+	var dest: Object = target if target != null else selected
+	if is_instance_valid(dest):
+		dest.set(key, value)
 		_remember()
 
 func _refresh_outline() -> void:

@@ -10,6 +10,8 @@ const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 signal line_posted(speaker: String, text: String)
 
 var captions: VBoxContainer
+## False when the host level advances captions itself (e.g. pauses them with its own clock).
+var auto_advance := true
 var voice: Node
 
 func setup(ui_parent: Node, bottom_offset := -92.0) -> void:
@@ -45,5 +47,5 @@ func get_active_speakers() -> Array:
 	return captions.entries.keys() if is_instance_valid(captions) else []
 
 func _process(dt: float) -> void:
-	if is_instance_valid(captions):
+	if auto_advance and is_instance_valid(captions):
 		captions.advance(dt)

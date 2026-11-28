@@ -71,7 +71,7 @@ func run() -> void:
 	check(lvl.audit_report.ok, "Chapter1R01Level passes full manifest audit")
 	check(is_instance_valid(lvl.dual_ui) and is_instance_valid(lvl.dialogue_presenter) and is_instance_valid(lvl.teammate_wheel),
 		"AcademyLevelBase auto-mounts unified DualModeInteractionHud + DialoguePresenter + TeammateWheel")
-	check(lvl.spawned_objects.size() == 6, "AcademyLevelBase auto-spawns all 6 declared catalog objects (%d)" % lvl.spawned_objects.size())
+	check(lvl.spawned_objects.size() == 7, "AcademyLevelBase auto-spawns all 7 declared catalog objects (%d)" % lvl.spawned_objects.size())
 
 	# 3. Export human-readable Markdown blueprint directly from live code manifest
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://docs/design/manifests"))
@@ -86,10 +86,14 @@ func run() -> void:
 	lvl.set_blueprint_inspector_visible(true)
 	lvl.play_dialogue("dlg_hale_entry")
 	await frames(3)
-	await RenderingServer.frame_post_draw
-	var img := root.get_texture().get_image()
-	var shot_path := "/tmp/level_base_f2_inspector_live.png"
-	check(img.save_png(shot_path) == OK, "Saved live F2 Blueprint Inspector screenshot %s" % shot_path)
+	if DisplayServer.get_name() == "headless":
+		print("SKIP F2 inspector screenshot (headless renderer never emits frame_post_draw)")
+	else:
+		await RenderingServer.frame_post_draw
+		var img := root.get_texture().get_image()
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://.runtime/unify"))
+		var shot_path := ProjectSettings.globalize_path("res://.runtime/unify/level_base_f2_inspector_live.png")
+		check(img.save_png(shot_path) == OK, "Saved live F2 Blueprint Inspector screenshot %s" % shot_path)
 
 	print("PIPELINE_GATE_SUMMARY failed=%d" % failed)
 	quit(0 if failed == 0 else 1)

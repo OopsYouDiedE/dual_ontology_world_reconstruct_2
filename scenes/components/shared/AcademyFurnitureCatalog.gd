@@ -15,7 +15,8 @@ const GLB_CATALOG := {
 	"academy_side_chair": {"path": "res://assets/props/academy/academy_side_chair.glb", "preset": "walnut_varnish"},
 	"manor_stool": {"path": "res://assets/furniture/kaykit_cc0/stool.glb", "preset": "oak_aged"},
 	"manor_shelf_large": {"path": "res://assets/furniture/kaykit_cc0/shelf_large.glb", "preset": "walnut_varnish"},
-	"manor_chest": {"path": "res://assets/furniture/kaykit_cc0/chest.glb", "preset": "oak_aged"},
+	"manor_chest": {"path": "res://assets/furniture/kaykit_cc0/chest.glb", "preset": "oak_aged",
+		"interaction": {"title_zh": "木箱", "title_en": "Chest", "verb_zh": "翻找", "verb_en": "Search", "action_id": "search_container", "anchor_offset": [0, 0.6, 0]}},
 	"supply_crates": {"path": "res://assets/furniture/kaykit_cc0/crates_stacked.glb", "preset": "oak_aged"},
 	"brass_candle_triple": {"path": "res://assets/furniture/kaykit_cc0/candle_triple.glb", "preset": "brass_antique"},
 }
@@ -244,6 +245,31 @@ static func spawn_recipe(parent: Node3D, id_or_recipe: String, pos: Vector3, yaw
 	parent.add_child(part)
 	refine_furniture_materials(part, preset, false)
 	return part
+
+## Default interaction data for a catalog item (GLB entry `interaction`, or the ArchBuilder
+## catalog.json `interaction` block of the recipe). Empty when the item is not selectable.
+## Levels opt in per object (`interaction: {from_catalog = true, ...overrides}`), so props
+## never become prompts no level handles.
+static func default_interaction(id_or_path: String) -> Dictionary:
+	if GLB_CATALOG.has(id_or_path):
+		return (GLB_CATALOG[id_or_path] as Dictionary).get("interaction", {}).duplicate(true)
+	var recipe := id_or_path
+	if RECIPE_CATALOG.has(id_or_path):
+		recipe = str(RECIPE_CATALOG[id_or_path].recipe)
+	var full_path := Factory.COMPONENT_ROOT + recipe.get_base_dir() + "/Recipe" + recipe.get_file() + ".gd"
+	for entry in Factory.load_catalog().get("items", []):
+		if Factory.script_path(str(entry.get("path", ""))) == full_path:
+			return (entry.get("interaction", {}) as Dictionary).duplicate(true)
+	return {}
+
+## Resolve a manifest object's `interaction` field into an AcademyInteractable spec.
+static func resolve_interaction(id_or_path: String, declared: Dictionary) -> Dictionary:
+	if declared.is_empty():
+		return {}
+	var spec: Dictionary = default_interaction(id_or_path) if bool(declared.get("from_catalog", false)) else {}
+	spec.merge(declared, true)
+	spec.erase("from_catalog")
+	return spec
 
 static func catalog_summary() -> Dictionary:
 	return {

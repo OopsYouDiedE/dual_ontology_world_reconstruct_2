@@ -10,15 +10,9 @@ var catalog: Dictionary
 var entries: Array = []
 
 func _enter_tree() -> void:
-	var file := FileAccess.open("res://tools/building_construction/catalog.json", FileAccess.READ)
-	if file == null:
-		push_error("无法读取建筑组件目录")
+	catalog = Components.load_catalog()
+	if catalog.is_empty():
 		return
-	var data = JSON.parse_string(file.get_as_text())
-	if not data is Dictionary:
-		push_error("建筑组件目录格式无效")
-		return
-	catalog = data
 	dock = VBoxContainer.new()
 	dock.name = "建筑组件"
 	category = OptionButton.new()

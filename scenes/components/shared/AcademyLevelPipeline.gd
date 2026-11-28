@@ -56,16 +56,39 @@ static func capabilities_expedition() -> Dictionary:
 		"attach_essence": true,
 	}
 
-## Unified viewport & rendering stage bootstrap.
-static func bootstrap_viewport(vp: Viewport, world_env: WorldEnvironment, capabilities: Dictionary) -> Dictionary:
+## Known level kinds. Every level declares one of these (plus explicit overrides) — never a hand-made dict.
+static func capabilities_for(level_kind: String, overrides := {}) -> Dictionary:
+	var base: Dictionary
+	match level_kind:
+		"hall": base = capabilities_hall()
+		"campaign_room": base = capabilities_campaign_room()
+		_: base = capabilities_expedition()
+	return with_overrides(base, overrides)
+
+## Explicit, auditable per-level exceptions on top of a standard profile.
+static func with_overrides(base: Dictionary, overrides: Dictionary) -> Dictionary:
+	var caps := base.duplicate(true)
+	for k in overrides:
+		if not caps.has(k):
+			push_error("AcademyLevelPipeline: unknown capability '%s' (declare it in the standard profiles first)" % k)
+			continue
+		caps[k] = overrides[k]
+	return caps
+
+## Unified viewport & rendering stage bootstrap (environment, MSAA/shadows, ink, essence post).
+## The ONLY sanctioned way a level gets its render stage. `attach_parent` receives the
+## post-process meshes when the viewport itself is busy (e.g. the root window during _ready).
+static func bootstrap_viewport(vp: Viewport, world_env: WorldEnvironment, capabilities: Dictionary, attach_parent: Node = null) -> Dictionary:
 	return Stage.apply_to_viewport(
 		vp,
 		world_env,
 		bool(capabilities.get("attach_ink", true)),
-		bool(capabilities.get("attach_essence", false))
+		bool(capabilities.get("attach_essence", false)),
+		attach_parent
 	)
 
 ## Unified UI, dialogue, and teammate interaction stack bootstrap.
+## Internal to AcademyLevelRuntime.install(): levels must install the runtime instead.
 static func bootstrap_ui_stack(owner: Node, ui_parent: Node, capabilities: Dictionary, mode_pill_y := 62.0, caption_bottom := -96.0) -> Dictionary:
 	UnifiedInput.ensure_default_actions()
 	var stack := {

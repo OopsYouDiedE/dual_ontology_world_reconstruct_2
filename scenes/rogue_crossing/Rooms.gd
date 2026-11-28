@@ -34,6 +34,8 @@ const BRIEF := {
 	"meridian":"The hall is waiting to hear a morning bell with your party’s names on the record."
 }
 
+const R18n := preload("res://scenes/components/shared/R18n.gd")
+
 # The four directions are deliberately portable survival practices, with local exceptions.
 const IVORY := [
 	"1 / At a speaking tube, keep your mouth closed until the line falls quiet. Keep a companion in sight.",
@@ -41,11 +43,29 @@ const IVORY := [
 	"3 / In a ward, carry your packet through on your person. Set down heavy tools before stepping onto a moving threshold.",
 	"4 / Take a shutter after the bell. If the pull is still fighting you, back into a recess and let someone read the room."
 ]
+const IVORY_ZH := [
+	"1 / 面对传声筒时，线路未静前切勿开口；始终让同伴处于视野之内。",
+	"2 / 文件贴身收入外套内侧。若衬里受潮，将文件留在干燥抽屉中，绕行通过。",
+	"3 / 进入隔离病房时，随身携带你的文书袋；踏上活动门槛前，先放下重型器具。",
+	"4 / 听到钟声后再拉动闸门。若拉杆仍在反向抗力，退回壁龛，让同伴先行读房。"
+]
 const VERSIONS := {
 	"Ivory": ["Wait for quiet at a speaking tube; stay in sight.", "Keep your packet on you until the far side."],
-	"Cobalt": ["Give one reply while a call is still held; stay in the speaking booth until they acknowledge it.", "Leave your packet in the pass-through before you cross."],
+	"Cobalt": ["Give one reply while a call is still held; stay in speaking booth until they acknowledge it.", "Leave your packet in the pass-through before you cross."],
 	"Ochre": ["Keep speech off the main line. File the reply on the relay before moving.", "Keep a wet packet in the open tray until it dries; carry it yourself afterward."]
 }
+const VERSIONS_ZH := {
+	"Ivory": ["传声筒待静后再答话；保持同伴在视线内。", "随身携带文书袋直至抵达对岸。"],
+	"Cobalt": ["呼叫未断时先作一次应答；留在通话亭内直到对方确认。", "通过前先将文书袋留在传递窗内。"],
+	"Ochre": ["勿在主线通话；先在中继台登记答复再移动。", "潮湿的文书袋留在敞口托盘晾干后再随身带走。"]
+}
+
+static func ivory_lines() -> Array:
+	return IVORY if R18n.is_en() else IVORY_ZH
+
+static func version_lines(edition: String) -> Array:
+	var table := VERSIONS if R18n.is_en() else VERSIONS_ZH
+	return table.get(edition, table["Ivory"])
 
 static func notice(stage: String, v: bool) -> String:
 	match stage:

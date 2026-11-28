@@ -1,6 +1,24 @@
 extends RefCounted
 ## The design application owns loading; component definitions are scripts.
 const COMPONENT_ROOT := "res://tools/building_construction/BuildingConstruction/"
+const CATALOG_PATH := "res://tools/building_construction/catalog.json"
+const Interactable := preload("res://scenes/components/interaction/AcademyInteractable.gd")
+
+## The one catalog loader shared by ArchBuilder (BuildingSimulator), the Component Library
+## (item property tool) and the editor dock. Optional entries whose script is absent from
+## this checkout are dropped here, so no tool can offer an item that fails to instantiate.
+static func load_catalog(path := CATALOG_PATH) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		push_error("Could not open the building catalog: " + path)
+		return {}
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not parsed is Dictionary or not parsed.has("items"):
+		push_error("Invalid building catalog: " + path)
+		return {}
+	var catalog: Dictionary = parsed
+	catalog.items = (catalog.items as Array).filter(func(entry) -> bool:
+		return entry is Dictionary and (not entry.get("optional", false) or ResourceLoader.exists(script_path(str(entry.path)))))
+	return catalog
 
 static func script_path(path: String) -> String:
 	# Read existing design files that still refer to the former scene wrappers.
@@ -33,6 +51,13 @@ static func create_entry(entry: Dictionary, overrides: Dictionary = {}) -> Node3
 	parameters.merge(overrides.duplicate(true), true)
 	for key in parameters:
 		instance.set(key, parameters[key])
+	# Items that declare an `interaction` block become scene-side selectables. The item
+	# only publishes data; whichever level hosts it presents the prompt via its runtime.
+	var interaction: Dictionary = entry.get("interaction", {})
+	if not interaction.is_empty() and instance.get_node_or_null("Interactable") == null:
+		var spec := interaction.duplicate(true)
+		spec["id"] = str(spec.get("id", entry.get("id", instance.name)))
+		Interactable.attach_to(instance, spec)
 	return instance
 
 static func production_note(entry: Dictionary) -> String:

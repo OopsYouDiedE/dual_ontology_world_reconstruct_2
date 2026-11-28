@@ -15,6 +15,9 @@ class_name AcademyLevelBase
 ##   4. Press F2 at runtime to toggle the live Visual Design Blueprint Overlay + 3D AI Route Gizmos.
 
 const LevelPipeline := preload("res://scenes/components/shared/AcademyLevelPipeline.gd")
+const LevelRuntime := preload("res://scenes/components/shared/AcademyLevelRuntime.gd")
+const Interactable := preload("res://scenes/components/interaction/AcademyInteractable.gd")
+const Hotspot := preload("res://scenes/components/interaction/AcademyHotspot.gd")
 const FurnitureCatalog := preload("res://scenes/components/shared/AcademyFurnitureCatalog.gd")
 const LevelAudit := preload("res://scenes/components/shared/AcademyLevelAudit.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
@@ -27,6 +30,8 @@ var spawned_objects: Dictionary = {}   # object_id -> Node3D
 var unlocked_flags: Dictionary = {}    # flag_name -> bool
 
 var ui_layer: CanvasLayer
+var runtime: AcademyLevelRuntime
+var interactable_nodes: Dictionary = {}  # interactable id -> AcademyInteractable
 var dual_ui
 var dialogue_presenter
 var teammate_wheel
@@ -76,30 +81,35 @@ func _ready() -> void:
 		world_env = WorldEnvironment.new()
 		world_env.name = "WorldEnvironment"
 		add_child(world_env)
-	LevelPipeline.bootstrap_viewport(get_viewport(), world_env, level_capabilities)
+	LevelPipeline.bootstrap_viewport(get_viewport(), world_env, level_capabilities, self)
 
 	# 2. Unified UI stack (DualModeInteractionHud + UnifiedDialoguePresenter + UnifiedTeammateWheel)
 	ui_layer = CanvasLayer.new()
 	ui_layer.name = "UnifiedLevelUiLayer"
 	ui_layer.layer = 10
 	add_child(ui_layer)
-	var stack := LevelPipeline.bootstrap_ui_stack(self, ui_layer, level_capabilities, 18.0, -72.0)
-	dual_ui = stack.dual_ui
-	dialogue_presenter = stack.dialogue
-	teammate_wheel = stack.teammate_wheel
-	if is_instance_valid(teammate_wheel):
-		teammate_wheel.order_selected.connect(func(order_id: String):
-			if order_id == "toggle_blueprint":
-				set_blueprint_inspector_visible(not _inspector_visible)
-			else:
-				_on_level_action("wheel_" + order_id, {"order_id": order_id})
-		)
+	runtime = LevelRuntime.install(self, ui_layer, level_capabilities, {"mode_pill_y": 18.0, "caption_bottom": -72.0})
+	dual_ui = runtime.dual_ui
+	dialogue_presenter = runtime.dialogue
+	teammate_wheel = runtime.teammate_wheel
+	runtime.set_wheel_options_provider(get_teammate_wheel_options)
+	runtime.set_view_provider(_runtime_view)
+	runtime.interactions.flags = unlocked_flags  # shared by reference: set a flag, hotspots unlock
+	runtime.interactions.action_requested.connect(_on_level_action)
+	runtime.interactions.dialogue_requested.connect(func(dialogue_id: String): play_dialogue(dialogue_id))
+	runtime.wheel_order_selected.connect(func(order_id: String):
+		if order_id == "toggle_blueprint":
+			set_blueprint_inspector_visible(not _inspector_visible)
+		else:
+			_on_level_action("wheel_" + order_id, {"order_id": order_id})
+	)
 
 	# 3. Auto-spawn all declared objects via unified AcademyFurnitureCatalog
 	_objects_root = Node3D.new()
 	_objects_root.name = "ManifestObjects"
 	add_child(_objects_root)
 	_spawn_manifest_objects()
+	_spawn_manifest_interactables()
 
 	# 4. Build live 3D AI Route & Trigger Gizmos + F2 Visual Design Inspector
 	_gizmo_root = Node3D.new()
@@ -133,6 +143,44 @@ func _spawn_manifest_objects() -> void:
 		if node != null:
 			node.name = oid
 			spawned_objects[oid] = node
+			var spec := FurnitureCatalog.resolve_interaction(cid, obj.get("interaction", {}))
+			if not spec.is_empty():
+				spec["id"] = str(spec.get("id", oid))
+				interactable_nodes[spec.id] = Interactable.attach_to(node, spec)
+
+## Manifest `interactables[]` become AcademyInteractable scene nodes. The UI never reads the
+## manifest: it only sees the descriptors those nodes publish through the runtime director.
+## Optional `attach_to: <object id>` parents the interactable to a spawned object.
+func _spawn_manifest_interactables() -> void:
+	for grp in level_manifest.get("interactables", []):
+		var gid := str(grp.get("id", ""))
+		var it := Interactable.new()
+		it.name = gid
+		it.interactable_id = gid
+		it.title_zh = str(grp.get("title", ""))
+		it.title_en = str(grp.get("title_en", grp.get("title", "")))
+		it.anchor_offset = Vector3.ZERO
+		it.unlock_flag = str(grp.get("unlock_when", ""))
+		for key in ["dist_selected", "dist_activatable", "dist_potential"]:
+			if grp.has(key):
+				it.set(key, float(grp[key]))
+		var host: Node3D = spawned_objects.get(str(grp.get("attach_to", "")), _objects_root)
+		host.add_child(it)
+		it.global_position = grp.get("anchor_world", Vector3.ZERO)
+		for h in grp.get("hotspots", []):
+			var hs := Hotspot.new()
+			hs.name = str(h.get("id", "hotspot"))
+			hs.hotspot_id = str(h.get("id", ""))
+			hs.part_zh = str(h.get("part_name", ""))
+			hs.part_en = str(h.get("part_name_en", h.get("part_name", "")))
+			hs.verb_zh = str(h.get("verb", ""))
+			hs.verb_en = str(h.get("verb_en", h.get("verb", "")))
+			hs.action_id = str(h.get("action_id", ""))
+			hs.dialogue_id = str(h.get("dialogue_id", ""))
+			hs.unlock_flag = str(h.get("unlock_when", ""))
+			it.add_child(hs)
+			hs.global_position = h.get("world_pos", it.global_position)
+		interactable_nodes[gid] = it
 
 func play_dialogue(dialogue_id: String) -> bool:
 	for dlg in level_manifest.get("dialogues", []):
@@ -148,34 +196,16 @@ func play_dialogue(dialogue_id: String) -> bool:
 				return true
 	return false
 
-func _build_live_interaction_groups() -> Array[Dictionary]:
-	var groups: Array[Dictionary] = []
-	for grp in level_manifest.get("interactables", []):
-		var active_hs: Array[Dictionary] = []
-		for h in grp.get("hotspots", []):
-			var req := str(h.get("unlock_when", ""))
-			if not req.is_empty() and not bool(unlocked_flags.get(req, false)):
-				continue
-			var action_id := str(h.get("action_id", ""))
-			var dlg_id := str(h.get("dialogue_id", ""))
-			var h_copy: Dictionary = h.duplicate(true)
-			h_copy["callback"] = func():
-				if not dlg_id.is_empty():
-					play_dialogue(dlg_id)
-				_on_level_action(action_id, {"group_id": str(grp.get("id", "")), "hotspot_id": str(h.get("id", ""))})
-			active_hs.append(h_copy)
-		if not active_hs.is_empty():
-			var g_copy: Dictionary = grp.duplicate(true)
-			g_copy["hotspots"] = active_hs
-			groups.append(g_copy)
-	return groups
-
-func _process(_dt: float) -> void:
-	if is_instance_valid(dual_ui):
-		var cam := get_level_camera()
-		var vp_rect := get_viewport().get_visible_rect()
-		var can_show: bool = not (is_instance_valid(teammate_wheel) and teammate_wheel.is_open())
-		dual_ui.sync_groups(cam, vp_rect, vp_rect.size, get_player_position(), _build_live_interaction_groups(), can_show)
+func _runtime_view() -> Dictionary:
+	var cam := get_level_camera()
+	var vp_rect := get_viewport().get_visible_rect()
+	return {
+		"camera": cam,
+		"rect": vp_rect,
+		"vp_size": vp_rect.size,
+		"player_pos": get_player_position(),
+		"can_show": not runtime.is_wheel_open(),
+	}
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -183,13 +213,8 @@ func _input(event: InputEvent) -> void:
 			set_blueprint_inspector_visible(not _inspector_visible)
 			get_viewport().set_input_as_handled()
 			return
-	if is_instance_valid(teammate_wheel) and bool(level_capabilities.get("allow_command_wheel", true)):
-		if teammate_wheel.handle_input(event, get_teammate_wheel_options):
-			get_viewport().set_input_as_handled()
-			return
-	if is_instance_valid(dual_ui):
-		if dual_ui.handle_input(event, true):
-			get_viewport().set_input_as_handled()
+	if is_instance_valid(runtime) and runtime.handle_input(event):
+		get_viewport().set_input_as_handled()
 
 func set_blueprint_inspector_visible(visible_flag: bool) -> void:
 	_inspector_visible = visible_flag

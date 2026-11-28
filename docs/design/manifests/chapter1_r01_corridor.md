@@ -12,6 +12,7 @@
 | `r01_shelf_n` | recipe | `bookshelf` | `(-2.60, 0.00, -8.20)` | 北端门牌柜 |
 | `r01_table_side` | glb | `manor_table_long` | `(2.40, 0.00, -8.60)` | 海侧窗台旁 |
 | `r01_candle` | glb | `brass_candle_triple` | `(2.40, 0.74, -8.60)` | 海侧窗台旁 |
+| `r01_supply_chest` | glb | `manor_chest` | `(-2.30, 0.00, -6.20)` | 门廊西侧 |
 
 ## 2. 可交互点（双模三态 `DualModeInteractionHud`）
 | 组 ID | 标题 | 局部热点 | 动作动词 | 触发动作 ID | 解锁条件 |
@@ -35,6 +36,7 @@
 | `dlg_letter_salt` |  | `resident` | 信封潮湿并带着浓重海盐味，邮戳日期竟是昨天——绝不能带回主楼。 |
 | `dlg_hale_h2_turn` | 霍铎 | `hale` | ……汽笛声。别看窗户，低头等它过去。 |
 | `dlg_hale_r04_mistake` | 霍铎 | `hale` | 奇怪，这儿没风，提灯火苗怎么发白还往一边倒？我把灯芯拧大一点看看…… |
+| `dlg_chest_supplies` |  | `resident` | 箱里只有几截受潮的蜡烛头和一卷麻绳，封条完好。 |
 | `dlg_hale_h5_nod` | 霍铎 | `hale` | 做得对，别徒手碰带海盐味和近日期的东西。我们可以往 N-02 走了。 |
 
 ## 5. AI 动作路线与规则前摇

@@ -126,6 +126,18 @@
       "production": {
         "kind": "assembly",
         "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      },
+      "interaction": {
+        "title_zh": "摊开的书",
+        "title_en": "Open Book",
+        "verb_zh": "阅读",
+        "verb_en": "Read",
+        "action_id": "read_document",
+        "anchor_offset": [
+          0,
+          0.15,
+          0
+        ]
       }
     },
     {
@@ -217,6 +229,18 @@
       "production": {
         "kind": "assembly",
         "generator": "res://tools/building_construction/production/assembly/FurnitureRecipes.gd"
+      },
+      "interaction": {
+        "title_zh": "油画",
+        "title_en": "Painting",
+        "verb_zh": "端详",
+        "verb_en": "Examine",
+        "action_id": "inspect_artwork",
+        "anchor_offset": [
+          0,
+          0,
+          0.05
+        ]
       }
     },
     {
@@ -256,6 +280,18 @@
       "production": {
         "kind": "rule",
         "generator": "res://tools/building_construction/production/rule/LightingRecipes.gd"
+      },
+      "interaction": {
+        "title_zh": "银行家台灯",
+        "title_en": "Banker's Lamp",
+        "verb_zh": "拉动灯绳",
+        "verb_en": "Pull chain",
+        "action_id": "toggle_light",
+        "anchor_offset": [
+          0,
+          0.35,
+          0
+        ]
       }
     },
     {
@@ -295,6 +331,18 @@
       "production": {
         "kind": "assembly",
         "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      },
+      "interaction": {
+        "title_zh": "柜子",
+        "title_en": "Cabinet",
+        "verb_zh": "打开",
+        "verb_en": "Open",
+        "action_id": "open_container",
+        "anchor_offset": [
+          0,
+          1.1,
+          0
+        ]
       }
     },
     {
@@ -308,6 +356,18 @@
       "production": {
         "kind": "assembly",
         "generator": "res://tools/building_construction/production/assembly/SpecialRecipes.gd"
+      },
+      "interaction": {
+        "title_zh": "木箱",
+        "title_en": "Chest",
+        "verb_zh": "翻找",
+        "verb_en": "Search",
+        "action_id": "search_container",
+        "anchor_offset": [
+          0,
+          0.6,
+          0
+        ]
       }
     },
     {

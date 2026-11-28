@@ -32,6 +32,10 @@ const WING_SPRING := 2.58
 const WING_ROOF := 5.20
 # The captain wakes in the west-wing dormitory, on the bed nearest the wing passage.
 const WAKE_BED := Vector3(7.65, 0.0, 18.45)
+const GRAVITY_STANDARD := 9.80665
+const PENDULUM_LENGTH_M := 12.24 # CROWN_H (12.60) + 0.02 - 0.38
+const NORMAL_PERIOD_S := 7.0196 # 2*pi*sqrt(12.24/9.80665) -> 7.0 s (1 decimal)
+const DRIFT_PERIOD_S := 8.1 # Abnormal opening drift period -> 8.1 s
 
 var pendulum_pivot: Node3D
 var pendulum_bob: Node3D
@@ -108,7 +112,7 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 		pendulum_world_pos = Vector3(well.position.x + well.size.x * 0.5, 0.0, well.position.y + well.size.y * 0.5)
 	else:
 		pendulum_world_pos = Vector3(cx, 0.0, cz)
-	_nave_cot_pos = Vector3(cx - 3.45, 0.0, max_z - 4.7)
+	_nave_cot_pos = Vector3(cx - 3.55, 0.0, max_z - 2.4)
 	north_gate_pos = Vector3(cx, 0.0, min_z + 0.45)
 
 	var has_wings: bool = lot.floors.has(Vector2i(6, 13))
@@ -174,9 +178,11 @@ func build(lot: Dictionary, floor_bounds: Rect2i, well: Rect2i) -> void:
 	_build_daylight_fills(cx, min_z, max_z, bays_z, bay_len)
 	if has_wings:
 		_build_watch_wings()
-		_build_brazier(Vector3(16.0, 0.0, 11.6), "WatchBrazier", 5.2, 11.0)
-	_build_brazier(Vector3(cx - 3.35, 0.0, min_z + bay_len * 1.45), "NaveBrazierWest", 4.4, 9.5)
-	_build_brazier(Vector3(cx + 3.35, 0.0, min_z + bay_len * 1.45), "NaveBrazierEast", 4.4, 9.5)
+	# 1900s-authentic standing brass glass-shielded oil floor lamps flanking Bay 1 & Bay 2 piers (clear central axis)
+	_build_floor_oil_lamp(Vector3(cx - 3.75, 0.0, min_z + bay_len * 1.0), "FloorLampNW", 2.8, 9.5)
+	_build_floor_oil_lamp(Vector3(cx + 3.75, 0.0, min_z + bay_len * 1.0), "FloorLampNE", 2.8, 9.5)
+	_build_floor_oil_lamp(Vector3(cx - 3.75, 0.0, min_z + bay_len * 2.0), "FloorLampSW", 2.6, 9.0)
+	_build_floor_oil_lamp(Vector3(cx + 3.75, 0.0, min_z + bay_len * 2.0), "FloorLampSE", 2.6, 9.0)
 	set_hour(4.0)
 
 func _pointed_arch_y(x_norm: float) -> float:
@@ -794,7 +800,7 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	pendulum_bob.add_child(needle)
 
 	# Sleek flush brass/crimson calibration bezel sitting flat on the MeridianWell rim
-	var well_r := (float(well.size.x) * 0.46) if well.has_area() else 1.25
+	var well_r := minf(1.60, float(well.size.x) * 0.40) if well.has_area() else 1.25
 	drift_bezel = MeshInstance3D.new()
 	var ring_mesh := TorusMesh.new()
 	ring_mesh.inner_radius = well_r - 0.028
@@ -806,7 +812,7 @@ func _build_foucault_pendulum(anchor: Vector3, well: Rect2i) -> void:
 	root.add_child(drift_bezel)
 
 	# Low brass Panthéon perimeter railing around the MeridianWell dial
-	var rail_r := well_r + 0.14
+	var rail_r := well_r + 0.10
 	var rail_h := 0.74
 	var rail_ring := MeshInstance3D.new()
 	var rail_torus := TorusMesh.new()
@@ -859,33 +865,29 @@ func _build_functional_props(min_z: float) -> void:
 		_prop(cot_root, "Lighting/CagedLamp", Vector3(0.55, 0.0, -0.78))
 		_pool(watch_cot_pos + Vector3(0.6, 0.55, -0.85), Color("ffc27a"), 1.3, 3.2)
 
-	# Essence Calibration Lectern (using real ArchBuilder RecipeLectern)
+	# Offset 1.80m Watch Lectern (leaving central North Axis completely open to the North Gate!)
 	var lec_root := Node3D.new()
 	lec_root.name = "EssenceCalibrationLectern"
-	lec_root.position = Vector3(pendulum_world_pos.x, 0.0, min_z + 3.65)
+	lec_root.position = Vector3(pendulum_world_pos.x - 2.60, 0.0, min_z + 3.20)
 	add_child(lec_root)
 	var lectern := Factory.create("res://tools/building_construction/BuildingConstruction/Tables/RecipeReceptionDesk.gd")
 	if lectern != null:
-		lectern.recipe_parameters["width"] = 2.75
+		lectern.recipe_parameters["width"] = 1.80
 		lectern.rotation.y = PI
 		lec_root.add_child(lectern)
-		_reserve_station(lec_root.position,Vector2(2.75,0.95),1.08)
-		_prop(lec_root, "Lighting/BankerLamp", Vector3(-0.8,1.08,0), 0, {"light_energy": 1.2})
-		var map := _prop(lec_root, "Props/Schematic", Vector3(0.14,1.13,0.16), 0, {"width":1.22,"height":0.64})
+		_reserve_station(lec_root.position, Vector2(1.80, 0.90), 1.08)
+		_prop(lec_root, "Lighting/BankerLamp", Vector3(-0.55, 1.08, 0), 0, {"light_energy": 1.2})
+		var map := _prop(lec_root, "Props/Schematic", Vector3(0.18, 1.13, 0.14), 0, {"width": 0.95, "height": 0.56})
 		map.rotation.x = -1.28
-		for dx: float in [-0.49,0.77]:
-			var scroll := CylinderMesh.new(); scroll.height=0.68; scroll.top_radius=0.055; scroll.bottom_radius=0.055
-			var spindle := MeshInstance3D.new(); spindle.mesh=scroll; spindle.material_override=_mat_runner
-			spindle.position=Vector3(dx,1.16,0.15); spindle.rotation.x=PI/2; lec_root.add_child(spindle)
-		_glb_prop(lec_root, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(0.95, 1.08, -0.15), 0.3, 0.72, _mat_brass)
+		_glb_prop(lec_root, "res://assets/furniture/kaykit_cc0/candle_triple.glb", Vector3(0.68, 1.08, -0.12), 0.3, 0.70, _mat_brass)
 
-	# KayKit CC0 Low-Poly Gothic/Academy furniture dressed in HallFinish Triplanar walnut
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/table_long.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 10.6), PI * 0.5, 0.78, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.65, 0.0, min_z + 10.0), PI * 0.5, 0.78, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.65, 0.0, min_z + 11.2), PI * 0.5, 0.78, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/crates_stacked.glb", Vector3(pendulum_world_pos.x - 3.65, 0.0, min_z + 5.2), 0.25, 0.75, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chest.glb", Vector3(pendulum_world_pos.x + 3.55, 0.0, min_z + 5.3), -0.35, 0.80, _mat_wood)
-	_glb_prop(self, "res://assets/furniture/kaykit_cc0/shelf_large.glb", Vector3(pendulum_world_pos.x - 3.95, 0.0, min_z + 10.6), PI * 0.5, 0.82, _mat_wood)
+	# KayKit CC0 furniture consolidated into Bay 1 (Z=9.8-11.8) so Bay 2-3 cross-axis around the pendulum is wide open (>=2.2m)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/table_long.glb", Vector3(pendulum_world_pos.x + 3.65, 0.0, min_z + 6.4), PI * 0.5, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.80, 0.0, min_z + 5.9), PI * 0.5, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(pendulum_world_pos.x + 2.80, 0.0, min_z + 6.9), PI * 0.5, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/crates_stacked.glb", Vector3(pendulum_world_pos.x - 3.75, 0.0, min_z + 4.8), 0.25, 0.72, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chest.glb", Vector3(pendulum_world_pos.x + 3.65, 0.0, min_z + 4.2), -0.35, 0.78, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/shelf_large.glb", Vector3(pendulum_world_pos.x - 3.95, 0.0, min_z + 6.4), PI * 0.5, 0.80, _mat_wood)
 
 func _reserve_station(pos: Vector3, footprint: Vector2, height: float) -> void:
 	station_bounds.append(Rect2(Vector2(pos.x,pos.z)-footprint*0.5,footprint))
@@ -1001,26 +1003,34 @@ func _build_watch_wings() -> void:
 	_prop(self,"Tables/WorkCounter",Vector3(24.6,0,13.5))
 	_reserve_station(Vector3(24.6,0,13.5),Vector2(2.05,0.75),0.94)
 	_prop(self,"Props/CrockeryShelf",Vector3(25.75,0,18.2),-PI/2)
-	_camp_cot(self, _nave_cot_pos + Vector3(-0.24,0,-1.65))
-	_prop(self,"Props/Screen",Vector3(11.27,0,20.35),PI/2)
+	_prop(self,"Props/Screen",Vector3(11.65,0,23.6),0.0)
 	for z: float in [14.25,15.9,18.45,20.0]:
 		var bed := Vector3(9.6 if z==14.25 else 7.65,0,z)
 		_prop(self,"Beds/Bed",bed,PI/2,{"medical":z<17.0})
 		_reserve_station(bed,Vector2(2.15,1.15),0.52)
 	_prop(self,"Cabinets/MedicineCabinet",Vector3(7.35,0,13.38))
 	_pool(Vector3(9.8,2.5,16.2),Color("b9dfff"),3.8,6.4)
-	var board := _prop(self,"Props/Chalkboard",Vector3(20.72,0.35,19.75),-1.27)
-	for x: float in [-1.28,1.28]:
-		_box(board,Vector3(x,-0.16,0),Vector3(0.08,0.38,0.1),_mat_wood)
-	for station in [Vector3(19.54,0,19.85),Vector3(24.25,0,18.7)]:
-		_prop(self,"Tables/Table",station,PI/2,{"width":3.4})
-		_reserve_station(station,Vector2(2.15,3.4),0.75)
-		for dx: float in [-0.78,0.78]:
-			_prop(self,"Chairs/Bench",station+Vector3(dx,0,0),PI/2,{"width":3.1})
+	# 1900s natural charcoal-black slate chalkboard mounted cleanly on Bay 4 east solid wall (clear Bay 3 arch!)
+	var board := _prop(self,"Props/Chalkboard",Vector3(20.42,0.45,22.6),-PI*0.5)
+	var slate_board_mat := _make_finish("1d2126", 0.90, 0.04)
+	for child in board.find_children("*", "MeshInstance3D", true, false):
+		if (child as MeshInstance3D).name.to_lower().contains("board") or (child as MeshInstance3D).name.to_lower().contains("slate"):
+			(child as MeshInstance3D).material_override = slate_board_mat
+	# Compact 2.0m study desk in Bay 4 east (Z=22.6) + full 3.4m dining table inside East Wing (Z=18.7)
+	_prop(self,"Tables/Table",Vector3(19.15,0,22.6),PI/2,{"width":2.0})
+	_reserve_station(Vector3(19.15,0,22.6),Vector2(1.4,2.0),0.75)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(18.25, 0.0, 22.1), PI * 0.5, 0.76, _mat_wood)
+	_glb_prop(self, "res://assets/furniture/kaykit_cc0/chair.glb", Vector3(18.25, 0.0, 23.1), PI * 0.5, 0.76, _mat_wood)
+	_prop(self,"Tables/Table",Vector3(24.25,0,18.7),PI/2,{"width":3.4})
+	_reserve_station(Vector3(24.25,0,18.7),Vector2(2.15,3.4),0.75)
+	for dx: float in [-0.78,0.78]:
+		_prop(self,"Chairs/Bench",Vector3(24.25+dx,0,18.7),PI/2,{"width":3.1})
 	var stove := Vector3(22.08,0,13.88)
 	_reserve_station(stove,Vector2(2.05,0.8),0.95)
 	_prop(self,"Props/Stove",stove,0,{"width":2.0})
-	_prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45)
+	var hood := _prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45)
+	for hchild in hood.find_children("*", "MeshInstance3D", true, false):
+		(hchild as MeshInstance3D).material_override = _mat_lead
 	var embers := StandardMaterial3D.new()
 	embers.albedo_color = Color("ff862d"); embers.emission_enabled = true
 	embers.emission = Color("ff7022"); embers.emission_energy_multiplier = 3.4
@@ -1028,7 +1038,9 @@ func _build_watch_wings() -> void:
 	for i in 9: _box(self,stove+Vector3((i-4)*0.16,0.5,0.48),Vector3(0.034,0.41,0.05),_mat_lead)
 	_pool(stove+Vector3(0,1.02,0.82),Color("ff9e50"),5.4,7.5)
 	_pool(Vector3(21.1,1.45,16.65),Color("ffc182"),1.7,4.4)
-	_prop(self,"Cabinets/Bookshelf",Vector3(16,0,5.38),0,{"width":2.75,"bays":4,"shelves":5})
+	# Flanking north bookcases leaving central (16.0, 5.0) completely clear for the North Wing Archway
+	_prop(self,"Cabinets/Bookshelf",Vector3(13.1,0,5.38),0,{"width":1.95,"bays":3,"shelves":5})
+	_prop(self,"Cabinets/Bookshelf",Vector3(18.9,0,5.38),0,{"width":1.95,"bays":3,"shelves":5})
 	for sx: float in [13.85,18.15]:
 		_prop(self,"Props/Crates",Vector3(sx,0,6.18))
 		for i in 2:
@@ -1084,6 +1096,29 @@ func _build_daylight_fills(cx: float, min_z: float, max_z: float, bays_z: int, b
 	sun_bounce.shadow_enabled = false
 	add_child(sun_bounce)
 	_daylight_fills.append({"light": sun_bounce, "day": 0.95})
+
+func get_pendulum_period_sec() -> float:
+	## Exact simple-pendulum period using g = 9.80665 m/s^2, rounded to 1 decimal place.
+	return snappedf(DRIFT_PERIOD_S if drifting else NORMAL_PERIOD_S, 0.1)
+
+func _build_floor_oil_lamp(pos: Vector3, lamp_name: String, night_energy: float = 2.8, reach: float = 9.5) -> void:
+	## Authentic 1900s standing brass glass-shielded kerosene floor lamp (replaces indoor open braziers).
+	var root := Node3D.new(); root.name = lamp_name; root.position = pos; add_child(root)
+	for seg in [[0.22, 0.28, 0.10, 0.05], [0.045, 0.06, 1.48, 0.84], [0.16, 0.08, 0.12, 1.62]]:
+		var cm := CylinderMesh.new(); cm.top_radius = seg[0]; cm.bottom_radius = seg[1]; cm.height = seg[2]
+		var mi := MeshInstance3D.new(); mi.mesh = cm; mi.material_override = _mat_brass; mi.position.y = seg[3]; root.add_child(mi)
+	var shade_mat := StandardMaterial3D.new()
+	shade_mat.albedo_color = Color("fff0cf"); shade_mat.emission_enabled = true
+	shade_mat.emission = Color("ffba62"); shade_mat.emission_energy_multiplier = 2.6; shade_mat.roughness = 0.25
+	var globe := SphereMesh.new(); globe.radius = 0.14; globe.height = 0.30
+	var gmi := MeshInstance3D.new(); gmi.mesh = globe; gmi.material_override = shade_mat; gmi.position.y = 1.80; root.add_child(gmi)
+	var cap := CylinderMesh.new(); cap.top_radius = 0.08; cap.bottom_radius = 0.17; cap.height = 0.07
+	var cmi := MeshInstance3D.new(); cmi.mesh = cap; cmi.material_override = _mat_brass; cmi.position.y = 1.98; root.add_child(cmi)
+	var l := OmniLight3D.new(); l.name = lamp_name + "_Light"; l.position = pos + Vector3(0.0, 1.82, 0.0)
+	l.light_color = Color("ffb86c"); l.light_energy = night_energy; l.omni_range = reach; l.omni_attenuation = 1.15; l.shadow_enabled = false
+	add_child(l)
+	_interior_pools.append({"light": l, "night": night_energy, "day": 0.08})
+	_reserve_station(pos, Vector2(0.58, 0.58), 2.0)
 
 func _build_brazier(pos: Vector3 = Vector3(16.0, 0.0, 11.6), brazier_name: String = "WatchBrazier", night_energy: float = 4.8, reach: float = 10.0) -> void:
 	var pan := Node3D.new(); pan.name = brazier_name; pan.position = pos; add_child(pan)
@@ -1451,15 +1486,18 @@ func _process(delta: float) -> void:
 		return
 	_time += delta
 	if drifting:
-		var base_phase := _time * 1.15
-		var stutter := 0.055 * sin(_time * 3.45) * maxf(0.0, sin(base_phase))
-		var swing := 0.115 * sin(base_phase) + stutter * 0.55
-		pendulum_pivot.rotation = Vector3(swing * sin(_drift_angle), _drift_angle + 0.04 * sin(_time * 0.4), swing * cos(_drift_angle))
+		var omega_drift := TAU / DRIFT_PERIOD_S # 8.1 s abnormal period
+		var base_phase := _time * omega_drift
+		var swing := 0.095 * sin(base_phase)
+		# Visible off-center lateral deflection (fails H1 'must cross center')
+		var lateral_off := 0.034 * cos(base_phase)
+		pendulum_pivot.rotation = Vector3(swing * sin(_drift_angle) + lateral_off, _drift_angle, swing * cos(_drift_angle))
 		if is_instance_valid(essence_light):
-			essence_light.light_energy = 1.15 + 0.35 * sin(_time * 4.0)
+			essence_light.light_energy = 0.85 + 0.12 * sin(base_phase)
 	else:
-		var swing := 0.105 * sin(_time * 1.05)
-		var slow_precession := fmod(_time * 0.025, TAU)
+		var omega_norm := TAU / NORMAL_PERIOD_S # 7.0 s exact physics period (L=12.24m, g=9.80665)
+		var swing := 0.092 * sin(_time * omega_norm)
+		var slow_precession := fmod(_time * 0.015, TAU)
 		pendulum_pivot.rotation = Vector3(swing * sin(slow_precession), slow_precession, swing * cos(slow_precession))
 		if is_instance_valid(essence_light):
 			essence_light.light_energy = 0.85 + 0.06 * sin(_time * 1.2)

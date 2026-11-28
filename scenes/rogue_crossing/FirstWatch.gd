@@ -24,6 +24,10 @@ const FIRST_BRIEF := "The Essence is drifting. Hale is waiting at the north gate
 
 var first_sortie
 var first_returned := false
+var pendulum_measured := false
+var pendulum_note_recorded := false
+var pendulum_measured_sec := 8.1
+var field_notes: Array[String] = []
 var _opening: CanvasLayer
 var _opening_played := false
 
@@ -376,20 +380,26 @@ func _speak_hall_mumble(text: String, speaker_profile: String = "resident") -> v
 func _take_deposition(id: String) -> void:
 	if phase != "camp" or not modal.is_empty():
 		return
-	# Pre-sortie Hale at the north gate: direct briefing + one-click departure
+	# Foucault Pendulum observation & single-pass period measurement
+	if id == "FoucaultPendulum":
+		_open_pendulum_sheet()
+		return
+
+	# Pre-sortie Hale: Epistemic-Firewall-compliant dialogue + unlockable Foucault Pendulum Q&A
 	if id == "Hale" and not first_returned:
 		if is_instance_valid(hall_hale) and hall_hale.has_meta("animation_player"):
 			(hall_hale.get_meta("animation_player") as AnimationPlayer).play(&"signal", 0.25)
 		var line := R18n.pick(
-			"铜摆已经越过红线三格了。带上提灯和手册，准备好了我们就从北门下井，取回备用源核。",
-			"The pendulum is three marks past the red line. Grab your lamp and manual—whenever you're ready, we take the north gate down the well."
+			"大厅里没有任何外力损坏，只有北门门缝在往里渗白雾和海盐味。整点前我们得进北翼核查落闸，带上提灯和怀表随时出发。",
+			"Nothing in the Hall is physically damaged—only the north archway is leaking ground mist and sea-salt air. We should inspect the North Wing before the hour bell."
 		)
 		_speak_hall_mumble(line, "hale")
-		_open("witness", R18n.pick("Hale · 外勤搭档", "Hale · Watch Partner"), R18n.pick("北门待命   /   首次出征", "NORTH GATE   /   FIRST EXPEDITION"))
+		_open("witness", R18n.pick("霍铎（Hale） · 同行学员", "Hale · Watch Partner"), R18n.pick("03:38 大厅待命", "03:38 PUBLIC HALL"))
 		_label(line)
-		_label(R18n.pick("井区守则只放双人编队过闸。出征途中可按 Q 呼出指令轮盘与 Hale 协同。", "Caisson rules only pass pairs. Press Q on expedition to open the radial command wheel with Hale."), 14)
-		_button(_sheet, R18n.pick("立即与 Hale 出发", "Depart with Hale now"), _depart_first)
-		_button(_sheet, R18n.pick("先在大厅转转", "Stay in the Hall"), _close)
+		if pendulum_measured:
+			_button(_sheet, R18n.pick("询问关于傅科摆周期与偏心的事", "Ask Hale about the Foucault pendulum"), _ask_hale_pendulum)
+		_button(_sheet, R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), _depart_first)
+		_button(_sheet, R18n.pick("先在大厅观察", "Keep looking around the Hall"), _close)
 		return
 
 	if id not in Cast.NAMES:
@@ -531,7 +541,10 @@ func _post_hall_hale() -> void:
 	hale_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	hale_tag.position.y = 1.94
 	hall_hale.add_child(hale_tag)
-	var hale_target: Array[Dictionary] = [{"kind": "witness", "id": "Hale", "label": "Hale", "position": hall_hale.position}]
+	var hale_target: Array[Dictionary] = [
+		{"kind": "witness", "id": "Hale", "label": R18n.pick("霍铎 (Hale)", "Hale"), "position": hall_hale.position},
+		{"kind": "witness", "id": "FoucaultPendulum", "label": R18n.pick("傅科摆", "Foucault Pendulum"), "position": anchors.pendulum + Vector3(0.0, 0.85, 0.0)},
+	]
 	room_view.set_witness_targets(hale_target)
 
 func _update_hall(dt: float) -> void:
@@ -784,3 +797,77 @@ func _on_opening_finished() -> void:
 	if phase == "camp" and not first_returned and is_instance_valid(_hud):
 		_instruction.text = R18n.pick("源质正在漂移。Hale 在北门等你：两人一起下井，取回备用源核。", FIRST_BRIEF)
 		_hud.fit_instruction(get_viewport_rect().size.x)
+
+
+## ---- Foucault Pendulum: Single-Pass Judge -> 1-Cycle Animation -> Exact g Period ----
+func _hall_pendulum_period() -> float:
+	var gothic: Node = room_view.find_child("PublicHallGothic", true, false) if is_instance_valid(room_view) else null
+	if gothic != null and gothic.has_method("get_pendulum_period_sec"):
+		return float(gothic.get_pendulum_period_sec())
+	return 7.0 if first_returned else 8.1
+
+func _open_pendulum_sheet() -> void:
+	var period := _hall_pendulum_period()
+	_open("witness", R18n.pick("中央傅科摆 · 先贤祠刻度盘", "Foucault Pendulum · Azimuth Dial"), R18n.pick("物理仪器观测", "INSTRUMENT OBSERVATION"))
+	_label(R18n.pick(
+		"悬索、黄铜摆锤与地面深石板刻度盘均完好无损。周圈 24 根计角立柱中有两根已倒伏在石板上。",
+		"The suspension wire, brass bob, and dark-slate azimuth dial show no physical damage. Two of the twenty-four perimeter pegs lie tipped on the slate."
+	))
+	if pendulum_measured:
+		var traj := R18n.pick("摆迹精准掠过中心铜钉。", "The bob crosses the center brass pin cleanly.") if first_returned else R18n.pick("摆迹明显绕开了中心铜钉。", "The bob's path visibly curves around the center brass pin.")
+		_label(R18n.pick("已测周期：%.1f 秒（%s）", "Measured period: %.1f s (%s)") % [pendulum_measured_sec, traj], 15, true)
+		if not pendulum_note_recorded:
+			_button(_sheet, R18n.pick("在笔记上记载这件事", "Record this observation in your notebook"), _record_pendulum_note)
+		else:
+			_label(R18n.pick("✓ 已记载于随身笔记。", "✓ Recorded in your field notebook."), 14)
+		if not first_returned:
+			_button(_sheet, R18n.pick("询问霍铎关于傅科摆的事", "Ask Hale about the Foucault pendulum"), _ask_hale_pendulum)
+	else:
+		_label(R18n.pick("你可以掏出随身怀表，在摆锤掠过最低点时完成一次判定，随后观摩一个完整周期得出精确读数。", "Raise your pocket watch, mark one pass at the lowest point, and follow one full cycle for an exact reading."), 14)
+		_button(_sheet, R18n.pick("统计周期", "Measure period"), _begin_pendulum_judge)
+	_button(_sheet, R18n.pick("离开刻度盘", "Step back"), _close)
+
+func _begin_pendulum_judge() -> void:
+	_open("witness", R18n.pick("统计周期 · 起点判定", "Measure Period · Mark Pass"), R18n.pick("步骤 1 / 2 · 单次判定", "STEP 1 / 2 · SINGLE PASS"))
+	_label(R18n.pick("盯紧黄铜摆锤掠过深石板最低点的瞬间，按下确认锁定起点——随后将自动完成一次完整往返周期观测。", "Watch the brass bob sweep past the lowest point and mark the start—one complete cycle will then be timed automatically."))
+	_button(_sheet, R18n.pick("确认：摆锤已过最低点（开始计时）", "Mark pass now (start cycle)"), _run_pendulum_cycle_anim)
+	_button(_sheet, R18n.pick("取消", "Cancel"), _close)
+
+func _run_pendulum_cycle_anim() -> void:
+	var watch := _watch_number
+	_open("witness", R18n.pick("统计周期 · 完整往返观测中……", "Measuring Period · Tracking 1 Full Cycle..."), R18n.pick("步骤 2 / 2 · 怀表读秒", "STEP 2 / 2 · TIMING"))
+	_label(R18n.pick("怀表秒针走动中：摆锤正荡向远端折返点……", "Pocket watch ticking: bob sweeping toward the far apex..."))
+	await get_tree().create_timer(0.95).timeout
+	if watch != _watch_number or modal != "witness":
+		return
+	_label(R18n.pick("怀表秒针走动中：摆锤回摆，即将回到起点完成 1 个完整周期……", "Pocket watch ticking: bob returning to complete 1 full cycle..."), 14)
+	await get_tree().create_timer(0.95).timeout
+	if watch != _watch_number or modal != "witness":
+		return
+	pendulum_measured = true
+	pendulum_measured_sec = _hall_pendulum_period()
+	_open_pendulum_sheet()
+
+func _record_pendulum_note() -> void:
+	if not pendulum_note_recorded:
+		pendulum_note_recorded = true
+		var entry := R18n.pick(
+			"03:38 · 公共大厅傅科摆完好无损，但实测完整周期为 %.1f 秒，且摆迹绕开中心铜钉。",
+			"03:38 · Public Hall Foucault pendulum is physically intact, yet measures %.1f s per cycle and misses the center pin."
+		) % pendulum_measured_sec
+		field_notes.append(entry)
+		message = R18n.pick("已在随身笔记上记载傅科摆观测数据（%.1f 秒）。", "Recorded Foucault pendulum reading (%.1f s) in your notebook.") % pendulum_measured_sec
+	_open_pendulum_sheet()
+
+func _ask_hale_pendulum() -> void:
+	var line := R18n.pick(
+		"你也掐出来是 %.1f 秒了？按大厅 12.24 米的摆长和标准重力算，它正常完整周期就该是 7.0 秒，而且工作时一定笔直穿过中心铜钉。仪器没坏却走慢偏心，说明出问题的不是摆——是这间大厅本身。",
+		"You timed %.1f seconds too? With a 12.24 m cable under standard gravity, its normal period is strictly 7.0 seconds and it always crosses the center pin. If an undamaged instrument drifts, it's not the pendulum—it's the Hall."
+	) % pendulum_measured_sec
+	_speak_hall_mumble(line, "hale")
+	_open("witness", R18n.pick("霍铎（Hale） · 关于傅科摆", "Hale · On the Foucault Pendulum"), R18n.pick("实测 %.1f 秒 / 基准 7.0 秒", "MEASURED %.1f s / BASELINE 7.0 s") % pendulum_measured_sec)
+	_label(line)
+	if not pendulum_note_recorded:
+		_button(_sheet, R18n.pick("在笔记上记载这件事", "Record this in your notebook"), _record_pendulum_note)
+	_button(_sheet, R18n.pick("与霍铎一同进入北翼", "Enter the North Wing with Hale"), _depart_first)
+	_button(_sheet, R18n.pick("返回大厅", "Back to the Hall"), _close)

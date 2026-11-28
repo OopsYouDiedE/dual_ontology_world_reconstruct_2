@@ -309,10 +309,14 @@ func _format_inspector_bbcode() -> String:
 	for obj in level_manifest.get("objects", []):
 		var p: Vector3 = obj.get("pos", Vector3.ZERO)
 		b.append("  • %s  [%s:%s]  @(%.1f, %.1f, %.1f)" % [str(obj.id), str(obj.kind), str(obj.catalog_id), p.x, p.y, p.z])
-	b.append("\n[color=#f0d394][b]2. 可交互点 (%d 组)[/b][/color]" % level_manifest.get("interactables", []).size())
+	b.append("\n[color=#f0d394][b]2. 可交互点 (%d 组)[/b][/color]" % interactable_nodes.size())
 	for grp in level_manifest.get("interactables", []):
 		for h in grp.get("hotspots", []):
 			b.append("  • %s / %s → [E] %s  (条件:%s)" % [str(grp.title), str(h.part_name), str(h.verb), str(h.get("unlock_when", "默认"))])
+	for obj in level_manifest.get("objects", []):
+		var spec := FurnitureCatalog.resolve_interaction(str(obj.get("catalog_id", "")), obj.get("interaction", {}))
+		if not spec.is_empty():
+			b.append("  • %s（物品 %s）→ [E] %s  (动作:%s)" % [str(spec.get("title_zh", obj.id)), str(obj.id), str(spec.get("verb_zh", "")), str(spec.get("action_id", ""))])
 	b.append("\n[color=#f0d394][b]3. 触发方式 (%d)[/b][/color]" % level_manifest.get("triggers", []).size())
 	for trg in level_manifest.get("triggers", []):
 		b.append("  • [%s] %s → %s" % [str(trg.how), str(trg.source_id), str(trg.get("effect", trg.get("dialogue_id", "-")))])

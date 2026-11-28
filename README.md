@@ -17,6 +17,7 @@ WASD 移动，点击画面控制视角，E 操作或过门，Tab 查手册，Esc
 
 ## 开发入口
 
-- 建筑工具：ArchBuilder → Props → Open Component Library。[参数与生成代码](tools/building_construction/production/README.zh-CN.md)按线控结构、规则构件、复合装配分类。
+- **[工具图解](docs/production/tools-guide.md)**：ArchBuilder、组件库（物品属性与交互配置）、F2 蓝图检视器、`inspect_level.py`，附实机截图。
+- 建筑工具：ArchBuilder → Furniture → Open Component Library。[参数与生成代码](tools/building_construction/production/README.zh-CN.md)按线控结构、规则构件、复合装配分类。
 - 设计参考：《蓝图王子》主导第一人称三渲二，《巴别塔圣歌》补充建筑色面与高差导向；《邪恶冥刻》主导分支连接与事件节奏。[视频帧与出处](docs/research/expedition/README.md)供同机位比对。
 - [项目 MCP](mcp/game/README.md)从正式入口操作实机。实验场景独立启动；正式玩法和美术以制作文档为准。

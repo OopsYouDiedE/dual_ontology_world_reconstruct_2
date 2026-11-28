@@ -31,3 +31,8 @@
 ## 5. 统一台词字幕与队友交互（`UnifiedDialoguePresenter.gd` + `UnifiedTeammateWheel.gd`）
 - **台词与字幕**：所有角色对白、内心独白与过场字幕（大厅霍铎、16 居民、北翼远征、`StoryDirector`）统一走 `UnifiedDialoguePresenter`（底层复用 `ExpeditionCaptions.gd` 底部字幕条 + `VoiceSynth.gd` 纯人声共振峰）。
 - **队友交互**：所有关卡统一按 **`Q`** 呼出 `UnifiedTeammateWheel`（底层复用 `CommandWheel.gd` 34px 中心取消死区 + 235px 径向扇区轮盘），支持鼠标悬停、滚轮、`1-5`、`E / Enter` 确认与 `Esc / Q` 取消。
+
+## 6. 统一家具库与材质规范（`AcademyFurnitureCatalog.gd`）
+- 入口：`scenes/components/shared/AcademyFurnitureCatalog.gd`
+- 合并第一章（`ExpeditionKit` / ArchBuilder 配方）与主线（`PublicHallGothic` / KayKit CC0 / 学院定制 GLB）所有家具资产，禁止在单关卡内对整件家具强行平涂单一材质覆盖。
+- 统一 9 套 1900s 欧洲官邸与哥特教堂 PBR 材质：`walnut_varnish`（三平面木纹法线 + 清漆）、`oak_aged`（陈年橡木）、`brass_antique`（拉丝古黄铜）、`iron_wrought`（哑光锻铁）、`linen_cream`（粗纺亚麻）、`wool_baize`（学院毛呢）、`leather_oxblood`（牛血红皮革）、`beeswax_candle`（暖蜂蜡）、`slate_honed`（精磨石板）。

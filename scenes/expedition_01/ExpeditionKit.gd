@@ -1,4 +1,5 @@
 extends "Masonry.gd"
+const FurnitureCatalog := preload("res://scenes/components/shared/AcademyFurnitureCatalog.gd")
 const Relay=preload("ServiceSignal.gd")
 const CX:=61.0
 const CZ:=10.1
@@ -346,10 +347,7 @@ func relay_lamp(at:Vector3)->MeshInstance3D:
 	finish.set_shader_parameter("emission_gain",.18)
 	lamp.material_override=finish;return lamp
 func shelf(x:float,z:float)->void:
-	var bookcase:=preload("res://tools/building_construction/BuildingConstruction/Cabinets/RecipeBookshelf.gd").new()
-	bookcase.recipe_parameters.merge({"width":3.2,"height":1.0,"depth":.48,"shelves":2,"bays":2},true)
-	section.add_child(bookcase);bookcase.position=Vector3(x,0,z)
-	for item in bookcase.find_children("*","MeshInstance3D",true,false):item.material_override=mat("book")
+	FurnitureCatalog.spawn_recipe(section, "bookshelf", Vector3(x, 0.0, z), 0.0, {"width":3.2,"height":1.0,"depth":.48,"shelves":2,"bays":2}, "walnut_varnish")
 func polar(rad:float,a:float,y:float)->Vector3:return Vector3(CX+rad*cos(a),y,CZ+rad*sin(a))
 func band(id:String,r0:float,r1:float,y0:float,y1:float,a:float,b:float,k:String,solid:=true)->Node3D:
 	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES);st.set_smooth_group(-1);var v:=PackedVector3Array()

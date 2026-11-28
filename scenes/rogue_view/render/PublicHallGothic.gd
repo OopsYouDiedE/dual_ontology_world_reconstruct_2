@@ -14,6 +14,7 @@ const StylizedFireShader := preload("res://scenes/rogue_view/render/StylizedFire
 const RenderProfile := preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const OilLamp := preload("res://scenes/blue_prince_lab/lamp/Lamp.tscn")
 const Factory := preload("res://tools/building_construction/BuildingConstruction/Shared/ComponentFactory.gd")
+const FurnitureCatalog := preload("res://scenes/components/shared/AcademyFurnitureCatalog.gd")
 
 const LANCET_TEX := "res://tools/research/french_gothic_nodes/lancet_register.png"
 const ROSE_NORTH_TEX := "res://tools/research/french_gothic_nodes/rose_register.png"
@@ -887,6 +888,7 @@ func _build_functional_props(min_z: float) -> void:
 		lectern.recipe_parameters["width"] = 1.80
 		lectern.rotation.y = PI
 		lec_root.add_child(lectern)
+		FurnitureCatalog.refine_furniture_materials(lectern, "walnut_varnish", false)
 		_reserve_station(lec_root.position, Vector2(1.80, 0.90), 1.08)
 		_prop(lec_root, "Lighting/BankerLamp", Vector3(-0.55, 1.08, 0), 0, {"light_energy": 1.3})
 		var map := _prop(lec_root, "Props/Schematic", Vector3(0.18, 1.13, 0.14), 0, {"width": 0.95, "height": 0.56})
@@ -927,30 +929,22 @@ func _camp_cot(parent: Node3D, pos: Vector3) -> void:
 	_reserve_station(to_local(cot.global_position),Vector2(1.94,0.8),0.48)
 
 func _glb_prop(parent: Node3D, path: String, pos: Vector3, yaw := 0.0, uniform_scale := 1.0, mat_override: Material = null) -> Node3D:
-	if not ResourceLoader.exists(path):
-		return null
-	var packed := load(path) as PackedScene
-	if packed == null:
-		return null
-	var inst := packed.instantiate() as Node3D
-	if inst == null:
-		return null
-	inst.position = pos
-	inst.rotation.y = yaw
-	inst.scale = Vector3.ONE * uniform_scale
-	if mat_override != null:
-		for child in inst.find_children("*", "MeshInstance3D", true, false):
-			(child as MeshInstance3D).material_override = mat_override
-	parent.add_child(inst)
-	return inst
+	var preset := "brass_antique" if (mat_override == _mat_brass or "candle" in path) else ("oak_aged" if ("stool" in path or "crate" in path or "chest" in path) else "walnut_varnish")
+	return FurnitureCatalog.spawn_glb(parent, path, pos, yaw, uniform_scale, preset)
 
 func _prop(parent: Node3D, recipe: String, pos: Vector3, yaw := 0.0, params := {}) -> Node3D:
-	var part := Factory.create(Factory.COMPONENT_ROOT + recipe.get_base_dir() + "/Recipe" + recipe.get_file() + ".gd")
-	part.recipe_parameters.merge(params,true)
-	part.position = pos
-	part.rotation.y = yaw
-	parent.add_child(part)
-	return part
+	var preset := "oak_aged"
+	if recipe in ["Cabinets/Bookshelf", "Cabinets/LinenCabinet", "Tables/ReceptionDesk", "Props/Screen"]:
+		preset = "walnut_varnish"
+	elif recipe in ["Props/Stove", "Props/KitchenHood"]:
+		preset = "iron_wrought"
+	elif recipe == "Props/Chalkboard":
+		preset = "slate_honed"
+	elif recipe.begins_with("Lighting/"):
+		preset = "brass_antique"
+	elif recipe == "Props/Schematic":
+		preset = "linen_cream"
+	return FurnitureCatalog.spawn_recipe(parent, recipe, pos, yaw, params, preset)
 
 func _pool(pos: Vector3, tint: Color, energy: float, reach: float) -> OmniLight3D:
 	var lamp := OmniLight3D.new()

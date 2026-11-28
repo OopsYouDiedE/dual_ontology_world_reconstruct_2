@@ -7,3 +7,4 @@
 - `goal.md` 的运行窗口只在用户明确授权时修改。当前入口、运行和测试见 README。
 - 项目生图首选 `image-2.6-sunburst`（已验证供应商的请求模型 ID：`gpt-image-2.6-sunburst`，`quality=high`）。使用项目已配置的专用生图接口，勿走当前会话接口或 `/v1/responses`。带参考图的编辑走供应商的 `/v1/images/edits`，调用方式见 [热厨生图记录](docs/design/kitchen-paintover/README.md#本机已验证的生图路径)。若专用接口未配置或无法确认，先向用户确认，再发起调用。
 - 全关卡统一构建流水线、操作、渲染、台词与队友交互铁律：所有现有关卡与未来新增关卡必须统一走 `AcademyLevelPipeline`（`AcademyStage` 渲染/相机 + `AcademyUnifiedInput` 无冲突键位 + `DualModeInteractionHud` 双模三态交互 + `UnifiedDialoguePresenter` 底部字幕与共振峰语音 + `UnifiedTeammateWheel` Q 键队友径向轮盘），仅通过显式 `level_capabilities` 声明关卡特例（如大厅 `allow_jump = false`），详见 `docs/design/unified-level-ui-and-render-contract.md`。
+- 家具与器物资产铁律：第一章与主线及未来所有关卡统一通过 `scenes/components/shared/AcademyFurnitureCatalog.gd` 加载家具并执行分部件 PBR 材质精修（胡桃木清漆 / 陈年橡木 / 拉丝黄铜 / 锻铁 / 亚麻 / 毛呢 / 蜂蜡），禁止在单关卡内绕过统一家具库或平涂覆盖整件家具。

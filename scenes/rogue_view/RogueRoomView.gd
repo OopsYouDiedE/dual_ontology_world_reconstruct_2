@@ -521,7 +521,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _modal and is_instance_valid(_player) and not _plan_open and event.is_action_pressed(INTERACT):
+	if not unified_hud_active and not _modal and is_instance_valid(_player) and not _plan_open and event.is_action_pressed(INTERACT):
 		_keyboard_interact = true
 		get_viewport().set_input_as_handled()
 

@@ -44,6 +44,25 @@ func run() -> void:
 	}
 	check(not LevelAudit.validate_manifest(bad_ai).ok, "Audit rejects teammate rule-mistake AI waypoint with foreshadow_sec < 3.0s")
 
+	
+	var bad_self_bypass := {
+		"level_id": "rogue_bypass", "title": "Bypass", "allow_deep_lore": true,
+		"capabilities": LevelPipeline.capabilities_expedition(),
+	}
+	check(not LevelAudit.validate_manifest(bad_self_bypass).ok, "Audit blocks unauthorized allow_deep_lore=true self-bypass")
+
+	var bad_kind := {
+		"level_id": "bad_kind", "title": "Kind", "capabilities": LevelPipeline.capabilities_expedition(),
+		"objects": [{"id": "o1", "kind": "custom_bypass", "catalog_id": "x", "pos": Vector3.ZERO}],
+	}
+	check(not LevelAudit.validate_manifest(bad_kind).ok, "Audit blocks unknown object kind bypass")
+
+	var bad_nan := {
+		"level_id": "bad_nan", "title": "NaN", "capabilities": LevelPipeline.capabilities_expedition(),
+		"ai_routes": [{"actor_id": "hale", "actor_name": "Hale", "waypoints": [{"pos": Vector3.ZERO, "action": "x", "is_rule_mistake": true, "foreshadow_sec": NAN, "rule_tag": "R4", "dialogue_id": ""}]}],
+	}
+	check(not LevelAudit.validate_manifest(bad_nan).ok, "Audit blocks NAN foreshadow_sec bypass")
+
 	# 2. Live instantiation of Chapter1R01Level (extends AcademyLevelBase)
 	var lvl := R01Level.new()
 	root.add_child(lvl)

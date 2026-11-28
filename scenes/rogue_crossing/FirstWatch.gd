@@ -611,7 +611,7 @@ func _return_first() -> void:
 	_set_hall_active(true)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	phase = "camp"
-	message = "Hale filed the source. The expedition chart is open."
+	message = R18n.pick("霍铎已将北翼勘察记录归档，外勤路线图现已开放。", "Hale filed the North Wing watch log. The expedition chart is open.")
 	_refresh()
 
 func travel(index: int) -> void:
@@ -689,7 +689,7 @@ func _chart() -> void:
 	_open("chart", "Expedition chart", "PUBLIC HALL   /   WATCH %d" % run_seed)
 	_button(_sheet, "Fold chart", _close)
 	if phase == "camp" and not first_returned:
-		_label("Public Hall  →  Immersion Arcade  →  Archive  →  Source Caisson", 16)
+		_label(R18n.pick("公共大厅  →  北翼编号门廊  →  下沉档案廊  →  北翼值班室", "Public Hall  →  North Wing Porch  →  Sunken Archive  →  North Watch Room"), 16)
 		return
 	var map := preload("RouteChart.gd").new()
 	map.chart = house

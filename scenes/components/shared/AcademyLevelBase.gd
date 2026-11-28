@@ -63,13 +63,19 @@ func get_teammate_wheel_options() -> Array:
 func _ready() -> void:
 	level_manifest = define_level_manifest()
 	audit_report = LevelAudit.validate_manifest(level_manifest)
-	assert(audit_report.ok, "AcademyLevelBase manifest audit FAILED for '%s': %s" % [
-		str(level_manifest.get("level_id", name)), str(audit_report.errors)
-	])
+	if not audit_report.ok:
+		push_error("AcademyLevelBase manifest audit FAILED for '%s': %s" % [
+			str(level_manifest.get("level_id", name)), str(audit_report.errors)
+		])
+		assert(false, "AcademyLevelBase manifest audit FAILED")
 	level_capabilities = level_manifest.get("capabilities", LevelPipeline.capabilities_expedition())
 
 	# 1. Unified rendering viewport contract
 	var world_env := find_child("WorldEnvironment", true, false) as WorldEnvironment
+	if world_env == null:
+		world_env = WorldEnvironment.new()
+		world_env.name = "WorldEnvironment"
+		add_child(world_env)
 	LevelPipeline.bootstrap_viewport(get_viewport(), world_env, level_capabilities)
 
 	# 2. Unified UI stack (DualModeInteractionHud + UnifiedDialoguePresenter + UnifiedTeammateWheel)
@@ -267,7 +273,7 @@ func _build_blueprint_inspector() -> void:
 func _format_inspector_bbcode() -> String:
 	var b: PackedStringArray = []
 	b.append("[color=#f0d394][b]关卡设计蓝图检视器 [F2][/b][/color]  ·  %s (`%s`)" % [str(level_manifest.get("title", "")), str(level_manifest.get("level_id", ""))])
-	b.append("[color=#7ce0a3]✓ 认知防火墙 & 家具库 & AI 前摇校验：PASS[/color]")
+	b.append("[color=#7ce0a3]✓ 认知防火墙 & 家具库 & AI 前摇校验：PASS[/color]" if bool(audit_report.get("ok", false)) else "[color=#ff6b6b]✗ 校验失败：%s[/color]" % str(audit_report.get("errors", [])))
 	b.append("能力开关：跳=%s  灯=%s  跺=%s  轮盘=%s" % [
 		str(level_capabilities.get("allow_jump", false)),
 		str(level_capabilities.get("allow_lamp", false)),

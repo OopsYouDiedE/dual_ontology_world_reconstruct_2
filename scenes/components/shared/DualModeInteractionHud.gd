@@ -201,13 +201,18 @@ func trigger_index(idx: int) -> bool:
 func handle_input(event: InputEvent, allow_interact := true) -> bool:
 	if not active_enabled:
 		return false
+	if event.is_action_pressed(UnifiedInput.ACTION_TOGGLE_UI):
+		toggle_mode()
+		return true
+	if allow_interact and is_selected_active() and event.is_action_pressed(UnifiedInput.ACTION_INTERACT):
+		return trigger_selected()
 	if event is InputEventKey and event.pressed and not event.echo:
 		var code := (event as InputEventKey).physical_keycode
-		if code == KEY_V or event.is_action_pressed(UnifiedInput.ACTION_TOGGLE_UI):
+		if code == KEY_V:
 			toggle_mode()
 			return true
 		if allow_interact and is_selected_active():
-			if code == KEY_E or event.is_action_pressed(UnifiedInput.ACTION_INTERACT):
+			if code == KEY_E:
 				return trigger_selected()
 			if mode == Mode.AGGREGATED_CPLUS and _active_cplus_items().size() > 1:
 				match code:

@@ -1027,11 +1027,7 @@ func _build_watch_wings() -> void:
 	_pool(Vector3(9.2,2.45,16.2),Color("c8e2ff"),3.2,6.2)
 
 	# --- BAY 4 EAST: Quiet Scholar's Chalkboard & Study Alcove ---
-	var board := _prop(self,"Props/Chalkboard",Vector3(20.42,0.45,22.6),-PI*0.5)
-	var slate_board_mat := _make_finish("1d2126", 0.90, 0.04)
-	for child in board.find_children("*", "MeshInstance3D", true, false):
-		if (child as MeshInstance3D).name.to_lower().contains("board") or (child as MeshInstance3D).name.to_lower().contains("slate"):
-			(child as MeshInstance3D).material_override = slate_board_mat
+	_prop(self,"Props/Chalkboard",Vector3(20.42,0.45,22.6),-PI*0.5)
 	_prop(self,"Tables/Table",Vector3(19.25,0,22.6),PI/2,{"width":2.0})
 	_reserve_station(Vector3(19.25,0,22.6),Vector2(1.35,2.0),0.75)
 	_prop(self,"Lighting/BankerLamp",Vector3(19.35,0.75,21.95),0,{"light_energy":1.1})
@@ -1051,9 +1047,7 @@ func _build_watch_wings() -> void:
 	var stove := Vector3(25.35,0,14.55)
 	_reserve_station(stove,Vector2(0.85,2.05),0.95)
 	_prop(self,"Props/Stove",stove,-PI*0.5,{"width":2.0})
-	var hood := _prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45,-PI*0.5)
-	for hchild in hood.find_children("*", "MeshInstance3D", true, false):
-		(hchild as MeshInstance3D).material_override = _mat_lead
+	_prop(self,"Props/KitchenHood",stove+Vector3.UP*1.45,-PI*0.5)
 	var embers := StandardMaterial3D.new()
 	embers.albedo_color = Color("ff862d"); embers.emission_enabled = true
 	embers.emission = Color("ff7022"); embers.emission_energy_multiplier = 3.4

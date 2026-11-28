@@ -5,11 +5,37 @@ class_name AcademyLevelAudit
 
 const FurnitureCatalog := preload("res://scenes/components/shared/AcademyFurnitureCatalog.gd")
 
+## Centralized whitelist of late-game level_ids permitted to use deep-lore terminology.
+## Individual levels CANNOT self-declare allow_deep_lore=true to bypass the firewall.
+const DEEP_LORE_APPROVED_LEVELS: PackedStringArray = []
+
+const VALID_OBJECT_KINDS := ["glb", "recipe", "architectural"]
+const VALID_MATERIAL_PRESETS := [
+	"", "walnut_varnish", "oak_aged", "brass_antique", "iron_wrought",
+	"linen_cream", "wool_baize", "leather_oxblood", "beeswax_candle", "slate_honed"
+]
+
 ## Terms strictly prohibited in early-game player-facing text/dialogues (goal.md Epistemic Firewall)
 const FORBIDDEN_EARLY_TERMS := [
 	"源质", "十二条对赌契约", "对赌契约", "恶魔", "四锚", "单实体锁", "双世界", "魔法隐藏",
-	"备用源核", "契约A", "契约B", "契约 A", "契约 B", "Prima Materia", "DemonEntityLock"
+	"备用源核", "源核", "锚定厅", "源井", "契约a", "契约b", "contracta", "contractb",
+	"primamateria", "demonentitylock"
 ]
+
+static func _normalize_for_firewall(text: String) -> String:
+	var s := text.to_lower()
+	for ch in [" ", "	", "
+", "", "·", "-", "_", "—", "–", ":", "：", "/", "（", "）", "(", ")"]:
+		s = s.replace(ch, "")
+	return s
+
+static func _check_firewall_text(text: String, field_path: String, deep_lore_allowed: bool, errors: Array[String]) -> void:
+	if deep_lore_allowed or text.is_empty():
+		return
+	var norm := _normalize_for_firewall(text)
+	for term in FORBIDDEN_EARLY_TERMS:
+		if norm.contains(term):
+			errors.append("EPISTEMIC FIREWALL VIOLATION in %s: forbidden term '%s'" % [field_path, term])
 
 static func validate_manifest(manifest: Dictionary) -> Dictionary:
 	var errors: Array[String] = []
@@ -18,16 +44,21 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 	var level_id := str(manifest.get("level_id", ""))
 	if level_id.is_empty():
 		errors.append("Manifest missing required 'level_id'")
-	if str(manifest.get("title", "")).is_empty():
+	var title := str(manifest.get("title", ""))
+	if title.is_empty():
 		errors.append("Manifest missing required 'title'")
 
 	var caps: Dictionary = manifest.get("capabilities", {})
-	if caps.is_empty():
-		errors.append("Manifest missing required 'capabilities' (use AcademyLevelPipeline.capabilities_*())")
+	if caps.is_empty() or not caps.has("level_kind"):
+		errors.append("Manifest missing valid 'capabilities' (must construct via AcademyLevelPipeline.capabilities_*())")
 
-	var allow_deep_lore := bool(manifest.get("allow_deep_lore", false))
+	var deep_lore_allowed := level_id in DEEP_LORE_APPROVED_LEVELS
+	if bool(manifest.get("allow_deep_lore", false)) and not deep_lore_allowed:
+		errors.append("Unauthorized 'allow_deep_lore=true' on '%s' (must be centrally approved in DEEP_LORE_APPROVED_LEVELS)" % level_id)
 
-	# 1. Validate Objects (must come from unified AcademyFurnitureCatalog unless kind == "architectural")
+	_check_firewall_text(title, "manifest.title", deep_lore_allowed, errors)
+
+	# 1. Validate Objects (strict kind whitelist + unified AcademyFurnitureCatalog + Vector3 pos)
 	var object_ids := {}
 	for obj in manifest.get("objects", []):
 		var oid := str(obj.get("id", ""))
@@ -37,12 +68,19 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 		if object_ids.has(oid):
 			errors.append("Duplicate object id: %s" % oid)
 		object_ids[oid] = true
-		var kind := str(obj.get("kind", "glb"))
+		var kind := str(obj.get("kind", ""))
+		if not (kind in VALID_OBJECT_KINDS):
+			errors.append("Object '%s' has invalid kind '%s' (allowed: %s)" % [oid, kind, str(VALID_OBJECT_KINDS)])
 		var cid := str(obj.get("catalog_id", ""))
 		if kind == "glb" and not FurnitureCatalog.GLB_CATALOG.has(cid):
 			errors.append("Object '%s' references unknown GLB catalog_id '%s' (must register in AcademyFurnitureCatalog)" % [oid, cid])
 		elif kind == "recipe" and not FurnitureCatalog.RECIPE_CATALOG.has(cid):
 			errors.append("Object '%s' references unknown recipe catalog_id '%s' (must register in AcademyFurnitureCatalog)" % [oid, cid])
+		if not (obj.get("pos") is Vector3):
+			errors.append("Object '%s' missing Vector3 'pos'" % oid)
+		var preset := str(obj.get("material_preset", ""))
+		if not (preset in VALID_MATERIAL_PRESETS):
+			errors.append("Object '%s' uses unknown material_preset '%s'" % [oid, preset])
 
 	# 2. Validate Dialogues & Epistemic Firewall
 	var dialogue_ids := {}
@@ -51,29 +89,32 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 		if did.is_empty():
 			errors.append("Dialogue entry missing 'id'")
 			continue
+		if dialogue_ids.has(did):
+			errors.append("Duplicate dialogue id: %s" % did)
 		dialogue_ids[did] = true
 		var text_zh := str(dlg.get("text_zh", ""))
 		var text_en := str(dlg.get("text_en", ""))
+		var speaker := str(dlg.get("speaker", ""))
 		if text_zh.is_empty() and text_en.is_empty():
 			errors.append("Dialogue '%s' has empty text_zh and text_en" % did)
-		if not allow_deep_lore:
-			for term in FORBIDDEN_EARLY_TERMS:
-				if term in text_zh or term in text_en:
-					errors.append("EPISTEMIC FIREWALL VIOLATION in dialogue '%s': forbidden term '%s'" % [did, term])
+		_check_firewall_text(speaker, "dialogue '%s'.speaker" % did, deep_lore_allowed, errors)
+		_check_firewall_text(text_zh, "dialogue '%s'.text_zh" % did, deep_lore_allowed, errors)
+		_check_firewall_text(text_en, "dialogue '%s'.text_en" % did, deep_lore_allowed, errors)
 
-	# 3. Validate Interactables & Hotspots
+	# 3. Validate Interactables & Hotspots (unique IDs + firewall + dialogue_id integrity)
 	var interact_ids := {}
-	var action_ids := {}
+	var hotspot_ids := {}
 	for grp in manifest.get("interactables", []):
 		var gid := str(grp.get("id", ""))
 		if gid.is_empty():
 			errors.append("Interactable group missing 'id'")
 			continue
+		if interact_ids.has(gid):
+			errors.append("Duplicate interactable group id: %s" % gid)
 		interact_ids[gid] = true
-		if not allow_deep_lore:
-			for term in FORBIDDEN_EARLY_TERMS:
-				if term in str(grp.get("title", "")):
-					errors.append("EPISTEMIC FIREWALL VIOLATION in interactable title '%s': '%s'" % [gid, term])
+		if not (grp.get("anchor_world") is Vector3):
+			errors.append("Interactable group '%s' missing Vector3 'anchor_world'" % gid)
+		_check_firewall_text(str(grp.get("title", "")), "interactable '%s'.title" % gid, deep_lore_allowed, errors)
 		var hs: Array = grp.get("hotspots", [])
 		if hs.is_empty():
 			errors.append("Interactable group '%s' must declare at least 1 hotspot" % gid)
@@ -82,26 +123,47 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 			var act := str(h.get("action_id", ""))
 			if hid.is_empty() or act.is_empty():
 				errors.append("Hotspot in '%s' missing 'id' or 'action_id'" % gid)
-			action_ids[act] = true
+				continue
+			if hotspot_ids.has(hid):
+				errors.append("Duplicate hotspot id: %s" % hid)
+			hotspot_ids[hid] = true
 			if not (h.get("world_pos") is Vector3):
 				errors.append("Hotspot '%s' missing Vector3 'world_pos'" % hid)
+			_check_firewall_text(str(h.get("part_name", "")), "hotspot '%s'.part_name" % hid, deep_lore_allowed, errors)
+			_check_firewall_text(str(h.get("verb", "")), "hotspot '%s'.verb" % hid, deep_lore_allowed, errors)
+			var hdlg := str(h.get("dialogue_id", ""))
+			if not hdlg.is_empty() and not dialogue_ids.has(hdlg):
+				errors.append("Hotspot '%s' references unknown dialogue_id '%s'" % [hid, hdlg])
 
 	# 4. Validate Triggers
+	var trigger_ids := {}
 	for trg in manifest.get("triggers", []):
 		var tid := str(trg.get("id", ""))
 		if tid.is_empty():
 			errors.append("Trigger entry missing 'id'")
+			continue
+		if trigger_ids.has(tid):
+			errors.append("Duplicate trigger id: %s" % tid)
+		trigger_ids[tid] = true
 		if str(trg.get("how", "")).is_empty():
 			errors.append("Trigger '%s' missing trigger mechanism 'how'" % tid)
+		_check_firewall_text(str(trg.get("effect", "")), "trigger '%s'.effect" % tid, deep_lore_allowed, errors)
+		_check_firewall_text(str(trg.get("condition", "")), "trigger '%s'.condition" % tid, deep_lore_allowed, errors)
 		var dlg_ref := str(trg.get("dialogue_id", ""))
 		if not dlg_ref.is_empty() and not dialogue_ids.has(dlg_ref):
 			errors.append("Trigger '%s' references unknown dialogue_id '%s'" % [tid, dlg_ref])
 
-	# 5. Validate AI Routes (waypoints + >=3.0s telegraph rule on teammate mistake nodes)
+	# 5. Validate AI Routes (unique actor_id + finite >= 3.0s telegraph on rule-mistake nodes)
+	var actor_ids := {}
 	for route in manifest.get("ai_routes", []):
 		var aid := str(route.get("actor_id", ""))
 		if aid.is_empty():
 			errors.append("AI route missing 'actor_id'")
+			continue
+		if actor_ids.has(aid):
+			errors.append("Duplicate AI route actor_id: %s" % aid)
+		actor_ids[aid] = true
+		_check_firewall_text(str(route.get("actor_name", "")), "ai_route '%s'.actor_name" % aid, deep_lore_allowed, errors)
 		var wps: Array = route.get("waypoints", [])
 		if wps.is_empty():
 			errors.append("AI route '%s' has no waypoints" % aid)
@@ -109,10 +171,13 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 			var wp: Dictionary = wps[wi]
 			if not (wp.get("pos") is Vector3):
 				errors.append("AI route '%s' waypoint #%d missing Vector3 'pos'" % [aid, wi])
+			_check_firewall_text(str(wp.get("action", "")), "ai_route '%s'[%d].action" % [aid, wi], deep_lore_allowed, errors)
 			if bool(wp.get("is_rule_mistake", false)):
 				var fs := float(wp.get("foreshadow_sec", 0.0))
-				if fs < 3.0:
-					errors.append("AI route '%s' waypoint #%d is a rule-mistake node but foreshadow_sec=%.1fs (< 3.0s fair-telegraph floor)" % [aid, wi, fs])
+				if not is_finite(fs) or fs < 3.0:
+					errors.append("AI route '%s' waypoint #%d is a rule-mistake node but foreshadow_sec=%s (< 3.0s fair-telegraph floor)" % [aid, wi, str(fs)])
+				if str(wp.get("rule_tag", "")).is_empty() or str(wp.get("dialogue_id", "")).is_empty():
+					errors.append("AI route '%s' waypoint #%d rule-mistake node must specify both 'rule_tag' and 'dialogue_id'" % [aid, wi])
 			var dref := str(wp.get("dialogue_id", ""))
 			if not dref.is_empty() and not dialogue_ids.has(dref):
 				errors.append("AI route '%s' waypoint #%d references unknown dialogue_id '%s'" % [aid, wi, dref])
@@ -193,4 +258,6 @@ static func export_markdown(manifest: Dictionary) -> String:
 				wi + 1, p.x, p.y, p.z, str(wp.get("action", "")),
 				str(wp.get("rule_tag", "-")), float(wp.get("foreshadow_sec", 0.0)), str(wp.get("dialogue_id", "-"))
 			])
-	return "\n".join(lines) + "\n"
+	return "
+".join(lines) + "
+"

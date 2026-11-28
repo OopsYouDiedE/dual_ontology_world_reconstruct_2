@@ -86,18 +86,24 @@ static func apply_to_viewport(vp: Viewport, world_env: WorldEnvironment = null, 
 	result.environment = env
 	tune_viewport(vp)
 	if is_compatibility():
-		var fill := create_compatibility_fill_light()
-		vp.add_child(fill)
-		result.compat_fill = fill
+		var existing_fill := vp.get_node_or_null("CompatibilityFillLight") as DirectionalLight3D
+		if existing_fill == null:
+			existing_fill = create_compatibility_fill_light()
+			vp.add_child(existing_fill)
+		result.compat_fill = existing_fill
 	if RenderingServer.get_current_rendering_method() == &"forward_plus":
 		if attach_ink:
-			var ink_node := ink()
-			ink_node.name = "ExpeditionInk"
-			vp.add_child(ink_node)
+			var ink_node := vp.get_node_or_null("ExpeditionInk") as MeshInstance3D
+			if ink_node == null:
+				ink_node = ink()
+				ink_node.name = "ExpeditionInk"
+				vp.add_child(ink_node)
 			result.ink = ink_node
 		if attach_essence:
-			var shift_node: MeshInstance3D = preload("res://scenes/components/rendering/post/EssenceShiftPass.gd").create()
-			shift_node.name = "EssenceShift"
-			vp.add_child(shift_node)
+			var shift_node := vp.get_node_or_null("EssenceShift") as MeshInstance3D
+			if shift_node == null:
+				shift_node = preload("res://scenes/components/rendering/post/EssenceShiftPass.gd").create()
+				shift_node.name = "EssenceShift"
+				vp.add_child(shift_node)
 			result.essence = shift_node
 	return result

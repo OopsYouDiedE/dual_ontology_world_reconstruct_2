@@ -13,6 +13,7 @@ signal wheel_opened
 signal wheel_closed
 
 var wheel: Node
+var _prev_mouse_mode: Input.MouseMode = Input.MOUSE_MODE_VISIBLE
 
 func setup(ui_parent: Node) -> void:
 	if is_instance_valid(wheel):
@@ -21,10 +22,12 @@ func setup(ui_parent: Node) -> void:
 	add_child(wheel)
 	wheel.setup(ui_parent, UiStyle.make_font())
 	wheel.chosen.connect(func(id: String):
+		Input.mouse_mode = _prev_mouse_mode
 		order_selected.emit(id)
 		wheel_closed.emit()
 	)
 	wheel.cancelled.connect(func():
+		Input.mouse_mode = _prev_mouse_mode
 		wheel_closed.emit()
 	)
 
@@ -36,6 +39,7 @@ func open_with(items: Array) -> bool:
 		return false
 	wheel.bind(items)
 	wheel.reveal()
+	_prev_mouse_mode = Input.mouse_mode
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	wheel_opened.emit()
 	return true
@@ -47,6 +51,7 @@ func close(confirm_current := false) -> void:
 		wheel.confirm()
 	else:
 		wheel.dismiss()
+		Input.mouse_mode = _prev_mouse_mode
 		wheel_closed.emit()
 
 func handle_input(event: InputEvent, options_provider: Callable) -> bool:

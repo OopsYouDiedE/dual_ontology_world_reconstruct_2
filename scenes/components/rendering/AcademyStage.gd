@@ -75,3 +75,29 @@ static func create_compatibility_fill_light() -> DirectionalLight3D:
 	fill.light_energy = 0.45
 	fill.shadow_enabled = false
 	return fill
+
+## Single-call rendering contract for ALL current and future first-person levels.
+## Applies shared Environment, MSAA/shadow tuning, CompatibilityFillLight, HallInk, and optional EssenceShiftPass.
+static func apply_to_viewport(vp: Viewport, world_env: WorldEnvironment = null, attach_ink := true, attach_essence := false) -> Dictionary:
+	var result := {"environment": null, "ink": null, "essence": null, "compat_fill": null}
+	var env := environment()
+	if world_env != null:
+		world_env.environment = env
+	result.environment = env
+	tune_viewport(vp)
+	if is_compatibility():
+		var fill := create_compatibility_fill_light()
+		vp.add_child(fill)
+		result.compat_fill = fill
+	if RenderingServer.get_current_rendering_method() == &"forward_plus":
+		if attach_ink:
+			var ink_node := ink()
+			ink_node.name = "ExpeditionInk"
+			vp.add_child(ink_node)
+			result.ink = ink_node
+		if attach_essence:
+			var shift_node: MeshInstance3D = preload("res://scenes/components/rendering/post/EssenceShiftPass.gd").create()
+			shift_node.name = "EssenceShift"
+			vp.add_child(shift_node)
+			result.essence = shift_node
+	return result

@@ -1,23 +1,24 @@
 extends Control
 class_name DualModeInteractionHud
-## Dual-mode (Aggregated C+ / Distributed Detroit) three-state spatial interaction UI
-## for The Sleeping Academy (Godot 4.7.2).
+## Universal Dual-Mode (Aggregated C+ / Distributed Detroit) Three-State Spatial Interaction HUD
+## for ALL current and future levels in The Sleeping Academy (Godot 4.7.2).
 ##
-## Three unified interaction states:
-##   1. POTENTIAL   (4.6m - 9.0m, or outer frustum) -> subtle breathing pip, no clutter
-##   2. ACTIVATABLE (2.4m - 4.5m, or non-primary hotspot) -> crisp hollow brass diamond (+ faint leader in Detroit)
-##   3. SELECTED    (<= 2.35m and aimed within focus cone) -> glowing brass reticle + full action prompt
+## Three unified interaction states across every level:
+##   1. POTENTIAL   (4.6m - 9.5m, or outer frustum)        -> subtle breathing pip, zero clutter
+##   2. ACTIVATABLE (2.85m - 4.6m, or non-primary hotspot) -> crisp hollow brass diamond (+ quiet leader in Detroit)
+##   3. SELECTED    (<= 2.85m and aimed within focus cone) -> glowing brass reticle + full action prompt
 ##
-## Conflict-free keybind design across Public Hall + Expedition:
-##   - Primary interact: E (consistent with RogueRoomView & Expedition.gd)
+## Conflict-free unified keybinds (managed via AcademyUnifiedInput):
+##   - Primary interact: E (consistent across Public Hall, Campaign Rooms, Expedition-01 & future levels)
 ##   - C+ multi-action selection: Mouse Wheel or 1 / 2 / 3 (avoids Q wheel, R lamp, F stomp, Tab manual)
 ##   - Detroit multi-hotspot selection: Aim at stationary 3D part + E
-##   - Hot-toggle UI mode anytime: V
+##   - Hot-toggle UI mode anytime (persisted across levels): V
 
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
 const R18n := preload("res://scenes/components/shared/R18n.gd")
+const UnifiedInput := preload("res://scenes/components/shared/AcademyUnifiedInput.gd")
 
-enum Mode { AGGREGATED_CPLUS, DISTRIBUTED_DETROIT }
+enum Mode { AGGREGATED_CPLUS = 0, DISTRIBUTED_DETROIT = 1 }
 enum State { NONE, POTENTIAL, ACTIVATABLE, SELECTED }
 
 const DIST_POTENTIAL := 9.5
@@ -34,9 +35,15 @@ const COL_BG_SOFT := Color(0.055, 0.068, 0.095, 0.56)
 
 var mode: int = Mode.AGGREGATED_CPLUS
 var active_enabled := false
+var mode_pill_y := 62.0
+
+## Universal multi-group data:
+## Each group dict: {id, title, anchor_world, hotspots: Array[{id, part_name, verb, world_pos, callback, dist_selected, dist_activatable, dist_potential, force_selected}]}
+var groups: Array[Dictionary] = []
+
+## Legacy single-target fields (mapped automatically into `groups` for backward compatibility)
 var group_title := ""
 var primary_anchor_world := Vector3.ZERO
-## Array of dicts: {id, part_name, verb, world_pos, callback, enabled, badge_hint}
 var hotspots: Array[Dictionary] = []
 
 var _camera: Camera3D
@@ -44,9 +51,11 @@ var _viewport_rect := Rect2()
 var _viewport_size := Vector2(1280, 720)
 var _player_pos := Vector3.ZERO
 
+var _group_states: Dictionary = {}      # group_id -> State
+var _cplus_focus_group_id := ""
 var _cplus_state: int = State.NONE
 var _cplus_index := 0
-var _detroit_states: Dictionary = {}   # id -> State
+var _detroit_states: Dictionary = {}    # hotspot_id -> State
 var _detroit_focus_id := ""
 var _detroit_override_focus_id := ""
 var _time := 0.0
@@ -59,25 +68,30 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_font = UiStyle.make_font()
+	UnifiedInput.ensure_default_actions()
+	mode = UnifiedInput.get_ui_mode()
 
 func set_mode(new_mode: int, announce := false) -> void:
-	mode = new_mode
+	mode = Mode.DISTRIBUTED_DETROIT if new_mode == Mode.DISTRIBUTED_DETROIT else Mode.AGGREGATED_CPLUS
+	UnifiedInput.set_ui_mode(mode)
 	if announce:
 		var label := R18n.pick("C+ 集合式（右下角语境条）", "C+ Aggregated (Corner Bar)") if mode == Mode.AGGREGATED_CPLUS else R18n.pick("底特律分散式（多热点折线）", "Detroit Distributed (Spatial Hotspots)")
 		show_toast(R18n.pick("交互样式已切换：", "Interaction UI: ") + label)
 	queue_redraw()
 
 func toggle_mode() -> void:
-	set_mode(Mode.DISTRIBUTED_DETROIT if mode == Mode.AGGREGATED_CPLUS else Mode.AGGREGATED_CPLUS, true)
+	var next := UnifiedInput.toggle_ui_mode()
+	set_mode(next, true)
 
 func get_mode_name() -> String:
 	return "cplus" if mode == Mode.AGGREGATED_CPLUS else "detroit"
 
 func set_cplus_index(idx: int) -> void:
-	if hotspots.is_empty():
+	var active_items := _active_cplus_items()
+	if active_items.is_empty():
 		_cplus_index = 0
 		return
-	_cplus_index = posmod(idx, hotspots.size())
+	_cplus_index = posmod(idx, active_items.size())
 	queue_redraw()
 
 func cycle_cplus(delta: int) -> void:
@@ -92,14 +106,22 @@ func show_toast(msg: String, duration := 2.4) -> void:
 	_toast_timer = duration
 	queue_redraw()
 
+## Single-target convenience API (wraps into 1 group)
 func configure_target(title: String, anchor_world: Vector3, items: Array[Dictionary]) -> void:
 	group_title = title
 	primary_anchor_world = anchor_world
 	hotspots = items
-	if _cplus_index >= hotspots.size():
+	groups = [{
+		"id": "primary",
+		"title": title,
+		"anchor_world": anchor_world,
+		"hotspots": items,
+	}]
+	if _cplus_index >= items.size():
 		_cplus_index = 0
 
 func sync_view(camera: Camera3D, pixels_rect: Rect2, vp_size: Vector2, player_pos: Vector3, enabled: bool) -> void:
+	mode = UnifiedInput.get_ui_mode()
 	_camera = camera
 	_viewport_rect = pixels_rect
 	_viewport_size = vp_size
@@ -108,11 +130,42 @@ func sync_view(camera: Camera3D, pixels_rect: Rect2, vp_size: Vector2, player_po
 	_evaluate_states()
 	queue_redraw()
 
+## Universal multi-group API for any level (Public Hall, Campaign Rooms, Expedition-01, future levels)
+func sync_groups(camera: Camera3D, pixels_rect: Rect2, vp_size: Vector2, player_pos: Vector3, new_groups: Array[Dictionary], enabled: bool) -> void:
+	mode = UnifiedInput.get_ui_mode()
+	groups = new_groups
+	_camera = camera
+	_viewport_rect = pixels_rect
+	_viewport_size = vp_size
+	_player_pos = player_pos
+	active_enabled = enabled
+	_evaluate_states()
+	var active_items := _active_cplus_items()
+	if _cplus_index >= active_items.size():
+		_cplus_index = 0
+	queue_redraw()
+
+func _find_group(gid: String) -> Dictionary:
+	for g in groups:
+		if str(g.get("id", "")) == gid:
+			return g
+	return {}
+
+func _active_cplus_items() -> Array[Dictionary]:
+	var g := _find_group(_cplus_focus_group_id)
+	if g.is_empty():
+		return []
+	var arr: Array[Dictionary] = []
+	for item in g.get("hotspots", []):
+		if item is Dictionary:
+			arr.append(item)
+	return arr
+
 func is_selected_active() -> bool:
 	if not active_enabled:
 		return false
 	if mode == Mode.AGGREGATED_CPLUS:
-		return _cplus_state == State.SELECTED and not hotspots.is_empty()
+		return _cplus_state == State.SELECTED and not _active_cplus_items().is_empty()
 	return not _detroit_focus_id.is_empty() and int(_detroit_states.get(_detroit_focus_id, State.NONE)) == State.SELECTED
 
 func trigger_selected() -> bool:
@@ -120,31 +173,65 @@ func trigger_selected() -> bool:
 		return false
 	if mode == Mode.AGGREGATED_CPLUS:
 		return trigger_index(_cplus_index)
-	for h in hotspots:
-		if str(h.get("id", "")) == _detroit_focus_id:
-			var cb: Callable = h.get("callback", Callable())
-			if cb.is_valid():
-				cb.call()
-				return true
+	for g in groups:
+		for h in g.get("hotspots", []):
+			if str(h.get("id", "")) == _detroit_focus_id:
+				var cb: Callable = h.get("callback", Callable())
+				if cb.is_valid():
+					cb.call()
+					return true
 	return false
 
 func trigger_index(idx: int) -> bool:
 	if not active_enabled or _cplus_state != State.SELECTED:
 		return false
-	if idx < 0 or idx >= hotspots.size():
+	var items := _active_cplus_items()
+	if idx < 0 or idx >= items.size():
 		return false
 	_cplus_index = idx
-	var cb: Callable = hotspots[idx].get("callback", Callable())
+	var cb: Callable = items[idx].get("callback", Callable())
 	if cb.is_valid():
 		cb.call()
 		queue_redraw()
 		return true
 	return false
 
+## Unified input handler any level can call from _input(event).
+## Returns true if the event was consumed.
+func handle_input(event: InputEvent, allow_interact := true) -> bool:
+	if not active_enabled:
+		return false
+	if event is InputEventKey and event.pressed and not event.echo:
+		var code := (event as InputEventKey).physical_keycode
+		if code == KEY_V or event.is_action_pressed(UnifiedInput.ACTION_TOGGLE_UI):
+			toggle_mode()
+			return true
+		if allow_interact and is_selected_active():
+			if code == KEY_E or event.is_action_pressed(UnifiedInput.ACTION_INTERACT):
+				return trigger_selected()
+			if mode == Mode.AGGREGATED_CPLUS and _active_cplus_items().size() > 1:
+				match code:
+					KEY_1: return trigger_index(0)
+					KEY_2: return trigger_index(1)
+					KEY_3: return trigger_index(2)
+					KEY_4: return trigger_index(3)
+	elif allow_interact and event is InputEventMouseButton and event.pressed:
+		if mode == Mode.AGGREGATED_CPLUS and is_selected_active() and _active_cplus_items().size() > 1:
+			var mb := (event as InputEventMouseButton).button_index
+			if mb == MOUSE_BUTTON_WHEEL_UP:
+				cycle_cplus(-1)
+				return true
+			elif mb == MOUSE_BUTTON_WHEEL_DOWN:
+				cycle_cplus(1)
+				return true
+	return false
+
 func get_state_snapshot() -> Dictionary:
 	return {
 		"mode": get_mode_name(),
 		"enabled": active_enabled,
+		"group_count": groups.size(),
+		"cplus_focus_group": _cplus_focus_group_id,
 		"cplus_state": _state_name(_cplus_state),
 		"cplus_index": _cplus_index,
 		"detroit_focus_id": _detroit_focus_id,
@@ -194,48 +281,94 @@ func _aim_angle_deg(world_pos: Vector3) -> float:
 	return rad_to_deg(acos(clampf(forward.dot(to_pt), -1.0, 1.0)))
 
 func _evaluate_states() -> void:
+	_group_states.clear()
+	_cplus_focus_group_id = ""
 	_cplus_state = State.NONE
 	_detroit_states.clear()
 	_detroit_focus_id = ""
-	if not active_enabled or hotspots.is_empty() or not is_instance_valid(_camera):
+	if not active_enabled or groups.is_empty() or not is_instance_valid(_camera):
 		return
 
-	# 1. C+ Aggregated state on primary anchor
-	var d_main := _flat_dist(primary_anchor_world)
-	var ang_main := _aim_angle_deg(primary_anchor_world)
-	if d_main <= DIST_SELECTED and ang_main <= AIM_HALF_ANGLE_DEG:
+	# 1. C+ Aggregated state per group (at most 1 primary SELECTED group, or nearest ACTIVATABLE preview)
+	var best_sel_gid := ""
+	var best_sel_score := INF
+	var best_act_gid := ""
+	var best_act_dist := INF
+	var best_pot_gid := ""
+	var best_pot_dist := INF
+
+	for g in groups:
+		var gid := str(g.get("id", ""))
+		var anchor: Vector3 = g.get("anchor_world", Vector3.ZERO)
+		var d_sel := float(g.get("dist_selected", DIST_SELECTED))
+		var d_act := float(g.get("dist_activatable", DIST_ACTIVATABLE))
+		var d_pot := float(g.get("dist_potential", DIST_POTENTIAL))
+		var force_sel := bool(g.get("force_selected", false))
+		var d := _flat_dist(anchor)
+		var ang := _aim_angle_deg(anchor)
+
+		var gst := State.NONE
+		if force_sel or (d <= d_sel and ang <= AIM_HALF_ANGLE_DEG):
+			gst = State.ACTIVATABLE
+			var score := -10.0 if force_sel else (ang + d * 2.5)
+			if score < best_sel_score:
+				best_sel_score = score
+				best_sel_gid = gid
+		elif d <= d_act:
+			gst = State.ACTIVATABLE
+			if d < best_act_dist:
+				best_act_dist = d
+				best_act_gid = gid
+		elif d <= d_pot:
+			gst = State.POTENTIAL
+			if d < best_pot_dist:
+				best_pot_dist = d
+				best_pot_gid = gid
+		_group_states[gid] = gst
+
+	if not best_sel_gid.is_empty():
+		_group_states[best_sel_gid] = State.SELECTED
+		_cplus_focus_group_id = best_sel_gid
 		_cplus_state = State.SELECTED
-	elif d_main <= DIST_ACTIVATABLE:
+	elif not best_act_gid.is_empty():
+		_cplus_focus_group_id = best_act_gid
 		_cplus_state = State.ACTIVATABLE
-	elif d_main <= DIST_POTENTIAL:
+	elif not best_pot_gid.is_empty():
+		_cplus_focus_group_id = best_pot_gid
 		_cplus_state = State.POTENTIAL
 
-	# 2. Detroit Distributed state per hotspot (at most one SELECTED primary focus)
-	var best_id := ""
-	var best_score := INF
-	for h in hotspots:
-		var id := str(h.get("id", ""))
-		var wpos: Vector3 = h.get("world_pos", primary_anchor_world)
-		var d := _flat_dist(wpos)
-		var ang := _aim_angle_deg(wpos)
-		var base_state := State.NONE
-		if d <= DIST_SELECTED and ang <= AIM_HALF_ANGLE_DEG:
-			base_state = State.ACTIVATABLE
-			var score := ang + d * 2.2
-			if id == _detroit_override_focus_id:
-				score = -1.0
-			if score < best_score:
-				best_score = score
-				best_id = id
-		elif d <= DIST_ACTIVATABLE:
-			base_state = State.ACTIVATABLE
-		elif d <= DIST_POTENTIAL:
-			base_state = State.POTENTIAL
-		_detroit_states[id] = base_state
+	# 2. Detroit Distributed state per hotspot across all groups (strictly at most 1 SELECTED focus)
+	var best_hid := ""
+	var best_hscore := INF
+	for g in groups:
+		for h in g.get("hotspots", []):
+			var hid := str(h.get("id", ""))
+			var wpos: Vector3 = h.get("world_pos", g.get("anchor_world", Vector3.ZERO))
+			var d_sel := float(h.get("dist_selected", g.get("dist_selected", DIST_SELECTED)))
+			var d_act := float(h.get("dist_activatable", g.get("dist_activatable", DIST_ACTIVATABLE)))
+			var d_pot := float(h.get("dist_potential", g.get("dist_potential", DIST_POTENTIAL)))
+			var force_sel := bool(h.get("force_selected", g.get("force_selected", false)))
+			var d := _flat_dist(wpos)
+			var ang := _aim_angle_deg(wpos)
 
-	if not best_id.is_empty():
-		_detroit_focus_id = best_id
-		_detroit_states[best_id] = State.SELECTED
+			var hst := State.NONE
+			if force_sel or (d <= d_sel and ang <= AIM_HALF_ANGLE_DEG):
+				hst = State.ACTIVATABLE
+				var score := -10.0 if force_sel else (ang + d * 2.2)
+				if hid == _detroit_override_focus_id:
+					score = -20.0
+				if score < best_hscore:
+					best_hscore = score
+					best_hid = hid
+			elif d <= d_act:
+				hst = State.ACTIVATABLE
+			elif d <= d_pot:
+				hst = State.POTENTIAL
+			_detroit_states[hid] = hst
+
+	if not best_hid.is_empty():
+		_detroit_focus_id = best_hid
+		_detroit_states[best_hid] = State.SELECTED
 	elif not _detroit_override_focus_id.is_empty() and _detroit_states.has(_detroit_override_focus_id):
 		if int(_detroit_states[_detroit_override_focus_id]) >= State.ACTIVATABLE:
 			_detroit_focus_id = _detroit_override_focus_id
@@ -258,7 +391,7 @@ func _draw_mode_pill() -> void:
 	var fsize := 12
 	var tw := _font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
 	var pad := Vector2(12, 6)
-	var rect := Rect2(Vector2(size.x - tw - pad.x * 2.0 - 22.0, 62.0), Vector2(tw + pad.x * 2.0, 26.0))
+	var rect := Rect2(Vector2(size.x - tw - pad.x * 2.0 - 22.0, mode_pill_y), Vector2(tw + pad.x * 2.0, 26.0))
 	draw_rect(rect, Color(0.055, 0.068, 0.095, 0.72), true)
 	draw_rect(rect, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.42), false, 1.0)
 	draw_string(_font, Vector2(rect.position.x + pad.x, rect.position.y + 17.5), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, COL_INK_2)
@@ -286,66 +419,70 @@ func _draw_diamond(center: Vector2, half_size: float, fill_col: Color, border_co
 		draw_polyline(loop, border_col, border_w, true)
 
 func _draw_cplus() -> void:
-	if _cplus_state == State.NONE:
-		return
-	var proj := _project_to_control(primary_anchor_world)
-	if proj.visible:
+	var pulse := 0.5 + 0.5 * sin(_time * 3.2)
+	# Draw 3-state pips on all in-range group anchors
+	for g in groups:
+		var gid := str(g.get("id", ""))
+		var gst := int(_group_states.get(gid, State.NONE))
+		if gst == State.NONE:
+			continue
+		var proj := _project_to_control(g.get("anchor_world", Vector3.ZERO))
+		if not proj.visible:
+			continue
 		var p: Vector2 = proj.pos
-		var pulse := 0.5 + 0.5 * sin(_time * 3.2)
-		if _cplus_state == State.POTENTIAL:
-			# State 1: faint breathing brass dot
+		if gst == State.POTENTIAL:
 			draw_circle(p, 7.5 + pulse * 2.5, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.14 + pulse * 0.10))
 			draw_circle(p, 3.2, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.45 + pulse * 0.35))
-		elif _cplus_state == State.ACTIVATABLE:
-			# State 2: hollow crisp brass diamond
+		elif gst == State.ACTIVATABLE:
 			_draw_diamond(p, 9.0, Color(0.05, 0.06, 0.09, 0.50), Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.85), 1.6)
 			_draw_diamond(p, 3.2, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.72), Color.TRANSPARENT, 0.0)
-		elif _cplus_state == State.SELECTED:
-			# State 3: glowing double brass diamond reticle
+		elif gst == State.SELECTED:
 			var ring_s := 13.0 + fmod(_time * 1.1, 1.0) * 9.0
 			var ring_a := (1.0 - fmod(_time * 1.1, 1.0)) * 0.55
 			_draw_diamond(p, ring_s, Color.TRANSPARENT, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, ring_a), 1.2)
 			_draw_diamond(p, 11.5, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.24), COL_BRASS_HI, 2.0)
 			_draw_diamond(p, 4.2, COL_BRASS_HI, Color.TRANSPARENT, 0.0)
 
-	# Bottom-right contextual bar: hidden on POTENTIAL, 52% preview on ACTIVATABLE, 100% on SELECTED
-	if _cplus_state == State.POTENTIAL:
+	# Bottom-right contextual bar for the focused/nearest activatable group
+	if _cplus_state != State.ACTIVATABLE and _cplus_state != State.SELECTED:
 		return
+	var fg := _find_group(_cplus_focus_group_id)
+	var items := _active_cplus_items()
+	if fg.is_empty() or items.is_empty():
+		return
+
 	var alpha := 1.0 if _cplus_state == State.SELECTED else 0.52
 	var row_h := 30.0
 	var header_h := 28.0
-	var tip_h := 20.0 if _cplus_state == State.SELECTED else 0.0
-	var total_h := header_h + hotspots.size() * row_h + tip_h + 10.0
-	var bar_w := 228.0
+	var multi := items.size() > 1
+	var tip_h := 20.0 if (_cplus_state == State.SELECTED and multi) else 0.0
+	var total_h := header_h + items.size() * row_h + tip_h + 10.0
+	var bar_w := 236.0
 	var right_x := size.x - 32.0
 	var bottom_y := size.y - 38.0
 	var top_y := bottom_y - total_h
 	var left_x := right_x - bar_w
 
-	# Subtle dark gradient backing for legibility on bright firelight
 	draw_rect(Rect2(left_x - 8.0, top_y - 4.0, bar_w + 14.0, total_h + 8.0), Color(0.04, 0.05, 0.075, 0.58 * alpha), true)
-
-	# Left vertical antique brass hairline + center diamond accent
 	draw_line(Vector2(left_x, top_y), Vector2(left_x, bottom_y), Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.78 * alpha), 1.5, true)
 	_draw_diamond(Vector2(left_x, (top_y + bottom_y) * 0.5), 3.8, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, alpha), Color.TRANSPARENT, 0.0)
 
-	# Header: target title + state cue
+	var title_str := str(fg.get("title", ""))
 	var title_col := Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, alpha)
 	var state_tag := R18n.pick("已锁定", "LOCKED") if _cplus_state == State.SELECTED else R18n.pick("靠近锁定", "APPROACH")
 	draw_string(_font, Vector2(left_x + 14.0, top_y + 18.0), state_tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(COL_INK_2.r, COL_INK_2.g, COL_INK_2.b, 0.85 * alpha))
-	var title_w := _font.get_string_size(group_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-	draw_string(_font, Vector2(right_x - title_w - 4.0, top_y + 19.0), group_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, title_col)
+	var title_w := _font.get_string_size(title_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+	draw_string(_font, Vector2(right_x - title_w - 4.0, top_y + 19.0), title_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, title_col)
 	draw_line(Vector2(left_x + 12.0, top_y + header_h), Vector2(right_x, top_y + header_h), Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.50 * alpha), 1.0, true)
 
-	# Action rows (E + Wheel OR 1/2/3 direct)
-	for i in hotspots.size():
-		var h: Dictionary = hotspots[i]
+	for i in items.size():
+		var h: Dictionary = items[i]
 		var ry := top_y + header_h + 6.0 + i * row_h
 		var is_sel := (_cplus_state == State.SELECTED and i == _cplus_index)
 		if is_sel:
 			draw_rect(Rect2(left_x + 10.0, ry, bar_w - 10.0, row_h - 3.0), Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.22 * alpha), true)
 		var verb := str(h.get("verb", ""))
-		var key_str := "E" if is_sel else str(i + 1)
+		var key_str := "E" if (is_sel or not multi) else str(i + 1)
 		var key_rect := Rect2(right_x - 26.0, ry + 3.0, 22.0, 21.0)
 		draw_rect(key_rect, Color(0.06, 0.075, 0.11, 0.88 * alpha), true)
 		var k_border := Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, alpha) if is_sel else Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.65 * alpha)
@@ -357,66 +494,63 @@ func _draw_cplus() -> void:
 		var vcol := Color(COL_INK.r, COL_INK.g, COL_INK.b, alpha) if is_sel else Color(COL_INK_2.r, COL_INK_2.g, COL_INK_2.b, 0.90 * alpha)
 		draw_string(_font, Vector2(key_rect.position.x - vw - 10.0, ry + 18.0), verb, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, vcol)
 
-	if _cplus_state == State.SELECTED:
+	if _cplus_state == State.SELECTED and multi:
 		var tip := R18n.pick("滚轮 / 1-3 切换 · 按 E 执行", "Wheel / 1-3 select · E confirm")
 		var tw := _font.get_string_size(tip, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 		draw_string(_font, Vector2(right_x - tw - 2.0, bottom_y - 3.0), tip, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(COL_INK_2.r, COL_INK_2.g, COL_INK_2.b, 0.72))
 
 func _draw_detroit() -> void:
 	var pulse := 0.5 + 0.5 * sin(_time * 3.0)
-	for i in hotspots.size():
-		var h: Dictionary = hotspots[i]
-		var id := str(h.get("id", ""))
-		var st := int(_detroit_states.get(id, State.NONE))
-		if st == State.NONE:
-			continue
-		var proj := _project_to_control(h.get("world_pos", primary_anchor_world))
-		if not proj.visible:
-			continue
-		var p: Vector2 = proj.pos
+	for g in groups:
+		for h in g.get("hotspots", []):
+			var id := str(h.get("id", ""))
+			var st := int(_detroit_states.get(id, State.NONE))
+			if st == State.NONE:
+				continue
+			var proj := _project_to_control(h.get("world_pos", g.get("anchor_world", Vector3.ZERO)))
+			if not proj.visible:
+				continue
+			var p: Vector2 = proj.pos
 
-		if st == State.POTENTIAL:
-			# State 1: subtle 7px pale-brass micro diamond, zero leader line, zero text
-			_draw_diamond(p, 4.5, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.16 + pulse * 0.14), Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.45 + pulse * 0.25), 1.0)
-			continue
+			if st == State.POTENTIAL:
+				_draw_diamond(p, 4.5, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.16 + pulse * 0.14), Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.45 + pulse * 0.25), 1.0)
+				continue
 
-		var dir_x := -1.0 if p.x < size.x * 0.44 else 1.0
-		var elbow_dx := 48.0 if st == State.SELECTED else 34.0
-		var elbow_dy := -54.0 if st == State.SELECTED else -32.0
-		var elbow := p + Vector2(dir_x * elbow_dx, elbow_dy)
-		var part_name := str(h.get("part_name", ""))
-		var verb := str(h.get("verb", ""))
+			var dir_x := -1.0 if p.x < size.x * 0.44 else 1.0
+			var elbow_dx := 48.0 if st == State.SELECTED else 34.0
+			var elbow_dy := -54.0 if st == State.SELECTED else -32.0
+			var elbow := p + Vector2(dir_x * elbow_dx, elbow_dy)
+			var part_name := str(h.get("part_name", g.get("title", "")))
+			var verb := str(h.get("verb", ""))
 
-		if st == State.ACTIVATABLE:
-			# State 2: crisp 14px hollow diamond + thin muted leader + quiet part label
-			_draw_diamond(p, 8.0, Color(0.05, 0.06, 0.09, 0.55), Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.85), 1.4)
-			_draw_diamond(p, 2.8, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.65), Color.TRANSPARENT, 0.0)
-			var pw := _font.get_string_size(part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-			var seg_len := pw + 22.0
-			var end_pt := elbow + Vector2(dir_x * seg_len, 0.0)
-			draw_polyline(PackedVector2Array([p, elbow, end_pt]), Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.48), 1.1, true)
-			var tx := elbow.x + 8.0 if dir_x > 0.0 else end_pt.x + 8.0
-			draw_rect(Rect2(tx - 6.0, elbow.y - 23.0, pw + 14.0, 21.0), COL_BG_SOFT, true)
-			draw_string(_font, Vector2(tx, elbow.y - 8.0), part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(COL_INK_2.r, COL_INK_2.g, COL_INK_2.b, 0.88))
-		elif st == State.SELECTED:
-			# State 3: high-precision glowing brass diamond + inner ring + sharp 45-deg leader + [E] action bar
-			_draw_diamond(p, 14.5, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.20), COL_BRASS_HI, 2.0)
-			draw_arc(p, 8.0, 0.0, TAU, 24, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.85), 1.1, true)
-			draw_circle(p, 2.6, COL_BRASS_HI)
+			if st == State.ACTIVATABLE:
+				_draw_diamond(p, 8.0, Color(0.05, 0.06, 0.09, 0.55), Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.85), 1.4)
+				_draw_diamond(p, 2.8, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.65), Color.TRANSPARENT, 0.0)
+				var pw := _font.get_string_size(part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+				var seg_len := pw + 22.0
+				var end_pt := elbow + Vector2(dir_x * seg_len, 0.0)
+				draw_polyline(PackedVector2Array([p, elbow, end_pt]), Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.48), 1.1, true)
+				var tx := elbow.x + 8.0 if dir_x > 0.0 else end_pt.x + 8.0
+				draw_rect(Rect2(tx - 6.0, elbow.y - 23.0, pw + 14.0, 21.0), COL_BG_SOFT, true)
+				draw_string(_font, Vector2(tx, elbow.y - 8.0), part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(COL_INK_2.r, COL_INK_2.g, COL_INK_2.b, 0.88))
+			elif st == State.SELECTED:
+				_draw_diamond(p, 14.5, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.20), COL_BRASS_HI, 2.0)
+				draw_arc(p, 8.0, 0.0, TAU, 24, Color(COL_BRASS_HI.r, COL_BRASS_HI.g, COL_BRASS_HI.b, 0.85), 1.1, true)
+				draw_circle(p, 2.6, COL_BRASS_HI)
 
-			var pw := _font.get_string_size(part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-			var vw := _font.get_string_size(verb, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 32.0
-			var box_w := maxf(pw, vw) + 26.0
-			var end_pt := elbow + Vector2(dir_x * box_w, 0.0)
-			draw_polyline(PackedVector2Array([p, elbow, end_pt]), COL_BRASS_HI, 1.8, true)
+				var pw := _font.get_string_size(part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+				var vw := _font.get_string_size(verb, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 32.0
+				var box_w := maxf(pw, vw) + 26.0
+				var end_pt := elbow + Vector2(dir_x * box_w, 0.0)
+				draw_polyline(PackedVector2Array([p, elbow, end_pt]), COL_BRASS_HI, 1.8, true)
 
-			var bx := elbow.x if dir_x > 0.0 else end_pt.x
-			var box_rect := Rect2(bx, elbow.y - 50.0, box_w, 48.0)
-			draw_rect(box_rect, COL_BG_DARK, true)
-			draw_string(_font, Vector2(bx + 10.0, elbow.y - 31.0), part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, COL_INK)
+				var bx := elbow.x if dir_x > 0.0 else end_pt.x
+				var box_rect := Rect2(bx, elbow.y - 50.0, box_w, 48.0)
+				draw_rect(box_rect, COL_BG_DARK, true)
+				draw_string(_font, Vector2(bx + 10.0, elbow.y - 31.0), part_name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, COL_INK)
 
-			var krect := Rect2(bx + 10.0, elbow.y - 23.0, 20.0, 18.0)
-			draw_rect(krect, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.24), true)
-			draw_rect(krect, COL_BRASS_HI, false, 1.2)
-			draw_string(_font, Vector2(krect.position.x + 6.0, krect.position.y + 13.5), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_BRASS_HI)
-			draw_string(_font, Vector2(krect.position.x + 28.0, krect.position.y + 14.0), verb, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, COL_BRASS_HI)
+				var krect := Rect2(bx + 10.0, elbow.y - 23.0, 20.0, 18.0)
+				draw_rect(krect, Color(COL_BRASS.r, COL_BRASS.g, COL_BRASS.b, 0.24), true)
+				draw_rect(krect, COL_BRASS_HI, false, 1.2)
+				draw_string(_font, Vector2(krect.position.x + 6.0, krect.position.y + 13.5), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COL_BRASS_HI)
+				draw_string(_font, Vector2(krect.position.x + 28.0, krect.position.y + 14.0), verb, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, COL_BRASS_HI)

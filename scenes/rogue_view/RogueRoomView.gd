@@ -15,6 +15,7 @@ const Veil := preload("res://scenes/components/rendering/feedback/NightVeil.gdsh
 const R18n := preload("res://scenes/components/shared/R18n.gd")
 const Stage := preload("res://scenes/components/rendering/AcademyStage.gd")
 const UiStyle := preload("res://scenes/components/shared/UiTheme.gd")
+const UnifiedInput := preload("res://scenes/components/shared/AcademyUnifiedInput.gd")
 
 const HALL_DRIFT_SHIFT := 0.22
 const PLAYER_SCENE := "res://scenes/rogue_player/RoguePlayer.tscn"
@@ -81,6 +82,7 @@ var _lights: Node3D
 var _gothic_hall: Node3D
 var _pendulum_drifting := true
 var suppressed_prompt_ids: PackedStringArray = PackedStringArray()
+var unified_hud_active := false
 var _hour := 12.0
 
 func mount_viewport_node(node: Node) -> void:
@@ -126,28 +128,12 @@ func _ready() -> void:
 	_pixels.resized.connect(_resize_render_target)
 	_resize_render_target.call_deferred()
 	if expedition_view:
-		$RoomViewport/WorldEnvironment.environment = Stage.environment()
-		Stage.tune_viewport(_viewport)
-		if Stage.is_compatibility():
-			_viewport.add_child(Stage.create_compatibility_fill_light())
+		var applied := Stage.apply_to_viewport(_viewport, $RoomViewport/WorldEnvironment, true, true)
+		_shift_pass = applied.essence
 		resized.connect(_fill_window)
 		_fill_window()
 		get_window().focus_exited.connect(_release_mouse)
-	if expedition_view and RenderingServer.get_current_rendering_method() == &"forward_plus":
-		var ink := Stage.ink()
-		ink.name = "ExpeditionInk"
-		_viewport.add_child(ink)
-		_shift_pass = preload("res://scenes/components/rendering/post/EssenceShiftPass.gd").create()
-		_shift_pass.name = "EssenceShift"
-		_viewport.add_child(_shift_pass)
-	if not InputMap.has_action(INTERACT):
-		InputMap.add_action(INTERACT)
-		var key := InputEventKey.new()
-		key.physical_keycode = KEY_E
-		InputMap.action_add_event(INTERACT, key)
-		var pad := InputEventJoypadButton.new()
-		pad.button_index = JOY_BUTTON_A
-		InputMap.action_add_event(INTERACT, pad)
+	UnifiedInput.ensure_default_actions()
 	_title.hide()
 	if expedition_view:
 		var veil := ColorRect.new()
@@ -506,7 +492,7 @@ func _update_prompt() -> void:
 		_prompt.text = ""
 	elif _plan_open or not is_instance_valid(_player):
 		_prompt.text = "" if (campaign_view and expedition_view) else ("Travel links" if not _exits.is_empty() else "")
-	elif target.is_empty() or (target.has("id") and str(target.id) in suppressed_prompt_ids):
+	elif unified_hud_active or target.is_empty() or (target.has("id") and str(target.id) in suppressed_prompt_ids):
 		_prompt.text = "" if expedition_view else "WASD · Move     Q / R or right-drag · Orbit"
 	else:
 		if campaign_view and target.kind == "exit" and not _campaign.routes_released:
@@ -774,3 +760,34 @@ func hall_opening_anchors() -> Dictionary:
 		"pendulum": _gothic_hall.pendulum_world_pos,
 		"gate": _gothic_hall.north_gate_pos,
 	}
+
+## Export all active room targets in the unified DualModeInteractionHud group schema.
+func unified_room_targets(exclude_ids: PackedStringArray = PackedStringArray()) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for t in _targets:
+		var tid := str(t.get("id", "%s_%s" % [str(t.get("kind", "t")), str(t.get("index", 0))]))
+		if tid in exclude_ids:
+			continue
+		var kind := str(t.get("kind", ""))
+		if campaign_view and kind == "exit" and not _campaign.routes_released:
+			continue
+		var verb := R18n.pick("查看", "Inspect") if kind == "inspect" else (R18n.pick("检视", "Examine") if kind in ["crossing", "fixture"] else (R18n.pick("交谈", "Speak to") if kind == "witness" else R18n.pick("前往", "Travel")))
+		var label := str(t.get("label", tid))
+		var wpos: Vector3 = t.get("position", Vector3.ZERO) + Vector3(0.0, 1.25 if kind == "witness" else 0.75, 0.0)
+		var captured_target: Dictionary = t
+		out.append({
+			"id": tid,
+			"title": label,
+			"anchor_world": wpos,
+			"dist_selected": REACH + 0.55,
+			"dist_activatable": APPROACH_HINT + 1.0,
+			"dist_potential": 9.5,
+			"hotspots": [{
+				"id": tid,
+				"part_name": label,
+				"verb": verb,
+				"world_pos": wpos,
+				"callback": func(): _activate(captured_target),
+			}],
+		})
+	return out

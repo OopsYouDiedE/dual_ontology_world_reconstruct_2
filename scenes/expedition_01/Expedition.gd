@@ -13,6 +13,8 @@ const EssenceSurgeShader=preload("res://scenes/expedition_01/EssenceSurge.gdshad
 const Feel=preload("res://scenes/components/shared/FeelProfile.gd")
 const RenderProfile=preload("res://scenes/components/rendering/AcademyRenderProfile.gd")
 const Stage=preload("res://scenes/components/rendering/AcademyStage.gd")
+const DualInteractionHud=preload("res://scenes/components/shared/DualModeInteractionHud.gd")
+const UnifiedInput=preload("res://scenes/components/shared/AcademyUnifiedInput.gd")
 var kit:=Kit.new()
 var walker:=CharacterBody3D.new()
 var eye:=Camera3D.new()
@@ -113,6 +115,7 @@ var plate_presence:=1.
 var plate_spill:=OmniLight3D.new()
 var prompt:=Label.new()
 var prompt_notice:=Label.new()
+var dual_ui:DualModeInteractionHud
 var read_book:=false
 var running:=false
 var subtitle_id:=""
@@ -313,6 +316,7 @@ func _ready()->void:
 	prompt_notice.add_theme_color_override("font_color",Color("ffcf9a"))
 	prompt_notice.mouse_filter=Control.MOUSE_FILTER_IGNORE;prompt_notice.hide()
 	manual_ui.setup(canvas, font)
+	dual_ui=DualInteractionHud.new();dual_ui.mode_pill_y=18.0;canvas.add_child(dual_ui)
 	add_child(polish);polish.setup(self,canvas,hud)
 	polish.sound_requested.connect(sound_at)
 	archive.line_requested.connect(line_once)
@@ -559,6 +563,9 @@ func _input(ev:InputEvent)->void:
 	if ev is InputEventKey and ev.pressed and not ev.echo:key=ev.physical_keycode
 	if key==KEY_F3:
 		polish.toggle_debug();get_viewport().set_input_as_handled();return
+	if key==KEY_V and mode<0 and not manual.visible and not wheel_open:
+		if is_instance_valid(dual_ui):dual_ui.toggle_mode()
+		get_viewport().set_input_as_handled();return
 	if key==KEY_F8:
 		R18n.toggle_locale()
 		if manual.visible:render_book()
@@ -1138,9 +1145,11 @@ func _physics_process(dt:float)->void:
 	# Two lines, never one replacing the other: the action line stays pinned to
 	# the reticle while the notice line reports state changes underneath it.
 	prompt.text=hint
+	prompt.modulate.a=0.0 if is_instance_valid(dual_ui) else 1.0
 	prompt_notice.visible=mode<0 and not manual.visible and not wheel_open
 	prompt_notice.text=notice if msg_time>0. else ""
 	prompt.offset_top=23 if hint!="" or msg_time>0. else 10
+	_sync_expedition_dual_ui(seen, hints)
 func in_return_gallery(p:Vector3)->bool:
 	return return_started and (p.x>75.55 or p.z>25.15 or (absf(p.x-kit.RETURN_WEST)<1.45 and p.z>=kit.RETURN_GATE_Z-.2))
 
@@ -1815,3 +1824,64 @@ func review_props()->void:
 	add_child(review_witness);review_witness.position=kit.polar(12.45,PI*1.5,4.8);Cast.attach_hero(review_witness,"hale");review_witness.rotation.y=PI
 	var cone:=MeshInstance3D.new();var mesh:=CylinderMesh.new();var target:=Vector3(61,.05,10.1);var top:=review_witness.position+Vector3.UP*1.6;mesh.height=top.distance_to(target);mesh.top_radius=.025;mesh.bottom_radius=1.45;cone.mesh=mesh;var m:=StandardMaterial3D.new();m.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;m.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;m.albedo_color=Color(.18,.75,.77,.27);cone.material_override=m;review_witness.add_child(cone);cone.global_position=(target+top)*.5;cone.global_basis=Basis(Quaternion(Vector3.UP,(top-target).normalized()));review_witness.hide()
 	warning.stream=Sound.SPRING;warning.volume_db=-9.;warning.position=Vector3(61,1,10.1);add_child(warning)
+
+
+func _sync_expedition_dual_ui(seen:String, hints:Dictionary)->void:
+	if not is_instance_valid(dual_ui):return
+	var can_show:bool=(mode<0 and not manual.visible and not wheel_open and not finished and retry<=0.)
+	if not can_show:
+		dual_ui.sync_groups(null, Rect2(), Vector2.ONE, Vector3.ZERO, [], false)
+		return
+	var groups:Array[Dictionary]=[]
+	var add_pt:=func(id:String, title:String, wpos:Vector3, custom_verb:String=""):
+		var verb:String=custom_verb if custom_verb!="" else str(hints.get(id, title))
+		# Strip leading "E · " or "[E] " prefix so the unified keycap never duplicates E
+		for pref in ["E · ", "[E] ", "E - ", "E: "]:
+			if verb.begins_with(pref):
+				verb=verb.substr(pref.length())
+		if verb.is_empty():verb=title
+		groups.append({
+			"id": id,
+			"title": title,
+			"anchor_world": wpos,
+			"force_selected": seen==id,
+			"hotspots": [{
+				"id": id,
+				"part_name": title,
+				"verb": verb,
+				"world_pos": wpos,
+				"force_selected": seen==id,
+				"callback": use,
+			}],
+		})
+	if not released:
+		add_pt.call("gate", R18n.pick("北翼闸门","North Gate"), Vector3(36.0, 1.57, 0.0))
+		add_pt.call("lever", R18n.pick("主释放杆","Master Lever"), Vector3(36.3, 1.35, 7.72))
+	if not taken:
+		add_pt.call("loot", R18n.pick("补给箱","Supply Crate"), Vector3(34.14, 0.5, 14.67))
+	add_pt.call("note", R18n.pick("残页记录","Torn Page"), Vector3(23.6, 1.03, 4.0))
+	if not niche_taken:
+		add_pt.call("niche_oil", R18n.pick("壁龛灯油","Niche Oil"), Vector3(13.9, 0.62, 5.9))
+	if not pump_balanced:
+		add_pt.call("pump_valve", R18n.pick("平衡泵阀","Pump Valve"), Vector3(39.2, 1.10, 3.1))
+	if released and not collected:
+		add_pt.call("core", R18n.pick("备用源核","Spare Core"), kit.core.position)
+		add_pt.call("north", R18n.pick("北窗观测位","North Window"), kit.watch_station.global_position)
+	if collected and not shortcut_open:
+		add_pt.call("return", R18n.pick("折返通道","Return Gate"), kit.leaf.global_position)
+	if collected and not exit_open:
+		add_pt.call("exit", R18n.pick("大厅出口","Hall Exit"), Vector3(0.37, 1.5, 0.0))
+	if not solo_escape and exit_open:
+		add_pt.call("solo_exit", R18n.pick("单人应急闸","Solo Hatch"), SOLO_HATCH)
+	add_pt.call("stele1", R18n.pick("铭文碑 A","Stele A"), STELE_A)
+	add_pt.call("stele2", R18n.pick("铭文碑 B","Stele B"), STELE_B)
+	if kit.vault_can.visible:
+		add_pt.call("vault_oil", R18n.pick("库房灯油","Vault Oil"), kit.vault_can.global_position)
+	if service_signal.open and not clock_taken:
+		add_pt.call("clock", R18n.pick("机械摆钟","Service Clock"), Relay.HATCH)
+	elif not service_signal.open and seen=="relay" and relay_focus>=0 and relay_focus<Relay.PORTS.size():
+		add_pt.call("relay", R18n.pick("中继端口","Relay Port"), Relay.PORTS[relay_focus], relay_hint())
+	if hale.visible:
+		add_pt.call("hale", R18n.pick("霍铎 (Hale)","Hale"), hale.position+Vector3.UP*1.25)
+	var vp_rect:=get_viewport().get_visible_rect()
+	dual_ui.sync_groups(eye, vp_rect, vp_rect.size, walker.position, groups, true)

@@ -257,3 +257,8 @@ func visible_buttons(modal_active: bool) -> Array:
 			var center: Vector2 = node.get_global_rect().get_center()
 			buttons.append({"label": node.text, "x": center.x, "y": center.y, "enabled": not node.disabled})
 	return buttons
+
+func update_pre_sortie_readout(place: String, clock_text: String) -> void:
+	place_label.text = "%s   %s" % [place, clock_text]
+	status_label.text = R18n.pick("同行：霍铎（Hale） · 大厅暂无外力损毁", "Partner: Hale · Hall structurally intact")
+	kit_label.text = R18n.pick("随身：煤油提灯 · 机械怀表 [T] · 手册 [Tab]", "Carried: Kerosene Lamp · Pocket Watch [T] · Manual [Tab]")

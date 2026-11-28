@@ -30,6 +30,8 @@ var first_sortie
 var first_returned := false
 var pendulum_measured := false
 var pendulum_note_recorded := false
+var north_draft_inspected := false
+var watch_desk_inspected := false
 var pendulum_measured_sec := 8.1
 var field_notes: Array[String] = []
 var _wrpg_panel: PanelContainer
@@ -262,7 +264,9 @@ func _input(event: InputEvent) -> void:
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
-	if event.physical_keycode == KEY_F8:
+	if event.physical_keycode == KEY_T and phase == "camp" and modal.is_empty():
+		_check_pocket_watch()
+	elif event.physical_keycode == KEY_F8:
 		R18n.toggle_locale()
 		_refresh()
 	elif event.physical_keycode == KEY_TAB and handbook and modal != "margin":
@@ -728,7 +732,10 @@ func _refresh() -> void:
 			play_hall_opening.call_deferred()
 	if not is_instance_valid(_hud):
 		return
-	_hud.update_readout(R18n.pick("公共大厅", "Public Hall") if phase == "camp" else title, clock, hp, nerve, party.size(), crew.supplies, pack)
+	if phase == "camp" and not first_returned:
+		_hud.update_pre_sortie_readout(R18n.pick("公共大厅", "Public Hall"), "03:38")
+	else:
+		_hud.update_readout(R18n.pick("公共大厅", "Public Hall") if phase == "camp" else title, clock, hp, nerve, party.size(), crew.supplies, pack)
 	if phase == "won":
 		_instruction.text = message + "\nMorning. The Hall has a name for everyone who returned."
 	elif phase == "lost":
@@ -747,7 +754,8 @@ func _refresh() -> void:
 			_instruction.text = R18n.pick("大厅傅科摆周期异常，霍铎正在等你。可先观测傅科摆，或走近与他交谈。", FIRST_BRIEF)
 		for i in destinations.size():
 			_button(_flow, _route_name(destinations[i]), travel.bind(i))
-		_button(_flow, R18n.pick("路线图", "Route chart"), _chart).disabled = _performing
+		if first_returned or phase != "camp":
+			_button(_flow, R18n.pick("路线图", "Route chart"), _chart).disabled = _performing
 		if handbook:
 			_button(_flow, R18n.pick("外勤手册 · Tab", "Field manual · Tab"), _read_guide).disabled = _performing
 		if phase == "camp" and first_returned:
@@ -1094,37 +1102,78 @@ func _sync_dual_ui() -> void:
 			var pin_pos := pend_base + Vector3(0.0, 0.14, 0.0)
 			var ring_pos := pend_base + Vector3(-1.35, 0.08, 0.35)
 			var hale_pos := (hall_hale.position + Vector3(0.0, 1.45, 0.0)) if is_instance_valid(hall_hale) else (pend_base + Vector3(1.25, 0.35, -0.35))
-			var note_verb := R18n.pick("查看笔记记录", "Review note") if pendulum_note_recorded else R18n.pick("记入笔记", "Record in notebook")
 			var measure_verb := R18n.pick("重新测周期 (%.1fs)" % pendulum_measured_sec, "Re-measure (%.1fs)" % pendulum_measured_sec) if pendulum_measured else R18n.pick("统计周期", "Measure period")
-			var hale_verb := R18n.pick("询问霍铎", "Ask Hale")
+			# Strictly enforce H1 progression: before measuring period, only offer Measure + Inspect Dial;
+			# only after measuring unlock Record in Notebook & Ask Hale about Pendulum!
+			var pend_hotspots: Array[Dictionary] = [
+				{
+					"id": "pin",
+					"part_name": R18n.pick("中心铜钉", "Center Brass Pin"),
+					"verb": measure_verb,
+					"world_pos": pin_pos,
+					"callback": _begin_pendulum_judge,
+				},
+			]
+			if pendulum_measured:
+				var note_verb := R18n.pick("查看笔记记录", "Review note") if pendulum_note_recorded else R18n.pick("记入笔记", "Record in notebook")
+				pend_hotspots.append({
+					"id": "ring",
+					"part_name": R18n.pick("刻度外环", "Outer Degree Ring"),
+					"verb": note_verb,
+					"world_pos": ring_pos,
+					"callback": _dual_ui_record_note,
+				})
+				if not first_returned:
+					pend_hotspots.append({
+						"id": "hale",
+						"part_name": R18n.pick("询问霍铎", "Ask Hale"),
+						"verb": R18n.pick("询问霍铎关于傅科摆", "Ask Hale on pendulum"),
+						"world_pos": hale_pos,
+						"callback": _dual_ui_ask_hale,
+					})
+			else:
+				pend_hotspots.append({
+					"id": "ring",
+					"part_name": R18n.pick("刻度外环", "Outer Degree Ring"),
+					"verb": R18n.pick("观察立柱与摆迹", "Inspect pegs & track"),
+					"world_pos": ring_pos,
+					"callback": _inspect_pendulum_dial,
+				})
 			groups.append({
 				"id": "FoucaultPendulum",
 				"title": R18n.pick("傅科摆", "Foucault Pendulum"),
 				"anchor_world": pin_pos,
-				"hotspots": [
-					{
-						"id": "pin",
-						"part_name": R18n.pick("中心铜钉", "Center Brass Pin"),
-						"verb": measure_verb,
-						"world_pos": pin_pos,
-						"callback": _begin_pendulum_judge,
-					},
-					{
-						"id": "ring",
-						"part_name": R18n.pick("刻度外环", "Outer Degree Ring"),
-						"verb": note_verb,
-						"world_pos": ring_pos,
-						"callback": _dual_ui_record_note,
-					},
-					{
-						"id": "hale",
-						"part_name": R18n.pick("询问霍铎", "Ask Hale"),
-						"verb": hale_verb,
-						"world_pos": hale_pos,
-						"callback": _dual_ui_ask_hale,
-					},
-				],
+				"hotspots": pend_hotspots,
 			})
+
+			# Elimination-method Hall clues (strict epistemic firewall: observable physical phenomena only)
+			if not first_returned:
+				var draft_pos: Vector3 = anchors.gate + Vector3(0.0, 0.35, 0.65)
+				groups.append({
+					"id": "NorthGateDraft",
+					"title": R18n.pick("北翼门缝", "North Archway Threshold"),
+					"anchor_world": draft_pos,
+					"hotspots": [{
+						"id": "north_draft",
+						"part_name": R18n.pick("北翼门缝", "North Archway Threshold"),
+						"verb": R18n.pick("查看贴地白雾", "Inspect mist & draft"),
+						"world_pos": draft_pos,
+						"callback": _inspect_north_draft,
+					}],
+				})
+				var desk_pos := Vector3(pend_base.x - 2.65, 1.05, 8.40)
+				groups.append({
+					"id": "WatchOfficerDesk",
+					"title": R18n.pick("值班书案", "Watch Officer's Desk"),
+					"anchor_world": desk_pos,
+					"hotspots": [{
+						"id": "watch_desk",
+						"part_name": R18n.pick("值班书案", "Watch Officer's Desk"),
+						"verb": R18n.pick("翻阅大厅值班簿", "Read Hall watch log"),
+						"world_pos": desk_pos,
+						"callback": _inspect_watch_desk,
+					}],
+				})
 
 	# Append all remaining active room targets (Hale, 16 residents, crossing stations, fixtures, exits)
 	var exclude := PackedStringArray(["FoucaultPendulum"])
@@ -1157,3 +1206,25 @@ func _handle_dual_ui_input(event: InputEvent) -> bool:
 	if not is_instance_valid(dual_ui) or not dual_ui.active_enabled:
 		return false
 	return dual_ui.handle_input(event, true)
+
+func _inspect_pendulum_dial() -> void:
+	_ensure_dual_ui()
+	if is_instance_valid(dialogue_presenter):
+		dialogue_presenter.thought("pendulum_dial", R18n.pick("悬索与黄铜摆锤完好无损，深石板周圈 24 根铜柱已倒伏两根，摆锤轨迹似乎略微偏离中心铜钉——先测一次完整周期看看。", "Wire and brass bob are undamaged; two of twenty-four brass pegs lie tipped, and the swing seems to miss the center pin—better time one full cycle first."))
+
+func _inspect_north_draft() -> void:
+	north_draft_inspected = true
+	_ensure_dual_ui()
+	if is_instance_valid(dialogue_presenter):
+		dialogue_presenter.thought("north_draft", R18n.pick("北翼厚木门底缝正往大厅渗出一层贴地白雾，夹带湿咸的海盐味；大厅其余门窗紧闭无损。整点前必须进北翼核查。", "A thin layer of ground mist carrying damp sea-salt air is seeping under the North Wing doorway; every other Hall window and door is intact."))
+
+func _inspect_watch_desk() -> void:
+	watch_desk_inspected = true
+	_ensure_dual_ui()
+	if is_instance_valid(dialogue_presenter):
+		dialogue_presenter.thought("watch_desk", R18n.pick("值班簿末页停在 03:00：全院高精度仪器例行检查完好，大厅无任何外力损毁记录。", "The watch log's last entry is 03:00: all precision instruments passed inspection, with zero structural damage reported in the Hall."))
+
+func _check_pocket_watch() -> void:
+	_ensure_dual_ui()
+	if is_instance_valid(dialogue_presenter):
+		dialogue_presenter.thought("pocket_watch", R18n.pick("低头核对随身机械怀表：当前 03:38，秒针走时均匀清脆，可用来对标大厅傅科摆周期。", "Pocket watch reads 03:38—second hand ticking steadily, ready to time the Hall's Foucault pendulum."))
